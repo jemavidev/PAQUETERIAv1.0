@@ -1,0 +1,203 @@
+<!-- ========================================
+     EJEMPLOS DE USO - COMPONENTE DE ERROR
+     PAQUETEX v4.0
+     ======================================== -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplos de Error - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="/static/css/error-components.css">
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+            Componentes de Error - PAQUETEX v4.0
+        </h1>
+
+        <!-- Ejemplo 1: Error Básico -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">1. Error Básico (Estático)</h2>
+            {% include 'components/error_message.html' %}
+        </div>
+
+        <!-- Ejemplo 2: Error con Alpine.js -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">2. Error Interactivo (Alpine.js)</h2>
+            <div x-data="errorMessage()" x-init="showError('Error de Validación', 'El número de guía ingresado no es válido.', 'error')">
+                {% include 'components/error_message_alpine.html' %}
+            </div>
+        </div>
+
+        <!-- Ejemplo 3: Diferentes Tipos de Error -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">3. Diferentes Tipos de Error</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Error -->
+                <div x-data="errorMessage()" x-init="showError('Error del Sistema', 'Error crítico del sistema.', 'error')">
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+
+                <!-- Warning -->
+                <div x-data="errorMessage()" x-init="showError('Advertencia', 'El paquete ya fue anunciado anteriormente.', 'warning')">
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+
+                <!-- Info -->
+                <div x-data="errorMessage()" x-init="showError('Información', 'El sistema se reiniciará en 5 minutos.', 'info')">
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+
+                <!-- Success -->
+                <div x-data="errorMessage()" x-init="showError('Éxito', 'El paquete se anunció correctamente.', 'success')">
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejemplo 4: Control de Errores -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">4. Control de Errores</h2>
+            
+            <div x-data="errorController()" class="space-y-4">
+                <div class="flex space-x-4">
+                    <button @click="showError('Error', 'Este es un error de prueba', 'error')" 
+                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        Mostrar Error
+                    </button>
+                    <button @click="showError('Advertencia', 'Esta es una advertencia', 'warning')" 
+                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+                        Mostrar Advertencia
+                    </button>
+                    <button @click="showError('Información', 'Esta es información', 'info')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        Mostrar Info
+                    </button>
+                    <button @click="showError('Éxito', 'Operación exitosa', 'success')" 
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        Mostrar Éxito
+                    </button>
+                </div>
+
+                <!-- Contenedor de Error Dinámico -->
+                <div x-show="show" x-transition>
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejemplo 5: Integración con Formularios -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">5. Integración con Formularios</h2>
+            
+            <div x-data="formWithError()" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+                <form @submit.prevent="submitForm()">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Guía
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="guideNumber"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el número de guía"
+                        >
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            :disabled="loading">
+                        <span x-show="!loading">Anunciar Paquete</span>
+                        <span x-show="loading">Procesando...</span>
+                    </button>
+                </form>
+
+                <!-- Error del Formulario -->
+                <div x-show="error.show" x-transition class="mt-4">
+                    {% include 'components/error_message_alpine.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Controlador de Errores
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('errorController', () => ({
+                show: false,
+                title: '',
+                message: '',
+                type: 'error',
+                
+                showError(title, message, type) {
+                    this.title = title;
+                    this.message = message;
+                    this.type = type;
+                    this.show = true;
+                    
+                    // Auto-ocultar después de 5 segundos
+                    setTimeout(() => {
+                        this.show = false;
+                    }, 5000);
+                }
+            }));
+
+            // Formulario con Manejo de Errores
+            Alpine.data('formWithError', () => ({
+                guideNumber: '',
+                loading: false,
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                
+                async submitForm() {
+                    this.loading = true;
+                    this.error.show = false;
+                    
+                    try {
+                        // Simular validación
+                        if (!this.guideNumber) {
+                            throw new Error('El número de guía es requerido');
+                        }
+                        
+                        if (this.guideNumber.length < 10) {
+                            throw new Error('El número de guía debe tener al menos 10 caracteres');
+                        }
+                        
+                        // Simular envío
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Mostrar éxito
+                        this.error = {
+                            show: true,
+                            title: 'Éxito',
+                            message: 'El paquete se anunció correctamente.',
+                            type: 'success'
+                        };
+                        
+                        this.guideNumber = '';
+                        
+                    } catch (error) {
+                        this.error = {
+                            show: true,
+                            title: 'Error de Validación',
+                            message: error.message,
+                            type: 'error'
+                        };
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

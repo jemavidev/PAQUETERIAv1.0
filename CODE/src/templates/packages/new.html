@@ -1,0 +1,113 @@
+{% extends "base/base.html" %}
+
+{% block title %}Nuevo Paquete - PAQUETEX v3.1{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header de la página -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Nuevo Paquete</h1>
+        <p class="text-gray-600">Registra un nuevo paquete en el sistema</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-lg shadow-sm border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Información del Paquete</h2>
+        </div>
+        
+        <form method="POST" class="p-6 space-y-6">
+            <!-- Información del Remitente -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="sender_name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Remitente</label>
+                    <input type="text" id="sender_name" name="sender_name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label for="sender_phone" class="block text-sm font-medium text-gray-700 mb-2">Teléfono del Remitente</label>
+                    <input type="tel" id="sender_phone" name="sender_phone" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+            </div>
+
+            <!-- Información del Destinatario -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="recipient_name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Destinatario</label>
+                    <input type="text" id="recipient_name" name="recipient_name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label for="recipient_phone" class="block text-sm font-medium text-gray-700 mb-2">Teléfono del Destinatario</label>
+                    <input type="tel" id="recipient_phone" name="recipient_phone" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+            </div>
+
+            <!-- Dirección de Entrega -->
+            <div>
+                <label for="delivery_address" class="block text-sm font-medium text-gray-700 mb-2">Dirección de Entrega</label>
+                <textarea id="delivery_address" name="delivery_address" rows="3" required
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent"></textarea>
+            </div>
+
+            <!-- Información del Paquete -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="package_type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Paquete</label>
+                    <select id="package_type" name="package_type" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                        <option value="">Seleccionar tipo</option>
+                        <option value="documento">Documento</option>
+                        <option value="ropa">Ropa</option>
+                        <option value="electronico">Electrónico</option>
+                        <option value="alimento">Alimento</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="package_weight" class="block text-sm font-medium text-gray-700 mb-2">Peso (kg)</label>
+                    <input type="number" id="package_weight" name="package_weight" step="0.1" min="0" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label for="package_value" class="block text-sm font-medium text-gray-700 mb-2">Valor Declarado</label>
+                    <input type="number" id="package_value" name="package_value" min="0" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+            </div>
+
+            <!-- Descripción -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Descripción del Contenido</label>
+                <textarea id="description" name="description" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent"
+                          placeholder="Describe el contenido del paquete..."></textarea>
+            </div>
+
+            <!-- Instrucciones Especiales -->
+            <div>
+                <label for="special_instructions" class="block text-sm font-medium text-gray-700 mb-2">Instrucciones Especiales</label>
+                <textarea id="special_instructions" name="special_instructions" rows="2"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-papyrus-blue focus:border-transparent"
+                          placeholder="Instrucciones especiales para la entrega..."></textarea>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="/packages" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Registrar Paquete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

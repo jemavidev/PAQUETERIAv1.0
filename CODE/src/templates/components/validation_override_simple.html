@@ -1,0 +1,47 @@
+<!-- ========================================
+     OVERRIDE COMPLETO DE VALIDACIÓN NATIVA - VERSIÓN SIMPLE
+     PAQUETEX v4.0
+     ======================================== -->
+
+<div id="validation-override-container" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-left: 4px solid #ef4444; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <!-- Iconos de Advertencia -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
+        <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; background-color: rgba(239, 68, 68, 0.1);">
+            <svg class="w-4 h-4 text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div style="width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: rgba(245, 158, 11, 0.1);">
+            <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido del Error -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+        <h3 id="validation-override-title" style="font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">Error de Validación</h3>
+        <p id="validation-override-message" style="font-size: 0.875rem; color: #374151; line-height: 1.6;">Por favor, complete todos los campos requeridos.</p>
+        <div id="validation-override-field" style="margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 0.25rem;">
+            <span style="font-size: 0.75rem; color: #92400e; font-weight: 500;">Campo: </span>
+            <span id="field-name-override" style="font-size: 0.75rem; color: #92400e;">Nombre del cliente</span>
+        </div>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div style="display: flex; justify-content: center;">
+        <button 
+            type="button" 
+            id="validation-override-close-btn"
+            style="color: white; font-weight: 500; padding: 0.5rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); border: none; cursor: pointer;"
+            onmouseover="this.style.background='linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.background='linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.3)'"
+        >
+            Cerrar
+        </button>
+    </div>
+</div>
+
+<!-- Cargar el archivo JavaScript -->
+<script src="/static/js/validation-override.js"></script>
+

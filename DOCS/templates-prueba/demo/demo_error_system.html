@@ -1,0 +1,262 @@
+{% extends "base/base.html" %}
+
+{% block title %}Demo Sistema de Alertas - PAQUETEX v4.0{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            🚨 Demo Sistema de Alertas Unificado
+        </h1>
+        <p class="text-lg text-gray-600">
+            Prueba todas las funcionalidades del sistema de alertas de PAQUETEX v4.0
+        </p>
+    </div>
+
+    <!-- Botones de Prueba -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Alertas Básicas -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Alertas Básicas</h3>
+            <div class="space-y-3">
+                <button onclick="showError('Error del Sistema', 'Este es un mensaje de error de ejemplo')" 
+                        class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    Mostrar Error
+                </button>
+                <button onclick="showWarning('Advertencia', 'Este es un mensaje de advertencia de ejemplo')" 
+                        class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                    Mostrar Advertencia
+                </button>
+                <button onclick="showInfo('Información', 'Este es un mensaje de información de ejemplo')" 
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Mostrar Info
+                </button>
+                <button onclick="showSuccess('Éxito', 'Este es un mensaje de éxito de ejemplo')" 
+                        class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Mostrar Éxito
+                </button>
+            </div>
+        </div>
+
+        <!-- Alertas con Auto-Cierre -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Auto-Cierre</h3>
+            <div class="space-y-3">
+                <button onclick="showAlert('Éxito Rápido', 'Se cerrará en 2 segundos', 'success', {autoClose: true, closeDelay: 2000})" 
+                        class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Éxito Rápido (2s)
+                </button>
+                <button onclick="showAlert('Info Media', 'Se cerrará en 5 segundos', 'info', {autoClose: true, closeDelay: 5000})" 
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Info Media (5s)
+                </button>
+                <button onclick="showAlert('Advertencia Lenta', 'Se cerrará en 10 segundos', 'warning', {autoClose: true, closeDelay: 10000})" 
+                        class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                    Advertencia Lenta (10s)
+                </button>
+            </div>
+        </div>
+
+        <!-- Errores de Validación -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Validación</h3>
+            <div class="space-y-3">
+                <button onclick="showValidationErrors({'email': ['El email es requerido', 'El email no es válido'], 'password': ['La contraseña debe tener al menos 8 caracteres']})" 
+                        class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    Errores de Validación
+                </button>
+                <button onclick="showSuccessMessage('Formulario enviado correctamente')" 
+                        class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Éxito de Formulario
+                </button>
+                <button onclick="showWarningMessage('Algunos campos tienen advertencias')" 
+                        class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                    Advertencias
+                </button>
+            </div>
+        </div>
+
+        <!-- Alertas Personalizadas -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Personalizadas</h3>
+            <div class="space-y-3">
+                <button onclick="showAlert('Confirmación', '¿Estás seguro de continuar?', 'warning', {buttonText: 'Sí, continuar', onClose: 'console.log(\"Usuario confirmó\")'})" 
+                        class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                    Con Callback
+                </button>
+                <button onclick="showAlert('Mensaje Largo', 'Este es un mensaje muy largo que demuestra cómo se ve el sistema de alertas cuando el contenido es extenso y necesita múltiples líneas para ser mostrado correctamente.', 'info', {autoClose: false})" 
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Mensaje Largo
+                </button>
+                <button onclick="showAlert('Sin Auto-Cierre', 'Este mensaje no se cierra automáticamente', 'info', {autoClose: false})" 
+                        class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    Sin Auto-Cierre
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Prueba con Validación -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Formulario de Prueba con Validación</h3>
+        <form id="testForm" data-validation="true" data-validate-on-change="true" class="space-y-4">
+            <div>
+                <label for="testEmail" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input type="email" id="testEmail" name="email" required minlength="5"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ingresa tu email">
+            </div>
+            <div>
+                <label for="testPassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña *</label>
+                <input type="password" id="testPassword" name="password" required minlength="8"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ingresa tu contraseña">
+            </div>
+            <div>
+                <label for="testConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña *</label>
+                <input type="password" id="testConfirmPassword" name="confirmPassword" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Confirma tu contraseña">
+            </div>
+            <div>
+                <label for="testPhone" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input type="tel" id="testPhone" name="phone"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ingresa tu teléfono">
+            </div>
+            <div>
+                <label for="testTracking" class="block text-sm font-medium text-gray-700 mb-1">Número de Guía</label>
+                <input type="text" id="testTracking" name="tracking" pattern="[A-Z0-9]{6,20}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ej: ABC123456">
+            </div>
+            <div>
+                <label for="testMessage" class="block text-sm font-medium text-gray-700 mb-1">Mensaje *</label>
+                <textarea id="testMessage" name="message" rows="3" required minlength="10" maxlength="500"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Escribe un mensaje (mínimo 10 caracteres)"></textarea>
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Enviar Formulario
+                </button>
+                <button type="button" onclick="clearForm()" 
+                        class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    Limpiar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Información del Sistema</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Funciones Disponibles:</h4>
+                <ul class="space-y-1">
+                    <li>• <code>showError(title, message, options)</code></li>
+                    <li>• <code>showWarning(title, message, options)</code></li>
+                    <li>• <code>showInfo(title, message, options)</code></li>
+                    <li>• <code>showSuccess(title, message, options)</code></li>
+                    <li>• <code>showAlert(title, message, type, options)</code></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Opciones Disponibles:</h4>
+                <ul class="space-y-1">
+                    <li>• <code>autoClose: boolean</code></li>
+                    <li>• <code>closeDelay: number (ms)</code></li>
+                    <li>• <code>buttonText: string</code></li>
+                    <li>• <code>onClose: string (JS code)</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configurar validador personalizado para el formulario
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('testForm');
+    
+    // Crear validador personalizado
+    const validator = new FormValidator('testForm', {
+        validateOnSubmit: true,
+        validateOnChange: true,
+        showErrors: true,
+        showSuccess: true,
+        onSuccess: function(formData) {
+            showSuccessMessage('Formulario enviado correctamente');
+            clearForm();
+        },
+        onError: function(errors) {
+            // Los errores ya se muestran automáticamente
+            console.log('Errores de validación:', errors);
+        }
+    });
+    
+    // Agregar validación personalizada para confirmación de contraseña
+    const confirmPasswordField = document.getElementById('testConfirmPassword');
+    if (confirmPasswordField) {
+        confirmPasswordField.addEventListener('blur', function() {
+            const password = document.getElementById('testPassword').value;
+            const confirmPassword = this.value;
+            
+            if (password && confirmPassword && password !== confirmPassword) {
+                validator.setFieldError('confirmPassword', 'Las contraseñas no coinciden');
+                showValidationErrors(validator.errors);
+            } else {
+                validator.clearFieldError('confirmPassword');
+            }
+        });
+    }
+    
+    // Agregar validación personalizada para número de guía
+    const trackingField = document.getElementById('testTracking');
+    if (trackingField) {
+        trackingField.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value) {
+                const error = CustomValidators.trackingNumber(value);
+                if (error) {
+                    validator.setFieldError('tracking', error);
+                    showValidationErrors(validator.errors);
+                } else {
+                    validator.clearFieldError('tracking');
+                }
+            }
+        });
+    }
+    
+    // Agregar validación personalizada para teléfono colombiano
+    const phoneField = document.getElementById('testPhone');
+    if (phoneField) {
+        phoneField.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value) {
+                const error = CustomValidators.colombianPhone(value);
+                if (error) {
+                    validator.setFieldError('phone', error);
+                    showValidationErrors(validator.errors);
+                } else {
+                    validator.clearFieldError('phone');
+                }
+            }
+        });
+    }
+});
+
+function clearForm() {
+    document.getElementById('testForm').reset();
+    // Limpiar errores del validador
+    if (window.FormValidator) {
+        const validator = new FormValidator('testForm');
+        validator.clearErrors();
+    }
+}
+</script>
+{% endblock %}
+

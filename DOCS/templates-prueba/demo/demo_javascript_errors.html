@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Manejador de Errores JavaScript - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .demo-section {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .demo-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+
+        .demo-button {
+            background: #2563eb;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            margin: 0.25rem;
+        }
+
+        .demo-button:hover {
+            background: #1d4ed8;
+        }
+
+        .demo-button-danger {
+            background: #dc2626;
+        }
+
+        .demo-button-danger:hover {
+            background: #b91c1c;
+        }
+
+        .demo-button-warning {
+            background: #d97706;
+        }
+
+        .demo-button-warning:hover {
+            background: #b45309;
+        }
+
+        .demo-button-success {
+            background: #059669;
+        }
+
+        .demo-button-success:hover {
+            background: #047857;
+        }
+
+        .demo-button-info {
+            background: #7c3aed;
+        }
+
+        .demo-button-info:hover {
+            background: #6d28d9;
+        }
+
+        .code-block {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <!-- Manejador de Errores JavaScript -->
+    {% include 'components/javascript_error_handler_simple.html' %}
+
+    <div class="container mx-auto px-4 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                🚨 Demo Manejador de Errores JavaScript
+            </h1>
+            <p class="text-lg text-gray-600">
+                PAQUETEX v4.0 - Captura y Muestra Errores de JavaScript
+            </p>
+        </div>
+
+        <!-- Sección 1: Errores Automáticos -->
+        <div class="demo-section">
+            <h2 class="demo-title">1. Errores Automáticos Capturados</h2>
+            <p class="demo-description">
+                El sistema captura automáticamente errores de JavaScript, promesas rechazadas y errores de recursos.
+            </p>
+            
+            <div class="space-y-4">
+                <button onclick="probarManejadorErrores()" class="demo-button-success">
+                    Probar Manejador (Función Global)
+                </button>
+                
+                <button onclick="generarErrorJS()" class="demo-button-danger">
+                    Generar Error de JavaScript
+                </button>
+                
+                <button onclick="generarPromesaRechazada()" class="demo-button-warning">
+                    Generar Promesa Rechazada
+                </button>
+                
+                <button onclick="generarErrorRecurso()" class="demo-button-info">
+                    Generar Error de Recurso
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección 2: Errores Personalizados -->
+        <div class="demo-section">
+            <h2 class="demo-title">2. Errores Personalizados</h2>
+            <p class="demo-description">
+                Puedes mostrar errores personalizados usando las funciones globales disponibles.
+            </p>
+            
+            <div class="space-y-4">
+                <button onclick="mostrarErrorPersonalizado()" class="demo-button-danger">
+                    Mostrar Error Personalizado
+                </button>
+                
+                <button onclick="mostrarAdvertenciaPersonalizada()" class="demo-button-warning">
+                    Mostrar Advertencia Personalizada
+                </button>
+                
+                <button onclick="mostrarInformacionPersonalizada()" class="demo-button-info">
+                    Mostrar Información Personalizada
+                </button>
+                
+                <button onclick="mostrarExitoPersonalizado()" class="demo-button-success">
+                    Mostrar Éxito Personalizado
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección 3: Errores de Validación -->
+        <div class="demo-section">
+            <h2 class="demo-title">3. Errores de Validación</h2>
+            <p class="demo-description">
+                Ejemplo de cómo usar el manejador de errores en formularios de validación.
+            </p>
+            
+            <div x-data="formularioValidacion()" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+                <form @submit.prevent="validarFormulario()">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Guía
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="numeroGuia"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el número de guía"
+                        >
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Email del Cliente
+                        </label>
+                        <input 
+                            type="email" 
+                            x-model="emailCliente"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el email del cliente"
+                        >
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                        Validar Formulario
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sección 4: Código de Implementación -->
+        <div class="demo-section">
+            <h2 class="demo-title">4. Código de Implementación</h2>
+            <p class="demo-description">
+                Cómo implementar el manejador de errores en tus páginas.
+            </p>
+            
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">1. Incluir el Componente</h3>
+                    <div class="code-block">
+&lt;!-- Incluir en tu template --&gt;
+{% include 'components/javascript_error_handler.html' %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">2. Funciones Disponibles</h3>
+                    <div class="code-block">
+// Mostrar error personalizado
+window.mostrarErrorJS('Título', 'Mensaje', 'error', 'Detalles opcionales');
+
+// Mostrar error de validación
+window.mostrarErrorValidacion('El campo es requerido');
+
+// Mostrar advertencia
+window.mostrarAdvertencia('Esta operación es irreversible');
+
+// Mostrar información
+window.mostrarInformacion('El sistema se reiniciará en 5 minutos');
+
+// Mostrar éxito
+window.mostrarExito('Operación completada exitosamente');
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">3. Captura Automática</h3>
+                    <div class="code-block">
+// El sistema captura automáticamente:
+// - Errores de JavaScript (window.onerror)
+// - Promesas rechazadas (unhandledrejection)
+// - Errores de recursos (imágenes, scripts, etc.)
+// - Errores de Alpine.js
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 5: Características -->
+        <div class="demo-section">
+            <h2 class="demo-title">5. Características del Manejador</h2>
+            <p class="demo-description">
+                Funcionalidades incluidas en el manejador de errores.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">✅ Captura Automática</h3>
+                    <p class="text-sm text-green-700">Captura todos los errores de JavaScript automáticamente</p>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">🎨 Diseño Consistente</h3>
+                    <p class="text-sm text-blue-700">Usa el mismo diseño que los componentes de error</p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-yellow-800 mb-2">📱 Responsive</h3>
+                    <p class="text-sm text-yellow-700">Se adapta a móviles, tablets y desktop</p>
+                </div>
+                
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2">🔧 Personalizable</h3>
+                    <p class="text-sm text-purple-700">Funciones globales para errores personalizados</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-red-800 mb-2">📊 Detalles Técnicos</h3>
+                    <p class="text-sm text-red-700">Muestra stack trace y detalles del error</p>
+                </div>
+                
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-indigo-800 mb-2">⏰ Auto-cierre</h3>
+                    <p class="text-sm text-indigo-700">Se cierra automáticamente después de 10 segundos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones para generar errores de prueba
+        function generarErrorJS() {
+            // Generar un error de JavaScript
+            try {
+                const objeto = null;
+                objeto.propiedad.inexistente;
+            } catch (error) {
+                // El error será capturado automáticamente por el manejador
+                throw error;
+            }
+        }
+
+        function generarPromesaRechazada() {
+            // Generar una promesa rechazada
+            Promise.reject(new Error('Esta promesa fue rechazada intencionalmente'));
+        }
+
+        function generarErrorRecurso() {
+            // Generar un error de recurso
+            const img = new Image();
+            img.src = 'imagen-inexistente.jpg';
+            img.onerror = function() {
+                // El error será capturado automáticamente
+            };
+        }
+
+        // Funciones para errores personalizados
+        function mostrarErrorPersonalizado() {
+            window.mostrarErrorJS(
+                'Error Personalizado',
+                'Este es un error personalizado generado para la demostración.',
+                'error',
+                'Detalles técnicos del error:\n- Archivo: demo_javascript_errors.html\n- Línea: 150\n- Función: mostrarErrorPersonalizado()'
+            );
+        }
+
+        function mostrarAdvertenciaPersonalizada() {
+            window.mostrarAdvertencia('Esta es una advertencia personalizada. Ten cuidado con esta operación.');
+        }
+
+        function mostrarInformacionPersonalizada() {
+            window.mostrarInformacion('El sistema está funcionando correctamente. Esta es información importante.');
+        }
+
+        function mostrarExitoPersonalizado() {
+            window.mostrarExito('¡Operación completada exitosamente! Los datos se han guardado correctamente.');
+        }
+
+        // Formulario de validación
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('formularioValidacion', () => ({
+                numeroGuia: '',
+                emailCliente: '',
+                
+                validarFormulario() {
+                    // Limpiar errores anteriores
+                    this.limpiarErrores();
+                    
+                    let hayErrores = false;
+                    
+                    // Validar número de guía
+                    if (!this.numeroGuia) {
+                        window.mostrarErrorValidacion('El número de guía es requerido');
+                        hayErrores = true;
+                    } else if (this.numeroGuia.length < 10) {
+                        window.mostrarErrorValidacion('El número de guía debe tener al menos 10 caracteres');
+                        hayErrores = true;
+                    }
+                    
+                    // Validar email
+                    if (!this.emailCliente) {
+                        window.mostrarErrorValidacion('El email del cliente es requerido');
+                        hayErrores = true;
+                    } else if (!this.validarEmail(this.emailCliente)) {
+                        window.mostrarErrorValidacion('El email del cliente no tiene un formato válido');
+                        hayErrores = true;
+                    }
+                    
+                    // Si no hay errores, mostrar éxito
+                    if (!hayErrores) {
+                        window.mostrarExito('Formulario validado correctamente. Todos los campos son válidos.');
+                        this.numeroGuia = '';
+                        this.emailCliente = '';
+                    }
+                },
+                
+                validarEmail(email) {
+                    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    return regex.test(email);
+                },
+                
+                limpiarErrores() {
+                    // Esta función se puede usar para limpiar errores anteriores
+                    // En este caso, el manejador se encarga automáticamente
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+/*
+ * PAQUETES EL CLUB v4.0 - Estilos Tablet
+ * Versión: 4.0.0
+ * Autor: Sistema PAQUETES EL CLUB
+ * Fecha: 2024-07-30
+ * 
+ * Estilos específicos para tablets (768px - 1023px)
+ * Diseño intermedio entre móvil y desktop
+ */
+
+/* ========================================
+ * BREAKPOINT TABLET
+ * ======================================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  
+  /* ========================================
+   * TIPOGRAFÍA TABLET
+   * ======================================== */
+  
+  body {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  
+  h1 {
+    font-size: 1.75rem; /* 28px */
+    line-height: 1.3;
+  }
+  
+  h2 {
+    font-size: 1.5rem; /* 24px */
+    line-height: 1.3;
+  }
+  
+  h3 {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.4;
+  }
+  
+  h4 {
+    font-size: 1.125rem; /* 18px */
+    line-height: 1.4;
+  }
+  
+  h5 {
+    font-size: 1rem; /* 16px */
+    line-height: 1.4;
+  }
+  
+  h6 {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.4;
+  }
+  
+  /* ========================================
+   * ESPACIADO TABLET
+   * ======================================== */
+  
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .section {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+  
+  .section-lg {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+  
+  /* ========================================
+   * HEADER TABLET
+   * ======================================== */
+  
+  .header {
+    height: 60px;
+  }
+  
+  .header-nav {
+    height: 60px;
+  }
+  
+  .logo-text {
+    font-size: 1.25rem; /* 20px */
+  }
+  
+  .logo-subtitle {
+    display: block;
+    font-size: 0.75rem;
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .nav-link-text {
+    display: none;
+  }
+  
+  .mobile-menu-button {
+    display: none;
+  }
+  
+  .mobile-menu {
+    display: none;
+  }
+  
+  .user-info {
+    display: block;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .user-avatar-text {
+    font-size: 1rem;
+  }
+  
+  .user-name {
+    font-size: 0.875rem;
+  }
+  
+  .user-role {
+    font-size: 0.75rem;
+  }
+  
+  /* ========================================
+   * FOOTER TABLET
+   * ======================================== */
+  
+  .footer {
+    height: 56px;
+  }
+  
+  .footer-main {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    gap: 0;
+  }
+  
+  .footer-copyright {
+    font-size: 0.875rem;
+  }
+  
+  .footer-links {
+    gap: 0.75rem;
+  }
+  
+  .footer-link {
+    padding: 0.25rem;
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  .footer-link-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .footer-link-text {
+    display: inline;
+    margin-left: 0.25rem;
+  }
+  
+  /* ========================================
+   * FORMULARIOS TABLET
+   * ======================================== */
+  
+  .form-container {
+    max-width: 90%;
+    margin: 0 auto;
+  }
+  
+  .form-wrapper {
+    border-radius: 1rem;
+  }
+  
+  .form-header {
+    padding: 1.5rem 2rem;
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+  }
+  
+  .form-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .form-content {
+    padding: 1.5rem 2rem;
+  }
+  
+  .form-footer {
+    padding: 1.5rem 2rem;
+  }
+  
+  .form-input,
+  .form-textarea,
+  .form-select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .form-actions {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .form-submit,
+  .form-reset,
+  .form-cancel {
+    flex: 1;
+    min-height: 44px;
+  }
+  
+  .input-icon {
+    width: 20px;
+    height: 20px;
+    left: 12px;
+  }
+  
+  .input-icon + .form-input,
+  .input-icon + .form-textarea {
+    padding-left: 40px;
+  }
+  
+  .input-icon-right {
+    width: 20px;
+    height: 20px;
+    right: 12px;
+  }
+  
+  .input-icon-right + .form-input,
+  .input-icon-right + .form-textarea {
+    padding-right: 40px;
+  }
+  
+  /* ========================================
+   * BOTONES TABLET
+   * ======================================== */
+  
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .btn-sm {
+    min-height: 36px;
+    min-width: 36px;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .btn-lg {
+    min-height: 48px;
+    min-width: 48px;
+    font-size: 1rem;
+    padding: 1rem 1.5rem;
+  }
+  
+  .btn-xl {
+    min-height: 52px;
+    min-width: 52px;
+    font-size: 1.125rem;
+    padding: 1.25rem 2rem;
+  }
+  
+  .btn-group {
+    width: auto;
+  }
+  
+  .btn-group .btn {
+    flex: none;
+    min-width: 44px;
+  }
+  
+  /* ========================================
+   * CARDS TABLET
+   * ======================================== */
+  
+  .card {
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin: 0.75rem;
+  }
+  
+  .card-header {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-title {
+    font-size: 1.125rem;
+  }
+  
+  .card-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .card-content {
+    gap: 1rem;
+  }
+  
+  .card-footer {
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .package-card .package-info {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  .package-card .package-actions {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+  
+  .package-card .package-actions .btn {
+    flex: 1;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 2rem;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 0.875rem;
+  }
+  
+  .user-card .user-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  /* ========================================
+   * NAVEGACIÓN TABLET
+   * ======================================== */
+  
+  .breadcrumbs {
+    font-size: 0.875rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+  
+  .breadcrumb-link {
+    font-size: 0.875rem;
+  }
+  
+  .breadcrumb-current {
+    font-size: 0.875rem;
+  }
+  
+  .pagination {
+    gap: 0.25rem;
+  }
+  
+  .pagination-item {
+    width: 40px;
+    height: 40px;
+    font-size: 0.875rem;
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  .tabs-list {
+    gap: 1.5rem;
+    overflow-x: visible;
+  }
+  
+  .tab {
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  
+  /* ========================================
+   * ESTADOS TABLET
+   * ======================================== */
+  
+  .status-badge {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    min-height: 24px;
+  }
+  
+  .status-badge-lg {
+    font-size: 1rem;
+    padding: 0.625rem 1rem;
+    min-height: 32px;
+  }
+  
+  .status-timeline-dot {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+  
+  .status-timeline::before {
+    left: 16px;
+  }
+  
+  .status-timeline-item {
+    gap: 0.75rem;
+  }
+  
+  .status-timeline-title {
+    font-size: 1rem;
+  }
+  
+  .status-timeline-description {
+    font-size: 0.875rem;
+  }
+  
+  .status-timeline-time {
+    font-size: 0.75rem;
+  }
+  
+  /* ========================================
+   * GRID TABLET
+   * ======================================== */
+  
+  .card-grid-2 {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .card-grid-3 {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .card-grid-4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .grid-tablet-1 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-tablet-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .grid-tablet-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+  .grid-tablet-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  /* ========================================
+   * UTILIDADES TABLET
+   * ======================================== */
+  
+  .tablet-hidden {
+    display: none !important;
+  }
+  
+  .tablet-visible {
+    display: block !important;
+  }
+  
+  .tablet-flex {
+    display: flex !important;
+  }
+  
+  .tablet-grid {
+    display: grid !important;
+  }
+  
+  .tablet-text-center {
+    text-align: center !important;
+  }
+  
+  .tablet-text-left {
+    text-align: left !important;
+  }
+  
+  .tablet-text-right {
+    text-align: right !important;
+  }
+  
+  .tablet-w-full {
+    width: 100% !important;
+  }
+  
+  .tablet-h-full {
+    height: 100% !important;
+  }
+  
+  .tablet-p-0 {
+    padding: 0 !important;
+  }
+  
+  .tablet-p-1 {
+    padding: 0.25rem !important;
+  }
+  
+  .tablet-p-2 {
+    padding: 0.5rem !important;
+  }
+  
+  .tablet-p-3 {
+    padding: 0.75rem !important;
+  }
+  
+  .tablet-p-4 {
+    padding: 1rem !important;
+  }
+  
+  .tablet-p-5 {
+    padding: 1.25rem !important;
+  }
+  
+  .tablet-m-0 {
+    margin: 0 !important;
+  }
+  
+  .tablet-m-1 {
+    margin: 0.25rem !important;
+  }
+  
+  .tablet-m-2 {
+    margin: 0.5rem !important;
+  }
+  
+  .tablet-m-3 {
+    margin: 0.75rem !important;
+  }
+  
+  .tablet-m-4 {
+    margin: 1rem !important;
+  }
+  
+  .tablet-m-5 {
+    margin: 1.25rem !important;
+  }
+  
+  /* ========================================
+   * ANIMACIONES TABLET
+   * ======================================== */
+  
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-fade-in-left,
+  .animate-fade-in-right {
+    animation-duration: 0.25s;
+  }
+  
+  .animate-slide-in,
+  .animate-slide-in-up,
+  .animate-slide-in-down,
+  .animate-slide-in-left,
+  .animate-slide-in-right {
+    animation-duration: 0.25s;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  .hover-scale-lg:hover {
+    transform: scale(1.05);
+  }
+  
+  .hover-scale-sm:hover {
+    transform: scale(1.01);
+  }
+  
+  .hover-rotate:hover {
+    transform: rotate(2deg);
+  }
+  
+  .hover-rotate-lg:hover {
+    transform: rotate(5deg);
+  }
+  
+  .hover-rotate-sm:hover {
+    transform: rotate(1deg);
+  }
+  
+  /* ========================================
+   * SCROLLBAR TABLET
+   * ======================================== */
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thick::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-thick::-webkit-scrollbar-thumb {
+    border: 1px solid var(--papyrus-gray-100);
+  }
+  
+  /* ========================================
+   * TOUCH TARGETS TABLET
+   * ======================================== */
+  
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-sm {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  .touch-target-xl {
+    min-height: 52px;
+    min-width: 52px;
+  }
+  
+  /* ========================================
+   * ACCESIBILIDAD TABLET
+   * ======================================== */
+  
+  .focus-visible:focus {
+    outline: 2px solid var(--papyrus-blue);
+    outline-offset: 2px;
+  }
+  
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* ========================================
+   * PERFORMANCE TABLET
+   * ======================================== */
+  
+  .tablet-optimize {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  .tablet-smooth {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ========================================
+   * ORIENTACIÓN TABLET
+   * ======================================== */
+  
+  @media (orientation: landscape) {
+    .header {
+      height: 56px;
+    }
+    
+    .header-nav {
+      height: 56px;
+    }
+    
+    .footer {
+      height: 52px;
+    }
+    
+    .form-container {
+      max-width: 80%;
+    }
+    
+    .card-grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .card-grid-4 {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+  }
+  
+  @media (orientation: portrait) {
+    .form-container {
+      max-width: 90%;
+    }
+    
+    .card-grid-3 {
+      grid-template-columns: 1fr 1fr;
+    }
+    
+    .card-grid-4 {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  /* ========================================
+   * DARK MODE TABLET (FUTURO)
+   * ======================================== */
+  
+  @media (prefers-color-scheme: dark) {
+    .tablet-dark-mode {
+      --theme-bg: var(--papyrus-gray-900);
+      --theme-text: var(--papyrus-gray-100);
+      --theme-border: var(--papyrus-gray-700);
+    }
+  }
+  
+  /* ========================================
+   * REDUCED MOTION TABLET
+   * ======================================== */
+  
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-fade-in-up,
+    .animate-fade-in-down,
+    .animate-fade-in-left,
+    .animate-fade-in-right,
+    .animate-slide-in,
+    .animate-slide-in-up,
+    .animate-slide-in-down,
+    .animate-slide-in-left,
+    .animate-slide-in-right,
+    .animate-pulse,
+    .animate-bounce,
+    .animate-shake,
+    .animate-wiggle,
+    .animate-flash,
+    .animate-glow,
+    .animate-spin,
+    .animate-rotate {
+      animation: none;
+    }
+    
+    .transition-fast,
+    .transition-normal,
+    .transition-slow,
+    .transition-slower {
+      transition: none;
+    }
+  }
+}

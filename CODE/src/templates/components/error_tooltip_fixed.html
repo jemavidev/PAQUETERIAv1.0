@@ -1,0 +1,282 @@
+<!-- ========================================
+     TOOLTIP DE ERROR PARA FORMULARIOS - VERSIÓN CORREGIDA
+     PAQUETEX v4.0
+     ======================================== -->
+
+<!-- Tooltip de Error Amigable -->
+<div id="error-tooltip" class="error-tooltip" style="display: none; position: fixed; z-index: 9999; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; font-size: 0.875rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: 0.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1); pointer-events: none; transform: translateX(-50%) translateY(-100%); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; scale: 0.9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 280px; max-width: 400px; word-wrap: break-word; white-space: normal; border: 2px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+    <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+        <div class="error-tooltip-icon" style="flex-shrink: 0; width: 24px; height: 24px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px;">
+            <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <span id="error-tooltip-text" style="line-height: 1.5; flex: 1; font-size: 0.9rem;"></span>
+    </div>
+</div>
+
+<style>
+/* Flecha del tooltip mejorada */
+.error-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #dc2626;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Variantes del tooltip con gradientes */
+.error-tooltip.success {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.success::after {
+    border-top-color: #059669 !important;
+}
+
+.error-tooltip.success .error-tooltip-icon {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.success .error-tooltip-icon svg {
+    fill: #ffffff !important;
+}
+
+.error-tooltip.warning {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.warning::after {
+    border-top-color: #d97706 !important;
+}
+
+.error-tooltip.warning .error-tooltip-icon {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.warning .error-tooltip-icon svg {
+    fill: #ffffff !important;
+}
+
+.error-tooltip.info {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.info::after {
+    border-top-color: #2563eb !important;
+}
+
+.error-tooltip.info .error-tooltip-icon {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.error-tooltip.info .error-tooltip-icon svg {
+    fill: #ffffff !important;
+}
+
+/* Animación de entrada mejorada */
+.error-tooltip.show {
+    opacity: 1;
+    scale: 1;
+    transform: translateX(-50%) translateY(-100%) translateY(-8px);
+}
+
+/* Efecto de pulso sutil */
+@keyframes tooltipPulse {
+    0%, 100% { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1); }
+    50% { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.2); }
+}
+
+.error-tooltip {
+    animation: tooltipPulse 2s ease-in-out infinite;
+}
+</style>
+
+<script>
+/**
+ * Sistema de Tooltip de Error para Formularios - VERSIÓN CORREGIDA
+ * PAQUETEX v4.0
+ */
+
+// Variable global para controlar el tooltip
+let tooltipTimeout = null;
+let tooltipVisible = false;
+
+// Función para mostrar tooltip de error
+function mostrarErrorTooltip(campo, mensaje, tipo = 'error') {
+    console.log('🔴 Mostrando tooltip de error:', { campo, mensaje, tipo });
+    console.log('🔧 Tipo de mensaje:', typeof mensaje);
+    console.log('🔧 Mensaje contiene NOT_FOUND?', mensaje && mensaje.includes('NOT_FOUND'));
+    console.log('🔧 Mensaje contiene undefined?', mensaje && mensaje.includes('undefined'));
+    
+    // Obtener el tooltip
+    const tooltip = document.getElementById('error-tooltip');
+    const tooltipText = document.getElementById('error-tooltip-text');
+    
+    if (!tooltip || !tooltipText) {
+        console.error('❌ No se encontró el tooltip de error');
+        return;
+    }
+    
+    // Limpiar timeout anterior si existe
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+    
+    // Configurar el mensaje
+    tooltipText.textContent = mensaje;
+    
+    // Limpiar clases anteriores
+    tooltip.className = 'error-tooltip';
+    
+    // Agregar clase de tipo
+    if (tipo !== 'error') {
+        tooltip.classList.add(tipo);
+    }
+    
+    // Actualizar icono según el tipo
+    const iconContainer = tooltip.querySelector('.error-tooltip-icon');
+    const iconSvg = iconContainer ? iconContainer.querySelector('svg') : null;
+    
+    let iconPath = '';
+    switch(tipo) {
+        case 'success':
+            iconPath = 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z';
+            break;
+        case 'warning':
+            iconPath = 'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z';
+            break;
+        case 'info':
+            iconPath = 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z';
+            break;
+        default: // error
+            iconPath = 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z';
+    }
+    
+    if (iconSvg) {
+        const pathElement = iconSvg.querySelector('path');
+        if (pathElement) {
+            pathElement.setAttribute('d', iconPath);
+        }
+    }
+    
+    // Posicionar el tooltip
+    const campoRect = campo.getBoundingClientRect();
+    
+    // Calcular posición (centrado horizontalmente, arriba del campo)
+    const left = campoRect.left + (campoRect.width / 2);
+    const top = campoRect.top - 15; // 15px arriba del campo
+    
+    // Aplicar posición
+    tooltip.style.position = 'fixed';
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+    tooltip.style.zIndex = '9999';
+    tooltip.style.opacity = '0';
+    tooltip.style.scale = '0.95';
+    
+    // Mostrar el tooltip
+    tooltip.style.display = 'block';
+    tooltipVisible = true;
+    
+    // Forzar reflow para que se apliquen los estilos
+    tooltip.offsetHeight;
+    
+    // Animar la aparición
+    setTimeout(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.scale = '1';
+    }, 10);
+    
+    // Auto-ocultar después de 10 segundos (más tiempo)
+    tooltipTimeout = setTimeout(() => {
+        ocultarErrorTooltip();
+    }, 10000);
+    
+    // NO agregar event listeners inmediatamente - solo después de un delay
+    setTimeout(() => {
+        if (tooltipVisible) {
+            // Ocultar al hacer clic en el campo (solo después de 2 segundos)
+            const hideOnFocus = () => {
+                if (tooltipVisible) {
+                    setTimeout(() => {
+                        ocultarErrorTooltip();
+                    }, 2000); // Esperar 2 segundos más antes de ocultar
+                }
+            };
+            
+            campo.addEventListener('focus', hideOnFocus, { once: true });
+            campo.addEventListener('input', hideOnFocus, { once: true });
+        }
+    }, 2000); // Esperar 2 segundos antes de agregar los listeners
+}
+
+// Función para ocultar tooltip de error
+function ocultarErrorTooltip() {
+    const tooltip = document.getElementById('error-tooltip');
+    if (!tooltip || !tooltipVisible) return;
+    
+    // Limpiar timeout
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+    
+    // Marcar como no visible
+    tooltipVisible = false;
+    
+    // Animar la desaparición
+    tooltip.style.opacity = '0';
+    tooltip.style.scale = '0.95';
+    
+    setTimeout(() => {
+        tooltip.style.display = 'none';
+    }, 300);
+}
+
+// Función para limpiar todos los tooltips
+function limpiarErrorTooltips() {
+    const tooltips = document.querySelectorAll('.error-tooltip');
+    tooltips.forEach(tooltip => {
+        tooltip.style.display = 'none';
+        tooltip.classList.remove('show', 'fade-in', 'fade-out');
+    });
+    tooltipVisible = false;
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+}
+
+// Función para mostrar tooltip de éxito
+function mostrarExitoTooltip(campo, mensaje) {
+    mostrarErrorTooltip(campo, mensaje, 'success');
+}
+
+// Función para mostrar tooltip de advertencia
+function mostrarAdvertenciaTooltip(campo, mensaje) {
+    mostrarErrorTooltip(campo, mensaje, 'warning');
+}
+
+// Función para mostrar tooltip de información
+function mostrarInfoTooltip(campo, mensaje) {
+    mostrarErrorTooltip(campo, mensaje, 'info');
+}
+
+// Exportar funciones globalmente
+window.mostrarErrorTooltip = mostrarErrorTooltip;
+window.ocultarErrorTooltip = ocultarErrorTooltip;
+window.limpiarErrorTooltips = limpiarErrorTooltips;
+window.mostrarExitoTooltip = mostrarExitoTooltip;
+window.mostrarAdvertenciaTooltip = mostrarAdvertenciaTooltip;
+window.mostrarInfoTooltip = mostrarInfoTooltip;
+
+console.log('✅ Sistema de tooltip de error CORREGIDO cargado');
+</script>

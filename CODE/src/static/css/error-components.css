@@ -1,0 +1,298 @@
+/* ========================================
+   COMPONENTES DE ERROR - PAQUETES EL CLUB v4.0
+   ======================================== */
+
+/* Contenedor Principal del Error */
+.error-container {
+    @apply bg-white border rounded-lg p-6 shadow-lg max-w-md mx-auto relative;
+    border-left: 4px solid #ef4444;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Iconos de Advertencia */
+.error-icons {
+    @apply flex flex-col items-center mb-4;
+}
+
+.error-icon-small {
+    @apply w-6 h-6 rounded-full flex items-center justify-center mb-2;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.error-icon-large {
+    @apply w-12 h-12 rounded-full flex items-center justify-center;
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+/* Contenido del Error */
+.error-content {
+    @apply text-center mb-6;
+}
+
+.error-title {
+    @apply text-lg font-bold text-gray-900 mb-2;
+    font-weight: 700;
+}
+
+.error-description {
+    @apply text-sm text-gray-700 leading-relaxed;
+    line-height: 1.6;
+}
+
+/* Botón de Cerrar */
+.error-actions {
+    @apply flex justify-center;
+}
+
+.error-close-btn {
+    @apply text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.error-close-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.error-close-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Variantes del Error */
+.error-container.error-error {
+    @apply border-red-300;
+    border-left-color: #ef4444;
+}
+
+.error-container.error-warning {
+    @apply border-yellow-300;
+    border-left-color: #f59e0b;
+}
+
+.error-container.error-info {
+    @apply border-blue-300;
+    border-left-color: #3b82f6;
+}
+
+.error-container.error-success {
+    @apply border-green-300;
+    border-left-color: #10b981;
+}
+
+/* Iconos por Tipo */
+.error-container.error-warning .error-icon-small {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-container.error-info .error-icon-small {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-container.error-success .error-icon-small {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.error-container.error-warning .error-icon-large {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-container.error-info .error-icon-large {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-container.error-success .error-icon-large {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Animaciones */
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.error-container.error-error {
+    animation: errorShake 0.5s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .error-container {
+        @apply mx-4 p-4;
+        max-width: calc(100vw - 2rem);
+    }
+    
+    .error-title {
+        @apply text-base;
+    }
+    
+    .error-description {
+        @apply text-xs;
+    }
+    
+    .error-close-btn {
+        @apply py-2 px-4 text-sm;
+    }
+}
+
+@media (max-width: 480px) {
+    .error-container {
+        @apply mx-2 p-3;
+    }
+    
+    .error-icon-large {
+        @apply w-10 h-10;
+    }
+    
+    .error-icon-small {
+        @apply w-5 h-5;
+    }
+}
+
+/* Modo Oscuro */
+@media (prefers-color-scheme: dark) {
+    .error-container {
+        @apply bg-gray-800 border-gray-600;
+    }
+    
+    .error-title {
+        @apply text-gray-100;
+    }
+    
+    .error-description {
+        @apply text-gray-300;
+    }
+}
+
+/* Accesibilidad */
+.error-container:focus-within {
+    @apply ring-2 ring-blue-500 ring-offset-2;
+}
+
+.error-close-btn:focus {
+    @apply ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Estados de Carga */
+.error-container.loading .error-close-btn {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+.error-container.loading .error-close-btn:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* ===== TOOLTIP DE ERROR PARA FORMULARIOS ===== */
+.error-tooltip {
+    position: fixed;
+    z-index: 9999;
+    background-color: #dc2626;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-100%);
+    transition: all 0.3s ease-in-out;
+    opacity: 0;
+    scale: 0.95;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 250px;
+    word-wrap: break-word;
+    white-space: nowrap;
+    border: 1px solid #b91c1c;
+}
+
+.error-tooltip.show {
+    opacity: 1;
+    scale: 1;
+}
+
+.error-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #dc2626;
+}
+
+/* Variantes del Tooltip */
+.error-tooltip.success {
+    background-color: #059669;
+    border-color: #047857;
+}
+
+.error-tooltip.success::after {
+    border-top-color: #059669;
+}
+
+.error-tooltip.warning {
+    background-color: #d97706;
+    border-color: #b45309;
+}
+
+.error-tooltip.warning::after {
+    border-top-color: #d97706;
+}
+
+.error-tooltip.info {
+    background-color: #2563eb;
+    border-color: #1d4ed8;
+}
+
+.error-tooltip.info::after {
+    border-top-color: #2563eb;
+}
+
+/* Animaciones del Tooltip */
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-100%) scale(1);
+    }
+}
+
+@keyframes tooltipFadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-100%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100%) scale(0.95);
+    }
+}
+
+.error-tooltip.fade-in {
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.error-tooltip.fade-out {
+    animation: tooltipFadeOut 0.2s ease-in;
+}
+
+/* Responsive para Tooltips */
+@media (max-width: 640px) {
+    .error-tooltip {
+        @apply text-xs px-1 py-0.5;
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .error-tooltip {
+        @apply text-xs px-1 py-0.5;
+        max-width: 120px;
+    }
+}

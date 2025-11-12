@@ -1,0 +1,442 @@
+# ========================================
+# Python
+# ========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.pyc
+*.pyo
+*.pyd
+.python-version
+.python-version.local
+
+# ========================================
+# Virtual Environment
+# ========================================
+venv/
+env/
+ENV/
+.venv/
+.env/
+virtualenv/
+env.bak/
+venv.bak/
+
+# ========================================
+# Environment Variables
+# ========================================
+.env
+.env.*
+!.env.example
+CODE/.env
+CODE/**/.env
+*.env.local
+*.env.production
+*.env.staging
+*.env.development
+*.env.v4
+.env.production.local
+.env.development.local
+.env.test.local
+
+# ========================================
+# IDE & Editor
+# ========================================
+.vscode/
+.idea/
+.settings/
+.project
+.classpath
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.sublime-*
+.editorconfig.local
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
+.idea/*.iml
+*.swp
+*.swo
+*.swn
+*~
+
+# ========================================
+# OS Files
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.documentRevisions-V100
+.TemporaryItems
+.apdisk
+desktop.ini
+$RECYCLE.BIN/
+.directory
+.Trash-*
+.nfs*
+ehthumbs.db
+Thumbs.db
+
+# ========================================
+# Logs
+# ========================================
+*.log
+*.log.*
+*.log.gz
+*.log.1
+*.log.2
+logs/
+log/
+CODE/src/logs/
+app.log
+error.log
+access.log
+
+# ========================================
+# Database
+# ========================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+*.sqlite3-journal
+*.sql
+*.dump
+*.sql.gz
+*.dump.gz
+*.sql.backup
+*.dump.backup
+local.db
+local.sqlite
+database.local.yml
+db.local.yml
+database.local.json
+postgres.local.json
+db.local.json
+
+# ========================================
+# Redis
+# ========================================
+dump.rdb
+appendonly.aof
+*.rdb
+*.aof
+redis.local.conf
+redis.conf.local
+
+# ========================================
+# Uploads & Media
+# ========================================
+uploads/
+CODE/src/uploads/*
+!CODE/src/uploads/.gitkeep
+CODE/static/uploads/
+static/uploads/
+media/uploads/
+
+# ========================================
+# Backups
+# ========================================
+BACKUPS/
+backups/
+BACKUPS/database/daily/*.sql
+BACKUPS/database/weekly/*.sql
+BACKUPS/database/monthly/*.sql
+
+# ========================================
+# Certificates & Secrets
+# ========================================
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+secrets/
+*.secret
+ssl/
+certs/
+.aws/
+aws-credentials.local
+aws-config.local
+
+# ========================================
+# Docker
+# ========================================
+.dockerignore
+.dockerignore.local
+.docker/
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
+docker-compose.*.local.yml
+
+# ========================================
+# Testing
+# ========================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+test-results/
+test-reports/
+tests/local/
+test/local/
+*.test.local
+*_test.local
+
+# ========================================
+# Jupyter Notebook
+# ========================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ========================================
+# Type Checkers
+# ========================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# ========================================
+# Profiling & Metrics
+# ========================================
+*.prof
+*.lprof
+.profiling/
+metrics/
+*.metrics
+
+# ========================================
+# Celery
+# ========================================
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat.pid
+*.pid
+
+# ========================================
+# Alembic
+# ========================================
+alembic.ini.local
+alembic/local/
+alembic/versions/local/
+migrations/local/
+*.migration.local
+
+# ========================================
+# Node.js (si se usan)
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ========================================
+# TypeScript (si se usan)
+# ========================================
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ========================================
+# Compilation
+# ========================================
+*.o
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+*.whl
+
+# ========================================
+# Packaging
+# ========================================
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ========================================
+# Documentation
+# ========================================
+docs/_build/
+docs/.doctrees/
+docs/build/
+site/
+_site/
+.build/
+
+# ========================================
+# Monitoring
+# ========================================
+monitoring/data/
+monitoring/grafana/data/
+monitoring/prometheus/data/
+monitoring/local/
+*.prom
+prometheus.local.yml
+grafana.local.ini
+monitoring.local.json
+prometheus.local.json
+grafana.local.json
+
+# ========================================
+# Nginx
+# ========================================
+nginx/logs/
+nginx/cache/
+nginx/tmp/
+nginx.local.conf
+nginx.conf.local
+
+# ========================================
+# Local Configuration Files
+# ========================================
+config.local.*
+settings.local.*
+local_settings.py
+local_config.py
+config.local.py
+settings.local.py
+local.json
+local_config.json
+dev.json
+development.json
+test.json
+testing.json
+test_config.json
+prod.json
+production.json
+prod_config.json
+prod.local.json
+production.local.json
+
+# ========================================
+# Application-specific Local Config
+# ========================================
+email.local.json
+smtp.local.json
+sms.local.json
+liwa.local.json
+rates.local.json
+tarifas.local.json
+notifications.local.json
+alertas.local.json
+logging.local.json
+logs.local.json
+cache.local.json
+redis.local.json
+storage.local.json
+s3.local.json
+s3-config.local.json
+s3.local.json
+uploads.local.json
+
+# ========================================
+# Cache & Session
+# ========================================
+.cache/
+*.cache
+*.session
+*.session.lock
+
+# ========================================
+# Lock Files
+# ========================================
+*.lock
+Pipfile.lock
+poetry.lock
+
+# ========================================
+# Dependencies
+# ========================================
+requirements-dev.txt
+requirements-local.txt
+requirements-test.txt
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ========================================
+# Temporary Files
+# ========================================
+*.bak
+*.backup
+*.tmp
+*.temp
+*.orig
+*.old
+tmp/
+temp/
+.tmp/
+.temp/
+
+# ========================================
+# External Services
+# ========================================
+# Insync (si se usan)
+.insync/
+.insyncignore
+
+# Google Drive (si se usan)
+.gdrive/
+*.gdoc
+*.gsheet
+
+# ========================================
+# Other
+# ========================================
+# PEP 582
+__pypackages__/
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# pipenv
+Pipfile.lock

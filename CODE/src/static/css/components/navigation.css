@@ -1,0 +1,549 @@
+/*
+ * PAQUETES EL CLUB v4.0 - Componentes de Navegación
+ * Versión: 4.0.0
+ * Autor: Sistema PAQUETES EL CLUB
+ * Fecha: 2024-07-30
+ * 
+ * Estilos para navegación del sistema de diseño
+ */
+
+/* ========================================
+ * HEADER PRINCIPAL
+ * ======================================== */
+
+.header {
+  @apply bg-white border-b border-gray-200 sticky top-0 z-40;
+  background-color: var(--theme-bg-light);
+  border-bottom-color: var(--theme-border-light);
+  height: var(--header-height);
+}
+
+.header-content {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.header-nav {
+  @apply flex justify-between items-center h-16;
+}
+
+/* ========================================
+ * LOGO Y MARCA
+ * ======================================== */
+
+.logo-container {
+  @apply flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200;
+}
+
+.logo {
+  @apply w-10 h-10 object-contain;
+}
+
+.logo-text {
+  @apply text-xl font-bold text-gray-800;
+  color: var(--theme-text-primary);
+}
+
+.logo-subtitle {
+  @apply text-xs text-gray-500 hidden sm:block;
+  color: var(--theme-text-tertiary);
+}
+
+/* ========================================
+ * NAVEGACIÓN PRINCIPAL
+ * ======================================== */
+
+.nav-links {
+  @apply hidden md:flex items-center space-x-1;
+}
+
+.nav-link {
+  @apply flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-papyrus-blue hover:bg-gray-50 transition-colors duration-200;
+  color: var(--theme-text-secondary);
+}
+
+.nav-link:hover {
+  color: var(--papyrus-blue);
+  background-color: var(--papyrus-gray-50);
+}
+
+.nav-link.active {
+  @apply text-papyrus-blue bg-blue-50;
+  color: var(--papyrus-blue);
+  background-color: #eff6ff;
+}
+
+.nav-link-icon {
+  @apply w-5 h-5;
+}
+
+.nav-link-text {
+  @apply hidden sm:inline;
+}
+
+/* ========================================
+ * NAVEGACIÓN MÓVIL
+ * ======================================== */
+
+.mobile-menu-button {
+  @apply md:hidden p-2 text-gray-700 hover:text-papyrus-blue transition-colors;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.mobile-menu-button:hover {
+  color: var(--papyrus-blue);
+}
+
+.mobile-menu-icon {
+  @apply w-6 h-6;
+}
+
+.mobile-menu {
+  @apply md:hidden px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t border-gray-200;
+  background-color: var(--papyrus-gray-50);
+  border-top-color: var(--theme-border-light);
+}
+
+.mobile-nav-link {
+  @apply flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-papyrus-blue hover:bg-gray-100 transition-colors duration-200;
+  color: var(--theme-text-secondary);
+  min-height: var(--touch-target-min);
+}
+
+.mobile-nav-link:hover {
+  color: var(--papyrus-blue);
+  background-color: var(--papyrus-gray-100);
+}
+
+.mobile-nav-link.active {
+  @apply text-papyrus-blue bg-blue-50;
+  color: var(--papyrus-blue);
+  background-color: #eff6ff;
+}
+
+.mobile-nav-link-icon {
+  @apply w-5 h-5;
+}
+
+/* ========================================
+ * DROPDOWN DE USUARIO
+ * ======================================== */
+
+.user-dropdown {
+  @apply relative;
+}
+
+.user-dropdown-button {
+  @apply flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200;
+  min-height: var(--touch-target-min);
+}
+
+.user-dropdown-button:hover {
+  background-color: var(--papyrus-gray-50);
+}
+
+.user-avatar {
+  @apply w-10 h-10 bg-papyrus-blue rounded-full flex items-center justify-center;
+  background-color: var(--papyrus-blue);
+}
+
+.user-avatar img {
+  @apply w-10 h-10 rounded-full object-cover;
+}
+
+.user-avatar-text {
+  @apply text-white font-semibold text-lg;
+}
+
+.user-info {
+  @apply hidden md:block text-left;
+}
+
+.user-name {
+  @apply text-sm font-medium text-gray-800;
+  color: var(--theme-text-primary);
+}
+
+.user-role {
+  @apply text-xs text-gray-500;
+  color: var(--theme-text-tertiary);
+}
+
+.dropdown-arrow {
+  @apply w-4 h-4 text-gray-400 transition-transform duration-200;
+}
+
+.dropdown-arrow.open {
+  @apply transform rotate-180;
+}
+
+.user-dropdown-menu {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 hidden;
+  background-color: var(--theme-bg-light);
+  border-color: var(--theme-border-light);
+  box-shadow: var(--theme-shadow-heavy);
+}
+
+.user-dropdown-menu.show {
+  @apply block;
+}
+
+.dropdown-item {
+  @apply flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200;
+  color: var(--theme-text-secondary);
+  min-height: var(--touch-target-min);
+}
+
+.dropdown-item:hover {
+  background-color: var(--papyrus-gray-100);
+}
+
+.dropdown-item.danger {
+  @apply text-papyrus-red hover:bg-red-50;
+  color: var(--papyrus-red);
+}
+
+.dropdown-item.danger:hover {
+  background-color: #fef2f2;
+}
+
+.dropdown-item-icon {
+  @apply w-4 h-4 mr-3;
+}
+
+.dropdown-divider {
+  @apply border-t border-gray-100 my-1;
+  border-top-color: var(--theme-border-light);
+}
+
+/* ========================================
+ * BREADCRUMBS
+ * ======================================== */
+
+.breadcrumbs {
+  @apply flex items-center space-x-2 text-sm text-gray-500;
+  color: var(--theme-text-tertiary);
+}
+
+.breadcrumb-item {
+  @apply flex items-center;
+}
+
+.breadcrumb-link {
+  @apply text-gray-500 hover:text-papyrus-blue transition-colors duration-200;
+  color: var(--theme-text-tertiary);
+}
+
+.breadcrumb-link:hover {
+  color: var(--papyrus-blue);
+}
+
+.breadcrumb-current {
+  @apply text-gray-900 font-medium;
+  color: var(--theme-text-primary);
+}
+
+.breadcrumb-separator {
+  @apply text-gray-400;
+  color: var(--theme-text-tertiary);
+}
+
+/* ========================================
+ * PAGINACIÓN
+ * ======================================== */
+
+.pagination {
+  @apply flex items-center justify-center space-x-1;
+}
+
+.pagination-item {
+  @apply flex items-center justify-center w-10 h-10 text-sm font-medium text-gray-500 hover:text-papyrus-blue hover:bg-gray-50 rounded-lg transition-colors duration-200;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.pagination-item:hover {
+  color: var(--papyrus-blue);
+  background-color: var(--papyrus-gray-50);
+}
+
+.pagination-item.active {
+  @apply text-white bg-papyrus-blue;
+  color: white;
+  background-color: var(--papyrus-blue);
+}
+
+.pagination-item.disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.pagination-item.disabled:hover {
+  @apply text-gray-500 bg-transparent;
+  color: var(--theme-text-tertiary);
+  background-color: transparent;
+}
+
+.pagination-ellipsis {
+  @apply flex items-center justify-center w-10 h-10 text-sm text-gray-500;
+}
+
+/* ========================================
+ * TABS
+ * ======================================== */
+
+.tabs {
+  @apply border-b border-gray-200;
+  border-bottom-color: var(--theme-border-light);
+}
+
+.tabs-list {
+  @apply flex space-x-8;
+}
+
+.tab {
+  @apply py-2 px-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors duration-200;
+  color: var(--theme-text-tertiary);
+  min-height: var(--touch-target-min);
+}
+
+.tab:hover {
+  color: var(--theme-text-secondary);
+  border-bottom-color: var(--theme-border-medium);
+}
+
+.tab.active {
+  @apply text-papyrus-blue border-papyrus-blue;
+  color: var(--papyrus-blue);
+  border-bottom-color: var(--papyrus-blue);
+}
+
+.tab-content {
+  @apply mt-6;
+}
+
+.tab-panel {
+  @apply hidden;
+}
+
+.tab-panel.active {
+  @apply block;
+}
+
+/* ========================================
+ * SIDEBAR
+ * ======================================== */
+
+.sidebar {
+  @apply fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out;
+  background-color: var(--theme-bg-light);
+  border-right-color: var(--theme-border-light);
+}
+
+.sidebar.open {
+  @apply transform translate-x-0;
+}
+
+.sidebar-header {
+  @apply flex items-center justify-between h-16 px-4 border-b border-gray-200;
+  border-bottom-color: var(--theme-border-light);
+}
+
+.sidebar-title {
+  @apply text-lg font-semibold text-gray-900;
+  color: var(--theme-text-primary);
+}
+
+.sidebar-close {
+  @apply p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.sidebar-nav {
+  @apply px-4 py-6 space-y-2;
+}
+
+.sidebar-nav-item {
+  @apply flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-papyrus-blue hover:bg-gray-50 transition-colors duration-200;
+  color: var(--theme-text-secondary);
+  min-height: var(--touch-target-min);
+}
+
+.sidebar-nav-item:hover {
+  color: var(--papyrus-blue);
+  background-color: var(--papyrus-gray-50);
+}
+
+.sidebar-nav-item.active {
+  @apply text-papyrus-blue bg-blue-50;
+  color: var(--papyrus-blue);
+  background-color: #eff6ff;
+}
+
+.sidebar-nav-icon {
+  @apply w-5 h-5;
+}
+
+.sidebar-overlay {
+  @apply fixed inset-0 z-40 bg-black bg-opacity-50 hidden;
+}
+
+.sidebar-overlay.show {
+  @apply block;
+}
+
+/* ========================================
+ * NAVEGACIÓN RESPONSIVE
+ * ======================================== */
+
+@media (max-width: 767px) {
+  .header-nav {
+    @apply h-14;
+  }
+  
+  .logo-text {
+    @apply text-lg;
+  }
+  
+  .nav-links {
+    @apply hidden;
+  }
+  
+  .mobile-menu {
+    @apply block;
+  }
+  
+  .user-info {
+    @apply hidden;
+  }
+  
+  .breadcrumbs {
+    @apply text-xs;
+  }
+  
+  .pagination {
+    @apply space-x-0.5;
+  }
+  
+  .pagination-item {
+    @apply w-8 h-8 text-xs;
+    min-height: 32px;
+    min-width: 32px;
+  }
+  
+  .tabs-list {
+    @apply space-x-4;
+  }
+  
+  .tab {
+    @apply text-xs;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nav-links {
+    @apply space-x-0.5;
+  }
+  
+  .nav-link {
+    @apply px-2 py-2 text-xs;
+  }
+  
+  .nav-link-text {
+    @apply hidden;
+  }
+}
+
+/* ========================================
+ * NAVEGACIÓN CON ANIMACIONES
+ * ======================================== */
+
+.nav-link {
+  @apply transition-all duration-200;
+}
+
+.nav-link:hover {
+  @apply transform translate-y-0.5;
+}
+
+.mobile-nav-link {
+  @apply transition-all duration-200;
+}
+
+.mobile-nav-link:hover {
+  @apply transform translate-x-2;
+}
+
+.dropdown-item {
+  @apply transition-all duration-200;
+}
+
+.dropdown-item:hover {
+  @apply transform translate-x-1;
+}
+
+/* ========================================
+ * NAVEGACIÓN CON INDICADORES
+ * ======================================== */
+
+.nav-link.with-badge {
+  @apply relative;
+}
+
+.nav-badge {
+  @apply absolute -top-1 -right-1 bg-papyrus-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center;
+  background-color: var(--papyrus-red);
+}
+
+.nav-badge.large {
+  @apply h-6 w-6 text-xs;
+}
+
+.nav-badge.pulse {
+  @apply animate-pulse;
+}
+
+/* ========================================
+ * NAVEGACIÓN CON BÚSQUEDA
+ * ======================================== */
+
+.nav-search {
+  @apply relative hidden lg:block;
+}
+
+.nav-search-input {
+  @apply w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue;
+}
+
+.nav-search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4;
+}
+
+.nav-search-results {
+  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden;
+  background-color: var(--theme-bg-light);
+  border-color: var(--theme-border-light);
+  box-shadow: var(--theme-shadow-heavy);
+}
+
+.nav-search-results.show {
+  @apply block;
+}
+
+.nav-search-item {
+  @apply px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer;
+  color: var(--theme-text-secondary);
+  min-height: var(--touch-target-min);
+}
+
+.nav-search-item:hover {
+  background-color: var(--papyrus-gray-50);
+}
+
+.nav-search-item:first-child {
+  @apply rounded-t-lg;
+}
+
+.nav-search-item:last-child {
+  @apply rounded-b-lg;
+}

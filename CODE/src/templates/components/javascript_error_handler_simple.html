@@ -1,0 +1,217 @@
+<!-- ========================================
+     MANEJADOR DE ERRORES DE JAVASCRIPT - VERSIÓN SIMPLE
+     PAQUETEX v4.0
+     ======================================== -->
+
+<div id="error-handler-container" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-left: 4px solid #ef4444; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <!-- Iconos de Advertencia -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
+        <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; background-color: rgba(239, 68, 68, 0.1);">
+            <svg class="w-4 h-4 text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div style="width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: rgba(245, 158, 11, 0.1);">
+            <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido del Error -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+        <h3 id="error-title" style="font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">Error de JavaScript</h3>
+        <p id="error-message" style="font-size: 0.875rem; color: #374151; line-height: 1.6;">Ha ocurrido un error en el código JavaScript.</p>
+        <div id="error-details" style="display: none; margin-top: 0.5rem;">
+            <details style="font-size: 0.75rem; color: #6b7280;">
+                <summary style="cursor: pointer; color: #6b7280;">Ver detalles técnicos</summary>
+                <pre id="error-details-content" style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.25rem; font-size: 0.75rem; overflow: auto; max-height: 8rem;"></pre>
+            </details>
+        </div>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div style="display: flex; justify-content: center;">
+        <button 
+            type="button" 
+            id="error-close-btn"
+            style="color: white; font-weight: 500; padding: 0.5rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); border: none; cursor: pointer;"
+            onmouseover="this.style.background='linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.background='linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.3)'"
+        >
+            Cerrar
+        </button>
+    </div>
+</div>
+
+<script>
+// Manejador de errores de JavaScript - Versión Simple
+(function() {
+    'use strict';
+    
+    console.log('Inicializando manejador de errores de JavaScript...');
+    
+    // Referencias a los elementos del DOM
+    const container = document.getElementById('error-handler-container');
+    const title = document.getElementById('error-title');
+    const message = document.getElementById('error-message');
+    const details = document.getElementById('error-details');
+    const detailsContent = document.getElementById('error-details-content');
+    const closeBtn = document.getElementById('error-close-btn');
+    
+    // Función para mostrar error
+    function mostrarError(titulo, mensaje, tipo = 'error', detalles = '') {
+        console.log('Mostrando error:', { titulo, mensaje, tipo, detalles });
+        
+        // Actualizar contenido
+        title.textContent = titulo;
+        message.textContent = mensaje;
+        
+        // Mostrar detalles si existen
+        if (detalles) {
+            detailsContent.textContent = detalles;
+            details.style.display = 'block';
+        } else {
+            details.style.display = 'none';
+        }
+        
+        // Cambiar colores según el tipo
+        const borderColors = {
+            error: '#ef4444',
+            warning: '#f59e0b',
+            info: '#3b82f6',
+            success: '#10b981'
+        };
+        
+        container.style.borderLeftColor = borderColors[tipo] || borderColors.error;
+        
+        // Mostrar el contenedor con animación
+        container.style.display = 'block';
+        container.style.opacity = '0';
+        container.style.transform = 'scale(0.95)';
+        
+        // Animar la aparición
+        setTimeout(() => {
+            container.style.transition = 'all 0.3s ease-out';
+            container.style.opacity = '1';
+            container.style.transform = 'scale(1)';
+        }, 10);
+        
+        // Auto-cerrar después de 10 segundos para errores
+        if (tipo === 'error') {
+            setTimeout(() => {
+                cerrarError();
+            }, 10000);
+        }
+    }
+    
+    // Función para cerrar error
+    function cerrarError() {
+        container.style.transition = 'all 0.2s ease-in';
+        container.style.opacity = '0';
+        container.style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+            container.style.display = 'none';
+        }, 200);
+    }
+    
+    // Event listener para el botón de cerrar
+    closeBtn.addEventListener('click', cerrarError);
+    
+    // Configurar captura de errores
+    function configurarCapturaErrores() {
+        console.log('Configurando captura de errores...');
+        
+        // Capturar errores de JavaScript
+        window.addEventListener('error', function(event) {
+            console.log('Error de JavaScript capturado:', event);
+            const error = event.error;
+            const mensaje = error ? error.message : event.message;
+            const stack = error ? error.stack : '';
+            const archivo = event.filename || 'Archivo desconocido';
+            const linea = event.lineno || 'Línea desconocida';
+            const columna = event.colno || 'Columna desconocida';
+            
+            mostrarError(
+                'Error de JavaScript',
+                `Error en ${archivo}:${linea}:${columna}\n${mensaje}`,
+                'error',
+                `Archivo: ${archivo}\nLínea: ${linea}\nColumna: ${columna}\n\nStack trace:\n${stack}`
+            );
+        });
+        
+        // Capturar promesas rechazadas
+        window.addEventListener('unhandledrejection', function(event) {
+            console.log('Promesa rechazada capturada:', event);
+            const razon = event.reason;
+            const mensaje = razon instanceof Error ? razon.message : String(razon);
+            const stack = razon instanceof Error ? razon.stack : '';
+            
+            mostrarError(
+                'Promesa Rechazada',
+                `Una promesa fue rechazada: ${mensaje}`,
+                'error',
+                `Razón: ${mensaje}\n\nStack trace:\n${stack}`
+            );
+        });
+        
+        // Capturar errores de recursos
+        window.addEventListener('error', function(event) {
+            if (event.target !== window) {
+                console.log('Error de recurso capturado:', event);
+                const elemento = event.target.tagName || 'Elemento';
+                const src = event.target.src || event.target.href || 'Origen desconocido';
+                
+                mostrarError(
+                    'Error de Recurso',
+                    `Error al cargar ${elemento}: ${src}`,
+                    'warning',
+                    `Elemento: ${elemento}\nOrigen: ${src}\nTipo: ${event.type}`
+                );
+            }
+        }, true);
+    }
+    
+    // Función global para mostrar errores personalizados
+    window.mostrarErrorJS = function(titulo, mensaje, tipo = 'error', detalles = '') {
+        console.log('Función global mostrarErrorJS llamada:', { titulo, mensaje, tipo, detalles });
+        mostrarError(titulo, mensaje, tipo, detalles);
+    };
+    
+    // Función global para mostrar errores de validación
+    window.mostrarErrorValidacion = function(mensaje) {
+        window.mostrarErrorJS('Error de Validación', mensaje, 'error');
+    };
+    
+    // Función global para mostrar advertencias
+    window.mostrarAdvertencia = function(mensaje) {
+        window.mostrarErrorJS('Advertencia', mensaje, 'warning');
+    };
+    
+    // Función global para mostrar información
+    window.mostrarInformacion = function(mensaje) {
+        window.mostrarErrorJS('Información', mensaje, 'info');
+    };
+    
+    // Función global para mostrar éxito
+    window.mostrarExito = function(mensaje) {
+        window.mostrarErrorJS('Éxito', mensaje, 'success');
+    };
+    
+    // Función de prueba
+    window.probarManejadorErrores = function() {
+        console.log('Probando manejador de errores...');
+        window.mostrarErrorJS('Prueba del Manejador', 'Este es un error de prueba para verificar que el manejador funciona correctamente', 'error', 'Detalles de prueba:\n- Función: probarManejadorErrores\n- Timestamp: ' + new Date().toISOString());
+    };
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', configurarCapturaErrores);
+    } else {
+        configurarCapturaErrores();
+    }
+    
+    console.log('Manejador de errores de JavaScript inicializado correctamente');
+})();
+</script>

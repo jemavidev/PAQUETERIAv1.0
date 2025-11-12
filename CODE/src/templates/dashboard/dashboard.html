@@ -1,0 +1,875 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dashboard - PAQUETEX v3.1{% endblock %}
+<!-- VERSION: 2025-09-09-16:45 - PHONE DISPLAY FIX v2 -->
+
+{% block content %}
+<!-- Sistema de Notificaciones Toast -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-6 xl:py-8">
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Header -->
+        <div class="sm:flex sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-light text-gray-900">Dashboard</h1>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6">
+            <div class="flex flex-col space-y-3 lg:flex-row lg:items-center lg:space-x-6 lg:space-y-0">
+                <h2 class="text-base sm:text-lg font-medium text-gray-900 lg:flex-shrink-0">Filtros</h2>
+
+                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 w-full">
+                    <!-- Búsqueda por cliente/paquete -->
+                    <div class="relative flex-1 min-w-0">
+                        <input id="searchFilter"
+                                type="text"
+                                placeholder="Buscar por: cliente, teléfono, guía, tracking..."
+                                class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-base sm:text-base touch-manipulation"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false">
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Botón de limpiar filtros -->
+                        <button id="clearFilters"
+                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation"
+                                title="Limpiar filtros">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Botón Nuevo Paquete -->
+                        <a href="/announce"
+                           class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 text-white bg-gradient-to-r from-papyrus-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 ease-out active:scale-95 touch-manipulation"
+                           title="Nuevo Paquete">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Actividad Reciente -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">Lista de Paquetes</h2>
+                    <div id="resultsCount" class="text-sm text-gray-500 hidden"></div>
+                </div>
+            </div>
+            <div class="p-3 sm:p-4 lg:p-8">
+                <div id="packagesList" class="space-y-3 sm:space-y-4">
+                    <!-- Los paquetes se cargarán aquí dinámicamente -->
+                </div>
+
+                <!-- Loading -->
+                <div id="packagesLoading" class="text-center py-6 sm:py-8">
+                    <div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+                    <p class="mt-2 text-xs sm:text-sm text-gray-500">Cargando paquetes...</p>
+                </div>
+
+                <!-- Sin paquetes -->
+                <div id="noPackages" class="text-center py-6 sm:py-8 hidden">
+                    <div class="bg-gray-100 rounded-lg p-2 sm:p-3 inline-flex mx-auto mb-3 sm:mb-4">
+                        <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900">No hay paquetes</h3>
+                    <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500">No se encontraron paquetes con los filtros aplicados.</p>
+                </div>
+            </div>
+
+            <!-- Paginación -->
+            <div id="pagination" class="hidden border-t border-gray-200 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex justify-between flex-1 sm:hidden">
+                        <button id="prevPageMobile" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
+                        <button id="nextPageMobile" class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+                    </div>
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Mostrando <span id="paginationStart">1</span>
+                                a <span id="paginationEnd">8</span>
+                                de <span id="paginationTotal">0</span> resultados
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <button id="prevPage" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Anterior</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <div id="pageNumbers" class="flex">
+                                    <!-- Los números de página se generarán dinámicamente -->
+                                </div>
+                                <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Siguiente</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+/* Estilos para notificaciones toast */
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.toast-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: width linear;
+}
+
+/* Animaciones mejoradas */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Mejoras para elementos interactivos */
+.hover-lift {
+    transition: transform 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Loading spinner mejorado */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Optimizaciones móviles adicionales */
+@media (max-width: 640px) {
+    /* Mejorar espaciado en móviles */
+    .space-y-3 > * + * {
+        margin-top: 0.75rem;
+    }
+
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+
+    /* Mejorar botones en móviles */
+    button {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+
+    /* Mejorar inputs en móviles */
+    input, textarea {
+        font-size: 16px; /* Prevenir zoom en iOS */
+    }
+}
+
+/* Optimizaciones de rendimiento para móviles */
+@media (hover: none) and (pointer: coarse) {
+    /* Estilos específicos para dispositivos táctiles */
+    .touch-manipulation {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mejorar feedback visual en toques */
+    button:active, .cursor-pointer:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+</style>
+
+<script>
+// Sistema de Notificaciones Toast (copiado de messages.html)
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+    };
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast ${type}">
+            <div class="toast-icon">${icons[type] || icons.info}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="removeToast('${toastId}')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="toast-progress" style="width: 100%;"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    
+    const toast = document.getElementById(toastId);
+    const progress = toast.querySelector('.toast-progress');
+    
+    // Mostrar toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Iniciar barra de progreso
+    setTimeout(() => {
+        progress.style.width = '0%';
+        progress.style.transition = `width ${duration}ms linear`;
+    }, 100);
+    
+    // Auto-remover después de la duración
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+    
+    return toastId;
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+// Funciones de conveniencia
+function showSuccessToast(title, message, duration) {
+    return showToast('success', title, message, duration);
+}
+
+function showErrorToast(title, message, duration) {
+    return showToast('error', title, message, duration);
+}
+
+function showInfoToast(title, message, duration) {
+    return showToast('info', title, message, duration);
+}
+
+function showWarningToast(title, message, duration) {
+    return showToast('warning', title, message, duration);
+}
+
+
+// Función para actualizar el indicador de filtros activos
+function updateActiveFiltersIndicator() {
+    const searchFilter = document.getElementById('searchFilter');
+    const searchTerm = searchFilter ? searchFilter.value.trim() : '';
+    
+    // Verificar si hay filtros activos
+    const hasActiveFilters = searchTerm.length > 0;
+    
+    // Actualizar el estilo del campo de búsqueda
+    if (searchFilter) {
+        if (hasActiveFilters) {
+            searchFilter.classList.add('border-yellow-400', 'bg-yellow-50');
+            searchFilter.classList.remove('border-gray-300');
+        } else {
+            searchFilter.classList.remove('border-yellow-400', 'bg-yellow-50');
+            searchFilter.classList.add('border-gray-300');
+        }
+    }
+    
+    // Mostrar/ocultar mensaje de filtros activos
+    let filterIndicator = document.getElementById('filterIndicator');
+    if (hasActiveFilters && !filterIndicator) {
+        // Crear indicador de filtros activos
+        filterIndicator = document.createElement('div');
+        filterIndicator.id = 'filterIndicator';
+        filterIndicator.className = 'mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg';
+        filterIndicator.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                <span class="text-sm text-yellow-800">Filtros activos: "${searchTerm}"</span>
+                <button onclick="clearAllFilters()" class="ml-auto text-yellow-600 hover:text-yellow-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        // Insertar después del contenedor de filtros
+        const filtersContainer = document.querySelector('.bg-white.rounded-xl.shadow-lg.border.border-gray-100');
+        if (filtersContainer) {
+            filtersContainer.parentNode.insertBefore(filterIndicator, filtersContainer.nextSibling);
+        }
+    } else if (!hasActiveFilters && filterIndicator) {
+        // Remover indicador si no hay filtros
+        filterIndicator.remove();
+    }
+}
+
+// Función para limpiar todos los filtros
+function clearAllFilters() {
+    // Limpiar campos usando cache de DOM
+    if (domCache.searchInput) domCache.searchInput.value = '';
+
+    // Resetear término de búsqueda actual
+    currentSearchTerm = '';
+
+    // Limpiar cache de filtros
+    filterCache.clear();
+
+    showInfoToast(
+        'Filtros Limpiados',
+        'Se han removido todos los filtros aplicados.',
+        2000
+    );
+}
+
+// Funciones específicas del dashboard
+function filterPackages(status) {
+    const packageCards = document.querySelectorAll('[onclick*="viewAnnouncementDetail"]');
+    
+    packageCards.forEach(card => {
+            const statusElement = card.querySelector('span[class*="bg-"]');
+            const statusText = statusElement ? statusElement.textContent.trim() : '';
+            
+            const statusMap = {
+                'anunciado': 'ANUNCIADO',
+                'recibido': 'RECIBIDO'
+            };
+            
+        if (statusText === statusMap[status]) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Limpiar búsqueda
+    const searchFilter = document.getElementById('searchFilter');
+    if (searchFilter) {
+        searchFilter.value = '';
+    }
+    
+}
+
+// Función para ver el detalle del anuncio
+function viewAnnouncementDetail(guideNumber) {
+    window.location.href = `/announcements/guide/${guideNumber}`;
+}
+
+
+
+
+// ========================================
+// OPTIMIZACIONES DE RENDIMIENTO
+// ========================================
+
+// Configuración de debug (cambiar a false en producción)
+const DEBUG_FILTERING = false;
+const log = DEBUG_FILTERING ? console.log : () => {};
+
+// Cache de elementos DOM para evitar queries repetitivas
+const domCache = {
+    searchInput: null,
+    packageCards: null,
+    resultsCount: null
+};
+
+// Cache de resultados de filtrado
+const filterCache = new Map();
+const CACHE_SIZE_LIMIT = 50;
+
+// Estado actual del filtro
+let currentSearchFilter = '';
+
+// Estado de paginación
+let currentPage = 1;
+let currentLimit = 8;
+let currentPagination = null;
+
+// Inicializar cache de elementos DOM
+function initializeDOMCache() {
+    domCache.searchInput = document.getElementById('searchFilter');
+    domCache.packageCards = document.querySelectorAll('[onclick*="viewAnnouncementDetail"]');
+    domCache.resultsCount = document.getElementById('resultsCount');
+
+    log('✅ Cache de elementos DOM inicializado');
+    log(`📊 resultsCount encontrado: ${domCache.resultsCount ? 'Sí' : 'No'}`);
+}
+
+// Limpiar cache si excede el límite
+function manageCacheSize() {
+    if (filterCache.size >= CACHE_SIZE_LIMIT) {
+        const firstKey = filterCache.keys().next().value;
+        filterCache.delete(firstKey);
+        log('🗑️ Entrada de cache eliminada para mantener límite');
+    }
+}
+
+
+// Función para actualizar contador de resultados en el header
+function updatePackageResultsCounter(pagination) {
+    if (!domCache.resultsCount || !pagination) {
+        return;
+    }
+
+    const totalPackages = pagination.total;
+    const currentPage = pagination.page;
+    const limit = pagination.limit;
+
+    // Calcular el rango actual mostrado
+    const startItem = ((currentPage - 1) * limit) + 1;
+    const endItem = Math.min(currentPage * limit, totalPackages);
+
+    // Actualizar el texto del contador
+    domCache.resultsCount.textContent = `Mostrando ${startItem} a ${endItem} de ${totalPackages} paquetes`;
+    domCache.resultsCount.classList.remove('hidden');
+
+    log(`📊 Contador actualizado: Mostrando ${startItem} a ${endItem} de ${totalPackages} paquetes`);
+}
+
+// Función debounce optimizada
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ========================================
+// FUNCIONES DE PAGINACIÓN
+// ========================================
+
+function loadPackages(page = 1, searchTerm = '') {
+    log('Cargando paquetes con página:', page, 'búsqueda:', searchTerm);
+
+    document.getElementById('packagesLoading').classList.remove('hidden');
+    document.getElementById('packagesList').innerHTML = '';
+    document.getElementById('noPackages').classList.add('hidden');
+    document.getElementById('pagination').classList.add('hidden');
+
+    // Construir parámetros de consulta
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: currentLimit.toString()
+    });
+
+    // Agregar parámetro de búsqueda si existe
+    if (searchTerm && searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+    }
+
+    fetch(`/api/dashboard/packages?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Datos recibidos desde API:', data);
+        currentPage = page;
+        displayPackages(data.packages, data.pagination, searchTerm);
+    })
+    .catch(error => {
+        console.error('Error cargando paquetes:', error);
+        document.getElementById('packagesLoading').classList.add('hidden');
+        document.getElementById('noPackages').classList.remove('hidden');
+
+        // Mostrar mensaje de error
+        const packagesList = document.getElementById('packagesList');
+        packagesList.innerHTML = `
+            <div class="text-center py-8">
+                <div class="bg-red-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Error al cargar paquetes</h3>
+                <p class="mt-2 text-sm text-gray-500">No se pudieron cargar los paquetes. Intenta recargar la página.</p>
+            </div>
+        `;
+    });
+}
+
+function displayPackages(packages, pagination = null, searchTerm = '') {
+    document.getElementById('packagesLoading').classList.add('hidden');
+
+    const packagesList = document.getElementById('packagesList');
+    packagesList.innerHTML = '';
+
+    if (packages.length === 0) {
+        document.getElementById('noPackages').classList.remove('hidden');
+        // Ocultar contador de resultados si no hay paquetes
+        if (domCache.resultsCount) {
+            domCache.resultsCount.classList.add('hidden');
+        }
+    } else {
+        packages.forEach(package => {
+            const packageElement = createPackageElement(package);
+            packagesList.appendChild(packageElement);
+        });
+
+        // Mostrar paginación si está disponible
+        if (pagination && pagination.total_pages > 1) {
+            displayPagination(pagination);
+        }
+
+        // Actualizar contador de resultados en el header
+        updatePackageResultsCounter(pagination);
+
+        // Inicializar cache de DOM con nuevos paquetes (sin filtrado local)
+        setTimeout(() => {
+            log('🔄 Inicializando cache de DOM después de cargar paquetes');
+            // Reconstruir cache de DOM con nuevos paquetes
+            initializeDOMCache();
+            // Limpiar cache de filtros
+            filterCache.clear();
+        }, 200);
+    }
+
+    log('Paquetes mostrados exitosamente');
+}
+
+function displayPagination(pagination) {
+    currentPagination = pagination;
+    const paginationDiv = document.getElementById('pagination');
+    paginationDiv.classList.remove('hidden');
+
+    // Actualizar información de paginación
+    document.getElementById('paginationStart').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+    document.getElementById('paginationEnd').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+    document.getElementById('paginationTotal').textContent = pagination.total;
+
+    // Actualizar botones de navegación
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+    const prevPageMobile = document.getElementById('prevPageMobile');
+    const nextPageMobile = document.getElementById('nextPageMobile');
+
+    prevPage.disabled = !pagination.has_prev;
+    nextPage.disabled = !pagination.has_next;
+    prevPageMobile.disabled = !pagination.has_prev;
+    nextPageMobile.disabled = !pagination.has_next;
+
+    // Generar números de página
+    const pageNumbersDiv = document.getElementById('pageNumbers');
+    pageNumbersDiv.innerHTML = '';
+
+    const startPage = Math.max(1, pagination.page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.className = `relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            i === pagination.page
+                ? 'z-10 bg-papyrus-blue border-papyrus-blue text-white'
+                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+        }`;
+        pageButton.textContent = i;
+        pageButton.onclick = () => loadPackages(i);
+        pageNumbersDiv.appendChild(pageButton);
+    }
+
+    // Event listeners para botones de navegación
+    prevPage.onclick = () => { if (pagination.has_prev) loadPackages(pagination.page - 1); };
+    nextPage.onclick = () => { if (pagination.has_next) loadPackages(pagination.page + 1); };
+    prevPageMobile.onclick = () => { if (pagination.has_prev) loadPackages(pagination.page - 1); };
+    nextPageMobile.onclick = () => { if (pagination.has_next) loadPackages(pagination.page + 1); };
+}
+
+function createPackageElement(package) {
+    const div = document.createElement('div');
+
+    div.className = `bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-papyrus-blue transition-all duration-200 cursor-pointer transform hover:scale-[1.02] touch-manipulation`;
+    div.onclick = () => {
+        console.log('Click en paquete:', package.id);
+        viewAnnouncementDetail(package.guide_number);
+    };
+
+    const announcedAt = package.announced_at ? new Date(package.announced_at) : null;
+    const formattedDate = announcedAt ? announcedAt.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }) : 'N/A';
+
+    div.innerHTML = `
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+                <div class="bg-gray-100 rounded-lg p-2">
+                    ${package.is_processed ? `
+                        <svg class="w-6 h-6 text-papyrus-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    ` : `
+                        <svg class="w-6 h-6 text-papyrus-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    `}
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <h4 class="text-base font-semibold text-gray-900 truncate">${package.tracking_code}</h4>
+                            ${package.guide_number ? `<span class="text-sm text-gray-500">(${package.guide_number})</span>` : ''}
+                        </div>
+                        <p class="text-base font-medium text-gray-700 mb-2">${package.customer_name}</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                            <span class="flex items-center"
+                                  data-phone="${package.customer_phone || ''}"
+                                  data-message="Consulta sobre paquete ${package.tracking_code || package.guide_number}">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                </svg>
+                                ${package.customer_phone || 'Sin teléfono'}
+                            </span>
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                ${formattedDate}
+                            </span>
+                            ${package.package_type ? `
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                ${package.package_type.charAt(0).toUpperCase() + package.package_type.slice(1)}
+                            </span>` : ''}
+                            ${package.estimated_cost && package.estimated_cost > 0 ? `
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                </svg>
+                                $${Math.round(package.estimated_cost)}
+                            </span>` : ''}
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-papyrus-yellow">
+                            ${package.is_processed ? 'RECIBIDO' : 'ANUNCIADO'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return div;
+}
+
+function getAuthToken() {
+    // Intentar obtener token desde cookies primero (más confiable)
+    const cookieValue = `; ${document.cookie}`;
+    const cookieParts = cookieValue.split(`; access_token=`);
+    if (cookieParts.length === 2) {
+        const token = cookieParts.pop().split(';').shift();
+        if (token && token !== 'undefined' && token !== 'null') {
+            return token;
+        }
+    }
+
+    // Si no está en cookies, intentar desde localStorage
+    let token = localStorage.getItem('access_token');
+    if (token && token !== 'undefined' && token !== 'null') {
+        return token;
+    }
+
+    return null;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard cargado');
+
+    // Cargar paquetes iniciales
+    loadPackages(1);
+
+    // Enfocar automáticamente el campo de búsqueda
+    setTimeout(() => {
+        const searchInput = document.getElementById('searchFilter');
+        if (searchInput) {
+            // Limpiar el campo de búsqueda antes de enfocar
+            searchInput.value = '';
+            searchInput.focus();
+            console.log('Campo de búsqueda limpiado y enfocado automáticamente');
+        }
+    }, 500); // Pequeño delay para asegurar que la página esté completamente cargada
+
+    // Estado de búsqueda actual
+    let currentSearchTerm = '';
+
+    // Debounce optimizado para búsqueda
+    const debouncedSearch = debounce(function() {
+        const searchTerm = domCache.searchInput?.value?.toLowerCase().trim() || '';
+        log('🔍 Evento de búsqueda disparado con término:', searchTerm);
+
+        // Solo recargar si el término de búsqueda cambió
+        if (searchTerm !== currentSearchTerm) {
+            currentSearchTerm = searchTerm;
+            loadPackages(1, searchTerm); // Reiniciar a página 1 con nueva búsqueda
+        }
+    }, 300); // Aumenté el delay para mejor UX
+
+    // Event listener para búsqueda
+    const searchFilter = document.getElementById('searchFilter');
+    if (searchFilter) {
+        searchFilter.addEventListener('input', debouncedSearch);
+    }
+
+    // Botón limpiar filtros
+    const clearFilters = document.getElementById('clearFilters');
+    if (clearFilters) {
+        clearFilters.addEventListener('click', function() {
+            clearAllFilters();
+            loadPackages(1, ''); // Recargar sin filtros
+        });
+    }
+});
+</script>
+{% endblock %}

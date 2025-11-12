@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Componentes de Error - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- <link rel="stylesheet" href="/static/css/error-components.css"> -->
+    <style>
+        /* Estilos de los Componentes de Error */
+        .error-container {
+            @apply bg-white border rounded-lg p-6 shadow-lg max-w-md mx-auto relative;
+            border-left: 4px solid #ef4444;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .error-icons {
+            @apply flex flex-col items-center mb-4;
+        }
+
+        .error-icon-small {
+            @apply w-6 h-6 rounded-full flex items-center justify-center mb-2;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .error-icon-large {
+            @apply w-12 h-12 rounded-full flex items-center justify-center;
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .error-content {
+            @apply text-center mb-6;
+        }
+
+        .error-title {
+            @apply text-lg font-bold text-gray-900 mb-2;
+            font-weight: 700;
+        }
+
+        .error-description {
+            @apply text-sm text-gray-700 leading-relaxed;
+            line-height: 1.6;
+        }
+
+        .error-actions {
+            @apply flex justify-center;
+        }
+
+        .error-close-btn {
+            @apply text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+
+        .error-close-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Variantes del Error */
+        .error-container.error-error {
+            @apply border-red-300;
+            border-left-color: #ef4444;
+        }
+
+        .error-container.error-warning {
+            @apply border-yellow-300;
+            border-left-color: #f59e0b;
+        }
+
+        .error-container.error-info {
+            @apply border-blue-300;
+            border-left-color: #3b82f6;
+        }
+
+        .error-container.error-success {
+            @apply border-green-300;
+            border-left-color: #10b981;
+        }
+
+        /* Iconos por Tipo */
+        .error-container.error-warning .error-icon-small {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .error-container.error-info .error-icon-small {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .error-container.error-success .error-icon-small {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .error-container.error-warning .error-icon-large {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+
+        .error-container.error-info .error-icon-large {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .error-container.error-success .error-icon-large {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .error-container {
+                @apply mx-4 p-4;
+                max-width: calc(100vw - 2rem);
+            }
+            
+            .error-title {
+                @apply text-base;
+            }
+            
+            .error-description {
+                @apply text-xs;
+            }
+            
+            .error-close-btn {
+                @apply py-2 px-4 text-sm;
+            }
+        }
+
+        /* Estilos de la Demo */
+        .demo-section {
+            @apply bg-white rounded-lg shadow-md p-6 mb-8;
+        }
+        .demo-title {
+            @apply text-2xl font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2;
+        }
+        .demo-subtitle {
+            @apply text-lg font-semibold text-gray-700 mb-3;
+        }
+        .demo-description {
+            @apply text-sm text-gray-600 mb-4;
+        }
+        .demo-grid {
+            @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+        }
+        .demo-item {
+            @apply border border-gray-200 rounded-lg p-4 bg-gray-50;
+        }
+        .demo-item-title {
+            @apply text-sm font-medium text-gray-600 mb-2;
+        }
+        .demo-button {
+            @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+        }
+        .demo-button-danger {
+            @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+        }
+        .demo-button-warning {
+            @apply bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
+        }
+        .demo-button-success {
+            @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+        }
+        .demo-button-info {
+            @apply bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                🚨 Demo Componentes de Error
+            </h1>
+            <p class="text-lg text-gray-600">
+                PAQUETEX v4.0 - Sistema de Gestión de Paquetes
+            </p>
+        </div>
+
+        <!-- Sección 1: Componente Estático -->
+        <div class="demo-section">
+            <h2 class="demo-title">1. Componente Estático (error_message.html)</h2>
+            <p class="demo-description">
+                Este componente se muestra sin JavaScript, ideal para errores de servidor o páginas estáticas.
+            </p>
+            
+            <div class="demo-item">
+                <h3 class="demo-item-title">Error Básico</h3>
+                <div class="error-container">
+                    <div class="error-icons">
+                        <div class="error-icon-small">
+                            <svg class="w-4 h-4 text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="error-icon-large">
+                            <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-content">
+                        <h3 class="error-title">Error del Sistema</h3>
+                        <p class="error-description">Error del sistema. Por favor, comuníquese con el administrador.</p>
+                    </div>
+                    <div class="error-actions">
+                        <button type="button" class="error-close-btn" onclick="this.closest('.error-container').style.display='none'">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 2: Componente con Alpine.js -->
+        <div class="demo-section">
+            <h2 class="demo-title">2. Componente Interactivo (error_message_alpine.html)</h2>
+            <p class="demo-description">
+                Este componente usa Alpine.js para control dinámico de errores. Puedes mostrar/ocultar y cambiar el contenido.
+            </p>
+            
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <h3 class="demo-item-title">Error</h3>
+                    <div x-data="errorMessage()" x-init="showError('Error del Sistema', 'Error crítico del sistema. Contacte al administrador.', 'error')">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demo-item">
+                    <h3 class="demo-item-title">Advertencia</h3>
+                    <div x-data="errorMessage()" x-init="showError('Advertencia', 'El paquete ya fue anunciado anteriormente.', 'warning')">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demo-item">
+                    <h3 class="demo-item-title">Información</h3>
+                    <div x-data="errorMessage()" x-init="showError('Información', 'El sistema se reiniciará en 5 minutos.', 'info')">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demo-item">
+                    <h3 class="demo-item-title">Éxito</h3>
+                    <div x-data="errorMessage()" x-init="showError('Éxito', 'El paquete se anunció correctamente.', 'success')">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 3: Control Dinámico -->
+        <div class="demo-section">
+            <h2 class="demo-title">3. Control Dinámico de Errores</h2>
+            <p class="demo-description">
+                Usa los botones para mostrar diferentes tipos de errores dinámicamente.
+            </p>
+            
+            <div x-data="errorController()" class="space-y-4">
+                <div class="flex flex-wrap gap-2">
+                    <button @click="showError('Error del Sistema', 'Error crítico del sistema. Contacte al administrador.', 'error')" 
+                            class="demo-button-danger">
+                        Mostrar Error
+                    </button>
+                    <button @click="showError('Advertencia', 'El paquete ya fue anunciado anteriormente.', 'warning')" 
+                            class="demo-button-warning">
+                        Mostrar Advertencia
+                    </button>
+                    <button @click="showError('Información', 'El sistema se reiniciará en 5 minutos.', 'info')" 
+                            class="demo-button-info">
+                        Mostrar Info
+                    </button>
+                    <button @click="showError('Éxito', 'El paquete se anunció correctamente.', 'success')" 
+                            class="demo-button-success">
+                        Mostrar Éxito
+                    </button>
+                    <button @click="hideError()" 
+                            class="demo-button">
+                        Ocultar
+                    </button>
+                </div>
+
+                <!-- Contenedor de Error Dinámico -->
+                <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95">
+                    <div x-data="errorMessage()" x-init="showError(title, message, type)">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 4: Integración con Formularios -->
+        <div class="demo-section">
+            <h2 class="demo-title">4. Integración con Formularios</h2>
+            <p class="demo-description">
+                Ejemplo de cómo usar los componentes de error en formularios con validación.
+            </p>
+            
+            <div x-data="formWithError()" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+                <form @submit.prevent="submitForm()">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Guía
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="guideNumber"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el número de guía"
+                        >
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre del Cliente
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="customerName"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el nombre del cliente"
+                        >
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            :disabled="loading">
+                        <span x-show="!loading">Anunciar Paquete</span>
+                        <span x-show="loading">Procesando...</span>
+                    </button>
+                </form>
+
+                <!-- Error del Formulario -->
+                <div x-show="error.show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="mt-4">
+                    <div x-data="errorMessage()" x-init="showError(error.title, error.message, error.type)">
+                        <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95" class="error-container" :class="errorType">
+                            <div class="error-icons">
+                                <div class="error-icon-small">
+                                    <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <div class="error-icon-large">
+                                    <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="error-content">
+                                <h3 class="error-title" x-text="title"></h3>
+                                <p class="error-description" x-text="message"></p>
+                            </div>
+                            <div class="error-actions">
+                                <button type="button" class="error-close-btn" @click="close()" x-text="buttonText"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 5: Responsive Design -->
+        <div class="demo-section">
+            <h2 class="demo-title">5. Responsive Design</h2>
+            <p class="demo-description">
+                Los componentes se adaptan automáticamente a diferentes tamaños de pantalla.
+            </p>
+            
+            <div class="space-y-4">
+                <div class="text-sm text-gray-600">
+                    <strong>Desktop:</strong> Ancho máximo de 448px (max-w-md)
+                </div>
+                <div class="text-sm text-gray-600">
+                    <strong>Tablet:</strong> Padding reducido y mejor distribución
+                </div>
+                <div class="text-sm text-gray-600">
+                    <strong>Mobile:</strong> Ancho completo con márgenes laterales
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-yellow-800 font-medium">Prueba redimensionando la ventana del navegador para ver el comportamiento responsive.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            // Controlador de Errores
+            Alpine.data('errorController', () => ({
+                show: false,
+                title: '',
+                message: '',
+                type: 'error',
+                
+                showError(title, message, type) {
+                    this.title = title;
+                    this.message = message;
+                    this.type = type;
+                    this.show = true;
+                    
+                    // Auto-ocultar después de 5 segundos
+                    setTimeout(() => {
+                        this.show = false;
+                    }, 5000);
+                },
+                
+                hideError() {
+                    this.show = false;
+                }
+            }));
+
+            // Formulario con Manejo de Errores
+            Alpine.data('formWithError', () => ({
+                guideNumber: '',
+                customerName: '',
+                loading: false,
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                
+                async submitForm() {
+                    this.loading = true;
+                    this.error.show = false;
+                    
+                    try {
+                        // Simular validación
+                        if (!this.guideNumber) {
+                            throw new Error('El número de guía es requerido');
+                        }
+                        
+                        if (this.guideNumber.length < 10) {
+                            throw new Error('El número de guía debe tener al menos 10 caracteres');
+                        }
+                        
+                        if (!this.customerName) {
+                            throw new Error('El nombre del cliente es requerido');
+                        }
+                        
+                        // Simular envío
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Mostrar éxito
+                        this.error = {
+                            show: true,
+                            title: 'Éxito',
+                            message: 'El paquete se anunció correctamente.',
+                            type: 'success'
+                        };
+                        
+                        this.guideNumber = '';
+                        this.customerName = '';
+                        
+                    } catch (error) {
+                        this.error = {
+                            show: true,
+                            title: 'Error de Validación',
+                            message: error.message,
+                            type: 'error'
+                        };
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

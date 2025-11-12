@@ -1,0 +1,383 @@
+<!-- ========================================
+     MANEJADOR DE ERRORES DE JAVASCRIPT - VERSIÓN CORREGIDA
+     PAQUETEX v4.0
+     ======================================== -->
+
+<div 
+    x-data="manejadorErroresJS()" 
+    x-show="mostrar" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform scale-95"
+    x-transition:enter-end="opacity-100 transform scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform scale-100"
+    x-transition:leave-end="opacity-0 transform scale-95"
+    class="error-container"
+    :class="'error-' + tipo"
+    style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;"
+>
+    <!-- Iconos de Advertencia -->
+    <div class="error-icons">
+        <div class="error-icon-small">
+            <svg class="w-4 h-4" :class="obtenerColorIcono()" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div class="error-icon-large">
+            <svg class="w-8 h-8" :class="obtenerColorIconoPrincipal()" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido del Error -->
+    <div class="error-content">
+        <h3 class="error-title" x-text="titulo"></h3>
+        <p class="error-description" x-text="mensaje"></p>
+        <div x-show="detalles" class="mt-2">
+            <details class="text-xs text-gray-500">
+                <summary class="cursor-pointer hover:text-gray-700">Ver detalles técnicos</summary>
+                <pre class="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32" x-text="detalles"></pre>
+            </details>
+        </div>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div class="error-actions">
+        <button 
+            type="button" 
+            class="error-close-btn"
+            @click="cerrar()"
+        >
+            Cerrar
+        </button>
+    </div>
+</div>
+
+<!-- Estilos del Componente -->
+<style>
+.error-container {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-left: 4px solid #ef4444;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.error-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.error-icon-small {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.error-icon-large {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-content {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.error-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.error-description {
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.error-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.error-close-btn {
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    border: none;
+    cursor: pointer;
+}
+
+.error-close-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Variantes del Error */
+.error-container.error-error {
+    border-color: #fca5a5;
+    border-left-color: #ef4444;
+}
+
+.error-container.error-warning {
+    border-color: #fde68a;
+    border-left-color: #f59e0b;
+}
+
+.error-container.error-info {
+    border-color: #93c5fd;
+    border-left-color: #3b82f6;
+}
+
+.error-container.error-success {
+    border-color: #86efac;
+    border-left-color: #10b981;
+}
+
+/* Iconos por Tipo */
+.error-container.error-warning .error-icon-small {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-container.error-info .error-icon-small {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-container.error-success .error-icon-small {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.error-container.error-warning .error-icon-large {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-container.error-info .error-icon-large {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-container.error-success .error-icon-large {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .error-container {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .error-title {
+        font-size: 1rem;
+    }
+    
+    .error-description {
+        font-size: 0.75rem;
+    }
+    
+    .error-close-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+</style>
+
+<!-- JavaScript del Componente -->
+<script>
+// Variable global para el manejador de errores
+let manejadorErroresGlobal = null;
+
+// Función para inicializar el manejador cuando Alpine.js esté listo
+function inicializarManejadorErrores() {
+    if (typeof Alpine !== 'undefined' && manejadorErroresGlobal) {
+        // Configurar captura de errores globales
+        configurarCapturaErrores();
+    }
+}
+
+// Configurar captura de errores
+function configurarCapturaErrores() {
+    console.log('Configurando captura de errores de JavaScript...');
+    
+    // Capturar errores de JavaScript
+    window.addEventListener('error', (event) => {
+        console.log('Error de JavaScript capturado:', event);
+        const error = event.error;
+        const mensaje = error ? error.message : event.message;
+        const stack = error ? error.stack : '';
+        const archivo = event.filename || 'Archivo desconocido';
+        const linea = event.lineno || 'Línea desconocida';
+        const columna = event.colno || 'Columna desconocida';
+        
+        if (manejadorErroresGlobal) {
+            manejadorErroresGlobal.mostrarError(
+                'Error de JavaScript',
+                `Error en ${archivo}:${linea}:${columna}\n${mensaje}`,
+                'error',
+                `Archivo: ${archivo}\nLínea: ${linea}\nColumna: ${columna}\n\nStack trace:\n${stack}`
+            );
+        }
+    });
+    
+    // Capturar promesas rechazadas
+    window.addEventListener('unhandledrejection', (event) => {
+        console.log('Promesa rechazada capturada:', event);
+        const razon = event.reason;
+        const mensaje = razon instanceof Error ? razon.message : String(razon);
+        const stack = razon instanceof Error ? razon.stack : '';
+        
+        if (manejadorErroresGlobal) {
+            manejadorErroresGlobal.mostrarError(
+                'Promesa Rechazada',
+                `Una promesa fue rechazada: ${mensaje}`,
+                'error',
+                `Razón: ${mensaje}\n\nStack trace:\n${stack}`
+            );
+        }
+    });
+    
+    // Capturar errores de recursos (imágenes, scripts, etc.)
+    window.addEventListener('error', (event) => {
+        if (event.target !== window) {
+            console.log('Error de recurso capturado:', event);
+            const elemento = event.target.tagName || 'Elemento';
+            const src = event.target.src || event.target.href || 'Origen desconocido';
+            
+            if (manejadorErroresGlobal) {
+                manejadorErroresGlobal.mostrarError(
+                    'Error de Recurso',
+                    `Error al cargar ${elemento}: ${src}`,
+                    'warning',
+                    `Elemento: ${elemento}\nOrigen: ${src}\nTipo: ${event.type}`
+                );
+            }
+        }
+    }, true);
+}
+
+// Esperar a que Alpine.js esté listo
+document.addEventListener('alpine:init', () => {
+    console.log('Alpine.js inicializado, configurando manejador de errores...');
+    
+    Alpine.data('manejadorErroresJS', () => ({
+        mostrar: false,
+        titulo: 'Error de JavaScript',
+        mensaje: 'Ha ocurrido un error en el código JavaScript.',
+        tipo: 'error',
+        detalles: '',
+        
+        // Colores de iconos
+        obtenerColorIcono() {
+            const colores = {
+                error: 'text-red-300',
+                warning: 'text-yellow-300',
+                info: 'text-blue-300',
+                success: 'text-green-300'
+            };
+            return colores[this.tipo] || colores.error;
+        },
+        
+        obtenerColorIconoPrincipal() {
+            const colores = {
+                error: 'text-yellow-500',
+                warning: 'text-yellow-500',
+                info: 'text-blue-500',
+                success: 'text-green-500'
+            };
+            return colores[this.tipo] || colores.error;
+        },
+        
+        // Método para mostrar error
+        mostrarError(titulo, mensaje, tipo = 'error', detalles = '') {
+            console.log('Mostrando error:', { titulo, mensaje, tipo, detalles });
+            this.titulo = titulo;
+            this.mensaje = mensaje;
+            this.tipo = tipo;
+            this.detalles = detalles;
+            this.mostrar = true;
+            
+            // Auto-cerrar después de 10 segundos para errores
+            if (tipo === 'error') {
+                setTimeout(() => {
+                    this.cerrar();
+                }, 10000);
+            }
+        },
+        
+        // Método para cerrar
+        cerrar() {
+            this.mostrar = false;
+        },
+        
+        // Inicialización
+        init() {
+            console.log('Inicializando manejador de errores...');
+            manejadorErroresGlobal = this;
+            // Configurar captura de errores
+            configurarCapturaErrores();
+        }
+    }));
+});
+
+// Función global para mostrar errores personalizados
+window.mostrarErrorJS = function(titulo, mensaje, tipo = 'error', detalles = '') {
+    console.log('Función global mostrarErrorJS llamada:', { titulo, mensaje, tipo, detalles });
+    if (manejadorErroresGlobal) {
+        manejadorErroresGlobal.mostrarError(titulo, mensaje, tipo, detalles);
+    } else {
+        console.error('Manejador de errores no está disponible');
+    }
+};
+
+// Función global para mostrar errores de validación
+window.mostrarErrorValidacion = function(mensaje) {
+    window.mostrarErrorJS('Error de Validación', mensaje, 'error');
+};
+
+// Función global para mostrar advertencias
+window.mostrarAdvertencia = function(mensaje) {
+    window.mostrarErrorJS('Advertencia', mensaje, 'warning');
+};
+
+// Función global para mostrar información
+window.mostrarInformacion = function(mensaje) {
+    window.mostrarErrorJS('Información', mensaje, 'info');
+};
+
+// Función global para mostrar éxito
+window.mostrarExito = function(mensaje) {
+    window.mostrarErrorJS('Éxito', mensaje, 'success');
+};
+
+// Función de prueba para verificar que el manejador funciona
+window.probarManejadorErrores = function() {
+    console.log('Probando manejador de errores...');
+    window.mostrarErrorJS('Prueba', 'Este es un error de prueba', 'error', 'Detalles de prueba');
+};
+
+// Mostrar mensaje de confirmación cuando el script se carga
+console.log('Manejador de errores de JavaScript cargado correctamente');
+</script>

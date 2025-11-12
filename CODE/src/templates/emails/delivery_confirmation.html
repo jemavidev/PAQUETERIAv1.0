@@ -1,0 +1,45 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Paquete Entregado - {{ company_name }}{% endblock %}
+
+{% block header_subtitle %}✅ Entrega Exitosa{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    ¡Hola <strong>{{ customer_name }}</strong>!
+</div>
+
+<div class="message">
+    ¡Excelente noticia! Tu paquete ha sido entregado exitosamente.
+</div>
+
+<div class="info-box">
+    <strong>Detalles de entrega:</strong><br>
+    <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
+        <li style="margin-bottom: 8px;"><strong>Guía:</strong> {{ guide_number }}</li>
+        <li style="margin-bottom: 8px;"><strong>Código:</strong> {{ tracking_code }}</li>
+        {% if delivered_at %}
+        <li style="margin-bottom: 8px;"><strong>Fecha y hora:</strong> {{ delivered_at }}</li>
+        {% endif %}
+        {% if recipient_name %}
+        <li style="margin-bottom: 8px;"><strong>Recibido por:</strong> {{ recipient_name }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="action-section">
+    <a href="{{ tracking_url }}" class="btn-primary">
+        📋 Ver Detalles Completos
+    </a>
+</div>
+
+<div class="support-text">
+    Esperamos que tu experiencia haya sido excelente. Si necesitas ayuda, contáctanos en <a href="mailto:{{ company_email }}">{{ company_email }}</a> o {{ company_phone }}
+</div>
+
+<div class="signature">
+    <p>¡Gracias por confiar en nosotros!<br>
+    <strong>El Equipo de {{ company_name }}</strong></p>
+</div>
+{% endblock %}
+

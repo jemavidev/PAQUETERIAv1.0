@@ -1,0 +1,44 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Paquete Cancelado - {{ company_name }}{% endblock %}
+
+{% block header_subtitle %}❌ Notificación de Cancelación{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    Estimado/a <strong>{{ customer_name }}</strong>
+</div>
+
+<div class="message">
+    Te informamos que tu paquete ha sido cancelado en nuestro sistema.
+</div>
+
+<div class="info-box">
+    <strong>Información del paquete cancelado:</strong><br>
+    <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
+        <li style="margin-bottom: 8px;"><strong>Guía:</strong> {{ guide_number }}</li>
+        <li style="margin-bottom: 8px;"><strong>Código:</strong> {{ tracking_code }}</li>
+        {% if cancelled_at %}
+        <li style="margin-bottom: 8px;"><strong>Fecha de cancelación:</strong> {{ cancelled_at }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="warning-box">
+    <h3>ℹ️ Información</h3>
+    <ul>
+        <li>Si tienes dudas sobre esta cancelación, por favor contáctanos</li>
+        <li>Estamos disponibles para ayudarte con cualquier consulta</li>
+    </ul>
+</div>
+
+<div class="support-text">
+    Para más información, contáctanos en <a href="mailto:{{ company_email }}">{{ company_email }}</a> o {{ company_phone }}
+</div>
+
+<div class="signature">
+    <p>Atentamente,<br>
+    <strong>El Equipo de {{ company_name }}</strong></p>
+</div>
+{% endblock %}
+

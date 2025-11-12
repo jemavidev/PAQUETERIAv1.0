@@ -1,0 +1,322 @@
+{% extends "base/base.html" %}
+
+{% block title %}Iniciar Sesión - PAQUETEX v4.0{% endblock %}
+
+{% block extra_head %}
+<!-- VERSION: 2025-10-13 - CORRECCIÓN SISTEMA DE VALIDACIÓN Y SIMPLIFICACIÓN JS -->
+<!-- Sistema de Tooltips de Error -->
+{% include 'components/error_tooltip_fixed.html' %}
+<!-- Estilos específicos para esta página -->
+<style>
+    /* Input con icono */
+    .input-with-icon {
+        position: relative;
+    }
+    
+    .input-with-icon input {
+        padding-left: 40px;
+    }
+    
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6B7280;
+        width: 20px;
+        height: 20px;
+        z-index: 10;
+    }
+
+    /* Animación de carga para el botón */
+    .loading {
+        position: relative;
+        color: transparent;
+    }
+    
+    .loading::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin-left: -10px;
+        margin-top: -10px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+    <!-- Logo PAPYRUS -->
+    <div class="text-center mb-8 px-4">
+        <img src="/static/images/logo.png?v=4.0" 
+             alt="PAPYRUS - Mucho más que solo papeles" 
+             class="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain mb-4"
+             style="max-height: 120px; min-height: 80px;">
+    </div>
+
+    <!-- Contenedor centrado para el formulario -->
+    <div class="flex justify-center">
+        <div class="max-w-md w-full">
+
+
+        <!-- Formulario de Login -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200">
+            <!-- Header del formulario -->
+            <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
+                <div class="text-center">
+                    <h2 class="text-xl sm:text-2xl font-light text-gray-900">Iniciar Sesión</h2>
+                    <p class="text-sm text-gray-500 mt-1">Accede a tu cuenta</p>
+                </div>
+            </div>
+            
+            <!-- Contenido del formulario -->
+            <div class="p-4 sm:p-8">
+            <form id="loginForm" class="space-y-6">
+                <!-- Usuario o Email -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <input type="text" 
+                           id="username_or_email" 
+                           name="username_or_email" 
+                           required
+                           class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
+                           placeholder="Correo electrónico">
+                </div>
+                
+                <!-- Contraseña -->
+                <div class="input-with-icon">
+                    <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required
+                           class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
+                           placeholder="Contraseña">
+                </div>
+                
+                <!-- Opciones adicionales -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input id="remember_me" 
+                               name="remember_me" 
+                               type="checkbox" 
+                               class="h-4 w-4 text-papyrus-blue focus:ring-papyrus-blue border-gray-300 rounded">
+                        <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                            Recordarme
+                        </label>
+                    </div>
+                    <div class="text-sm">
+                        <a href="/auth/forgot-password" class="font-medium text-papyrus-blue hover:text-blue-700">
+                            ¿Olvidaste tu contraseña?
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Mensaje de error -->
+                <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    <div class="flex">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span id="errorText">Error en las credenciales</span>
+                    </div>
+                </div>
+                
+                <!-- Botón de Envío -->
+                <div class="pt-4">
+                    <button type="submit" 
+                            id="loginButton"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-xl text-white bg-papyrus-blue hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-all duration-300 shadow-md hover:shadow-lg">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <svg class="h-5 w-5 text-blue-200 group-hover:text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                        </span>
+                        <span id="loginButtonText">Iniciar Sesión</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function() {
+        const loginForm = document.getElementById('loginForm');
+        
+        if (!loginForm) {
+            console.error('No se encontró el formulario con ID loginForm');
+            return;
+        }
+    
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const loginButton = document.getElementById('loginButton');
+        const loginButtonText = document.getElementById('loginButtonText');
+        const username_or_email = document.getElementById('username_or_email').value;
+        const password = document.getElementById('password').value;
+        
+        // Validaciones básicas
+        if (!username_or_email || !password) {
+            showLoginError('VALIDATION_ERROR');
+            return;
+        }
+        
+        if (!isValidUsernameOrEmail(username_or_email)) {
+            showLoginError('INVALID_FORMAT');
+            return;
+        }
+        
+        // Mostrar estado de carga
+        loginButton.disabled = true;
+        loginButton.classList.add('loading');
+        loginButtonText.textContent = 'Iniciando sesión...';
+        hideError();
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'username': username_or_email,
+                    'password': password
+                })
+            });
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    showLoginError('INVALID_CREDENTIALS');
+                } else if (response.status === 400) {
+                    showLoginError('INACTIVE_ACCOUNT');
+                } else {
+                    showLoginError('LOGIN_ERROR');
+                }
+                resetButton();
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (data.access_token) {
+                // Guardar token
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user_info', JSON.stringify(data.user));
+                
+                // Configurar cookies
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const cookieOptions = `path=/; max-age=86400; ${isLocalhost ? 'SameSite=Lax' : 'SameSite=None; Secure'}`;  // 24 horas = 86400 segundos
+
+                document.cookie = `access_token=${data.access_token}; ${cookieOptions}`;
+                if (data.user) {
+                    document.cookie = `user_name=${data.user.username}; ${cookieOptions}`;
+                    document.cookie = `user_role=${data.user.role}; ${cookieOptions}`;
+                    document.cookie = `user_id=${data.user.id}; ${cookieOptions}`;
+                }
+            }
+            
+            // Simular login en el header (si existe la función)
+            if (typeof simulateLogin === 'function') {
+                simulateLogin(data.user.username, data.user.first_name);
+            }
+            
+            // Redirigir
+            setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectUrl = urlParams.get('redirect') || '/packages';
+                window.location.href = redirectUrl;
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error en login:', error);
+            showLoginError('CONNECTION_ERROR');
+            resetButton();
+        }
+    });
+    
+    function showLoginError(errorType) {
+        const errorMessages = {
+            'INVALID_CREDENTIALS': '🔐 Usuario o contraseña incorrectos. Por favor, verifica tus datos.',
+            'INACTIVE_ACCOUNT': '⚠️ Tu cuenta está inactiva. Contacta al administrador.',
+            'CONNECTION_ERROR': '🌐 Problema de conexión. Verifica tu internet.',
+            'LOGIN_ERROR': '❌ Error al iniciar sesión. Intenta nuevamente.',
+            'VALIDATION_ERROR': '📝 Por favor, completa todos los campos.',
+            'INVALID_FORMAT': '✉️ Por favor, ingresa un usuario o correo electrónico válido.'
+        };
+        
+        const errorMessage = errorMessages[errorType] || '❌ Error inesperado. Contacta al administrador.';
+        const usernameField = document.getElementById('username_or_email');
+        
+        if (usernameField && typeof window.mostrarErrorTooltip === 'function') {
+            window.mostrarErrorTooltip(usernameField, errorMessage);
+        } else {
+            showErrorFallback(errorMessage);
+        }
+    }
+    
+    function showErrorFallback(message) {
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        if (errorText) errorText.textContent = message;
+        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
+    }
+    
+    function hideError() {
+        const errorMessageDiv = document.getElementById('errorMessage');
+        if (errorMessageDiv) errorMessageDiv.classList.add('hidden');
+    }
+    
+    function resetButton() {
+        const loginButton = document.getElementById('loginButton');
+        const loginButtonText = document.getElementById('loginButtonText');
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.classList.remove('loading');
+        }
+        if (loginButtonText) loginButtonText.textContent = 'Iniciar Sesión';
+    }
+    
+    function isValidUsernameOrEmail(input) {
+        if (input.includes('@')) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(input);
+        }
+        const usernameRegex = /^[a-zA-Z0-9_-]{3,}$/;
+        return usernameRegex.test(input);
+    }
+    
+    // Limpiar error cuando el usuario empiece a escribir
+    document.getElementById('username_or_email').addEventListener('input', hideError);
+    document.getElementById('password').addEventListener('input', hideError);
+    
+    // Focus automático y limpiar localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        const usernameField = document.getElementById('username_or_email');
+        if (usernameField) usernameField.focus();
+        
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_info');
+    });
+    })();
+</script>
+{% endblock %}

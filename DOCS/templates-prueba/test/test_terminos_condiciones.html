@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Términos y Condiciones - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Tooltip de Error Amigable */
+        .error-tooltip {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(-100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            scale: 0.9;
+            max-width: 400px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .error-tooltip.show {
+            opacity: 1;
+            scale: 1;
+            transform: translateX(-50%) translateY(-100%) translateY(-8px);
+        }
+
+        /* Flecha del tooltip mejorada */
+        .error-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #dc2626;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Variantes del tooltip con gradientes */
+        .error-tooltip.success {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.success::after {
+            border-top-color: #059669 !important;
+        }
+
+        .error-tooltip.success .error-tooltip-icon {
+            background: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.success .error-tooltip-icon svg {
+            fill: #ffffff !important;
+        }
+
+        .error-tooltip.warning {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.warning::after {
+            border-top-color: #d97706 !important;
+        }
+
+        .error-tooltip.warning .error-tooltip-icon {
+            background: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.warning .error-tooltip-icon svg {
+            fill: #ffffff !important;
+        }
+
+        .error-tooltip.info {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.info::after {
+            border-top-color: #2563eb !important;
+        }
+
+        .error-tooltip.info .error-tooltip-icon {
+            background: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .error-tooltip.info .error-tooltip-icon svg {
+            fill: #ffffff !important;
+        }
+
+        /* Efecto de pulso sutil */
+        @keyframes tooltipPulse {
+            0%, 100% { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1); }
+            50% { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.2); }
+        }
+
+        .error-tooltip {
+            animation: tooltipPulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                Test de Términos y Condiciones
+            </h1>
+            <p class="text-gray-600">
+                Prueba la validación de términos y condiciones con tooltip personalizado
+            </p>
+        </div>
+
+        <!-- Formulario de Prueba -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <form id="testForm" class="space-y-6">
+                <!-- Campo de Nombre -->
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre Completo *
+                    </label>
+                    <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        placeholder="Ingrese su nombre completo"
+                        required
+                    >
+                </div>
+
+                <!-- Términos y Condiciones -->
+                <div class="mb-6">
+                    <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center h-5">
+                            <input
+                                id="terms_conditions"
+                                name="terms_conditions"
+                                type="checkbox"
+                                required
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            >
+                        </div>
+                        <div class="text-sm">
+                            <label for="terms_conditions" class="font-medium text-gray-700">
+                                Acepto los términos y condiciones *
+                            </label>
+                            <p class="text-gray-500 mt-1">
+                                Al marcar esta casilla, confirmo que he leído y acepto los 
+                                <a href="#" class="text-blue-600 hover:text-blue-700 underline">términos y condiciones</a> 
+                                del servicio de anuncios de paquetes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Prueba -->
+                <div class="grid grid-cols-1 gap-3">
+                    <button
+                        type="button"
+                        onclick="probarTerminosNoMarcados()"
+                        class="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            Probar Términos NO Marcados (Error)
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="probarTerminosMarcados()"
+                        class="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Probar Términos Marcados (Éxito)
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="probarEnvioFormulario()"
+                        class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Enviar Formulario (Validación Completa)
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">
+                📋 Instrucciones de Prueba
+            </h3>
+            <ul class="text-blue-800 space-y-2">
+                <li>• <strong>Botón Rojo:</strong> Desmarca los términos y muestra error</li>
+                <li>• <strong>Botón Verde:</strong> Marca los términos y muestra éxito</li>
+                <li>• <strong>Botón Azul:</strong> Intenta enviar el formulario con validación completa</li>
+                <li>• <strong>Tooltip:</strong> Aparece automáticamente con mensaje personalizado</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tooltip de Error Amigable -->
+    <div id="error-tooltip" class="error-tooltip" style="display: none; position: fixed; z-index: 9999; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; font-size: 0.875rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: 0.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.1); pointer-events: none; transform: translateX(-50%) translateY(-100%); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; scale: 0.9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 280px; max-width: 400px; word-wrap: break-word; white-space: normal; border: 2px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+        <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div class="error-tooltip-icon" style="flex-shrink: 0; width: 24px; height: 24px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px;">
+                <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <span id="error-tooltip-text" style="line-height: 1.5; flex: 1; font-size: 0.9rem;"></span>
+        </div>
+    </div>
+
+    <!-- Incluir el sistema de validación agresiva -->
+    {% include 'components/validation_override_aggressive.html' %}
+    {% include 'components/error_tooltip_fixed.html' %}
+
+    <script>
+        // Variable global para controlar el tooltip
+        let tooltipTimeout = null;
+        let tooltipVisible = false;
+
+        // Función para mostrar tooltip de error
+        function mostrarErrorTooltip(campo, mensaje, tipo = 'error') {
+            const tooltip = document.getElementById('error-tooltip');
+            const tooltipText = document.getElementById('error-tooltip-text');
+            
+            if (!tooltip || !tooltipText) {
+                console.error('❌ No se encontró el tooltip');
+                return;
+            }
+            
+            // Configurar el mensaje
+            tooltipText.textContent = mensaje;
+            
+            // Limpiar clases anteriores
+            tooltip.className = 'error-tooltip';
+            
+            // Agregar clase de tipo
+            if (tipo !== 'error') {
+                tooltip.classList.add(tipo);
+            }
+            
+            // Actualizar icono según el tipo
+            const iconContainer = tooltip.querySelector('.error-tooltip-icon');
+            const iconSvg = iconContainer ? iconContainer.querySelector('svg') : null;
+            
+            let iconPath = '';
+            switch(tipo) {
+                case 'success':
+                    iconPath = 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z';
+                    break;
+                case 'warning':
+                    iconPath = 'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z';
+                    break;
+                case 'info':
+                    iconPath = 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z';
+                    break;
+                default: // error
+                    iconPath = 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z';
+            }
+            
+            if (iconSvg) {
+                const pathElement = iconSvg.querySelector('path');
+                if (pathElement) {
+                    pathElement.setAttribute('d', iconPath);
+                }
+            }
+            
+            // Posicionar el tooltip
+            const campoRect = campo.getBoundingClientRect();
+            
+            // Calcular posición (centrado horizontalmente, arriba del campo)
+            const left = campoRect.left + (campoRect.width / 2);
+            const top = campoRect.top - 10; // 10px arriba del campo
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            
+            // Limpiar timeout anterior
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+            }
+            
+            // Mostrar el tooltip
+            tooltip.style.display = 'block';
+            tooltip.offsetHeight; // Force reflow
+            tooltip.style.opacity = '1';
+            tooltip.style.scale = '1';
+            tooltipVisible = true;
+            
+            // Auto-hide después de 10 segundos
+            tooltipTimeout = setTimeout(() => {
+                ocultarErrorTooltip();
+            }, 10000);
+            
+            // Agregar event listeners para ocultar tooltip después de un delay
+            setTimeout(() => {
+                campo.addEventListener('focus', ocultarErrorTooltip, { once: true });
+                campo.addEventListener('input', ocultarErrorTooltip, { once: true });
+            }, 2000); // Delay de 2 segundos antes de agregar listeners
+        }
+
+        function ocultarErrorTooltip() {
+            if (!tooltipVisible) return; // Solo ocultar si está visible
+            
+            const tooltip = document.getElementById('error-tooltip');
+            if (!tooltip) return;
+            
+            tooltip.style.transition = 'all 0.3s ease-in';
+            tooltip.style.opacity = '0';
+            tooltip.style.scale = '0.9';
+            
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+                tooltipVisible = false;
+            }, 300);
+        }
+
+        // Funciones de prueba
+        function probarTerminosNoMarcados() {
+            const campo = document.getElementById('terms_conditions');
+            campo.checked = false;
+            campo.focus();
+            mostrarErrorTooltip(campo, 'Debe aceptar los términos y condiciones para continuar', 'error');
+        }
+
+        function probarTerminosMarcados() {
+            const campo = document.getElementById('terms_conditions');
+            campo.checked = true;
+            campo.focus();
+            mostrarErrorTooltip(campo, '¡Términos y condiciones aceptados correctamente!', 'success');
+        }
+
+        function probarEnvioFormulario() {
+            // Simular envío del formulario
+            const formulario = document.getElementById('testForm');
+            const nombre = document.getElementById('nombre').value.trim();
+            const terminos = document.getElementById('terms_conditions').checked;
+            
+            if (!nombre) {
+                const campo = document.getElementById('nombre');
+                mostrarErrorTooltip(campo, 'El nombre es requerido', 'error');
+                return;
+            }
+            
+            if (!terminos) {
+                const campo = document.getElementById('terms_conditions');
+                mostrarErrorTooltip(campo, 'Debe aceptar los términos y condiciones para continuar', 'error');
+                return;
+            }
+            
+            // Si todo está bien
+            alert('✅ Formulario válido! Todos los campos están correctos.');
+        }
+
+        // Interceptar envío del formulario
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            probarEnvioFormulario();
+        });
+
+        console.log('✅ Test de términos y condiciones cargado');
+    </script>
+</body>
+</html>

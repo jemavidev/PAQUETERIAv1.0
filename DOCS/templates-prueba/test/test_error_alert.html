@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Error Alert - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+            🧪 Test Componente Error Alert
+        </h1>
+
+        <!-- Test 1: Diferentes Tipos -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">1. Diferentes Tipos de Alertas</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Error -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Error</h3>
+                    {% include 'components/error_alert.html' with 
+                        title="Error del Sistema" 
+                        message="Error crítico del sistema. Contacte al administrador." 
+                        type="error" 
+                    %}
+                </div>
+
+                <!-- Warning -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Advertencia</h3>
+                    {% include 'components/error_alert.html' with 
+                        title="Advertencia" 
+                        message="El paquete ya fue anunciado anteriormente." 
+                        type="warning" 
+                    %}
+                </div>
+
+                <!-- Info -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Información</h3>
+                    {% include 'components/error_alert.html' with 
+                        title="Información" 
+                        message="El sistema se reiniciará en 5 minutos." 
+                        type="info" 
+                    %}
+                </div>
+
+                <!-- Success -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Éxito</h3>
+                    {% include 'components/error_alert.html' with 
+                        title="Éxito" 
+                        message="El paquete se anunció correctamente." 
+                        type="success" 
+                    %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 2: Auto-Cierre -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">2. Auto-Cierre (3 segundos)</h2>
+            {% include 'components/error_alert.html' with 
+                title="Mensaje Temporal" 
+                message="Este mensaje se cerrará automáticamente en 3 segundos." 
+                type="info" 
+                auto_close=true 
+                close_delay=3000 
+            %}
+        </div>
+
+        <!-- Test 3: Control Dinámico -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">3. Control Dinámico</h2>
+            <div x-data="dynamicError()" class="space-y-4">
+                <div class="flex flex-wrap gap-2">
+                    <button @click="showError('Error', 'Este es un error dinámico', 'error')" 
+                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm">
+                        Mostrar Error
+                    </button>
+                    <button @click="showError('Advertencia', 'Esta es una advertencia', 'warning')" 
+                            class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+                        Mostrar Advertencia
+                    </button>
+                    <button @click="showError('Información', 'Esta es información', 'info')" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                        Mostrar Info
+                    </button>
+                    <button @click="showError('Éxito', 'Operación exitosa', 'success')" 
+                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm">
+                        Mostrar Éxito
+                    </button>
+                    <button @click="hideError()" 
+                            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">
+                        Ocultar
+                    </button>
+                </div>
+
+                <!-- Error Dinámico -->
+                <div x-show="error.show" x-transition>
+                    <div x-data="errorAlert({
+                        title: error.title,
+                        message: error.message,
+                        type: error.type,
+                        show: error.show
+                    })">
+                        {% include 'components/error_alert.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 4: Formulario con Validación -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">4. Formulario con Validación</h2>
+            <div x-data="packageForm()" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+                <form @submit.prevent="submitForm()">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Guía
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="guideNumber"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el número de guía"
+                        >
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre del Cliente
+                        </label>
+                        <input 
+                            type="text" 
+                            x-model="customerName"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Ingrese el nombre del cliente"
+                        >
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            :disabled="loading">
+                        <span x-show="!loading">Anunciar Paquete</span>
+                        <span x-show="loading">Procesando...</span>
+                    </button>
+                </form>
+
+                <!-- Error del Formulario -->
+                <div x-show="error.show" x-transition class="mt-4">
+                    <div x-data="errorAlert({
+                        title: error.title,
+                        message: error.message,
+                        type: error.type,
+                        show: error.show
+                    })">
+                        {% include 'components/error_alert.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 5: Callback Personalizado -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">5. Callback Personalizado</h2>
+            <div x-data="callbackTest()">
+                <button @click="showCallbackError()" 
+                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Mostrar Error con Callback
+                </button>
+                
+                <div x-show="error.show" x-transition class="mt-4">
+                    <div x-data="errorAlert({
+                        title: error.title,
+                        message: error.message,
+                        type: error.type,
+                        show: error.show,
+                        onClose: 'handleCallback()'
+                    })">
+                        {% include 'components/error_alert.html' %}
+                    </div>
+                </div>
+                
+                <div x-show="callbackExecuted" class="mt-2 text-green-600 text-sm">
+                    ✅ Callback ejecutado correctamente
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 6: Eventos -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">6. Eventos</h2>
+            <div x-data="eventTest()" @error-alert-closed="handleErrorClosed">
+                <button @click="showEventError()" 
+                        class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
+                    Mostrar Error con Eventos
+                </button>
+                
+                <div x-show="error.show" x-transition class="mt-4">
+                    <div x-data="errorAlert({
+                        title: error.title,
+                        message: error.message,
+                        type: error.type,
+                        show: error.show
+                    })">
+                        {% include 'components/error_alert.html' %}
+                    </div>
+                </div>
+                
+                <div x-show="eventLog.length > 0" class="mt-4">
+                    <h3 class="text-sm font-medium text-gray-600 mb-2">Log de Eventos:</h3>
+                    <div class="bg-gray-100 p-3 rounded text-xs">
+                        <div x-for="log in eventLog" x-text="log" class="mb-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            // Test 3: Control Dinámico
+            Alpine.data('dynamicError', () => ({
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                
+                showError(title, message, type) {
+                    this.error = { show: true, title, message, type };
+                },
+                
+                hideError() {
+                    this.error.show = false;
+                }
+            }));
+
+            // Test 4: Formulario con Validación
+            Alpine.data('packageForm', () => ({
+                guideNumber: '',
+                customerName: '',
+                loading: false,
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                
+                async submitForm() {
+                    this.loading = true;
+                    this.error.show = false;
+                    
+                    try {
+                        // Simular validación
+                        if (!this.guideNumber) {
+                            throw new Error('El número de guía es requerido');
+                        }
+                        
+                        if (this.guideNumber.length < 10) {
+                            throw new Error('El número de guía debe tener al menos 10 caracteres');
+                        }
+                        
+                        if (!this.customerName) {
+                            throw new Error('El nombre del cliente es requerido');
+                        }
+                        
+                        // Simular envío
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Mostrar éxito
+                        this.error = {
+                            show: true,
+                            title: 'Éxito',
+                            message: 'El paquete se anunció correctamente.',
+                            type: 'success'
+                        };
+                        
+                        this.guideNumber = '';
+                        this.customerName = '';
+                        
+                    } catch (error) {
+                        this.error = {
+                            show: true,
+                            title: 'Error de Validación',
+                            message: error.message,
+                            type: 'error'
+                        };
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }));
+
+            // Test 5: Callback Personalizado
+            Alpine.data('callbackTest', () => ({
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                callbackExecuted: false,
+                
+                showCallbackError() {
+                    this.error = {
+                        show: true,
+                        title: 'Error con Callback',
+                        message: 'Este error ejecutará un callback al cerrarse.',
+                        type: 'error'
+                    };
+                    this.callbackExecuted = false;
+                },
+                
+                handleCallback() {
+                    this.callbackExecuted = true;
+                    console.log('Callback ejecutado!');
+                }
+            }));
+
+            // Test 6: Eventos
+            Alpine.data('eventTest', () => ({
+                error: {
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'error'
+                },
+                eventLog: [],
+                
+                showEventError() {
+                    this.error = {
+                        show: true,
+                        title: 'Error con Eventos',
+                        message: 'Este error emite eventos al cerrarse.',
+                        type: 'error'
+                    };
+                },
+                
+                handleErrorClosed(event) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    this.eventLog.unshift(`[${timestamp}] Error cerrado: ${event.detail.title}`);
+                    console.log('Evento recibido:', event.detail);
+                }
+            }));
+
+            // Función global para callback
+            window.handleCallback = function() {
+                console.log('Callback global ejecutado!');
+            };
+        });
+    </script>
+</body>
+</html>

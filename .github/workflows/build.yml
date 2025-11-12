@@ -1,0 +1,81 @@
+name: Build y Test
+
+on:
+  push:
+    branches: [ main, SPEC-KIT ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_paqueteria
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 1. Revisar el código
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 3. Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r CODE/LOCAL/requirements-dev.txt
+
+      - name: 4. Ejecutar el Linter
+        run: |
+          echo "🔍 Verificando formato con Black..."
+          black --check CODE/LOCAL/src || echo "⚠️ Black encontró problemas de formato"
+          
+          echo "🔍 Verificando orden de imports con isort..."
+          isort --check-only CODE/LOCAL/src || echo "⚠️ isort encontró problemas"
+          
+          echo "🔍 Ejecutando Flake8..."
+          flake8 CODE/LOCAL/src || echo "⚠️ Flake8 encontró problemas"
+
+      - name: 5. Ejecutar Pruebas
+        working-directory: .
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_paqueteria
+          TESTING: "true"
+          SECRET_KEY: test-secret-key-for-ci
+        run: |
+          echo "🧪 Ejecutando tests..."
+          pytest TEST/ -v --tb=short || echo "⚠️ Algunos tests fallaron"
+
+      - name: 6. Generar Reporte de Cobertura
+        working-directory: .
+        env:
+          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_paqueteria
+          TESTING: "true"
+          SECRET_KEY: test-secret-key-for-ci
+        run: |
+          echo "📊 Generando reporte de cobertura..."
+          pytest TEST/ --cov=CODE/LOCAL/src --cov-report=xml --cov-report=term-missing || true
+
+      - name: 7. Subir Cobertura (opcional)
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+

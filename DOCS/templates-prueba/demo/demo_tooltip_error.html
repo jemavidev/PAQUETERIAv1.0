@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Tooltip de Error - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/error-components.css">
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Demo Tooltip de Error</h1>
+            <p class="text-gray-600">Sistema de tooltip elegante para formularios</p>
+        </div>
+
+        <!-- Formulario de Demostración -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Formulario de Prueba</h2>
+            
+            <form id="demoForm" class="space-y-6">
+                <!-- Campo de Nombre -->
+                <div class="relative">
+                    <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre Completo *
+                    </label>
+                    <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        placeholder="Ingrese su nombre completo"
+                        required
+                    >
+                </div>
+
+                <!-- Campo de Email -->
+                <div class="relative">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Correo Electrónico *
+                    </label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        placeholder="ejemplo@correo.com"
+                        required
+                    >
+                </div>
+
+                <!-- Campo de Teléfono -->
+                <div class="relative">
+                    <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">
+                        Teléfono *
+                    </label>
+                    <input
+                        type="tel"
+                        id="telefono"
+                        name="telefono"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        placeholder="300 123 4567"
+                        pattern="[0-9]{10}"
+                        required
+                    >
+                </div>
+
+                <!-- Campo de Dirección -->
+                <div class="relative">
+                    <label for="direccion" class="block text-sm font-medium text-gray-700 mb-2">
+                        Dirección
+                    </label>
+                    <textarea
+                        id="direccion"
+                        name="direccion"
+                        rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        placeholder="Ingrese su dirección completa"
+                    ></textarea>
+                </div>
+
+                <!-- Botones de Prueba -->
+                <div class="flex flex-wrap gap-4">
+                    <button
+                        type="button"
+                        onclick="probarCampoRequerido()"
+                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    >
+                        Probar Campo Requerido
+                    </button>
+                    
+                    <button
+                        type="button"
+                        onclick="probarEmailInvalido()"
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    >
+                        Probar Email Inválido
+                    </button>
+                    
+                    <button
+                        type="button"
+                        onclick="probarPatronInvalido()"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    >
+                        Probar Patrón Inválido
+                    </button>
+                    
+                    <button
+                        type="button"
+                        onclick="probarExito()"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    >
+                        Probar Éxito
+                    </button>
+                </div>
+
+                <!-- Botón de Envío -->
+                <div class="pt-4">
+                    <button
+                        type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        Enviar Formulario
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3">Instrucciones de Prueba</h3>
+            <ul class="space-y-2 text-blue-700">
+                <li>• <strong>Probar Campo Requerido:</strong> Vacía el campo de nombre y envía el formulario</li>
+                <li>• <strong>Probar Email Inválido:</strong> Ingresa un email sin formato válido</li>
+                <li>• <strong>Probar Patrón Inválido:</strong> Ingresa un teléfono con menos de 10 dígitos</li>
+                <li>• <strong>Probar Éxito:</strong> Muestra un mensaje de éxito en el campo de dirección</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Incluir el sistema de tooltip de error -->
+    {% include 'components/error_tooltip.html' %}
+
+    <script>
+        // Funciones de prueba
+        function probarCampoRequerido() {
+            const campo = document.getElementById('nombre');
+            campo.value = '';
+            campo.focus();
+            mostrarErrorTooltip(campo, 'Este campo es obligatorio. Por favor, complételo.');
+        }
+
+        function probarEmailInvalido() {
+            const campo = document.getElementById('email');
+            campo.value = 'email-invalido';
+            campo.focus();
+            mostrarErrorTooltip(campo, 'Por favor, ingrese un email válido.');
+        }
+
+        function probarPatronInvalido() {
+            const campo = document.getElementById('telefono');
+            campo.value = '123';
+            campo.focus();
+            mostrarErrorTooltip(campo, 'El teléfono debe tener 10 dígitos.');
+        }
+
+        function probarExito() {
+            const campo = document.getElementById('direccion');
+            campo.focus();
+            mostrarExitoTooltip(campo, '¡Campo completado correctamente!');
+        }
+
+        // Interceptar envío del formulario
+        document.getElementById('demoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validar formulario
+            const nombre = document.getElementById('nombre');
+            const email = document.getElementById('email');
+            const telefono = document.getElementById('telefono');
+            
+            let hayErrores = false;
+            
+            if (!nombre.value.trim()) {
+                mostrarErrorTooltip(nombre, 'El nombre es obligatorio.');
+                hayErrores = true;
+            }
+            
+            if (!email.value.trim()) {
+                mostrarErrorTooltip(email, 'El email es obligatorio.');
+                hayErrores = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+                mostrarErrorTooltip(email, 'Por favor, ingrese un email válido.');
+                hayErrores = true;
+            }
+            
+            if (!telefono.value.trim()) {
+                mostrarErrorTooltip(telefono, 'El teléfono es obligatorio.');
+                hayErrores = true;
+            } else if (!/^[0-9]{10}$/.test(telefono.value)) {
+                mostrarErrorTooltip(telefono, 'El teléfono debe tener 10 dígitos.');
+                hayErrores = true;
+            }
+            
+            if (!hayErrores) {
+                alert('✅ Formulario válido! Datos enviados correctamente.');
+            }
+        });
+
+        console.log('✅ Demo de tooltip de error cargado');
+    </script>
+</body>
+</html>

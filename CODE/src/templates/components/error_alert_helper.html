@@ -1,0 +1,114 @@
+<!-- ========================================
+     HELPER PARA ERROR ALERT
+     PAQUETEX v4.0
+     ======================================== -->
+
+<!-- Helper para mostrar errores rápidamente -->
+{# 
+Uso:
+{% include 'components/error_alert_helper.html' with 
+    error_type="error" 
+    error_title="Título del Error" 
+    error_message="Mensaje del error" 
+%}
+
+Tipos disponibles: error, warning, info, success
+#}
+
+{% if error_type %}
+    {% set alert_title = error_title|default("Error del Sistema") %}
+    {% set alert_message = error_message|default("Error del sistema. Por favor, comuníquese con el administrador.") %}
+    {% set alert_type = error_type %}
+    {% set alert_show = error_show|default(true) %}
+    {% set alert_auto_close = error_auto_close|default(false) %}
+    {% set alert_close_delay = error_close_delay|default(5000) %}
+    {% set alert_button_text = error_button_text|default("Cerrar") %}
+    {% set alert_on_close = error_on_close|default("") %}
+    
+    {% include 'components/error_alert.html' %}
+{% endif %}
+
+{# Helper para errores de validación #}
+{% if validation_errors %}
+    {% for field, errors in validation_errors.items %}
+        {% for error in errors %}
+            {% set alert_title = "Error de Validación" %}
+            {% set alert_message = error %}
+            {% set alert_type = "error" %}
+            {% set alert_show = true %}
+            {% set alert_auto_close = true %}
+            {% set alert_close_delay = 5000 %}
+            {% set alert_button_text = "Cerrar" %}
+            {% set alert_on_close = "" %}
+            
+            {% include 'components/error_alert.html' %}
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+
+{# Helper para mensajes flash del sistema #}
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            {% set alert_title = "Error" %}
+            {% set alert_message = message %}
+            {% set alert_type = "error" %}
+            {% set alert_show = true %}
+            {% set alert_auto_close = true %}
+            {% set alert_close_delay = 5000 %}
+            {% set alert_button_text = "Cerrar" %}
+            {% set alert_on_close = "" %}
+            
+            {% include 'components/error_alert.html' %}
+        {% elif message.tags == 'warning' %}
+            {% set alert_title = "Advertencia" %}
+            {% set alert_message = message %}
+            {% set alert_type = "warning" %}
+            {% set alert_show = true %}
+            {% set alert_auto_close = true %}
+            {% set alert_close_delay = 5000 %}
+            {% set alert_button_text = "Cerrar" %}
+            {% set alert_on_close = "" %}
+            
+            {% include 'components/error_alert.html' %}
+        {% elif message.tags == 'info' %}
+            {% set alert_title = "Información" %}
+            {% set alert_message = message %}
+            {% set alert_type = "info" %}
+            {% set alert_show = true %}
+            {% set alert_auto_close = true %}
+            {% set alert_close_delay = 3000 %}
+            {% set alert_button_text = "Cerrar" %}
+            {% set alert_on_close = "" %}
+            
+            {% include 'components/error_alert.html' %}
+        {% elif message.tags == 'success' %}
+            {% set alert_title = "Éxito" %}
+            {% set alert_message = message %}
+            {% set alert_type = "success" %}
+            {% set alert_show = true %}
+            {% set alert_auto_close = true %}
+            {% set alert_close_delay = 3000 %}
+            {% set alert_button_text = "Cerrar" %}
+            {% set alert_on_close = "" %}
+            
+            {% include 'components/error_alert.html' %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{# Helper para mensajes flash del backend (nuevo sistema) #}
+{% if flash_messages %}
+    {% for flash_msg in flash_messages %}
+        {% set alert_title = flash_msg.title|default("Mensaje del Sistema") %}
+        {% set alert_message = flash_msg.message %}
+        {% set alert_type = flash_msg.type|default("info") %}
+        {% set alert_show = true %}
+        {% set alert_auto_close = flash_msg.auto_close|default(true) %}
+        {% set alert_close_delay = flash_msg.close_delay|default(5000) %}
+        {% set alert_button_text = flash_msg.button_text|default("Cerrar") %}
+        {% set alert_on_close = flash_msg.on_close|default("") %}
+        
+        {% include 'components/error_alert.html' %}
+    {% endfor %}
+{% endif %}

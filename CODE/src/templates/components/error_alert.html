@@ -1,0 +1,271 @@
+<!-- ========================================
+     COMPONENTE DE ALERTA DE ERROR REUTILIZABLE
+     PAQUETEX v4.0
+     ======================================== -->
+
+<div 
+    x-data="errorAlert({
+        title: '{{ title or "Error del Sistema" }}',
+        message: '{{ message or "Error del sistema. Por favor, comuníquese con el administrador." }}',
+        type: '{{ type or "error" }}',
+        show: {{ show|default(true)|lower }},
+        autoClose: {{ auto_close|default(false)|lower }},
+        closeDelay: {{ close_delay|default(5000) }},
+        buttonText: '{{ button_text or "Cerrar" }}',
+        onClose: '{{ on_close or "" }}'
+    })"
+    x-show="show" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform scale-95"
+    x-transition:enter-end="opacity-100 transform scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform scale-100"
+    x-transition:leave-end="opacity-0 transform scale-95"
+    class="error-alert-container"
+    :class="alertTypeClass"
+    @error-closed="handleClose"
+>
+    <!-- Iconos de Advertencia -->
+    <div class="error-alert-icons">
+        <div class="error-alert-icon-small">
+            <svg class="w-4 h-4" :class="smallIconClass" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div class="error-alert-icon-large">
+            <svg class="w-8 h-8" :class="largeIconClass" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido de la Alerta -->
+    <div class="error-alert-content">
+        <h3 class="error-alert-title" x-text="title"></h3>
+        <p class="error-alert-message" x-text="message"></p>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div class="error-alert-actions">
+        <button 
+            type="button" 
+            class="error-alert-close-btn"
+            @click="close()"
+            x-text="buttonText"
+        >
+        </button>
+    </div>
+</div>
+
+<!-- Estilos del Componente -->
+<style>
+.error-alert-container {
+    @apply bg-white border rounded-lg p-6 shadow-lg max-w-md mx-auto relative;
+    border-left: 4px solid #ef4444;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.error-alert-icons {
+    @apply flex flex-col items-center mb-4;
+}
+
+.error-alert-icon-small {
+    @apply w-6 h-6 rounded-full flex items-center justify-center mb-2;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.error-alert-icon-large {
+    @apply w-12 h-12 rounded-full flex items-center justify-center;
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-alert-content {
+    @apply text-center mb-6;
+}
+
+.error-alert-title {
+    @apply text-lg font-bold text-gray-900 mb-2;
+    font-weight: 700;
+}
+
+.error-alert-message {
+    @apply text-sm text-gray-700 leading-relaxed;
+    line-height: 1.6;
+}
+
+.error-alert-actions {
+    @apply flex justify-center;
+}
+
+.error-alert-close-btn {
+    @apply text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.error-alert-close-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Variantes por Tipo */
+.error-alert-container.error-alert-error {
+    @apply border-red-300;
+    border-left-color: #ef4444;
+}
+
+.error-alert-container.error-alert-warning {
+    @apply border-yellow-300;
+    border-left-color: #f59e0b;
+}
+
+.error-alert-container.error-alert-info {
+    @apply border-blue-300;
+    border-left-color: #3b82f6;
+}
+
+.error-alert-container.error-alert-success {
+    @apply border-green-300;
+    border-left-color: #10b981;
+}
+
+/* Iconos por Tipo */
+.error-alert-container.error-alert-warning .error-alert-icon-small {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-alert-container.error-alert-info .error-alert-icon-small {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-alert-container.error-alert-success .error-alert-icon-small {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.error-alert-container.error-alert-warning .error-alert-icon-large {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.error-alert-container.error-alert-info .error-alert-icon-large {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.error-alert-container.error-alert-success .error-alert-icon-large {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .error-alert-container {
+        @apply mx-4 p-4;
+        max-width: calc(100vw - 2rem);
+    }
+    
+    .error-alert-title {
+        @apply text-base;
+    }
+    
+    .error-alert-message {
+        @apply text-xs;
+    }
+    
+    .error-alert-close-btn {
+        @apply py-2 px-4 text-sm;
+    }
+}
+</style>
+
+<!-- JavaScript del Componente -->
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('errorAlert', (config = {}) => ({
+        // Configuración por defecto
+        title: config.title || 'Error del Sistema',
+        message: config.message || 'Error del sistema. Por favor, comuníquese con el administrador.',
+        type: config.type || 'error',
+        show: config.show !== false,
+        autoClose: config.autoClose || false,
+        closeDelay: config.closeDelay || 5000,
+        buttonText: config.buttonText || 'Cerrar',
+        onClose: config.onClose || '',
+        
+        // Clases CSS dinámicas
+        get alertTypeClass() {
+            return `error-alert-${this.type}`;
+        },
+        
+        get smallIconClass() {
+            const colors = {
+                error: 'text-red-300',
+                warning: 'text-yellow-300',
+                info: 'text-blue-300',
+                success: 'text-green-300'
+            };
+            return colors[this.type] || colors.error;
+        },
+        
+        get largeIconClass() {
+            const colors = {
+                error: 'text-yellow-500',
+                warning: 'text-yellow-500',
+                info: 'text-blue-500',
+                success: 'text-green-500'
+            };
+            return colors[this.type] || colors.error;
+        },
+        
+        // Métodos
+        close() {
+            this.show = false;
+            
+            // Ejecutar callback personalizado si existe
+            if (this.onClose) {
+                try {
+                    // Si es una función, ejecutarla
+                    if (typeof this.onClose === 'function') {
+                        this.onClose();
+                    } else if (typeof this.onClose === 'string') {
+                        // Si es una cadena, evaluarla como código
+                        eval(this.onClose);
+                    }
+                } catch (error) {
+                    console.warn('Error ejecutando callback onClose:', error);
+                }
+            }
+            
+            // Emitir evento personalizado
+            this.$dispatch('error-alert-closed', {
+                type: this.type,
+                title: this.title,
+                message: this.message
+            });
+        },
+        
+        // Método para mostrar alerta
+        showAlert(title, message, type = 'error') {
+            this.title = title;
+            this.message = message;
+            this.type = type;
+            this.show = true;
+            
+            // Auto-cerrar si está habilitado
+            if (this.autoClose) {
+                setTimeout(() => {
+                    this.close();
+                }, this.closeDelay);
+            }
+        },
+        
+        // Inicialización
+        init() {
+            // Auto-cerrar si está habilitado
+            if (this.autoClose && this.show) {
+                setTimeout(() => {
+                    this.close();
+                }, this.closeDelay);
+            }
+        }
+    }));
+});
+</script>

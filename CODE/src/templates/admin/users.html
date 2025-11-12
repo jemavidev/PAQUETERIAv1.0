@@ -1,0 +1,954 @@
+{% extends "base/base.html" %}
+
+{% block title %}Gestión de Usuarios - PAQUETEX v3.1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-light text-gray-900">Gestión de Usuarios</h1>
+            <p class="mt-2 text-sm sm:text-base text-gray-500">Administra todos los usuarios del sistema</p>
+        </div>
+
+        <!-- Navegación -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6 sm:mb-8">
+            <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
+                <a href="/profile" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Perfil
+                </a>
+                <a href="/settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Configuración
+                </a>
+                <a href="/profile/change-password" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Seguridad
+                </a>
+                <a href="/admin/users" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm">
+                    Gestión de Usuarios
+                </a>
+            </nav>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-lg">
+            <div class="px-4 sm:px-6 py-4 sm:py-6">
+                
+                <!-- Lista de Usuarios -->
+                <div>
+                    <!-- Header con título, búsqueda y botón -->
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
+                        <!-- Título -->
+                        <h2 class="text-lg font-light text-gray-900">Lista de Usuarios</h2>
+                        
+                        <!-- Búsqueda y Botón en la misma línea -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+                            <!-- Barra de Búsqueda -->
+                            <div class="relative w-full sm:w-80">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <input type="text" 
+                                       id="userSearchInput" 
+                                       placeholder="Buscar..." 
+                                       class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-papyrus-blue focus:border-papyrus-blue sm:text-sm"
+                                       onkeyup="searchUsers()">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <button type="button" 
+                                            onclick="clearSearch()" 
+                                            class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            title="Limpiar búsqueda">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Botón Crear Usuario -->
+                            <button onclick="openCreateUserModal()" class="bg-papyrus-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 whitespace-nowrap">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Crear Usuario</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensaje de búsqueda -->
+                    <div id="searchMessage" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-sm text-blue-800" id="searchMessageText"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabla de Usuarios -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="usersTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                    <th class="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                                    <th class="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for user_item in users %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 bg-papyrus-blue rounded-full flex items-center justify-center">
+                                                <span class="text-white font-semibold text-sm">{{ user_item.username[0] if user_item.username else 'U' }}</span>
+                                            </div>
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">{{ user_item.full_name }}</div>
+                                                <div class="text-sm text-gray-500">{{ user_item.username }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if user_item.role.value == 'ADMIN' %}bg-red-100 text-red-800
+                                            {% elif user_item.role.value == 'OPERADOR' %}bg-blue-100 text-blue-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {% if user_item.role.value == 'ADMIN' %}Administrador
+                                            {% elif user_item.role.value == 'OPERADOR' %}Operador
+                                            {% else %}Usuario{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user_item.phone or 'No especificado' }}</td>
+                                    <td class="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user_item.email }}</td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if user_item.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ 'Activo' if user_item.is_active else 'Inactivo' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <div class="flex items-center space-x-1">
+                                            <!-- Botón Editar - Solo para Admin y Operator -->
+                                            {% if user_item.role.value in ['ADMIN', 'OPERADOR'] %}
+                                            <button onclick="editUser('{{ user_item.id }}', '{{ user_item.username }}', '{{ user_item.email }}', '{{ user_item.full_name }}', '{{ user_item.phone or '' }}', '{{ user_item.role.value }}', {{ 'true' if user_item.is_active else 'false' }})"
+                                                    class="bg-blue-100 text-blue-800 hover:bg-blue-200 p-1.5 rounded transition-colors" 
+                                                    title="Editar Usuario">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </button>
+                                            {% else %}
+                                            <!-- Botón deshabilitado para usuarios básicos -->
+                                            <button class="bg-gray-100 text-gray-400 p-1.5 rounded cursor-not-allowed opacity-50" 
+                                                    title="Edición no disponible para usuarios básicos" disabled>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Botón Restablecer Contraseña -->
+                                            {% if user_item.role.value in ['ADMIN', 'OPERADOR'] %}
+                                            <button onclick="resetPassword('{{ user_item.id }}', '{{ user_item.username }}')"
+                                                    class="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 p-1.5 rounded transition-colors" 
+                                                    title="Restablecer Contraseña">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                                </svg>
+                                            </button>
+                                            {% else %}
+                                            <!-- Botón deshabilitado para usuarios básicos -->
+                                            <button class="bg-gray-100 text-gray-400 p-1.5 rounded cursor-not-allowed opacity-50" 
+                                                    title="Reset de contraseña no disponible para usuarios básicos" disabled>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z"></path>
+                                                </svg>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Botón Activar/Desactivar -->
+                                            {% if not user_item.is_active %}
+                                            <button onclick="activateUser('{{ user_item.id }}', '{{ user_item.username }}')" 
+                                                    class="bg-green-100 text-green-800 hover:bg-green-200 p-1.5 rounded transition-colors" 
+                                                    title="Activar Usuario">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </button>
+                                            {% else %}
+                                            <button onclick="deactivateUser('{{ user_item.id }}', '{{ user_item.username }}')" 
+                                                    class="bg-orange-100 text-orange-800 hover:bg-orange-200 p-1.5 rounded transition-colors" 
+                                                    title="Desactivar Usuario">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Botón Eliminar - Solo para administradores -->
+                                            {% if user.role.value == 'ADMIN' %}
+                                            <button onclick="deleteUser('{{ user_item.id }}', '{{ user_item.username }}')"
+                                                    class="bg-red-100 text-red-800 hover:bg-red-200 p-1.5 rounded transition-colors"
+                                                    title="Eliminar Usuario">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                            {% else %}
+                                            <!-- Espacio vacío para mantener el layout -->
+                                            <div class="w-9 h-9"></div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación -->
+                    {% if pagination and pagination.total_pages > 1 %}
+                    <div class="mt-6 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+                        <div class="flex flex-1 justify-between sm:hidden">
+                            {% if pagination.has_prev %}
+                            <a href="?page={{ pagination.page - 1 }}&limit={{ pagination.limit }}" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Anterior
+                            </a>
+                            {% else %}
+                            <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                Anterior
+                            </span>
+                            {% endif %}
+                            {% if pagination.has_next %}
+                            <a href="?page={{ pagination.page + 1 }}&limit={{ pagination.limit }}" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Siguiente
+                            </a>
+                            {% else %}
+                            <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                Siguiente
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Mostrando
+                                    <span class="font-medium">{{ ((pagination.page - 1) * pagination.limit) + 1 }}</span>
+                                    a
+                                    <span class="font-medium">{{ [pagination.page * pagination.limit, pagination.total] | min }}</span>
+                                    de
+                                    <span class="font-medium">{{ pagination.total }}</span>
+                                    resultados
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                    {% if pagination.has_prev %}
+                                    <a href="?page={{ pagination.page - 1 }}&limit={{ pagination.limit }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">Anterior</span>
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                    {% else %}
+                                    <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 bg-gray-50 cursor-not-allowed">
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% for page_num in range(1, pagination.total_pages + 1) %}
+                                        {% if page_num == pagination.page %}
+                                        <span aria-current="page" class="relative z-10 inline-flex items-center bg-papyrus-blue px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-papyrus-blue">
+                                            {{ page_num }}
+                                        </span>
+                                        {% elif page_num <= 3 or page_num > pagination.total_pages - 3 or (page_num >= pagination.page - 1 and page_num <= pagination.page + 1) %}
+                                        <a href="?page={{ page_num }}&limit={{ pagination.limit }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                            {{ page_num }}
+                                        </a>
+                                        {% elif page_num == 4 and pagination.page > 5 %}
+                                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                            ...
+                                        </span>
+                                        {% elif page_num == pagination.total_pages - 3 and pagination.page < pagination.total_pages - 4 %}
+                                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                            ...
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if pagination.has_next %}
+                                    <a href="?page={{ pagination.page + 1 }}&limit={{ pagination.limit }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span class="sr-only">Siguiente</span>
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                    {% else %}
+                                    <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 bg-gray-50 cursor-not-allowed">
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    {% endif %}
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Modal de Crear Usuario -->
+<div id="createUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+        <div class="text-center mb-6">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Crear Nuevo Usuario</h3>
+            <p class="text-sm text-gray-600">Completa la información para crear un nuevo usuario</p>
+        </div>
+        
+        <form id="createUserForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Nombre de Usuario -->
+                <div>
+                    <label for="create_username" class="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario *</label>
+                    <input type="text" id="create_username" name="username" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el nombre de usuario">
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label for="create_email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" id="create_email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el email">
+                </div>
+            </div>
+            
+            <!-- Nombre Completo -->
+            <div>
+                <label for="create_full_name" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                <input type="text" id="create_full_name" name="full_name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                       placeholder="Ingresa el nombre completo">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Teléfono -->
+                <div>
+                    <label for="create_phone" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="tel" id="create_phone" name="phone"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el teléfono">
+                </div>
+                
+                <!-- Rol -->
+                <div>
+                    <label for="create_role" class="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                    <select id="create_role" name="role" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                            onchange="togglePasswordField()">
+                        <option value="OPERADOR" selected>Operador</option>
+                        <option value="USUARIO">Usuario</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Operador: acceso al dashboard. Usuario: solo notificaciones. Admin: control total.</p>
+                </div>
+            </div>
+            
+            <!-- Contraseña -->
+            <div id="passwordField">
+                <label for="create_password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña *</label>
+                <input type="password" id="create_password" name="password" required minlength="8"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                       placeholder="Ingresa la contraseña (mínimo 8 caracteres)">
+                <p class="mt-1 text-xs text-gray-500">Mínimo 8 caracteres</p>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex space-x-3 pt-4">
+                <button type="button" onclick="closeCreateUserModal()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Crear Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Editar Usuario -->
+<div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+        <div class="text-center mb-6">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Editar Usuario</h3>
+            <p class="text-sm text-gray-600">Modifica la información del usuario</p>
+        </div>
+        
+        <form id="editUserForm" class="space-y-4">
+            <input type="hidden" id="edit_user_id" name="user_id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Nombre de Usuario -->
+                <div>
+                    <label for="edit_username" class="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario *</label>
+                    <input type="text" id="edit_username" name="username" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el nombre de usuario">
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" id="edit_email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el email">
+                </div>
+            </div>
+            
+            <!-- Nombre Completo -->
+            <div>
+                <label for="edit_full_name" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                <input type="text" id="edit_full_name" name="full_name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                       placeholder="Ingresa el nombre completo">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Teléfono -->
+                <div>
+                    <label for="edit_phone" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="tel" id="edit_phone" name="phone"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                           placeholder="Ingresa el teléfono">
+                </div>
+                
+                <!-- Rol -->
+                <div>
+                    <label for="edit_role" class="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                    <select id="edit_role" name="role" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-500 bg-white transition-colors">
+                        <option value="OPERADOR">Operador</option>
+                        <option value="USUARIO">Usuario</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Se pueden asignar todos los roles del sistema</p>
+                </div>
+            </div>
+            
+            <!-- Estado -->
+            <div>
+                <label class="flex items-center">
+                    <input type="checkbox" id="edit_is_active" name="is_active" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <span class="ml-2 text-sm text-gray-700">Usuario Activo</span>
+                </label>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex space-x-3 pt-4">
+                <button type="button" onclick="closeEditUserModal()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-md shadow-2xl rounded-2xl bg-white">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2" id="modalTitle">Confirmar Acción</h3>
+            <p class="text-sm text-gray-600 mb-6" id="modalMessage">¿Estás seguro de que quieres realizar esta acción?</p>
+            <div class="flex space-x-3">
+                <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirmButton" class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Funciones para el modal de crear usuario
+function openCreateUserModal() {
+    document.getElementById('createUserModal').classList.remove('hidden');
+    // Limpiar el formulario
+    document.getElementById('createUserForm').reset();
+}
+
+function closeCreateUserModal() {
+    document.getElementById('createUserModal').classList.add('hidden');
+}
+
+// Funciones para el modal de editar usuario
+function editUser(userId, username, email, fullName, phone, role, isActive) {
+    // Llenar el formulario con los datos del usuario
+    // Asegurar que userId sea string y esté limpio
+    const cleanUserId = String(userId).trim();
+    document.getElementById('edit_user_id').value = cleanUserId;
+    document.getElementById('edit_username').value = username || '';
+    document.getElementById('edit_email').value = email || '';
+    document.getElementById('edit_full_name').value = fullName || '';
+    document.getElementById('edit_phone').value = phone || '';
+    document.getElementById('edit_role').value = role || 'OPERADOR';
+    // Manejar isActive como boolean o string
+    const isActiveBool = isActive === true || isActive === 'True' || isActive === 'true' || String(isActive).toLowerCase() === 'true';
+    document.getElementById('edit_is_active').checked = isActiveBool;
+    
+    // Mostrar el modal
+    document.getElementById('editUserModal').classList.remove('hidden');
+}
+
+function closeEditUserModal() {
+    document.getElementById('editUserModal').classList.add('hidden');
+}
+
+// Función para manejar el toggle del campo de contraseña según el rol
+function togglePasswordField() {
+    const roleSelect = document.getElementById('create_role');
+    const passwordField = document.getElementById('passwordField');
+    const passwordInput = document.getElementById('create_password');
+    
+    if (roleSelect.value === 'USUARIO') {
+        // Para rol "Usuario", deshabilitar y vaciar el campo de contraseña
+        passwordInput.disabled = true;
+        passwordInput.required = false;
+        passwordInput.value = '';
+        passwordInput.placeholder = 'No se requiere contraseña para usuarios';
+        passwordField.style.opacity = '0.5';
+    } else {
+        // Para roles "Operador" y "Administrador", habilitar el campo de contraseña
+        passwordInput.disabled = false;
+        passwordInput.required = true;
+        passwordInput.placeholder = 'Ingresa la contraseña (mínimo 8 caracteres)';
+        passwordField.style.opacity = '1';
+    }
+}
+
+// Manejar envío del formulario de crear usuario
+document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    
+    try {
+        // Mostrar estado de carga
+        submitButton.textContent = 'Creando...';
+        submitButton.disabled = true;
+        
+        // Convertir FormData a JSON
+        const jsonData = {};
+        for (let [key, value] of formData.entries()) {
+            jsonData[key] = value;
+        }
+        
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Éxito
+            closeCreateUserModal();
+            showSuccessMessage('Usuario creado exitosamente');
+            setTimeout(() => location.reload(), 1500); // Recargar después de mostrar el mensaje
+        } else {
+            // Error
+            showError('Error al crear usuario', result.detail || 'Error desconocido');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Error de conexión', 'Error al crear el usuario. Por favor, intenta nuevamente.');
+    } finally {
+        // Restaurar botón
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+    }
+});
+
+// Manejar envío del formulario de editar usuario
+document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    
+    try {
+        // Mostrar estado de carga
+        submitButton.textContent = 'Guardando...';
+        submitButton.disabled = true;
+        
+        // Convertir FormData a JSON
+        const jsonData = {};
+        for (let [key, value] of formData.entries()) {
+            // Limpiar y convertir valores
+            if (key === 'user_id') {
+                jsonData[key] = String(value).trim();
+            } else {
+                jsonData[key] = value;
+            }
+        }
+        
+        // Validar que user_id existe y no está vacío
+        if (!jsonData['user_id'] || String(jsonData['user_id']).trim() === '') {
+            showError('Error de validación', 'El ID de usuario es requerido');
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+            return;
+        }
+        
+        // Asegurar que user_id sea string y esté limpio
+        const userId = String(jsonData['user_id']).trim();
+        // Validar que sea un número entero válido
+        if (!userId || isNaN(parseInt(userId)) || parseInt(userId) <= 0) {
+            console.error('user_id inválido:', userId);
+            showError('Error de validación', 'El formato del ID de usuario es inválido: ' + userId);
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+            return;
+        }
+        jsonData['user_id'] = userId;
+        
+        // Log para debug
+        console.log('Enviando datos de actualización:', { ...jsonData, user_id: userId });
+        
+        // Manejar checkbox is_active - si no está presente, es false
+        if (!formData.has('is_active')) {
+            jsonData['is_active'] = false;
+        } else {
+            jsonData['is_active'] = jsonData['is_active'] === 'on' || jsonData['is_active'] === 'true' || jsonData['is_active'] === true || jsonData['is_active'] === 'True';
+        }
+        
+        const response = await fetch('/api/admin/users/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success !== false) {
+            // Éxito
+            closeEditUserModal();
+            showSuccessMessage(result.message || 'Usuario actualizado exitosamente');
+            setTimeout(() => location.reload(), 1500); // Recargar después de mostrar el mensaje
+        } else {
+            // Error
+            showError('Error al actualizar usuario', result.detail || result.message || 'Error desconocido');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Error de conexión', 'Error al actualizar el usuario. Por favor, intenta nuevamente.');
+    } finally {
+        // Restaurar botón
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+    }
+});
+
+function resetPassword(userId, username) {
+    document.getElementById('modalTitle').textContent = 'Restablecer Contraseña';
+    document.getElementById('modalMessage').textContent = `¿Estás seguro de que quieres restablecer la contraseña del usuario "${username}"? Se enviará una nueva contraseña por email.`;
+    document.getElementById('confirmButton').textContent = 'Restablecer';
+    document.getElementById('confirmButton').onclick = async () => {
+        try {
+            const response = await fetch('/api/admin/users/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: String(userId) })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success !== false) {
+                closeModal();
+                const message = result.message || 'Contraseña restablecida exitosamente.';
+                if (result.new_password) {
+                    showSuccessMessage(message + ' Nueva contraseña: ' + result.new_password);
+                } else {
+                    showSuccessMessage(message);
+                }
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showError('Error al restablecer contraseña', result.detail || result.message || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión', 'Error al restablecer la contraseña. Por favor, intenta nuevamente.');
+        }
+    };
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function activateUser(userId, username) {
+    document.getElementById('modalTitle').textContent = 'Activar Usuario';
+    document.getElementById('modalMessage').textContent = `¿Estás seguro de que quieres activar el usuario "${username}"?`;
+    document.getElementById('confirmButton').textContent = 'Activar';
+    document.getElementById('confirmButton').onclick = async () => {
+        try {
+            const response = await fetch('/api/admin/users/toggle-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: String(userId) })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success !== false) {
+                closeModal();
+                showSuccessMessage(result.message || 'Usuario activado exitosamente.');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError('Error al activar usuario', result.detail || result.message || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión', 'Error al activar el usuario. Por favor, intenta nuevamente.');
+        }
+    };
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function deactivateUser(userId, username) {
+    document.getElementById('modalTitle').textContent = 'Desactivar Usuario';
+    document.getElementById('modalMessage').textContent = `¿Estás seguro de que quieres desactivar el usuario "${username}"?`;
+    document.getElementById('confirmButton').textContent = 'Desactivar';
+    document.getElementById('confirmButton').onclick = async () => {
+        try {
+            const response = await fetch('/api/admin/users/toggle-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: String(userId) })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success !== false) {
+                closeModal();
+                showSuccessMessage(result.message || 'Usuario desactivado exitosamente.');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError('Error al desactivar usuario', result.detail || result.message || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión', 'Error al desactivar el usuario. Por favor, intenta nuevamente.');
+        }
+    };
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function deleteUser(userId, username) {
+    console.log('deleteUser llamado con:', { userId, username });
+    
+    document.getElementById('modalTitle').textContent = 'Eliminar Usuario';
+    document.getElementById('modalMessage').textContent = `¿Estás seguro de que quieres eliminar permanentemente el usuario "${username}"? Esta acción no se puede deshacer.`;
+    document.getElementById('confirmButton').textContent = 'Eliminar';
+    document.getElementById('confirmButton').className = 'flex-1 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors';
+    
+    // Limpiar el evento onclick anterior si existe
+    const confirmButton = document.getElementById('confirmButton');
+    const newConfirmButton = confirmButton.cloneNode(true);
+    confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+    
+    newConfirmButton.onclick = async () => {
+        try {
+            // Validar que userId sea un número válido
+            const userIdInt = parseInt(String(userId));
+            if (isNaN(userIdInt) || userIdInt <= 0) {
+                console.error('ID de usuario inválido:', userId);
+                if (typeof showError === 'function') {
+                    showError('Error de validación', 'El ID de usuario es inválido');
+                } else {
+                    alert('Error: El ID de usuario es inválido');
+                }
+                return;
+            }
+            
+            console.log('Eliminando usuario con ID:', userIdInt);
+            
+            // Deshabilitar el botón mientras se procesa
+            newConfirmButton.disabled = true;
+            newConfirmButton.textContent = 'Eliminando...';
+            
+            const response = await fetch('/api/admin/users/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Incluir cookies
+                body: JSON.stringify({ user_id: String(userIdInt) })
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            let result;
+            try {
+                result = await response.json();
+                console.log('Respuesta de eliminación:', result);
+            } catch (jsonError) {
+                console.error('Error al parsear JSON:', jsonError);
+                const textResult = await response.text();
+                console.error('Respuesta como texto:', textResult);
+                throw new Error('Respuesta inválida del servidor');
+            }
+            
+            if (response.ok && result.success !== false) {
+                closeModal();
+                if (typeof showSuccessMessage === 'function') {
+                    showSuccessMessage(result.message || 'Usuario eliminado exitosamente.');
+                } else {
+                    alert('Usuario eliminado exitosamente.');
+                }
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                const errorMsg = result.detail || result.message || 'Error desconocido';
+                console.error('Error al eliminar:', errorMsg, result);
+                if (typeof showError === 'function') {
+                    showError('Error al eliminar usuario', errorMsg);
+                } else {
+                    alert('Error: ' + errorMsg);
+                }
+                newConfirmButton.disabled = false;
+                newConfirmButton.textContent = 'Eliminar';
+            }
+        } catch (error) {
+            console.error('Error completo:', error);
+            if (typeof showError === 'function') {
+                showError('Error de conexión', 'Error al eliminar el usuario: ' + error.message);
+            } else {
+                alert('Error de conexión: ' + error.message);
+            }
+            newConfirmButton.disabled = false;
+            newConfirmButton.textContent = 'Eliminar';
+        }
+    };
+    
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+    // Resetear el botón de confirmación a su estado original
+    document.getElementById('confirmButton').className = 'flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors';
+}
+
+// Funcionalidad de búsqueda
+function searchUsers() {
+    const searchTerm = document.getElementById('userSearchInput').value.toLowerCase().trim();
+    const table = document.getElementById('usersTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    const searchMessage = document.getElementById('searchMessage');
+    const searchMessageText = document.getElementById('searchMessageText');
+    
+    let visibleCount = 0;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.getElementsByTagName('td');
+        
+        if (cells.length === 0) continue; // Skip header row
+        
+        // Obtener datos de las celdas según el orden actual:
+        // 0: Usuario (nombre completo + username), 1: Rol, 2: Teléfono, 3: Email, 4: Estado, 5: Acciones
+        const userCell = cells[0] ? cells[0].textContent.toLowerCase() : '';
+        const role = cells[1] ? cells[1].textContent.toLowerCase() : '';
+        const phone = cells[2] ? cells[2].textContent.toLowerCase() : '';
+        const email = cells[3] ? cells[3].textContent.toLowerCase() : '';
+        const status = cells[4] ? cells[4].textContent.toLowerCase() : '';
+        
+        // Extraer username y nombre completo del campo usuario
+        const userLines = userCell.split('\n');
+        const fullName = userLines[0] || '';
+        const username = userLines[1] || '';
+        
+        // Verificar si el término de búsqueda coincide con algún campo
+        const matches = email.includes(searchTerm) || 
+                       phone.includes(searchTerm) || 
+                       role.includes(searchTerm) ||
+                       fullName.includes(searchTerm) ||
+                       username.includes(searchTerm) ||
+                       status.includes(searchTerm);
+        
+        if (searchTerm === '' || matches) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    }
+    
+    // Mostrar mensaje de búsqueda
+    if (searchTerm !== '') {
+        if (visibleCount === 0) {
+            searchMessageText.textContent = `No se encontraron usuarios que coincidan con "${searchTerm}"`;
+            searchMessage.classList.remove('hidden');
+        } else {
+            searchMessageText.textContent = `Se encontraron ${visibleCount} usuario(s) que coinciden con "${searchTerm}"`;
+            searchMessage.classList.remove('hidden');
+        }
+    } else {
+        searchMessage.classList.add('hidden');
+    }
+}
+
+// Limpiar búsqueda
+function clearSearch() {
+    document.getElementById('userSearchInput').value = '';
+    searchUsers();
+}
+</script>
+{% endblock %}

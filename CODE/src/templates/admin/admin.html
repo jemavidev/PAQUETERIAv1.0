@@ -1,0 +1,135 @@
+{% extends "base/base.html" %}
+
+{% block title %}Panel de Administración - PAQUETEX v3.1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-light text-gray-900">Panel de Administración</h1>
+            <p class="mt-2 text-sm sm:text-base text-gray-500">Gestiona el sistema de paquetería</p>
+        </div>
+
+        <!-- Navegación -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6 sm:mb-8">
+            <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
+                <a href="/admin" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm">
+                    Dashboard
+                </a>
+                <a href="/admin/users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Gestión de Usuarios
+                </a>
+                <a href="/packages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Paquetes
+                </a>
+                <a href="/profile" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    Mi Perfil
+                </a>
+            </nav>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Tarjeta de Usuarios -->
+            <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-papyrus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Usuarios</dt>
+                                <dd class="text-lg font-medium text-gray-900">Gestionar</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-3">
+                    <div class="text-sm">
+                        <a href="/admin/users" class="font-medium text-papyrus-blue hover:text-blue-700">Ver todos los usuarios</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Paquetes -->
+            <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Paquetes</dt>
+                                <dd class="text-lg font-medium text-gray-900">Gestionar</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-3">
+                    <div class="text-sm">
+                        <a href="/packages" class="font-medium text-green-600 hover:text-green-700">Ver todos los paquetes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Estadísticas -->
+            <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Reportes</dt>
+                                <dd class="text-lg font-medium text-gray-900">Estadísticas</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-3">
+                    <div class="text-sm">
+                        <a href="/admin" class="font-medium text-orange-600 hover:text-orange-700">Ver estadísticas</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Enlaces Rápidos -->
+        <div class="mt-8">
+            <h2 class="text-lg font-light text-gray-900 mb-4">Enlaces Rápidos</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="/admin/users" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-papyrus-blue transition-colors">
+                    <div class="text-sm font-medium text-gray-900">Gestión de Usuarios</div>
+                    <div class="text-xs text-gray-500 mt-1">Crear, editar y administrar usuarios</div>
+                </a>
+                <a href="/packages" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-green-600 transition-colors">
+                    <div class="text-sm font-medium text-gray-900">Lista de Paquetes</div>
+                    <div class="text-xs text-gray-500 mt-1">Ver y gestionar todos los paquetes</div>
+                </a>
+                <a href="/admin" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-orange-600 transition-colors">
+                    <div class="text-sm font-medium text-gray-900">Dashboard</div>
+                    <div class="text-xs text-gray-500 mt-1">Estadísticas y métricas del sistema</div>
+                </a>
+                <a href="/profile" class="bg-white p-4 rounded-lg border border-gray-200 hover:border-purple-600 transition-colors">
+                    <div class="text-sm font-medium text-gray-900">Mi Perfil</div>
+                    <div class="text-xs text-gray-500 mt-1">Gestionar información personal</div>
+                </a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

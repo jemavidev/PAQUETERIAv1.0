@@ -1,0 +1,2884 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mensajes - PAQUETEX v4.0{% endblock %}
+
+{% block content %}
+<!-- Verificación de autenticación -->
+{% if not is_authenticated %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center">
+        <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">Acceso Restringido</h3>
+        <p class="mt-2 text-sm text-gray-500">Debes iniciar sesión para acceder a los mensajes.</p>
+        <div class="mt-6">
+            <a href="/auth/login" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-papyrus-blue hover:bg-blue-700 transition-colors duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-6 xl:py-8">
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6">
+            <div class="flex flex-col space-y-3 lg:flex-row lg:items-center lg:space-x-6 lg:space-y-0">
+                <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-gray-900">Mensajes</h1>
+                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 w-full">
+                    <!-- Búsqueda por cliente -->
+                    <div class="relative flex-1 min-w-0">
+                        <input id="searchFilter"
+                                type="text"
+                                placeholder="Buscar..."
+                                class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-base sm:text-base touch-manipulation"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false">
+                    </div>
+
+                    <!-- Filtros rápidos por estado (estilo similar a Paquetes) -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <!-- ABIERTO -->
+                        <button id="btnStatusAbierto" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 active:scale-95 touch-manipulation" title="ABIERTO">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                        <!-- RESPONDIDO -->
+                        <button id="btnStatusRespondido" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation" title="RESPONDIDO">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Botón de limpiar filtros -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button id="clearFilters"
+                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation"
+                                title="Limpiar filtros">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Lista de Mensajes -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">Lista de Mensajes</h2>
+                    {% if pagination and pagination.total > 0 %}
+                    <div class="text-sm text-gray-700">
+                        Mostrando 
+                        <span class="font-medium">{{ ((pagination.page - 1) * pagination.limit) + 1 }}</span>
+                        a 
+                        <span class="font-medium">{{ [pagination.page * pagination.limit, pagination.total]|min }}</span>
+                        de 
+                        <span class="font-medium">{{ pagination.total }}</span> 
+                        resultados
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="p-3 sm:p-4 lg:p-8">
+                <!-- Vista de escritorio: Tarjetas -->
+                <div id="messagesList" class="hidden lg:grid lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 items-stretch">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="{\% if message.status == 'ABIERTO' \%}bg-orange-50 border-orange-200{\% elif message.status == 'RESPONDIDO' \%}bg-blue-50 border-blue-200{\% else \%}bg-white border-gray-200{\% endif \%} border rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col h-full" 
+                             data-search="{{ message.id|string|lower }} {{ message.subject|lower }} {{ message.content|lower }} {{ message.answer|lower }} {{ message.customer_name|lower }} {{ message.customer_phone|lower }} {{ message.package_tracking_code|lower }} {{ message.status|lower }}"
+                             data-status="{{ message.status }}">
+                            
+                            <!-- Header de la tarjeta -->
+                            <div class="p-6 pb-4">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Icono de mensaje -->
+                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-bold text-gray-900">
+                                                <a href="/search?auto_search={{ message.package_tracking_code }}" 
+                                                   class="text-gray-900 hover:text-papyrus-blue-700 hover:underline transition-colors duration-200 cursor-pointer">
+                                                    PAQUETE {{ message.package_tracking_code or message.id }}
+                                                </a>
+                                            </h3>
+                                            <p class="text-sm text-gray-600">{{ message.customer_name }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Botón de respuesta -->
+                                    <button onclick="openMessageDetail({{ message.id }})" 
+                                            title="{% if message.status == 'ABIERTO' %}Responder al mensaje{% else %}Editar respuesta{% endif %}"
+                                            class="w-10 h-10 {% if message.status == 'ABIERTO' %}bg-green-600 hover:bg-green-700{% else %}bg-blue-600 hover:bg-blue-700{% endif %} rounded-lg flex items-center justify-center transition-colors duration-200">
+                                        {% if message.status == 'ABIERTO' %}
+                                        <!-- Icono de chat para mensajes abiertos -->
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        {% else %}
+                                        <!-- Icono de check para mensajes respondidos -->
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        {% endif %}
+                                    </button>
+                                </div>
+                                
+                                <!-- Badge de estado -->
+                                <div class="mb-4">
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold
+                                        {% if message.status == 'ABIERTO' %}bg-orange-100 text-orange-800 border border-orange-200
+                                        {% elif message.status == 'LEIDO' %}bg-blue-100 text-blue-800 border border-blue-200
+                                        {% elif message.status == 'RESPONDIDO' %}bg-green-100 text-green-800 border border-green-200
+                                        {% elif message.status == 'CERRADO' %}bg-gray-100 text-gray-800 border border-gray-200
+                                        {% else %}bg-gray-100 text-gray-800 border border-gray-200{% endif %}">
+                                        <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                            {% if message.status == 'ABIERTO' %}
+                                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+                                            {% elif message.status == 'LEIDO' %}
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                            {% elif message.status == 'RESPONDIDO' %}
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                            {% else %}
+                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                            {% endif %}
+                                        </svg>
+                                        {{ message.status }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Contenido del mensaje -->
+                            <div class="px-6 pb-4 flex-1 flex flex-col">
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4 flex-1">
+                                    <p class="text-sm text-gray-700 leading-relaxed truncate" title="{{ message.content }}">
+                                        {{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}
+                                    </p>
+                                </div>
+                                
+                                <!-- Detalles en formato de lista -->
+                                <div class="space-y-3">
+                                    {% if message.package_tracking_code %}
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">TRACKING</p>
+                                            <a href="/search?auto_search={{ message.package_tracking_code }}" 
+                                               class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                                {{ message.package_tracking_code }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">FECHA</p>
+                                            <p class="text-sm font-semibold text-gray-900">{{ message.created_at[:10] if message.created_at else 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">CLIENTE</p>
+                                            <p class="text-sm font-semibold text-gray-900">{{ message.customer_name }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if message.customer_phone %}
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">TELÉFONO</p>
+                                            <a href="https://wa.me/57{{ message.customer_phone }}?text=Dando respuesta a tu pregunta: {{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}" 
+                                               target="_blank"
+                                               class="text-sm font-semibold text-orange-600 hover:text-orange-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                                {{ message.customer_phone }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-span-full text-center py-12">
+                            <div class="bg-gray-100 rounded-lg p-4 inline-flex mx-auto mb-6">
+                                <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay mensajes</h3>
+                            <p class="text-gray-500">No se encontraron mensajes con los filtros aplicados.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Vista móvil/tablet: Lista original -->
+                <div id="messagesListMobile" class="lg:hidden space-y-4 sm:space-y-6 items-stretch">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="{\% if message.status == 'ABIERTO' \%}bg-orange-50 border-orange-200{\% elif message.status == 'RESPONDIDO' \%}bg-blue-50 border-blue-200{\% else \%}bg-white border-gray-200{\% endif \%} border rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col h-full" 
+                             data-search="{{ message.id|string|lower }} {{ message.subject|lower }} {{ message.content|lower }} {{ message.answer|lower }} {{ message.customer_name|lower }} {{ message.customer_phone|lower }} {{ message.package_tracking_code|lower }} {{ message.status|lower }}"
+                             data-status="{{ message.status }}">
+                            
+                            <!-- Header con gradiente sutil -->
+                            <div class="{% if message.status == 'ABIERTO' %}bg-gradient-to-r from-orange-50 to-orange-100{% elif message.status == 'RESPONDIDO' %}bg-gradient-to-r from-blue-50 to-blue-100{% else %}bg-gradient-to-r from-gray-50 to-blue-50{% endif %} px-6 py-4 border-b border-gray-100">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <!-- Icono de mensaje -->
+                                            <div class="flex-shrink-0 w-10 h-10 bg-papyrus-blue-100 rounded-full flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-papyrus-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="text-lg font-semibold text-gray-900 truncate group-hover:text-papyrus-blue-700 transition-colors">
+                                                    <a href="/search?auto_search={{ message.package_tracking_code }}" 
+                                                       class="text-gray-900 hover:text-papyrus-blue-700 hover:underline transition-colors duration-200 cursor-pointer">
+                                                        PAQUETE {{ message.package_tracking_code or message.id }}
+                                                    </a>
+                                                </h3>
+                                                <p class="text-sm text-gray-600 mt-1">
+                                                    <span class="font-medium text-papyrus-blue-600">{{ message.customer_name }}</span>                                                    
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Badges de estado y prioridad -->
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <!-- Estado del mensaje -->
+                                            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border
+                                                {% if message.status == 'ABIERTO' %}bg-orange-100 text-orange-800 border-orange-200
+                                                {% elif message.status == 'LEIDO' %}bg-blue-100 text-blue-800 border-blue-200
+                                                {% elif message.status == 'RESPONDIDO' %}bg-green-100 text-green-800 border-green-200
+                                                {% elif message.status == 'CERRADO' %}bg-gray-100 text-gray-800 border-gray-200
+                                                {% else %}bg-gray-100 text-gray-800 border-gray-200{% endif %}">
+                                <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                    {% if message.status == 'ABIERTO' %}
+                                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+                                    {% elif message.status == 'LEIDO' %}
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                    {% elif message.status == 'RESPONDIDO' %}
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    {% else %}
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                    {% endif %}
+                                </svg>
+                                                {{ message.status }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Botón de acción -->
+                                    <div class="flex-shrink-0 ml-4">
+                                        <button onclick="openMessageDetail({{ message.id }})" 
+                                                title="{% if message.status == 'ABIERTO' %}Responder al mensaje{% else %}Editar respuesta{% endif %}"
+                                                class="inline-flex items-center justify-center w-10 h-10 border border-transparent text-xs font-medium rounded-md text-white {% if message.status == 'ABIERTO' %}bg-green-600 hover:bg-green-700{% else %}bg-blue-600 hover:bg-blue-700{% endif %} hover:opacity-80 transition-colors duration-200">
+                                            {% if message.status == 'ABIERTO' %}
+                                            <!-- Icono de chat para mensajes abiertos -->
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            {% else %}
+                                            <!-- Icono de check para mensajes respondidos -->
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Contenido del mensaje -->
+                            <div class="px-6 py-4 flex-1 flex flex-col">
+                                <div class="bg-gray-50 rounded-lg p-4 mb-4 flex-1">
+                                    <p class="text-sm text-gray-700 leading-relaxed truncate" title="{{ message.content }}">
+                                        {{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}
+                                    </p>
+                                </div>
+                                
+                                <!-- Metadatos enriquecidos -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {% if message.package_tracking_code %}
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tracking</p>
+                                            <a href="/search?auto_search={{ message.package_tracking_code }}" 
+                                               class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                                {{ message.package_tracking_code }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Fecha</p>
+                                            <p class="text-sm font-semibold text-gray-900">{{ message.created_at[:10] if message.created_at else 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cliente</p>
+                                            <p class="text-sm font-semibold text-gray-900">{{ message.customer_name }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if message.customer_phone %}
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</p>
+                                            <a href="https://wa.me/57{{ message.customer_phone }}?text=Dando respuesta a tu pregunta: {{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}" 
+                                               target="_blank"
+                                               class="text-sm font-semibold text-orange-600 hover:text-orange-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                                {{ message.customer_phone }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-12">
+                            <div class="bg-gray-100 rounded-lg p-4 inline-flex mx-auto mb-6">
+                                <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay mensajes</h3>
+                            <p class="text-gray-500">No se encontraron mensajes con los filtros aplicados.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Loading -->
+                <div id="messagesLoading" class="text-center py-6 sm:py-8 hidden">
+                    <div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+                    <p class="mt-2 text-xs sm:text-sm text-gray-500">Cargando mensajes...</p>
+                </div>
+
+                <!-- Sin mensajes -->
+                <div id="noMessages" class="text-center py-6 sm:py-8 hidden">
+                    <div class="bg-gray-100 rounded-lg p-2 sm:p-3 inline-flex mx-auto mb-3 sm:mb-4">
+                        <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-medium text-gray-900">No hay mensajes</h3>
+                    <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500">No se encontraron mensajes con los filtros aplicados.</p>
+                </div>
+            </div>
+            
+            <!-- Paginación -->
+            {% if pagination and pagination.total_pages > 1 %}
+            <div id="paginationContainer" class="border-t border-gray-200 bg-white px-3 py-4 sm:px-6 rounded-b-xl">
+                <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                    <!-- Contador de resultados -->
+                    <div class="text-sm text-gray-700 order-2 sm:order-1">
+                        Mostrando 
+                        <span class="font-medium">{{ ((pagination.page - 1) * pagination.limit) + 1 }}</span>
+                        a 
+                        <span class="font-medium">{{ [pagination.page * pagination.limit, pagination.total]|min }}</span>
+                        de 
+                        <span class="font-medium">{{ pagination.total }}</span> 
+                        resultados
+                    </div>
+                    
+                    <!-- Botones de navegación -->
+                    <div class="flex items-center space-x-2 order-1 sm:order-2">
+                        <!-- Botón Anterior -->
+                        {% if pagination.has_prev %}
+                        <a href="?page={{ pagination.page - 1 }}" 
+                           class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="ml-1 hidden sm:inline">Anterior</span>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="ml-1 hidden sm:inline">Anterior</span>
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Números de página -->
+                        <div class="hidden md:flex items-center space-x-1">
+                            {% set start_page = [1, pagination.page - 2]|max %}
+                            {% set end_page = [pagination.total_pages, pagination.page + 2]|min %}
+                            
+                            {% if start_page > 1 %}
+                            <a href="?page=1" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                1
+                            </a>
+                            {% if start_page > 2 %}
+                            <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
+                            {% endif %}
+                            {% endif %}
+                            
+                            {% for page_num in range(start_page, end_page + 1) %}
+                            {% if page_num == pagination.page %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-papyrus-blue bg-papyrus-blue text-sm font-medium text-white z-10">
+                                {{ page_num }}
+                            </span>
+                            {% else %}
+                            <a href="?page={{ page_num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                {{ page_num }}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if end_page < pagination.total_pages %}
+                            {% if end_page < pagination.total_pages - 1 %}
+                            <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
+                            {% endif %}
+                            <a href="?page={{ pagination.total_pages }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                {{ pagination.total_pages }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Indicador de página actual (móvil) -->
+                        <div class="md:hidden relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            {{ pagination.page }} / {{ pagination.total_pages }}
+                        </div>
+                        
+                        <!-- Botón Siguiente -->
+                        {% if pagination.has_next %}
+                        <a href="?page={{ pagination.page + 1 }}" 
+                           class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="mr-1 hidden sm:inline">Siguiente</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <span class="mr-1 hidden sm:inline">Siguiente</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalle de Mensaje -->
+<div id="messageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-2 sm:top-4 md:top-8 lg:top-20 mx-auto p-2 sm:p-3 md:p-4 lg:p-5 w-11/12 sm:w-10/12 md:w-3/4 lg:w-1/2 max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex items-center justify-between">
+                <h3 class="text-lg sm:text-xl uppercase text-gray-900">Detalle del Mensaje</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-3 sm:p-4 lg:p-8">
+                <div id="messageDetail" class="space-y-6">
+                    <!-- El contenido del mensaje se cargará aquí -->
+                </div>
+
+                <!-- Formulario de respuesta -->
+                <div id="responseForm" class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                    <h4 class="text-base sm:text-lg uppercase text-gray-900 mb-3 sm:mb-4">Responder al Mensaje</h4>
+                    <div class="relative">
+                        <textarea id="responseText"
+                                   rows="4"
+                                   class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base sm:text-base resize-none touch-manipulation"
+                                   placeholder="Escribe tu respuesta..."
+                                   maxlength="2000"
+                                   oninput="updateResponseCounter()"></textarea>
+                        <div id="responseCounter" class="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-1 rounded">
+                            0/2000
+                        </div>
+                    </div>
+                    <div class="mt-4 sm:mt-4 flex flex-col space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-3">
+                        <button id="cancelResponse"
+                                class="w-full sm:w-auto px-6 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation min-h-[44px]">
+                            Cancelar
+                        </button>
+                        <button id="sendResponse"
+                                class="w-full sm:w-auto px-6 py-3 sm:py-2.5 md:py-2 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-papyrus-blue hover:bg-blue-700 transition-colors duration-200 active:scale-95 touch-manipulation min-h-[44px]">
+                            <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            Responder
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Sistema de Notificaciones Toast -->
+<div id="toastContainer" class="fixed top-4 left-4 right-4 sm:top-4 sm:left-auto sm:right-4 z-50 space-y-2 max-w-full sm:max-w-sm mx-auto sm:mx-0"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Estilos para notificaciones toast */
+.toast {
+    min-width: 280px;
+    max-width: 320px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+@media (min-width: 640px) {
+    .toast {
+        min-width: 300px;
+        max-width: 400px;
+        padding: 16px;
+        gap: 12px;
+    }
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.toast-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: width linear;
+}
+
+/* Optimizaciones móviles adicionales */
+@media (max-width: 640px) {
+    /* Mejorar espaciado en móviles */
+    .space-y-3 > * + * {
+        margin-top: 0.75rem;
+    }
+
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+
+    /* Mejorar botones en móviles */
+    button {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+
+    /* Mejorar inputs en móviles */
+    input, textarea {
+        font-size: 16px; /* Prevenir zoom en iOS */
+    }
+
+    /* Mejorar modal en móviles */
+    #messageModal .relative {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Optimizaciones de rendimiento para móviles */
+@media (hover: none) and (pointer: coarse) {
+    /* Estilos específicos para dispositivos táctiles */
+    .touch-manipulation {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mejorar feedback visual en toques */
+    button:active, .cursor-pointer:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* Animaciones */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+</style>
+<script>
+let currentMessageId = null;
+
+// ========================================
+// OPTIMIZACIONES DE RENDIMIENTO
+// ========================================
+
+// Configuración de debug (cambiar a false en producción)
+const DEBUG_FILTERING = false;
+const log = DEBUG_FILTERING ? console.log : () => {};
+
+// Cache de elementos DOM para evitar queries repetitivas
+const domCache = {
+    searchInput: null,
+    statusFilter: null,
+    priorityFilter: null,
+    typeFilter: null,
+    unreadOnly: null,
+    messageCards: null,
+    activeFilters: null,
+    activeFiltersList: null,
+    resultsCount: null
+};
+
+// Cache de resultados de filtrado
+const filterCache = new Map();
+const CACHE_SIZE_LIMIT = 50;
+
+// Estado actual del filtro de estado
+let currentStatusFilter = null;
+
+// Inicializar cache de elementos DOM
+function initializeDOMCache() {
+    domCache.searchInput = document.getElementById('searchFilter');
+    domCache.messageCards = document.querySelectorAll('[data-search]');
+    domCache.activeFilters = document.getElementById('activeFilters');
+    domCache.activeFiltersList = document.getElementById('activeFiltersList');
+    domCache.resultsCount = document.getElementById('resultsCount');
+
+    log('✅ Cache de elementos DOM inicializado');
+}
+
+// Limpiar cache si excede el límite
+function manageCacheSize() {
+    if (filterCache.size >= CACHE_SIZE_LIMIT) {
+        const firstKey = filterCache.keys().next().value;
+        filterCache.delete(firstKey);
+        log('🗑️ Entrada de cache eliminada para mantener límite');
+    }
+}
+
+// Sistema de Notificaciones Toast
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+    };
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast ${type}">
+            <div class="toast-icon">${icons[type] || icons.info}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="removeToast('${toastId}')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="toast-progress" style="width: 100%;"></div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    
+    const toast = document.getElementById(toastId);
+    const progress = toast.querySelector('.toast-progress');
+    
+    // Mostrar toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Iniciar barra de progreso
+    setTimeout(() => {
+        progress.style.width = '0%';
+        progress.style.transition = `width ${duration}ms linear`;
+    }, 100);
+    
+    // Auto-remover después de la duración
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+    
+    return toastId;
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+// Funciones de conveniencia
+function showSuccessToast(title, message, duration) {
+    return showToast('success', title, message, duration);
+}
+
+function showErrorToast(title, message, duration) {
+    return showToast('error', title, message, duration);
+}
+
+function showInfoToast(title, message, duration) {
+    return showToast('info', title, message, duration);
+}
+
+function showWarningToast(title, message, duration) {
+    return showToast('warning', title, message, duration);
+}
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de mensajes cargada');
+    const token = getAuthToken();
+    console.log('Token disponible:', token ? 'Sí' : 'No');
+
+    // Obtener nombre del usuario actual (username)
+    const userName = getCookie('user_name') || 'admin';  // Default to admin username
+    window.currentUserName = userName;
+    console.log('Nombre de usuario actual:', userName);
+    
+    loadMessageStats();
+    // loadMessages(1); // Deshabilitado - usando datos del backend
+    
+    // Enfocar automáticamente el campo de búsqueda
+    setTimeout(() => {
+        const searchInput = document.getElementById('searchFilter');
+        if (searchInput) {
+            // Limpiar el campo de búsqueda antes de enfocar
+            searchInput.value = '';
+            searchInput.focus();
+            console.log('Campo de búsqueda limpiado y enfocado automáticamente');
+        }
+    }, 500); // Pequeño delay para asegurar que la página esté completamente cargada
+    
+    // Función de prueba removida - no debe ejecutarse automáticamente
+    
+    // Función optimizada para inicializar el sistema de búsqueda
+    function initializeMessageSearch() {
+        log('🚀 Inicializando sistema de búsqueda de mensajes...');
+        
+        // Inicializar cache de DOM
+        initializeDOMCache();
+        
+        // Asegurar que el campo de búsqueda esté limpio
+        if (domCache.searchInput) {
+            domCache.searchInput.value = '';
+        }
+        
+        // Verificar que hay mensajes para buscar
+        const messageCards = domCache.messageCards;
+        log('📧 Mensajes disponibles para búsqueda:', messageCards ? messageCards.length : 0);
+        
+        if (!messageCards || messageCards.length === 0) {
+            log('⚠️ No hay mensajes disponibles para búsqueda');
+            if (DEBUG_FILTERING) {
+                showWarningToast(
+                    'Sin Mensajes',
+                    'No hay mensajes disponibles para buscar. Carga algunos mensajes primero.',
+                    3000
+                );
+            }
+            return;
+        }
+        
+        // Verificar que los mensajes tienen datos de búsqueda
+        let messagesWithData = 0;
+        messageCards.forEach((card, index) => {
+            const searchData = card.getAttribute('data-search');
+            if (searchData && searchData.trim().length > 0) {
+                messagesWithData++;
+            } else if (DEBUG_FILTERING) {
+                log(`⚠️ Mensaje ${index + 1} no tiene datos de búsqueda`);
+            }
+        });
+        
+        log(`📊 Mensajes con datos de búsqueda: ${messagesWithData}/${messageCards.length}`);
+        
+        if (messagesWithData === 0) {
+            log('❌ Ningún mensaje tiene datos de búsqueda configurados');
+            if (DEBUG_FILTERING) {
+                showErrorToast(
+                    'Error de Configuración',
+                    'Los mensajes no tienen datos de búsqueda configurados correctamente.',
+                    5000
+                );
+            }
+            return;
+        }
+        
+        // Aplicar filtro inicial para mostrar todos los mensajes
+        applyMessageFilter();
+        
+        log('✅ Sistema de búsqueda de mensajes inicializado correctamente');
+        
+        if (DEBUG_FILTERING) {
+            showSuccessToast(
+                'Búsqueda Lista',
+                `Sistema de búsqueda inicializado con ${messagesWithData} mensajes disponibles`,
+                2000
+            );
+        }
+    }
+    
+    // Inicializar el sistema de búsqueda después de cargar los mensajes
+    setTimeout(() => {
+        initializeMessageSearch();
+    }, 2000);
+    
+    // Event listeners
+    // Nota: refreshButton no existe en esta página, se removió
+
+    // Debounce optimizado con indicador de carga
+    const debouncedSearch = debounce(function() {
+        log('🔍 Evento de búsqueda disparado');
+        applyMessageFilter();
+    }, 200);
+
+    // Event listeners para filtros
+    document.getElementById('searchFilter').addEventListener('input', function() {
+        debouncedSearch();
+    });
+    document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+    // Botones de estado: ABIERTO / RESPONDIDO
+    const btnAbierto = document.getElementById('btnStatusAbierto');
+    const btnRespondido = document.getElementById('btnStatusRespondido');
+    function setStatusFilter(status) {
+        // Toggle: si está activo y se vuelve a pulsar, limpiar filtro
+        currentStatusFilter = (currentStatusFilter === status) ? null : status;
+        updateStatusButtonsUI();
+        applyMessageFilter();
+    }
+    function updateStatusButtonsUI() {
+        if (btnAbierto) {
+            if (currentStatusFilter === 'ABIERTO') {
+                btnAbierto.classList.add('ring-2','ring-orange-400','bg-orange-50','text-orange-700','border-orange-300');
+            } else {
+                btnAbierto.classList.remove('ring-2','ring-orange-400','bg-orange-50','text-orange-700','border-orange-300');
+            }
+        }
+        if (btnRespondido) {
+            if (currentStatusFilter === 'RESPONDIDO') {
+                btnRespondido.classList.add('ring-2','ring-green-500','bg-green-50','text-green-700','border-green-300');
+            } else {
+                btnRespondido.classList.remove('ring-2','ring-green-500','bg-green-50','text-green-700','border-green-300');
+            }
+        }
+    }
+    if (btnAbierto) btnAbierto.addEventListener('click', () => setStatusFilter('ABIERTO'));
+    if (btnRespondido) btnRespondido.addEventListener('click', () => setStatusFilter('RESPONDIDO'));
+    // Inicializar estado visual
+    updateStatusButtonsUI();
+    
+    // Event listener para limpiar todos los filtros
+    const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+    if (clearAllFiltersBtn) {
+        clearAllFiltersBtn.addEventListener('click', clearFilters);
+    }
+    
+    // Modal events
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('cancelResponse').addEventListener('click', closeModal);
+    document.getElementById('sendResponse').addEventListener('click', sendResponse);
+});
+
+function loadMessageStats() {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.error('No hay token de autenticación disponible');
+        return;
+    }
+    
+    fetch('/api/messages/stats', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Actualizar solo si existen los elementos (algunas vistas no tienen tarjetas)
+        const unreadEl = document.getElementById('unreadMessages');
+        const pendingEl = document.getElementById('pendingMessages');
+        const closedEl = document.getElementById('closedMessages');
+        if (unreadEl) unreadEl.textContent = data.unread_messages || 0;
+        if (pendingEl) pendingEl.textContent = data.pending_messages || 0;
+        if (closedEl) closedEl.textContent = data.closed_messages || 0;
+    })
+    .catch(error => {
+        console.error('Error cargando estadísticas:', error);
+        // Mostrar valores por defecto en caso de error si existen los elementos
+        const unreadEl = document.getElementById('unreadMessages');
+        const pendingEl = document.getElementById('pendingMessages');
+        const closedEl = document.getElementById('closedMessages');
+        if (unreadEl) unreadEl.textContent = '0';
+        if (pendingEl) pendingEl.textContent = '0';
+        if (closedEl) closedEl.textContent = '0';
+        
+        // Mostrar notificación de error solo si es un error de red
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            showErrorToast(
+                'Error de Conexión',
+                'No se pudieron cargar las estadísticas. Verifica tu conexión.',
+                5000
+            );
+        }
+    });
+}
+
+let currentPage = 1;
+let currentLimit = 20;
+
+function loadMessages(page = 1) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.error('No hay token de autenticación disponible');
+        window.location.href = '/auth/login';
+        return;
+    }
+    
+    log('Cargando mensajes con token:', token ? 'presente' : 'ausente');
+    
+    document.getElementById('messagesLoading').classList.remove('hidden');
+    document.getElementById('messagesList').innerHTML = '';
+    document.getElementById('noMessages').classList.add('hidden');
+    document.getElementById('pagination').classList.add('hidden');
+    
+    // Construir parámetros de consulta
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: currentLimit.toString()
+    });
+
+    // Nota: La búsqueda se hace solo del lado del cliente para buscar en todos los campos
+    // No enviamos el parámetro 'search' al backend
+    
+    fetch(`/api/messages/?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Datos recibidos desde API:', data);
+        currentPage = page;
+        displayMessages(data.messages, data.pagination);
+    })
+    .catch(error => {
+        console.error('Error cargando mensajes:', error);
+        document.getElementById('messagesLoading').classList.add('hidden');
+        document.getElementById('noMessages').classList.remove('hidden');
+        
+        // Mostrar mensaje de error
+        const messagesList = document.getElementById('messagesList');
+        messagesList.innerHTML = `
+            <div class="text-center py-8">
+                <div class="bg-red-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Error al cargar mensajes</h3>
+                <p class="mt-2 text-sm text-gray-500">No se pudieron cargar los mensajes. Intenta recargar la página.</p>
+            </div>
+        `;
+    });
+}
+
+function displayMessages(messages, pagination = null) {
+    document.getElementById('messagesLoading').classList.add('hidden');
+    
+    // Obtener ambas listas de mensajes (escritorio y móvil)
+    const messagesListDesktop = document.getElementById('messagesList');
+    const messagesListMobile = document.getElementById('messagesListMobile');
+    
+    // Limpiar ambas listas
+    messagesListDesktop.innerHTML = '';
+    messagesListMobile.innerHTML = '';
+    
+    if (messages.length === 0) {
+        document.getElementById('noMessages').classList.remove('hidden');
+    } else {
+        messages.forEach(message => {
+            const messageElementDesktop = createMessageElement(message, 'desktop');
+            const messageElementMobile = createMessageElement(message, 'mobile');
+            messagesListDesktop.appendChild(messageElementDesktop);
+            messagesListMobile.appendChild(messageElementMobile);
+        });
+        
+        // Mostrar paginación si está disponible
+        if (pagination && pagination.total_pages > 1) {
+            displayPagination(pagination);
+        }
+        
+        // Inicializar filtrado local después de cargar mensajes
+        setTimeout(() => {
+            log('🔄 Inicializando filtrado local después de cargar mensajes');
+            // Reconstruir cache de DOM con nuevos mensajes
+            initializeDOMCache();
+            // Limpiar cache de filtros para forzar recálculo
+            filterCache.clear();
+            applyMessageFilter();
+        }, 200);
+    }
+    
+    log('Mensajes mostrados exitosamente');
+}
+
+function displayPagination(pagination) {
+    const paginationDiv = document.getElementById('pagination');
+    paginationDiv.classList.remove('hidden');
+    
+    let paginationHTML = `
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+            <div class="flex justify-between flex-1 sm:hidden">
+                ${pagination.has_prev ? `<button onclick="loadMessages(${pagination.page - 1})" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Anterior</button>` : ''}
+                ${pagination.has_next ? `<button onclick="loadMessages(${pagination.page + 1})" class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Siguiente</button>` : ''}
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando <span class="font-medium">${((pagination.page - 1) * pagination.limit) + 1}</span>
+                        a <span class="font-medium">${Math.min(pagination.page * pagination.limit, pagination.total)}</span>
+                        de <span class="font-medium">${pagination.total}</span> resultados
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+    `;
+    
+    // Botón Anterior
+    if (pagination.has_prev) {
+        paginationHTML += `
+            <button onclick="loadMessages(${pagination.page - 1})" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <span class="sr-only">Anterior</span>
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        `;
+    }
+    
+    // Números de página
+    const startPage = Math.max(1, pagination.page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isCurrentPage = i === pagination.page;
+        paginationHTML += `
+            <button onclick="loadMessages(${i})" class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${isCurrentPage ? 'z-10 bg-papyrus-blue border-papyrus-blue text-white' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Botón Siguiente
+    if (pagination.has_next) {
+        paginationHTML += `
+            <button onclick="loadMessages(${pagination.page + 1})" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                <span class="sr-only">Siguiente</span>
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        `;
+    }
+    
+    paginationHTML += `
+                    </nav>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    paginationDiv.innerHTML = paginationHTML;
+}
+
+function createMessageElement(message, viewType = 'mobile') {
+    const div = document.createElement('div');
+    const isUnread = !message.is_read;
+    
+    // Agregar atributo data-search para filtrado local - incluir todos los campos posibles
+    // Incluir tanto el estado en inglés como en español para búsqueda
+    const statusTextForSearch = getStatusText(message.status);
+    const searchData = [
+        message.id || '', // Código de consulta
+        message.subject || '', // Asunto/Pregunta
+        message.content || '', // Contenido/Pregunta
+        message.sender_name || '', // Nombre del cliente
+        message.sender_email || '',
+        message.sender_phone || '', // Teléfono del cliente
+        message.package_guide_number || '', // Número de guía
+        message.package_tracking_code || '', // Código de tracking
+        message.status || '', // Estado en inglés
+        statusTextForSearch || '', // Estado en español
+        message.message_type || '', // Tipo de mensaje
+        message.priority || '', // Prioridad
+        message.answered_by_name || '', // Nombre del que respondió
+        message.answer || '', // Respuesta del administrador
+        message.category || '', // Categoría
+        message.tags || '', // Tags
+        message.created_at || '',
+        message.answered_at || '',
+        message.updated_at || ''
+    ].join(' ').toLowerCase();
+
+    div.setAttribute('data-search', searchData);
+    div.setAttribute('data-status', message.status || '');
+    div.setAttribute('data-priority', message.priority || '');
+    div.setAttribute('data-type', message.message_type || '');
+
+    // Usar el estado que viene del backend (ya calculado correctamente)
+    const actualStatus = message.status;
+    const statusColor = getStatusColor(actualStatus);
+    const statusText = getStatusText(actualStatus);
+    const statusIcon = getStatusIcon(actualStatus);
+    
+    if (viewType === 'desktop') {
+        // Vista de tarjeta para escritorio
+        const statusBg = actualStatus === 'ABIERTO' ? 'bg-orange-50 border-orange-200' : 
+                        actualStatus === 'RESPONDIDO' ? 'bg-blue-50 border-blue-200' : 
+                        'bg-white border-gray-200';
+        div.className = `${statusBg} border rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col h-full ${isUnread ? 'border-blue-500 bg-blue-50' : ''}`;
+    
+    div.innerHTML = `
+            <!-- Header de la tarjeta -->
+            <div class="p-6 pb-4">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <!-- Icono de mensaje -->
+                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">
+                                <a href="/search?auto_search=${message.package_tracking_code || message.id}" 
+                                   class="text-gray-900 hover:text-papyrus-blue-700 hover:underline transition-colors duration-200 cursor-pointer">
+                                    PAQUETE ${message.package_tracking_code || message.id}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-gray-600">${message.sender_name || 'Sistema'}</p>
+            </div>
+                        </div>
+                    
+                    <!-- Botón de respuesta -->
+                    <button onclick="openMessageDetail(${message.id})" 
+                            title="${actualStatus === 'ABIERTO' ? 'Responder al mensaje' : 'Editar respuesta'}"
+                            class="w-10 h-10 ${actualStatus === 'ABIERTO' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-lg flex items-center justify-center transition-colors duration-200">
+                        ${actualStatus === 'ABIERTO' ? 
+                            '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>' :
+                            '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'}
+                    </button>
+                </div>
+                
+                <!-- Badge de estado -->
+                <div class="mb-4">
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${statusColor}">
+                        <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            ${actualStatus === 'ABIERTO' ? '<path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>' : 
+                              actualStatus === 'LEIDO' ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>' :
+                              actualStatus === 'RESPONDIDO' ? '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>' :
+                              '<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>'}
+                        </svg>
+                        ${statusText}
+                            </span>
+                </div>
+            </div>
+            
+            <!-- Contenido del mensaje -->
+            <div class="px-6 pb-4 flex-1 flex flex-col">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 flex-1">
+                    <p class="text-sm text-gray-700 leading-relaxed truncate" title="${message.content || 'Sin contenido'}">
+                        ${message.content ? (message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content) : 'Sin contenido'}
+                    </p>
+                </div>
+                
+                <!-- Detalles en formato de lista -->
+                <div class="space-y-3">
+                    ${message.package_tracking_code ? `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">TRACKING</p>
+                            <a href="/search?auto_search=${message.package_tracking_code}" 
+                               class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${message.package_tracking_code}
+                            </a>
+                        </div>
+                    </div>` : ''}
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">FECHA</p>
+                            <p class="text-sm font-semibold uppercase text-gray-900">${formatDate(message.created_at)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">CLIENTE</p>
+                            <p class="text-sm font-semibold uppercase text-gray-900">${message.sender_name || 'Sistema'}</p>
+                    </div>
+                    </div>
+                    
+                    ${message.sender_phone ? `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">TELÉFONO</p>
+                            <a href="https://wa.me/57${message.sender_phone}?text=Dando respuesta a tu pregunta: ${message.content ? (message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content) : ''}" 
+                               target="_blank"
+                               class="text-sm font-semibold text-orange-600 uppercase hover:text-orange-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${message.sender_phone}
+                            </a>
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>
+        `;
+    } else {
+        // Vista móvil/tablet (original)
+        const statusBg = actualStatus === 'ABIERTO' ? 'bg-orange-50 border-orange-200' : 
+                        actualStatus === 'RESPONDIDO' ? 'bg-blue-50 border-blue-200' : 
+                        'bg-white border-gray-200';
+        div.className = `${statusBg} border rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col h-full ${isUnread ? 'border-blue-500 bg-blue-50' : ''}`;
+        div.onclick = () => {
+            console.log('Click en mensaje:', message.id);
+            openMessageDetail(message.id);
+        };
+        
+        const headerGradient = actualStatus === 'ABIERTO' ? 'bg-gradient-to-r from-orange-50 to-orange-100' : 
+                              actualStatus === 'RESPONDIDO' ? 'bg-gradient-to-r from-blue-50 to-blue-100' : 
+                              'bg-gradient-to-r from-gray-50 to-blue-50';
+        
+        div.innerHTML = `
+            <!-- Header con gradiente sutil -->
+            <div class="${headerGradient} px-6 py-4 border-b border-gray-100">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <!-- Icono de mensaje -->
+                            <div class="flex-shrink-0 w-10 h-10 bg-papyrus-blue-100 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-papyrus-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900 truncate group-hover:text-papyrus-blue-700 transition-colors">
+                                    <a href="/search?auto_search=${message.package_tracking_code || message.id}" 
+                                       class="text-gray-900 hover:text-papyrus-blue-700 hover:underline transition-colors duration-200 cursor-pointer">
+                                        PAQUETE ${message.package_tracking_code || message.id}
+                                    </a>
+                                </h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-medium uppercase text-papyrus-blue-600">${message.sender_name || 'Sistema'}</span>                                                    
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Badges de estado y prioridad -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Estado del mensaje -->
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border ${statusColor}">
+                                <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                    ${actualStatus === 'ABIERTO' ? '<path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>' : 
+                                      actualStatus === 'LEIDO' ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>' :
+                                      actualStatus === 'RESPONDIDO' ? '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>' :
+                                      '<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>'}
+                                </svg>
+                            ${statusText}
+                        </span>
+                    </div>
+                </div>
+                    
+                    <!-- Botón de acción -->
+                    <div class="flex-shrink-0 ml-4">
+                        <button onclick="openMessageDetail(${message.id})" 
+                                title="${actualStatus === 'ABIERTO' ? 'Responder al mensaje' : 'Editar respuesta'}"
+                                class="inline-flex items-center justify-center w-10 h-10 border border-transparent text-xs font-medium rounded-md text-white ${actualStatus === 'ABIERTO' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} hover:opacity-80 transition-colors duration-200">
+                            ${actualStatus === 'ABIERTO' ? 
+                                '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>' :
+                                '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contenido del mensaje -->
+            <div class="px-6 py-4 flex-1 flex flex-col">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 flex-1">
+                    <p class="text-sm text-gray-700 leading-relaxed truncate" title="${message.content || 'Sin contenido'}">
+                        ${message.content ? (message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content) : 'Sin contenido'}
+                    </p>
+                </div>
+                
+                <!-- Metadatos enriquecidos -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    ${message.package_tracking_code ? `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tracking</p>
+                            <a href="/search?auto_search=${message.package_tracking_code}" 
+                               class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${message.package_tracking_code}
+                            </a>
+                        </div>
+                    </div>` : ''}
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Fecha</p>
+                            <p class="text-sm font-semibold uppercase text-gray-900">${formatDate(message.created_at)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cliente</p>
+                            <p class="text-sm font-semibold uppercase text-gray-900">${message.sender_name || 'Sistema'}</p>
+                        </div>
+                    </div>
+                    
+                    ${message.sender_phone ? `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</p>
+                            <a href="https://wa.me/57${message.sender_phone}?text=Dando respuesta a tu pregunta: ${message.content ? (message.content.length > 50 ? message.content.substring(0, 50) + '...' : message.content) : ''}" 
+                               target="_blank"
+                               class="text-sm font-semibold text-orange-600 uppercase hover:text-orange-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${message.sender_phone}
+                            </a>
+                        </div>
+                    </div>` : ''}
+            </div>
+        </div>
+    `;
+    }
+    
+    return div;
+}
+
+function getTypeIcon(type) {
+    switch(type) {
+        case 'customer_inquiry':
+            return '<svg class="w-6 h-6 text-papyrus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        case 'internal':
+            return '<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>';
+        case 'support':
+            return '<svg class="w-6 h-6 text-papyrus-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>';
+        case 'system':
+            return '<svg class="w-6 h-6 text-papyrus-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>';
+        default:
+            return '<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>';
+    }
+}
+
+function openMessageDetail(messageId) {
+    console.log('Abriendo detalle del mensaje:', messageId);
+    currentMessageId = messageId;
+    
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.error('No hay token de autenticación disponible');
+        window.location.href = '/auth/login';
+        return;
+    }
+    
+    // Mostrar loading en el modal
+    const detailDiv = document.getElementById('messageDetail');
+    detailDiv.innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+            <p class="mt-2 text-sm text-gray-500">Cargando mensaje...</p>
+        </div>
+    `;
+    
+    const modal = document.getElementById('messageModal');
+    modal.classList.remove('hidden');
+    
+    fetch(`/api/messages/${messageId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Datos del mensaje recibidos:', data);
+        
+        // Marcar el mensaje como leído si no lo está
+        if (data.status === 'UNREAD') {
+            markMessageAsRead(messageId);
+        }
+        
+        const statusColor = getStatusColor(data.status);
+        const statusText = getStatusText(data.status);
+        
+        detailDiv.innerHTML = `
+            <!-- Header con información básica -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-gray-900">${data.subject}</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${statusColor}">
+                            ${statusText}
+                        </span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span class="text-sm uppercase text-gray-700">${data.sender_name || 'Sin nombre'}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                        </svg>
+                        <span class="text-sm uppercase text-gray-700">${createPhoneLinksHTML(data.sender_phone, `Respuesta sobre consulta de ${data.sender_name}`)}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-sm uppercase text-gray-700">${data.sender_email || 'Sin email'}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm uppercase text-gray-700">${formatDate(data.created_at)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            ${data.package_guide_number || data.package_tracking_code ? `
+            <!-- Información del paquete -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Información del Paquete</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    ${data.package_guide_number ? `
+                    <div>
+                        <span class="text-gray-500">Número de Guía:</span>
+                        <span class="ml-2 font-medium text-gray-900">${data.package_guide_number}</span>
+                    </div>
+                    ` : ''}
+                    ${data.package_tracking_code ? `
+                    <div>
+                        <span class="text-gray-500">Código de Tracking:</span>
+                        <span class="ml-2 font-medium text-gray-900">${data.package_tracking_code}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            ` : ''}
+            
+            <!-- Mensaje del cliente -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium uppercase text-gray-900 mb-3"><b>${data.sender_name}</b> Pregunto...</h3>
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap">${data.content}</p>
+                </div>
+            </div>
+            
+            ${data.answer ? `
+            <!-- Respuesta del administrador -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="text-sm uppercase font-medium text-gray-900 mb-3"><b>${data.answered_by_name}</b> Respondio...</h3>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap mb-3">${data.answer}</p>
+                <p class="text-xs uppercase text-gray-500">
+                    Fecha: ${formatDate(data.answered_at)}
+                </p>
+            </div>
+            ` : ''}
+            
+        `;
+        
+        // Mostrar/ocultar formulario de respuesta
+        const responseForm = document.getElementById('responseForm');
+        // Mostrar formulario si el mensaje no ha sido respondido aún
+        if (!data.answer && !data.answered_at) {
+            responseForm.classList.remove('hidden');
+        } else {
+            responseForm.classList.add('hidden');
+        }
+        
+        console.log('Modal mostrado exitosamente');
+    })
+    .catch(error => {
+        console.error('Error cargando detalle del mensaje:', error);
+        detailDiv.innerHTML = `
+            <div class="text-center py-8">
+                <div class="bg-red-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Error al cargar mensaje</h3>
+                <p class="mt-2 text-sm text-gray-500">No se pudo cargar el detalle del mensaje.</p>
+            </div>
+        `;
+    });
+}
+
+function markMessageAsRead(messageId) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.error('No hay token de autenticación disponible');
+        return;
+    }
+    
+    fetch(`/api/messages/${messageId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Mensaje marcado como leído:', data);
+        // No recargar la lista completa para evitar cambio de diseño
+    })
+    .catch(error => {
+        console.error('Error marcando mensaje como leído:', error);
+    });
+}
+
+function sendResponse() {
+    const responseText = document.getElementById('responseText').value.trim();
+    
+    if (!responseText) {
+        showErrorToast(
+            'Respuesta Vacía',
+            'Por favor escribe una respuesta antes de enviar.',
+            3000
+        );
+        return;
+    }
+    
+    if (responseText.length < 5) {
+        showErrorToast(
+            'Respuesta Muy Corta',
+            'La respuesta debe tener al menos 5 caracteres.',
+            3000
+        );
+        return;
+    }
+    
+    if (responseText.length > 2000) {
+        showErrorToast(
+            'Respuesta Muy Larga',
+            'La respuesta no puede exceder 2000 caracteres.',
+            3000
+        );
+        return;
+    }
+    
+    fetch(`/api/messages/${currentMessageId}/answer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            answer: responseText
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                throw new Error(`HTTP ${response.status}: ${errorData.detail || 'Error desconocido'}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Limpiar formulario de respuesta
+        document.getElementById('responseText').value = '';
+        updateResponseCounter();
+
+        // Ocultar formulario de respuesta
+        document.getElementById('responseForm').classList.add('hidden');
+
+        // Mostrar la respuesta enviada en el modal
+        const messageDetail = document.getElementById('messageDetail');
+        // Obtener el nombre del usuario actual (puedes obtenerlo de una variable global o del contexto)
+        const currentUserName = window.currentUserName || 'Administrador';
+        const adminResponseHTML = `
+            <!-- Respuesta del administrador -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Respuesta del Administrador</h3>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap mb-3">${responseText}</p>
+                <p class="text-xs text-gray-500">
+                    <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    ${currentUserName} - ${new Date().toLocaleDateString('es-CO', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
+                </p>
+            </div>
+        `;
+
+        // Agregar la respuesta al final del contenido del mensaje
+        messageDetail.insertAdjacentHTML('beforeend', adminResponseHTML);
+
+        // Actualizar estado del mensaje localmente (marcar como cerrado)
+        const statusBadge = document.querySelector('#messageDetail .inline-flex');
+        if (statusBadge) {
+            statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-600';
+            statusBadge.textContent = 'CERRADO';
+        }
+
+        currentMessageId = null;
+
+        // Evitar refrescar la lista renderizada por el servidor para mantener el layout
+
+        showSuccessToast(
+            'Respuesta Enviada',
+            'La respuesta se ha enviado y el mensaje ha sido cerrado.',
+            4000
+        );
+    })
+    .catch(error => {
+        console.error('Error enviando respuesta:', error);
+        showErrorToast(
+            'Error al Enviar',
+            error.message || 'No se pudo enviar la respuesta. Intenta nuevamente.',
+            5000
+        );
+    });
+}
+
+function closeModal() {
+    document.getElementById('messageModal').classList.add('hidden');
+    document.getElementById('responseText').value = '';
+    updateResponseCounter();
+    
+    // No refrescar la lista para mantener el layout del servidor
+    currentMessageId = null;
+}
+
+function updateResponseCounter() {
+    const textarea = document.getElementById('responseText');
+    const counter = document.getElementById('responseCounter');
+    if (textarea && counter) {
+        const length = textarea.value.length;
+        counter.textContent = `${length}/2000`;
+        
+        // Cambiar color según la longitud
+        if (length < 5) {
+            counter.className = 'absolute bottom-2 right-2 text-xs text-red-500 bg-white px-1 rounded';
+        } else if (length > 1800) {
+            counter.className = 'absolute bottom-2 right-2 text-xs text-orange-500 bg-white px-1 rounded';
+        } else {
+            counter.className = 'absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-1 rounded';
+        }
+    }
+}
+
+// Función para crear elemento de mensaje desde datos de API
+function createMessageElementFromAPI(message, viewType = 'desktop') {
+    const statusColors = {
+        'ABIERTO': 'bg-orange-50 border-orange-200',
+        'RESPONDIDO': 'bg-blue-50 border-blue-200',
+        'CERRADO': 'bg-white border-gray-200',
+        'LEIDO': 'bg-white border-gray-200'
+    };
+    
+    const statusClass = statusColors[message.status] || 'bg-white border-gray-200';
+    const isDesktop = viewType === 'desktop';
+    
+    const div = document.createElement('div');
+    div.className = `${statusClass} border rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group flex flex-col h-full`;
+    div.setAttribute('data-search', `${message.id} ${message.subject || ''} ${message.content || ''} ${message.answer || ''} ${message.sender_name || ''} ${message.sender_phone || ''} ${message.tracking_code || ''} ${message.status || ''}`.toLowerCase());
+    div.setAttribute('data-status', message.status || '');
+    
+    const trackingCode = message.tracking_code || message.id;
+    const customerName = message.sender_name || 'Cliente';
+    const subject = message.subject || 'Sin asunto';
+    const content = message.content || 'Sin contenido';
+    const contentPreview = content.length > 100 ? content.substring(0, 100) + '...' : content;
+    const createdDate = message.created_at ? message.created_at.substring(0, 10) : 'N/A';
+    const customerPhone = message.sender_phone || '';
+    
+    // Determinar badge de estado
+    let statusBadge = '';
+    if (message.status === 'ABIERTO') {
+        statusBadge = `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200">
+            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+            </svg>
+            ABIERTO
+        </span>`;
+    } else if (message.status === 'RESPONDIDO') {
+        statusBadge = `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200">
+            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            RESPONDIDO
+        </span>`;
+    } else if (message.status === 'LEIDO') {
+        statusBadge = `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            LEIDO
+        </span>`;
+    } else {
+        statusBadge = `<span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800 border border-gray-200">
+            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+            </svg>
+            ${message.status}
+        </span>`;
+    }
+    
+    if (isDesktop) {
+        // Vista Desktop - Estructura completa igual al template
+        div.innerHTML = `
+            <!-- Header de la tarjeta -->
+            <div class="p-6 pb-4">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <!-- Icono de mensaje -->
+                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">
+                                <a href="/search?auto_search=${trackingCode}" 
+                                   class="text-gray-900 hover:text-papyrus-blue-700 hover:underline transition-colors duration-200 cursor-pointer">
+                                    PAQUETE ${trackingCode}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-gray-600">${customerName}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de respuesta -->
+                    <button onclick="openMessageDetail(${message.id})" 
+                            title="${message.status === 'ABIERTO' ? 'Responder al mensaje' : 'Editar respuesta'}"
+                            class="w-10 h-10 ${message.status === 'ABIERTO' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-lg flex items-center justify-center transition-colors duration-200">
+                        ${message.status === 'ABIERTO' ? 
+                            '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>' :
+                            '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'}
+                    </button>
+                </div>
+                
+                <!-- Badge de estado -->
+                <div class="mb-4">
+                    ${statusBadge}
+                </div>
+            </div>
+            
+            <!-- Contenido del mensaje -->
+            <div class="px-6 pb-4 flex-1 flex flex-col">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 flex-1">
+                    <p class="text-sm text-gray-700 leading-relaxed truncate" title="${content}">
+                        ${contentPreview}
+                    </p>
+                </div>
+                
+                <!-- Detalles en formato de lista -->
+                <div class="space-y-3">
+                    ${trackingCode ? `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">TRACKING</p>
+                            <a href="/search?auto_search=${trackingCode}" 
+                               class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${trackingCode}
+                            </a>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">FECHA</p>
+                            <p class="text-sm font-semibold text-gray-900">${createdDate}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">CLIENTE</p>
+                            <p class="text-sm font-semibold text-gray-900">${customerName}</p>
+                        </div>
+                    </div>
+                    
+                    ${customerPhone ? `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">TELÉFONO</p>
+                            <a href="https://wa.me/57${customerPhone}?text=Dando respuesta a tu pregunta: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}" 
+                               target="_blank"
+                               class="text-sm font-semibold text-orange-600 hover:text-orange-800 hover:underline transition-colors duration-200 cursor-pointer">
+                                ${customerPhone}
+                            </a>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } else {
+        // Vista Mobile - estructura completa igual al template
+        div.innerHTML = `
+            <div class="${message.status === 'ABIERTO' ? 'bg-gradient-to-r from-orange-50 to-orange-100' : message.status === 'RESPONDIDO' ? 'bg-gradient-to-r from-blue-50 to-blue-100' : 'bg-gradient-to-r from-gray-50 to-blue-50'} px-6 py-4 border-b border-gray-100">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-bold text-gray-900 truncate">
+                                    <a href="/search?auto_search=${trackingCode}" class="text-gray-900 hover:text-papyrus-blue-700">
+                                        PAQUETE ${trackingCode}
+                                    </a>
+                                </h3>
+                                <p class="text-sm text-gray-600 truncate">${customerName}</p>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <button onclick="openMessageDetail(${message.id})" 
+                            title="${message.status === 'ABIERTO' ? 'Responder al mensaje' : 'Editar respuesta'}"
+                            class="ml-3 w-12 h-12 ${message.status === 'ABIERTO' ? 'bg-green-600' : 'bg-blue-600'} rounded-xl flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 flex-shrink-0">
+                        ${message.status === 'ABIERTO' ? 
+                            '<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>' :
+                            '<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>'}
+                    </button>
+                </div>
+            </div>
+            <div class="px-6 py-4 flex-1 flex flex-col">
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-700 leading-relaxed" title="${content}">
+                        ${contentPreview}
+                    </p>
+                </div>
+                <div class="space-y-2 text-xs">
+                    ${trackingCode ? `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-500 uppercase">📦 Tracking:</span>
+                        <a href="/search?auto_search=${trackingCode}" class="font-semibold text-green-600">${trackingCode}</a>
+                    </div>
+                    ` : ''}
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-500 uppercase">📅 Fecha:</span>
+                        <span class="font-semibold text-gray-900">${createdDate}</span>
+                    </div>
+                    ${customerPhone ? `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-500 uppercase">📞 Teléfono:</span>
+                        <a href="https://wa.me/57${customerPhone}" target="_blank" class="font-semibold text-orange-600">${customerPhone}</a>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    return div;
+}
+
+// Función para renderizar paginación dinámica (modo búsqueda)
+function renderDynamicPagination(data, searchText, currentPage) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    
+    if (!paginationContainer) {
+        console.warn('Contenedor de paginación no encontrado');
+        return;
+    }
+    
+    const totalPages = data.total_pages || 1;
+    
+    if (totalPages <= 1) {
+        paginationContainer.classList.add('hidden');
+        return;
+    }
+    
+    paginationContainer.classList.remove('hidden');
+    
+    const hasPrev = currentPage > 1;
+    const hasNext = currentPage < totalPages;
+    const startItem = ((currentPage - 1) * 9) + 1;
+    const endItem = Math.min(currentPage * 9, data.total);
+    
+    let html = `
+        <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+            <div class="text-sm text-gray-700 order-2 sm:order-1">
+                Mostrando 
+                <span class="font-medium">${startItem}</span>
+                a 
+                <span class="font-medium">${endItem}</span>
+                de 
+                <span class="font-medium">${data.total}</span> 
+                resultados
+            </div>
+            <div class="flex items-center space-x-2 order-1 sm:order-2">
+    `;
+    
+    // Botón Anterior
+    if (hasPrev) {
+        html += `<button onclick="searchMessagesAPI('${searchText}', ${currentPage - 1})" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            <span class="ml-1 hidden sm:inline">Anterior</span>
+        </button>`;
+    } else {
+        html += `<span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            <span class="ml-1 hidden sm:inline">Anterior</span>
+        </span>`;
+    }
+    
+    // Números de página (solo desktop)
+    html += '<div class="hidden md:flex items-center space-x-1">';
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            html += `<span class="relative inline-flex items-center px-4 py-2 border border-papyrus-blue bg-papyrus-blue text-sm font-medium text-white z-10">${i}</span>`;
+        } else {
+            html += `<button onclick="searchMessagesAPI('${searchText}', ${i})" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">${i}</button>`;
+        }
+    }
+    html += '</div>';
+    
+    // Indicador móvil
+    html += `<div class="md:hidden relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">${currentPage} / ${totalPages}</div>`;
+    
+    // Botón Siguiente
+    if (hasNext) {
+        html += `<button onclick="searchMessagesAPI('${searchText}', ${currentPage + 1})" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="mr-1 hidden sm:inline">Siguiente</span>
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+        </button>`;
+    } else {
+        html += `<span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+            <span class="mr-1 hidden sm:inline">Siguiente</span>
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+        </span>`;
+    }
+    
+    html += '</div></div>';
+    
+    paginationContainer.innerHTML = html;
+}
+
+// Función para actualizar el contador superior
+function updateTopCounter(data, currentPage) {
+    // Buscar el contador en el header de "Lista de Mensajes"
+    const headerDiv = document.querySelector('.border-b.border-gray-100.px-3.sm\\:px-4.lg\\:px-8');
+    if (!headerDiv) return;
+    
+    const counterDiv = headerDiv.querySelector('.text-sm.text-gray-700');
+    if (!counterDiv) return;
+    
+    const startItem = ((currentPage - 1) * 9) + 1;
+    const endItem = Math.min(currentPage * 9, data.total);
+    
+    counterDiv.innerHTML = `
+        Mostrando 
+        <span class="font-medium">${startItem}</span>
+        a 
+        <span class="font-medium">${endItem}</span>
+        de 
+        <span class="font-medium">${data.total}</span> 
+        resultados
+    `;
+}
+
+function clearFilters() {
+    // Fade ultra rápido para recarga casi instantánea
+    document.body.style.opacity = '0.7';
+    document.body.style.transition = 'opacity 0.1s ease';
+    
+    // Recargar la página limpia casi inmediatamente
+    // Esto vuelve a /messages sin parámetros, como si acabaras de entrar
+    setTimeout(() => {
+        window.location.href = '/messages';
+    }, 100);
+}
+
+// Función optimizada para filtrar por estado desde las tarjetas
+function filterByStatus(status) {
+    // ========================================
+    // LÓGICA DE FILTROS DE ESTADO
+    // ========================================
+    // unread: Mensajes con status = "UNREAD"
+    // pending: Mensajes con status = "ABIERTO"
+    // answered: Mensajes con status = "ANSWERED"
+    // closed: Mensajes con status = "CLOSED"
+
+    let filterStatus = '';
+    switch(status) {
+        case 'unread':
+            filterStatus = 'UNREAD'; // No Leídos
+            break;
+        case 'pending':
+            filterStatus = 'ABIERTO'; // Pendientes
+            break;
+        case 'answered':
+            filterStatus = 'ANSWERED'; // Respondidos
+            break;
+        case 'closed':
+            filterStatus = 'CLOSED'; // Cerrados
+            break;
+    }
+
+    // Establecer el filtro de estado actual
+    currentStatusFilter = filterStatus;
+
+    // Limpiar cache de filtros
+    filterCache.clear();
+
+    // Aplicar filtrado local
+    applyMessageFilter();
+
+    // Mostrar notificación de filtro aplicado
+    const statusNames = {
+        'UNREAD': 'NO LEÍDOS',
+        'ABIERTO': 'PENDIENTES',
+        'ANSWERED': 'RESPONDIDOS',
+        'CLOSED': 'CERRADOS'
+    };
+
+    showInfoToast(
+        'Filtro Aplicado',
+        `Mostrando solo mensajes: ${statusNames[filterStatus]}`,
+        3000
+    );
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+
+function getStatusColor(status) {
+    switch(status?.toUpperCase()) {
+        case 'UNREAD': return 'bg-blue-100 text-blue-600';
+        case 'ABIERTO': return 'bg-red-100 text-red-600';
+        case 'ANSWERED': return 'bg-green-100 text-green-600';
+        case 'CLOSED': return 'bg-green-100 text-green-600';
+        default: return 'bg-gray-100 text-gray-700';
+    }
+}
+
+function getStatusText(status) {
+    switch(status?.toUpperCase()) {
+        case 'UNREAD': return 'NO LEÍDO';
+        case 'ABIERTO': return 'PENDIENTE';
+        case 'ANSWERED': return 'RESUELTO';
+        case 'RESPONDIDO': return 'RESPONDIDO';
+        case 'CLOSED': return 'CERRADO';
+        case 'CERRADO': return 'CERRADO';
+        default: return status;
+    }
+}
+
+// Alias para compatibilidad
+function formatStatus(status) {
+    return getStatusText(status);
+}
+
+function getStatusIcon(status) {
+    switch(status?.toUpperCase()) {
+        case 'UNREAD':
+            return '<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>';
+        case 'ABIERTO':
+            return '<svg class="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>';
+        case 'LEIDO':
+            return '<svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>';
+        case 'RESPONDIDO':
+            return '<svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+        case 'ANSWERED':
+            return '<svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+        case 'CLOSED':
+            return '<svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+        default:
+            return '<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>';
+    }
+}
+
+function getPriorityColor(priority) {
+    switch(priority) {
+        case 'urgent':
+        case 'URGENT': return 'bg-red-100 text-red-800';
+        case 'high':
+        case 'ALTA': return 'bg-orange-100 text-orange-800';
+        case 'normal':
+        case 'MEDIA': return 'bg-blue-100 text-blue-800';
+        case 'low':
+        case 'BAJA': return 'bg-gray-100 text-gray-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getPriorityText(priority) {
+    switch(priority) {
+        case 'urgent':
+        case 'URGENT': return 'Urgente';
+        case 'high':
+        case 'ALTA': return 'Alta';
+        case 'normal':
+        case 'MEDIA': return 'Normal';
+        case 'low':
+        case 'BAJA': return 'Baja';
+        default: return priority;
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Variable global para modo de búsqueda
+let isSearchMode = false;
+
+// Función optimizada para aplicar filtros - SISTEMA HÍBRIDO
+function applyMessageFilter() {
+    const startTime = performance.now();
+    log('🚀 Iniciando applyMessageFilter...');
+    
+    // Inicializar cache de DOM si no está disponible
+    if (!domCache.messageCards) {
+        initializeDOMCache();
+    }
+    
+    // Recopilar filtros usando cache de DOM
+    const searchText = domCache.searchInput?.value?.trim() || '';
+    
+    log('🔍 Aplicando filtros:', { searchText });
+    
+    // SISTEMA HÍBRIDO: Si hay búsqueda o filtro de estado activo, usar API. Si no, filtrar localmente
+    if (searchText.length >= 2 || (currentStatusFilter && currentStatusFilter.length > 0)) {
+        // MODO API: Búsqueda global en todos los mensajes
+        isSearchMode = true;
+        searchMessagesAPI(searchText, 1);
+    } else {
+        // MODO LOCAL: Sin búsqueda o búsqueda muy corta, usar filtrado local
+        isSearchMode = false;
+        applyLocalFilter(searchText);
+    }
+}
+
+// Función para búsqueda global via API
+function searchMessagesAPI(searchText, page = 1) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.error('No hay token de autenticación disponible');
+        return;
+    }
+    
+    log('🌐 Buscando en API:', searchText, 'Página:', page);
+    
+    // Construir parámetros de consulta
+    const params = new URLSearchParams({
+        skip: ((page - 1) * 9).toString(),
+        limit: '9'
+    });
+    
+    fetch(`/api/messages/search?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ 
+            search_text: searchText, 
+            status: currentStatusFilter || null
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        log('✅ Resultados de API:', data);
+        renderSearchResults(data, searchText, page);
+    })
+    .catch(error => {
+        console.error('❌ Error en búsqueda API:', error);
+        showErrorToast(
+            'Error de Búsqueda',
+            'No se pudo completar la búsqueda. Intenta nuevamente.',
+            3000
+        );
+    });
+}
+
+// Función para renderizar resultados de búsqueda API
+function renderSearchResults(data, searchText, currentPage) {
+    const messagesListDesktop = document.getElementById('messagesList');
+    const messagesListMobile = document.getElementById('messagesListMobile');
+    const noMessagesDiv = document.getElementById('noMessages');
+    
+    // Limpiar listas
+    messagesListDesktop.innerHTML = '';
+    messagesListMobile.innerHTML = '';
+    
+    if (!data.messages || data.messages.length === 0) {
+        // No hay resultados
+        noMessagesDiv.classList.remove('hidden');
+        messagesListDesktop.classList.add('hidden');
+        messagesListMobile.classList.add('hidden');
+        
+        // Ocultar paginación
+        const paginationContainer = document.getElementById('paginationContainer');
+        if (paginationContainer) {
+            paginationContainer.classList.add('hidden');
+        }
+        return;
+    }
+    
+    // Mostrar resultados
+    noMessagesDiv.classList.add('hidden');
+    messagesListDesktop.classList.remove('hidden');
+    messagesListMobile.classList.remove('hidden');
+    
+    // Renderizar cada mensaje
+    data.messages.forEach(message => {
+        const messageElementDesktop = createMessageElementFromAPI(message, 'desktop');
+        const messageElementMobile = createMessageElementFromAPI(message, 'mobile');
+        messagesListDesktop.appendChild(messageElementDesktop);
+        messagesListMobile.appendChild(messageElementMobile);
+    });
+    
+    // Renderizar paginación dinámica
+    renderDynamicPagination(data, searchText, currentPage);
+    
+    // Actualizar contador superior
+    updateTopCounter(data, currentPage);
+}
+
+// Función para aplicar filtro local (modo sin búsqueda)
+function applyLocalFilter(searchText) {
+    const startTime = performance.now();
+    
+    // Recopilar filtros usando cache de DOM
+    const filters = {
+        search: searchText.toLowerCase(),
+        status: currentStatusFilter || ''
+    };
+    
+    // Verificar cache de resultados
+    const cacheKey = JSON.stringify(filters);
+    if (filterCache.has(cacheKey)) {
+        log('🎯 Usando resultado de cache');
+        const cachedResult = filterCache.get(cacheKey);
+        applyFilterResults(cachedResult.visibleElements, cachedResult.visibleCount);
+        return;
+    }
+    
+    const messageCards = domCache.messageCards;
+    if (!messageCards || messageCards.length === 0) {
+        log('⚠️ No se encontraron mensajes para filtrar');
+        return;
+    }
+    
+    let visibleCount = 0;
+    const visibleElements = [];
+    const processedMessages = new Set(); // Para evitar contar duplicados
+    
+    messageCards.forEach((card, index) => {
+        if (matchesFilters(card, filters)) {
+            visibleElements.push(card);
+            
+            // Solo contar una vez por mensaje único (usar el ID del mensaje)
+            const messageId = card.getAttribute('data-search')?.split(' ')[0]; // Primer elemento es el ID
+            if (messageId && !processedMessages.has(messageId)) {
+                processedMessages.add(messageId);
+                visibleCount++;
+            }
+        }
+    });
+    
+    // Guardar en cache
+    manageCacheSize();
+    filterCache.set(cacheKey, { visibleElements, visibleCount });
+    
+    // Aplicar resultados
+    applyFilterResults(visibleElements, visibleCount);
+    
+    // Log de rendimiento (solo en debug)
+    const duration = performance.now() - startTime;
+    log(`⚡ Filtrado local completado en ${duration.toFixed(2)}ms - ${visibleCount} resultados`);
+}
+
+// Función optimizada para verificar si un mensaje coincide con los filtros
+function matchesFilters(card, filters) {
+    // Filtrar por búsqueda
+    if (filters.search) {
+        // Validación: mínimo 2 caracteres para búsqueda
+        if (filters.search.length < 2) {
+            return true; // Si no cumple mínimo, mostrar todos
+        }
+
+        const searchData = card.getAttribute('data-search') || '';
+        const searchTerms = filters.search.split(' ').filter(term => term.length >= 2); // Solo palabras de 2+ caracteres
+
+        // Si no hay términos válidos después del filtro, mostrar el mensaje
+        if (searchTerms.length === 0) {
+            return true;
+        }
+
+        // Todas las palabras deben encontrarse en los datos
+        const allTermsFound = searchTerms.every(term =>
+            searchData.includes(term.toLowerCase())
+        );
+
+        if (!allTermsFound) {
+            return false;
+        }
+    }
+
+    // Filtrar por estado
+    if (filters.status) {
+        const cardStatus = card.getAttribute('data-status');
+        if (cardStatus !== filters.status) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Función para aplicar resultados de filtrado
+function applyFilterResults(visibleElements, visibleCount) {
+    // Ocultar todos los mensajes
+    domCache.messageCards.forEach(card => {
+        card.style.display = 'none';
+    });
+    
+    // Mostrar mensajes visibles
+    visibleElements.forEach(card => {
+        card.style.display = 'block';
+    });
+    
+    // Actualizar contador y filtros activos
+    updateMessageCounter(visibleCount);
+    updateActiveFilters();
+    showNoMessagesMessage(visibleCount === 0);
+}
+
+// Funciones de resaltado removidas - solo se realiza búsqueda sin resaltar
+
+// Función optimizada para actualizar contador de mensajes
+function updateMessageCounter(visibleCount) {
+    // Contar solo los mensajes únicos (dividir por 2 ya que tenemos vista desktop y móvil)
+    const totalMessages = domCache.messageCards ? Math.floor(domCache.messageCards.length / 2) : 0;
+
+    if (domCache.resultsCount) {
+        if (totalMessages > 0) {
+            domCache.resultsCount.textContent = `Mostrando ${visibleCount} de ${totalMessages} mensajes`;
+            domCache.resultsCount.classList.remove('hidden');
+        } else {
+            domCache.resultsCount.classList.add('hidden');
+        }
+    }
+}
+
+// Función para mostrar filtros activos
+function updateActiveFilters() {
+    if (!domCache.activeFilters || !domCache.activeFiltersList) return;
+    
+    const activeFilters = [];
+    
+    // Recopilar filtros activos
+    if (domCache.searchInput?.value?.trim()) {
+        activeFilters.push({
+            type: 'search',
+            label: 'Búsqueda',
+            value: domCache.searchInput.value.trim(),
+            remove: () => {
+                domCache.searchInput.value = '';
+                applyMessageFilter();
+            }
+        });
+    }
+
+    // Filtro de estado activo (desde tarjetas)
+    if (currentStatusFilter) {
+        const statusNames = {
+            'UNREAD': 'NO LEÍDOS',
+            'ABIERTO': 'PENDIENTES',
+            'ANSWERED': 'RESPONDIDOS',
+            'CLOSED': 'CERRADOS'
+        };
+        activeFilters.push({
+            type: 'status',
+            label: 'Estado',
+            value: statusNames[currentStatusFilter] || currentStatusFilter,
+            remove: () => {
+                currentStatusFilter = null;
+                applyMessageFilter();
+            }
+        });
+    }
+    
+    // Mostrar/ocultar panel de filtros activos
+    if (activeFilters.length > 0) {
+        domCache.activeFilters.classList.remove('hidden');
+        
+        // Generar HTML de filtros activos
+        domCache.activeFiltersList.innerHTML = activeFilters.map(filter => `
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                ${filter.label}: ${filter.value}
+                <button onclick="removeFilter('${filter.type}')" class="ml-2 text-blue-600 hover:text-blue-800 transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </span>
+        `).join('');
+        
+        // Guardar funciones de eliminación globalmente
+        window.removeFilter = (type) => {
+            const filter = activeFilters.find(f => f.type === type);
+            if (filter) {
+                filter.remove();
+            }
+        };
+    } else {
+        domCache.activeFilters.classList.add('hidden');
+    }
+}
+
+// Función para mostrar mensaje cuando no hay mensajes visibles
+function showNoMessagesMessage(show) {
+    const noMessagesDiv = document.getElementById('noMessages');
+    if (noMessagesDiv) {
+        if (show) {
+            noMessagesDiv.classList.remove('hidden');
+        } else {
+            noMessagesDiv.classList.add('hidden');
+        }
+    }
+}
+
+function getAuthToken() {
+    // Intentar obtener token desde cookies primero (más confiable)
+    const cookieValue = `; ${document.cookie}`;
+    const cookieParts = cookieValue.split(`; access_token=`);
+    if (cookieParts.length === 2) {
+        const token = cookieParts.pop().split(';').shift();
+        if (token && token !== 'undefined' && token !== 'null') {
+            return token;
+        }
+    }
+
+    // Si no está en cookies, intentar desde localStorage
+    let token = localStorage.getItem('access_token');
+    if (token && token !== 'undefined' && token !== 'null') {
+        return token;
+    }
+
+    return null;
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// ========================================
+// FUNCIONES DE DIAGNÓSTICO Y MANTENIMIENTO
+// ========================================
+
+// Función para diagnosticar el rendimiento del sistema de filtrado
+function diagnoseFilteringPerformance() {
+    console.log('🔍 Diagnóstico del sistema de filtrado:');
+    console.log(`- Elementos DOM cacheados: ${Object.keys(domCache).filter(key => domCache[key] !== null).length}`);
+    console.log(`- Mensajes disponibles: ${domCache.messageCards ? domCache.messageCards.length : 0}`);
+    console.log(`- Entradas en cache: ${filterCache.size}`);
+    console.log(`- Modo debug: ${DEBUG_FILTERING}`);
+    
+    // Analizar mensajes individuales
+    if (domCache.messageCards) {
+        console.log('- Análisis de mensajes:');
+        domCache.messageCards.forEach((card, index) => {
+            const hasUnreadClass = card.classList.contains('border-blue-500');
+            const statusElement = card.querySelector('span[class*="bg-"]');
+            const statusText = statusElement ? statusElement.textContent.trim() : 'Sin estado';
+            console.log(`  Mensaje ${index + 1}: Clase no-leído=${hasUnreadClass}, Estado="${statusText}"`);
+        });
+    }
+    
+    // Probar rendimiento
+    const startTime = performance.now();
+    applyMessageFilter();
+    const duration = performance.now() - startTime;
+    console.log(`- Tiempo de filtrado: ${duration.toFixed(2)}ms`);
+    
+    // Mostrar estadísticas de cache
+    console.log('- Estadísticas de cache:');
+    filterCache.forEach((value, key) => {
+        console.log(`  ${key}: ${value.visibleElements ? value.visibleElements.length : 0} elementos`);
+    });
+}
+
+// Función para limpiar completamente el sistema
+function resetFilteringSystem() {
+    console.log('🔄 Reiniciando sistema de filtrado...');
+    
+    // Limpiar cache
+    filterCache.clear();
+    
+    // Reinicializar cache de DOM
+    initializeDOMCache();
+    
+    // Limpiar filtros
+    clearFilters();
+    
+    console.log('✅ Sistema de filtrado reiniciado');
+}
+
+// Función para habilitar/deshabilitar modo debug
+function toggleDebugMode() {
+    DEBUG_FILTERING = !DEBUG_FILTERING;
+    console.log(`🐛 Modo debug: ${DEBUG_FILTERING ? 'HABILITADO' : 'DESHABILITADO'}`);
+    
+    if (DEBUG_FILTERING) {
+        showInfoToast('Debug Habilitado', 'El modo debug está activo. Revisa la consola para más información.', 3000);
+    } else {
+        showInfoToast('Debug Deshabilitado', 'El modo debug está desactivado.', 2000);
+    }
+}
+
+// Función específica para diagnosticar mensajes no leídos
+function diagnoseUnreadMessages() {
+    console.log('🔍 Diagnóstico específico de mensajes no leídos:');
+    
+    if (!domCache.messageCards) {
+        console.log('❌ No hay mensajes cargados');
+        return;
+    }
+    
+    let unreadCount = 0;
+    let totalCount = domCache.messageCards.length;
+    
+    domCache.messageCards.forEach((card, index) => {
+        const hasUnreadClass = card.classList.contains('border-blue-500');
+        const statusElement = card.querySelector('span[class*="bg-"]');
+        const statusText = statusElement ? statusElement.textContent.trim() : 'Sin estado';
+        
+        if (hasUnreadClass) {
+            unreadCount++;
+            console.log(`✅ Mensaje ${index + 1} es NO LEÍDO: Estado="${statusText}"`);
+        } else {
+            console.log(`❌ Mensaje ${index + 1} NO es no leído: Estado="${statusText}"`);
+        }
+    });
+    
+    console.log(`📊 Resumen: ${unreadCount} de ${totalCount} mensajes son no leídos`);
+    
+    // Filtros ocultos eliminados - no hay filtros activos
+}
+
+// Exportar funciones para uso global
+window.filteringDiagnostics = {
+    diagnose: diagnoseFilteringPerformance,
+    reset: resetFilteringSystem,
+    toggleDebug: toggleDebugMode,
+    diagnoseUnread: diagnoseUnreadMessages
+};
+</script>
+{% endblock %}
+
+

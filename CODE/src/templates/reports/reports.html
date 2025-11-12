@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="reportsApp()">
+
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">PAQUETEX</h1>
+                    <span class="text-blue-200">Sistema de Reportes</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <a href="/sms" class="bg-purple-500 hover:bg-purple-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-sms mr-1"></i>SMS
+                    </a>
+                    <span class="text-sm">Bienvenido, {{ user.username if user else 'Usuario' }}</span>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-chart-bar mr-3 text-blue-600"></i>
+                    Sistema de Reportes
+                </h1>
+                <p class="text-gray-600">Análisis y estadísticas del sistema</p>
+            </div>
+            <div class="flex space-x-3 mt-4 lg:mt-0">
+                <button @click="showGenerateModal = true"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-plus mr-2"></i>Generar Reporte
+                </button>
+                <button @click="refreshDashboard()"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                    <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Paquetes -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-box text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Paquetes</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="dashboardStats?.packages_summary?.total_packages || 0"></p>
+                        <p class="text-xs text-gray-500">últimos 30 días</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-users text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Clientes</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="dashboardStats?.customers_analysis?.total_customers || 0"></p>
+                        <p class="text-xs text-gray-500" x-text="'activos: ' + (dashboardStats?.customers_analysis?.active_customers || 0)"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rendimiento -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-tachometer-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Tasa Entrega</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="(dashboardStats?.performance_metrics?.delivery_rate || 0) + '%'"></p>
+                        <p class="text-xs text-gray-500" x-text="'procesados: ' + (dashboardStats?.performance_metrics?.total_processed || 0)"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-sms text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">SMS Enviados</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="dashboardStats?.sms_analytics?.total_sms || 0"></p>
+                        <p class="text-xs text-gray-500" x-text="'tasa: ' + (dashboardStats?.sms_analytics?.delivery_rate || 0) + '%'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Packages Status Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribución de Paquetes por Estado</h3>
+                <canvas id="packagesChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- SMS Analytics Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Análisis de SMS</h3>
+                <canvas id="smsChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Reports Table -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">Reportes Recientes</h3>
+                <div class="flex space-x-2">
+                    <select x-model="filterStatus" @change="loadReports()" class="text-sm border border-gray-300 rounded px-3 py-1">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendientes</option>
+                        <option value="processing">Procesando</option>
+                        <option value="completed">Completados</option>
+                        <option value="failed">Fallidos</option>
+                    </select>
+                    <button @click="loadReports()" class="text-blue-600 hover:text-blue-600">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiempo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" x-show="reports.length > 0">
+                        <template x-for="report in reports" :key="report.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="report.title"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="report.report_type.replace('_', ' ')"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                          :class="{
+                                              'bg-yellow-100 text-yellow-800': report.status === 'pending',
+                                              'bg-blue-100 text-blue-800': report.status === 'processing',
+                                              'bg-green-100 text-green-800': report.status === 'completed',
+                                              'bg-red-100 text-red-800': report.status === 'failed'
+                                          }"
+                                          x-text="report.status">
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(report.created_at)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="report.processing_time ? report.processing_time.toFixed(1) + 's' : '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <template x-if="report.status === 'completed'">
+                                        <a :href="'/api/reports/' + report.id + '/download'"
+                                           class="text-blue-600 hover:text-blue-900 mr-3">
+                                            <i class="fas fa-download"></i> Descargar
+                                        </a>
+                                    </template>
+                                    <button @click="viewReport(report)" class="text-gray-600 hover:text-gray-900">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                    <tbody x-show="reports.length === 0">
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-chart-bar text-4xl mb-4"></i>
+                                <p>No hay reportes disponibles</p>
+                                <p class="text-sm">Genera tu primer reporte para comenzar</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js Functions -->
+    <script>
+        function reportsApp() {
+            return {
+                dashboardStats: null,
+                reports: [],
+                filterStatus: '',
+                showGenerateModal: false,
+                showReportModal: false,
+                selectedReport: null,
+                generateForm: {
+                    report_type: '',
+                    format: 'pdf',
+                    title: '',
+                    date_from: '',
+                    date_to: ''
+                },
+
+                init() {
+                    this.loadDashboardStats();
+                    this.loadReports();
+                },
+
+                async loadDashboardStats() {
+                    try {
+                        const response = await fetch('/api/reports/dashboard/stats');
+                        if (response.ok) {
+                            this.dashboardStats = await response.json();
+                            this.updateCharts();
+                        }
+                    } catch (error) {
+                        console.error('Error loading dashboard stats:', error);
+                    }
+                },
+
+                async loadReports() {
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.filterStatus) params.append('status', this.filterStatus);
+
+                        const response = await fetch(`/api/reports?${params}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.reports = data.reports;
+                        }
+                    } catch (error) {
+                        console.error('Error loading reports:', error);
+                    }
+                },
+
+                async generateReport() {
+                    try {
+                        const response = await fetch('/api/reports/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                report_type: this.generateForm.report_type,
+                                format: this.generateForm.format,
+                                parameters: {
+                                    date_from: this.generateForm.date_from || null,
+                                    date_to: this.generateForm.date_to || null
+                                }
+                            })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            alert('Reporte generado exitosamente');
+                            this.closeModals();
+                            this.loadReports();
+                        } else {
+                            alert('Error al generar el reporte');
+                        }
+                    } catch (error) {
+                        console.error('Error generating report:', error);
+                        alert('Error al generar el reporte');
+                    }
+                },
+
+                viewReport(report) {
+                    this.selectedReport = report;
+                    this.showReportModal = true;
+                },
+
+                closeModals() {
+                    this.showGenerateModal = false;
+                    this.showReportModal = false;
+                    this.selectedReport = null;
+                    this.generateForm = {
+                        report_type: '',
+                        format: 'pdf',
+                        title: '',
+                        date_from: '',
+                        date_to: ''
+                    };
+                },
+
+                refreshDashboard() {
+                    this.loadDashboardStats();
+                    this.loadReports();
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return '-';
+                    return new Date(dateString).toLocaleDateString('es-CO');
+                },
+
+                updateCharts() {
+                    // Update packages chart
+                    if (this.dashboardStats?.packages_summary?.status_distribution) {
+                        const ctx = document.getElementById('packagesChart');
+                        if (ctx) {
+                            new Chart(ctx, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: Object.keys(this.dashboardStats.packages_summary.status_distribution),
+                                    datasets: [{
+                                        data: Object.values(this.dashboardStats.packages_summary.status_distribution),
+                                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Update SMS chart
+                    if (this.dashboardStats?.sms_analytics?.status_distribution) {
+                        const ctx = document.getElementById('smsChart');
+                        if (ctx) {
+                            new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: Object.keys(this.dashboardStats.sms_analytics.status_distribution),
+                                    datasets: [{
+                                        label: 'SMS por Estado',
+                                        data: Object.values(this.dashboardStats.sms_analytics.status_distribution),
+                                        backgroundColor: '#8B5CF6'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

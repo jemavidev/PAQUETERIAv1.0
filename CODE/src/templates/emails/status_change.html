@@ -1,0 +1,45 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Estado de Paquete Actualizado - {{ company_name }}{% endblock %}
+
+{% block header_subtitle %}📬 Actualización de Estado{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    ¡Hola <strong>{{ customer_name }}</strong>!
+</div>
+
+<div class="message">
+    Te informamos que el estado de tu paquete ha sido actualizado.
+</div>
+
+<div class="info-box">
+    <strong>Información de tu paquete:</strong><br>
+    <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
+        <li style="margin-bottom: 8px;"><strong>Guía:</strong> {{ guide_number }}</li>
+        <li style="margin-bottom: 8px;"><strong>Código:</strong> {{ tracking_code }}</li>
+        {% if received_at %}
+        <li style="margin-bottom: 8px;"><strong>Recibido el:</strong> {{ received_at }}</li>
+        {% endif %}
+        {% if package_type %}
+        <li style="margin-bottom: 8px;"><strong>Tipo:</strong> {{ package_type }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="action-section">
+    <a href="{{ tracking_url }}" class="btn-primary">
+        🔍 Ver Detalles
+    </a>
+</div>
+
+<div class="support-text">
+    Si tienes alguna pregunta, contáctanos en <a href="mailto:{{ company_email }}">{{ company_email }}</a> o {{ company_phone }}
+</div>
+
+<div class="signature">
+    <p>Cordialmente,<br>
+    <strong>El Equipo de {{ company_name }}</strong></p>
+</div>
+{% endblock %}
+

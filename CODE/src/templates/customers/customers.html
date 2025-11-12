@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="customersApp()">
+
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">PAQUETEX</h1>
+                    <span class="text-blue-200">Gestión de Clientes</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <span class="text-sm">Bienvenido, {{ user.username if user else 'Usuario' }}</span>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-users mr-3 text-blue-600"></i>
+                    Gestión de Clientes
+                </h1>
+                <p class="text-gray-600">Administra la base de datos de clientes del sistema</p>
+            </div>
+            <div class="flex space-x-3 mt-4 lg:mt-0">
+                <button @click="showImportModal = true"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                    <i class="fas fa-upload mr-2"></i>Importar CSV
+                </button>
+                <button @click="exportCustomers()"
+                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                    <i class="fas fa-download mr-2"></i>Exportar CSV
+                </button>
+                <button @click="showCreateModal = true"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Cliente
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Clientes</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.total_customers || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-user-check text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Clientes Activos</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.active_customers || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-crown text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Clientes VIP</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.vip_customers || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-user-plus text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Nuevos (30 días)</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.recent_registrations || 0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Filters Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filtros
+                    </h3>
+
+                    <div class="space-y-4">
+                        <!-- Search -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                            <input type="text"
+                                   x-model="searchQuery"
+                                   @input="debouncedSearch()"
+                                   placeholder="Nombre, teléfono, email..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="radio" x-model="statusFilter" value="" class="mr-2">
+                                    <span class="text-sm">Todos</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" x-model="statusFilter" value="active" class="mr-2">
+                                    <span class="text-sm">Activos</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" x-model="statusFilter" value="inactive" class="mr-2">
+                                    <span class="text-sm">Inactivos</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- VIP -->
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="vipOnly" @change="applyFilters()" class="mr-2">
+                                <span class="text-sm font-medium text-gray-700">Solo VIP</span>
+                            </label>
+                        </div>
+
+                        <!-- City -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+                            <select x-model="cityFilter" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="">Todas las ciudades</option>
+                                <template x-for="[city, count] in Object.entries(stats.customers_by_city || {})" :key="city">
+                                    <option :value="city" x-text="`${city} (${count})`"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <button @click="clearFilters()"
+                                class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-200">
+                            Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Customers -->
+                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-trophy mr-2"></i>
+                        Top Clientes
+                    </h3>
+                    <div class="space-y-3">
+                        <template x-for="customer in stats.top_customers_by_packages || []" :key="customer.id">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900" x-text="customer.name"></p>
+                                    <p class="text-xs text-gray-500" x-text="`${customer.packages_received} paquetes`"></p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-box mr-1"></i>
+                                        <span x-text="customer.packages_received"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customers List -->
+            <div class="lg:col-span-3">
+                <!-- Customers Table -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-table mr-2"></i>
+                            Clientes
+                            <span class="text-sm text-gray-500 ml-2" x-text="'(' + customers.length + ')'"></span>
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <button @click="loadCustomers()" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paquetes</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="customer in customers" :key="customer.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-gray-700" x-text="customer.first_name[0] + customer.last_name[0]"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900" x-text="customer.display_name"></div>
+                                                    <div class="text-sm text-gray-500" x-text="customer.document_number || 'Sin documento'"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" x-text="customer.primary_phone"></div>
+                                            <div class="text-sm text-gray-500" x-text="customer.primary_email || 'Sin email'"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" x-text="customer.full_address.split(',')[0] || 'Sin dirección'"></div>
+                                            <div class="text-sm text-gray-500" x-text="customer.address_city || ''"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  :class="customer.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                                <i :class="customer.is_active ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="mr-1"></i>
+                                                <span x-text="customer.is_active ? 'Activo' : 'Inactivo'"></span>
+                                            </span>
+                                            <div x-show="customer.is_vip" class="mt-1">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    <i class="fas fa-crown mr-1"></i>VIP
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div class="flex flex-col">
+                                                <span x-text="'Recibidos: ' + customer.total_packages_received"></span>
+                                                <span x-text="'Entregados: ' + customer.total_packages_delivered"></span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div class="flex space-x-2">
+                                                <button @click="viewCustomer(customer)"
+                                                        class="text-blue-600 hover:text-blue-900">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="editCustomer(customer)"
+                                                        class="text-indigo-600 hover:text-indigo-900">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="toggleCustomerStatus(customer)"
+                                                        :class="customer.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'">
+                                                    <i :class="customer.is_active ? 'fas fa-ban' : 'fas fa-check'"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                        <div class="text-sm text-gray-700">
+                            Mostrando <span x-text="customers.length"></span> de <span x-text="totalCustomers"></span> clientes
+                        </div>
+                        <div class="flex space-x-2">
+                            <button @click="loadPage(currentPage - 1)"
+                                    :disabled="currentPage <= 1"
+                                    :class="currentPage <= 1 ? 'bg-gray-200 text-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                                    class="px-3 py-1 rounded text-sm">
+                                Anterior
+                            </button>
+                            <span class="px-3 py-1 text-sm text-gray-700" x-text="'Página ' + currentPage"></span>
+                            <button @click="loadPage(currentPage + 1)"
+                                    :disabled="customers.length < pageSize"
+                                    :class="customers.length < pageSize ? 'bg-gray-200 text-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                                    class="px-3 py-1 rounded text-sm">
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Customer Modal -->
+    <div x-show="showCreateModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900" x-text="showEditModal ? 'Editar Cliente' : 'Nuevo Cliente'"></h3>
+                    <button @click="closeModals()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="saveCustomer()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Basic Information -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-md font-medium text-gray-900 mb-3">Información Básica</h4>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+                            <input type="text" x-model="currentCustomer.first_name" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Apellido *</label>
+                            <input type="text" x-model="currentCustomer.last_name" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Teléfono Principal *</label>
+                            <input type="tel" x-model="currentCustomer.primary_phone" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email Principal</label>
+                            <input type="email" x-model="currentCustomer.primary_email"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Document Information -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-md font-medium text-gray-900 mb-3 mt-4">Información de Documento</h4>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tipo de Documento</label>
+                            <select x-model="currentCustomer.document_type"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Seleccionar...</option>
+                                <option value="CC">Cédula de Ciudadanía</option>
+                                <option value="CE">Cédula de Extranjería</option>
+                                <option value="NIT">NIT</option>
+                                <option value="PAS">Pasaporte</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Número de Documento</label>
+                            <input type="text" x-model="currentCustomer.document_number"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-md font-medium text-gray-900 mb-3 mt-4">Dirección</h4>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                            <input type="text" x-model="currentCustomer.address_street"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+                            <input type="text" x-model="currentCustomer.address_city"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">País</label>
+                            <input type="text" x-model="currentCustomer.address_country" value="Colombia"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Building Information -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-md font-medium text-gray-900 mb-3 mt-4">Información del Edificio</h4>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nombre del Edificio</label>
+                            <input type="text" x-model="currentCustomer.building_name"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Torre</label>
+                            <input type="text" x-model="currentCustomer.tower"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Apartamento</label>
+                            <input type="text" x-model="currentCustomer.apartment"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Piso</label>
+                            <input type="text" x-model="currentCustomer.floor"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-md font-medium text-gray-900 mb-3 mt-4">Información Adicional</h4>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Notas</label>
+                            <textarea x-model="currentCustomer.notes" rows="3"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="currentCustomer.is_vip" class="mr-2">
+                                <span class="text-sm font-medium text-gray-700">Cliente VIP</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" @click="closeModals()"
+                                class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                            <span x-text="showEditModal ? 'Actualizar' : 'Crear'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div x-show="showImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Importar Clientes desde CSV</h3>
+                    <button @click="closeModals()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Sube un archivo CSV con los datos de los clientes. El archivo debe tener las siguientes columnas:
+                        <code class="bg-gray-100 px-1 py-0.5 rounded text-xs">first_name, last_name, primary_phone, primary_email, document_type, document_number, address_street, address_city, building_name, tower, apartment</code>
+                    </p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="importOptions.update_existing" class="mr-2">
+                                <span class="text-sm text-gray-700">Actualizar clientes existentes</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="importOptions.skip_duplicates" class="mr-2">
+                                <span class="text-sm text-gray-700">Omitir duplicados</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <form @submit.prevent="importCustomers()">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Archivo CSV</label>
+                        <input type="file" accept=".csv" @change="handleFileSelect($event)" required
+                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="closeModals()"
+                                class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                            Importar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js Data and Functions -->
+    <script>
+        function customersApp() {
+            return {
+                // Data
+                customers: [],
+                stats: {},
+                totalCustomers: 0,
+                currentPage: 1,
+                pageSize: 50,
+                searchQuery: '',
+                statusFilter: 'active',
+                vipOnly: false,
+                cityFilter: '',
+                showCreateModal: false,
+                showEditModal: false,
+                showImportModal: false,
+                currentCustomer: {},
+                importOptions: {
+                    update_existing: false,
+                    skip_duplicates: true
+                },
+                selectedFile: null,
+                searchTimeout: null,
+
+                // Initialization
+                init() {
+                    this.resetCurrentCustomer();
+                    this.loadCustomers();
+                    this.loadStats();
+                },
+
+                // API Calls
+                async loadCustomers() {
+                    try {
+                        const params = new URLSearchParams({
+                            skip: ((this.currentPage - 1) * this.pageSize).toString(),
+                            limit: this.pageSize.toString()
+                        });
+
+                        if (this.searchQuery) params.append('search', this.searchQuery);
+                        if (this.statusFilter) {
+                            params.append('is_active', this.statusFilter === 'active' ? 'true' : 'false');
+                        }
+                        if (this.vipOnly) params.append('is_vip', 'true');
+                        if (this.cityFilter) params.append('city', this.cityFilter);
+
+                        const response = await fetch(`/api/customers?${params}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.customers = data.customers || [];
+                            this.totalCustomers = data.total || 0;
+                        }
+                    } catch (error) {
+                        console.error('Error loading customers:', error);
+                    }
+                },
+
+                async loadStats() {
+                    try {
+                        const response = await fetch('/api/customers/stats/summary');
+                        if (response.ok) {
+                            this.stats = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error loading stats:', error);
+                    }
+                },
+
+                async saveCustomer() {
+                    try {
+                        const url = this.showEditModal ? `/api/customers/${this.currentCustomer.id}` : '/api/customers';
+                        const method = this.showEditModal ? 'PUT' : 'POST';
+
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.currentCustomer)
+                        });
+
+                        if (response.ok) {
+                            this.closeModals();
+                            this.loadCustomers();
+                            this.loadStats();
+                        } else {
+                            const error = await response.json();
+                            showError('Error al guardar cliente', error.detail || 'Error desconocido');
+                        }
+                    } catch (error) {
+                        console.error('Error saving customer:', error);
+                        showError('Error de conexión', 'Error al guardar cliente');
+                    }
+                },
+
+                async toggleCustomerStatus(customer) {
+                    try {
+                        const url = customer.is_active ?
+                            `/api/customers/${customer.id}/deactivate` :
+                            `/api/customers/${customer.id}/reactivate`;
+
+                        const response = await fetch(url, {
+                            method: 'POST'
+                        });
+
+                        if (response.ok) {
+                            this.loadCustomers();
+                            this.loadStats();
+                        } else {
+                            showError('Error al cambiar estado', 'Error al cambiar estado del cliente');
+                        }
+                    } catch (error) {
+                        console.error('Error toggling customer status:', error);
+                    }
+                },
+
+                async importCustomers() {
+                    if (!this.selectedFile) {
+                        showWarningMessage('Por favor selecciona un archivo CSV');
+                        return;
+                    }
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', this.selectedFile);
+                        formData.append('update_existing', this.importOptions.update_existing.toString());
+                        formData.append('skip_duplicates', this.importOptions.skip_duplicates.toString());
+
+                        const response = await fetch('/api/customers/import/csv', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            showSuccessMessage(`Importación completada: Importados: ${result.imported_count}, Actualizados: ${result.updated_count}, Omitidos: ${result.skipped_count}`);
+                            this.closeModals();
+                            this.loadCustomers();
+                            this.loadStats();
+                        } else {
+                            const error = await response.json();
+                            showError('Error en la importación', error.detail || 'Error desconocido');
+                        }
+                    } catch (error) {
+                        console.error('Error importing customers:', error);
+                        showError('Error de conexión', 'Error al importar clientes');
+                    }
+                },
+
+                async exportCustomers() {
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.statusFilter !== '') {
+                            params.append('is_active', this.statusFilter === 'active' ? 'true' : 'false');
+                        }
+                        if (this.vipOnly) params.append('is_vip', 'true');
+
+                        const response = await fetch(`/api/customers/export/csv?${params}`);
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'customers.csv';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                        } else {
+                            showError('Error al exportar', 'Error al exportar clientes');
+                        }
+                    } catch (error) {
+                        console.error('Error exporting customers:', error);
+                    }
+                },
+
+                // UI Functions
+                editCustomer(customer) {
+                    this.currentCustomer = { ...customer };
+                    this.showEditModal = true;
+                },
+
+                viewCustomer(customer) {
+                    // Implementar vista detallada del cliente
+                    showInfo('Información del Cliente', 
+                        `Nombre: ${customer.display_name}\nTeléfono: ${customer.primary_phone}\nEmail: ${customer.primary_email}\nDirección: ${customer.full_address}`);
+                },
+
+                closeModals() {
+                    this.showCreateModal = false;
+                    this.showEditModal = false;
+                    this.showImportModal = false;
+                    this.resetCurrentCustomer();
+                },
+
+                resetCurrentCustomer() {
+                    this.currentCustomer = {
+                        first_name: '',
+                        last_name: '',
+                        primary_phone: '',
+                        primary_email: '',
+                        document_type: '',
+                        document_number: '',
+                        address_street: '',
+                        address_city: '',
+                        address_country: 'Colombia',
+                        building_name: '',
+                        tower: '',
+                        apartment: '',
+                        floor: '',
+                        notes: '',
+                        preferred_language: 'es',
+                        is_vip: false
+                    };
+                },
+
+                handleFileSelect(event) {
+                    this.selectedFile = event.target.files[0];
+                },
+
+                applyFilters() {
+                    this.currentPage = 1;
+                    this.loadCustomers();
+                },
+
+                clearFilters() {
+                    this.searchQuery = '';
+                    this.statusFilter = 'active';
+                    this.vipOnly = false;
+                    this.cityFilter = '';
+                    this.applyFilters();
+                },
+
+                loadPage(page) {
+                    if (page < 1) return;
+                    this.currentPage = page;
+                    this.loadCustomers();
+                },
+
+                debouncedSearch() {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.applyFilters();
+                    }, 500);
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

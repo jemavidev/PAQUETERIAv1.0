@@ -1,0 +1,321 @@
+<!-- ========================================
+     OVERRIDE COMPLETO DE VALIDACIÓN NATIVA
+     PAQUETEX v4.0
+     ======================================== -->
+
+<div id="validation-override-container" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-left: 4px solid #ef4444; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <!-- Iconos de Advertencia -->
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem;">
+        <div style="width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; background-color: rgba(239, 68, 68, 0.1);">
+            <svg class="w-4 h-4 text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div style="width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: rgba(245, 158, 11, 0.1);">
+            <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido del Error -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+        <h3 id="validation-override-title" style="font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">Error de Validación</h3>
+        <p id="validation-override-message" style="font-size: 0.875rem; color: #374151; line-height: 1.6;">Por favor, complete todos los campos requeridos.</p>
+        <div id="validation-override-field" style="margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 0.25rem;">
+            <span style="font-size: 0.75rem; color: #92400e; font-weight: 500;">Campo: </span>
+            <span id="field-name-override" style="font-size: 0.75rem; color: #92400e;">Nombre del cliente</span>
+        </div>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div style="display: flex; justify-content: center;">
+        <button 
+            type="button" 
+            id="validation-override-close-btn"
+            style="color: white; font-weight: 500; padding: 0.5rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); border: none; cursor: pointer;"
+            onmouseover="this.style.background='linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.background='linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.3)'"
+        >
+            Cerrar
+        </button>
+    </div>
+</div>
+
+<script>
+// OVERRIDE COMPLETO DE VALIDACIÓN NATIVA - SOLUCIÓN DEFINITIVA
+(function() {
+    'use strict';
+    
+    console.log('🚨 Inicializando OVERRIDE completo de validación nativa...');
+    
+    // Referencias a los elementos del DOM
+    const container = document.getElementById('validation-override-container');
+    const title = document.getElementById('validation-override-title');
+    const message = document.getElementById('validation-override-message');
+    const fieldName = document.getElementById('field-name-override');
+    const closeBtn = document.getElementById('validation-override-close-btn');
+    
+    // Función para mostrar error de validación
+    function mostrarErrorValidacion(campo, mensaje, tipoValidacion) {
+        console.log('📝 Mostrando error de validación:', { campo, mensaje, tipoValidacion });
+        
+        // Obtener el nombre del campo
+        const nombreCampo = obtenerNombreCampo(campo);
+        
+        // Actualizar contenido
+        title.textContent = 'Error de Validación';
+        message.textContent = mensaje;
+        fieldName.textContent = nombreCampo;
+        
+        // Mostrar el contenedor con animación
+        container.style.display = 'block';
+        container.style.opacity = '0';
+        container.style.transform = 'scale(0.95)';
+        
+        // Animar la aparición
+        setTimeout(() => {
+            container.style.transition = 'all 0.3s ease-out';
+            container.style.opacity = '1';
+            container.style.transform = 'scale(1)';
+        }, 10);
+        
+        // Auto-cerrar después de 8 segundos
+        setTimeout(() => {
+            cerrarError();
+        }, 8000);
+    }
+    
+    // Función para obtener el nombre del campo
+    function obtenerNombreCampo(campo) {
+        // Buscar label asociado
+        const label = document.querySelector(`label[for="${campo.id}"]`);
+        if (label) {
+            return label.textContent.replace('*', '').trim();
+        }
+        
+        // Buscar placeholder
+        if (campo.placeholder) {
+            return campo.placeholder;
+        }
+        
+        // Usar el nombre del campo
+        return campo.name || campo.id || 'Campo';
+    }
+    
+    // Función para cerrar error
+    function cerrarError() {
+        container.style.transition = 'all 0.2s ease-in';
+        container.style.opacity = '0';
+        container.style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+            container.style.display = 'none';
+        }, 200);
+    }
+    
+    // Función para obtener mensaje de validación personalizado
+    function obtenerMensajeValidacion(campo) {
+        const validacion = campo.validity;
+        
+        if (validacion.valueMissing) {
+            return 'Este campo es obligatorio. Por favor, complételo.';
+        }
+        
+        if (validacion.tooShort) {
+            const minLength = campo.getAttribute('minlength') || campo.minLength;
+            return `El campo debe tener al menos ${minLength} caracteres.`;
+        }
+        
+        if (validacion.tooLong) {
+            const maxLength = campo.getAttribute('maxlength') || campo.maxLength;
+            return `El campo no puede tener más de ${maxLength} caracteres.`;
+        }
+        
+        if (validacion.typeMismatch) {
+            if (campo.type === 'email') {
+                return 'Por favor, ingrese un email válido.';
+            }
+            if (campo.type === 'url') {
+                return 'Por favor, ingrese una URL válida.';
+            }
+            return 'El formato del campo no es válido.';
+        }
+        
+        if (validacion.patternMismatch) {
+            return 'El formato del campo no coincide con el patrón requerido.';
+        }
+        
+        if (validacion.rangeUnderflow) {
+            const min = campo.getAttribute('min') || campo.min;
+            return `El valor debe ser mayor o igual a ${min}.`;
+        }
+        
+        if (validacion.rangeOverflow) {
+            const max = campo.getAttribute('max') || campo.max;
+            return `El valor debe ser menor o igual a ${max}.`;
+        }
+        
+        if (validacion.stepMismatch) {
+            return 'El valor no es válido para este campo.';
+        }
+        
+        if (validacion.badInput) {
+            return 'El valor ingresado no es válido.';
+        }
+        
+        if (validacion.customError) {
+            return campo.validationMessage || 'Error de validación personalizado.';
+        }
+        
+        return 'Por favor, complete este campo correctamente.';
+    }
+    
+    // DESHABILITAR COMPLETAMENTE LA VALIDACIÓN NATIVA
+    function deshabilitarValidacionNativa() {
+        console.log('🔧 Deshabilitando validación nativa del navegador...');
+        
+        // Interceptar TODOS los eventos de formulario
+        document.addEventListener('submit', function(event) {
+            console.log('📤 Evento submit interceptado:', event);
+            event.preventDefault(); // Prevenir envío nativo
+            event.stopPropagation(); // Detener propagación
+            
+            const formulario = event.target;
+            console.log('📋 Formulario interceptado:', formulario);
+            
+            // Validar manualmente
+            validarFormularioManual(formulario);
+        }, true);
+        
+        // Interceptar TODOS los eventos de click en botones submit
+        document.addEventListener('click', function(event) {
+            if (event.target.type === 'submit' || event.target.tagName === 'BUTTON') {
+                console.log('🖱️ Click en botón interceptado:', event.target);
+                event.preventDefault();
+                event.stopPropagation();
+                
+                const formulario = event.target.closest('form');
+                if (formulario) {
+                    validarFormularioManual(formulario);
+                }
+            }
+        }, true);
+        
+        // Interceptar eventos de teclado (Enter)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+                console.log('⌨️ Enter en input interceptado:', event.target);
+                event.preventDefault();
+                event.stopPropagation();
+                
+                const formulario = event.target.closest('form');
+                if (formulario) {
+                    validarFormularioManual(formulario);
+                }
+            }
+        }, true);
+    }
+    
+    // VALIDACIÓN MANUAL COMPLETA
+    function validarFormularioManual(formulario) {
+        console.log('🔍 Validando formulario manualmente:', formulario);
+        
+        // Obtener todos los campos del formulario
+        const campos = formulario.querySelectorAll('input, select, textarea');
+        let esValido = true;
+        let primerCampoInvalido = null;
+        
+        // Validar cada campo
+        campos.forEach(campo => {
+            if (campo.hasAttribute('required') && !campo.value.trim()) {
+                console.log('❌ Campo requerido vacío:', campo);
+                esValido = false;
+                if (!primerCampoInvalido) {
+                    primerCampoInvalido = campo;
+                }
+            } else if (campo.hasAttribute('minlength')) {
+                const minLength = parseInt(campo.getAttribute('minlength'));
+                if (campo.value.length < minLength) {
+                    console.log('❌ Campo con longitud mínima:', campo);
+                    esValido = false;
+                    if (!primerCampoInvalido) {
+                        primerCampoInvalido = campo;
+                    }
+                }
+            } else if (campo.type === 'email' && campo.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(campo.value)) {
+                    console.log('❌ Email inválido:', campo);
+                    esValido = false;
+                    if (!primerCampoInvalido) {
+                        primerCampoInvalido = campo;
+                    }
+                }
+            } else if (campo.hasAttribute('pattern') && campo.value) {
+                const pattern = new RegExp(campo.getAttribute('pattern'));
+                if (!pattern.test(campo.value)) {
+                    console.log('❌ Patrón inválido:', campo);
+                    esValido = false;
+                    if (!primerCampoInvalido) {
+                        primerCampoInvalido = campo;
+                    }
+                }
+            }
+        });
+        
+        if (esValido) {
+            console.log('✅ Formulario válido, enviando...');
+            // Aquí puedes enviar el formulario
+            alert('✅ Formulario válido! Datos enviados correctamente.');
+        } else {
+            console.log('❌ Formulario inválido, mostrando error...');
+            const mensaje = obtenerMensajeValidacion(primerCampoInvalido);
+            mostrarErrorValidacion(primerCampoInvalido, mensaje, 'validacion');
+            primerCampoInvalido.focus();
+        }
+    }
+    
+    // Event listener para el botón de cerrar
+    closeBtn.addEventListener('click', cerrarError);
+    
+    // Función global para mostrar errores de validación personalizados
+    window.mostrarErrorValidacionOverride = function(campo, mensaje) {
+        mostrarErrorValidacion(campo, mensaje, 'personalizado');
+    };
+    
+    // Función global para validar un formulario específico
+    window.validarFormularioOverride = function(formularioId) {
+        const formulario = document.getElementById(formularioId);
+        if (formulario) {
+            validarFormularioManual(formulario);
+        }
+    };
+    
+    // Función de prueba
+    window.probarOverrideValidacion = function() {
+        console.log('🧪 Probando override de validación...');
+        const campo = document.querySelector('input[required]');
+        if (campo) {
+            campo.value = '';
+            campo.focus();
+            mostrarErrorValidacion(campo, 'Este campo es obligatorio. Por favor, complételo.', 'prueba');
+        }
+    };
+    
+    // Inicializar cuando el DOM esté listo
+    function inicializar() {
+        console.log('🚀 Inicializando override de validación...');
+        deshabilitarValidacionNativa();
+        console.log('✅ Override de validación inicializado correctamente');
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializar);
+    } else {
+        inicializar();
+    }
+    
+    console.log('🎯 Override de validación nativa cargado');
+})();
+</script>

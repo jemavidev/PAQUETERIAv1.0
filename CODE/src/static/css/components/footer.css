@@ -1,0 +1,432 @@
+/*
+ * PAQUETES EL CLUB v4.0 - Componentes de Footer
+ * Versión: 4.0.0
+ * Autor: Sistema PAQUETES EL CLUB
+ * Fecha: 2024-07-30
+ * 
+ * Estilos para footer del sistema de diseño
+ */
+
+/* ========================================
+ * FOOTER PRINCIPAL
+ * ======================================== */
+
+.footer {
+  @apply bg-white shadow-sm border-t flex-shrink-0;
+  background-color: var(--theme-bg-light);
+  border-top-color: var(--theme-border-light);
+  box-shadow: var(--theme-shadow-light);
+  height: var(--footer-height);
+}
+
+.footer-content {
+  @apply max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8;
+}
+
+.footer-main {
+  @apply flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 sm:py-4 space-y-2 sm:space-y-0;
+}
+
+/* ========================================
+ * COPYRIGHT Y INFORMACIÓN
+ * ======================================== */
+
+.footer-copyright {
+  @apply text-xs sm:text-sm text-gray-500 text-center sm:text-left;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-copyright a {
+  @apply text-papyrus-blue hover:text-blue-700 underline transition-colors duration-200;
+  color: var(--papyrus-blue);
+}
+
+.footer-copyright a:hover {
+  color: #1d4ed8; /* blue-700 */
+}
+
+.footer-company {
+  @apply font-medium;
+}
+
+.footer-year {
+  @apply font-normal;
+}
+
+/* ========================================
+ * ENLACES DEL FOOTER
+ * ======================================== */
+
+.footer-links {
+  @apply flex items-center justify-center sm:justify-end space-x-3 sm:space-x-4;
+}
+
+.footer-link {
+  @apply text-gray-500 hover:text-gray-900 transition-colors flex items-center justify-center p-2 sm:p-0;
+  color: var(--theme-text-tertiary);
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.footer-link:hover {
+  color: var(--theme-text-primary);
+}
+
+.footer-link-icon {
+  @apply w-8 h-8 sm:w-4 sm:h-4;
+}
+
+.footer-link-text {
+  @apply hidden sm:inline sm:ml-1;
+}
+
+/* ========================================
+ * ENLACES ESPECÍFICOS
+ * ======================================== */
+
+/* Enlace de Ayuda */
+.footer-link-help {
+  @apply text-gray-500 hover:text-gray-900 transition-colors;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-link-help:hover {
+  color: var(--theme-text-primary);
+}
+
+/* Enlace de WhatsApp */
+.footer-link-whatsapp {
+  @apply text-gray-500 hover:text-green-600 transition-colors;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-link-whatsapp:hover {
+  color: #16a34a; /* green-600 */
+}
+
+/* Enlace de Teléfono */
+.footer-link-phone {
+  @apply text-gray-500 hover:text-papyrus-blue transition-colors;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-link-phone:hover {
+  color: var(--papyrus-blue);
+}
+
+/* Enlace de Email */
+.footer-link-email {
+  @apply text-gray-500 hover:text-papyrus-blue transition-colors;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-link-email:hover {
+  color: var(--papyrus-blue);
+}
+
+/* ========================================
+ * FOOTER CON SECCIONES
+ * ======================================== */
+
+.footer-sections {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-8 py-8;
+}
+
+.footer-section {
+  @apply space-y-4;
+}
+
+.footer-section-title {
+  @apply text-sm font-semibold text-gray-900 uppercase tracking-wide;
+  color: var(--theme-text-primary);
+}
+
+.footer-section-links {
+  @apply space-y-2;
+}
+
+.footer-section-link {
+  @apply text-sm text-gray-500 hover:text-papyrus-blue transition-colors duration-200;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-section-link:hover {
+  color: var(--papyrus-blue);
+}
+
+/* ========================================
+ * FOOTER CON REDES SOCIALES
+ * ======================================== */
+
+.footer-social {
+  @apply flex items-center justify-center sm:justify-end space-x-4;
+}
+
+.footer-social-link {
+  @apply text-gray-400 hover:text-papyrus-blue transition-colors duration-200;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.footer-social-link:hover {
+  color: var(--papyrus-blue);
+}
+
+.footer-social-icon {
+  @apply w-6 h-6;
+}
+
+/* ========================================
+ * FOOTER CON NEWSLETTER
+ * ======================================== */
+
+.footer-newsletter {
+  @apply bg-gray-50 py-8;
+  background-color: var(--papyrus-gray-50);
+}
+
+.footer-newsletter-content {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.footer-newsletter-title {
+  @apply text-lg font-semibold text-gray-900 text-center mb-4;
+  color: var(--theme-text-primary);
+}
+
+.footer-newsletter-description {
+  @apply text-sm text-gray-600 text-center mb-6;
+  color: var(--theme-text-secondary);
+}
+
+.footer-newsletter-form {
+  @apply flex flex-col sm:flex-row gap-3 max-w-md mx-auto;
+}
+
+.footer-newsletter-input {
+  @apply flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue;
+}
+
+.footer-newsletter-button {
+  @apply btn btn-primary px-6 py-2;
+}
+
+/* ========================================
+ * FOOTER CON INFORMACIÓN LEGAL
+ * ======================================== */
+
+.footer-legal {
+  @apply border-t border-gray-200 py-4;
+  border-top-color: var(--theme-border-light);
+}
+
+.footer-legal-content {
+  @apply flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0;
+}
+
+.footer-legal-links {
+  @apply flex flex-wrap items-center justify-center sm:justify-start space-x-4;
+}
+
+.footer-legal-link {
+  @apply text-xs text-gray-500 hover:text-papyrus-blue transition-colors duration-200;
+  color: var(--theme-text-tertiary);
+}
+
+.footer-legal-link:hover {
+  color: var(--papyrus-blue);
+}
+
+.footer-legal-separator {
+  @apply text-gray-300;
+  color: var(--theme-border-medium);
+}
+
+/* ========================================
+ * FOOTER STICKY
+ * ======================================== */
+
+.footer-sticky {
+  @apply fixed bottom-0 left-0 right-0 z-30;
+}
+
+.footer-sticky + .main-content {
+  @apply pb-16;
+}
+
+/* ========================================
+ * FOOTER RESPONSIVE
+ * ======================================== */
+
+@media (max-width: 767px) {
+  .footer {
+    @apply h-auto;
+  }
+  
+  .footer-main {
+    @apply py-4 space-y-3;
+  }
+  
+  .footer-copyright {
+    @apply text-xs;
+  }
+  
+  .footer-links {
+    @apply space-x-2;
+  }
+  
+  .footer-link {
+    @apply p-2;
+  }
+  
+  .footer-link-icon {
+    @apply w-6 h-6;
+  }
+  
+  .footer-sections {
+    @apply grid-cols-1 gap-6 py-6;
+  }
+  
+  .footer-section {
+    @apply text-center;
+  }
+  
+  .footer-newsletter-form {
+    @apply flex-col;
+  }
+  
+  .footer-legal-content {
+    @apply text-center space-y-3;
+  }
+  
+  .footer-legal-links {
+    @apply justify-center;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .footer-sections {
+    @apply grid-cols-2 gap-6;
+  }
+  
+  .footer-newsletter-form {
+    @apply flex-row;
+  }
+}
+
+/* ========================================
+ * FOOTER CON ANIMACIONES
+ * ======================================== */
+
+.footer-link {
+  @apply transition-all duration-200;
+}
+
+.footer-link:hover {
+  @apply transform translate-y-0.5;
+}
+
+.footer-social-link {
+  @apply transition-all duration-200;
+}
+
+.footer-social-link:hover {
+  @apply transform scale-110;
+}
+
+/* ========================================
+ * FOOTER CON ESTADOS
+ * ======================================== */
+
+.footer-link.active {
+  @apply text-papyrus-blue;
+  color: var(--papyrus-blue);
+}
+
+.footer-link.disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.footer-link.disabled:hover {
+  @apply text-gray-500 transform-none;
+  color: var(--theme-text-tertiary);
+}
+
+/* ========================================
+ * FOOTER CON BADGES
+ * ======================================== */
+
+.footer-link.with-badge {
+  @apply relative;
+}
+
+.footer-badge {
+  @apply absolute -top-1 -right-1 bg-papyrus-red text-white text-xs rounded-full h-4 w-4 flex items-center justify-center;
+  background-color: var(--papyrus-red);
+}
+
+.footer-badge.pulse {
+  @apply animate-pulse;
+}
+
+/* ========================================
+ * FOOTER CON TOOLTIPS
+ * ======================================== */
+
+.footer-link.with-tooltip {
+  @apply relative;
+}
+
+.footer-tooltip {
+  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 invisible transition-all duration-200;
+  background-color: var(--papyrus-gray-900);
+}
+
+.footer-tooltip::after {
+  content: '';
+  @apply absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900;
+  border-top-color: var(--papyrus-gray-900);
+}
+
+.footer-link.with-tooltip:hover .footer-tooltip {
+  @apply opacity-100 visible;
+}
+
+/* ========================================
+ * FOOTER CON GRADIENTES
+ * ======================================== */
+
+.footer-gradient {
+  @apply bg-gradient-to-r from-papyrus-blue to-blue-600 text-white;
+  background: linear-gradient(135deg, var(--papyrus-blue) 0%, #2563eb 100%);
+}
+
+.footer-gradient .footer-copyright {
+  @apply text-blue-100;
+}
+
+.footer-gradient .footer-link {
+  @apply text-blue-200 hover:text-white;
+}
+
+.footer-gradient .footer-link:hover {
+  color: white;
+}
+
+/* ========================================
+ * FOOTER CON PATRONES
+ * ======================================== */
+
+.footer-pattern {
+  @apply relative overflow-hidden;
+}
+
+.footer-pattern::before {
+  content: '';
+  @apply absolute inset-0 opacity-5;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.footer-pattern .footer-content {
+  @apply relative z-10;
+}

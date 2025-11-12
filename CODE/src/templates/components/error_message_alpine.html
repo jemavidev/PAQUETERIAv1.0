@@ -1,0 +1,97 @@
+<!-- Componente de Error con Alpine.js -->
+<div 
+    x-data="errorMessage()" 
+    x-show="show" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 transform scale-95"
+    x-transition:enter-end="opacity-100 transform scale-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 transform scale-100"
+    x-transition:leave-end="opacity-0 transform scale-95"
+    class="error-container"
+    :class="errorType"
+>
+    <!-- Iconos de Advertencia -->
+    <div class="error-icons">
+        <div class="error-icon-small">
+            <svg class="w-4 h-4" :class="iconColor" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+        <div class="error-icon-large">
+            <svg class="w-8 h-8" :class="mainIconColor" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Contenido del Error -->
+    <div class="error-content">
+        <h3 class="error-title" x-text="title"></h3>
+        <p class="error-description" x-text="message"></p>
+    </div>
+    
+    <!-- Botón de Cerrar -->
+    <div class="error-actions">
+        <button 
+            type="button" 
+            class="error-close-btn"
+            @click="close()"
+            x-text="buttonText"
+        >
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('errorMessage', () => ({
+        show: true,
+        title: 'Error del Sistema',
+        message: 'Error del sistema. Por favor, comuníquese con el administrador.',
+        type: 'error', // error, warning, info, success
+        buttonText: 'Cerrar',
+        
+        get errorType() {
+            return `error-${this.type}`;
+        },
+        
+        get iconColor() {
+            const colors = {
+                error: 'text-red-300',
+                warning: 'text-yellow-300',
+                info: 'text-blue-300',
+                success: 'text-green-300'
+            };
+            return colors[this.type] || colors.error;
+        },
+        
+        get mainIconColor() {
+            const colors = {
+                error: 'text-yellow-500',
+                warning: 'text-yellow-500',
+                info: 'text-blue-500',
+                success: 'text-green-500'
+            };
+            return colors[this.type] || colors.error;
+        },
+        
+        close() {
+            this.show = false;
+            // Emitir evento personalizado
+            this.$dispatch('error-closed', {
+                type: this.type,
+                title: this.title
+            });
+        },
+        
+        // Método para mostrar error
+        showError(title, message, type = 'error') {
+            this.title = title;
+            this.message = message;
+            this.type = type;
+            this.show = true;
+        }
+    }));
+});
+</script>

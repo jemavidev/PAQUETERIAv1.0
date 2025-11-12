@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tarifas - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="ratesApp()">
+
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">PAQUETEX</h1>
+                    <span class="text-blue-200">Gestión de Tarifas</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <span class="text-sm">Bienvenido, {{ user.username if user else 'Usuario' }}</span>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-dollar-sign mr-3 text-green-600"></i>
+                    Gestión de Tarifas
+                </h1>
+                <p class="text-gray-600">Administra las tarifas y precios del sistema de paquetería</p>
+            </div>
+            <div class="flex space-x-3 mt-4 lg:mt-0">
+                <button @click="showCalculatorModal = true"
+                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                    <i class="fas fa-calculator mr-2"></i>Calculadora
+                </button>
+                <button @click="showCreateModal = true"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-plus mr-2"></i>Nueva Tarifa
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-list text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Tarifas</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.total_rates || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Tarifas Activas</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="stats.active_rates || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Última Actualización</p>
+                        <p class="text-sm font-bold text-gray-900" x-text="formatDate(stats.last_updated)"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Alertas</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="getAlertsCount()"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Rates List -->
+            <div class="lg:col-span-2">
+                <!-- Filters -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text"
+                                   x-model="searchQuery"
+                                   @input="debouncedSearch()"
+                                   placeholder="Buscar tarifas..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <div class="w-full md:w-48">
+                            <select x-model="typeFilter" @change="applyFilters()"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Todos los tipos</option>
+                                <option value="storage">Almacenamiento</option>
+                                <option value="delivery">Entrega</option>
+                                <option value="package_type">Tipo de Paquete</option>
+                            </select>
+                        </div>
+
+                        <div class="w-full md:w-48">
+                            <select x-model="statusFilter" @change="applyFilters()"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Todos los estados</option>
+                                <option value="active">Activas</option>
+                                <option value="inactive">Inactivas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rates Table -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-table mr-2"></i>
+                            Tarifas del Sistema
+                            <span class="text-sm text-gray-500 ml-2" x-text="'(' + rates.length + ')'"></span>
+                        </h3>
+                        <div class="flex items-center space-x-2">
+                            <button @click="loadRates()" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Base</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vigencia</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="rate in rates" :key="rate.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  :class="getTypeClass(rate.rate_type)">
+                                                <i :class="getTypeIcon(rate.rate_type)" class="mr-1"></i>
+                                                <span x-text="getTypeText(rate.rate_type)"></span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" x-text="rate.name"></div>
+                                            <div class="text-sm text-gray-500" x-text="rate.description"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <span class="font-medium" x-text="'$' + formatCurrency(rate.base_price)"></span>
+                                            <div class="text-xs text-gray-500" x-show="rate.daily_storage_rate > 0">
+                                                Almacenamiento: $<span x-text="formatCurrency(rate.daily_storage_rate)"></span>/día
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  :class="rate.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                                <span x-text="rate.is_active ? 'Activa' : 'Inactiva'"></span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div x-text="'Desde: ' + formatDate(rate.valid_from)"></div>
+                                            <div x-show="rate.valid_to" x-text="'Hasta: ' + formatDate(rate.valid_to)"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div class="flex space-x-2">
+                                                <button @click="editRate(rate)"
+                                                        class="text-blue-600 hover:text-blue-900">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="toggleRateStatus(rate)"
+                                                        :class="rate.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'">
+                                                    <i :class="rate.is_active ? 'fas fa-ban' : 'fas fa-check'"></i>
+                                                </button>
+                                                <button @click="viewRateHistory(rate)"
+                                                        class="text-gray-600 hover:text-gray-900">
+                                                    <i class="fas fa-history"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div x-show="rates.length === 0" class="p-12 text-center">
+                        <i class="fas fa-dollar-sign text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay tarifas configuradas</h3>
+                        <p class="text-gray-500 mb-4">Comienza creando tu primera tarifa para el sistema</p>
+                        <button @click="showCreateModal = true"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                            Crear Primera Tarifa
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Rate Summary -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Resumen por Tipo
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div x-show="stats.rates_by_type">
+                            <template x-for="[type, data] in Object.entries(stats.rates_by_type || {})" :key="type">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600" x-text="getTypeText(type)"></span>
+                                    <span class="text-sm font-medium" x-text="data.count"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                    <div class="bg-blue-600 h-2 rounded-full"
+                                         :style="`width: ${(data.count / stats.total_rates) * 100}%`"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Calculator -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-calculator mr-2"></i>
+                        Calculadora Rápida
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Paquete</label>
+                            <select x-model="calculator.package_type"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="normal">Normal</option>
+                                <option value="extra_dimensioned">Extra Dimensionado</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Días de Almacenamiento</label>
+                            <input type="number" x-model="calculator.storage_days" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" x-model="calculator.delivery_required" id="delivery_required"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="delivery_required" class="ml-2 text-sm text-gray-700">Requiere entrega</label>
+                        </div>
+
+                        <button @click="calculateRate()"
+                                class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200">
+                            Calcular
+                        </button>
+
+                        <div x-show="calculationResult" class="mt-4 p-3 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Resultado del Cálculo</h4>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Costo Base:</span>
+                                    <span x-text="'$' + formatCurrency(calculationResult.base_cost)"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Almacenamiento:</span>
+                                    <span x-text="'$' + formatCurrency(calculationResult.storage_cost)"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Entrega:</span>
+                                    <span x-text="'$' + formatCurrency(calculationResult.delivery_cost)"></span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="flex justify-between font-medium">
+                                    <span>Total:</span>
+                                    <span x-text="'$' + formatCurrency(calculationResult.total_cost)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Rate Modal -->
+    <div x-show="showCreateModal || showEditModal"
+         x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+         @keydown.escape.window="closeModals()">
+
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-plus mr-3 text-blue-600" x-show="showCreateModal"></i>
+                        <i class="fas fa-edit mr-3 text-blue-600" x-show="showEditModal"></i>
+                        <span x-text="showCreateModal ? 'Nueva Tarifa' : 'Editar Tarifa'"></span>
+                    </h2>
+                    <button @click="closeModals()"
+                            class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="saveRate()">
+                    <div class="space-y-6">
+                        <!-- Basic Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Tarifa *</label>
+                                <select x-model="currentRate.rate_type"
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="storage">Almacenamiento</option>
+                                    <option value="delivery">Entrega</option>
+                                    <option value="package_type">Tipo de Paquete</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                                <input type="text"
+                                       x-model="currentRate.name"
+                                       required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                            <textarea x-model="currentRate.description"
+                                      rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                      placeholder="Descripción opcional de la tarifa"></textarea>
+                        </div>
+
+                        <!-- Pricing -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Precio Base (COP) *</label>
+                                <input type="number"
+                                       x-model="currentRate.base_price"
+                                       step="0.01"
+                                       min="0"
+                                       required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tarifa Diaria Almacenamiento (COP)</label>
+                                <input type="number"
+                                       x-model="currentRate.daily_storage_rate"
+                                       step="0.01"
+                                       min="0"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <!-- Additional Rates -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tarifa de Entrega (COP)</label>
+                                <input type="number"
+                                       x-model="currentRate.delivery_rate"
+                                       step="0.01"
+                                       min="0"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Multiplicador Tipo Paquete</label>
+                                <input type="number"
+                                       x-model="currentRate.package_type_multiplier"
+                                       step="0.1"
+                                       min="0.1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="flex items-center" x-show="showEditModal">
+                            <input type="checkbox" x-model="currentRate.is_active" id="rate_active"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="rate_active" class="ml-2 text-sm text-gray-700">Tarifa activa</label>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
+                        <button type="button"
+                                @click="closeModals()"
+                                class="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                :disabled="!isFormValid()"
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-save mr-2"></i>
+                            <span x-text="showCreateModal ? 'Crear Tarifa' : 'Guardar Cambios'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculator Modal -->
+    <div x-show="showCalculatorModal"
+         x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+         @keydown.escape.window="showCalculatorModal = false">
+
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-calculator mr-3 text-purple-600"></i>
+                        Calculadora de Tarifas
+                    </h2>
+                    <button @click="showCalculatorModal = false"
+                            class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Paquete</label>
+                        <select x-model="detailedCalculator.package_type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="normal">Normal</option>
+                            <option value="extra_dimensioned">Extra Dimensionado</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Días de Almacenamiento</label>
+                        <input type="number" x-model="detailedCalculator.storage_days" min="0"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" x-model="detailedCalculator.delivery_required" id="calc_delivery"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="calc_delivery" class="ml-2 text-sm text-gray-700">Requiere entrega</label>
+                    </div>
+
+                    <button @click="calculateDetailedRate()"
+                            class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-200">
+                        <i class="fas fa-calculator mr-2"></i>Calcular Detallado
+                    </button>
+
+                    <div x-show="detailedCalculation" class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3">Cálculo Detallado</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Tipo de paquete:</span>
+                                <span x-text="getTypeText(detailedCalculator.package_type)"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Costo base:</span>
+                                <span x-text="'$' + formatCurrency(detailedCalculation.base_cost)"></span>
+                            </div>
+                            <div class="flex justify-between" x-show="detailedCalculator.storage_days > 0">
+                                <span>Almacenamiento (<span x-text="detailedCalculator.storage_days"></span> días):</span>
+                                <span x-text="'$' + formatCurrency(detailedCalculation.storage_cost)"></span>
+                            </div>
+                            <div class="flex justify-between" x-show="detailedCalculator.delivery_required">
+                                <span>Entrega:</span>
+                                <span x-text="'$' + formatCurrency(detailedCalculation.delivery_cost)"></span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="flex justify-between font-bold text-base">
+                                <span>Total estimado:</span>
+                                <span x-text="'$' + formatCurrency(detailedCalculation.total_cost)"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alpine.js Data and Functions -->
+    <script>
+        function ratesApp() {
+            return {
+                // Data
+                rates: [],
+                stats: {},
+                showCreateModal: false,
+                showEditModal: false,
+                showCalculatorModal: false,
+                searchQuery: '',
+                typeFilter: '',
+                statusFilter: 'active',
+                currentRate: {},
+                calculationResult: null,
+                detailedCalculation: null,
+                searchTimeout: null,
+
+                calculator: {
+                    package_type: 'normal',
+                    storage_days: 0,
+                    delivery_required: true
+                },
+
+                detailedCalculator: {
+                    package_type: 'normal',
+                    storage_days: 0,
+                    delivery_required: true
+                },
+
+                // Initialization
+                init() {
+                    this.resetCurrentRate();
+                    this.loadRates();
+                    this.loadStats();
+                },
+
+                // API Calls
+                async loadRates() {
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.typeFilter) params.append('rate_type', this.typeFilter);
+                        if (this.statusFilter) {
+                            params.append('active_only', this.statusFilter === 'active' ? 'true' : 'false');
+                        }
+
+                        const response = await fetch(`/api/rates?${params}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.rates = data.rates || [];
+                        }
+                    } catch (error) {
+                        console.error('Error loading rates:', error);
+                    }
+                },
+
+                async loadStats() {
+                    try {
+                        const response = await fetch('/api/rates/summary');
+                        if (response.ok) {
+                            this.stats = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error loading stats:', error);
+                    }
+                },
+
+                async saveRate() {
+                    try {
+                        const url = this.showEditModal ? `/api/rates/${this.currentRate.id}` : '/api/rates';
+                        const method = this.showEditModal ? 'PUT' : 'POST';
+
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.currentRate)
+                        });
+
+                        if (response.ok) {
+                            this.closeModals();
+                            this.loadRates();
+                            this.loadStats();
+                        } else {
+                            alert('Error al guardar la tarifa');
+                        }
+                    } catch (error) {
+                        console.error('Error saving rate:', error);
+                        alert('Error al guardar la tarifa');
+                    }
+                },
+
+                async toggleRateStatus(rate) {
+                    try {
+                        const response = await fetch(`/api/rates/${rate.id}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (response.ok) {
+                            this.loadRates();
+                            this.loadStats();
+                        }
+                    } catch (error) {
+                        console.error('Error toggling rate status:', error);
+                    }
+                },
+
+                async calculateRate() {
+                    try {
+                        const response = await fetch('/api/rates/calculate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.calculator)
+                        });
+
+                        if (response.ok) {
+                            this.calculationResult = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error calculating rate:', error);
+                    }
+                },
+
+                async calculateDetailedRate() {
+                    await this.calculateRate();
+                    this.detailedCalculation = this.calculationResult;
+                },
+
+                // UI Functions
+                editRate(rate) {
+                    this.currentRate = { ...rate };
+                    this.showEditModal = true;
+                },
+
+                closeModals() {
+                    this.showCreateModal = false;
+                    this.showEditModal = false;
+                    this.showCalculatorModal = false;
+                    this.resetCurrentRate();
+                },
+
+                resetCurrentRate() {
+                    this.currentRate = {
+                        rate_type: 'storage',
+                        name: '',
+                        description: '',
+                        base_price: 0,
+                        daily_storage_rate: 0,
+                        delivery_rate: 0,
+                        package_type_multiplier: 1.0,
+                        is_active: true
+                    };
+                },
+
+                applyFilters() {
+                    this.loadRates();
+                },
+
+                debouncedSearch() {
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.applyFilters();
+                    }, 500);
+                },
+
+                isFormValid() {
+                    return this.currentRate.name.trim() &&
+                           this.currentRate.rate_type &&
+                           this.currentRate.base_price > 0;
+                },
+
+                getAlertsCount() {
+                    // Simple logic for alerts - can be expanded
+                    return this.rates.filter(r => !r.is_active).length;
+                },
+
+                // Utility Functions
+                formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                },
+
+                formatCurrency(amount) {
+                    return new Intl.NumberFormat('es-CO', {
+                        style: 'decimal',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    }).format(amount);
+                },
+
+                getTypeClass(type) {
+                    const classes = {
+                        'storage': 'bg-blue-100 text-blue-800',
+                        'delivery': 'bg-green-100 text-green-800',
+                        'package_type': 'bg-purple-100 text-purple-800'
+                    };
+                    return classes[type] || classes.storage;
+                },
+
+                getTypeIcon(type) {
+                    const icons = {
+                        'storage': 'fas fa-warehouse',
+                        'delivery': 'fas fa-truck',
+                        'package_type': 'fas fa-box'
+                    };
+                    return icons[type] || icons.storage;
+                },
+
+                getTypeText(type) {
+                    const texts = {
+                        'storage': 'Almacenamiento',
+                        'delivery': 'Entrega',
+                        'package_type': 'Tipo Paquete',
+                        'normal': 'Normal',
+                        'extra_dimensioned': 'Extra Dimensionado'
+                    };
+                    return texts[type] || type;
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

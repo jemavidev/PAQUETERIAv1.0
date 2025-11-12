@@ -1,0 +1,44 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Recordatorio de Pago - {{ company_name }}{% endblock %}
+
+{% block header_subtitle %}💳 Pago Pendiente{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    ¡Hola <strong>{{ customer_name }}</strong>!
+</div>
+
+<div class="message">
+    Te recordamos que tienes un pago pendiente para continuar con la entrega de tu paquete.
+</div>
+
+<div class="info-box">
+    <strong>Detalles del pago:</strong><br>
+    <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
+        <li style="margin-bottom: 8px;"><strong>Guía:</strong> {{ guide_number }}</li>
+        <li style="margin-bottom: 8px;"><strong>Monto a pagar:</strong> ${{ amount }} COP</li>
+        {% if due_date %}
+        <li style="margin-bottom: 8px;"><strong>Fecha límite:</strong> {{ due_date }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="warning-box">
+    <h3>⚠️ Importante</h3>
+    <ul>
+        <li>Realiza el pago para continuar con la entrega de tu paquete</li>
+        <li>Puedes realizar el pago en nuestras instalaciones o a través de nuestros canales autorizados</li>
+    </ul>
+</div>
+
+<div class="support-text">
+    Si tienes dudas sobre el monto o métodos de pago, contáctanos en <a href="mailto:{{ company_email }}">{{ company_email }}</a> o {{ company_phone }}
+</div>
+
+<div class="signature">
+    <p>Cordialmente,<br>
+    <strong>El Equipo de {{ company_name }}</strong></p>
+</div>
+{% endblock %}
+

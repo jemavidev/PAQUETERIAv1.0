@@ -1,0 +1,575 @@
+{% extends "base/base.html" %}
+
+{% block title %}Paquete {{ package.tracking_number }} - PAQUETEX v3.1{% endblock %}
+
+{% block content %}
+<!-- Sistema de Notificaciones Toast -->
+<div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div class="space-y-6">
+        <!-- Header con navegación -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/admin" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Volver al Dashboard
+                </a>
+                <div class="h-6 w-px bg-gray-300"></div>
+                <h1 class="text-2xl font-light text-gray-900">Paquete {{ package.tracking_number }}</h1>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="packageStatus" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                    {% if package.status.value == 'anunciado' %}bg-yellow-100 text-papyrus-yellow
+                    {% elif package.status.value == 'recibido' %}bg-blue-100 text-papyrus-blue
+                    {% elif package.status.value == 'entregado' %}bg-green-100 text-papyrus-green
+                    {% elif package.status.value == 'cancelado' %}bg-red-100 text-red-600
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ package.status.value|upper }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Información principal del paquete -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Información del paquete -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Detalles básicos -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Información del Paquete</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Número de Tracking</label>
+                            <p class="text-lg font-mono text-gray-900">{{ package.tracking_number }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estado Actual</label>
+                            <p class="text-lg font-semibold text-gray-900">{{ package.status.value|title }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Paquete</label>
+                            <select id="packageType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                                <option value="normal" {% if package.package_type.value == 'normal' %}selected{% endif %}>Normal</option>
+                                <option value="extra_dimensioned" {% if package.package_type.value == 'extra_dimensioned' %}selected{% endif %}>Extra Dimensionado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Condición</label>
+                            <select id="packageCondition" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                                <option value="bueno" {% if package.package_condition.value == 'bueno' %}selected{% endif %}>Bueno</option>
+                                <option value="regular" {% if package.package_condition.value == 'regular' %}selected{% endif %}>Regular</option>
+                                <option value="malo" {% if package.package_condition.value == 'malo' %}selected{% endif %}>Malo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del cliente -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Información del Cliente</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                            <p class="text-lg text-gray-900">{{ package.customer_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                            <p class="text-lg text-gray-900">{{ package.customer_phone }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Costos -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Costos</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Costo Base</label>
+                            <p class="text-lg font-semibold text-gray-900" id="baseCost">${{ "%.0f"|format(package.storage_cost) if package.storage_cost else 0 }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tiempo Excedido</label>
+                            <p class="text-lg font-semibold text-gray-900" id="overtimeCost">$0</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Costo Total</label>
+                            <p class="text-xl font-bold text-papyrus-blue" id="totalCost">${{ "%.0f"|format(package.total_cost) if package.total_cost else 0 }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Estado del tiempo de gracia -->
+                    {% if package.status.value == 'recibido' and package.received_at %}
+                    <div class="mt-4 p-4 rounded-lg" id="gracePeriodInfo">
+                        <h3 class="text-sm font-semibold mb-2">Estado del Tiempo de Gracia</h3>
+                        <div class="text-sm" id="gracePeriodStatus">
+                            <!-- Se cargará dinámicamente -->
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Observaciones -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Observaciones</h2>
+                    <textarea id="observations" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue" rows="4" placeholder="Agregar observaciones...">{{ package.observations or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Panel lateral -->
+            <div class="space-y-6">
+                <!-- Acciones de estado -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Cambiar Estado</h2>
+                    <div class="space-y-3">
+                        {% if package.status.value == 'anunciado' %}
+                        <button onclick="changePackageStatus('receive')" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                            Recibir
+                        </button>
+                        {% if user_role == 'ADMIN' %}
+                        <button onclick="changePackageStatus('cancel')" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancelar Paquete (Admin)
+                        </button>
+                        {% endif %}
+                        {% elif package.status.value == 'recibido' %}
+                        <button onclick="changePackageStatus('deliver')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Marcar como Entregado
+                        </button>
+                        {% if user_role == 'ADMIN' %}
+                        <button onclick="changePackageStatus('cancel')" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancelar Paquete (Admin)
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Timestamps -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Fechas Importantes</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Anunciado</label>
+                            <p class="text-sm text-gray-900">{{ package.announced_at.strftime('%d/%m/%Y %H:%M') if package.announced_at else 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Recibido</label>
+                            <p class="text-sm text-gray-900">{{ package.received_at.strftime('%d/%m/%Y %H:%M') if package.received_at else 'N/A' }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Entregado</label>
+                            <p class="text-sm text-gray-900">{{ package.delivered_at.strftime('%d/%m/%Y %H:%M') if package.delivered_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón guardar cambios -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <button onclick="savePackageChanges()" class="w-full bg-papyrus-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline/Historial -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Historial del Paquete</h2>
+            <div id="packageTimeline" class="space-y-4">
+                <!-- Timeline se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Confirmar Acción</h3>
+                <p id="confirmMessage" class="text-gray-600 mb-4"></p>
+                <div class="flex space-x-3">
+                    <button id="confirmYes" class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Confirmar
+                    </button>
+                    <button onclick="closeConfirmModal()" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Variables globales
+const packageId = '{{ package.id }}';
+let currentStatus = '{{ package.status.value }}';
+
+// Sistema de notificaciones toast
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+    };
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast ${type}">
+            <div class="toast-icon">${icons[type] || icons.info}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="removeToast('${toastId}')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    
+    const toast = document.getElementById(toastId);
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+    
+    return toastId;
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+// Función para cambiar estado del paquete
+function changePackageStatus(action) {
+    const messages = {
+        'receive': '¿Estás seguro de que quieres marcar este paquete como RECIBIDO?',
+        'deliver': '¿Estás seguro de que quieres marcar este paquete como ENTREGADO?',
+        'cancel': '¿Estás seguro de que quieres CANCELAR este paquete?'
+    };
+    
+    document.getElementById('confirmMessage').textContent = messages[action];
+    document.getElementById('confirmYes').onclick = () => executeStatusChange(action);
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+// Función para ejecutar el cambio de estado
+async function executeStatusChange(action) {
+    closeConfirmModal();
+    
+    try {
+        const response = await fetch(`/packages/${packageId}/${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showToast('success', 'Estado Actualizado', result.message);
+            
+            // Actualizar la página después de un breve delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            const error = await response.json();
+            showToast('error', 'Error', error.detail || 'Error al cambiar el estado');
+        }
+    } catch (error) {
+        showToast('error', 'Error', 'Error de conexión');
+    }
+}
+
+// Función para guardar cambios del paquete
+async function savePackageChanges() {
+    const packageType = document.getElementById('packageType').value;
+    const packageCondition = document.getElementById('packageCondition').value;
+    const observations = document.getElementById('observations').value;
+    
+    try {
+        const response = await fetch(`/packages/${packageId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                package_type: packageType,
+                package_condition: packageCondition,
+                observations: observations
+            })
+        });
+        
+        if (response.ok) {
+            showToast('success', 'Cambios Guardados', 'La información del paquete ha sido actualizada');
+        } else {
+            const error = await response.json();
+            showToast('error', 'Error', error.detail || 'Error al guardar los cambios');
+        }
+    } catch (error) {
+        showToast('error', 'Error', 'Error de conexión');
+    }
+}
+
+// Función para cerrar modal de confirmación
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+}
+
+// Función para cargar el timeline del paquete
+async function loadPackageTimeline() {
+    try {
+        const response = await fetch(`/packages/${packageId}/history`);
+        if (response.ok) {
+            const data = await response.json();
+            displayTimeline(data.history);
+        }
+    } catch (error) {
+        console.error('Error loading timeline:', error);
+    }
+}
+
+// Función para cargar información de costos
+async function loadCostInformation() {
+    try {
+        const response = await fetch(`/packages/${packageId}/cost-calculation`);
+        if (response.ok) {
+            const data = await response.json();
+            updateCostDisplay(data);
+        }
+    } catch (error) {
+        console.error('Error loading cost information:', error);
+    }
+}
+
+// Función para actualizar la visualización de costos
+function updateCostDisplay(costData) {
+    const baseCostElement = document.getElementById('baseCost');
+    const overtimeCostElement = document.getElementById('overtimeCost');
+    const totalCostElement = document.getElementById('totalCost');
+    const gracePeriodStatusElement = document.getElementById('gracePeriodStatus');
+    
+    if (baseCostElement) {
+        baseCostElement.textContent = `$${costData.calculated_cost.base_cost.toLocaleString()}`;
+    }
+    
+    if (overtimeCostElement) {
+        overtimeCostElement.textContent = `$${costData.calculated_cost.overtime_cost.toLocaleString()}`;
+        if (costData.calculated_cost.overtime_cost > 0) {
+            overtimeCostElement.classList.add('text-red-600', 'font-bold');
+        }
+    }
+    
+    if (totalCostElement) {
+        totalCostElement.textContent = `$${costData.calculated_cost.total_cost.toLocaleString()}`;
+    }
+    
+    // Actualizar estado del tiempo de gracia
+    if (gracePeriodStatusElement && costData.status === 'recibido') {
+        const overtimeHours = costData.calculated_cost.overtime_hours;
+        const gracePeriodHours = costData.grace_period_hours;
+        
+        if (overtimeHours === 0) {
+            gracePeriodStatusElement.innerHTML = `
+                <div class="flex items-center text-green-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Dentro del período de gracia (24h)</span>
+                </div>
+            `;
+        } else {
+            const overtimePeriods = costData.calculated_cost.overtime_periods;
+            gracePeriodStatusElement.innerHTML = `
+                <div class="flex items-center text-red-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Tiempo excedido: ${overtimeHours.toFixed(1)}h (${overtimePeriods} períodos de 24h)</span>
+                </div>
+                <div class="mt-2 text-sm text-red-700">
+                    Costo adicional: $${costData.calculated_cost.overtime_cost.toLocaleString()}
+                </div>
+            `;
+        }
+    }
+}
+
+// Función para mostrar el timeline
+function displayTimeline(history) {
+    const timelineContainer = document.getElementById('packageTimeline');
+    
+    if (!history || history.length === 0) {
+        timelineContainer.innerHTML = '<p class="text-gray-500 text-center">No hay historial disponible</p>';
+        return;
+    }
+    
+    const timelineHTML = history.map((item, index) => {
+        const isLast = index === history.length - 1;
+        const statusColors = {
+            'anunciado': 'bg-yellow-100 text-yellow-800',
+            'recibido': 'bg-blue-100 text-blue-800',
+            'entregado': 'bg-green-100 text-green-800',
+            'cancelado': 'bg-red-100 text-red-800'
+        };
+        
+        return `
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'} flex items-center justify-center text-sm font-semibold">
+                        ${index + 1}
+                    </div>
+                    ${!isLast ? '<div class="w-px h-8 bg-gray-300 ml-4"></div>' : ''}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-1">${item.description}</h4>
+                        <p class="text-xs text-gray-500">${new Date(item.timestamp).toLocaleString('es-CO')}</p>
+                        ${item.details ? `
+                            <div class="mt-2 text-xs text-gray-600">
+                                ${Object.entries(item.details).map(([key, value]) => 
+                                    `<span class="block">${key}: ${value}</span>`
+                                ).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    timelineContainer.innerHTML = timelineHTML;
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    loadPackageTimeline();
+    loadCostInformation();
+    
+    // Actualizar costos cada 30 segundos si el paquete está recibido
+    if (currentStatus === 'recibido') {
+        setInterval(loadCostInformation, 30000);
+    }
+});
+</script>
+
+<style>
+/* Estilos para notificaciones toast */
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.toast-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+</style>
+{% endblock %}

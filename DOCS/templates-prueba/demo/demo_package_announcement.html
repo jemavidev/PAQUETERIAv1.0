@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anuncio de Paquetes - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-input:invalid {
+            border-color: #ef4444;
+        }
+        
+        .form-checkbox {
+            margin-right: 0.5rem;
+        }
+        
+        .form-submit {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        
+        .form-submit:hover {
+            background: #2563eb;
+        }
+        
+        .form-submit:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #dc2626;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-tagline {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .test-buttons {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-button {
+            display: block;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        
+        .test-button:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <!-- Override Completo de Validación Nativa -->
+    {% include 'components/validation_override_simple.html' %}
+    
+    <!-- Botones de Prueba -->
+    <div class="test-buttons">
+        <h3 style="font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Pruebas:</h3>
+        <button class="test-button" onclick="probarOverrideValidacion()">
+            Probar Override
+        </button>
+        <button class="test-button" onclick="probarCampoRequerido()">
+            Campo Requerido
+        </button>
+        <button class="test-button" onclick="probarMinLength()">
+            Mínimo Caracteres
+        </button>
+        <button class="test-button" onclick="probarEmail()">
+            Email Inválido
+        </button>
+    </div>
+
+    <div class="container mx-auto px-4">
+        <!-- Logo -->
+        <div class="logo">
+            <div class="logo-text">PAPYRUS</div>
+            <div class="logo-tagline">MUCHO MÁS QUE SOLO PAPELES</div>
+        </div>
+
+        <!-- Formulario -->
+        <div class="form-container">
+            <h1 class="form-title">Anuncio de Paquetes</h1>
+            <p class="form-subtitle">Completa los datos para registrar tu # de guía</p>
+            
+            <form id="formulario-paquetes" novalidate>
+                <div class="form-group">
+                    <label for="nombre-cliente" class="form-label">
+                        Nombre del cliente *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="nombre-cliente" 
+                        name="nombre-cliente"
+                        class="form-input"
+                        placeholder="Ingrese el nombre del cliente"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="numero-guia" class="form-label">
+                        Número de guía (mínimo 8 caracteres) *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="numero-guia" 
+                        name="numero-guia"
+                        class="form-input"
+                        placeholder="Ingrese el número de guía"
+                        minlength="8"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefono" class="form-label">
+                        Número de Teléfono *
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="telefono" 
+                        name="telefono"
+                        class="form-input"
+                        placeholder="Ingrese el número de teléfono"
+                        pattern="[0-9]{10}"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        Email del cliente
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email"
+                        class="form-input"
+                        placeholder="Ingrese el email del cliente"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="terminos" name="terminos" class="form-checkbox" required>
+                        Acepto los términos y condiciones *
+                    </label>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                        Al marcar esta casilla, confirmo que he leído y acepto los 
+                        <a href="#" style="color: #3b82f6; text-decoration: underline;">términos y condiciones</a> 
+                        del servicio de anuncios de paquetes.
+                    </p>
+                </div>
+                
+                <button type="submit" class="form-submit">
+                    📦 Anunciar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Funciones de prueba
+        function probarCampoRequerido() {
+            const campo = document.getElementById('nombre-cliente');
+            campo.value = '';
+            campo.focus();
+            mostrarErrorValidacionOverride(campo, 'Este campo es obligatorio. Por favor, complételo.');
+        }
+
+        function probarMinLength() {
+            const campo = document.getElementById('numero-guia');
+            campo.value = '123';
+            campo.focus();
+            mostrarErrorValidacionOverride(campo, 'El campo debe tener al menos 8 caracteres.');
+        }
+
+        function probarEmail() {
+            const campo = document.getElementById('email');
+            campo.value = 'email-invalido';
+            campo.focus();
+            mostrarErrorValidacionOverride(campo, 'Por favor, ingrese un email válido.');
+        }
+
+        // El override se encarga de todo automáticamente
+        console.log('📋 Formulario configurado con override de validación');
+    </script>
+</body>
+</html>

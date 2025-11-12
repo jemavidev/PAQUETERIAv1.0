@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Imágenes S3 - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">🖼️ Test de Imágenes AWS S3</h1>
+            <p class="text-gray-600 mb-6">Verificación de acceso directo a imágenes en el bucket S3</p>
+            
+            <!-- Botones de acción -->
+            <div class="flex space-x-4 mb-6">
+                <button onclick="testS3Connection()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    🔧 Test Conexión S3
+                </button>
+                <button onclick="loadBucketImages()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    📋 Listar Imágenes
+                </button>
+                <button onclick="clearResults()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    🗑️ Limpiar
+                </button>
+            </div>
+            
+            <!-- Área de resultados -->
+            <div id="results" class="space-y-4"></div>
+        </div>
+        
+        <!-- Galería de imágenes -->
+        <div id="imageGallery" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">📷 Imágenes Encontradas</h2>
+                <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Las imágenes se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, type = 'info') {
+            const colors = {
+                'success': 'bg-green-100 border-green-400 text-green-700',
+                'error': 'bg-red-100 border-red-400 text-red-700',
+                'info': 'bg-blue-100 border-blue-400 text-blue-700',
+                'warning': 'bg-yellow-100 border-yellow-400 text-yellow-700'
+            };
+            
+            const resultsDiv = document.getElementById('results');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `border-l-4 p-4 ${colors[type] || colors.info}`;
+            messageDiv.innerHTML = `<p>${message}</p>`;
+            resultsDiv.appendChild(messageDiv);
+        }
+
+        async function testS3Connection() {
+            showMessage('🔧 Probando conexión con S3...', 'info');
+            
+            try {
+                const response = await fetch('/api/images/debug/s3-test');
+                const data = await response.json();
+                
+                if (data.connection_test) {
+                    showMessage(`✅ Conexión S3 exitosa!<br>
+                        📦 Bucket: ${data.bucket}<br>
+                        🌍 Región: ${data.region}<br>
+                        📁 Base Path: ${data.base_path}<br>
+                        📄 Archivos encontrados: ${data.files_found}`, 'success');
+                    
+                    if (data.sample_files && data.sample_files.length > 0) {
+                        showMessage(`📋 Archivos de muestra:<br>${data.sample_files.map(f => `• ${f}`).join('<br>')}`, 'info');
+                    }
+                } else {
+                    showMessage(`❌ Error en conexión S3: ${data.error || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Error conectando al servidor: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadBucketImages() {
+            showMessage('📋 Cargando imágenes del bucket...', 'info');
+            
+            try {
+                const response = await fetch('/api/images/debug/list-bucket-images?limit=50');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ Encontradas ${data.image_files} imágenes de ${data.total_files} archivos totales`, 'success');
+                    
+                    if (data.images && data.images.length > 0) {
+                        displayImages(data.images);
+                    } else {
+                        showMessage('ℹ️ No se encontraron imágenes en el bucket', 'warning');
+                    }
+                } else {
+                    showMessage(`❌ Error listando imágenes: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Error cargando imágenes: ${error.message}`, 'error');
+            }
+        }
+
+        function displayImages(images) {
+            const gallery = document.getElementById('imageGallery');
+            const grid = document.getElementById('imageGrid');
+            
+            // Limpiar galería anterior
+            grid.innerHTML = '';
+            
+            images.forEach((img, index) => {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'bg-white rounded-lg shadow-md overflow-hidden border border-gray-200';
+                
+                imageCard.innerHTML = `
+                    <div class="aspect-square bg-gray-100 relative">
+                        ${img.presigned_url ? `
+                            <img src="${img.presigned_url}" 
+                                 alt="${img.filename}"
+                                 class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                                 onclick="openImageModal('${img.presigned_url}', '${img.filename}')"
+                                 onerror="handleImageError(this, '${img.filename}')">
+                        ` : `
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <div class="text-center">
+                                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    <p class="text-xs">Error URL</p>
+                                </div>
+                            </div>
+                        `}
+                        <div class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            ${index + 1}
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-medium text-sm text-gray-900 truncate" title="${img.filename}">
+                            ${img.filename}
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">
+                            📏 ${formatFileSize(img.size)}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            🔑 ${img.key.length > 40 ? img.key.substring(0, 40) + '...' : img.key}
+                        </p>
+                        ${img.error ? `
+                            <p class="text-xs text-red-500 mt-1">
+                                ❌ ${img.error}
+                            </p>
+                        ` : ''}
+                        ${img.presigned_url ? `
+                            <button onclick="copyToClipboard('${img.presigned_url}')" 
+                                    class="mt-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded transition-colors">
+                                📋 Copiar URL
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                grid.appendChild(imageCard);
+            });
+            
+            // Mostrar galería
+            gallery.classList.remove('hidden');
+        }
+
+        function handleImageError(img, filename) {
+            console.error(`Error cargando imagen: ${filename}`);
+            img.style.display = 'none';
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'w-full h-full flex items-center justify-center text-red-400';
+            errorDiv.innerHTML = `
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <p class="text-xs">Error cargando</p>
+                </div>
+            `;
+            
+            img.parentNode.appendChild(errorDiv);
+        }
+
+        function openImageModal(url, filename) {
+            // Crear modal simple para ver imagen en grande
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
+            modal.onclick = () => modal.remove();
+            
+            modal.innerHTML = `
+                <div class="relative max-w-4xl max-h-full">
+                    <img src="${url}" alt="${filename}" class="max-w-full max-h-full object-contain rounded-lg">
+                    <div class="absolute top-4 right-4">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded">
+                        ${filename}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('📋 URL copiada al portapapeles', 'success');
+            }).catch(() => {
+                showMessage('❌ Error copiando URL', 'error');
+            });
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('imageGallery').classList.add('hidden');
+        }
+
+        // Cargar automáticamente al abrir la página
+        window.addEventListener('load', () => {
+            showMessage('🚀 Página de test cargada. Haz clic en "Test Conexión S3" para empezar.', 'info');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo de Manejo de Errores - PAQUETEX v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md mx-auto">
+            <div class="text-center">
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                    Demo de Manejo de Errores
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Prueba el nuevo sistema de manejo de errores
+                </p>
+            </div>
+
+            <div class="mt-8 space-y-6">
+                <!-- Formulario de Consulta -->
+                <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    <h3 class="text-lg font-medium text-gray-900 mb-6">¿Tienes alguna pregunta?</h3>
+                    <p class="text-sm text-gray-600 mb-6">Envíanos tu consulta sobre tu paquete</p>
+                    
+                    <form id="inquiry-form" class="space-y-6">
+                        <div>
+                            <label for="customer_email" class="block text-sm font-medium text-gray-700">
+                                Correo Electrónico
+                            </label>
+                            <div class="mt-1 relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                                    </svg>
+                                </div>
+                                <input id="customer_email" 
+                                       name="customer_email" 
+                                       type="email" 
+                                       value="jveyes@gmail.com"
+                                       class="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-blue-50"
+                                       readonly>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="content" class="block text-sm font-medium text-gray-700">
+                                Mensaje
+                            </label>
+                            <div class="mt-1">
+                                <textarea id="content" 
+                                          name="content" 
+                                          rows="4" 
+                                          class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                          placeholder="Escribe tu consulta aquí..."></textarea>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Mínimo 10 caracteres
+                            </p>
+                        </div>
+
+                        <div>
+                            <button type="submit" 
+                                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Enviar Consulta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Botones de Prueba -->
+                <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    <h3 class="text-lg font-medium text-gray-900 mb-6">Pruebas de Errores</h3>
+                    
+                    <div class="space-y-4">
+                        <button onclick="testValidationError()" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Probar Error Simple
+                        </button>
+                        
+                        <button onclick="testGenericError()" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                            Probar Error Genérico
+                        </button>
+                        
+                        <button onclick="testSuccess()" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Probar Mensaje de Éxito
+                        </button>
+                        
+                        <button onclick="testWarning()" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                            Probar Advertencia
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manejador de errores -->
+    <script src="/static/js/error-handler.js"></script>
+
+    <script>
+    // Manejar envío del formulario
+    document.getElementById("inquiry-form").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {
+            customer_email: formData.get("customer_email"),
+            content: formData.get("content")
+        };
+        
+        try {
+            const response = await fetch("/test-validation", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                showSuccess("¡Consulta enviada correctamente!");
+                this.reset();
+            } else {
+                const errorData = await response.json();
+                if (errorData.error && errorData.error.is_validation_error) {
+                    // El error ya está formateado por el backend
+                    showError("Error de validación", errorData.error.message);
+                } else {
+                    showError("Error del servidor", errorData.detail || "Error desconocido");
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            showError("Error de conexión", "No se pudo conectar con el servidor.");
+        }
+    });
+
+    // Funciones de prueba
+    function testValidationError() {
+        const errorData = {
+            is_validation_error: true,
+            title: "Error de validación",
+            message: "Se encontraron 1 error(es) en el formulario:",
+            errors: [
+                {
+                    field: "mensaje",
+                    field_path: "body.content",
+                    error_type: "string_too_short",
+                    title: "Texto muy corto",
+                    message: "El texto debe tener al menos 10 caracteres.",
+                    suggestion: "Por favor, escribe más detalles en tu mensaje.",
+                    input_value: "TEST TEST",
+                    context: { min_length: 10 }
+                }
+            ],
+            suggestion: "Por favor, corrige los errores marcados y vuelve a intentar."
+        };
+        
+        if (window.errorHandler) {
+            window.errorHandler.showValidationError(errorData);
+        }
+    }
+
+    function testGenericError() {
+        showError("Error del servidor", "No se pudo procesar la solicitud. Intenta nuevamente.");
+    }
+
+    function testSuccess() {
+        showSuccess("¡Operación completada exitosamente!");
+    }
+
+    function testWarning() {
+        showWarning("Esta es una advertencia importante.");
+    }
+    </script>
+</body>
+</html>

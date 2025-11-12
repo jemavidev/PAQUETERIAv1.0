@@ -1,0 +1,1029 @@
+{% extends "base/base.html" %}
+
+{% block title %}RECEPCIÓN DE PAQUETES - PAQUETEX v4.0{% endblock %}
+
+{% block content %}
+<!-- Verificación de autenticación -->
+{% if not is_authenticated %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center">
+        <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">Acceso Restringido</h3>
+        <p class="mt-2 text-sm text-gray-500">Debes iniciar sesión para acceder a la recepción de paquetes.</p>
+        <div class="mt-6">
+            <a href="/auth/login" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-papyrus-blue hover:bg-blue-700 transition-colors duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-6 xl:py-8">
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='/packages'"
+                        class="inline-flex items-center justify-center w-10 h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-gray-900">RECEPCIÓN DE PAQUETES</h1>
+                    <p class="text-sm text-gray-600 mt-1">Gestión completa de recepción de paquetes desde anuncios</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Paquete -->
+        <div id="packageInfo" class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 lg:p-8 hidden">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Información del Paquete</h2>
+                    <p class="text-sm text-gray-600">Verifica los detalles antes de procesar la recepción</p>
+                </div>
+            </div>
+
+            <div id="packageDetails" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Detalles del paquete se cargarán aquí -->
+            </div>
+        </div>
+
+        <!-- Formulario de Recepción -->
+        <div id="receiveForm" class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 lg:p-8 hidden">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Procesar Recepción</h2>
+                    <p class="text-sm text-gray-600">Completa la información necesaria para recibir el paquete</p>
+                </div>
+            </div>
+
+            <form id="receivePackageForm" class="space-y-6">
+                <!-- Paso 1: Verificación Física -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">1</span>
+                        Verificación Física
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Tipo de Paquete -->
+                        <div>
+                            <label for="packageType" class="block text-sm font-medium text-gray-700 mb-2">
+                                Tipo de Paquete <span class="text-red-500">*</span>
+                            </label>
+                            <select id="packageType"
+                                    name="package_type"
+                                    class="w-full px-3 py-3 sm:py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base touch-manipulation bg-white"
+                                    required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="normal">Normal (hasta 30x30x30cm, 5kg)</option>
+                                <option value="extra_dimensioned">Extra Dimensionado (más grande/pesado)</option>
+                            </select>
+                        </div>
+
+                        <!-- Condición del Paquete -->
+                        <div>
+                            <label for="packageCondition" class="block text-sm font-medium text-gray-700 mb-2">
+                                Condición del Paquete <span class="text-red-500">*</span>
+                            </label>
+                            <select id="packageCondition"
+                                    name="package_condition"
+                                    class="w-full px-3 py-3 sm:py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base touch-manipulation bg-white"
+                                    required>
+                                <option value="">Seleccionar condición</option>
+                                <option value="BUENO">Excelente - Sin daños</option>
+                                <option value="REGULAR">Regular - Daños menores</option>
+                                <option value="OPENED">Abierto - Requiere verificación</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ubicación Física -->
+                    <div class="mt-4">
+                        <label for="baroti" class="block text-sm font-medium text-gray-700 mb-2">
+                            Ubicación Física (Posición)
+                        </label>
+                        <div class="relative">
+                            <input type="text"
+                                   id="baroti"
+                                   name="baroti"
+                                   placeholder="Se asignará automáticamente"
+                                   class="w-full px-3 py-3 sm:py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                                   readonly
+                                   disabled>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-600 mt-1">✓ Se generará automáticamente al recibir el paquete</p>
+                    </div>
+                </div>
+
+                <!-- Paso 2: Documentación Fotográfica -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold text-sm mr-3">2</span>
+                        Documentación Fotográfica
+                    </h3>
+
+                    <div class="space-y-3">
+                        <!-- Input de archivo oculto -->
+                        <input type="file" id="packageImages" multiple accept="image/*" class="hidden" />
+
+                        <!-- Botón para seleccionar archivos -->
+                        <button type="button" id="selectImagesBtn"
+                                class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-papyrus-blue hover:text-papyrus-blue transition-colors touch-manipulation min-h-[44px] flex flex-col items-center justify-center">
+                            <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-sm" id="selectImagesText">Seleccionar imágenes del paquete</span>
+                            <span class="text-xs text-gray-500 mt-1">JPG, PNG, WEBP (máx. 5MB cada una, máximo 3 imágenes)</span>
+                        </button>
+
+                        <!-- Preview de imágenes seleccionadas -->
+                        <div id="imagePreview" class="hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <!-- Las previews se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+
+                        <!-- Contador de imágenes -->
+                        <p id="imageCounter" class="text-xs text-gray-500 hidden">
+                            <span id="imageCount">0</span> de 3 imágenes seleccionadas
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Observaciones -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm mr-3">3</span>
+                        Observaciones
+                    </h3>
+
+                    <div>
+                        <label for="observations" class="block text-sm font-medium text-gray-700 mb-2">
+                            Observaciones de Recepción
+                        </label>
+                        <textarea id="observations"
+                                name="observations"
+                                rows="4"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base resize-none touch-manipulation"
+                                placeholder="Describe cualquier detalle importante sobre la recepción del paquete, daños, características especiales, etc."
+                                maxlength="500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Opcional - Máximo 500 caracteres</p>
+                    </div>
+                </div>
+
+                <!-- Resumen y Confirmación -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="text-lg font-medium text-blue-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Resumen de Recepción
+                    </h3>
+
+                    <div id="receiveSummary" class="space-y-2 text-sm text-blue-800">
+                        <!-- El resumen se actualizará dinámicamente -->
+                        <p>Completa los campos requeridos para ver el resumen</p>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="flex flex-col space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-3">
+                    <button type="button"
+                            onclick="window.location.href='/packages'"
+                            class="w-full sm:w-auto px-6 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation min-h-[44px]">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            id="submitReceive"
+                            class="w-full sm:w-auto px-6 py-3 sm:py-2.5 md:py-2 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200 active:scale-95 touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Confirmar Recepción
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Estado de Carga -->
+        <div id="loadingState" class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+            <p class="mt-4 text-sm text-gray-500">Cargando información del paquete...</p>
+        </div>
+
+        <!-- Estado de Error -->
+        <div id="errorState" class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center hidden">
+            <div class="bg-red-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Error al Cargar Paquete</h3>
+            <p id="errorMessage" class="mt-2 text-sm text-gray-500">No se pudo cargar la información del paquete.</p>
+            <div class="mt-6">
+                <button onclick="window.location.href='/packages'"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-papyrus-blue hover:bg-blue-700 transition-colors duration-200">
+                    Volver a Paquetes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Sistema de Notificaciones Toast -->
+<div id="toastContainer" class="fixed top-4 left-4 right-4 sm:top-4 sm:left-auto sm:right-4 z-50 space-y-2 max-w-full sm:max-w-sm mx-auto sm:mx-0"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Estilos para notificaciones toast */
+.toast {
+    min-width: 280px;
+    max-width: 320px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+@media (min-width: 640px) {
+    .toast {
+        min-width: 300px;
+        max-width: 400px;
+        padding: 16px;
+        gap: 12px;
+    }
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.toast.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.toast-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: width linear;
+}
+
+/* Optimizaciones móviles */
+@media (max-width: 640px) {
+    .space-y-3 > * + * {
+        margin-top: 0.75rem;
+    }
+
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+
+    button {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+
+    input, textarea {
+        font-size: 16px;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .touch-manipulation {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+
+    button:active, .cursor-pointer:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+</style>
+<script>
+// Sistema de Notificaciones Toast
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+
+    const icons = {
+        success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        info: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+        warning: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+    };
+
+    const toastHTML = `
+        <div id="${toastId}" class="toast ${type}">
+            <div class="toast-icon">${icons[type] || icons.info}</div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="removeToast('${toastId}')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="toast-progress" style="width: 100%;"></div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', toastHTML);
+
+    const toast = document.getElementById(toastId);
+    const progress = toast.querySelector('.toast-progress');
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+
+    setTimeout(() => {
+        progress.style.width = '0%';
+        progress.style.transition = `width ${duration}ms linear`;
+    }, 100);
+
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+
+    return toastId;
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+}
+
+// Funciones de conveniencia
+function showSuccessToast(title, message, duration) {
+    return showToast('success', title, message, duration);
+}
+
+function showErrorToast(title, message, duration) {
+    return showToast('error', title, message, duration);
+}
+
+function showInfoToast(title, message, duration) {
+    return showToast('info', title, message, duration);
+}
+
+function showWarningToast(title, message, duration) {
+    return showToast('warning', title, message, duration);
+}
+
+// Variables globales
+let currentPackageId = null;
+let selectedImages = [];
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de recepción de paquetes cargada');
+
+    // Obtener el ID del paquete de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    currentPackageId = urlParams.get('id');
+
+    if (!currentPackageId) {
+        showError('No se especificó un paquete para recibir');
+        return;
+    }
+
+    console.log('ID del paquete a recibir:', currentPackageId);
+
+    // Cargar información del paquete
+    loadPackageInfo(currentPackageId);
+
+    // Configurar event listeners
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Formulario de recepción
+    const form = document.getElementById('receivePackageForm');
+    if (form) {
+        form.addEventListener('submit', handleReceiveSubmit);
+    }
+
+    // Selector de imágenes
+    const selectImagesBtn = document.getElementById('selectImagesBtn');
+    if (selectImagesBtn) {
+        selectImagesBtn.addEventListener('click', function() {
+            // Verificar si ya se alcanzó el límite máximo
+            if (selectedImages.length >= 3) {
+                showInfoToast('Límite alcanzado', 'Ya tienes el máximo de 3 imágenes seleccionadas. Elimina alguna para agregar otra.', 3000);
+                return;
+            }
+            document.getElementById('packageImages').click();
+        });
+    }
+
+    const imageInput = document.getElementById('packageImages');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImageSelection);
+    }
+
+    // Actualizar resumen cuando cambien los campos
+    const formFields = ['packageType', 'packageCondition'];
+    formFields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            element.addEventListener('change', updateReceiveSummary);
+        }
+    });
+}
+
+function loadPackageInfo(packageId) {
+    console.log('Cargando información del paquete:', packageId);
+
+    // Mostrar estado de carga
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('errorState').classList.add('hidden');
+
+    fetch(`/api/packages/${packageId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Datos del paquete cargados:', data);
+        displayPackageInfo(data);
+        document.getElementById('loadingState').classList.add('hidden');
+    })
+    .catch(error => {
+        console.error('Error cargando paquete:', error);
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMessage').textContent = error.message || 'Error desconocido';
+    });
+}
+
+function displayPackageInfo(package) {
+    const packageDetails = document.getElementById('packageDetails');
+
+    packageDetails.innerHTML = `
+        <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Información del Cliente</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Nombre:</span>
+                            <span class="text-sm font-medium text-gray-900">${package.customer_name || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Teléfono:</span>
+                            <span class="text-sm font-medium text-gray-900">${package.customer_phone || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Información del Paquete</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Tracking:</span>
+                            <span class="text-sm font-medium text-gray-900">${package.tracking_number || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Guía:</span>
+                            <span class="text-sm font-medium text-gray-900">${package.guide_number || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Estado:</span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">ANUNCIADO</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-blue-900 mb-2">Información de Tarifas</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-blue-600">$${package.base_fee || 0}</div>
+                        <div class="text-xs text-blue-700">Tarifa Base</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-blue-600">$${package.storage_fee || 0}</div>
+                        <div class="text-xs text-blue-700">Almacenamiento</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-blue-600">$${package.total_amount || 0}</div>
+                        <div class="text-xs text-blue-700">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Mostrar la información del paquete y el formulario
+    document.getElementById('packageInfo').classList.remove('hidden');
+    document.getElementById('receiveForm').classList.remove('hidden');
+}
+
+function updateReceiveSummary() {
+    const packageType = document.getElementById('packageType').value;
+    const packageCondition = document.getElementById('packageCondition').value;
+    const baroti = document.getElementById('baroti').value;
+    const imageCount = selectedImages.length;
+
+    const summary = document.getElementById('receiveSummary');
+
+    if (!packageType || !packageCondition) {
+        summary.innerHTML = '<p class="text-blue-700">Completa los campos requeridos para ver el resumen</p>';
+        return;
+    }
+
+    const typeText = packageType === 'MEDIA' ? 'Normal' : 'Extra Dimensionado';
+    const conditionText = packageCondition === 'BUENO' ? 'Excelente' : packageCondition === 'REGULAR' ? 'Regular' : 'Abierto';
+
+    summary.innerHTML = `
+        <div class="space-y-2">
+            <div class="flex justify-between">
+                <span>Tipo de paquete:</span>
+                <span class="font-medium">${typeText}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>Condición:</span>
+                <span class="font-medium">${conditionText}</span>
+            </div>
+            ${baroti ? `
+            <div class="flex justify-between">
+                <span>Ubicación:</span>
+                <span class="font-medium">${baroti}</span>
+            </div>
+            ` : ''}
+            <div class="flex justify-between">
+                <span>Imágenes:</span>
+                <span class="font-medium">${imageCount} seleccionada(s)</span>
+            </div>
+        </div>
+    `;
+}
+
+function handleReceiveSubmit(event) {
+    event.preventDefault();
+
+    // Validar campos requeridos
+    const packageType = document.getElementById('packageType').value;
+    const packageCondition = document.getElementById('packageCondition').value;
+
+    if (!packageType || !packageCondition) {
+        showErrorToast('Error', 'Debe completar todos los campos requeridos.', 3000);
+        return;
+    }
+
+    // Preparar FormData para incluir imágenes
+    const formData = new FormData();
+    formData.append('announcement_id', currentPackageId.startsWith('announcement_') ? currentPackageId.replace('announcement_', '') : currentPackageId);
+    formData.append('package_type', packageType);
+    formData.append('package_condition', packageCondition);
+    // La posición se genera automáticamente en el backend
+    // formData.append('baroti', document.getElementById('baroti').value || '');
+    formData.append('observations', document.getElementById('observations').value || '');
+
+    // Agregar imágenes seleccionadas
+    console.log(`📤 Adding ${selectedImages.length} images to FormData`);
+    selectedImages.forEach((file, index) => {
+        formData.append('images', file);
+        console.log(`📎 Added image ${index + 1}: ${file.name} (${Math.round(file.size/1024)}KB)`);
+    });
+
+    console.log('Enviando recepción con imágenes:', {
+        announcement_id: currentPackageId,
+        package_type: packageType,
+        package_condition: packageCondition,
+        images_count: selectedImages.length
+    });
+
+    // Deshabilitar botón
+    const submitBtn = document.getElementById('submitReceive');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        Procesando...
+    `;
+
+    // Enviar recepción con imágenes
+    fetch('/api/packages/receive-with-images', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorData => {
+                throw new Error(errorData.detail || 'Error al procesar la recepción');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Recepción exitosa:', data);
+        
+        // Mostrar opción de enviar email si el cliente tiene email
+        if (data.package && data.package.customer && data.package.customer.email) {
+            showReceiveSuccessWithEmail(data.package);
+        } else {
+            showSuccessToast('Éxito', 'El paquete ha sido recibido correctamente.', 3000);
+            // Redirigir después de 2 segundos
+            setTimeout(() => {
+                window.location.href = '/packages';
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Error en recepción:', error);
+        showErrorToast('Error', error.message || 'No se pudo procesar la recepción.', 5000);
+
+        // Rehabilitar botón
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Confirmar Recepción
+        `;
+    });
+}
+
+function handleImageSelection() {
+    const fileInput = document.getElementById('packageImages');
+    const newFiles = Array.from(fileInput.files);
+    const maxFiles = 3;
+
+    console.log('🔍 handleImageSelection called');
+    console.log('📁 New files selected:', newFiles.length);
+    console.log('📋 Current selectedImages:', selectedImages.length);
+
+    // Si no hay archivos nuevos, no hacer nada
+    if (newFiles.length === 0) {
+        return;
+    }
+
+    // Agregar nuevos archivos a la selección existente
+    let addedCount = 0;
+    newFiles.forEach(newFile => {
+        // Verificar si ya existe un archivo con el mismo nombre y tamaño
+        const existingFile = selectedImages.find(existing => 
+            existing.name === newFile.name && existing.size === newFile.size
+        );
+        
+        // Solo agregar si no existe y hay espacio disponible
+        if (!existingFile && selectedImages.length < maxFiles) {
+            selectedImages.push(newFile);
+            addedCount++;
+            console.log(`✅ Added image: ${newFile.name} (${Math.round(newFile.size/1024)}KB)`);
+        } else if (existingFile) {
+            console.log(`⚠️ Duplicate image skipped: ${newFile.name}`);
+        } else {
+            console.log(`❌ Max limit reached, skipped: ${newFile.name}`);
+        }
+    });
+
+    // Mostrar mensajes informativos
+    if (addedCount > 0) {
+        showSuccessToast('Imágenes agregadas', `Se agregaron ${addedCount} imagen${addedCount > 1 ? 'es' : ''}.`, 2000);
+    }
+
+    if (selectedImages.length === maxFiles) {
+        showInfoToast('Límite alcanzado', `Ya tienes ${maxFiles} imágenes seleccionadas.`, 2000);
+    }
+
+    // Limpiar el input file para permitir seleccionar los mismos archivos de nuevo si es necesario
+    fileInput.value = '';
+
+    console.log('📊 Final selectedImages count:', selectedImages.length);
+    displayImagePreviews();
+    updateReceiveSummary();
+}
+
+function displayImagePreviews() {
+    const previewContainer = document.getElementById('imagePreview');
+    const gridContainer = previewContainer.querySelector('.grid');
+    const counter = document.getElementById('imageCounter');
+    const countSpan = document.getElementById('imageCount');
+    const selectImagesText = document.getElementById('selectImagesText');
+
+    // Clear previous previews
+    gridContainer.innerHTML = '';
+
+    if (selectedImages.length === 0) {
+        previewContainer.classList.add('hidden');
+        counter.classList.add('hidden');
+        selectImagesText.textContent = 'Seleccionar imágenes del paquete';
+        return;
+    }
+
+    // Update button text based on selection
+    const remainingSlots = 3 - selectedImages.length;
+    if (remainingSlots > 0) {
+        selectImagesText.textContent = `Agregar más imágenes (${remainingSlots} disponibles)`;
+    } else {
+        selectImagesText.textContent = 'Máximo de imágenes alcanzado';
+    }
+
+    // Show counter
+    countSpan.textContent = selectedImages.length;
+    counter.classList.remove('hidden');
+    console.log(`📊 Displaying ${selectedImages.length} of 3 images`);
+
+    // Create previews
+    selectedImages.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'relative group';
+            previewDiv.innerHTML = `
+                <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                    <img src="${e.target.result}" alt="Preview ${index + 1}" class="w-full h-full object-cover">
+                </div>
+                <button type="button"
+                        onclick="removeImage(${index})"
+                        class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 focus:opacity-100">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <div class="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
+                    ${Math.round(file.size / 1024)}KB
+                </div>
+            `;
+            gridContainer.appendChild(previewDiv);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    previewContainer.classList.remove('hidden');
+}
+
+function removeImage(index) {
+    console.log(`🗑️ Removing image at index ${index}`);
+    const removedImage = selectedImages[index];
+    selectedImages.splice(index, 1);
+    
+    console.log(`✅ Removed: ${removedImage.name}`);
+    console.log(`📊 Remaining images: ${selectedImages.length}`);
+
+    // No necesitamos actualizar el input file ya que lo mantenemos limpio
+    displayImagePreviews();
+    updateReceiveSummary();
+    
+    showSuccessToast('Imagen eliminada', 'La imagen ha sido eliminada de la selección.', 2000);
+}
+
+function showError(message) {
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('errorState').classList.remove('hidden');
+    document.getElementById('errorMessage').textContent = message;
+}
+
+function getAuthToken() {
+    const cookieValue = `; ${document.cookie}`;
+    const cookieParts = cookieValue.split(`; access_token=`);
+    if (cookieParts.length === 2) {
+        const token = cookieParts.pop().split(';').shift();
+        if (token && token !== 'undefined' && token !== 'null') {
+            return token;
+        }
+    }
+
+    let token = localStorage.getItem('access_token');
+    if (token && token !== 'undefined' && token !== 'null') {
+        return token;
+    }
+
+    return null;
+}
+
+/**
+ * Mostrar mensaje de éxito con opción de enviar email
+ */
+function showReceiveSuccessWithEmail(packageData) {
+    const receiveForm = document.getElementById('receiveForm');
+    const packageInfo = document.getElementById('packageInfo');
+    
+    // Ocultar formularios
+    receiveForm.classList.add('hidden');
+    packageInfo.classList.add('hidden');
+    
+    // Mostrar sección de éxito con botón de email
+    const successSection = document.createElement('div');
+    successSection.id = 'receiveSuccessSection';
+    successSection.className = 'bg-white rounded-xl shadow-lg border border-gray-100 p-6 lg:p-8';
+    successSection.innerHTML = `
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-2">¡Paquete Recibido Exitosamente!</h2>
+            <p class="text-gray-600 mb-6">El paquete ${packageData.tracking_number || 'N/A'} ha sido recibido correctamente.</p>
+            
+            <div id="emailNotificationSection" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-md mx-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        <div class="text-left">
+                            <p class="text-sm font-medium text-blue-900">Notificación por Email</p>
+                            <p class="text-xs text-blue-700">${packageData.customer.email} (Tel: ${packageData.customer.phone || 'N/A'})</p>
+                        </div>
+                    </div>
+                </div>
+                <button id="sendEmailButton"
+                        onclick="sendReceiveEmail(${packageData.id})"
+                        class="w-full px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Enviar Email de Notificación
+                </button>
+            </div>
+            
+            <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="window.location.href='/packages'"
+                        class="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+                    Volver a Paquetes
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Insertar antes del formulario
+    receiveForm.parentNode.insertBefore(successSection, receiveForm);
+    
+    showSuccessToast('Éxito', 'El paquete ha sido recibido correctamente.', 3000);
+}
+
+/**
+ * Enviar email después de recibir paquete
+ */
+async function sendReceiveEmail(packageId) {
+    const sendButton = document.getElementById('sendEmailButton');
+    const originalContent = sendButton.innerHTML;
+    
+    sendButton.disabled = true;
+    sendButton.innerHTML = `
+        <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Enviando...
+    `;
+    
+    try {
+        const response = await fetch(`/api/packages/${packageId}/send-email?event_type=received`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Error al enviar el email');
+        }
+        
+        const data = await response.json();
+        
+        showSuccessToast('Email Enviado', `Email enviado exitosamente a ${data.recipient_email}`, 4000);
+        
+        sendButton.innerHTML = `
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Email Enviado
+        `;
+        sendButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        sendButton.classList.add('bg-green-600', 'hover:bg-green-700');
+        sendButton.disabled = true;
+        
+    } catch (error) {
+        console.error('Error enviando email:', error);
+        showErrorToast('Error', error.message || 'No se pudo enviar el email.', 5000);
+        
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalContent;
+    }
+}
+</script>
+{% endblock %}

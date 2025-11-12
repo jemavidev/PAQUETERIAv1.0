@@ -1,0 +1,41 @@
+{% extends "emails/base.html" %}
+
+{% block title %}{{ email_subject|default(company_name ~ " - Notificación") }}{% endblock %}
+
+{% block header_subtitle %}{{ notification_title|default("📬 Notificación") }}{% endblock %}
+
+{% block content %}
+{% if user_name %}
+<div class="greeting">
+    ¡Hola <strong>{{ user_name }}</strong>!
+</div>
+{% endif %}
+
+<div class="message">
+    {{ message|default(content|default("Tienes una nueva notificación de nuestro sistema.")) }}
+</div>
+
+{% if action_url %}
+<div class="action-section">
+    <a href="{{ action_url }}" class="btn-primary">
+        {{ action_text|default("Ver Más") }}
+    </a>
+</div>
+{% endif %}
+
+{% if details %}
+<div class="info-box">
+    {{ details }}
+</div>
+{% endif %}
+
+<div class="support-text">
+    Para cualquier consulta, contáctanos en <a href="mailto:{{ company_email }}">{{ company_email }}</a> o {{ company_phone }}
+</div>
+
+<div class="signature">
+    <p>Cordialmente,<br>
+    <strong>El Equipo de {{ company_name }}</strong></p>
+</div>
+{% endblock %}
+
