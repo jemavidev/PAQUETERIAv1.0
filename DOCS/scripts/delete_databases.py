@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Eliminación de Bases de Datos
+PAQUETES EL CLUB v1.0 - Script de Eliminación de Bases de Datos
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -187,7 +187,7 @@ def confirm_deletion():
 
 def main():
     """Función principal"""
-    print("🚀 PAQUETES EL CLUB v4.0 - Eliminación de Bases de Datos AWS RDS")
+    print("🚀 PAQUETES EL CLUB v1.0 - Eliminación de Bases de Datos AWS RDS")
     print("="*70)
     
     # Verificar que estamos en el directorio correcto

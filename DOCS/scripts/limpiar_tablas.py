@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza de Tablas
+PAQUETES EL CLUB v1.0 - Script de Limpieza de Tablas
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -116,6 +116,6 @@ def limpiar_tablas():
         sys.exit(1)
 
 if __name__ == "__main__":
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza de Tablas")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza de Tablas")
     print("="*50)
     limpiar_tablas()

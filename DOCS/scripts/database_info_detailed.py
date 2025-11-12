@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Información Detallada de Base de Datos
+PAQUETES EL CLUB v1.0 - Script de Información Detallada de Base de Datos
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -264,7 +264,7 @@ class DatabaseInfoDetailed:
 
 def main():
     """Función principal"""
-    print("🚀 PAQUETES EL CLUB v4.0 - Información Detallada de Base de Datos AWS RDS")
+    print("🚀 PAQUETES EL CLUB v1.0 - Información Detallada de Base de Datos AWS RDS")
     print("="*80)
     
     # Verificar que estamos en el directorio correcto

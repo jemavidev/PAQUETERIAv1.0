@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza Simple (Base de Datos + AWS S3)
+PAQUETES EL CLUB v1.0 - Script de Limpieza Simple (Base de Datos + AWS S3)
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -423,7 +423,7 @@ def load_env_file():
 
 def main():
     """Función principal"""
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza Completa (DB + S3) - Simple")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza Completa (DB + S3) - Simple")
     print("="*70)
     
     # Crear directorio de logs si no existe

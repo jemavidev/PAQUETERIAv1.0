@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Rutas Protegidas
+# PAQUETES EL CLUB v1.0 - Rutas Protegidas
 # ========================================
 
 from fastapi import APIRouter, Request, HTTPException, Depends, status

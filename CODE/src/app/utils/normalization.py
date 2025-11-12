@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Utilidades de Normalización de Datos
+PAQUETES EL CLUB v1.0 - Utilidades de Normalización de Datos
 Objetivo: Alinear valores entre DB, backend y frontend usando nomenclatura unificada.
 """
 

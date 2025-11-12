@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza con Autenticación
+PAQUETES EL CLUB v1.0 - Script de Limpieza con Autenticación
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -26,7 +26,7 @@ def login_and_cleanup():
         "password": "admin123"
     }
     
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza con Autenticación")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza con Autenticación")
     print("="*60)
     
     # Crear sesión para mantener cookies

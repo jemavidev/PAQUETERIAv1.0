@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Script de Limpieza de Base de Datos
+# PAQUETES EL CLUB v1.0 - Script de Limpieza de Base de Datos
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 # Autor: Equipo de Desarrollo
@@ -178,7 +178,7 @@ verify_cleanup() {
 
 # Función principal
 main() {
-    echo "🚀 PAQUETES EL CLUB v4.0 - Script de Limpieza de Base de Datos"
+    echo "🚀 PAQUETES EL CLUB v1.0 - Script de Limpieza de Base de Datos"
     echo "============================================================"
     
     # Verificar conexión a la base de datos

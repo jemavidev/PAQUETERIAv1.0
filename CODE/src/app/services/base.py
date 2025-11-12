@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio Base
+PAQUETES EL CLUB v1.0 - Servicio Base
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo

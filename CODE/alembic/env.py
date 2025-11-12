@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Entorno de Alembic
+# PAQUETES EL CLUB v1.0 - Entorno de Alembic
 # ========================================
 
 from logging.config import fileConfig

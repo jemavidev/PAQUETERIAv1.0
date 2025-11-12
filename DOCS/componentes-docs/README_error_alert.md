@@ -1,4 +1,4 @@
-# 🚨 Componente Error Alert - PAQUETES EL CLUB v4.0
+# 🚨 Componente Error Alert - PAQUETES EL CLUB v1.0
 
 ## 📋 Descripción
 
@@ -266,4 +266,4 @@ document.addEventListener('error-alert-closed', (event) => {
 
 ## 📞 Soporte
 
-Para problemas o mejoras, contactar al equipo de desarrollo de PAQUETES EL CLUB v4.0.
+Para problemas o mejoras, contactar al equipo de desarrollo de PAQUETES EL CLUB v1.0.

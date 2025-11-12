@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza Final
+PAQUETES EL CLUB v1.0 - Script de Limpieza Final
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -16,7 +16,7 @@ from pathlib import Path
 def cleanup_via_psql():
     """Ejecutar limpieza usando psql en el contenedor"""
     
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza Final")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza Final")
     print("="*60)
     
     # Mostrar advertencia

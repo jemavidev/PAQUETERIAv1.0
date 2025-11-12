@@ -1,10 +1,10 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Limpieza Automática S3
+# PAQUETES EL CLUB v1.0 - Limpieza Automática S3
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
-echo "🧹 PAQUETES EL CLUB v4.0 - Limpieza Automática S3"
+echo "🧹 PAQUETES EL CLUB v1.0 - Limpieza Automática S3"
 echo "================================================="
 
 # Cargar variables de entorno desde CODE/LOCAL/.env

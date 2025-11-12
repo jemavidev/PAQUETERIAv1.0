@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Rutas FastAPI
+# PAQUETES EL CLUB v1.0 - Rutas FastAPI
 # ========================================
 # Archivo: CODE/LOCAL/src/app/routes/__init__.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0

@@ -56,7 +56,7 @@
 {
   "status": "healthy",
   "timestamp": "2025-11-12T19:35:54.431155",
-  "version": "4.0.0",
+  "version": "1.0.0",
   "environment": "production"
 }
 ```

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio de Administración
+PAQUETES EL CLUB v1.0 - Servicio de Administración
 Versión: 1.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
@@ -466,7 +466,7 @@ class AdminService:
         # En el futuro esto podría venir de una tabla de configuraciones
         return {
             "app_name": "PAQUETES EL CLUB",
-            "app_version": "4.0.0",
+            "app_version": "1.0.0",
             "environment": "development",
             "database_url": "[CONFIGURADO]",
             "smtp_config": {
@@ -573,7 +573,7 @@ class AdminService:
     def get_system_info(self) -> Dict[str, Any]:
         """Información del sistema para diagnóstico"""
         return {
-            "app_version": "4.0.0",
+            "app_version": "1.0.0",
             "python_version": "3.11",
             "database_type": "PostgreSQL",
             "cache_type": "Redis",

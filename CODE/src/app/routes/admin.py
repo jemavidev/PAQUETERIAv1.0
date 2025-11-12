@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Rutas de Administración
+PAQUETES EL CLUB v1.0 - Rutas de Administración
 Versión: 2.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
@@ -444,8 +444,8 @@ async def get_detailed_stats(
 async def get_admin_legacy():
     """Endpoint legacy para compatibilidad"""
     return {
-        "message": "Panel de Administración v4.0",
-        "version": "4.0.0",
+        "message": "Panel de Administración v1.0",
+        "version": "1.0.0",
         "endpoints": {
             "dashboard": "/api/admin/dashboard",
             "users": "/api/admin/users",

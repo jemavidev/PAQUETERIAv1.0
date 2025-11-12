@@ -1,8 +1,8 @@
-# 🚨 Sistema de Alertas Unificado - PAQUETES EL CLUB v4.0
+# 🚨 Sistema de Alertas Unificado - PAQUETES EL CLUB v1.0
 
 ## 📋 Descripción General
 
-El Sistema de Alertas Unificado es una solución completa para manejar todos los mensajes de error, advertencia, información y éxito en la aplicación PAQUETES EL CLUB v4.0. Reemplaza todos los `alert()` nativos del navegador con un sistema moderno, responsive y consistente.
+El Sistema de Alertas Unificado es una solución completa para manejar todos los mensajes de error, advertencia, información y éxito en la aplicación PAQUETES EL CLUB v1.0. Reemplaza todos los `alert()` nativos del navegador con un sistema moderno, responsive y consistente.
 
 ## 🎯 Características Principales
 
@@ -345,10 +345,10 @@ Visita `/demo-error-system` para probar todas las funcionalidades:
 
 ## 📞 Soporte
 
-Para problemas o mejoras, contactar al equipo de desarrollo de PAQUETES EL CLUB v4.0.
+Para problemas o mejoras, contactar al equipo de desarrollo de PAQUETES EL CLUB v1.0.
 
 ---
 
-**Sistema de Alertas Unificado v1.0.0** - PAQUETES EL CLUB v4.0
+**Sistema de Alertas Unificado v1.0.0** - PAQUETES EL CLUB v1.0
 **Última actualización**: 2025-01-24
 **Mantenido por**: Equipo de Desarrollo PAQUETES EL CLUB

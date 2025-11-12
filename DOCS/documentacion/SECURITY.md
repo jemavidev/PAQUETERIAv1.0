@@ -1,6 +1,6 @@
 # Política de Seguridad
 
-Gracias por ayudar a hacer que PAQUETES EL CLUB v4.0 sea seguro para todos.
+Gracias por ayudar a hacer que PAQUETES EL CLUB v1.0 sea seguro para todos.
 
 ## 🛡️ Reportar Vulnerabilidades de Seguridad
 
@@ -73,5 +73,5 @@ Para ayudar a mantener el proyecto seguro:
 
 ---
 
-**Gracias por ayudar a mantener PAQUETES EL CLUB v4.0 seguro.**
+**Gracias por ayudar a mantener PAQUETES EL CLUB v1.0 seguro.**
 

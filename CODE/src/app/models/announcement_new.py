@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Modelo Nuevo de Anuncio
+# PAQUETES EL CLUB v1.0 - Modelo Nuevo de Anuncio
 # ========================================
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey

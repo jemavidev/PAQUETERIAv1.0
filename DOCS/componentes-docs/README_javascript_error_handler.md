@@ -1,4 +1,4 @@
-# 🚨 Manejador de Errores de JavaScript - PAQUETES EL CLUB v4.0
+# 🚨 Manejador de Errores de JavaScript - PAQUETES EL CLUB v1.0
 
 ## 📋 Descripción
 
@@ -263,10 +263,10 @@ function buscarPaquete() {
 
 ## 📞 Soporte
 
-Para problemas o mejoras en el manejador de errores de JavaScript, contactar al equipo de desarrollo de PAQUETES EL CLUB v4.0.
+Para problemas o mejoras en el manejador de errores de JavaScript, contactar al equipo de desarrollo de PAQUETES EL CLUB v1.0.
 
 ---
 
 **Última actualización**: 2025-01-24
-**Versión**: 4.0.0
+**Versión**: 1.0.0
 **Mantenido por**: Equipo de Desarrollo PAQUETES EL CLUB

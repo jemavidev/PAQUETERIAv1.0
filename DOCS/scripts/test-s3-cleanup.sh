@@ -1,12 +1,12 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Script de Conveniencia para Pruebas S3
+# PAQUETES EL CLUB v1.0 - Script de Conveniencia para Pruebas S3
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
 # Script de conveniencia para probar la funcionalidad de limpieza S3
 
-echo "🧪 PAQUETES EL CLUB v4.0 - Prueba de Limpieza S3"
+echo "🧪 PAQUETES EL CLUB v1.0 - Prueba de Limpieza S3"
 echo "==============================================="
 
 # Verificar que estamos en el directorio correcto

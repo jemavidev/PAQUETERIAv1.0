@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Excepciones Personalizadas
+# PAQUETES EL CLUB v1.0 - Excepciones Personalizadas
 # ========================================
 # Archivo: CODE/LOCAL/src/app/utils/exceptions.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0

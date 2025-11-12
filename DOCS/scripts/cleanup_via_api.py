@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza via API
+PAQUETES EL CLUB v1.0 - Script de Limpieza via API
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -23,7 +23,7 @@ def cleanup_via_api():
     # Endpoint de limpieza (necesitamos crearlo)
     cleanup_url = f"{base_url}/admin/cleanup-database"
     
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza via API")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza via API")
     print("="*50)
     
     try:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Modelo de Notificación Expandido
+PAQUETES EL CLUB v1.0 - Modelo de Notificación Expandido
 Versión: 2.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo

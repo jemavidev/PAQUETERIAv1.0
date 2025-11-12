@@ -1,4 +1,4 @@
-# PAQUETES EL CLUB v4.0 - ALEMBIC SCRIPT TEMPLATE
+# PAQUETES EL CLUB v1.0 - ALEMBIC SCRIPT TEMPLATE
 # Template para generar archivos de migración
 
 """Add missing MessageStatus values

@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Configuración de Base de Datos
+# PAQUETES EL CLUB v1.0 - Configuración de Base de Datos
 # ========================================
 # Archivo: CODE/LOCAL/src/app/database/database.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0

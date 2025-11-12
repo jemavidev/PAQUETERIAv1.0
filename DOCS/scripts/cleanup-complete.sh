@@ -1,13 +1,13 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Script de Conveniencia para Limpieza Completa (DB + S3)
+# PAQUETES EL CLUB v1.0 - Script de Conveniencia para Limpieza Completa (DB + S3)
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
 # Script de conveniencia para ejecutar la limpieza completa del sistema
 # (Base de datos + AWS S3) desde la raíz del proyecto
 
-echo "🚀 PAQUETES EL CLUB v4.0 - Limpieza Completa (DB + S3)"
+echo "🚀 PAQUETES EL CLUB v1.0 - Limpieza Completa (DB + S3)"
 echo "======================================================"
 
 # Verificar que estamos en el directorio correcto

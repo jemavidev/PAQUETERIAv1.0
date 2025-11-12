@@ -1,4 +1,4 @@
-# Deploy a Producción - PAQUETERÍA v4.0
+# Deploy a Producción - PAQUETERÍA v1.0
 
 ## Resumen de cambios recientes
 - Única fuente de entorno: `CODE/LOCAL/.env` (no se versiona).

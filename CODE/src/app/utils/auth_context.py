@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Contexto de Autenticación
+# PAQUETES EL CLUB v1.0 - Contexto de Autenticación
 # ========================================
 # Archivo: CODE/LOCAL/src/app/utils/auth_context.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0
@@ -175,7 +175,7 @@ def create_template_context(
     context.update({
         "title": title,
         "app_name": "PAQUETES EL CLUB",
-        "app_version": "4.0.0",
+        "app_version": "1.0.0",
         "company_name": "PAQUETES EL CLUB",
         "company_phone": "3334004007",
         "company_email": "guia@papyrus.com.co",

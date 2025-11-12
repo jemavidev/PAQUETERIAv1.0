@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Debug Dashboard Independiente
+PAQUETES EL CLUB v1.0 - Debug Dashboard Independiente
 Vista de debug separada e independiente del proyecto principal
 Funciona para usuarios logueados y no logueados
 """
@@ -48,7 +48,7 @@ async def debug_standalone_dashboard(request: Request, db: Session = Depends(get
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug Dashboard - PAQUETES EL CLUB v4.0</title>
+    <title>Debug Dashboard - PAQUETES EL CLUB v1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
@@ -68,7 +68,7 @@ async def debug_standalone_dashboard(request: Request, db: Session = Depends(get
             <div class="flex justify-between items-center py-4">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">🔧 Debug Dashboard</h1>
-                    <p class="text-sm text-gray-600">PAQUETES EL CLUB v4.0 - Sistema de Diagnóstico</p>
+                    <p class="text-sm text-gray-600">PAQUETES EL CLUB v1.0 - Sistema de Diagnóstico</p>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="text-sm">
@@ -748,7 +748,7 @@ async def get_database_info_standalone(db: Session = Depends(get_db)):
 async def get_api_info_standalone():
     """Obtener información de la API"""
     return {
-        "version": "4.0.0",
+        "version": "1.0.0",
         "endpoint_count": "50+",
         "status": "active"
     }

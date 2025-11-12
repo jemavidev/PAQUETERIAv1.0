@@ -2,7 +2,7 @@
 
 ## 📋 Descripción
 
-Este directorio contiene scripts para limpiar las tablas de la base de datos de PAQUETES EL CLUB v4.0. Los scripts eliminan todos los datos de las siguientes tablas:
+Este directorio contiene scripts para limpiar las tablas de la base de datos de PAQUETES EL CLUB v1.0. Los scripts eliminan todos los datos de las siguientes tablas:
 
 - `packages`
 - `package_history`
@@ -223,7 +223,7 @@ python SCRIPTS/database/cleanup_database_env.py
 ## 📊 Ejemplo de Salida
 
 ```
-🚀 PAQUETES EL CLUB v4.0 - Script de Limpieza de Base de Datos
+🚀 PAQUETES EL CLUB v1.0 - Script de Limpieza de Base de Datos
 ============================================================
 
 📊 Estado actual de la base de datos:
@@ -324,6 +324,6 @@ Si tienes problemas con los scripts:
 
 ---
 
-**PAQUETES EL CLUB v4.0** - Scripts de Limpieza de Base de Datos
+**PAQUETES EL CLUB v1.0** - Scripts de Limpieza de Base de Datos
 **Versión**: 1.0.0
 **Fecha**: 2025-01-24

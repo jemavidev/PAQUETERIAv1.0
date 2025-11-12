@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Configuración de Celery
+PAQUETES EL CLUB v1.0 - Configuración de Celery
 Versión: 1.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
@@ -11,7 +11,7 @@ from .config import settings
 
 # Crear aplicación Celery
 celery_app = Celery(
-    "paqueteria_v4",
+    "paqueteria_v1",
     broker=settings.redis_url,
     backend=settings.redis_url,
     include=["app.tasks"]

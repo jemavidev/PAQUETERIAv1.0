@@ -2,7 +2,7 @@
 
 ## 📋 Información
 
-Esta es la versión de producción del sistema PAQUETERÍA v4.0.
+Esta es la versión de producción del sistema PAQUETERÍA v1.0.
 
 **Fecha de creación**: 2025-01-24  
 **Versión**: 1.0.0  

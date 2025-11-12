@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Configuración Centralizada
+# PAQUETES EL CLUB v1.0 - Configuración Centralizada
 # ========================================
 # Archivo: CODE/LOCAL/src/app/config.py (siguiendo reglas de AGENTS.md y .kilorules)
 # Versión: 1.0.0
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Configuración de la Aplicación
     app_name: str = os.getenv("APP_NAME", "PAQUETES EL CLUB")
-    app_version: str = os.getenv("APP_VERSION", "4.0.0")
+    app_version: str = os.getenv("APP_VERSION", "1.0.0")
     debug: bool = os.getenv("DEBUG", "true").lower() == "true"
     environment: str = os.getenv("ENVIRONMENT", "development")
 

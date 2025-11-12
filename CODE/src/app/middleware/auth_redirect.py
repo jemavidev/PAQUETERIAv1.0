@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Middleware de Redirección de Autenticación
+# PAQUETES EL CLUB v1.0 - Middleware de Redirección de Autenticación
 # ========================================
 # Archivo: CODE/LOCAL/src/app/middleware/auth_redirect.py
 # Versión: 1.0.0

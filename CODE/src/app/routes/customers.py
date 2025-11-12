@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Rutas de Clientes
+PAQUETES EL CLUB v1.0 - Rutas de Clientes
 Versión: 2.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo

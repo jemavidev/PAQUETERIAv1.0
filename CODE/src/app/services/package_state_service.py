@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Servicio de Estados
+# PAQUETES EL CLUB v1.0 - Servicio de Estados
 # ========================================
 
 from sqlalchemy.orm import Session

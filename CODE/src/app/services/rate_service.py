@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Servicio de Tarifas
+# PAQUETES EL CLUB v1.0 - Servicio de Tarifas
 # ========================================
 
 from sqlalchemy.orm import Session

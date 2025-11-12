@@ -1,4 +1,4 @@
-# 🚨 Visualización de Componentes de Error - PAQUETES EL CLUB v4.0
+# 🚨 Visualización de Componentes de Error - PAQUETES EL CLUB v1.0
 
 ## 📋 Cómo Visualizar los Componentes
 
@@ -186,10 +186,10 @@ http://localhost:8000/demo/error-components
 
 ## 📞 Soporte
 
-Para problemas o mejoras en los componentes de error, contactar al equipo de desarrollo de PAQUETES EL CLUB v4.0.
+Para problemas o mejoras en los componentes de error, contactar al equipo de desarrollo de PAQUETES EL CLUB v1.0.
 
 ---
 
 **Última actualización**: 2025-01-24
-**Versión**: 4.0.0
+**Versión**: 1.0.0
 **Mantenido por**: Equipo de Desarrollo PAQUETES EL CLUB

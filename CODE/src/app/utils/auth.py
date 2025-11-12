@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Utilidades de Autenticación
+# PAQUETES EL CLUB v1.0 - Utilidades de Autenticación
 # ========================================
 # Archivo: CODE/LOCAL/src/app/utils/auth.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0

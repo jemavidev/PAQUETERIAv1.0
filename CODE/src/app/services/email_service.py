@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio de Email Unificado
+PAQUETES EL CLUB v1.0 - Servicio de Email Unificado
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -503,7 +503,7 @@ class EmailService(BaseService[Notification, Any, Any]):
             msg['Subject'] = subject
             msg['From'] = formataddr((settings.smtp_from_name, settings.smtp_from_email))
             msg['To'] = recipient
-            msg['X-Mailer'] = 'PAQUETES EL CLUB v4.0'
+            msg['X-Mailer'] = 'PAQUETES EL CLUB v1.0'
 
             # Adjuntar contenido
             if text_content:

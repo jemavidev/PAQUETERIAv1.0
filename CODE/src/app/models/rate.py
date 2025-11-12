@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Modelo de Tarifas
+# PAQUETES EL CLUB v1.0 - Modelo de Tarifas
 # ========================================
 
 import enum

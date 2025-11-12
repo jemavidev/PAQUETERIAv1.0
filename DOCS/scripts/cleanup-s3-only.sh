@@ -1,10 +1,10 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Limpieza Solo S3
+# PAQUETES EL CLUB v1.0 - Limpieza Solo S3
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
-echo "🧹 PAQUETES EL CLUB v4.0 - Limpieza Solo S3"
+echo "🧹 PAQUETES EL CLUB v1.0 - Limpieza Solo S3"
 echo "============================================="
 
 # Verificar archivo de entorno

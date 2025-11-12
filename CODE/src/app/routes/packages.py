@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Router de Paquetes
+# PAQUETES EL CLUB v1.0 - Router de Paquetes
 # ========================================
 # Archivo: CODE/LOCAL/src/app/routes/packages.py (siguiendo reglas de AGENTS.md)
 # Versión: 2.0.0

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza Completa (Base de Datos + AWS S3)
+PAQUETES EL CLUB v1.0 - Script de Limpieza Completa (Base de Datos + AWS S3)
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -424,7 +424,7 @@ def confirm_cleanup():
 
 def main():
     """Función principal"""
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza Completa (DB + S3)")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza Completa (DB + S3)")
     print("="*70)
     
     # Verificar que estamos en el directorio correcto

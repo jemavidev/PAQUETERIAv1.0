@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio S3
+PAQUETES EL CLUB v1.0 - Servicio S3
 Versión: 1.0.0
 Fecha: 2025-09-26
 Autor: KiloCode

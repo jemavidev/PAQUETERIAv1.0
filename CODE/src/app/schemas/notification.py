@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Esquemas de Notificaciones SMS
+PAQUETES EL CLUB v1.0 - Esquemas de Notificaciones SMS
 Versión: 2.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
@@ -267,7 +267,7 @@ class SMSReportResponse(BaseModel):
 class SMSTestRequest(BaseModel):
     """Esquema para probar configuración SMS"""
     recipient: str = Field(..., pattern=r'^\+57\s?\d{3}\s?\d{3}\s?\d{4}$', description="Número de teléfono para prueba")
-    message: str = Field("Test SMS from PAQUETES EL CLUB v4.0", min_length=1, max_length=160, description="Mensaje de prueba")
+    message: str = Field("Test SMS from PAQUETES EL CLUB v1.0", min_length=1, max_length=160, description="Mensaje de prueba")
 
 class SMSTestResponse(BaseModel):
     """Esquema de respuesta para pruebas SMS"""

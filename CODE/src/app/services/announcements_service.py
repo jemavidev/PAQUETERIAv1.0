@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio de Anuncios
+PAQUETES EL CLUB v1.0 - Servicio de Anuncios
 Versión: 1.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo

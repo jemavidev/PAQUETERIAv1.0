@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PAQUETERÍA v4.0 - Script para crear base de datos v4.0 en AWS RDS
+PAQUETERÍA v1.0 - Script para crear base de datos v1.0 en AWS RDS
 """
 
 import psycopg2
@@ -67,7 +67,7 @@ def create_v4_database():
         conn.close()
 
         print("\n" + "="*50)
-        print("✅ BASE DE DATOS v4.0 CREADA EXITOSAMENTE")
+        print("✅ BASE DE DATOS v1.0 CREADA EXITOSAMENTE")
         print("="*50)
         print("📍 Host: ls-abe25e9bea57818f0ee32555c0e7b4a10e361535.ctobuhtlkwoj.us-east-1.rds.amazonaws.com")
         print("📍 Puerto: 5432")
@@ -86,7 +86,7 @@ def create_v4_database():
         return False
 
 def test_v4_connection():
-    """Probar conexión a la nueva base de datos v4.0"""
+    """Probar conexión a la nueva base de datos v1.0"""
 
     print("\n🔍 Probando conexión a paqueteria_v4...")
 
@@ -118,7 +118,7 @@ def test_v4_connection():
         return False
 
 if __name__ == "__main__":
-    print("🚀 PAQUETERÍA v4.0 - CREACIÓN DE BASE DE DATOS")
+    print("🚀 PAQUETERÍA v1.0 - CREACIÓN DE BASE DE DATOS")
     print("="*50)
 
     # Crear la base de datos

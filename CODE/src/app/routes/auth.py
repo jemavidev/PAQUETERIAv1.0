@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Router de Autenticación
+# PAQUETES EL CLUB v1.0 - Router de Autenticación
 # ========================================
 # Archivo: CODE/LOCAL/src/app/routes/auth.py (siguiendo reglas de AGENTS.md)
 # Versión: 1.0.0

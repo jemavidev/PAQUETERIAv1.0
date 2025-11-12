@@ -1,7 +1,7 @@
 # 📋 Resumen de Copia a Producción
 
 **Fecha**: 2025-01-24  
-**Origen**: `Paqueteria v4.0 (new)`  
+**Origen**: `Paqueteria v1.0 (new)`  
 **Destino**: `PAQUETERIA v1.0`  
 **Estado**: ✅ **COMPLETADO**
 

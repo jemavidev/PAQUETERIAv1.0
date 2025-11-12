@@ -1,12 +1,12 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Instalador de Dependencias S3
+# PAQUETES EL CLUB v1.0 - Instalador de Dependencias S3
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
 # Script para instalar las dependencias necesarias para la limpieza con S3
 
-echo "🚀 PAQUETES EL CLUB v4.0 - Instalador de Dependencias S3"
+echo "🚀 PAQUETES EL CLUB v1.0 - Instalador de Dependencias S3"
 echo "======================================================="
 
 # Verificar que Python está disponible

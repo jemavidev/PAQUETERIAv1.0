@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script de Limpieza Automática
+PAQUETES EL CLUB v1.0 - Script de Limpieza Automática
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
@@ -23,7 +23,7 @@ def cleanup_via_endpoint():
     # Endpoint de limpieza
     cleanup_url = f"{base_url}/admin/cleanup-database"
     
-    print("🚀 PAQUETES EL CLUB v4.0 - Limpieza Automática")
+    print("🚀 PAQUETES EL CLUB v1.0 - Limpieza Automática")
     print("="*60)
     
     try:

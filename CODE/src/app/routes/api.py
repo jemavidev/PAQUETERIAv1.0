@@ -21,8 +21,8 @@ async def api_root():
     """Endpoint raíz de la API"""
     return {
         "success": True,
-        "message": "API de PAQUETES EL CLUB v4.0",
-        "version": "4.0.0",
+        "message": "API de PAQUETES EL CLUB v1.0",
+        "version": "1.0.0",
         "endpoints": {
             "auth": "/api/auth/",
             "packages": "/api/packages/",

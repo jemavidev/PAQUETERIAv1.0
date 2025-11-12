@@ -1,5 +1,5 @@
 # ========================================
-# PAQUETES EL CLUB v4.0 - Esquemas de Tarifas
+# PAQUETES EL CLUB v1.0 - Esquemas de Tarifas
 # ========================================
 
 from pydantic import BaseModel, Field, validator

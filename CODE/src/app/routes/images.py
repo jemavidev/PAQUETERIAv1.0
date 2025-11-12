@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Rutas de Imágenes
+PAQUETES EL CLUB v1.0 - Rutas de Imágenes
 Versión: 1.0.0
 Fecha: 2025-10-05
 Autor: KiloCode

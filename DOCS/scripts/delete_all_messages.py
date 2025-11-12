@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PAQUETERÍA v4.0 - Script para eliminar todos los mensajes de la base de datos
+PAQUETERÍA v1.0 - Script para eliminar todos los mensajes de la base de datos
 """
 
 import psycopg2
@@ -145,7 +145,7 @@ def delete_all_messages():
 
 def main():
     """Función principal"""
-    print("🚀 PAQUETERÍA v4.0 - ELIMINACIÓN DE MENSAJES")
+    print("🚀 PAQUETERÍA v1.0 - ELIMINACIÓN DE MENSAJES")
     print("="*50)
     print(f"📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*50)

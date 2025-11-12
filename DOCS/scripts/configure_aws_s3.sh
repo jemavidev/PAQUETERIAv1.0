@@ -1,12 +1,12 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-# PAQUETES EL CLUB v4.0 - Configurador de AWS S3
+# PAQUETES EL CLUB v1.0 - Configurador de AWS S3
 # Versión: 1.0.0
 # Fecha: 2025-01-24
 
 # Script para configurar las variables AWS S3 en CODE/LOCAL/.env
 
-echo "🔧 PAQUETES EL CLUB v4.0 - Configurador de AWS S3"
+echo "🔧 PAQUETES EL CLUB v1.0 - Configurador de AWS S3"
 echo "================================================="
 
 if [ ! -f "CODE/LOCAL/.env" ]; then

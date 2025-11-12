@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Script Rápido de Información de Base de Datos
+PAQUETES EL CLUB v1.0 - Script Rápido de Información de Base de Datos
 Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo

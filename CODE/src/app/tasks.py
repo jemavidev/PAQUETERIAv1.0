@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Tareas de Celery
+PAQUETES EL CLUB v1.0 - Tareas de Celery
 Versión: 1.0.0
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo

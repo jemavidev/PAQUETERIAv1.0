@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Servicio de Eventos de Paquete
+PAQUETES EL CLUB v1.0 - Servicio de Eventos de Paquete
 Versión: 1.0.0
 Fecha: 2025-10-26
 Autor: Equipo de Desarrollo

@@ -1,5 +1,5 @@
  # ========================================
-# PAQUETES EL CLUB v4.0 - Rutas Públicas
+# PAQUETES EL CLUB v1.0 - Rutas Públicas
 # ========================================
 
 import logging

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-PAQUETES EL CLUB v4.0 - Aplicación Principal FastAPI
-Versión: 4.0.0
+PAQUETES EL CLUB v1.0 - Aplicación Principal FastAPI
+Versión: 1.0.0
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
 """
@@ -48,7 +48,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Iniciando PAQUETES EL CLUB v4.0...")
+    logger.info("Iniciando PAQUETES EL CLUB v1.0...")
     try:
         init_db()
         logger.info("✅ Base de datos inicializada correctamente")
@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI):
         logger.warning(f"⚠️ No se pudo validar configuración SMTP: {str(e)}")
     
     yield
-    logger.info("Cerrando PAQUETES EL CLUB v4.0...")
+    logger.info("Cerrando PAQUETES EL CLUB v1.0...")
 
 # Crear aplicación FastAPI
 app = FastAPI(
