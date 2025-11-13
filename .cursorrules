@@ -1,0 +1,118 @@
+# ========================================
+# REGLAS DE CURSOR - MANEJO DE ARCHIVOS TEMPORALES
+# ========================================
+
+## 📋 REGLA PRINCIPAL: Archivos Temporales
+
+Los siguientes tipos de archivos se consideran **TEMPORALES** y deben ser **OMITIDOS** por defecto en búsquedas, referencias y sugerencias de Cursor:
+
+### Tipos de archivos temporales:
+- **Carpeta DOCS completa**: `DOCS/` y todo su contenido (TODO debe omitirse)
+- **Archivos de documentación**: `.md`, `*.md` (fuera de DOCS/, excepto `README.md` en la raíz)
+- **Carpetas de documentación**: `docs/`, `documentation/`, `documentacion/`
+- **Archivos de fixes**: `fix/`, `fixes/`, `*.fix`, `*_fix.*`
+- **Archivos de tests**: `test/`, `tests/`, `*_test.*`, `test_*.py`, `*.test.*`
+- **Scripts temporales**: `scripts/` (fuera de CODE/)
+- **Templates de prueba**: `templates-prueba/`, `templates-test/`, `templates/` (fuera de CODE/)
+- **Archivos temporales**: `*.tmp`, `*.temp`, `*.bak`, `*.backup`
+
+### Excepciones importantes:
+- **README.md en la raíz**: NO se omite (es importante para el proyecto)
+- **Archivos .md dentro de CODE/**: NO se omiten (son parte del código)
+
+## 🚫 COMPORTAMIENTO POR DEFECTO
+
+1. **OMITIR automáticamente** estos archivos en:
+   - Búsquedas semánticas
+   - Referencias de código
+   - Sugerencias de autocompletado
+   - Análisis de código
+   - Búsquedas de archivos
+   - **NO SUGERIR** estos archivos en ningún contexto
+
+2. **REGLA CRÍTICA**: 
+   - **TODA la carpeta `DOCS/` debe omitirse completamente** - contiene solo archivos temporales
+   - Los archivos temporales deben guardarse en `DOCS/` pero **NO deben ser sugeridos ni referenciados**
+
+3. **EXCEPCIONES** (solo cuando el usuario lo solicite explícitamente):
+   - Archivos que el usuario solicite explícitamente por nombre o ruta
+   - Archivos que yo sugiera y el usuario apruebe explícitamente
+
+## ✅ CUANDO SE NECESITEN ESTOS ARCHIVOS
+
+Si el usuario solicita crear o trabajar con estos archivos, o si yo sugiero su uso y el usuario lo aprueba, **DEBEN** organizarse en la estructura de `DOCS/` según el tipo:
+
+### Estructura de organización en DOCS:
+
+```
+DOCS/
+├── documentacion/          # Para archivos .md de documentación general
+│   ├── fixes/              # Para documentación de fixes (si se crea)
+│   └── *.md                # Archivos de documentación del proyecto
+│
+├── componentes-docs/       # Para documentación de componentes
+│   └── *.md                # Documentación de componentes específicos
+│
+├── scripts/                # Para scripts temporales/no esenciales
+│   ├── deployment/         # Scripts de despliegue
+│   └── *.py, *.sh          # Scripts de desarrollo, testing, cleanup
+│
+├── tests/                  # Para archivos de tests
+│   └── *.py                # Tests del proyecto
+│
+└── templates-prueba/       # Para templates de prueba
+    ├── debug/              # Templates de debug
+    ├── demo/               # Templates de demostración
+    ├── examples/           # Templates de ejemplo
+    ├── mockup/             # Mockups
+    └── test/               # Templates de prueba
+```
+
+### Reglas de ubicación específicas:
+
+1. **Archivos .md (documentación)**:
+   - Documentación general → `DOCS/documentacion/`
+   - Documentación de componentes → `DOCS/componentes-docs/`
+   - Documentación de fixes → `DOCS/documentacion/fixes/` (crear si no existe)
+
+2. **Scripts**:
+   - Scripts de desarrollo/testing → `DOCS/scripts/`
+   - Scripts de despliegue → `DOCS/scripts/deployment/`
+   - Scripts de limpieza → `DOCS/scripts/`
+
+3. **Tests**:
+   - Tests del proyecto → `DOCS/tests/`
+
+4. **Templates**:
+   - Templates de prueba/debug/demo → `DOCS/templates-prueba/` y su subcarpeta correspondiente
+
+5. **Fixes**:
+   - Documentación de fixes → `DOCS/documentacion/fixes/`
+   - Scripts de fixes → `DOCS/scripts/`
+
+## 🔄 PROCESO DE APROBACIÓN
+
+Cuando yo sugiera crear o usar estos archivos temporales:
+
+1. **YO DEBO**: Explicar por qué es necesario y dónde se ubicará
+2. **EL USUARIO DEBE**: Aprobar explícitamente la creación/uso
+3. **SOLO DESPUÉS**: Crear el archivo en la ubicación correcta dentro de `DOCS/`
+
+## 📝 NOTAS IMPORTANTES
+
+- **NUNCA** crear archivos temporales fuera de `DOCS/` sin aprobación
+- **SIEMPRE** verificar la estructura de `DOCS/` antes de crear archivos
+- **SIEMPRE** usar las subcarpetas correspondientes dentro de `DOCS/`
+- **NUNCA** sugerir crear archivos temporales en la raíz del proyecto o en `CODE/`
+- **NUNCA sugerir archivos de DOCS** en búsquedas, referencias o autocompletado
+- **OMITIR completamente DOCS/** en todas las operaciones de Cursor por defecto
+- Los archivos en `DOCS/` solo pueden ser referenciados cuando el usuario lo solicite explícitamente
+
+## 🎯 OBJETIVO
+
+Mantener el proyecto limpio y organizado, separando claramente:
+- **Código de producción** (en `CODE/`)
+- **Documentación y archivos temporales** (en `DOCS/`)
+
+Esto mejora la búsqueda, el análisis y el mantenimiento del código principal.
+

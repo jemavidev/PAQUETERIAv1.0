@@ -1,0 +1,107 @@
+# ========================================
+# CURSOR IGNORE - ARCHIVOS TEMPORALES
+# ========================================
+# Este archivo indica a Cursor que omita estos archivos
+# en búsquedas, referencias, sugerencias y análisis de código
+# ========================================
+
+# ========================================
+# CARPETA DOCS COMPLETA - ARCHIVOS TEMPORALES
+# ========================================
+# TODA la carpeta DOCS debe omitirse completamente
+# contiene solo archivos temporales (documentación, scripts, tests, templates)
+DOCS/
+
+# ========================================
+# ARCHIVOS DE DOCUMENTACIÓN (.md)
+# ========================================
+# Omitir archivos .md fuera de DOCS/
+# EXCEPCIÓN: README.md en la raíz del proyecto (es importante)
+*.md
+!README.md
+!CODE/**/*.md
+
+# ========================================
+# CARPETAS DE DOCUMENTACIÓN
+# ========================================
+docs/
+documentation/
+documentacion/
+
+# ========================================
+# ARCHIVOS DE FIXES
+# ========================================
+fix/
+fixes/
+*.fix
+*_fix.*
+*_fix_*
+fix_*
+
+# ========================================
+# ARCHIVOS DE TESTS
+# ========================================
+# Omitir tests fuera de CODE/
+test/
+tests/
+*_test.*
+test_*.py
+*.test.*
+*.spec.*
+*_spec.*
+
+# ========================================
+# SCRIPTS TEMPORALES
+# ========================================
+# Omitir scripts fuera de CODE/
+scripts/
+!CODE/**/scripts/
+
+# ========================================
+# TEMPLATES DE PRUEBA
+# ========================================
+# Omitir templates de prueba fuera de CODE/
+templates-prueba/
+templates-test/
+!CODE/**/templates/
+
+# ========================================
+# ARCHIVOS TEMPORALES
+# ========================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.old
+*.swp
+*.swo
+*~
+
+# ========================================
+# ARCHIVOS DE LOG Y DEBUG
+# ========================================
+*.log
+*.log.*
+logs/
+log/
+debug/
+debug_*
+
+# ========================================
+# ARCHIVOS DE NOTAS Y TODOS
+# ========================================
+TODO.md
+NOTES.md
+CHANGELOG.md
+!CODE/**/CHANGELOG.md
+
+# ========================================
+# CARPETAS DE DESARROLLO
+# ========================================
+.dev/
+development/
+dev/
+sandbox/
+playground/
+
