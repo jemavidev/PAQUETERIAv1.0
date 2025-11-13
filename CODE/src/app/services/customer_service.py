@@ -159,6 +159,17 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
                 search_filters.append(Customer.email.ilike(f"%{query}%"))
             if search_by in ["all", "document"]:
                 search_filters.append(Customer.document_number.ilike(f"%{query}%"))
+            if search_by in ["all", "address"]:
+                search_filters.extend([
+                    Customer.address_street.ilike(f"%{query}%"),
+                    Customer.address_city.ilike(f"%{query}%")
+                ])
+            if search_by in ["all", "building", "conjunto"]:
+                search_filters.append(Customer.building_name.ilike(f"%{query}%"))
+            if search_by in ["all", "tower", "torre"]:
+                search_filters.append(Customer.tower.ilike(f"%{query}%"))
+            if search_by in ["all", "apartment", "apt", "apartamento"]:
+                search_filters.append(Customer.apartment.ilike(f"%{query}%"))
 
             if search_filters:
                 base_query = base_query.filter(or_(*search_filters))

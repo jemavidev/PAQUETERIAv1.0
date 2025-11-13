@@ -243,7 +243,7 @@
             // Redirigir
             setTimeout(() => {
                 const urlParams = new URLSearchParams(window.location.search);
-                const redirectUrl = urlParams.get('redirect') || '/packages';
+                const redirectUrl = resolveRedirectUrl(urlParams.get('redirect'));
                 window.location.href = redirectUrl;
             }, 500);
             
@@ -296,6 +296,33 @@
         if (loginButtonText) loginButtonText.textContent = 'Iniciar Sesión';
     }
     
+    function resolveRedirectUrl(redirectParam) {
+        const defaultUrl = '/packages';
+        if (!redirectParam) {
+            return defaultUrl;
+        }
+
+        // Evitar rutas de API o destinos inseguros
+        const isApiPath = (path) => path.startsWith('/api/');
+
+        try {
+            const candidateUrl = new URL(redirectParam, window.location.origin);
+            // Solo permitir la misma procedencia
+            if (candidateUrl.origin !== window.location.origin) {
+                return defaultUrl;
+            }
+
+            const normalizedPath = `${candidateUrl.pathname}${candidateUrl.search || ''}`;
+            return isApiPath(normalizedPath) ? defaultUrl : normalizedPath;
+        } catch (error) {
+            // Si no es una URL válida, tratarlo como ruta relativa segura
+            if (redirectParam.startsWith('/') && !isApiPath(redirectParam)) {
+                return redirectParam;
+            }
+            return defaultUrl;
+        }
+    }
+
     function isValidUsernameOrEmail(input) {
         if (input.includes('@')) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

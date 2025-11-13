@@ -396,7 +396,8 @@ async def customers_manage_page(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
     page: int = 1,
-    limit: int = 10
+    limit: int = 10,
+    search: str = ""
 ):
     """Vista de gestión de clientes con paginación (10 clientes por página)"""
     context = get_auth_context_required(request)
@@ -406,15 +407,26 @@ async def customers_manage_page(
         return RedirectResponse(url="/auth/login?redirect=/customers/manage", status_code=302)
     
     try:
-        # Obtener clientes con paginación
-        skip = (page - 1) * limit
+        search_query = search.strip()
+        skip = max(0, (page - 1) * limit)
         customer_service = CustomerService()
         customers, total = customer_service.search_customers_advanced(
             db=db,
-            query="",
+            query=search_query,
             skip=skip,
             limit=limit
         )
+        if total > 0 and skip >= total:
+            # Ajustar a la última página disponible
+            total_pages = (total + limit - 1) // limit
+            page = max(1, total_pages)
+            skip = max(0, (page - 1) * limit)
+            customers, total = customer_service.search_customers_advanced(
+                db=db,
+                query=search_query,
+                skip=skip,
+                limit=limit
+            )
         
         # Calcular metadata de paginación
         total_pages = (total + limit - 1) // limit if total > 0 else 1
@@ -430,6 +442,7 @@ async def customers_manage_page(
             "has_next": has_next,
             "has_prev": has_prev
         }
+        context["search_term"] = search_query
     except Exception as e:
         context["customers"] = []
         context["pagination"] = {
@@ -440,6 +453,7 @@ async def customers_manage_page(
             "has_next": False,
             "has_prev": False
         }
+        context["search_term"] = ""
     
     return templates.TemplateResponse("customers/manage.html", context)
 

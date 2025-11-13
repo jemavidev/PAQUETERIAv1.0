@@ -75,6 +75,23 @@ def get_user_from_request(request: Request, db: Session):
     
     return None
 
+def _normalize_spanish_string(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    import unicodedata
+    normalized = unicodedata.normalize('NFKD', value)
+    return ''.join(char for char in normalized if not unicodedata.combining(char)).lower().strip()
+
+
+def _is_placeholder_customer(value: Optional[str]) -> bool:
+    normalized = _normalize_spanish_string(value)
+    return normalized in {"sin cliente", "scliente"}
+
+
+def _is_placeholder_phone(value: Optional[str]) -> bool:
+    normalized = _normalize_spanish_string(value)
+    return normalized in {"sin telefono", "sintelfono", "sintelfono", "sin telefono"}
+
 # ========================================
 # ENDPOINTS BÁSICOS DE CRUD
 # ========================================
@@ -312,8 +329,28 @@ async def list_invalid_customers(
         packages_without_customer = 0
         if not invalid_customers:
             packages_without_customer = db.query(Package).filter(Package.customer_id.is_(None)).count()
-            if packages_without_customer > 0:
-                logger.info(f"Se encontraron {packages_without_customer} paquete(s) sin cliente asociado")
+        else:
+            # Incluir clientes que en paquetes se muestran como "Sin cliente" o "Sin teléfono"
+            suspect_customer_ids = set()
+            for customer in invalid_customers:
+                suspect_customer_ids.add(customer.id)
+            else:
+                packages_without_customer = db.query(Package).filter(Package.customer_id.is_(None)).count()
+
+        # Buscar clientes asociados a paquetes con campos "Sin cliente" o "Sin teléfono"
+        suspect_packages = db.query(Package.customer_id, Package.customer_name, Package.customer_phone).distinct().all()
+        for customer_id, package_name, package_phone in suspect_packages:
+            if not customer_id:
+                continue
+            if _is_placeholder_customer(package_name) or _is_placeholder_phone(package_phone):
+                suspect_customer_ids.add(customer_id)
+
+        # Unir clientes sospechosos adicionales y completar info
+        if suspect_customer_ids:
+            extra_customers = db.query(Customer).filter(Customer.id.in_(suspect_customer_ids)).all()
+            for extra in extra_customers:
+                if extra not in invalid_customers:
+                    invalid_customers.append(extra)
         
         customers_info = []
         for customer in invalid_customers:

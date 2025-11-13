@@ -1,0 +1,18 @@
+Acciones sugeridas (consultar vistas announce / packages / messages / customers)
+=======================================================================
+
+1. Resolución de rutas duplicadas en `/packages`
+   - Mantener una sola vista activa para paquetes.
+   - Retirar la plantilla y la ruta legacy que no se use para evitar colisiones en FastAPI.
+
+2. Optimización de estadísticas en `/messages`
+   - Reemplazar los recorridos completos de la tabla por agregaciones con `COUNT` agrupadas.
+   - Evitar cargar todos los mensajes en memoria únicamente para calcular totales.
+
+3. Manejo de `package_announcements` en `/announce`
+   - Reutilizar el listado en la plantilla (tabla o historial) o eliminarlo del contexto si no se mostrará.
+
+4. Validación de cookies de autenticación
+   - Asegurar que las cookies tengan `SameSite=None; Secure` para que los `fetch` de `packages/packages.html`
+     mantengan la sesión en entornos productivos (HTTPS).
+
