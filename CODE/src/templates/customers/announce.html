@@ -72,7 +72,7 @@
                                maxlength="20"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                placeholder="+573001234567 o 3001234567"
-                               @blur="form.customer_phone = normalizePhone($event.target.value)">
+                               @blur="if(window.normalizePhone) form.customer_phone = window.normalizePhone($event.target.value)">
                         <p class="text-xs text-gray-500 mt-1">Formato: +573001234567 (Colombia por defecto si no ingresa código)</p>
                     </div>
 

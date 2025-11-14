@@ -368,6 +368,15 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
                 content={"detail": "El teléfono del cliente es requerido"}
             )
 
+        # Normalizar y validar teléfono
+        from app.utils.phone_utils import normalize_phone, validate_phone
+        customer_phone = normalize_phone(customer_phone)
+        if not validate_phone(customer_phone):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Número de teléfono inválido. Use formato: +573001234567 o 3001234567"}
+            )
+
         if not guide_number:
             return JSONResponse(
                 status_code=400,

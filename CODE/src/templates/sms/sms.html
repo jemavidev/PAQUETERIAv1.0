@@ -352,7 +352,7 @@
                             <input type="tel" x-model="sendForm.recipient" required
                                    minlength="10" maxlength="20"
                                    placeholder="+573001234567 o 3001234567"
-                                   @blur="sendForm.recipient = normalizePhone($event.target.value)"
+                                   @blur="if(window.normalizePhone) sendForm.recipient = window.normalizePhone($event.target.value)"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                             <p class="text-xs text-gray-500 mt-1">Formato: +573001234567 (Colombia por defecto si no ingresa código)</p>
                         </div>

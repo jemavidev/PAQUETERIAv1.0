@@ -85,8 +85,8 @@ def get_current_admin_user_from_cookies(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No autenticado",
             headers={
-                "Location": "/auth/login",
-                "Content-Type": "application/json"
+                "WWW-Authenticate": "Bearer",
+                "X-Login-URL": "/auth/login"
             },
         )
     
@@ -209,8 +209,8 @@ def get_current_active_user_from_cookies(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No autenticado",
             headers={
-                "Location": "/auth/login",
-                "Content-Type": "application/json"
+                "WWW-Authenticate": "Bearer",
+                "X-Login-URL": "/auth/login"
             },
         )
     return user

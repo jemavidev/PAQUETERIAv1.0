@@ -131,7 +131,7 @@ class AuthRedirectMiddleware(BaseHTTPMiddleware):
         if query_params:
             redirect_url += f"?{urlencode(query_params)}"
         
-        # Si es una ruta de API, devolver JSON con información de redirección
+        # Si es una ruta de API, devolver JSON SIN header Location para evitar redirects automáticos
         if self._is_api_path(path) or path.startswith("/api/"):
             return JSONResponse(
                 status_code=401,
@@ -142,7 +142,7 @@ class AuthRedirectMiddleware(BaseHTTPMiddleware):
                     "requires_auth": True
                 },
                 headers={
-                    "Location": self.login_url,
+                    "X-Login-URL": self.login_url,
                     "X-Original-URL": redirect_url
                 }
             )

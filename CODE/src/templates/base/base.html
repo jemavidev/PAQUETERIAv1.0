@@ -1162,13 +1162,22 @@
                 }
             })
             .then(response => {
+                if (response.status === 401) {
+                    // Sesión expirada - redirigir al login
+                    console.log('⚠️ Sesión expirada, redirigiendo al login...');
+                    const currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = `/auth/login?redirect=${encodeURIComponent(currentUrl)}`;
+                    return null;
+                }
                 if (response.ok) {
                     return response.json();
                 }
                 throw new Error('Error al cargar notificaciones');
             })
             .then(data => {
-                updateNotificationBadges(data);
+                if (data) {
+                    updateNotificationBadges(data);
+                }
             })
             .catch(error => {
                 console.log('Error cargando notificaciones:', error);
@@ -1239,8 +1248,19 @@
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' }
             })
-            .then(response => response.ok ? response.json() : Promise.reject('Error al cargar paquetes'))
+            .then(response => {
+                if (response.status === 401) {
+                    // Sesión expirada - redirigir al login
+                    console.log('⚠️ Sesión expirada, redirigiendo al login...');
+                    const currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = `/auth/login?redirect=${encodeURIComponent(currentUrl)}`;
+                    return null;
+                }
+                return response.ok ? response.json() : Promise.reject('Error al cargar paquetes');
+            })
             .then(data => {
+                if (!data) return; // Sesión expirada, ya se está redirigiendo
+                
                 const apiCount = Number(data.count || 0);
                 try { console.debug('🔔 Badge Paquetes (ANUNCIADO):', apiCount); } catch (_e) {}
 

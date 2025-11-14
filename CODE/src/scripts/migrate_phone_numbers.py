@@ -312,6 +312,12 @@ Ejemplos de uso:
         help='Mostrar información detallada (modo debug)'
     )
     
+    parser.add_argument(
+        '--yes',
+        action='store_true',
+        help='Confirmar automáticamente sin solicitar confirmación interactiva'
+    )
+    
     args = parser.parse_args()
     
     # Configurar nivel de logging
@@ -324,11 +330,13 @@ Ejemplos de uso:
         logger.warning("⚠️  ADVERTENCIA: Estás a punto de modificar la base de datos en MODO PRODUCCIÓN")
         logger.warning("⚠️  Se cambiarán PERMANENTEMENTE los números de teléfono")
         logger.warning("")
-        response = input("¿Estás seguro de que deseas continuar? (escribe 'SI' para confirmar): ")
         
-        if response.strip().upper() != 'SI':
-            logger.info("❌ Migración cancelada por el usuario")
-            return 1
+        if not args.yes:
+            response = input("¿Estás seguro de que deseas continuar? (escribe 'SI' para confirmar): ")
+            
+            if response.strip().upper() != 'SI':
+                logger.info("❌ Migración cancelada por el usuario")
+                return 1
         
         logger.info("")
         logger.info("✅ Confirmación recibida. Iniciando migración...")
