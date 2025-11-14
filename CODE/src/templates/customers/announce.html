@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Utilidades de teléfono -->
+    <script src="/static/js/phone-utils.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen" x-data="announceApp()">
     <!-- Navigation -->
@@ -66,10 +68,12 @@
                         <input type="tel"
                                x-model="form.customer_phone"
                                required
-                               pattern="3[0-9]{9}"
+                               minlength="10"
+                               maxlength="20"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               placeholder="3001234567">
-                        <p class="text-xs text-gray-500 mt-1">Número colombiano de 10 dígitos sin indicativo</p>
+                               placeholder="+573001234567 o 3001234567"
+                               @blur="form.customer_phone = normalizePhone($event.target.value)">
+                        <p class="text-xs text-gray-500 mt-1">Formato: +573001234567 (Colombia por defecto si no ingresa código)</p>
                     </div>
 
                     <!-- Guide Number -->
@@ -168,6 +172,16 @@
                     this.showError = false;
 
                     try {
+                        // Validar formato de teléfono
+                        if (window.validatePhone && !window.validatePhone(this.form.customer_phone)) {
+                            throw new Error('Número de teléfono inválido. Use formato: +573001234567 o 3001234567');
+                        }
+                        
+                        // Normalizar teléfono antes de enviar
+                        if (window.normalizePhone) {
+                            this.form.customer_phone = window.normalizePhone(this.form.customer_phone);
+                        }
+                        
                         const response = await fetch('/api/announcements/', {
                             method: 'POST',
                             headers: {

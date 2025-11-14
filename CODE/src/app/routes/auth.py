@@ -17,11 +17,11 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from src.app.database import get_db
-from src.app.dependencies import get_current_active_user
-from src.app.models.user import User
-from src.app.schemas.user import UserCreate, UserResponse
-from src.app.services.user_service import UserService
+from app.database import get_db
+from app.dependencies import get_current_active_user
+from app.models.user import User
+from app.schemas.user import UserCreate, UserResponse
+from app.services.user_service import UserService
 
 # Crear router
 router = APIRouter()
@@ -459,7 +459,7 @@ async def get_current_user_info(
     """
     Obtener información del usuario actual desde cookies o Authorization header
     """
-    from src.app.dependencies import get_current_active_user_from_cookies
+    from app.dependencies import get_current_active_user_from_cookies
     
     try:
         current_user = get_current_active_user_from_cookies(request, db)

@@ -2,6 +2,11 @@
 
 {% block title %}Crear Cliente - PAQUETEX v3.1{% endblock %}
 
+{% block extra_head %}
+<!-- Utilidades de teléfono -->
+<script src="{{ url_for('static', path='/js/phone-utils.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-4 sm:py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,12 +82,11 @@
                                    id="phone" 
                                    name="phone" 
                                    required
-                                   minlength="7"
+                                   minlength="10"
                                    maxlength="20"
-                                   pattern="[0-9+\s()\-]+"
                                    class="form-input"
-                                   placeholder="Ej: +57 300 1234567 o 3001234567">
-                            <p class="mt-1 text-xs text-gray-500">Solo números, espacios, + o -</p>
+                                   placeholder="+573001234567 o 3001234567">
+                            <p class="mt-1 text-xs text-gray-500">Formato: +573001234567 (Colombia por defecto si no ingresa código)</p>
                         </div>
                         
                         <div class="form-field">
@@ -181,6 +185,17 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     if (!data.phone || data.phone.trim().length === 0) {
         alert('El teléfono es obligatorio');
         return;
+    }
+    
+    // Validar formato de teléfono
+    if (window.validatePhone && !window.validatePhone(data.phone)) {
+        alert('Número de teléfono inválido. Use formato: +573001234567 o 3001234567');
+        return;
+    }
+    
+    // Normalizar teléfono
+    if (window.normalizePhone) {
+        data.phone = window.normalizePhone(data.phone);
     }
     
     if (!data.address_street || data.address_street.trim().length === 0) {

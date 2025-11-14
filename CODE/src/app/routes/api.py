@@ -1226,7 +1226,7 @@ async def get_packages(
 @router.get("/health")
 async def api_health_check():
     """Health check para API"""
-    from src.app.config import settings
+    from app.config import settings
     from datetime import datetime
     return {
         "status": "healthy",

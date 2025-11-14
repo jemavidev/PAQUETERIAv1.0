@@ -13,7 +13,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, Enum, DateTime, Nume
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 from .base import Base
-from src.app.utils.datetime_utils import get_colombia_now
+from app.utils.datetime_utils import get_colombia_now
 from decimal import Decimal
 import enum
 import uuid

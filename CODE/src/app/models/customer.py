@@ -13,7 +13,7 @@ from datetime import datetime
 import uuid
 
 from .base import Base
-from src.app.utils.datetime_utils import get_colombia_now
+from app.utils.datetime_utils import get_colombia_now
 
 class Customer(Base):
     """
