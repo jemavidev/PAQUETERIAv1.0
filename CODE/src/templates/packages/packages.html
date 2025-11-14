@@ -1508,16 +1508,20 @@ function showPackageModal(package, action) {
 }
 
 function normalizePackageType(packageType) {
-    if (!packageType) return 'normal';
-    
+    // Normalizar siempre a los DOS valores que entiende el backend:
+    //  - "NORMAL"
+    //  - "EXTRA_DIMENSIONADO" (valor del Enum PackageType)
+    if (!packageType) return 'NORMAL';
+
     const normalized = packageType.toString().toLowerCase();
-    
-    // Mapear diferentes formatos a los valores esperados por el backend
-    if (normalized === 'extra_dimensioned' || normalized === 'extra dimensioned' || normalized === 'extra-dimensioned') {
-        return 'extra_dimensioned';
+
+    // Cualquier variante que contenga "extra" se considera extra dimensionado
+    if (normalized.includes('extra') || normalized.includes('dimension')) {
+        // Valor oficial del Enum en backend
+        return 'EXTRA_DIMENSIONADO';
     }
-    
-    return 'normal';
+
+    return 'NORMAL';
 }
 
 async function loadPaymentSummary(package) {
@@ -1539,7 +1543,8 @@ async function loadPaymentSummary(package) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                package_type: normalizePackageType(package.package_type).toUpperCase(),
+                // Enviar el valor EXACTO que espera el Enum del backend
+                package_type: normalizePackageType(package.package_type),
                 storage_days: package.storage_days || 0
             })
         });
@@ -4268,7 +4273,10 @@ function showCorrectFees(package) {
     const packageType = normalizePackageType(package.package_type);
     const storageDays = package.storage_days || 0;
     
-    const baseFee = packageType === 'extra_dimensioned' ? rates.extra_dimensioned : rates.normal;
+    // Usar las claves exactas que viene del backend en app_config.rates
+    const baseFee = packageType === 'EXTRA_DIMENSIONADO'
+        ? (rates.extra_dimensioned ?? rates.extra_dimensioned_package_rate ?? rates.normal)
+        : (rates.normal ?? rates.normal_package_rate ?? rates.extra_dimensioned);
     const storageFee = storageDays * rates.storage_per_day;
     const totalFee = baseFee + storageFee;
     

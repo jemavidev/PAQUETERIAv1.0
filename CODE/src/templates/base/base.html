@@ -796,12 +796,15 @@
         
         <script>
         // Deshabilitar alert-container para páginas específicas
+        // Nota: Antes se deshabilitaba en '/announce', pero ahora lo dejamos
+        // habilitado para que los errores (como guía duplicada) se muestren
+        // correctamente en esa vista.
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
             const alertContainer = document.getElementById('alert-container');
             
             // Páginas donde NO mostrar el alert-container
-            const disabledPages = ['/announce'];
+            const disabledPages = [];
             
             if (disabledPages.includes(currentPath)) {
                 if (alertContainer) {

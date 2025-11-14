@@ -1232,23 +1232,28 @@ async def calculate_dynamic_fee(
     try:
         from app.utils.dynamic_fee_calculator import DynamicFeeCalculator
         from app.models.package import PackageType
+        from app.utils.normalization import normalize_type
         
         # Extraer parámetros del request
-        package_type = request.get('package_type', 'normal')
+        raw_package_type = request.get('package_type', 'NORMAL')
         storage_days = request.get('storage_days', 0)
+
+        # Normalizar el tipo usando la misma lógica que el resto del sistema
+        normalized_type = normalize_type(raw_package_type) or "NORMAL"
         
-        # Convertir string a enum
+        # Convertir string normalizado a enum (acepta NORMAL / EXTRA_DIMENSIONADO,
+        # y también variantes como extra_dimensioned que normalize_type resuelve)
         try:
-            package_type_enum = PackageType(package_type.upper())
+            package_type_enum = PackageType(normalized_type)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Tipo de paquete inválido: {package_type}"
+                detail=f"Tipo de paquete inválido: {raw_package_type}"
             )
         
-        # Calcular tarifa
+        # Calcular tarifa usando el enum ya normalizado
         fee_calculation = DynamicFeeCalculator.calculate_total_fee(
-            package_type_enum, 
+            package_type_enum,
             storage_days
         )
         
