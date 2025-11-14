@@ -60,7 +60,7 @@
                         <button type="button"
                                 class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 active:scale-95 touch-manipulation flex-shrink-0"
                                 @click="openCleanupModal()"
-                                title="Limpiar Clientes Inválidos (Sin cliente / Sin teléfono)">
+                                title="Limpiar Clientes Inválidos">
                             <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
@@ -203,7 +203,7 @@
                                         </svg>
                                     </button>
                                     {% if user.role.value == 'ADMIN' %}
-                                    <button onclick="deleteCustomerHandler('{{ customer.id }}', '{{ (customer.first_name ~ ' ' ~ customer.last_name)|replace("'", "\\'")|replace('"', '\\"') }}')"
+                                    <button onclick="deleteCustomer('{{ customer.id }}')"
                                             title="Eliminar"
                                             class="inline-flex items-center justify-center w-9 h-9 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,17 +407,16 @@
                         </div>
 
                         <!-- Dirección -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Dirección <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   x-model="formData.address_street" 
-                                   required
-                                   maxlength="100"
-                                   class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base sm:text-base touch-manipulation"
-                                   placeholder="Ej: Calle 123 #45-67">
-                        </div>
+    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Dirección
+                        </label>
+                        <input type="text" 
+                               x-model="formData.address_street" 
+                               maxlength="100"
+                               class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue transition-colors text-base sm:text-base touch-manipulation"
+                               placeholder="Ej: Calle 123 #45-67">
+                    </div>
 
                         <!-- Información del Edificio -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -728,7 +727,7 @@
                                 </svg>
                                 <div class="flex-1">
                                     <p class="text-sm font-medium text-blue-800 mb-1">Paquetes sin cliente asociado</p>
-                                    <p class="text-sm text-blue-800 mb-2" x-text="`${cleanupData.packagesWithoutCustomer} paquete(s) no tienen cliente asociado (muestran \"Sin cliente\" y \"Sin teléfono\" en la interfaz).`"></p>
+                                    <p class="text-sm text-blue-800 mb-2" x-text="`${cleanupData.packagesWithoutCustomer} paquete(s) no tienen cliente asociado (muestran 'Sin cliente' y 'Sin teléfono' en la interfaz).`"></p>
                                     <p class="text-sm text-blue-800 font-medium">Al confirmar la limpieza:</p>
                                     <ul class="text-sm text-blue-800 list-disc list-inside mt-1 space-y-1">
                                         <li>Se crearán clientes "Sin cliente" para estos paquetes</li>
@@ -1317,11 +1316,6 @@ function customerManagement() {
                 return;
             }
             
-            if (!this.formData.address_street || this.formData.address_street.trim().length === 0) {
-                this.showErrorToast('Error de validación', 'La dirección es obligatoria');
-                return;
-            }
-            
             // Limpiar espacios y construir objeto de datos
             const data = {};
             
@@ -1401,6 +1395,17 @@ function getCustomerAppInstance() {
     return window.customerAppInstance || customerApp || null;
 }
 
+// Función para remover toasts
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.style.animation = 'slideOut 0.3s ease-out forwards';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }
+}
+
 window.openCreateModalFunc = function() {
     cancelManageSearchDebounce();
     const app = getCustomerAppInstance();
@@ -1474,11 +1479,15 @@ window.openEditModal = function(id, firstName, lastName, phone, email, address, 
     setTimeout(() => window.openEditModal(id, firstName, lastName, phone, email, address, building, tower, apartment), 100);
 };
 
+function deleteCustomer(customerId) {
+    deleteCustomerHandler(customerId, '');
+}
+
 function deleteCustomerHandler(customerId, customerName) {
     cancelManageSearchDebounce();
     const app = getCustomerAppInstance();
     if (app && typeof app.openDeleteModal === 'function') {
-        app.openDeleteModal(customerId, customerName);
+        app.openDeleteModal(customerId, customerName || 'el cliente');
         return;
     }
     setTimeout(() => deleteCustomerHandler(customerId, customerName), 100);
@@ -1595,6 +1604,17 @@ function deleteCustomerHandler(customerId, customerName) {
     height: 3px;
     background-color: rgba(255, 255, 255, 0.3);
     transition: width linear;
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 .modal-scroll {
