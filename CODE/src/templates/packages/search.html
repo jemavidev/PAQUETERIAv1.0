@@ -44,15 +44,26 @@
                            oninput="this.value = this.value.toUpperCase()">
                 </div>
                 
-                <!-- Botón de Búsqueda -->
-                <div class="text-center pt-4">
+                <!-- Botones de acción: Buscar + Escanear QR -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center pt-4 gap-3">
                     <button type="submit" 
                             id="searchButton"
-                            class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            class="inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         <span id="searchButtonText">Consultar Paquete</span>
+                    </button>
+
+                    <!-- Botón para abrir el escáner QR (solo visible si hay cámara disponible) -->
+                    <button type="button"
+                            id="scanQrButton"
+                            class="inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-blue-600 text-base font-medium rounded-lg shadow-sm text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 5a2 2 0 012-2h3v2H5v3H3V5zm13-2h3a2 2 0 012 2v3h-2V5h-3V3zM5 16H3v3a2 2 0 002 2h3v-2H5v-3zm14 0v3h-3v2h3a2 2 0 002-2v-3h-2zM9 9h1v1H9V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zM9 11h1v1H9v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zM9 13h1v1H9v-1zm4 0h1v1h-1v-1z" />
+                        </svg>
+                        <span>Escanear QR</span>
                     </button>
                 </div>
             </form>
@@ -426,9 +437,48 @@
         </div>
     </div>
 </div>
+
+<!-- Modal del escáner QR -->
+<div id="qrScannerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 hidden">
+    <div class="relative bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+            <h3 class="text-base sm:text-lg font-medium text-white flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 5a2 2 0 012-2h3v2H5v3H3V5zm13-2h3a2 2 0 012 2v3h-2V5h-3V3zM5 16H3v3a2 2 0 002 2h3v-2H5v-3zm14 0v3h-3v2h3a2 2 0 002-2v-3h-2z" />
+                </svg>
+                Escanear código QR
+            </h3>
+            <button id="closeQrScannerButton"
+                    type="button"
+                    class="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span class="sr-only">Cerrar escáner</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Contenido -->
+        <div class="px-4 pt-4 pb-5 space-y-3">
+            <div class="relative rounded-xl overflow-hidden bg-black border border-gray-800">
+                <video id="qrVideo" class="w-full h-56 sm:h-64 object-cover bg-black"></video>
+            </div>
+            <p class="text-xs sm:text-sm text-gray-300">
+                Apunta la cámara al código QR de tu guía o código de consulta. Al detectar un código válido, lo
+                llenaremos automáticamente en el campo de búsqueda y ejecutaremos la consulta.
+            </p>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Librería de escaneo QR (UMD, expone QrScanner en window) -->
+<script src="/qr-scanner/qr-scanner.umd.min.js"></script>
+
 <script>
     // Protección adicional para search.html
     (function() {
@@ -537,6 +587,151 @@
         } else {
             console.error('❌ Formulario de búsqueda NO encontrado!');
         }
+
+        // ============================
+        // INTEGRACIÓN ESCÁNER QR
+        // ============================
+        const scanButton = document.getElementById('scanQrButton');
+        const qrModal = document.getElementById('qrScannerModal');
+        const closeQrButton = document.getElementById('closeQrScannerButton');
+        const qrVideo = document.getElementById('qrVideo');
+
+        let qrScanner = null;
+
+        function stopQrScanner() {
+            if (qrScanner) {
+                try {
+                    qrScanner.stop();
+                } catch (e) {
+                    console.warn('Error al detener el escáner QR:', e);
+                }
+            }
+            if (qrModal) {
+                qrModal.classList.add('hidden');
+            }
+        }
+
+        async function startQrScanner() {
+            if (!qrVideo || !qrModal) {
+                console.warn('Elementos necesarios para el escáner QR no disponibles');
+                return;
+            }
+
+            if (!qrScanner) {
+                try {
+                    qrScanner = new QrScanner(
+                        qrVideo,
+                        result => {
+                            const value = (typeof result === 'string' ? result : (result && result.data)) || '';
+                            const trimmed = value.trim();
+                            console.log('🔍 QR detectado:', trimmed);
+
+                            const searchInput = document.getElementById('searchQuery');
+                            if (searchInput) {
+                                searchInput.value = trimmed.toUpperCase();
+                            }
+
+                            // Cerrar el escáner y ejecutar la búsqueda automáticamente
+                            stopQrScanner();
+
+                            if (trimmed) {
+                                showLoading();
+                                searchPackage(trimmed);
+                            }
+                        },
+                        {
+                            onDecodeError: (error) => {
+                                // Silenciar el caso "No QR code found" para no saturar la consola
+                                if (!error || error === QrScanner.NO_QR_CODE_FOUND) {
+                                    return;
+                                }
+                                console.warn('Error decodificando QR:', error);
+                            },
+                            preferredCamera: 'environment',
+                            maxScansPerSecond: 15,
+                            highlightScanRegion: true,
+                            highlightCodeOutline: true,
+                            returnDetailedScanResult: true
+                        }
+                    );
+                } catch (e) {
+                    console.error('No se pudo inicializar QrScanner:', e);
+                    return;
+                }
+            }
+
+            try {
+                qrModal.classList.remove('hidden');
+                await qrScanner.start();
+            } catch (e) {
+                console.error('Error al iniciar el escáner QR:', e);
+                stopQrScanner();
+            }
+        }
+
+        if (scanButton) {
+            // Mostrar siempre el botón; la verificación de cámara/librería se hace al hacer clic
+            scanButton.classList.remove('hidden');
+
+            scanButton.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                // Verificar que la librería esté disponible
+                if (typeof QrScanner === 'undefined') {
+                    console.warn('Librería QrScanner no está cargada. Verifica que /qr-scanner/qr-scanner.umd.min.js se sirva correctamente.');
+                    if (typeof showWarningMessage === 'function') {
+                        showWarningMessage('No se pudo iniciar el escáner QR en este navegador.');
+                    } else {
+                        alert('No se pudo iniciar el escáner QR en este navegador.');
+                    }
+                    return;
+                }
+
+                // Verificar que haya cámara disponible antes de abrir el modal
+                QrScanner.hasCamera()
+                    .then(hasCamera => {
+                        if (!hasCamera) {
+                            console.warn('No hay cámara disponible para el escáner QR');
+                            if (typeof showWarningMessage === 'function') {
+                                showWarningMessage('Este dispositivo no tiene cámara disponible para escanear QR.');
+                            } else {
+                                alert('Este dispositivo no tiene cámara disponible para escanear QR.');
+                            }
+                            return;
+                        }
+                        startQrScanner();
+                    })
+                    .catch(error => {
+                        console.warn('Error comprobando cámaras para el escáner QR:', error);
+                        if (typeof showWarningMessage === 'function') {
+                            showWarningMessage('No se pudo acceder a la cámara para escanear el código QR.');
+                        } else {
+                            alert('No se pudo acceder a la cámara para escanear el código QR.');
+                        }
+                    });
+            });
+        }
+
+        if (closeQrButton) {
+            closeQrButton.addEventListener('click', function () {
+                stopQrScanner();
+            });
+        }
+
+        if (qrModal) {
+            qrModal.addEventListener('click', function (event) {
+                if (event.target === qrModal) {
+                    stopQrScanner();
+                }
+            });
+        }
+
+        // Pausar el escáner cuando la pestaña pierde foco
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stopQrScanner();
+            }
+        });
     });
 
     function showLoading() {

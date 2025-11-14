@@ -35,8 +35,29 @@ if USE_S3:
         USE_S3 = False
 
 # Configuración de almacenamiento local (fallback)
-LOCAL_STORAGE_PATH = Path("/app/uploads")
-LOCAL_STORAGE_PATH.mkdir(parents=True, exist_ok=True)
+# Resolver ruta compatible con Docker y desarrollo local
+def _resolve_uploads_dir() -> Path:
+    """Resolver ruta de uploads compatible con Docker y entorno local."""
+    candidates = [
+        os.environ.get("UPLOAD_DIR", ""),
+        Path("/app/uploads"),
+        Path(os.getcwd()) / "src" / "uploads",
+        Path(os.getcwd()) / "uploads",
+    ]
+    for path in candidates:
+        if path and Path(path).exists():
+            return Path(path)
+    # Si no existe, usar el primer candidato disponible y crearlo
+    uploads_dir = Path(os.getcwd()) / "src" / "uploads"
+    try:
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        return uploads_dir
+    except (PermissionError, OSError):
+        # Fallback a directorio temporal si no se puede crear
+        import tempfile
+        return Path(tempfile.gettempdir()) / "paqueteria_uploads"
+
+LOCAL_STORAGE_PATH = _resolve_uploads_dir()
 
 print(f"📦 Modo de almacenamiento: {'AWS S3' if USE_S3 else 'Local (Fallback)'}")
 

@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 import logging
 import os
 
@@ -59,7 +60,7 @@ async def lifespan(app: FastAPI):
     
     # Validar configuración SMTP al iniciar (solo si está configurada)
     try:
-        from app.services.email_service import EmailService
+        from src.app.services.email_service import EmailService
         email_service = EmailService()
         smtp_test = await email_service.test_smtp_connection()
         if smtp_test.get("success"):
@@ -101,18 +102,89 @@ app.add_middleware(SlowAPIMiddleware)
 app.state.limiter = limiter  # Set the limiter in app state for middleware
 app.add_exception_handler(429, rate_limit_exceeded_handler)
 
-# Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
+# Funciones auxiliares para resolver rutas (compatibles con Docker y desarrollo local)
+def _resolve_static_dir() -> str:
+    """Resolver ruta de archivos estáticos compatible con Docker y entorno local."""
+    candidates = [
+        os.path.join(os.getcwd(), "src", "static"),
+        os.path.join(os.getcwd(), "static"),
+        "/app/src/static",
+    ]
+    for path in candidates:
+        if path and os.path.isdir(path):
+            return os.path.abspath(path)
+    return os.path.abspath(os.path.join(os.getcwd(), "src", "static"))
 
-# Montar uploads desde /app/uploads (volumen dedicado)
-# Crear directorio si no existe
-from pathlib import Path
-uploads_dir = Path("/app/uploads")
-uploads_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+def _resolve_qr_scanner_dir() -> str:
+    """Resolver ruta de qr-scanner compatible con Docker y entorno local."""
+    candidates = [
+        os.path.join(os.getcwd(), "qr-scanner"),
+        "/app/qr-scanner",
+    ]
+    for path in candidates:
+        if path and os.path.isdir(path):
+            return os.path.abspath(path)
+    return os.path.abspath(os.path.join(os.getcwd(), "qr-scanner"))
+
+def _resolve_uploads_dir() -> str:
+    """Resolver ruta de uploads compatible con Docker y entorno local."""
+    candidates = [
+        os.environ.get("UPLOAD_DIR", ""),
+        os.path.join(os.getcwd(), "src", "uploads"),
+        os.path.join(os.getcwd(), "uploads"),
+        "/app/uploads",
+    ]
+    for path in candidates:
+        if path and os.path.isdir(path):
+            return os.path.abspath(path)
+    # Si no existe, usar el primer candidato disponible y crearlo
+    uploads_dir = os.path.join(os.getcwd(), "src", "uploads")
+    Path(uploads_dir).mkdir(parents=True, exist_ok=True)
+    return os.path.abspath(uploads_dir)
+
+def _resolve_templates_dir() -> str:
+    """Resolver ruta de templates compatible con Docker y entorno local."""
+    candidates = [
+        os.environ.get("TEMPLATES_DIR"),
+        "/app/src/templates",
+        os.path.join(os.getcwd(), "src", "templates"),
+    ]
+    for path in candidates:
+        if path and os.path.isdir(path):
+            return os.path.abspath(path)
+    return os.path.abspath(os.path.join(os.getcwd(), "src", "templates"))
+
+# Resolver rutas
+static_dir = _resolve_static_dir()
+qr_scanner_dir = _resolve_qr_scanner_dir()
+uploads_dir = _resolve_uploads_dir()
+templates_dir = _resolve_templates_dir()
+
+# Crear directorios si no existen
+Path(uploads_dir).mkdir(parents=True, exist_ok=True)
+
+logger.info(f"📁 Archivos estáticos: {static_dir}")
+logger.info(f"📁 QR Scanner: {qr_scanner_dir}")
+logger.info(f"📁 Uploads: {uploads_dir}")
+logger.info(f"📁 Templates: {templates_dir}")
+
+# Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Montar librería de escaneo QR (qr-scanner) como estático separado
+# Esto permite servir directamente los archivos:
+#   - /qr-scanner/qr-scanner.umd.min.js
+#   - /qr-scanner/qr-scanner-worker.min.js
+if os.path.isdir(qr_scanner_dir):
+    app.mount("/qr-scanner", StaticFiles(directory=qr_scanner_dir), name="qr-scanner")
+else:
+    logger.warning(f"⚠️ Directorio qr-scanner no encontrado en: {qr_scanner_dir}")
+
+# Montar uploads
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # Configuración de templates
-templates = Jinja2Templates(directory="/app/src/templates", auto_reload=True)
+templates = Jinja2Templates(directory=templates_dir, auto_reload=True)
 
 # Manejadores de excepciones
 def handle_paqueteria_exception(request: Request, exc: PaqueteriaException):
