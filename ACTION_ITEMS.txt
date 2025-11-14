@@ -1,6 +1,15 @@
 Acciones sugeridas (consultar vistas announce / packages / messages / customers)
 =======================================================================
 
+ACTUALIZACIÓN: [13/11/2025]
+✅ IMPLEMENTADO: Auto-creación de clientes desde /announce
+✅ IMPLEMENTADO: Actualización de email desde /search
+✅ IMPLEMENTADO: Asociación customer_id en anuncios
+
+=======================================================================
+ACCIONES PENDIENTES:
+=======================================================================
+
 1. Resolución de rutas duplicadas en `/packages`
    - Mantener una sola vista activa para paquetes.
    - Retirar la plantilla y la ruta legacy que no se use para evitar colisiones en FastAPI.
@@ -15,4 +24,114 @@ Acciones sugeridas (consultar vistas announce / packages / messages / customers)
 4. Validación de cookies de autenticación
    - Asegurar que las cookies tengan `SameSite=None; Secure` para que los `fetch` de `packages/packages.html`
      mantengan la sesión en entornos productivos (HTTPS).
+
+=======================================================================
+CAMBIOS IMPLEMENTADOS:
+=======================================================================
+
+✅ AUTO-CREACIÓN DE CLIENTES DESDE /announce
+   Archivo: CODE/src/app/routes/public.py
+   Endpoint: POST /api/announcements/direct (líneas 394-434)
+   
+   Funcionalidad:
+   - Al anunciar un paquete, se busca automáticamente si el cliente existe (por teléfono)
+   - Si existe, se reutiliza su customer_id
+   - Si no existe, se crea un cliente nuevo con datos mínimos (nombre + teléfono)
+   - El customer_id se asocia al anuncio (PackageAnnouncementNew.customer_id)
+   - Si falla la creación del cliente, el anuncio continúa sin romper el flujo
+   
+   Impacto:
+   - Los clientes ahora se registran automáticamente al anunciar paquetes
+   - Los datos son visibles en http://localhost:8000/customers/manage
+   - El sistema mantiene trazabilidad entre anuncios y clientes
+
+✅ ACTUALIZACIÓN DE EMAIL DESDE /search
+   Archivo: CODE/src/app/routes/public.py
+   Endpoint: POST /api/messages/customer-inquiry (líneas 1271-1322)
+   
+   Funcionalidad:
+   - Al enviar una pregunta desde /search, se captura el email del cliente
+   - Se busca el paquete o anuncio asociado al tracking_code
+   - Si se encuentra el cliente vinculado y NO tiene email registrado:
+     * Se actualiza automáticamente su email
+     * Se registra en la base de datos (tabla customers)
+   - Si falla la actualización, la consulta continúa normalmente
+   
+   Flujo de búsqueda:
+   1. Buscar en paquetes (Package) por tracking_number o access_code
+   2. Si no se encuentra, buscar en anuncios (PackageAnnouncementNew)
+   3. Obtener el customer_id asociado
+   4. Actualizar el email si el cliente no lo tiene
+   
+   Impacto:
+   - Los emails de clientes se capturan progresivamente
+   - No se sobrescribe si el cliente ya tiene un email
+   - Mantiene la integridad de los datos sin duplicados
+
+✅ ASOCIACIÓN CUSTOMER_ID EN ANUNCIOS
+   Archivo: CODE/src/app/routes/public.py
+   Cambio: PackageAnnouncementNew ahora incluye customer_id (línea 442)
+   
+   Funcionalidad:
+   - Los anuncios ahora se vinculan directamente con el cliente
+   - Facilita la trazabilidad desde el anuncio hasta el cliente
+   - Permite actualizar datos del cliente desde cualquier punto del flujo
+   
+   Beneficios:
+   - Relación bidireccional entre anuncios y clientes
+   - Simplifica consultas y reportes
+   - Mejora la integridad de datos
+
+=======================================================================
+FLUJO COMPLETO IMPLEMENTADO:
+=======================================================================
+
+1. ANUNCIO DE PAQUETE (http://localhost:8000/announce)
+   ↓
+   Cliente anuncia paquete → Se captura nombre + teléfono
+   ↓
+   Sistema busca/crea cliente automáticamente
+   ↓
+   Se asocia customer_id al anuncio
+   ↓
+   Cliente visible en http://localhost:8000/customers/manage
+
+2. BÚSQUEDA Y CONSULTA (http://localhost:8000/search)
+   ↓
+   Cliente pregunta por su paquete → Se captura email
+   ↓
+   Sistema busca el paquete/anuncio por tracking_code
+   ↓
+   Si el cliente no tiene email, se actualiza automáticamente
+   ↓
+   Email ahora visible en http://localhost:8000/customers/manage
+
+3. GESTIÓN DE CLIENTES (http://localhost:8000/customers/manage)
+   ↓
+   Operador puede completar datos faltantes:
+   - Dirección, Conjunto, Torre, Apartamento
+   - Documento, Email (si no fue capturado antes)
+   ↓
+   Datos se actualizan progresivamente según necesidad
+
+=======================================================================
+NOTAS TÉCNICAS:
+=======================================================================
+
+- Todos los cambios respetan el código existente
+- Se usa try-except para no romper flujos si falla la gestión de clientes
+- Se agregó import: "from sqlalchemy import or_" (línea 10)
+- Se reutilizan servicios existentes: CustomerService
+- Se mantiene compatibilidad con el modelo de datos actual
+- No se requieren migraciones de base de datos (campos ya existen)
+
+=======================================================================
+PRUEBAS SUGERIDAS:
+=======================================================================
+
+1. Anunciar paquete nuevo → Verificar cliente creado en /customers/manage
+2. Anunciar paquete con teléfono existente → Verificar reutilización del cliente
+3. Hacer pregunta desde /search → Verificar email actualizado en cliente
+4. Hacer pregunta con email existente → Verificar que NO se sobrescribe
+5. Completar datos desde /customers/manage → Verificar actualización correcta
 

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request, HTTPException, Depends, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import datetime
 import uuid
 from typing import List, Dict
@@ -391,12 +392,63 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
                 content={"detail": f"Ya existe un anuncio con el número de guía: {guide_number}"}
             )
 
+        # ========================================
+        # BUSCAR O CREAR CLIENTE AUTOMÁTICAMENTE
+        # ========================================
+        customer_id = None
+        try:
+            from app.services.customer_service import CustomerService
+            from app.schemas.customer import CustomerCreate
+            
+            customer_service = CustomerService()
+            
+            # Buscar cliente existente por teléfono
+            existing_customer = customer_service.get_customer_by_phone(db, customer_phone)
+            
+            if existing_customer:
+                # Cliente ya existe, usar su ID
+                customer_id = existing_customer.id
+                print(f"✅ Cliente existente encontrado: {existing_customer.id} - {existing_customer.full_name}")
+            else:
+                # Cliente nuevo, crear con datos mínimos (nombre + teléfono)
+                # Separar nombre y apellido del customer_name con valores por defecto válidos
+                name_parts = [part.strip() for part in customer_name.split() if part.strip()]
+                first_name = name_parts[0] if name_parts else (customer_name.strip() or "CLIENTE")
+                last_name = (
+                    name_parts[1]
+                    if len(name_parts) > 1
+                    else (name_parts[0] if name_parts else "PENDIENTE")
+                )
+
+                # Respetar longitudes máximas del esquema
+                first_name = first_name[:50]
+                last_name = last_name[:50] or "PENDIENTE"
+                
+                customer_data = CustomerCreate(
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=customer_phone,
+                    # email, address, etc. quedan None hasta que se completen
+                )
+                
+                new_customer = customer_service.create_customer(db, customer_data)
+                customer_id = new_customer.id
+                print(f"✅ Cliente nuevo creado: {new_customer.id} - {new_customer.full_name}")
+                
+        except Exception as customer_error:
+            # Si falla la creación del cliente, continuar sin romper el anuncio
+            print(f"⚠️ Error gestionando cliente: {customer_error}")
+            import traceback
+            traceback.print_exc()
+            # customer_id quedará None, pero el anuncio se creará igual
+
         announcement = PackageAnnouncementNew(
             id=uuid.uuid4(),
             customer_name=customer_name,
             customer_phone=customer_phone,
             guide_number=guide_number,
             tracking_code=tracking_code,
+            customer_id=customer_id,  # ✅ Vincular con el cliente
             is_active=True,
             is_processed=False,
             announced_at=get_colombia_now(),
@@ -1224,6 +1276,59 @@ async def create_customer_inquiry(
         db.add(message)
         db.commit()
         db.refresh(message)
+
+        # ========================================
+        # ACTUALIZAR EMAIL DEL CLIENTE SI NO LO TIENE
+        # ========================================
+        if inquiry.customer_email and inquiry.package_tracking_code:
+            try:
+                # Buscar el paquete por tracking_code
+                package = db.query(Package).filter(
+                    or_(
+                        Package.tracking_number == inquiry.package_tracking_code,
+                        Package.access_code == inquiry.package_tracking_code
+                    )
+                ).first()
+                
+                # Si no se encuentra paquete, buscar en anuncios
+                if not package:
+                    announcement = db.query(PackageAnnouncementNew).filter(
+                        or_(
+                            PackageAnnouncementNew.tracking_code == inquiry.package_tracking_code,
+                            PackageAnnouncementNew.guide_number == inquiry.package_tracking_code
+                        )
+                    ).first()
+                    
+                    if announcement and announcement.customer_id:
+                        # Actualizar email del cliente del anuncio
+                        customer = db.query(Customer).filter(
+                            Customer.id == announcement.customer_id
+                        ).first()
+                        
+                        if customer and not customer.email:
+                            customer.email = inquiry.customer_email
+                            customer.updated_at = get_colombia_now()
+                            db.commit()
+                            print(f"✅ Email actualizado para cliente {customer.id} desde anuncio: {inquiry.customer_email}")
+                
+                # Si existe paquete y tiene cliente asociado
+                elif package and package.customer_id:
+                    customer = db.query(Customer).filter(
+                        Customer.id == package.customer_id
+                    ).first()
+                    
+                    if customer and not customer.email:
+                        customer.email = inquiry.customer_email
+                        customer.updated_at = get_colombia_now()
+                        db.commit()
+                        print(f"✅ Email actualizado para cliente {customer.id} desde paquete: {inquiry.customer_email}")
+                        
+            except Exception as email_error:
+                # No fallar la consulta por esto, solo registrar el error
+                print(f"⚠️ Error actualizando email del cliente: {email_error}")
+                import traceback
+                traceback.print_exc()
+                # Continuar normalmente
 
         return {
             "message": "Consulta enviada exitosamente",
