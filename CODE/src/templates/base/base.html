@@ -1199,7 +1199,7 @@
         }
 
         function updateNotificationBadges(data) {
-            const { count, show_badge, badge_text, badge_class } = data;
+            const { count, show_badge, badge_text, badge_class } = data || {};
             
             // Actualizar badge desktop
             const desktopBadge = document.getElementById('messages-badge');
@@ -1209,8 +1209,25 @@
             const mobileBadge = document.getElementById('messages-badge-mobile');
             const mobileCount = document.getElementById('messages-count-mobile');
             
-            // SIEMPRE mostrar badges cuando el usuario está autenticado
-            const safeText = (badge_text && badge_text.length > 0) ? badge_text : '0';
+            // Texto seguro para el contador
+            const safeText = (badge_text && badge_text.length > 0)
+                ? badge_text
+                : (typeof count === 'number' ? String(count) : '0');
+
+            // Regla: si no hay mensajes o el backend indica que no se muestre el badge,
+            // ocultamos completamente el "tooltip"/badge.
+            const shouldShow =
+                typeof count === 'number'
+                    ? (count > 0 && show_badge !== false)
+                    : (show_badge === true);
+
+            if (!shouldShow) {
+                if (desktopBadge) desktopBadge.classList.add('hidden');
+                if (mobileBadge) mobileBadge.classList.add('hidden');
+                if (desktopCount) desktopCount.textContent = '0';
+                if (mobileCount) mobileCount.textContent = '0';
+                return;
+            }
 
             if (desktopBadge) {
                 desktopBadge.classList.remove('hidden');
@@ -1221,20 +1238,20 @@
                 mobileBadge.className = `absolute -top-1 -right-1 ${badge_class || 'bg-papyrus-red text-white'} text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] animate-pulse`;
             }
 
-            // Actualizar contadores (incluye 0)
+            // Actualizar contadores
             if (desktopCount) desktopCount.textContent = safeText;
             if (mobileCount) mobileCount.textContent = safeText;
         }
 
         function hideNotificationBadges() {
-            // No ocultar completamente; mantener visibles con 0 para evitar parpadeos
+            // En caso de error o carga inicial sin datos, ocultar los badges
             const desktopBadge = document.getElementById('messages-badge');
             const mobileBadge = document.getElementById('messages-badge-mobile');
             const desktopCount = document.getElementById('messages-count');
             const mobileCount = document.getElementById('messages-count-mobile');
 
-            if (desktopBadge) desktopBadge.classList.remove('hidden');
-            if (mobileBadge) mobileBadge.classList.remove('hidden');
+            if (desktopBadge) desktopBadge.classList.add('hidden');
+            if (mobileBadge) mobileBadge.classList.add('hidden');
             if (desktopCount) desktopCount.textContent = '0';
             if (mobileCount) mobileCount.textContent = '0';
         }
