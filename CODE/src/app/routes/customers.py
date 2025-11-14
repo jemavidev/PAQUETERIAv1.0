@@ -31,6 +31,7 @@ from app.schemas.customer import (
 from app.services.customer_service import CustomerService
 from app.services.package_service import PackageService
 from app.dependencies import get_current_active_user, get_current_admin_user, get_current_active_user_from_cookies
+from app.utils.phone_utils import normalize_phone, validate_phone, format_phone_link
 from fastapi import Request
 import logging
 
@@ -107,6 +108,16 @@ async def create_customer(
     if not current_user:
         raise HTTPException(status_code=401, detail="No autenticado")
     
+    # Normalizar teléfono antes de crear
+    if customer.phone:
+        normalized_phone = normalize_phone(customer.phone)
+        if not normalized_phone or not validate_phone(normalized_phone):
+            raise HTTPException(
+                status_code=400, 
+                detail="Número de teléfono inválido. Use formato: +573001234567 o 3001234567"
+            )
+        customer.phone = normalized_phone
+    
     customer_service = CustomerService()
     try:
         db_customer = customer_service.create_customer(
@@ -143,6 +154,16 @@ async def update_customer(
     if not current_user:
         raise HTTPException(status_code=401, detail="No autenticado")
     
+    # Normalizar teléfono antes de actualizar
+    if customer_update.phone:
+        normalized_phone = normalize_phone(customer_update.phone)
+        if not normalized_phone or not validate_phone(normalized_phone):
+            raise HTTPException(
+                status_code=400, 
+                detail="Número de teléfono inválido. Use formato: +573001234567 o 3001234567"
+            )
+        customer_update.phone = normalized_phone
+    
     customer_service = CustomerService()
     try:
         db_customer = customer_service.update_customer(
@@ -177,6 +198,7 @@ async def delete_customer(
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
         # Contar paquetes asociados al cliente
+        from app.models.package import Package
         packages_count = db.query(Package).filter(
             Package.customer_id == customer_id
         ).count()
@@ -259,6 +281,213 @@ async def delete_customer(
         raise HTTPException(
             status_code=500, 
             detail=f"Ocurrió un error al eliminar el cliente: {str(e)}"
+        )
+
+@router.get("/{customer_id}/packages")
+async def get_customer_packages(
+    customer_id: UUID,
+    limit: int = Query(10, ge=1, le=50),
+    request: Request = None,
+    db: Session = Depends(get_db)
+):
+    """Obtener los últimos 10 paquetes de un cliente (Anunciado, Recibido, Entregado, Cancelado)"""
+    try:
+        # Verificar que el cliente existe
+        customer = db.query(Customer).filter(Customer.id == customer_id).first()
+        if not customer:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        
+        # Obtener paquetes del cliente
+        from app.models.package import Package, PackageStatus
+        from app.models.announcement_new import PackageAnnouncementNew
+        from sqlalchemy import desc, or_
+        
+        # Estados permitidos usando el enum correcto
+        ALLOWED_STATUSES = [
+            PackageStatus.ANUNCIADO,
+            PackageStatus.RECIBIDO,
+            PackageStatus.ENTREGADO,
+            PackageStatus.CANCELADO
+        ]
+        
+        # Obtener paquetes con estados permitidos
+        packages_query = db.query(Package).filter(
+            Package.customer_id == customer_id,
+            Package.status.in_(ALLOWED_STATUSES)
+        ).order_by(desc(Package.created_at)).limit(limit * 2)  # Obtener más para compensar filtros
+        
+        packages = packages_query.all()
+        
+        # Obtener también los anuncios no procesados del cliente (activos y cancelados)
+        announcements = db.query(PackageAnnouncementNew).filter(
+            PackageAnnouncementNew.customer_id == customer_id,
+            PackageAnnouncementNew.is_processed == False
+        ).order_by(desc(PackageAnnouncementNew.announced_at)).limit(limit).all()
+        
+        # Función para normalizar estado
+        def normalize_status(status):
+            if not status:
+                return None
+            status_str = status.value if hasattr(status, 'value') else str(status)
+            status_map = {
+                'announced': 'ANUNCIADO',
+                'received': 'RECIBIDO',
+                'delivered': 'ENTREGADO',
+                'cancelled': 'CANCELADO',
+                'canceled': 'CANCELADO'
+            }
+            return status_map.get(status_str.lower(), status_str.upper())
+        
+        # Serializar paquetes
+        result = []
+        
+        for pkg in packages:
+            normalized_status = normalize_status(pkg.status)
+            # Solo agregar si el estado está en los permitidos
+            if normalized_status in ['ANUNCIADO', 'RECIBIDO', 'ENTREGADO', 'CANCELADO']:
+                result.append({
+                    'id': str(pkg.id),
+                    'tracking_number': pkg.tracking_number,
+                    'guide_number': pkg.guide_number,
+                    'status': normalized_status,
+                    'announced_at': pkg.announced_at.isoformat() if pkg.announced_at else None,
+                    'received_at': pkg.received_at.isoformat() if pkg.received_at else None,
+                    'delivered_at': pkg.delivered_at.isoformat() if pkg.delivered_at else None,
+                    'type': 'package'
+                })
+        
+        # Agregar anuncios (solo activos o cancelados)
+        for ann in announcements:
+            if ann.is_active:
+                status = 'ANUNCIADO'
+            else:
+                status = 'CANCELADO'
+            
+            result.append({
+                'id': f'announcement_{ann.id}',
+                'tracking_number': ann.tracking_code,
+                'guide_number': ann.guide_number,
+                'status': status,
+                'announced_at': ann.announced_at.isoformat() if ann.announced_at else None,
+                'received_at': None,
+                'delivered_at': None,
+                'type': 'announcement'
+            })
+        
+        # Ordenar por fecha de anuncio (más reciente primero)
+        result.sort(key=lambda x: x['announced_at'] or '', reverse=True)
+        
+        # Limitar a los últimos 10 paquetes
+        result = result[:limit]
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al obtener paquetes del cliente {customer_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al obtener paquetes del cliente: {str(e)}"
+        )
+
+@router.get("/search-suggestions")
+async def search_suggestions(
+    q: str = Query(..., min_length=2),
+    limit: int = Query(5, ge=1, le=10),
+    db: Session = Depends(get_db)
+):
+    """Obtener sugerencias de clientes para autocompletado"""
+    try:
+        # Buscar clientes que coincidan con el query
+        search_pattern = f"%{q}%"
+        
+        customers = db.query(Customer).filter(
+            or_(
+                Customer.first_name.ilike(search_pattern),
+                Customer.last_name.ilike(search_pattern),
+                func.concat(Customer.first_name, ' ', Customer.last_name).ilike(search_pattern),
+                Customer.phone.ilike(search_pattern),
+                Customer.email.ilike(search_pattern)
+            )
+        ).limit(limit).all()
+        
+        # Formatear resultados
+        suggestions = []
+        for customer in customers:
+            suggestions.append({
+                "id": str(customer.id),
+                "full_name": customer.full_name,
+                "phone": customer.phone,
+                "email": customer.email
+            })
+        
+        return {"suggestions": suggestions}
+        
+    except Exception as e:
+        logger.error(f"Error al obtener sugerencias de búsqueda: {str(e)}", exc_info=True)
+        return {"suggestions": []}
+
+@router.get("/check-duplicate")
+async def check_duplicate_customer(
+    phone: Optional[str] = Query(None),
+    email: Optional[str] = Query(None),
+    customer_id: Optional[UUID] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Verificar si existe un cliente con el mismo teléfono o email (validación en tiempo real)"""
+    try:
+        result = {
+            "phone_exists": False,
+            "email_exists": False,
+            "phone_customer": None,
+            "email_customer": None
+        }
+        
+        # Verificar teléfono
+        if phone and phone.strip():
+            # Normalizar el teléfono para comparación
+            normalized_phone = normalize_phone(phone.strip())
+            if normalized_phone:
+                phone_query = db.query(Customer).filter(Customer.phone == normalized_phone)
+                # Si estamos editando, excluir el cliente actual
+                if customer_id:
+                    phone_query = phone_query.filter(Customer.id != customer_id)
+                
+                existing_phone = phone_query.first()
+                if existing_phone:
+                    result["phone_exists"] = True
+                    result["phone_customer"] = {
+                        "id": str(existing_phone.id),
+                        "full_name": existing_phone.full_name,
+                        "phone": existing_phone.phone,
+                        "email": existing_phone.email
+                    }
+        
+        # Verificar email
+        if email and email.strip():
+            email_query = db.query(Customer).filter(Customer.email == email.strip().lower())
+            # Si estamos editando, excluir el cliente actual
+            if customer_id:
+                email_query = email_query.filter(Customer.id != customer_id)
+            
+            existing_email = email_query.first()
+            if existing_email:
+                result["email_exists"] = True
+                result["email_customer"] = {
+                    "id": str(existing_email.id),
+                    "full_name": existing_email.full_name,
+                    "phone": existing_email.phone,
+                    "email": existing_email.email
+                }
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error al verificar duplicados: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al verificar duplicados: {str(e)}"
         )
 
 @router.get("/cleanup/invalid/list", status_code=status.HTTP_200_OK)

@@ -235,6 +235,7 @@ async def list_packages(
     packages_data = packages_result.fetchall()
 
     # Get unprocessed package announcements (including cancelled ones)
+    # ✅ ACTUALIZADO: Ahora hace JOIN con customers para obtener datos actualizados
     announcements_query = f"""
         SELECT
             CONCAT('announcement_', a.tracking_code) as id,
@@ -258,13 +259,15 @@ async def list_packages(
             {settings.base_delivery_rate_normal} as base_fee,
             0.00 as storage_fee,
             {settings.base_delivery_rate_normal} as total_amount,
-            NULL as customer_id,
+            a.customer_id,
             a.announced_at as created_at,
             a.announced_at as updated_at,
-            a.customer_name,
-            a.customer_phone,
+            COALESCE(c.full_name, a.customer_name, 'Sin cliente') as customer_name,
+            COALESCE(c.phone, a.customer_phone, 'Sin teléfono') as customer_phone,
+            c.email as customer_email,
             a.guide_number
         FROM package_announcements_new a
+        LEFT JOIN customers c ON a.customer_id = c.id
         WHERE a.is_processed = false
         ORDER BY a.announced_at DESC
     """
@@ -315,9 +318,6 @@ async def list_packages(
         item_dict = {
             'id': row[0],  # This will be 'announcement_uuid'
             'tracking_number': row[1],
-            'customer_name': row[18],
-            'customer_phone': row[19],
-            'guide_number': row[20],  # Guide number from announcement
             'package_type': row[2],  # normalized later
             'status': row[3],        # normalized later
             'package_condition': row[4],
@@ -335,6 +335,10 @@ async def list_packages(
             'customer_id': row[15],
             'created_at': row[16].isoformat() if row[16] else None,
             'updated_at': row[17].isoformat() if row[17] else None,
+            'customer_name': row[18],  # ✅ Ahora viene de customers.full_name si existe
+            'customer_phone': row[19],  # ✅ Ahora viene de customers.phone si existe
+            'customer_email': row[20],  # ✅ Email del cliente (puede ser None)
+            'guide_number': row[21],  # Guide number from announcement
             'is_announcement': True  # Flag to identify if it's an announcement
         }
         all_items.append(normalize_package_item(item_dict))
@@ -1228,23 +1232,28 @@ async def calculate_dynamic_fee(
     try:
         from app.utils.dynamic_fee_calculator import DynamicFeeCalculator
         from app.models.package import PackageType
+        from app.utils.normalization import normalize_type
         
         # Extraer parámetros del request
-        package_type = request.get('package_type', 'normal')
+        raw_package_type = request.get('package_type', 'NORMAL')
         storage_days = request.get('storage_days', 0)
+
+        # Normalizar el tipo usando la misma lógica que el resto del sistema
+        normalized_type = normalize_type(raw_package_type) or "NORMAL"
         
-        # Convertir string a enum
+        # Convertir string normalizado a enum (acepta NORMAL / EXTRA_DIMENSIONADO,
+        # y también variantes como extra_dimensioned que normalize_type resuelve)
         try:
-            package_type_enum = PackageType(package_type.upper())
+            package_type_enum = PackageType(normalized_type)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Tipo de paquete inválido: {package_type}"
+                detail=f"Tipo de paquete inválido: {raw_package_type}"
             )
         
-        # Calcular tarifa
+        # Calcular tarifa usando el enum ya normalizado
         fee_calculation = DynamicFeeCalculator.calculate_total_fee(
-            package_type_enum, 
+            package_type_enum,
             storage_days
         )
         

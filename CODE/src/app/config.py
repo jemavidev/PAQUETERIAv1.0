@@ -150,10 +150,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         extra="ignore",
-        # En Docker, las variables se cargan desde .env mediante docker-compose
-        # No necesitamos buscar el archivo .env dentro del contenedor
-        # Las variables de entorno ya están disponibles desde docker-compose
-        env_file=None,  # Usar solo variables de entorno del sistema
+        # En Docker, las variables se cargan desde .env mediante docker-compose,
+        # pero en desarrollo local es útil poder leer un archivo .env.
+        # Si las variables existen en el entorno del sistema, SIEMPRE tienen prioridad
+        # sobre lo que venga del archivo .env.
+        env_file=".env",
         env_file_encoding="utf-8"
     )
 

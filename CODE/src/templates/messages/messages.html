@@ -1777,7 +1777,17 @@ function markMessageAsRead(messageId) {
     })
     .then(data => {
         console.log('Mensaje marcado como leído:', data);
-        // No recargar la lista completa para evitar cambio de diseño
+        // Actualizar contadores de mensajes del header y tarjetas sin recargar toda la lista
+        try {
+            if (typeof loadNotificationCount === 'function') {
+                loadNotificationCount();
+            }
+            if (typeof loadMessageStats === 'function') {
+                loadMessageStats();
+            }
+        } catch (e) {
+            console.warn('No se pudieron refrescar los contadores después de marcar como leído:', e);
+        }
     })
     .catch(error => {
         console.error('Error marcando mensaje como leído:', error);
@@ -1883,6 +1893,18 @@ function sendResponse() {
             'La respuesta se ha enviado y el mensaje ha sido cerrado.',
             4000
         );
+
+        // Refrescar contadores de mensajes en el header y las tarjetas
+        try {
+            if (typeof loadNotificationCount === 'function') {
+                loadNotificationCount();
+            }
+            if (typeof loadMessageStats === 'function') {
+                loadMessageStats();
+            }
+        } catch (e) {
+            console.warn('No se pudieron refrescar los contadores después de enviar la respuesta:', e);
+        }
     })
     .catch(error => {
         console.error('Error enviando respuesta:', error);

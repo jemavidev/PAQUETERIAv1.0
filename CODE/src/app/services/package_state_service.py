@@ -517,17 +517,28 @@ class PackageStateService:
 
         # Tarifas base por tipo - DINÁMICO usando configuración desde .env
         from app.config import settings
-        
-        if package.package_type == PackageType.NORMAL:
+
+        # Normalizar tipo de paquete a string para evitar problemas entre enums de modelo/esquema
+        if package.package_type is None:
+            package_type_value = "NORMAL"
+        elif hasattr(package.package_type, "value"):
+            # Puede ser Enum de modelo o de esquema
+            package_type_value = str(package.package_type.value)
+        else:
+            package_type_value = str(package.package_type)
+
+        package_type_value = package_type_value.upper()
+
+        if package_type_value == "NORMAL":
             base_fee = Decimal(str(settings.base_delivery_rate_normal))
             print(f"💰 Tarifa NORMAL aplicada: {base_fee} COP (desde .env)")
-        elif package.package_type == PackageType.EXTRA_DIMENSIONADO:
+        elif package_type_value in ("EXTRA_DIMENSIONADO", "EXTRA_DIMENSIONED"):
             base_fee = Decimal(str(settings.base_delivery_rate_extra_dimensioned))
             print(f"💰 Tarifa EXTRA DIMENSIONADO aplicada: {base_fee} COP (desde .env)")
         else:
             # Fallback para tipos no reconocidos
             base_fee = Decimal(str(settings.base_delivery_rate_normal))
-            print(f"⚠️ Tipo no reconocido, usando tarifa NORMAL: {base_fee} COP")
+            print(f"⚠️ Tipo no reconocido ({package_type_value}), usando tarifa NORMAL: {base_fee} COP")
 
         # Tarifa de almacenamiento por día - usando configuración desde .env
         storage_fee_per_day = Decimal(str(settings.base_storage_rate))
@@ -1035,20 +1046,33 @@ class PackageStateService:
             return max(0, storage_days)  # No días negativos
 
     @classmethod
-    def _calculate_fees_for_new_package(cls, package_type: PackageType) -> PackageFeeCalculation:
-        """Calcular tarifas para un paquete nuevo (sin días de almacenamiento) - DINÁMICO desde .env"""
+    def _calculate_fees_for_new_package(cls, package_type) -> PackageFeeCalculation:
+        """Calcular tarifas para un paquete nuevo (sin días de almacenamiento) - DINÁMICO desde .env.
+
+        Acepta tanto enums de modelo/esquema como strings y normaliza internamente.
+        """
         from app.config import settings
-        
+
+        # Normalizar tipo de paquete a string
+        if package_type is None:
+            package_type_value = "NORMAL"
+        elif hasattr(package_type, "value"):
+            package_type_value = str(package_type.value)
+        else:
+            package_type_value = str(package_type)
+
+        package_type_value = package_type_value.upper()
+
         # Tarifas base por tipo usando configuración DINÁMICA desde .env
-        if package_type == PackageType.NORMAL:
+        if package_type_value == "NORMAL":
             base_fee = Decimal(str(settings.base_delivery_rate_normal))
             print(f"💰 Tarifa NORMAL aplicada: {base_fee} COP (desde .env: BASE_DELIVERY_RATE_NORMAL)")
-        elif package_type == PackageType.EXTRA_DIMENSIONADO:
+        elif package_type_value in ("EXTRA_DIMENSIONADO", "EXTRA_DIMENSIONED"):
             base_fee = Decimal(str(settings.base_delivery_rate_extra_dimensioned))
             print(f"💰 Tarifa EXTRA DIMENSIONADO aplicada: {base_fee} COP (desde .env: BASE_DELIVERY_RATE_EXTRA_DIMENSIONED)")
         else:
             base_fee = Decimal(str(settings.base_delivery_rate_normal))
-            print(f"⚠️ Tipo de paquete no reconocido, usando tarifa NORMAL: {base_fee} COP")
+            print(f"⚠️ Tipo de paquete no reconocido ({package_type_value}), usando tarifa NORMAL: {base_fee} COP")
 
         storage_fee = Decimal('0.00')  # Sin almacenamiento para paquetes nuevos
         total_amount = base_fee + storage_fee

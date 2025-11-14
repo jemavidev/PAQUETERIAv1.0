@@ -19,9 +19,9 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text, inspect
 
-from src.app.database import get_db
-from src.app.utils.datetime_utils import get_colombia_now
-from src.app.config import settings
+from app.database import get_db
+from app.utils.datetime_utils import get_colombia_now
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -704,7 +704,7 @@ async def get_services_status_standalone(db: Session = Depends(get_db)):
     
     # S3
     try:
-        from src.app.services.s3_service import S3Service
+        from app.services.s3_service import S3Service
         s3_service = S3Service()
         services["s3"] = {"status": "ok", "details": "S3 Service Available"}
     except Exception as e:
@@ -898,7 +898,7 @@ async def run_tests_standalone(db: Session = Depends(get_db)):
     
     # Test 2: S3
     try:
-        from src.app.services.s3_service import S3Service
+        from app.services.s3_service import S3Service
         s3_service = S3Service()
         tests.append({
             "name": "Servicio S3",
@@ -933,7 +933,7 @@ async def run_tests_standalone(db: Session = Depends(get_db)):
     # Test 4: Búsqueda
     try:
         # Probar búsqueda básica
-        from src.app.models.package import Package
+        from app.models.package import Package
         packages = db.query(Package).limit(1).all()
         tests.append({
             "name": "Búsqueda de Paquetes",

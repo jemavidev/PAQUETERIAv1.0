@@ -10,7 +10,7 @@ from sqlalchemy import Column, String, Text, Enum, DateTime, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
-from src.app.utils.datetime_utils import get_colombia_now
+from app.utils.datetime_utils import get_colombia_now
 import enum
 import uuid
 

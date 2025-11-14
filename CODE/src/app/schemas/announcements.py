@@ -22,14 +22,20 @@ class AnnouncementBase(BaseModel):
 
     @validator('customer_phone')
     def validate_phone_format(cls, v):
-        """Validar formato de teléfono colombiano"""
+        """Validar y normalizar formato de teléfono"""
         if not v:
             raise ValueError('El teléfono es requerido')
-        # Remover espacios y caracteres especiales
-        phone = ''.join(c for c in v if c.isdigit())
-        if len(phone) < 10:
-            raise ValueError('El teléfono debe tener al menos 10 dígitos')
-        return phone
+        
+        from app.utils.phone_utils import normalize_phone, validate_phone
+        
+        # Normalizar teléfono
+        normalized = normalize_phone(v)
+        
+        # Validar formato internacional
+        if not validate_phone(normalized):
+            raise ValueError('Número de teléfono inválido. Use formato: +573001234567 o 3001234567')
+        
+        return normalized
 
     @validator('customer_name')
     def validate_customer_name(cls, v):
@@ -57,6 +63,22 @@ class AnnouncementUpdate(BaseModel):
     tracking_code: Optional[str] = None
     is_active: Optional[bool] = None
     is_processed: Optional[bool] = None
+
+    @validator('customer_phone')
+    def validate_phone_format(cls, v):
+        """Validar y normalizar formato de teléfono"""
+        if v is not None and v.strip():
+            from app.utils.phone_utils import normalize_phone, validate_phone
+            
+            # Normalizar teléfono
+            normalized = normalize_phone(v)
+            
+            # Validar formato internacional
+            if not validate_phone(normalized):
+                raise ValueError('Número de teléfono inválido. Use formato: +573001234567 o 3001234567')
+            
+            return normalized
+        return v
 
     @validator('customer_name')
     def validate_customer_name(cls, v):
