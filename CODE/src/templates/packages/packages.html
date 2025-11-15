@@ -1138,13 +1138,6 @@ function createPackageElement(package) {
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
                 <div class="text-sm text-gray-900">${package.customer_name || 'Sin nombre'}</div>
-                ${package.customer_email ? `
-                    <span class="inline-flex items-center" title="Cliente tiene email registrado: ${package.customer_email}">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </span>
-                ` : ''}
             </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
@@ -2684,28 +2677,13 @@ function closeBarotiModalOnBackdrop(event) {
 async function processReceiveWithS3(packageId, packageType, packageCondition, trackingNumber) {
     console.log(`🚀 Procesando recepción con S3 para paquete: ${packageId}`);
     
-    // 1. SUBIR IMÁGENES A S3 (si las hay)
-    let uploadedImages = [];
-    if (selectedImages && selectedImages.length > 0) {
-        console.log(`📤 Subiendo ${selectedImages.length} imágenes a S3...`);
-        uploadedImages = await uploadImagesToS3(packageId, 'receive', trackingNumber);
-        console.log(`✅ ${uploadedImages.length} imágenes subidas a S3`);
-    }
-    
-    // 2. CREAR DATOS DE RECEPCIÓN
     // Extraer tracking_code del packageId (remover prefijo 'announcement_')
     const trackingCode = packageId.replace('announcement_', '');
     
-    const receiveData = {
-        announcement_id: trackingCode, // tracking_code sin prefijo
-        package_type: packageType, // Mantener en minúsculas como espera el backend
-        package_condition: packageCondition, // Mantener en minúsculas como espera el backend
-        operator_id: 1 // TODO: Obtener ID del usuario actual
-    };
+    // IMPORTANTE: NO subir imágenes a S3 antes de verificar el anuncio
+    // El endpoint /api/packages/receive-with-images verificará el anuncio primero
+    // y luego procesará las imágenes dentro de la misma transacción
     
-    console.log('📋 Datos de recepción:', receiveData);
-    
-    // 3. ENVIAR RECEPCIÓN AL BACKEND CON IMÁGENES
     // Crear FormData para enviar tanto datos como imágenes
     const formData = new FormData();
     formData.append('announcement_id', `announcement_${trackingCode}`);
@@ -2713,8 +2691,9 @@ async function processReceiveWithS3(packageId, packageType, packageCondition, tr
     formData.append('package_condition', packageCondition);
     formData.append('observations', '');
     
-    // Agregar imágenes comprimidas si existen
+    // Agregar imágenes comprimidas si existen (el backend las subirá a S3)
     if (selectedImages && selectedImages.length > 0) {
+        console.log(`📤 Agregando ${selectedImages.length} imágenes al FormData...`);
         for (let i = 0; i < selectedImages.length; i++) {
             const image = selectedImages[i];
             if (image.compressedBlob) {
@@ -2723,6 +2702,10 @@ async function processReceiveWithS3(packageId, packageType, packageCondition, tr
         }
     }
     
+    console.log('📋 Enviando recepción al backend...');
+    
+    // Enviar recepción al backend - el backend verificará el anuncio PRIMERO
+    // y solo si existe, procesará las imágenes
     const response = await fetch('/api/packages/receive-with-images', {
         method: 'POST',
         credentials: 'same-origin',

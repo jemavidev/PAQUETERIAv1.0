@@ -818,15 +818,42 @@ async def receive_package_with_images(
         # Verificar que el anuncio existe y no está procesado
         from sqlalchemy import text
         announcement_query = text("""
-            SELECT customer_name, customer_phone, guide_number, tracking_code, id
+            SELECT customer_name, customer_phone, guide_number, tracking_code, id, is_processed
             FROM package_announcements_new
-            WHERE tracking_code = :tracking_code AND is_processed = false
+            WHERE tracking_code = :tracking_code
         """)
         result = db.execute(announcement_query, {"tracking_code": tracking_code})
         announcement = result.fetchone()
 
         if not announcement:
-            raise HTTPException(status_code=404, detail="Anuncio no encontrado o ya procesado")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Anuncio con código '{tracking_code}' no encontrado. Verifica que el código sea correcto."
+            )
+        
+        # Verificar si ya está procesado
+        is_processed = announcement[5] if len(announcement) > 5 else False
+        if is_processed:
+            # Intentar obtener el paquete asociado para dar un mensaje más útil
+            package_query = text("""
+                SELECT id, tracking_number, status
+                FROM packages
+                WHERE tracking_number = :tracking_code
+                LIMIT 1
+            """)
+            package_result = db.execute(package_query, {"tracking_code": tracking_code})
+            package = package_result.fetchone()
+            
+            if package:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"El anuncio '{tracking_code}' ya fue procesado. El paquete ya existe con ID: {package[0]}"
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"El anuncio '{tracking_code}' ya fue procesado, pero no se encontró el paquete asociado."
+                )
 
         # Crear el paquete directamente desde los datos del anuncio (sin validaciones Pydantic)
         customer_name = announcement[0]

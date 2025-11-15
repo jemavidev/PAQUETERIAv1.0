@@ -37,18 +37,29 @@ async function loadDynamicRates() {
  * Obtener tarifa según tipo de paquete
  */
 function getRateByPackageType(packageType) {
-    if (!window.packageRates) {
-        console.warn('⚠️ Tarifas no cargadas, usando valores por defecto');
-        return packageType === 'normal' ? 1800 : 2500;
+    // Intentar obtener tarifas de window.appConfig primero (cargado desde el template)
+    if (window.appConfig && window.appConfig.rates) {
+        if (packageType === 'normal') {
+            return window.appConfig.rates.normal || 1500;
+        } else if (packageType === 'extra_dimensioned') {
+            return window.appConfig.rates.extra_dimensioned || 2000;
+        }
+        return window.appConfig.rates.normal || 1500;
     }
     
-    if (packageType === 'normal') {
-        return window.packageRates.normal;
-    } else if (packageType === 'extra_dimensioned') {
-        return window.packageRates.extra_dimensioned;
+    // Si window.packageRates está disponible (cargado dinámicamente)
+    if (window.packageRates) {
+        if (packageType === 'normal') {
+            return window.packageRates.normal;
+        } else if (packageType === 'extra_dimensioned') {
+            return window.packageRates.extra_dimensioned;
+        }
+        return window.packageRates.normal; // Default
     }
     
-    return window.packageRates.normal; // Default
+    // Valores por defecto que coinciden con .env (último recurso)
+    console.warn('⚠️ Tarifas no cargadas, usando valores por defecto del .env');
+    return packageType === 'normal' ? 1500 : 2000;
 }
 
 /**
