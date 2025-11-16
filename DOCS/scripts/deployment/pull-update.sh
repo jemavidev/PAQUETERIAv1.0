@@ -32,13 +32,16 @@ log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-# Obtener directorio del script
+# Obtener directorio del script y navegar a la raíz del proyecto
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../.." && pwd )"
+cd "$PROJECT_ROOT"
 
 echo "========================================="
 echo "🔄 ACTUALIZACIÓN AUTOMÁTICA - PAQUETERÍA v1.0"
 echo "========================================="
+echo ""
+log_info "Directorio del proyecto: $PROJECT_ROOT"
 echo ""
 
 # ========================================
