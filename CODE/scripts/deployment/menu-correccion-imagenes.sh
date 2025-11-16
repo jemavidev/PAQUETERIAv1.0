@@ -69,14 +69,14 @@ run_diagnostic() {
     echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
     
-    if [ ! -f "diagnose-static-files.sh" ]; then
+    if [ ! -f "CODE/scripts/deployment/diagnose-static-files.sh" ]; then
         echo -e "${RED}❌ Error: No se encuentra diagnose-static-files.sh${NC}"
         pause
         return
     fi
     
-    chmod +x diagnose-static-files.sh
-    ./diagnose-static-files.sh
+    chmod +x CODE/scripts/deployment/diagnose-static-files.sh
+    ./CODE/scripts/deployment/diagnose-static-files.sh
     pause
 }
 
@@ -88,7 +88,7 @@ test_locally() {
     echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
     
-    if [ ! -f "redeploy-with-static-fix.sh" ]; then
+    if [ ! -f "CODE/scripts/deployment/redeploy-with-static-fix.sh" ]; then
         echo -e "${RED}❌ Error: No se encuentra redeploy-with-static-fix.sh${NC}"
         pause
         return
@@ -100,8 +100,8 @@ test_locally() {
     echo
     
     if [[ $REPLY =~ ^[Ss]$ ]]; then
-        chmod +x redeploy-with-static-fix.sh
-        ./redeploy-with-static-fix.sh
+        chmod +x CODE/scripts/deployment/redeploy-with-static-fix.sh
+        ./CODE/scripts/deployment/redeploy-with-static-fix.sh
     else
         echo "Operación cancelada"
     fi
@@ -116,7 +116,7 @@ deploy_to_server() {
     echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
     
-    if [ ! -f "deploy-static-fix-to-server.sh" ]; then
+    if [ ! -f "CODE/scripts/deployment/deploy-static-fix-to-server.sh" ]; then
         echo -e "${RED}❌ Error: No se encuentra deploy-static-fix-to-server.sh${NC}"
         pause
         return
@@ -133,8 +133,8 @@ deploy_to_server() {
     echo
     
     if [[ $REPLY =~ ^[Ss]$ ]]; then
-        chmod +x deploy-static-fix-to-server.sh
-        ./deploy-static-fix-to-server.sh
+        chmod +x CODE/scripts/deployment/deploy-static-fix-to-server.sh
+        ./CODE/scripts/deployment/deploy-static-fix-to-server.sh
     else
         echo "Operación cancelada"
     fi
@@ -150,7 +150,7 @@ show_documentation() {
     echo ""
     echo "Documentos disponibles:"
     echo ""
-    echo "  1) CORRECCION_IMAGENES_ESTATICAS.md (Guía rápida)"
+    echo "  1) DOCS/documentacion/CORRECCION_IMAGENES_ESTATICAS.md (Guía rápida)"
     echo "  2) DOCS/SOLUCION_IMAGENES_ESTATICAS.md (Documentación completa)"
     echo "  3) RESUMEN_CORRECCION.txt (Resumen ejecutivo)"
     echo "  0) Volver al menú principal"
@@ -160,7 +160,7 @@ show_documentation() {
     case $doc_choice in
         1)
             clear
-            cat CORRECCION_IMAGENES_ESTATICAS.md | less
+            cat DOCS/documentacion/CORRECCION_IMAGENES_ESTATICAS.md | less
             ;;
         2)
             clear

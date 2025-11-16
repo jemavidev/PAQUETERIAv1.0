@@ -62,8 +62,6 @@ ARCHIVOS_A_ELIMINAR=(
 ARCHIVOS_VALIDOS=(
     "deploy-lightsail.sh"
     "deploy-to-aws.sh"
-    "monitor.sh"
-    "start.sh"
     "test-scripts.sh"
 )
 
@@ -123,6 +121,6 @@ log_success "✅ Limpieza completada"
 echo ""
 
 log_info "Los archivos correctos están en:"
-echo "  - Raíz del proyecto: deploy-lightsail.sh, deploy-to-aws.sh, monitor.sh, start.sh, test-scripts.sh"
-echo "  - DOCS/scripts/deployment/: deploy.sh, pull-update.sh, pull-only.sh, etc."
+echo "  - Raíz del proyecto: deploy-lightsail.sh, deploy-to-aws.sh, test-scripts.sh"
+echo "  - CODE/scripts/deployment/: monitor.sh, start.sh, deploy.sh, pull-update.sh, pull-only.sh, etc."
 echo ""

@@ -18,9 +18,9 @@ echo ""
 
 # Paso 1: Verificar configuración local
 echo -e "${YELLOW}Paso 1: Verificando configuración local...${NC}"
-if ! ./sync-configs.sh | grep -q "TODAS LAS CONFIGURACIONES ESTÁN CORRECTAS"; then
+if ! ./CODE/scripts/deployment/sync-configs.sh | grep -q "TODAS LAS CONFIGURACIONES ESTÁN CORRECTAS"; then
     echo -e "${RED}❌ Error: La configuración local tiene problemas${NC}"
-    echo "Ejecuta './sync-configs.sh' para ver los detalles"
+    echo "Ejecuta './CODE/scripts/deployment/sync-configs.sh' para ver los detalles"
     exit 1
 fi
 echo -e "${GREEN}✅ Configuración local correcta${NC}"

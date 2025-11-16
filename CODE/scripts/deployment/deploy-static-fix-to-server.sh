@@ -55,8 +55,8 @@ echo ""
 echo -e "${YELLOW}📋 Paso 3: Subiendo archivos corregidos...${NC}"
 scp docker-compose.lightsail.yml $SSH_USER@$SERVER_IP:$SERVER_PATH/
 scp CODE/nginx/nginx.lightsail.conf $SSH_USER@$SERVER_IP:$SERVER_PATH/CODE/nginx/
-scp redeploy-with-static-fix.sh $SSH_USER@$SERVER_IP:$SERVER_PATH/
-scp diagnose-static-files.sh $SSH_USER@$SERVER_IP:$SERVER_PATH/
+scp CODE/scripts/deployment/redeploy-with-static-fix.sh $SSH_USER@$SERVER_IP:$SERVER_PATH/CODE/scripts/deployment/
+scp CODE/scripts/deployment/diagnose-static-files.sh $SSH_USER@$SERVER_IP:$SERVER_PATH/CODE/scripts/deployment/
 echo -e "${GREEN}✅ Archivos subidos${NC}"
 echo ""
 
@@ -72,7 +72,7 @@ if [[ $REPLY =~ ^[Ss]$ ]]; then
     echo ""
     echo -e "${BLUE}Ejecutando redespliegue en el servidor...${NC}"
     echo "----------------------------------------"
-    ssh -t $SSH_USER@$SERVER_IP "cd $SERVER_PATH && chmod +x redeploy-with-static-fix.sh && ./redeploy-with-static-fix.sh"
+    ssh -t $SSH_USER@$SERVER_IP "cd $SERVER_PATH && chmod +x CODE/scripts/deployment/redeploy-with-static-fix.sh && ./CODE/scripts/deployment/redeploy-with-static-fix.sh"
     echo "----------------------------------------"
     echo ""
     echo -e "${GREEN}✅ Redespliegue completado${NC}"
@@ -82,7 +82,7 @@ else
     echo "Para aplicarla manualmente, conéctate al servidor y ejecuta:"
     echo "  ssh $SSH_USER@$SERVER_IP"
     echo "  cd $SERVER_PATH"
-    echo "  ./redeploy-with-static-fix.sh"
+    echo "  ./CODE/scripts/deployment/redeploy-with-static-fix.sh"
 fi
 
 echo ""
@@ -138,7 +138,7 @@ echo "  Ver logs en tiempo real:"
 echo "    ssh $SSH_USER@$SERVER_IP 'cd $SERVER_PATH && docker logs -f paqueteria_app'"
 echo ""
 echo "  Ejecutar diagnóstico:"
-echo "    ssh $SSH_USER@$SERVER_IP 'cd $SERVER_PATH && ./diagnose-static-files.sh'"
+echo "    ssh $SSH_USER@$SERVER_IP 'cd $SERVER_PATH && ./CODE/scripts/deployment/diagnose-static-files.sh'"
 echo ""
 echo "  Reiniciar aplicación:"
 echo "    ssh $SSH_USER@$SERVER_IP 'cd $SERVER_PATH && docker compose -f docker-compose.lightsail.yml restart app'"
