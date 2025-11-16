@@ -35,13 +35,21 @@ log_error() {
 # Obtener directorio del script y navegar a la raíz del proyecto
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../.." && pwd )"
-cd "$PROJECT_ROOT"
 
 echo "========================================="
 echo "🔄 ACTUALIZACIÓN AUTOMÁTICA - PAQUETERÍA v1.0"
 echo "========================================="
 echo ""
-log_info "Directorio del proyecto: $PROJECT_ROOT"
+log_info "Script ubicado en: $SCRIPT_DIR"
+log_info "Raíz del proyecto: $PROJECT_ROOT"
+
+# Cambiar al directorio raíz del proyecto
+cd "$PROJECT_ROOT" || {
+    log_error "No se pudo cambiar al directorio del proyecto: $PROJECT_ROOT"
+    exit 1
+}
+
+log_info "Directorio actual: $(pwd)"
 echo ""
 
 # ========================================
@@ -52,6 +60,9 @@ log_info "Verificando repositorio Git..."
 
 if [ ! -d ".git" ]; then
     log_error "No se encontró un repositorio Git en este directorio"
+    log_error "Directorio actual: $(pwd)"
+    log_error "Contenido del directorio:"
+    ls -la | head -10
     exit 1
 fi
 
