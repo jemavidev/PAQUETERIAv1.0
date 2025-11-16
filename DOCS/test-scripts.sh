@@ -80,11 +80,11 @@ echo ""
 # Test 5: Verificar archivos de documentación
 echo "Test 5: Verificar documentación de despliegue"
 DOCS=(
-    "EMPEZAR_HOY.md"
-    "RESUMEN_DESPLIEGUE.md"
-    "GUIA_DESPLIEGUE_AUTOMATIZADO.md"
-    "CONFIGURACION_SERVIDOR.md"
-    "RESUMEN_FINAL.md"
+    "DOCS/EMPEZAR_HOY.md"
+    "DOCS/RESUMEN_DESPLIEGUE.md"
+    "DOCS/documentacion/GUIA_DESARROLLO_Y_DESPLIEGUE.md"
+    "DOCS/CONFIGURACION_SERVIDOR.md"
+    "DOCS/documentacion/RESUMEN_FINAL_CORRECCION.md"
 )
 
 for doc in "${DOCS[@]}"; do
@@ -104,6 +104,6 @@ echo ""
 echo -e "${GREEN}✅ Sistema listo para despliegue automatizado${NC}"
 echo ""
 echo "Próximos pasos:"
-echo "1. Lee EMPEZAR_HOY.md para configuración inicial"
+echo "1. Lee DOCS/EMPEZAR_HOY.md para configuración inicial"
 echo "2. Ejecuta: ./deploy-to-aws.sh \"test: primer despliegue\""
 echo ""

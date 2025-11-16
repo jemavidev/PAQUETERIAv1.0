@@ -105,7 +105,7 @@ FILES_TO_ADD=(
     "CODE/src/app/database_optimized.py"
     "deploy-lightsail.sh"
     "docker-compose.lightsail.yml"
-    "monitor.sh"
+    "CODE/scripts/deployment/monitor.sh"
 )
 
 log_info "Archivos a agregar al repositorio:"
@@ -212,7 +212,7 @@ COMMIT_MESSAGE="feat: Agregar archivos de deployment y configuración del servid
 - CODE/src/app/database_optimized.py: Optimizaciones de base de datos
 - deploy-lightsail.sh: Script de deployment para Lightsail
 - docker-compose.lightsail.yml: Docker Compose para Lightsail
-- monitor.sh: Script de monitoreo"
+- CODE/scripts/deployment/monitor.sh: Script de monitoreo"
 
 git commit -m "$COMMIT_MESSAGE"
 
