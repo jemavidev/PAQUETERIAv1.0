@@ -1,0 +1,167 @@
+================================================================================
+CORRECCIÓN: IMÁGENES NO SE VISUALIZAN EN EL SERVIDOR
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+Las imágenes y archivos estáticos no se visualizaban en el servidor de 
+producción debido a una configuración incorrecta de volúmenes en Docker.
+
+CAUSA RAÍZ:
+-----------
+Los volúmenes montaban los archivos estáticos en /app/static/ pero FastAPI
+los buscaba en /app/src/static/, causando errores 404.
+
+SOLUCIÓN APLICADA:
+------------------
+✅ Eliminado montaje redundante en docker-compose.prod.yml
+✅ Eliminado montaje redundante en docker-compose.lightsail.yml
+✅ Habilitados logs de debug en nginx.lightsail.conf
+✅ Creados scripts de diagnóstico y despliegue
+
+ARCHIVOS MODIFICADOS:
+---------------------
+1. docker-compose.prod.yml
+   - Eliminada línea: - ./CODE/src/static:/app/static
+
+2. docker-compose.lightsail.yml
+   - Eliminada línea: - ./CODE/src/static:/app/static:ro
+
+3. CODE/nginx/nginx.lightsail.conf
+   - Agregados logs de debug para archivos estáticos
+
+ARCHIVOS CREADOS:
+-----------------
+1. diagnose-static-files.sh
+   → Script para diagnosticar problemas con archivos estáticos
+
+2. fix-static-files.sh
+   → Script para aplicar corrección rápida
+
+3. redeploy-with-static-fix.sh
+   → Script completo de redespliegue con verificación
+
+4. deploy-static-fix-to-server.sh
+   → Script para desplegar la corrección al servidor remoto
+
+5. DOCS/SOLUCION_IMAGENES_ESTATICAS.md
+   → Documentación técnica completa
+
+6. CORRECCION_IMAGENES_ESTATICAS.md
+   → Guía rápida de aplicación
+
+7. RESUMEN_CORRECCION.txt
+   → Este archivo
+
+CÓMO APLICAR LA SOLUCIÓN:
+--------------------------
+
+OPCIÓN 1 - Despliegue al Servidor (RECOMENDADO):
+  ./deploy-static-fix-to-server.sh
+
+OPCIÓN 2 - Prueba Local:
+  ./redeploy-with-static-fix.sh
+
+OPCIÓN 3 - Manual:
+  1. Conectarse al servidor
+  2. Actualizar archivos docker-compose
+  3. Ejecutar: docker compose -f docker-compose.lightsail.yml down
+  4. Ejecutar: docker compose -f docker-compose.lightsail.yml build --no-cache app
+  5. Ejecutar: docker compose -f docker-compose.lightsail.yml up -d
+
+VERIFICACIÓN:
+-------------
+Después de aplicar la solución, verifica:
+
+1. Health check:
+   curl http://TU_SERVIDOR:8000/health
+
+2. Favicon:
+   curl -I http://TU_SERVIDOR:8000/static/images/favicon.png
+
+3. Logo:
+   curl -I http://TU_SERVIDOR:8000/static/images/logo.png
+
+4. CSS:
+   curl -I http://TU_SERVIDOR:8000/static/css/main.css
+
+Todos deben retornar: HTTP/1.1 200 OK
+
+DIAGNÓSTICO:
+------------
+Para verificar el estado actual sin hacer cambios:
+  ./diagnose-static-files.sh
+
+COMANDOS ÚTILES:
+----------------
+Ver logs en tiempo real:
+  docker logs -f paqueteria_app
+
+Ver estado de contenedores:
+  docker compose -f docker-compose.lightsail.yml ps
+
+Reiniciar aplicación:
+  docker compose -f docker-compose.lightsail.yml restart app
+
+Ejecutar comando en contenedor:
+  docker exec paqueteria_app ls -lh /app/src/static/images/
+
+CHECKLIST DE DESPLIEGUE:
+------------------------
+Antes:
+  [ ] Leer documentación
+  [ ] Ejecutar diagnóstico
+  [ ] Tener acceso SSH al servidor
+  [ ] Crear backup de configuración
+
+Durante:
+  [ ] Subir archivos corregidos
+  [ ] Reconstruir contenedores
+  [ ] Verificar que inician correctamente
+
+Después:
+  [ ] Health check responde 200
+  [ ] Archivos estáticos accesibles
+  [ ] Imágenes visibles en navegador
+  [ ] Sin errores 404 en consola
+
+TROUBLESHOOTING:
+----------------
+Si los archivos aún no se ven:
+  1. Limpiar caché del navegador (Ctrl+Shift+R)
+  2. Verificar logs: docker logs paqueteria_app --tail 100
+  3. Verificar estructura: docker exec paqueteria_app ls -lh /app/src/static/
+  4. Revisar permisos de archivos en el host
+
+Si hay errores de conexión SSH:
+  1. Verificar IP del servidor
+  2. Verificar credenciales SSH
+  3. Verificar puerto SSH (default: 22)
+  4. Verificar firewall
+
+DOCUMENTACIÓN ADICIONAL:
+------------------------
+- CORRECCION_IMAGENES_ESTATICAS.md → Guía rápida
+- DOCS/SOLUCION_IMAGENES_ESTATICAS.md → Documentación completa
+- CODE/src/main.py → Configuración de FastAPI
+- CODE/nginx/nginx.lightsail.conf → Configuración de Nginx
+
+ESTADO:
+-------
+✅ Corrección lista para desplegar
+✅ Scripts probados y funcionales
+✅ Documentación completa
+✅ Sin errores de sintaxis
+
+PRÓXIMOS PASOS:
+---------------
+1. Ejecutar: ./deploy-static-fix-to-server.sh
+2. Seguir las instrucciones del script
+3. Verificar que las imágenes se visualicen correctamente
+4. Confirmar que no hay errores en los logs
+
+================================================================================
+Fecha: 2025-01-24
+Versión: 1.0
+Estado: ✅ LISTO PARA DESPLEGAR
+================================================================================

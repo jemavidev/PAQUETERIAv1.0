@@ -83,7 +83,6 @@ services:
     volumes:
       # Código fuente en modo READ ONLY (sin hot reload)
       - ./CODE/src:/app/src:ro
-      - ./CODE/src/static:/app/static:ro
       # Solo uploads es writable
       - uploads_data:/app/uploads
       # Logs con límite de tamaño

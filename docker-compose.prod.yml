@@ -55,8 +55,6 @@ services:
       # Código fuente completo (incluye templates, CSS, JS, Python) desde el host
       # Sin :ro para permitir hot reload y cambios en tiempo real
       - ./CODE/src:/app/src
-      # Archivos estáticos montados también en /app/static para acceso directo
-      - ./CODE/src/static:/app/static
       # Imágenes/archivos locales subidos por la app (persistencia)
       - uploads_data:/app/uploads
       # Logs persistentes (opcional, útil para depurar)
