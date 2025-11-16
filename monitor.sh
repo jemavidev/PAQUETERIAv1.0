@@ -33,7 +33,7 @@ print_header "📊 MONITOR PAQUETERÍA v1.0 - LIGHTSAIL"
 # ========================================
 
 print_header "🐳 Estado de Contenedores"
-docker-compose -f docker-compose.lightsail.yml ps
+docker compose -f docker-compose.lightsail.yml ps
 
 # ========================================
 # 2. USO DE RECURSOS
@@ -78,20 +78,20 @@ echo ""
 
 print_header "🔴 Estado de Redis"
 
-if docker-compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" ping 2>/dev/null | grep -q "PONG"; then
+if docker compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" ping 2>/dev/null | grep -q "PONG"; then
     echo -e "${GREEN}✅ Redis: ACTIVO${NC}"
     
     # Info de Redis
     echo ""
     echo "Información de Redis:"
-    docker-compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" info stats 2>/dev/null | grep -E "keyspace_hits|keyspace_misses|total_connections_received|instantaneous_ops_per_sec"
+    docker compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" info stats 2>/dev/null | grep -E "keyspace_hits|keyspace_misses|total_connections_received|instantaneous_ops_per_sec"
     
     echo ""
-    docker-compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" info memory 2>/dev/null | grep -E "used_memory_human|used_memory_peak_human|maxmemory_human"
+    docker compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" info memory 2>/dev/null | grep -E "used_memory_human|used_memory_peak_human|maxmemory_human"
     
     echo ""
     echo "Claves en BD:"
-    docker-compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" dbsize 2>/dev/null
+    docker compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" dbsize 2>/dev/null
 else
     echo -e "${RED}❌ Redis: NO DISPONIBLE${NC}"
 fi
@@ -103,11 +103,11 @@ fi
 print_header "📋 Últimos Errores en Logs (últimos 5 minutos)"
 
 echo "App:"
-docker-compose -f docker-compose.lightsail.yml logs --since 5m app 2>/dev/null | grep -i "error\|exception\|failed\|warning" | tail -n 10 || echo "No hay errores recientes"
+docker compose -f docker-compose.lightsail.yml logs --since 5m app 2>/dev/null | grep -i "error\|exception\|failed\|warning" | tail -n 10 || echo "No hay errores recientes"
 
 echo ""
 echo "Celery:"
-docker-compose -f docker-compose.lightsail.yml logs --since 5m celery_worker 2>/dev/null | grep -i "error\|exception\|failed" | tail -n 10 || echo "No hay errores recientes"
+docker compose -f docker-compose.lightsail.yml logs --since 5m celery_worker 2>/dev/null | grep -i "error\|exception\|failed" | tail -n 10 || echo "No hay errores recientes"
 
 # ========================================
 # 8. CONEXIONES DE RED
@@ -189,13 +189,13 @@ docker volume ls | grep paqueteria
 print_header "💡 Comandos Útiles"
 
 echo "Ver logs en tiempo real:"
-echo "  docker-compose -f docker-compose.lightsail.yml logs -f [servicio]"
+echo "  docker compose -f docker-compose.lightsail.yml logs -f [servicio]"
 echo ""
 echo "Reiniciar servicios:"
-echo "  docker-compose -f docker-compose.lightsail.yml restart [servicio]"
+echo "  docker compose -f docker-compose.lightsail.yml restart [servicio]"
 echo ""
 echo "Limpiar caché Redis:"
-echo "  docker-compose -f docker-compose.lightsail.yml exec redis redis-cli -a \$REDIS_PASSWORD FLUSHDB"
+echo "  docker compose -f docker-compose.lightsail.yml exec redis redis-cli -a \$REDIS_PASSWORD FLUSHDB"
 echo ""
 echo "Ver estadísticas en tiempo real:"
 echo "  watch -n 5 'docker stats --no-stream'"

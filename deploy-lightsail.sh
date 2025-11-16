@@ -47,7 +47,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null && ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
+if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
     log_error "Docker Compose no está instalado"
     exit 1
 fi
@@ -90,7 +90,7 @@ echo ""
 
 log_info "Deteniendo contenedores anteriores..."
 
-docker-compose -f docker-compose.lightsail.yml down 2>/dev/null || true
+docker compose -f docker-compose.lightsail.yml down 2>/dev/null || true
 
 log_success "Contenedores detenidos"
 echo ""
@@ -135,7 +135,7 @@ echo ""
 
 log_info "Iniciando servicios..."
 
-docker-compose -f docker-compose.lightsail.yml up -d
+docker compose -f docker-compose.lightsail.yml up -d
 
 log_success "Servicios iniciados"
 echo ""
@@ -151,7 +151,7 @@ sleep 10
 # Verificar Redis
 log_info "Verificando Redis..."
 for i in {1..30}; do
-    if docker-compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" ping &>/dev/null; then
+    if docker compose -f docker-compose.lightsail.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-Redis2025!Secure}" ping &>/dev/null; then
         log_success "Redis está listo"
         break
     fi
@@ -171,7 +171,7 @@ for i in {1..30}; do
     fi
     if [ $i -eq 30 ]; then
         log_error "Aplicación no responde después de 30 intentos"
-        log_info "Verifica los logs con: docker-compose -f docker-compose.lightsail.yml logs app"
+        log_info "Verifica los logs con: docker compose -f docker-compose.lightsail.yml logs app"
         exit 1
     fi
     sleep 2
@@ -187,7 +187,7 @@ read -p "¿Ejecutar migraciones de Alembic? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     log_info "Ejecutando migraciones..."
-    docker-compose -f docker-compose.lightsail.yml exec app sh -c "cd /app && alembic upgrade head"
+    docker compose -f docker-compose.lightsail.yml exec app sh -c "cd /app && alembic upgrade head"
     log_success "Migraciones ejecutadas"
 fi
 
@@ -219,7 +219,7 @@ echo ""
 # ========================================
 
 log_info "Estado de los contenedores:"
-docker-compose -f docker-compose.lightsail.yml ps
+docker compose -f docker-compose.lightsail.yml ps
 
 echo ""
 
@@ -246,15 +246,15 @@ echo "   - Health Check: http://localhost:8000/health"
 echo "   - Métricas: http://localhost:8000/metrics"
 echo ""
 echo "📝 Comandos útiles:"
-echo "   - Ver logs: docker-compose -f docker-compose.lightsail.yml logs -f [servicio]"
-echo "   - Reiniciar: docker-compose -f docker-compose.lightsail.yml restart [servicio]"
-echo "   - Detener: docker-compose -f docker-compose.lightsail.yml down"
-echo "   - Estado: docker-compose -f docker-compose.lightsail.yml ps"
+echo "   - Ver logs: docker compose -f docker-compose.lightsail.yml logs -f [servicio]"
+echo "   - Reiniciar: docker compose -f docker-compose.lightsail.yml restart [servicio]"
+echo "   - Detener: docker compose -f docker-compose.lightsail.yml down"
+echo "   - Estado: docker compose -f docker-compose.lightsail.yml ps"
 echo "   - Estadísticas: docker stats"
 echo ""
 echo "🔍 Monitoreo:"
 echo "   - Recursos: watch -n 5 docker stats --no-stream"
-echo "   - Logs en tiempo real: docker-compose -f docker-compose.lightsail.yml logs -f"
+echo "   - Logs en tiempo real: docker compose -f docker-compose.lightsail.yml logs -f"
 echo ""
 echo "⚠️  IMPORTANTE:"
 echo "   - Configura Nginx como reverse proxy en el puerto 80/443"
