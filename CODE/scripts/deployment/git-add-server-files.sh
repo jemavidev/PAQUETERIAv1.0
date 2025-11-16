@@ -67,9 +67,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Buscar la raíz del proyecto (donde está .git)
 PROJECT_ROOT=$(find_project_root "$SCRIPT_DIR")
-if [ $? -ne 0 ]; then
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ] || [ -z "$PROJECT_ROOT" ]; then
     echo "❌ Error: No se encontró la raíz del proyecto (.git)" >&2
     echo "   Ejecuta este script desde dentro del repositorio Git" >&2
+    echo "   Directorio actual del script: $SCRIPT_DIR" >&2
     exit 1
 fi
 
