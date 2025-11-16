@@ -132,6 +132,8 @@ CRITICAL_FILES=(
     "CODE/Dockerfile.lightsail"
     "docker-compose.prod.yml"
     "docker-compose.lightsail.yml"
+    "CODE/nginx/nginx.lightsail.conf"
+    "deploy-lightsail.sh"
 )
 
 # Obtener cambios desde el último commit
