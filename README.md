@@ -20,7 +20,7 @@ Esta es la versión de producción del sistema PAQUETERÍA v1.0.
 - Credenciales de AWS RDS configuradas
 - Credenciales de AWS S3 configuradas
 
-### Despliegue
+### Despliegue Local
 
 ```bash
 # 1. Configurar variables de entorno
@@ -35,6 +35,21 @@ docker compose -f docker-compose.prod.yml up -d
 # O usar el script de inicio
 ./start.sh
 ```
+
+### 🚀 Despliegue Automatizado a AWS
+
+**Flujo de trabajo:** Localhost → GitHub → AWS Server
+
+```bash
+# Despliegue en un solo comando
+./deploy-to-aws.sh "mensaje del commit"
+```
+
+**Documentación completa:**
+- 📖 **[EMPEZAR_HOY.md](EMPEZAR_HOY.md)** - Guía rápida de 15 minutos
+- 📚 **[GUIA_DESPLIEGUE_AUTOMATIZADO.md](GUIA_DESPLIEGUE_AUTOMATIZADO.md)** - Guía completa
+- 📊 **[DIAGRAMA_FLUJO_DESPLIEGUE.md](DIAGRAMA_FLUJO_DESPLIEGUE.md)** - Diagramas visuales
+- 📝 **[RESUMEN_DESPLIEGUE.md](RESUMEN_DESPLIEGUE.md)** - Resumen ejecutivo
 
 ---
 
