@@ -1,0 +1,178 @@
+# ========================================
+# PAQUETERÍA v1.0 - DOCKER COMPOSE AWS LIGHTSAIL
+# ========================================
+# Optimizado para: 1GB RAM, 20GB Disco, 2 CPUs, 50 usuarios simultáneos
+# Uso: docker compose -f docker-compose.lightsail.yml up -d
+# ========================================
+
+name: "PAQUETERIA_v1_LIGHTSAIL"
+
+services:
+  # ========================================
+  # REDIS - Cache optimizado (128MB RAM máximo)
+  # ========================================
+  redis:
+    image: redis:7-alpine
+    container_name: paqueteria_redis
+    command: >
+      redis-server 
+      --requirepass ${REDIS_PASSWORD:-Redis2025!Secure} 
+      --maxmemory 128mb 
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --appendonly no
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    mem_limit: 150m
+    mem_reservation: 100m
+    cpus: 0.3
+    environment:
+      - TZ=America/Bogota
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-Redis2025!Secure}", "--raw", "incr", "ping"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paqueteria_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  # ========================================
+  # APP - FastAPI optimizado (400MB RAM máximo)
+  # ========================================
+  app:
+    build:
+      context: ./CODE
+      dockerfile: Dockerfile
+    image: paqueteria_v1_app:lightsail
+    container_name: paqueteria_app
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./CODE/.env
+    environment:
+      - TZ=America/Bogota
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - ENVIRONMENT=production
+      - WORKERS=2
+      - MAX_REQUESTS=1000
+      - MAX_REQUESTS_JITTER=50
+      - TIMEOUT=30
+      - KEEP_ALIVE=5
+    restart: unless-stopped
+    mem_limit: 450m
+    mem_reservation: 350m
+    cpus: 1.2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Código fuente en modo READ ONLY (sin hot reload)
+      - ./CODE/src:/app/src:ro
+      - ./CODE/src/static:/app/static:ro
+      # Solo uploads es writable
+      - uploads_data:/app/uploads
+      # Logs con límite de tamaño
+      - logs_data:/app/logs
+    command: >
+      sh -c "mkdir -p /app/uploads && 
+             cd /app && 
+             python -m uvicorn src.main:app 
+             --host 0.0.0.0 
+             --port 8000 
+             --workers 2 
+             --limit-concurrency 100 
+             --timeout-keep-alive 5 
+             --no-access-log
+             --log-level warning"
+    networks:
+      - paqueteria_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ========================================
+  # CELERY WORKER - 1 solo worker optimizado (150MB RAM máximo)
+  # ========================================
+  celery_worker:
+    image: paqueteria_v1_app:lightsail
+    container_name: paqueteria_celery
+    depends_on:
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_started
+    env_file:
+      - ./CODE/.env
+    environment:
+      - TZ=America/Bogota
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-Redis2025!Secure}@redis:6379/0
+    restart: unless-stopped
+    mem_limit: 180m
+    mem_reservation: 120m
+    cpus: 0.5
+    command: >
+      sh -c "cd /app && 
+             celery -A src.app.celery_app worker 
+             --loglevel=warning 
+             --concurrency=1 
+             --max-tasks-per-child=100 
+             --task-events 
+             --without-gossip 
+             --without-mingle 
+             --without-heartbeat
+             --hostname=worker@lightsail"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 90s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ./CODE/src:/app/src:ro
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    networks:
+      - paqueteria_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+# ========================================
+# VOLÚMENES - Solo lo esencial
+# ========================================
+volumes:
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+  logs_data:
+    driver: local
+
+# ========================================
+# REDES
+# ========================================
+networks:
+  paqueteria_network:
+    driver: bridge
+    name: paqueteria_lightsail_network
+
