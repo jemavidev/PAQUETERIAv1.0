@@ -12,7 +12,7 @@ Router de paquetes para PAQUETES EL CLUB
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from app.database import get_db
 from app.dependencies import get_current_active_user, get_current_active_user_from_cookies
@@ -211,28 +211,85 @@ async def list_packages(
     import logging
     logger = logging.getLogger(__name__)
 
-    # Get packages
-    packages_query = """
-        SELECT
-            p.id, p.tracking_number, p.guide_number, p.package_type, p.status, p.package_condition,
-            p.access_code, p.posicion, NULL as observations, p.announced_at, p.received_at,
-            p.delivered_at, p.cancelled_at, p.base_fee, p.storage_fee, p.total_amount,
-            p.customer_id, p.created_at, p.updated_at,
-            COALESCE(c.full_name, 'Sin cliente') as customer_name,
-            COALESCE(c.phone, 'Sin teléfono') as customer_phone,
-            c.email as customer_email,
-            CASE 
-                WHEN p.received_at IS NOT NULL THEN 
-                    FLOOR(EXTRACT(EPOCH FROM (NOW() - p.received_at)) / 86400)
-                ELSE 0
-            END as storage_days
-        FROM packages p
-        LEFT JOIN customers c ON p.customer_id = c.id
-        ORDER BY p.created_at DESC
-    """
-
-    packages_result = db.execute(text(packages_query))
-    packages_data = packages_result.fetchall()
+    # Get packages with file uploads
+    # Get packages with file uploads using ORM
+    from datetime import datetime, timezone
+    
+    try:
+        packages_query = db.query(Package).options(
+            joinedload(Package.customer),
+            joinedload(Package.file_uploads)
+        ).order_by(Package.created_at.desc()).all()
+    except Exception as e:
+        logger.error(f"Error querying packages: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
+    
+    packages_data = []
+    for package in packages_query:
+        try:
+            # Calculate storage days
+            storage_days = 0
+            if package.received_at:
+                # Make datetime timezone-aware if needed
+                now = datetime.now(timezone.utc)
+                received_at = package.received_at
+                if received_at.tzinfo is None:
+                    received_at = received_at.replace(tzinfo=timezone.utc)
+                delta = now - received_at
+                storage_days = max(0, delta.days)
+            
+            # Calculate storage fee
+            storage_fee = float(storage_days * settings.base_storage_rate)
+            total_amount = float(package.base_fee or 0) + storage_fee
+            
+            # Get file uploads
+            file_uploads_data = []
+            for file_upload in package.file_uploads:
+                try:
+                    file_uploads_data.append({
+                        'id': file_upload.id,
+                        'filename': file_upload.filename,
+                        's3_key': file_upload.s3_key,
+                        's3_url': file_upload.s3_url,
+                        'file_type': file_upload.file_type.value if file_upload.file_type else None,
+                        'file_size': file_upload.file_size,
+                        'content_type': file_upload.content_type,
+                        'created_at': file_upload.created_at.isoformat() if file_upload.created_at else None
+                    })
+                except Exception as e:
+                    logger.warning(f"Error processing file upload {file_upload.id}: {str(e)}")
+                    continue
+            
+            packages_data.append({
+                'id': package.id,
+                'tracking_number': package.tracking_number,
+                'guide_number': package.guide_number,
+                'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
+                'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
+                'customer_email': package.customer.email if package.customer else None,
+                'package_type': package.package_type.value if package.package_type else 'normal',
+                'status': package.status.value if package.status else 'ANUNCIADO',
+                'package_condition': package.package_condition.value if package.package_condition else 'BUENO',
+                'access_code': package.access_code or '',
+                'baroti': package.posicion,
+                'observations': None,
+                'announced_at': package.announced_at.isoformat() if package.announced_at else None,
+                'received_at': package.received_at.isoformat() if package.received_at else None,
+                'delivered_at': package.delivered_at.isoformat() if package.delivered_at else None,
+                'cancelled_at': package.cancelled_at.isoformat() if package.cancelled_at else None,
+                'base_fee': float(package.base_fee or 0),
+                'storage_fee': storage_fee,
+                'storage_days': storage_days,
+                'total_amount': total_amount,
+                'customer_id': package.customer_id,
+                'created_at': package.created_at.isoformat() if package.created_at else None,
+                'updated_at': package.updated_at.isoformat() if package.updated_at else None,
+                'is_announcement': False,
+                'file_uploads': file_uploads_data
+            })
+        except Exception as e:
+            logger.error(f"Error processing package {package.id}: {str(e)}")
+            continue
 
     # Get unprocessed package announcements (including cancelled ones)
     # ✅ ACTUALIZADO: Ahora hace JOIN con customers para obtener datos actualizados
@@ -278,40 +335,9 @@ async def list_packages(
     # Combine packages and announcements
     all_items = []
 
-    # Add packages
-    for row in packages_data:
-        # Calcular storage_fee actualizado basado en storage_days
-        storage_days = int(row[22] or 0)  # storage_days es el índice 22 (después de customer_email)
-        storage_fee = float(storage_days * settings.base_storage_rate)  # Tarifa por día desde configuración
-        total_amount = float(row[13] or 0) + storage_fee  # base_fee + storage_fee
-        
-        item_dict = {
-            'id': str(row[0]),  # Convert to string for frontend
-            'tracking_number': row[1],
-            'guide_number': row[2],
-            'customer_name': row[19],
-            'customer_phone': row[20],
-            'customer_email': row[21],  # Email del cliente (puede ser None)
-            'package_type': row[3] or 'normal',
-            'status': row[4] or 'ANUNCIADO',
-            'package_condition': row[5] or 'BUENO',
-            'access_code': row[6] or '',
-            'baroti': row[7],
-            'observations': row[8],
-            'announced_at': row[9].isoformat() if row[9] else None,
-            'received_at': row[10].isoformat() if row[10] else None,
-            'delivered_at': row[11].isoformat() if row[11] else None,
-            'cancelled_at': row[12].isoformat() if row[12] else None,
-            'base_fee': float(row[13] or 0),
-            'storage_fee': storage_fee,
-            'storage_days': storage_days,
-            'total_amount': total_amount,
-            'customer_id': row[16],
-            'created_at': row[17].isoformat() if row[17] else None,
-            'updated_at': row[18].isoformat() if row[18] else None,
-            'is_announcement': False  # Flag to identify if it's an announcement
-        }
-        all_items.append(normalize_package_item(item_dict))
+    # Add packages (now they are already dictionaries with file_uploads)
+    for package_dict in packages_data:
+        all_items.append(normalize_package_item(package_dict))
 
     # Add announcements
     for row in announcements_data:
@@ -339,7 +365,8 @@ async def list_packages(
             'customer_phone': row[19],  # ✅ Ahora viene de customers.phone si existe
             'customer_email': row[20],  # ✅ Email del cliente (puede ser None)
             'guide_number': row[21],  # Guide number from announcement
-            'is_announcement': True  # Flag to identify if it's an announcement
+            'is_announcement': True,  # Flag to identify if it's an announcement
+            'file_uploads': []  # Los anuncios no tienen archivos adjuntos
         }
         all_items.append(normalize_package_item(item_dict))
 
