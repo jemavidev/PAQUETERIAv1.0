@@ -661,7 +661,7 @@ async def receive_package_from_announcement(
                 detail="No tienes permisos para recibir paquetes"
             )
 
-        result = PackageStateService.receive_package_from_announcement(
+        result = await PackageStateService.receive_package_from_announcement(
             db=db,
             request=request
         )
@@ -904,7 +904,7 @@ async def receive_package_with_images(
         )
 
         # Procesar recepción usando el servicio que genera BAROTI
-        result = PackageStateService.receive_package_from_announcement(
+        result = await PackageStateService.receive_package_from_announcement(
             db=db,
             request=receive_request
         )
@@ -1537,24 +1537,22 @@ async def send_package_email_notification(
                 detail=f"El paquete está en estado {package.status.value}, no puede enviarse email para evento {event_type}"
             )
         
-        # Preparar variables para el template
+        # Preparar variables para la plantilla unificada de estado
+        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
+        first_name = full_name.split(" ")[0]
+
+        consult_code = package.tracking_number
+        # Usar TRACKING_BASE_URL para construir la URL pública real
+        tracking_base = settings.tracking_base_url.rstrip("/")
+        tracking_url = f"{tracking_base}?auto_search={consult_code}"
+
         variables = {
-            "guide_number": package.tracking_number,
-            "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-            "customer_name": package.customer.full_name if package.customer else "Cliente",
-            "package_type": package.package_type.value if package.package_type else "normal",
-            "tracking_url": f"{settings.tracking_base_url}/{package.tracking_number}"
+            "first_name": first_name,
+            "current_status": package.status.value if hasattr(package.status, "value") else str(package.status),
+            "guide_number": package.guide_number or None,
+            "consult_code": consult_code,
+            "tracking_url": tracking_url,
         }
-        
-        # Agregar timestamps según el estado
-        if notification_event == NotificationEvent.PACKAGE_RECEIVED and package.received_at:
-            variables["received_at"] = package.received_at.strftime("%d/%m/%Y %H:%M")
-        elif notification_event == NotificationEvent.PACKAGE_DELIVERED and package.delivered_at:
-            variables["delivered_at"] = package.delivered_at.strftime("%d/%m/%Y %H:%M")
-            variables["recipient_name"] = getattr(package, 'delivered_to', 'Cliente')
-        elif notification_event == NotificationEvent.PACKAGE_CANCELLED:
-            from app.utils.datetime_utils import get_colombia_now
-            variables["cancelled_at"] = get_colombia_now().strftime("%d/%m/%Y %H:%M")
         
         # Enviar email usando EmailService
         email_service = EmailService()

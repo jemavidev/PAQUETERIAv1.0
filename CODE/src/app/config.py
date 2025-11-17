@@ -100,9 +100,11 @@ class Settings(BaseSettings):
     default_phone_length: int = int(os.getenv("DEFAULT_PHONE_LENGTH", "10"))
     
     # URLs y Dominios
-    production_url: str = os.getenv("PRODUCTION_URL", "https://paquetes.com.co")
+    # Dominio público principal del proyecto PAQUETEX
+    production_url: str = os.getenv("PRODUCTION_URL", "https://paquetex.papyrus.com.co")
     development_url: str = os.getenv("DEVELOPMENT_URL", "http://localhost:8000")
-    tracking_base_url: str = os.getenv("TRACKING_BASE_URL", "https://paquetes.com.co/seguimiento")
+    # URL base para consultas de paquetes (página /search real del proyecto)
+    tracking_base_url: str = os.getenv("TRACKING_BASE_URL", "https://paquetex.papyrus.com.co/search")
     
     # Configuración de Mensajes SMS
     sms_daily_limit: int = int(os.getenv("SMS_DAILY_LIMIT", "1000"))

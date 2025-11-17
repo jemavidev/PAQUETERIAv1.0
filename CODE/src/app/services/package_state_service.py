@@ -12,11 +12,12 @@ from app.models.package import Package, PackageStatus, PackageType, PackageCondi
 from app.models.package_history import PackageHistory
 from app.models.package_event import PackageEvent, EventType
 from app.models.announcement_new import PackageAnnouncementNew
-from app.models.notification import NotificationEvent
+from app.models.notification import NotificationEvent, NotificationPriority
 from app.models.user import User
 from app.models.customer import Customer
 from app.services.sms_service import SMSService
 from app.utils.datetime_utils import get_colombia_now
+from app.config import settings
 from app.schemas.package import (
     PackageReceiveRequest, PackageDeliverRequest, PackageCancelRequest,
     PackageReceiveResponse, PackageDeliverResponse, PackageCancelResponse,
@@ -106,7 +107,6 @@ class PackageStateService:
         db.refresh(package)
 
         # Enviar notificación SMS automáticamente si hay un cliente asociado
-        # NOTA: Email se envía manualmente mediante botón en la interfaz
         try:
             await cls._send_sms_notification(db, package, new_status, changed_by)
         except Exception as e:
@@ -114,6 +114,14 @@ class PackageStateService:
             import logging
             logger = logging.getLogger("package_state_service")
             logger.warning(f"Error enviando SMS para paquete {package.id}: {str(e)}")
+
+        # Enviar notificación por email automáticamente si hay un cliente con email
+        try:
+            await cls._send_email_notification(db, package, new_status, changed_by)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger("package_state_service")
+            logger.warning(f"Error enviando email para paquete {package.id}: {str(e)}")
 
         return history_entry
 
@@ -432,16 +440,28 @@ class PackageStateService:
         changed_by: str
     ):
         """Enviar notificación por email cuando cambia el estado del paquete"""
+        import logging
+        logger = logging.getLogger("package_state_service")
+        
+        logger.info(f"🔍 [EMAIL] Iniciando envío de email para paquete {package.id}, estado: {new_status}")
+        
         # Solo enviar email si el paquete tiene un cliente asociado con email
         if not package.customer_id:
+            logger.info(f"❌ [EMAIL] Paquete {package.id} no tiene customer_id asociado")
             return
+
+        logger.info(f"✅ [EMAIL] Paquete {package.id} tiene customer_id: {package.customer_id}")
 
         # Obtener email del cliente
         customer_email = None
         if package.customer and hasattr(package.customer, 'email'):
             customer_email = package.customer.email
+            logger.info(f"📧 [EMAIL] Email del cliente: {customer_email if customer_email else 'NO TIENE EMAIL'}")
+        else:
+            logger.warning(f"⚠️ [EMAIL] Paquete {package.id}: customer no cargado o no tiene atributo email")
 
         if not customer_email:
+            logger.info(f"❌ [EMAIL] No se enviará email para paquete {package.id}: cliente sin email")
             return  # No hay email para enviar
 
         # Mapear estados de paquete a eventos de notificación
@@ -456,31 +476,35 @@ class PackageStateService:
         if not event_type:
             return  # No hay evento definido para este estado
 
-        # Preparar variables para la plantilla
+        # Construir variables unificadas para la plantilla de estado
+        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
+        first_name = full_name.split(" ")[0]
+
+        # Código de consulta que se usará en la URL de búsqueda
+        consult_code = package.tracking_number
+
+        # Usar TRACKING_BASE_URL configurado para construir el enlace público correcto
+        # Ejemplo por defecto: https://paquetex.papyrus.com.co/search
+        tracking_base = settings.tracking_base_url.rstrip("/")
+        tracking_url = f"{tracking_base}?auto_search={consult_code}"
+
         variables = {
-            "guide_number": package.tracking_number,
-            "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-            "customer_name": package.customer.full_name if package.customer else "Cliente",
-            "package_type": package.package_type.value if package.package_type else "normal",
-            "tracking_url": f"{settings.tracking_base_url}/{package.tracking_number}"
+            "first_name": first_name,
+            "current_status": new_status.value if hasattr(new_status, "value") else str(new_status),
+            "guide_number": package.guide_number or None,
+            "consult_code": consult_code,
+            "tracking_url": tracking_url,
         }
 
-        # Agregar timestamps según el estado
-        if new_status == PackageStatus.RECIBIDO and package.received_at:
-            variables["received_at"] = package.received_at.strftime("%d/%m/%Y %H:%M")
-        elif new_status == PackageStatus.ENTREGADO and package.delivered_at:
-            variables["delivered_at"] = package.delivered_at.strftime("%d/%m/%Y %H:%M")
-            variables["recipient_name"] = getattr(package, 'delivered_to', 'Cliente')
-        elif new_status == PackageStatus.CANCELADO:
-            from app.utils.datetime_utils import get_colombia_now
-            variables["cancelled_at"] = get_colombia_now().strftime("%d/%m/%Y %H:%M")
-
         # Enviar email usando el servicio
+        logger.info(f"📤 [EMAIL] Preparando envío a {customer_email} con evento {event_type}")
+        logger.info(f"📦 [EMAIL] Variables: {variables}")
+        
         try:
             from app.services.email_service import EmailService
             email_service = EmailService()
             
-            await email_service.send_email_by_event(
+            result = await email_service.send_email_by_event(
                 db=db,
                 event_type=event_type,
                 recipient=customer_email,
@@ -490,11 +514,14 @@ class PackageStateService:
                 priority=NotificationPriority.MEDIA,
                 is_test=False
             )
+            
+            logger.info(f"✅ [EMAIL] Email enviado exitosamente a {customer_email} para paquete {package.id}")
+            logger.info(f"📊 [EMAIL] Resultado: {result}")
+            
         except Exception as e:
             # Log error but don't fail the package update
-            import logging
-            logger = logging.getLogger("package_state_service")
-            logger.warning(f"No se pudo enviar email para paquete {package.id}: {str(e)}")
+            logger.error(f"❌ [EMAIL] Error enviando email para paquete {package.id}: {str(e)}")
+            logger.exception(e)  # Esto imprimirá el stack trace completo
 
     # ========================================
     # NUEVOS MÉTODOS PARA TRANSICIONES AVANZADAS
@@ -563,7 +590,7 @@ class PackageStateService:
         )
 
     @classmethod
-    def receive_package_from_announcement(
+    async def receive_package_from_announcement(
         cls,
         db: Session,
         request: PackageReceiveRequest
@@ -670,6 +697,17 @@ class PackageStateService:
                     db.add(history_entry)
                     db.commit()
                 
+                # Enviar notificaciones (SMS y Email) para estado RECIBIDO
+                try:
+                    await cls._send_sms_notification(db, existing_package, PackageStatus.RECIBIDO, operator_name)
+                except Exception as e:
+                    print(f"Error sending SMS for package {existing_package.id}: {str(e)}")
+
+                try:
+                    await cls._send_email_notification(db, existing_package, PackageStatus.RECIBIDO, operator_name)
+                except Exception as e:
+                    print(f"Error sending email for package {existing_package.id}: {str(e)}")
+
                 # Retornar respuesta
                 return PackageReceiveResponse(
                     success=True,
@@ -796,11 +834,16 @@ class PackageStateService:
         db.refresh(announcement)
         db.refresh(history_entry)
 
-        # Enviar notificación SMS
+        # Enviar notificaciones (SMS y Email) para estado RECIBIDO
         try:
-            cls._send_sms_notification(db, new_package, PackageStatus.RECIBIDO, f"operator_{request.operator_id}")
+            await cls._send_sms_notification(db, new_package, PackageStatus.RECIBIDO, f"operator_{request.operator_id}")
         except Exception as e:
             print(f"Error sending SMS for package {new_package.id}: {str(e)}")
+
+        try:
+            await cls._send_email_notification(db, new_package, PackageStatus.RECIBIDO, f"operator_{request.operator_id}")
+        except Exception as e:
+            print(f"Error sending email for package {new_package.id}: {str(e)}")
 
         return PackageReceiveResponse(
             success=True,

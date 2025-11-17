@@ -25,6 +25,7 @@ from app.services.s3_service import S3Service
 from app.utils.datetime_utils import get_colombia_now
 from app.schemas.message import CustomerInquiryCreate
 from sqlalchemy.orm import joinedload
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -492,6 +493,47 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
             # Log error but don't fail the announcement creation
             print(f"Error sending SMS confirmation for announcement {announcement.id}: {str(sms_error)}")
             # Continue with success response
+
+        # Enviar EMAIL de confirmación automáticamente
+        # Solo si el anuncio está vinculado a un cliente con email registrado
+        try:
+            if announcement.customer_id:
+                customer = db.query(Customer).filter(Customer.id == announcement.customer_id).first()
+            else:
+                customer = None
+
+            if customer and getattr(customer, "email", None):
+                from app.services.email_service import EmailService
+                from app.models.notification import NotificationEvent
+
+                email_service = EmailService()
+
+                full_name = customer.full_name or announcement.customer_name
+                first_name = full_name.split(" ")[0]
+
+                consult_code = announcement.tracking_code
+                tracking_base = settings.tracking_base_url.rstrip("/")
+                tracking_url = f"{tracking_base}?auto_search={consult_code}"
+
+                await email_service.send_email_by_event(
+                    db=db,
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    recipient=customer.email,
+                    variables={
+                        "first_name": first_name,
+                        "current_status": PackageStatus.ANUNCIADO.value,
+                        "guide_number": announcement.guide_number,
+                        "consult_code": consult_code,
+                        "tracking_url": tracking_url,
+                    },
+                    package_id=None,
+                    customer_id=str(customer.id),
+                    announcement_id=str(announcement.id),
+                    is_test=False,
+                )
+        except Exception as email_error:
+            # Log error but don't bloquear el flujo de anuncio
+            print(f"Error sending EMAIL confirmation for announcement {announcement.id}: {str(email_error)}")
 
         return {
             "success": True,

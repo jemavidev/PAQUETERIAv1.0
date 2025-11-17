@@ -264,12 +264,12 @@ class EmailService(BaseService[Notification, Any, Any]):
             Dict con resultado del envío
         """
         try:
-            # Mapear evento a template
+            # Mapear evento a template (unificación de estados en una sola plantilla)
             template_map = {
-                NotificationEvent.PACKAGE_ANNOUNCED: "announcement_confirmation.html",
+                NotificationEvent.PACKAGE_ANNOUNCED: "status_change.html",
                 NotificationEvent.PACKAGE_RECEIVED: "status_change.html",
-                NotificationEvent.PACKAGE_DELIVERED: "delivery_confirmation.html",
-                NotificationEvent.PACKAGE_CANCELLED: "package_cancelled.html",
+                NotificationEvent.PACKAGE_DELIVERED: "status_change.html",
+                NotificationEvent.PACKAGE_CANCELLED: "status_change.html",
                 NotificationEvent.PAYMENT_DUE: "payment_reminder.html",
             }
 
@@ -401,7 +401,9 @@ class EmailService(BaseService[Notification, Any, Any]):
             "company_email": settings.company_email,
             "company_website": settings.company_website,
             "current_date": get_colombia_now().strftime("%d/%m/%Y"),
-            "current_time": get_colombia_now().strftime("%H:%M")
+            "current_time": get_colombia_now().strftime("%H:%M"),
+            # Enlace de ayuda estándar (usado en footers y textos de soporte)
+            "help_url": f"{settings.production_url}/help"
         }
         
         # Combinar variables comunes con las específicas
@@ -474,11 +476,14 @@ class EmailService(BaseService[Notification, Any, Any]):
         """Genera subject por defecto basado en el evento"""
         company_name = variables.get("company_name", "PAQUETES EL CLUB")
         
+        # Para eventos de estado de paquete, usar un asunto unificado
+        estado_subject = "ACTUALIZACION ESTADO DE PAQUETE"
+
         subjects = {
-            NotificationEvent.PACKAGE_ANNOUNCED: f"{company_name} - Paquete Anunciado",
-            NotificationEvent.PACKAGE_RECEIVED: f"{company_name} - Paquete Recibido",
-            NotificationEvent.PACKAGE_DELIVERED: f"{company_name} - Paquete Entregado",
-            NotificationEvent.PACKAGE_CANCELLED: f"{company_name} - Paquete Cancelado",
+            NotificationEvent.PACKAGE_ANNOUNCED: estado_subject,
+            NotificationEvent.PACKAGE_RECEIVED: estado_subject,
+            NotificationEvent.PACKAGE_DELIVERED: estado_subject,
+            NotificationEvent.PACKAGE_CANCELLED: estado_subject,
             NotificationEvent.PAYMENT_DUE: f"{company_name} - Recordatorio de Pago",
             NotificationEvent.CUSTOM_MESSAGE: f"{company_name} - Notificación"
         }

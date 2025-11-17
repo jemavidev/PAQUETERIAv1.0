@@ -22,7 +22,11 @@ from app.schemas.announcements import (
 )
 from app.services.announcements_service import AnnouncementsService
 from app.services.sms_service import SMSService
+from app.services.email_service import EmailService
+from app.models.customer import Customer
 from app.dependencies import get_current_active_user, get_current_admin_user
+from app.config import settings
+from app.utils.phone_utils import normalize_phone
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +70,57 @@ async def create_announcement(
             )
         except Exception as sms_error:
             logger.warning(f"No se pudo enviar SMS para anuncio {db_announcement.id}: {sms_error}")
+        
+        # Enviar EMAIL de confirmación si el cliente existe y tiene email
+        try:
+            # Normalizar número de teléfono para búsqueda
+            # El número del anuncio puede venir como "3002596319"
+            # El número en la BD de clientes está como "+573002596319"
+            normalized_announcement_phone = normalize_phone(db_announcement.customer_phone)
+            
+            logger.info(f"Buscando cliente para anuncio {db_announcement.id}: teléfono original='{db_announcement.customer_phone}', normalizado='{normalized_announcement_phone}'")
+            
+            # Buscar cliente por número de teléfono normalizado
+            customer = db.query(Customer).filter(
+                Customer.phone == normalized_announcement_phone
+            ).first()
+            
+            # Si el cliente existe y tiene email, enviar notificación
+            if customer and customer.email:
+                logger.info(f"Cliente encontrado: {customer.full_name} (email: {customer.email})")
+                
+                email_service = EmailService()
+                
+                # Preparar variables para la plantilla
+                first_name = customer.full_name.split(" ")[0] if customer.full_name else "Cliente"
+                consult_code = db_announcement.tracking_code
+                tracking_base = settings.tracking_base_url.rstrip("/")
+                tracking_url = f"{tracking_base}?auto_search={consult_code}"
+                
+                variables = {
+                    "first_name": first_name,
+                    "current_status": "ANUNCIADO",
+                    "guide_number": db_announcement.guide_number,
+                    "consult_code": consult_code,
+                    "tracking_url": tracking_url,
+                }
+                
+                # Enviar email usando el evento PACKAGE_ANNOUNCED
+                await email_service.send_email_by_event(
+                    db=db,
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    recipient=customer.email,  # CORREGIDO: era recipient_email, debe ser recipient
+                    variables=variables
+                )
+                
+                logger.info(f"✅ Email de anuncio enviado exitosamente a {customer.email} para anuncio {db_announcement.id}")
+            elif customer and not customer.email:
+                logger.info(f"Cliente encontrado ({customer.full_name}) pero no tiene email registrado")
+            else:
+                logger.info(f"No se encontró cliente con teléfono {normalized_announcement_phone}")
+                
+        except Exception as email_error:
+            logger.warning(f"No se pudo enviar email para anuncio {db_announcement.id}: {email_error}")
         
         return AnnouncementResponse.model_validate(db_announcement)
     except ValueError as e:
