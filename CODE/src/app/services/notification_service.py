@@ -56,7 +56,7 @@ class NotificationService(BaseService[Notification, NotificationCreate, dict]):
         if not notification:
             return False
 
-        notification.status = NotificationStatus.ENTREGADO
+        notification.status = NotificationStatus.DELIVERED
         notification.delivered_at = datetime.utcnow()
         db.commit()
         return True
@@ -67,14 +67,14 @@ class NotificationService(BaseService[Notification, NotificationCreate, dict]):
 
     def get_pending_notifications(self, db: Session, skip: int = 0, limit: int = 50) -> List[Notification]:
         """Obtener notificaciones pendientes"""
-        return db.query(Notification).filter(Notification.status == NotificationStatus.ABIERTO).offset(skip).limit(limit).all()
+        return db.query(Notification).filter(Notification.status == NotificationStatus.PENDING).offset(skip).limit(limit).all()
 
     def get_notification_stats(self, db: Session) -> dict:
         """Obtener estadísticas de notificaciones"""
         total_notifications = db.query(Notification).count()
         sent_count = db.query(Notification).filter(Notification.status == NotificationStatus.SENT).count()
         failed_count = db.query(Notification).filter(Notification.status == NotificationStatus.FAILED).count()
-        delivered_count = db.query(Notification).filter(Notification.status == NotificationStatus.ENTREGADO).count()
+        delivered_count = db.query(Notification).filter(Notification.status == NotificationStatus.DELIVERED).count()
 
         # Por tipo
         sms_count = db.query(Notification).filter(Notification.type == NotificationType.SMS).count()

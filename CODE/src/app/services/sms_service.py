@@ -53,7 +53,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 account_id=settings.liwa_account,
                 password=settings.liwa_password,
                 auth_url=settings.liwa_auth_url or "https://api.liwa.co/v2/auth/login",
-                api_url="https://api.liwa.co/v2/sms/send",
+                api_url="https://api.liwa.co/v2/sms/single",  # Endpoint correcto
                 default_sender="PAQUETES",
                 cost_per_sms_cents=50  # 50 centavos por SMS
             )
@@ -120,7 +120,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 priority=priority,
                 recipient=recipient,
                 message=message,
-                status=NotificationStatus.ABIERTO,
+                status=NotificationStatus.PENDING,
                 package_id=package_id,
                 customer_id=customer_id,
                 announcement_id=announcement_id,
@@ -256,59 +256,73 @@ class SMSService(BaseService[Notification, Any, Any]):
             raise ExternalServiceException(f"Error al enviar SMS por evento: {str(e)}")
 
     # ========================================
-    # PLANTILLAS
+    # PLANTILLAS (UNIFICADAS - Similar a EmailService)
     # ========================================
 
     def get_template_by_event(self, db: Session, event_type: NotificationEvent, language: str = "es") -> Optional[SMSMessageTemplate]:
-        """Obtiene plantilla por evento"""
+        """
+        Obtiene plantilla por evento
+        UNIFICADO: Usa plantilla única para cambios de estado de paquetes
+        """
+        # Mapear eventos a plantillas (unificación de estados en una sola plantilla)
+        template_map = {
+            NotificationEvent.PACKAGE_ANNOUNCED: "status_change_unified",
+            NotificationEvent.PACKAGE_RECEIVED: "status_change_unified",
+            NotificationEvent.PACKAGE_DELIVERED: "status_change_unified",
+            NotificationEvent.PACKAGE_CANCELLED: "status_change_unified",
+            NotificationEvent.PAYMENT_DUE: "payment_due",
+            NotificationEvent.CUSTOM_MESSAGE: "custom_message"
+        }
+
+        template_id = template_map.get(event_type, "custom_message")
+
         return db.query(SMSMessageTemplate).filter(
-            SMSMessageTemplate.event_type == event_type,
+            SMSMessageTemplate.template_id == template_id,
             SMSMessageTemplate.language == language,
             SMSMessageTemplate.is_active == True
-        ).order_by(SMSMessageTemplate.is_default.desc()).first()
+        ).first()
 
     def create_default_templates(self, db: Session) -> List[SMSMessageTemplate]:
-        """Crea plantillas por defecto para eventos comunes"""
+        """
+        Crea plantillas por defecto UNIFICADAS
+        Similar al patrón de EmailService con status_change.html
+        """
         templates_data = [
             {
-                "template_id": "package_announced",
-                "name": "Paquete Anunciado",
-                "event_type": NotificationEvent.PACKAGE_ANNOUNCED,
-                "message_template": "PAQUETES EL CLUB: Su paquete con guía {guide_number} ha sido anunciado. Código: {tracking_code}. Más info: https://paquetes.com.co/seguimiento/{tracking_code}",
-                "available_variables": json.dumps(["guide_number", "tracking_code", "customer_name"]),
-                "is_default": True
-            },
-            {
-                "template_id": "package_received",
-                "name": "Paquete Recibido",
-                "event_type": NotificationEvent.PACKAGE_RECEIVED,
-                "message_template": "PAQUETES EL CLUB: Su paquete {guide_number} ha sido RECIBIDO en nuestras instalaciones. Código: {tracking_code}. Procesaremos su entrega pronto.",
-                "available_variables": json.dumps(["guide_number", "tracking_code", "customer_name", "received_at"]),
-                "is_default": True
-            },
-            {
-                "template_id": "package_delivered",
-                "name": "Paquete Entregado",
-                "event_type": NotificationEvent.PACKAGE_DELIVERED,
-                "message_template": "PAQUETES EL CLUB: ¡Su paquete {guide_number} ha sido ENTREGADO exitosamente! Código: {tracking_code}. Gracias por confiar en nosotros.",
-                "available_variables": json.dumps(["guide_number", "tracking_code", "customer_name", "delivered_at"]),
-                "is_default": True
-            },
-            {
-                "template_id": "package_cancelled",
-                "name": "Paquete Cancelado",
-                "event_type": NotificationEvent.PACKAGE_CANCELLED,
-                "message_template": "PAQUETES EL CLUB: Su paquete {guide_number} ha sido CANCELADO. Código: {tracking_code}. Contacte con nosotros para más información.",
-                "available_variables": json.dumps(["guide_number", "tracking_code", "customer_name", "cancelled_at"]),
-                "is_default": True
+                "template_id": "status_change_unified",
+                "name": "Cambio de Estado Unificado",
+                "event_type": NotificationEvent.PACKAGE_RECEIVED,  # Evento base (se usa para todos los estados)
+                "message_template": "PAQUETES: Su paquete {guide_number} está {status_text}. Código: {consult_code}. Info: {tracking_url}",
+                "available_variables": json.dumps([
+                    "guide_number", "consult_code", "tracking_code", "status_text", 
+                    "customer_name", "tracking_url", "company_name", "company_phone"
+                ]),
+                "description": "Plantilla unificada para todos los cambios de estado de paquetes (anunciado, recibido, entregado, cancelado)",
+                "is_default": True,
+                "is_active": True
             },
             {
                 "template_id": "payment_due",
-                "name": "Pago Pendiente",
+                "name": "Recordatorio de Pago",
                 "event_type": NotificationEvent.PAYMENT_DUE,
-                "message_template": "PAQUETES EL CLUB: Tiene un pago pendiente por ${amount} COP para el paquete {guide_number}. Realice el pago para continuar con la entrega.",
-                "available_variables": json.dumps(["guide_number", "tracking_code", "customer_name", "amount", "due_date"]),
-                "is_default": True
+                "message_template": "PAQUETES: Tiene un pago pendiente de ${amount} COP para el paquete {guide_number}. Realice el pago para continuar con la entrega.",
+                "available_variables": json.dumps([
+                    "guide_number", "consult_code", "amount", "due_date", 
+                    "customer_name", "company_phone"
+                ]),
+                "description": "Plantilla para recordatorios de pago pendiente",
+                "is_default": True,
+                "is_active": True
+            },
+            {
+                "template_id": "custom_message",
+                "name": "Mensaje Personalizado",
+                "event_type": NotificationEvent.CUSTOM_MESSAGE,
+                "message_template": "PAQUETES: {message}",
+                "available_variables": json.dumps(["message", "customer_name", "company_phone"]),
+                "description": "Plantilla genérica para mensajes personalizados",
+                "is_default": True,
+                "is_active": True
             }
         ]
 
@@ -323,6 +337,12 @@ class SMSService(BaseService[Notification, Any, Any]):
                 template = SMSMessageTemplate(**template_data)
                 db.add(template)
                 templates.append(template)
+            else:
+                # Actualizar plantilla existente para migrar al nuevo formato
+                existing.message_template = template_data["message_template"]
+                existing.available_variables = template_data["available_variables"]
+                existing.description = template_data.get("description")
+                templates.append(existing)
 
         db.commit()
         return templates
@@ -337,21 +357,30 @@ class SMSService(BaseService[Notification, Any, Any]):
             # Autenticar
             token = await self.authenticate_liwa(config)
 
-            # Preparar payload
+            # Preparar payload con formato correcto de Liwa.co
+            # Asegurar que el número tenga código de país
+            phone_number = recipient
+            if not phone_number.startswith("57"):
+                phone_number = f"57{phone_number}"
+            
             payload = {
-                "to": recipient,
+                "number": phone_number,
                 "message": message,
-                "from": config.default_sender
+                "type": 1  # Tipo 1 para SMS estándar
             }
 
-            # Enviar SMS
+            # Enviar SMS usando endpoint correcto /v2/sms/single
             async with httpx.AsyncClient(timeout=30.0) as client:
                 headers = {
                     "Authorization": f"Bearer {token}",
+                    "API-KEY": config.api_key,  # Header API-KEY requerido
                     "Content-Type": "application/json"
                 }
 
-                response = await client.post(config.api_url, json=payload, headers=headers)
+                # Usar endpoint correcto
+                sms_url = config.api_url.replace("/sms/send", "/sms/single")
+                
+                response = await client.post(sms_url, json=payload, headers=headers)
                 response.raise_for_status()
 
                 data = response.json()
@@ -359,8 +388,8 @@ class SMSService(BaseService[Notification, Any, Any]):
                 if data.get("success"):
                     return {
                         "success": True,
-                        "message_id": data.get("message_id", str(uuid.uuid4())),
-                        "message": "SMS enviado exitosamente"
+                        "message_id": data.get("menssageId", str(uuid.uuid4())),  # Nota: "menssageId" con doble 's'
+                        "message": data.get("message", "SMS enviado exitosamente")
                     }
                 else:
                     return {
@@ -454,39 +483,79 @@ class SMSService(BaseService[Notification, Any, Any]):
         announcement_id: Optional[str],
         custom_variables: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Prepara variables para plantilla basado en evento"""
+        """
+        Prepara variables para plantilla basado en evento
+        UNIFICADO: Incluye status_text dinámico para plantilla unificada
+        """
         variables = dict(custom_variables)
 
         # Variables comunes
         variables.update({
-            "company_name": "PAQUETES EL CLUB",
-            "company_phone": "3334004007",
+            "company_name": settings.company_display_name or "PAQUETES EL CLUB",
+            "company_phone": settings.company_phone or "3334004007",
             "current_date": get_colombia_now().strftime("%d/%m/%Y"),
             "current_time": get_colombia_now().strftime("%H:%M")
         })
 
+        # Mapeo de eventos a texto de estado (UNIFICADO)
+        status_text_map = {
+            NotificationEvent.PACKAGE_ANNOUNCED: "ANUNCIADO",
+            NotificationEvent.PACKAGE_RECEIVED: "RECIBIDO en nuestras instalaciones",
+            NotificationEvent.PACKAGE_DELIVERED: "ENTREGADO exitosamente",
+            NotificationEvent.PACKAGE_CANCELLED: "CANCELADO"
+        }
+
+        # Agregar status_text para plantilla unificada
+        variables["status_text"] = status_text_map.get(event_type, "en proceso")
+
         # Variables específicas por evento
         if event_type == NotificationEvent.PACKAGE_ANNOUNCED and announcement_id:
-            announcement = db.query(PackageAnnouncementNew).filter(PackageAnnouncementNew.id == announcement_id).first()
+            # Obtener datos del anuncio
+            from app.models.announcement_new import PackageAnnouncementNew
+            announcement = db.query(PackageAnnouncementNew).filter(
+                PackageAnnouncementNew.id == announcement_id
+            ).first()
             if announcement:
                 variables.update({
                     "guide_number": announcement.guide_number,
+                    "consult_code": announcement.tracking_code,
                     "tracking_code": announcement.tracking_code,
                     "customer_name": announcement.customer_name,
-                    "announced_at": announcement.announced_at.strftime("%d/%m/%Y %H:%M") if announcement.announced_at else ""
+                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetes.com.co'}?auto_search={announcement.tracking_code}"
                 })
 
-        elif event_type in [NotificationEvent.PACKAGE_RECEIVED, NotificationEvent.PACKAGE_DELIVERED] and package_id:
+        elif event_type in [NotificationEvent.PACKAGE_RECEIVED, NotificationEvent.PACKAGE_DELIVERED, NotificationEvent.PACKAGE_CANCELLED] and package_id:
             package = db.query(Package).filter(Package.id == package_id).first()
             if package:
                 variables.update({
                     "guide_number": package.tracking_number,
-                    "customer_name": package.customer.full_name if package.customer else "",
-                    "received_at": package.received_at.strftime("%d/%m/%Y %H:%M") if package.received_at else "",
-                    "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if package.delivered_at else "",
-                    "package_type": package.package_type.value if package.package_type else "",
-                    "package_condition": package.package_condition.value if package.package_condition else ""
+                    "consult_code": getattr(package, 'consult_code', package.tracking_number),
+                    "tracking_code": package.tracking_number,
+                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "received_at": package.received_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'received_at') and package.received_at else "",
+                    "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'delivered_at') and package.delivered_at else "",
+                    "package_type": package.package_type.value if hasattr(package, 'package_type') and package.package_type else "normal",
+                    "package_condition": package.package_condition.value if hasattr(package, 'package_condition') and package.package_condition else "bueno",
+                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetes.com.co'}/seguimiento/{package.tracking_number}"
                 })
+
+        elif event_type == NotificationEvent.PAYMENT_DUE and package_id:
+            package = db.query(Package).filter(Package.id == package_id).first()
+            if package:
+                variables.update({
+                    "guide_number": package.tracking_number,
+                    "consult_code": getattr(package, 'consult_code', package.tracking_number),
+                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "amount": custom_variables.get("amount", "0"),
+                    "due_date": custom_variables.get("due_date", get_colombia_now().strftime("%d/%m/%Y"))
+                })
+
+        # Asegurar que siempre haya valores por defecto
+        variables.setdefault("guide_number", "N/A")
+        variables.setdefault("consult_code", "N/A")
+        variables.setdefault("tracking_code", "N/A")
+        variables.setdefault("customer_name", "Cliente")
+        variables.setdefault("tracking_url", settings.tracking_base_url or "https://paquetes.com.co")
 
         return variables
 
@@ -498,18 +567,28 @@ class SMSService(BaseService[Notification, Any, Any]):
         customer_id: Optional[str],
         announcement_id: Optional[str]
     ) -> Optional[str]:
-        """Determina el destinatario basado en el evento"""
+        """
+        Determina el destinatario basado en el evento
+        Prioridad: customer_id > package_id > announcement_id
+        """
         if customer_id:
             customer = db.query(Customer).filter(Customer.id == customer_id).first()
-            return customer.phone if customer else None
+            if customer and hasattr(customer, 'phone'):
+                return customer.phone
 
         if package_id:
             package = db.query(Package).filter(Package.id == package_id).first()
-            return package.customer.phone if package and package.customer else None
+            if package and package.customer and hasattr(package.customer, 'phone'):
+                return package.customer.phone
 
+        # Obtener teléfono del anuncio si está disponible
         if announcement_id:
-            announcement = db.query(PackageAnnouncementNew).filter(PackageAnnouncementNew.id == announcement_id).first()
-            return announcement.customer_phone if announcement else None
+            from app.models.announcement_new import PackageAnnouncementNew
+            announcement = db.query(PackageAnnouncementNew).filter(
+                PackageAnnouncementNew.id == announcement_id
+            ).first()
+            if announcement and hasattr(announcement, 'customer_phone'):
+                return announcement.customer_phone
 
         return None
 
@@ -574,7 +653,7 @@ class SMSService(BaseService[Notification, Any, Any]):
 
         total_delivered = db.query(func.count(Notification.id)).filter(
             Notification.notification_type == NotificationType.SMS,
-            Notification.status == NotificationStatus.ENTREGADO,
+            Notification.status == NotificationStatus.DELIVERED,
             Notification.created_at >= start_date
         ).scalar()
 

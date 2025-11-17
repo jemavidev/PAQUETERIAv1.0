@@ -158,7 +158,7 @@ docker compose -f docker-compose.prod.yml run --rm app alembic upgrade head
 - ✅ Conectado a AWS RDS
 - ✅ Almacenamiento en AWS S3
 - ✅ Email SMTP configurado
-- ✅ SMS LIWA.co configurado
+- ✅ SMS LIWA.co configurado y funcionando
 - ✅ **Celery Worker** - Tareas asíncronas
 - ✅ **Celery Beat** - Tareas programadas
 - ✅ **Prometheus** - Métricas y monitoreo

@@ -101,7 +101,7 @@ class Notification(Base):
     @property
     def is_successful(self) -> bool:
         """Verifica si la notificación fue exitosa"""
-        return self.status in [NotificationStatus.SENT, NotificationStatus.ENTREGADO]
+        return self.status in [NotificationStatus.SENT, NotificationStatus.DELIVERED]
 
     @property
     def can_retry(self) -> bool:
@@ -119,7 +119,7 @@ class Notification(Base):
 
     def mark_as_delivered(self):
         """Marca la notificación como entregada"""
-        self.status = NotificationStatus.ENTREGADO
+        self.status = NotificationStatus.DELIVERED
         self.delivered_at = get_colombia_now()
 
     def mark_as_failed(self, error_message: str, error_code: str = None):

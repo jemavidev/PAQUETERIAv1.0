@@ -1,0 +1,399 @@
+================================================================================
+  DIAGRAMA: SISTEMA DE NOTIFICACIONES SMS UNIFICADO
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ARQUITECTURA GENERAL                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────────────────┐
+                    │   API Endpoint / Route   │
+                    │  /packages/{id}/notify   │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │     SMSService           │
+                    │  send_sms_by_event()     │
+                    └────────────┬─────────────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+                ▼                ▼                ▼
+    ┌──────────────────┐ ┌──────────────┐ ┌──────────────┐
+    │ get_template_    │ │  _prepare_   │ │ _get_event_  │
+    │   by_event()     │ │   event_     │ │  recipient() │
+    │                  │ │  variables() │ │              │
+    └────────┬─────────┘ └──────┬───────┘ └──────┬───────┘
+             │                  │                 │
+             │                  │                 │
+             └──────────────────┼─────────────────┘
+                                │
+                                ▼
+                    ┌──────────────────────────┐
+                    │   Renderizar Mensaje     │
+                    │  (String replacement)    │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │   _send_liwa_sms()       │
+                    │   (Liwa.co API)          │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │   Registrar en BD        │
+                    │   (Notification model)   │
+                    └──────────────────────────┘
+
+
+================================================================================
+  FLUJO: PLANTILLA UNIFICADA
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EVENTO: PACKAGE_RECEIVED                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    1. Llamada al servicio
+       ┌────────────────────────────────────────────┐
+       │ send_sms_by_event(                         │
+       │   event_type=PACKAGE_RECEIVED,             │
+       │   package_id=123                           │
+       │ )                                          │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    2. Mapeo de evento → plantilla
+       ┌────────────────────────────────────────────┐
+       │ template_map = {                           │
+       │   PACKAGE_RECEIVED: "status_change_unified"│
+       │ }                                          │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    3. Obtener plantilla de BD
+       ┌────────────────────────────────────────────┐
+       │ SELECT * FROM sms_message_templates        │
+       │ WHERE template_id = 'status_change_unified'│
+       │ AND is_active = true                       │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    4. Preparar variables dinámicas
+       ┌────────────────────────────────────────────┐
+       │ status_text_map = {                        │
+       │   PACKAGE_RECEIVED: "RECIBIDO en nuestras  │
+       │                      instalaciones"        │
+       │ }                                          │
+       │                                            │
+       │ variables = {                              │
+       │   "guide_number": "123456789",             │
+       │   "consult_code": "ABC123",                │
+       │   "status_text": "RECIBIDO en nuestras...",│
+       │   "tracking_url": "https://...",           │
+       │   "customer_name": "Juan Pérez"            │
+       │ }                                          │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    5. Renderizar mensaje
+       ┌────────────────────────────────────────────┐
+       │ Template:                                  │
+       │ "PAQUETES: Su paquete {guide_number} está  │
+       │  {status_text}. Código: {consult_code}..." │
+       │                                            │
+       │ Resultado:                                 │
+       │ "PAQUETES: Su paquete 123456789 está       │
+       │  RECIBIDO en nuestras instalaciones.       │
+       │  Código: ABC123. Info: https://..."        │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    6. Enviar SMS
+       ┌────────────────────────────────────────────┐
+       │ POST https://api.liwa.co/v2/sms/single     │
+       │ {                                          │
+       │   "number": "573001234567",                │
+       │   "message": "PAQUETES: Su paquete...",    │
+       │   "type": 1                                │
+       │ }                                          │
+       └────────────────┬───────────────────────────┘
+                        │
+                        ▼
+    7. Registrar en BD
+       ┌────────────────────────────────────────────┐
+       │ INSERT INTO notifications (                │
+       │   notification_type = 'sms',               │
+       │   event_type = 'package_received',         │
+       │   status = 'sent',                         │
+       │   message = "PAQUETES: Su paquete...",     │
+       │   cost_cents = 50                          │
+       │ )                                          │
+       └────────────────────────────────────────────┘
+
+
+================================================================================
+  COMPARACIÓN: ANTES vs DESPUÉS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ANTES (Plantillas Separadas)                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Base de Datos: sms_message_templates
+    ┌──────────────────────┬─────────────────────┬──────────────────────┐
+    │ template_id          │ event_type          │ is_active            │
+    ├──────────────────────┼─────────────────────┼──────────────────────┤
+    │ package_announced    │ PACKAGE_ANNOUNCED   │ ✅ true              │
+    │ package_received     │ PACKAGE_RECEIVED    │ ✅ true              │
+    │ package_delivered    │ PACKAGE_DELIVERED   │ ✅ true              │
+    │ package_cancelled    │ PACKAGE_CANCELLED   │ ✅ true              │
+    │ payment_due          │ PAYMENT_DUE         │ ✅ true              │
+    └──────────────────────┴─────────────────────┴──────────────────────┘
+    
+    Problemas:
+    ❌ 4 plantillas diferentes para estados de paquetes
+    ❌ Mensajes inconsistentes
+    ❌ Difícil de mantener
+    ❌ No alineado con EmailService
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  DESPUÉS (Plantilla Unificada)                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Base de Datos: sms_message_templates
+    ┌──────────────────────┬─────────────────────┬──────────────────────┐
+    │ template_id          │ event_type          │ is_active            │
+    ├──────────────────────┼─────────────────────┼──────────────────────┤
+    │ status_change_unified│ PACKAGE_RECEIVED    │ ✅ true ⭐ DEFAULT   │
+    │ payment_due          │ PAYMENT_DUE         │ ✅ true ⭐ DEFAULT   │
+    │ custom_message       │ CUSTOM_MESSAGE      │ ✅ true ⭐ DEFAULT   │
+    ├──────────────────────┼─────────────────────┼──────────────────────┤
+    │ package_announced    │ PACKAGE_ANNOUNCED   │ ❌ false (antigua)   │
+    │ package_received     │ PACKAGE_RECEIVED    │ ❌ false (antigua)   │
+    │ package_delivered    │ PACKAGE_DELIVERED   │ ❌ false (antigua)   │
+    │ package_cancelled    │ PACKAGE_CANCELLED   │ ❌ false (antigua)   │
+    └──────────────────────┴─────────────────────┴──────────────────────┘
+    
+    Beneficios:
+    ✅ 1 sola plantilla para todos los estados de paquetes
+    ✅ Mensajes consistentes
+    ✅ Fácil de mantener
+    ✅ Alineado con EmailService
+
+
+================================================================================
+  MAPEO DE EVENTOS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Evento → Plantilla → Status Text                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    PACKAGE_ANNOUNCED
+         │
+         ├─→ status_change_unified
+         │
+         └─→ status_text = "ANUNCIADO"
+         
+         Mensaje: "Su paquete 123456789 está ANUNCIADO. Código: ABC123..."
+
+
+    PACKAGE_RECEIVED
+         │
+         ├─→ status_change_unified
+         │
+         └─→ status_text = "RECIBIDO en nuestras instalaciones"
+         
+         Mensaje: "Su paquete 123456789 está RECIBIDO en nuestras 
+                   instalaciones. Código: ABC123..."
+
+
+    PACKAGE_DELIVERED
+         │
+         ├─→ status_change_unified
+         │
+         └─→ status_text = "ENTREGADO exitosamente"
+         
+         Mensaje: "Su paquete 123456789 está ENTREGADO exitosamente. 
+                   Código: ABC123..."
+
+
+    PACKAGE_CANCELLED
+         │
+         ├─→ status_change_unified
+         │
+         └─→ status_text = "CANCELADO"
+         
+         Mensaje: "Su paquete 123456789 está CANCELADO. Código: ABC123..."
+
+
+    PAYMENT_DUE
+         │
+         ├─→ payment_due
+         │
+         └─→ (plantilla específica)
+         
+         Mensaje: "Tiene un pago pendiente de $15000 COP para el 
+                   paquete 123456789..."
+
+
+    CUSTOM_MESSAGE
+         │
+         ├─→ custom_message
+         │
+         └─→ (plantilla genérica)
+         
+         Mensaje: "PAQUETES: {mensaje personalizado}"
+
+
+================================================================================
+  ALINEACIÓN CON EMAILSERVICE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EmailService (Patrón de Referencia)                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    template_map = {
+        PACKAGE_ANNOUNCED:  "status_change.html",
+        PACKAGE_RECEIVED:   "status_change.html",  ← UNA SOLA PLANTILLA
+        PACKAGE_DELIVERED:  "status_change.html",
+        PACKAGE_CANCELLED:  "status_change.html",
+        PAYMENT_DUE:        "payment_reminder.html"
+    }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SMSService (Ahora Alineado)                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    template_map = {
+        PACKAGE_ANNOUNCED:  "status_change_unified",
+        PACKAGE_RECEIVED:   "status_change_unified",  ← UNA SOLA PLANTILLA
+        PACKAGE_DELIVERED:  "status_change_unified",
+        PACKAGE_CANCELLED:  "status_change_unified",
+        PAYMENT_DUE:        "payment_due"
+    }
+
+    ✅ MISMO PATRÓN
+    ✅ MISMA LÓGICA
+    ✅ CONSISTENCIA TOTAL
+
+
+================================================================================
+  VARIABLES DISPONIBLES
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Plantilla: status_change_unified                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    {guide_number}      → Número de guía del paquete
+    {consult_code}      → Código de consulta
+    {tracking_code}     → Código de seguimiento
+    {status_text}       → ⭐ DINÁMICO según evento
+    {customer_name}     → Nombre del cliente
+    {tracking_url}      → URL de seguimiento completa
+    {company_name}      → Nombre de la empresa
+    {company_phone}     → Teléfono de contacto
+    {current_date}      → Fecha actual
+    {current_time}      → Hora actual
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Plantilla: payment_due                                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    {guide_number}      → Número de guía del paquete
+    {consult_code}      → Código de consulta
+    {amount}            → Monto a pagar
+    {due_date}          → Fecha límite de pago
+    {customer_name}     → Nombre del cliente
+    {company_phone}     → Teléfono de contacto
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Plantilla: custom_message                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    {message}           → Mensaje personalizado
+    {customer_name}     → Nombre del cliente
+    {company_phone}     → Teléfono de contacto
+
+
+================================================================================
+  PROCESO DE MIGRACIÓN
+================================================================================
+
+    1. BACKUP
+       ┌────────────────────────────────────────┐
+       │ Hacer backup de la base de datos       │
+       └────────────────────────────────────────┘
+                        │
+                        ▼
+    2. EJECUTAR SCRIPT
+       ┌────────────────────────────────────────┐
+       │ python -m src.scripts.                 │
+       │   migrate_sms_templates_unified        │
+       │                                        │
+       │ Opción 1: Migrar                       │
+       └────────────────────────────────────────┘
+                        │
+                        ▼
+    3. DESACTIVAR ANTIGUAS
+       ┌────────────────────────────────────────┐
+       │ UPDATE sms_message_templates           │
+       │ SET is_active = false                  │
+       │ WHERE template_id IN (                 │
+       │   'package_announced',                 │
+       │   'package_received',                  │
+       │   'package_delivered',                 │
+       │   'package_cancelled'                  │
+       │ )                                      │
+       └────────────────────────────────────────┘
+                        │
+                        ▼
+    4. CREAR/ACTUALIZAR UNIFICADAS
+       ┌────────────────────────────────────────┐
+       │ INSERT/UPDATE sms_message_templates    │
+       │ (                                      │
+       │   template_id = 'status_change_unified'│
+       │   is_active = true,                    │
+       │   is_default = true                    │
+       │ )                                      │
+       └────────────────────────────────────────┘
+                        │
+                        ▼
+    5. VERIFICAR
+       ┌────────────────────────────────────────┐
+       │ SELECT * FROM sms_message_templates    │
+       │ WHERE is_active = true                 │
+       │                                        │
+       │ Debe mostrar:                          │
+       │ - status_change_unified ✅             │
+       │ - payment_due ✅                       │
+       │ - custom_message ✅                    │
+       └────────────────────────────────────────┘
+                        │
+                        ▼
+    6. PROBAR
+       ┌────────────────────────────────────────┐
+       │ Enviar SMS de prueba con cada evento   │
+       │ Verificar mensajes recibidos           │
+       └────────────────────────────────────────┘
+
+
+================================================================================
+  FIN DEL DIAGRAMA
+================================================================================
+
+Para más información, consultar:
+- CODE/UNIFICACION_PLANTILLAS_SMS.md
+- CODE/EJEMPLO_USO_SMS_UNIFICADO.md
+- CODE/RESUMEN_UNIFICACION_SMS.md
+
+================================================================================

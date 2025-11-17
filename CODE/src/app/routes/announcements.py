@@ -61,15 +61,41 @@ async def create_announcement(
         
         # Enviar SMS de confirmación
         try:
+            from app.schemas.notification import SMSByEventRequest
+            from app.models.notification import NotificationPriority
+            
             sms_service = SMSService()
-            await sms_service.send_sms_by_event(
+            
+            # Preparar variables para el SMS
+            custom_variables = {
+                "guide_number": db_announcement.guide_number,
+                "consult_code": db_announcement.tracking_code,
+                "tracking_code": db_announcement.tracking_code,
+                "customer_name": db_announcement.customer_name,
+                "tracking_url": f"{settings.tracking_base_url}?auto_search={db_announcement.tracking_code}"
+            }
+            
+            # Enviar SMS usando el evento correcto
+            sms_result = await sms_service.send_sms_by_event(
                 db=db,
-                event_type=NotificationEvent.ANNOUNCEMENT,
-                recipient=db_announcement.customer_phone,
-                announcement_id=db_announcement.id
+                event_request=SMSByEventRequest(
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    package_id=None,  # No hay package_id aún, es solo anuncio
+                    customer_id=None,
+                    announcement_id=db_announcement.id,
+                    custom_variables=custom_variables,
+                    priority=NotificationPriority.ALTA,
+                    is_test=False
+                )
             )
+            
+            if sms_result.status == "sent":
+                logger.info(f"✅ SMS de anuncio enviado exitosamente para anuncio {db_announcement.id} al {db_announcement.customer_phone}")
+            else:
+                logger.warning(f"⚠️ SMS de anuncio falló para anuncio {db_announcement.id}: {sms_result.message}")
+                
         except Exception as sms_error:
-            logger.warning(f"No se pudo enviar SMS para anuncio {db_announcement.id}: {sms_error}")
+            logger.error(f"❌ Error al enviar SMS para anuncio {db_announcement.id}: {sms_error}", exc_info=True)
         
         # Enviar EMAIL de confirmación si el cliente existe y tiene email
         try:
