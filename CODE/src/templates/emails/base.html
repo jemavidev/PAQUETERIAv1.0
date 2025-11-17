@@ -63,13 +63,6 @@
             position: relative;
         }
 
-        .email-header::before {
-            content: '📦';
-            font-size: 56px;
-            display: block;
-            margin-bottom: 16px;
-        }
-
         .email-header h1 {
             font-size: 32px;
             font-weight: 700;
@@ -200,21 +193,14 @@
 
         .email-footer {
             background-color: var(--papyrus-gray-100);
-            padding: 32px;
+            padding: 24px;
             text-align: center;
             border-top: 1px solid var(--papyrus-gray-200);
-        }
-
-        .email-footer p {
-            color: var(--papyrus-gray-600);
-            font-size: 14px;
-            margin-bottom: 8px;
         }
 
         .email-footer .copyright {
             font-size: 12px;
             color: var(--papyrus-gray-500);
-            margin-top: 16px;
         }
 
         @media (max-width: 640px) {
@@ -257,8 +243,6 @@
         </div>
 
         <div class="email-footer">
-            <p>📧 Este es un mensaje automático generado por nuestro sistema</p>
-            <p>🚫 Por favor, no respondas directamente a este correo</p>
             <p class="copyright">&copy; 2025 {{ company_name }}. Todos los derechos reservados.</p>
         </div>
     </div>

@@ -1,47 +1,58 @@
 {% extends "base.html" %}
 
-{% block title %}ACTUALIZACION ESTADO DE PAQUETE - {{ company_name }}{% endblock %}
+{% block title %}CAMBIO ESTADO DE PAQUETE - {{ company_name }}{% endblock %}
 
-{% block header_subtitle %}📬 Actualización de estado de su paquete{% endblock %}
+{% block header_subtitle %}
+<img src="https://paquetex.papyrus.com.co/static/images/logo.png"
+     alt="{{ company_name }}"
+     style="max-height: 120px; display: inline-block;">
+{% endblock %}
 
 {% block content %}
-<div class="greeting">
-    Hola <strong>{{ first_name|default("Cliente") }}</strong>,
-</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+    <tr>
+        <td style="padding:18px 20px;font-size:15px;color:#0f172a;">
+            <p style="margin:0 0 8px;font-weight:600;font-size:16px;">Hola {{ first_name|default("Cliente") }},</p>
+            <p style="margin:0 0 16px;">El estado de su paquete ha cambiado a: <strong>{{ current_status }}</strong>.</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:0 20px 16px;font-size:14px;color:#0f172a;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="font-weight:600;padding-bottom:6px;">DATOS DE ENVIO</td>
+                </tr>
+                {% if guide_number %}
+                <tr>
+                    <td style="padding-bottom:4px;">
+                        <span style="font-weight:600;">GUIA:</span> {{ guide_number }}
+                    </td>
+                </tr>
+                {% endif %}
+                {% if consult_code %}
+                <tr>
+                    <td>
+                        <span style="font-weight:600;">CODIGO:</span> {{ consult_code }}
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </td>
+    </tr>
+    {% if tracking_url %}
+    <tr>
+        <td style="padding:0 20px 16px;text-align:center;">
+            <a href="{{ tracking_url }}" class="btn-primary" style="display:inline-block;text-decoration:none;">Ver Estado</a>
+        </td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td style="padding:0 20px 16px;font-size:13px;color:#475467;text-align:center;">
+            Para mas ayuda ingresa en <a href="{{ help_url }}" target="_blank" rel="noopener">este enlace</a>.
+        </td>
+    </tr>
+</table>
 
-<div class="message">
-    Le informamos que el estado de su paquete ha cambiado a: <strong>{{ current_status }}</strong>.
-</div>
-
-<div class="info-box">
-    <strong>Datos de su envío:</strong><br>
-    <ul style="list-style: none; padding-left: 0; margin-top: 16px;">
-        {% if guide_number %}
-        <li style="margin-bottom: 8px;"><strong>Número de guía:</strong> {{ guide_number }}</li>
-        {% endif %}
-        {% if consult_code %}
-        <li style="margin-bottom: 8px;"><strong>Código de consulta:</strong> {{ consult_code }}</li>
-        {% endif %}
-    </ul>
-</div>
-
-{% if tracking_url %}
-<div class="action-section">
-    <a href="{{ tracking_url }}" class="btn-primary">
-        🔍 Ver estado del paquete
-    </a>
-</div>
-{% endif %}
-
-<div class="support-text">
-    Si necesita ayuda, puede consultar nuestro Centro de Ayuda en
-    <a href="{{ help_url }}" target="_blank" rel="noopener">este enlace</a>.
-</div>
-
-<div class="signature">
-    <p>Atentamente,<br>
-    <strong>El equipo de {{ company_name }}</strong></p>
-</div>
 {% endblock %}
 
 
