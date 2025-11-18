@@ -49,8 +49,8 @@
     
     <title>{% block title %}PAQUETEX v3.1{% endblock %}</title>
     
-    {# Tailwind CSS #}
-    <script src="https://cdn.tailwindcss.com"></script>
+    {# Tailwind CSS - Local #}
+    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -87,8 +87,8 @@
     {# Configuración de la aplicación #}
     <script src="/static/js/config.js"></script>
     
-    {# Alpine.js #}
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {# Alpine.js - Local #}
+    <script defer src="/static/vendor/js/alpine.min.js?v=3.13.3"></script>
     
     {# Alpine.js Components #}
     <script>
@@ -158,8 +158,8 @@
         });
     </script>
     
-    {# HTMX #}
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {# HTMX - Local #}
+    <script src="/static/vendor/js/htmx.min.js?v=1.9.10"></script>
     
     {# Form Validation #}
     <script src="/static/js/form-validation.js"></script>
@@ -347,8 +347,8 @@
         });
     </script>
     
-    {# Heroicons #}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.css">
+    {# Heroicons - Local #}
+    <link rel="stylesheet" href="/static/vendor/css/heroicons.css?v=2.0.18">
     
     {# CSS Optimizado para Selección de Imágenes #}
     <link rel="stylesheet" href="/static/css/image-upload-optimized.css?v=1.0">
