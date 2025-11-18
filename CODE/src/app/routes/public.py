@@ -473,7 +473,7 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
         # Enviar SMS de confirmación automáticamente
         try:
             from app.services.sms_service import SMSService
-            from app.models.notification import NotificationEvent
+            from app.models.notification import NotificationEvent, NotificationPriority
             from app.schemas.notification import SMSByEventRequest
 
             sms_service = SMSService()
@@ -485,7 +485,7 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
                     "tracking_code": announcement.tracking_code,
                     "customer_name": announcement.customer_name
                 },
-                priority="normal",
+                priority=NotificationPriority.ALTA,
                 is_test=False
             )
             await sms_service.send_sms_by_event(db=db, event_request=event_request)

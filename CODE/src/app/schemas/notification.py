@@ -196,7 +196,7 @@ class SMSBulkSendRequest(BaseModel):
 class SMSByEventRequest(BaseModel):
     """Esquema para enviar SMS por evento"""
     event_type: NotificationEvent
-    package_id: Optional[UUID] = None
+    package_id: Optional[int] = None  # Cambiado de UUID a int para compatibilidad con Package.id
     customer_id: Optional[UUID] = None
     announcement_id: Optional[UUID] = None
     custom_variables: Optional[Dict[str, Any]] = Field(None, description="Variables personalizadas")

@@ -742,6 +742,38 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
         db.commit()
         db.refresh(announcement)
         
+        # ========================================
+        # ENVIAR SMS DE CONFIRMACIÓN AUTOMÁTICAMENTE
+        # ========================================
+        try:
+            from app.services.sms_service import SMSService
+            from app.models.notification import NotificationEvent, NotificationPriority
+            from app.schemas.notification import SMSByEventRequest
+
+            sms_service = SMSService()
+            event_request = SMSByEventRequest(
+                event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                announcement_id=announcement.id,
+                custom_variables={
+                    "guide_number": announcement.guide_number,
+                    "tracking_code": announcement.tracking_code,
+                    "customer_name": announcement.customer_name
+                },
+                priority=NotificationPriority.ALTA,
+                is_test=False
+            )
+            sms_result = await sms_service.send_sms_by_event(db=db, event_request=event_request)
+            
+            if sms_result.status == "sent":
+                print(f"✅ SMS de anuncio enviado exitosamente para anuncio {announcement.id} al {announcement.customer_phone}")
+            else:
+                print(f"⚠️ SMS de anuncio falló para anuncio {announcement.id}: {sms_result.message}")
+                
+        except Exception as sms_error:
+            print(f"❌ Error al enviar SMS para anuncio {announcement.id}: {sms_error}")
+            import traceback
+            traceback.print_exc()
+        
         return {
             "success": True,
             "message": "Anuncio creado exitosamente",

@@ -37,6 +37,8 @@ class SMSService(BaseService[Notification, Any, Any]):
 
     def __init__(self):
         super().__init__(Notification)
+        self._cached_token = None
+        self._token_expires_at = None
 
     # ========================================
     # CONFIGURACIÓN Y AUTENTICACIÓN
@@ -62,6 +64,25 @@ class SMSService(BaseService[Notification, Any, Any]):
             db.refresh(config)
         return config
 
+    async def get_valid_token(self, config: SMSConfiguration) -> str:
+        """Obtiene un token válido, usando cache o renovando si es necesario"""
+        now = get_colombia_now()
+        
+        # Verificar si tenemos un token válido en cache
+        if (self._cached_token and 
+            self._token_expires_at and 
+            now < self._token_expires_at):
+            return self._cached_token
+        
+        # Necesitamos un nuevo token
+        token = await self.authenticate_liwa(config)
+        
+        # Cachear el token por 23 horas (renovar diariamente)
+        self._cached_token = token
+        self._token_expires_at = now + timedelta(hours=23)
+        
+        return token
+
     async def authenticate_liwa(self, config: SMSConfiguration) -> str:
         """Autentica con Liwa.co y obtiene token"""
         try:
@@ -75,15 +96,21 @@ class SMSService(BaseService[Notification, Any, Any]):
                 response.raise_for_status()
 
                 data = response.json()
-                if data.get("success") and data.get("token"):
+                # LIWA devuelve directamente el token, no un objeto con "success"
+                if data.get("token"):
                     return data["token"]
                 else:
-                    raise ExternalServiceException(f"Autenticación Liwa fallida: {data.get('message', 'Respuesta inválida')}")
+                    raise ExternalServiceException(f"Autenticación Liwa fallida: {data.get('message', 'Token no encontrado en respuesta')}")
 
         except httpx.HTTPStatusError as e:
             raise ExternalServiceException(f"Error HTTP en autenticación Liwa: {e.response.status_code} - {e.response.text}")
         except Exception as e:
             raise ExternalServiceException(f"Error de conexión con Liwa: {str(e)}")
+
+    def clear_token_cache(self):
+        """Limpia el cache del token (útil cuando hay errores de autenticación)"""
+        self._cached_token = None
+        self._token_expires_at = None
 
     # ========================================
     # ENVÍO DE SMS
@@ -146,7 +173,7 @@ class SMSService(BaseService[Notification, Any, Any]):
             return SMSSendResponse(
                 notification_id=notification.id,
                 status="sent" if result["success"] else "failed",
-                message=result.get("message", "SMS enviado exitosamente" if result["success"] else "Error al enviar SMS"),
+                message=result.get("message", "SMS enviado exitosamente") if result["success"] else result.get("error", "Error al enviar SMS"),
                 cost_cents=config.cost_per_sms_cents
             )
 
@@ -352,15 +379,25 @@ class SMSService(BaseService[Notification, Any, Any]):
     # ========================================
 
     async def _send_liwa_sms(self, config: SMSConfiguration, recipient: str, message: str) -> Dict[str, Any]:
-        """Envía SMS usando Liwa.co API"""
+        """Envía SMS usando Liwa.co API - Formato corregido basado en prueba exitosa"""
+        import logging
+        logger = logging.getLogger("sms_service")
+        
         try:
-            # Autenticar
-            token = await self.authenticate_liwa(config)
+            logger.info(f"🔄 Iniciando envío SMS a {recipient}")
+            
+            # Obtener token válido (con cache diario)
+            token = await self.get_valid_token(config)
+            logger.info(f"✅ Token obtenido: {token[:50]}...")
 
-            # Preparar payload con formato correcto de Liwa.co
-            # Asegurar que el número tenga código de país
+            # Preparar payload exactamente como funcionó en la prueba
             phone_number = recipient
-            if not phone_number.startswith("57"):
+            # Limpiar el número y asegurar formato correcto
+            if phone_number.startswith("+57"):
+                phone_number = phone_number[1:]  # Remover el + pero mantener 57
+            elif phone_number.startswith("+"):
+                phone_number = phone_number[1:]  # Remover solo el +
+            elif not phone_number.startswith("57"):
                 phone_number = f"57{phone_number}"
             
             payload = {
@@ -368,45 +405,67 @@ class SMSService(BaseService[Notification, Any, Any]):
                 "message": message,
                 "type": 1  # Tipo 1 para SMS estándar
             }
+            logger.info(f"📤 Payload preparado: {payload}")
 
-            # Enviar SMS usando endpoint correcto /v2/sms/single
+            # Enviar SMS usando el endpoint correcto
             async with httpx.AsyncClient(timeout=30.0) as client:
                 headers = {
                     "Authorization": f"Bearer {token}",
-                    "API-KEY": config.api_key,  # Header API-KEY requerido
+                    "API-KEY": config.api_key,
                     "Content-Type": "application/json"
                 }
+                logger.info(f"📡 Headers preparados (API-KEY: {config.api_key[:20]}...)")
 
-                # Usar endpoint correcto
-                sms_url = config.api_url.replace("/sms/send", "/sms/single")
+                # Usar endpoint correcto (ya está configurado correctamente)
+                sms_url = "https://api.liwa.co/v2/sms/single"
+                logger.info(f"🌐 Enviando a URL: {sms_url}")
                 
                 response = await client.post(sms_url, json=payload, headers=headers)
+                logger.info(f"📡 Respuesta HTTP: {response.status_code}")
+                
                 response.raise_for_status()
 
                 data = response.json()
+                logger.info(f"📋 Datos respuesta: {data}")
 
                 if data.get("success"):
+                    logger.info(f"✅ SMS enviado exitosamente")
                     return {
                         "success": True,
                         "message_id": data.get("menssageId", str(uuid.uuid4())),  # Nota: "menssageId" con doble 's'
                         "message": data.get("message", "SMS enviado exitosamente")
                     }
                 else:
+                    error_msg = data.get("message", "Error en respuesta de Liwa")
+                    logger.error(f"❌ Error en respuesta LIWA: {error_msg}")
                     return {
                         "success": False,
-                        "error": data.get("message", "Error en respuesta de Liwa")
+                        "error": error_msg
                     }
 
         except httpx.HTTPStatusError as e:
-            error_data = e.response.json() if e.response.content else {}
+            # Si es error 401 (no autorizado), limpiar cache del token
+            if e.response.status_code == 401:
+                self.clear_token_cache()
+            
+            error_data = {}
+            try:
+                error_data = e.response.json() if e.response.content else {}
+            except:
+                pass
+            
+            error_msg = f"Error HTTP {e.response.status_code}: {error_data.get('message', e.response.text)}"
+            logger.error(f"❌ Error HTTP: {error_msg}")
             return {
                 "success": False,
-                "error": f"Error HTTP {e.response.status_code}: {error_data.get('message', str(e))}"
+                "error": error_msg
             }
         except Exception as e:
+            error_msg = f"Error de conexión: {str(e)}"
+            logger.error(f"❌ Error de conexión: {error_msg}")
             return {
                 "success": False,
-                "error": f"Error de conexión: {str(e)}"
+                "error": error_msg
             }
 
     async def _send_test_sms(
@@ -478,7 +537,7 @@ class SMSService(BaseService[Notification, Any, Any]):
         self,
         db: Session,
         event_type: NotificationEvent,
-        package_id: Optional[str],
+        package_id: Optional[int],  # Corregido de str a int
         customer_id: Optional[str],
         announcement_id: Optional[str],
         custom_variables: Dict[str, Any]
@@ -563,7 +622,7 @@ class SMSService(BaseService[Notification, Any, Any]):
         self,
         db: Session,
         event_type: NotificationEvent,
-        package_id: Optional[str],
+        package_id: Optional[int],  # Corregido de str a int
         customer_id: Optional[str],
         announcement_id: Optional[str]
     ) -> Optional[str]:

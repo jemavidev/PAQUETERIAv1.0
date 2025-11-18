@@ -418,10 +418,10 @@ class PackageStateService:
                 db=db,
                 event_request=SMSByEventRequest(
                     event_type=event_type,
-                    package_id=package.id,
+                    package_id=package.id,  # Ahora funciona correctamente con int
                     customer_id=package.customer_id,
                     custom_variables=variables,
-                    priority="normal",
+                    priority=NotificationPriority.MEDIA,
                     is_test=False
                 )
             )
