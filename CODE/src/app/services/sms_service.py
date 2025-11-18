@@ -587,8 +587,8 @@ class SMSService(BaseService[Notification, Any, Any]):
             package = db.query(Package).filter(Package.id == package_id).first()
             if package:
                 variables.update({
-                    "guide_number": package.tracking_number,
-                    "consult_code": getattr(package, 'consult_code', package.tracking_number),
+                    "guide_number": package.guide_number or package.tracking_number,  # Número de guía real del transportador
+                    "consult_code": package.tracking_number,  # Código de consulta público
                     "tracking_code": package.tracking_number,
                     "customer_name": package.customer.full_name if package.customer else "Cliente",
                     "received_at": package.received_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'received_at') and package.received_at else "",
