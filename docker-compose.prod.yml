@@ -59,7 +59,7 @@ services:
       - uploads_data:/app/uploads
       # Logs persistentes (opcional, útil para depurar)
       - logs_data:/app/logs
-    command: ["sh", "-c", "mkdir -p /app/src/uploads /app/uploads && cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src"]
+    command: ["sh", "-c", "mkdir -p /app/src/uploads /app/uploads && cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --access-log --log-level info"]
     networks:
       - paqueteria_network
 

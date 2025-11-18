@@ -32,9 +32,9 @@ engine = create_engine(
     echo=False,  # Desactivar logging de queries en producción
     pool_pre_ping=True,  # Verificar conexión antes de usar
     pool_recycle=300,  # Reciclar conexiones cada 5 minutos
-    pool_size=10,  # Conexiones base en el pool (OPTIMIZADO)
-    max_overflow=5,  # Conexiones adicionales permitidas (OPTIMIZADO)
-    pool_timeout=20,  # Timeout para obtener conexión del pool
+    pool_size=20,  # AUMENTADO: Conexiones base en el pool
+    max_overflow=10,  # AUMENTADO: Conexiones adicionales permitidas
+    pool_timeout=30,  # AUMENTADO: Timeout para obtener conexión del pool
     poolclass=QueuePool,  # Usar QueuePool explícitamente
     connect_args={
         "options": "-c timezone=America/Bogota",
@@ -55,12 +55,13 @@ def set_postgresql_optimizations(dbapi_connection, connection_record):
     """Optimizaciones a nivel de conexión PostgreSQL"""
     cursor = dbapi_connection.cursor()
     try:
-        # Optimizaciones de performance
-        cursor.execute("SET work_mem = '16MB'")  # Memoria para operaciones de ordenamiento
-        cursor.execute("SET maintenance_work_mem = '64MB'")  # Memoria para VACUUM, CREATE INDEX
-        cursor.execute("SET effective_cache_size = '512MB'")  # Estimación de cache disponible
+        # Optimizaciones de performance MEJORADAS
+        cursor.execute("SET work_mem = '32MB'")  # AUMENTADO: Memoria para operaciones de ordenamiento
+        cursor.execute("SET maintenance_work_mem = '128MB'")  # AUMENTADO: Memoria para VACUUM, CREATE INDEX
+        cursor.execute("SET effective_cache_size = '1GB'")  # AUMENTADO: Estimación de cache disponible
         cursor.execute("SET random_page_cost = 1.1")  # Optimizado para SSD
         cursor.execute("SET effective_io_concurrency = 200")  # Para SSD
+        cursor.execute("SET shared_preload_libraries = 'pg_stat_statements'")  # Para monitoreo de queries
         
         # Optimizaciones de query
         cursor.execute("SET enable_seqscan = ON")
