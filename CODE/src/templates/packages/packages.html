@@ -183,8 +183,8 @@
                 <div id="actionForm" class="mt-3 sm:mt-4 border-gray-200">
                     <h4 id="actionTitle" class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Confirmar Acción</h4>
                     
-                    <!-- Input de archivo (fuera del receiveForm para que siempre sea accesible) -->
-                    <input type="file" id="packageImages" multiple accept="image/jpeg,image/jpg,image/png,image/webp" capture="environment" style="position: absolute; left: -9999px; opacity: 0; pointer-events: auto; width: 1px; height: 1px; z-index: 1000;" />
+                    <!-- Input de archivo optimizado para escritorio (fuera del receiveForm para que siempre sea accesible) -->
+                    <input type="file" id="packageImages" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="position: absolute; left: -9999px; opacity: 0; pointer-events: auto; width: 1px; height: 1px; z-index: 1000;" />
                     
                     <!-- Formulario específico de recepción -->
                     <div id="receiveForm" class="space-y-6 hidden">
@@ -270,7 +270,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-medium">Tomar foto o seleccionar de galería</span>
+                                    <span class="text-sm font-medium desktop-text">Seleccionar imágenes</span>
                                     <span class="text-xs text-purple-500 mt-1">JPG, PNG, WEBP (máx. 5MB cada una)</span>
                                 </button>
 
@@ -4052,69 +4052,40 @@ document.addEventListener('DOMContentLoaded', function() {
         nextPageMobileBtn.addEventListener('click', goToNextPage);
     }
 
-    // Image upload events - Usar button para activar el input file programáticamente
+    // Image upload events - OPTIMIZADO para escritorio (sin demoras)
     document.addEventListener('click', function(e) {
         // Verificar si el click fue en el botón de selección de imágenes o en sus elementos hijos
         const clickedBtn = e.target.closest('#selectImagesBtn');
         if (clickedBtn) {
-            console.log('🔘 ===== BOTÓN CLICKEADO =====');
-            console.log('🔘 Target:', e.target);
-            console.log('🔘 Botón encontrado:', clickedBtn);
-            
             e.preventDefault();
             e.stopPropagation();
             
             // Verificar si ya se alcanzó el límite máximo
             if (selectedImages.length >= 3) {
-                console.log('⚠️ Límite de imágenes alcanzado');
                 showInfoToast('Límite alcanzado', 'Ya tienes el máximo de 3 imágenes seleccionadas. Elimina alguna para agregar otra.', 3000);
                 return;
             }
             
             // Buscar el input file
             const packageImagesInput = document.getElementById('packageImages');
-            console.log('📁 Input encontrado:', packageImagesInput);
             
             if (!packageImagesInput) {
-                console.error('❌ Input packageImages no encontrado');
                 showErrorToast('Error', 'No se encontró el selector de archivos. Por favor, recarga la página.', 3000);
                 return;
             }
             
-            // Verificar que el input esté en el DOM y sea accesible
-            const isInDOM = document.body.contains(packageImagesInput) || document.getElementById('packageModal')?.contains(packageImagesInput);
-            console.log('📁 Input en DOM:', isInDOM);
-            
-            if (!isInDOM) {
-                console.error('❌ Input no está en el DOM');
-                showErrorToast('Error', 'El selector de archivos no está disponible. Por favor, recarga la página.', 3000);
-                return;
+            // OPTIMIZACIÓN: Activar inmediatamente sin demoras ni verificaciones complejas
+            try {
+                // Asegurar que solo seleccione archivos (no cámara)
+                packageImagesInput.removeAttribute('capture');
+                packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+                
+                // Activar selector de archivos inmediatamente
+                packageImagesInput.click();
+            } catch (error) {
+                console.error('❌ Error al activar input:', error);
+                showErrorToast('Error', 'No se pudo abrir el selector de archivos. Por favor, intenta nuevamente.', 3000);
             }
-            
-            // Asegurar que el input sea clickeable temporalmente
-            const originalStyle = packageImagesInput.style.cssText;
-            packageImagesInput.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; pointer-events: auto; z-index: 10000; width: 1px; height: 1px;';
-            
-            console.log('🖱️ Intentando activar input file...');
-            
-            // Usar múltiples métodos para asegurar que funcione
-            setTimeout(() => {
-                try {
-                    // Método 1: click directo
-                    packageImagesInput.focus();
-                    packageImagesInput.click();
-                    console.log('✅ Click ejecutado en input file');
-                    
-                    // Restaurar estilo después de un momento
-                    setTimeout(() => {
-                        packageImagesInput.style.cssText = originalStyle || 'position: absolute; left: -9999px; opacity: 0; pointer-events: auto; width: 1px; height: 1px; z-index: 1000;';
-                    }, 200);
-                } catch (error) {
-                    console.error('❌ Error al activar input:', error);
-                    showErrorToast('Error', 'No se pudo abrir el selector de archivos. Por favor, intenta nuevamente.', 3000);
-                    packageImagesInput.style.cssText = originalStyle;
-                }
-            }, 10);
         }
     });
 
@@ -4280,16 +4251,22 @@ console.error('❌ No se encontró app_config en el template');
 window.appConfig = null;
 {% endif %}
 
-// Mejorar experiencia móvil para captura de imágenes
+// Detección mejorada de dispositivos móviles (más precisa)
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+    // Detección más estricta para evitar falsos positivos en escritorio
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isSmallScreen = window.innerWidth <= 768;
+    const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
+    
+    return isMobileUA || (isSmallScreen && hasTouchOnly);
 }
 
-// Función para mostrar opciones de captura en móviles
+// Función optimizada para mostrar opciones de captura solo en móviles reales
 function showMobileCaptureOptions() {
+    // Solo mostrar opciones en dispositivos móviles reales
     if (!isMobileDevice()) {
-        return false; // No es móvil, usar comportamiento normal
+        return false; // No es móvil, usar comportamiento normal (solo galería)
     }
     
     // Crear modal de opciones para móviles
@@ -4336,7 +4313,7 @@ function showMobileCaptureOptions() {
     });
     
     selectFromGalleryBtn.addEventListener('click', () => {
-        // Configurar input para galería
+        // Configurar input para galería (sin capture)
         packageImagesInput.removeAttribute('capture');
         packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
         packageImagesInput.click();
@@ -4357,28 +4334,8 @@ function showMobileCaptureOptions() {
     return true; // Indica que se mostró el modal móvil
 }
 
-// Interceptar el click del botón original para mostrar opciones en móviles
-document.addEventListener('DOMContentLoaded', function() {
-    // Sobrescribir el comportamiento del botón en móviles
-    const originalClickHandler = function(e) {
-        const clickedBtn = e.target.closest('#selectImagesBtn');
-        if (clickedBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Si es móvil, mostrar opciones
-            if (showMobileCaptureOptions()) {
-                return; // Se mostró el modal móvil, no continuar
-            }
-            
-            // Si no es móvil o no se mostró el modal, continuar con comportamiento normal
-            // (el código original se ejecutará)
-        }
-    };
-    
-    // Agregar el listener con alta prioridad
-    document.addEventListener('click', originalClickHandler, true);
-});
+// ELIMINADO: Interceptor que causaba demoras en escritorio
+// El comportamiento optimizado ya está en el listener principal
 
 </script>
 {% endblock %}

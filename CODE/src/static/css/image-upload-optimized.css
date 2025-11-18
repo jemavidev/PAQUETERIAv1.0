@@ -1,0 +1,132 @@
+/* ========================================
+ * OPTIMIZACIÓN DE BOTÓN DE SELECCIÓN DE IMÁGENES
+ * ========================================
+ * Mejoras de rendimiento y UX para escritorio
+ * Fecha: 2025-11-17
+ */
+
+/* Optimización del botón de selección de imágenes */
+#selectImagesBtn {
+    /* Mejorar la respuesta visual inmediata */
+    transition: all 0.15s ease-in-out !important;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Estados del botón optimizados */
+#selectImagesBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+#selectImagesBtn:active {
+    transform: translateY(0);
+    transition: all 0.05s ease-in-out;
+}
+
+/* Optimización para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    #selectImagesBtn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    #selectImagesBtn:active {
+        background-color: rgb(139 92 246 / 0.1);
+        transform: scale(0.98);
+    }
+}
+
+/* Indicador visual de carga rápida */
+#selectImagesBtn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+#selectImagesBtn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Optimización del input file oculto */
+#packageImages {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    pointer-events: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    z-index: -1 !important;
+}
+
+/* Mejoras de accesibilidad */
+#selectImagesBtn:focus {
+    outline: 2px solid rgb(139 92 246);
+    outline-offset: 2px;
+}
+
+/* Optimización para pantallas de alta densidad */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    #selectImagesBtn {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Prevenir selección de texto en el botón */
+#selectImagesBtn * {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Optimización para escritorio - cursor más específico */
+@media (pointer: fine) {
+    #selectImagesBtn {
+        cursor: pointer;
+    }
+    
+    #selectImagesBtn:hover {
+        border-color: rgb(139 92 246 / 0.6);
+        background-color: rgb(139 92 246 / 0.05);
+    }
+}
+
+/* Indicador de que es solo para seleccionar archivos en escritorio */
+@media (pointer: fine) and (min-width: 769px) {
+    #selectImagesBtn .text-sm {
+        /* Cambiar texto dinámicamente via JavaScript si es necesario */
+    }
+}
+
+/* Animación suave para el preview de imágenes */
+#imagePreview {
+    transition: opacity 0.2s ease-in-out;
+}
+
+#imagePreview.show {
+    opacity: 1;
+}
+
+#imagePreview.hide {
+    opacity: 0;
+}
