@@ -56,7 +56,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 password=settings.liwa_password,
                 auth_url=settings.liwa_auth_url or "https://api.liwa.co/v2/auth/login",
                 api_url="https://api.liwa.co/v2/sms/single",  # Endpoint correcto
-                default_sender="PAQUETES",
+                default_sender="PAQUETEX",
                 cost_per_sms_cents=50  # 50 centavos por SMS
             )
             db.add(config)
@@ -319,7 +319,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 "template_id": "status_change_unified",
                 "name": "Cambio de Estado Unificado",
                 "event_type": NotificationEvent.PACKAGE_RECEIVED,  # Evento base (se usa para todos los estados)
-                "message_template": "PAQUETES: Su paquete {guide_number} está {status_text}. Código: {consult_code}. Info: {tracking_url}",
+                "message_template": "PAQUETEX: Su paquete con guia {guide_number} está {status_text}. Código: {consult_code}.",
                 "available_variables": json.dumps([
                     "guide_number", "consult_code", "tracking_code", "status_text", 
                     "customer_name", "tracking_url", "company_name", "company_phone"
@@ -332,7 +332,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 "template_id": "payment_due",
                 "name": "Recordatorio de Pago",
                 "event_type": NotificationEvent.PAYMENT_DUE,
-                "message_template": "PAQUETES: Tiene un pago pendiente de ${amount} COP para el paquete {guide_number}. Realice el pago para continuar con la entrega.",
+                "message_template": "PAQUETEX: Tiene un pago pendiente de ${amount} COP para el paquete {guide_number}. Realice el pago para continuar con la entrega.",
                 "available_variables": json.dumps([
                     "guide_number", "consult_code", "amount", "due_date", 
                     "customer_name", "company_phone"
@@ -345,7 +345,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 "template_id": "custom_message",
                 "name": "Mensaje Personalizado",
                 "event_type": NotificationEvent.CUSTOM_MESSAGE,
-                "message_template": "PAQUETES: {message}",
+                "message_template": "PAQUETEX: {message}",
                 "available_variables": json.dumps(["message", "customer_name", "company_phone"]),
                 "description": "Plantilla genérica para mensajes personalizados",
                 "is_default": True,
@@ -580,7 +580,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                     "consult_code": announcement.tracking_code,
                     "tracking_code": announcement.tracking_code,
                     "customer_name": announcement.customer_name,
-                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetes.com.co'}?auto_search={announcement.tracking_code}"
+                    "tracking_url": f"{settings.tracking_base_url or 'https://papyrus.com.co'}?auto_search={announcement.tracking_code}"
                 })
 
         elif event_type in [NotificationEvent.PACKAGE_RECEIVED, NotificationEvent.PACKAGE_DELIVERED, NotificationEvent.PACKAGE_CANCELLED] and package_id:
@@ -595,7 +595,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                     "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'delivered_at') and package.delivered_at else "",
                     "package_type": package.package_type.value if hasattr(package, 'package_type') and package.package_type else "normal",
                     "package_condition": package.package_condition.value if hasattr(package, 'package_condition') and package.package_condition else "bueno",
-                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetes.com.co'}/seguimiento/{package.tracking_number}"
+                    "tracking_url": f"{settings.tracking_base_url or 'https://papyrus.com.co'}/seguimiento/{package.tracking_number}"
                 })
 
         elif event_type == NotificationEvent.PAYMENT_DUE and package_id:
@@ -614,7 +614,7 @@ class SMSService(BaseService[Notification, Any, Any]):
         variables.setdefault("consult_code", "N/A")
         variables.setdefault("tracking_code", "N/A")
         variables.setdefault("customer_name", "Cliente")
-        variables.setdefault("tracking_url", settings.tracking_base_url or "https://paquetes.com.co")
+        variables.setdefault("tracking_url", settings.tracking_base_url or "https://papyrus.com.co")
 
         return variables
 
