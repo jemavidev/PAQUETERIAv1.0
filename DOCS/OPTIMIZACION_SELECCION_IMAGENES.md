@@ -151,12 +151,14 @@ Creado `image-upload-optimized.js`:
 - ✅ Respuesta inmediata al click
 - ✅ Hover effects optimizados
 - ✅ Texto: "Seleccionar archivos de imagen"
+- ✅ Sin atributo `capture` en el input
 
 ### **📱 Móvil/Tablet**
 - ✅ Modal con opciones: "Tomar foto" / "Seleccionar de galería"
-- ✅ Soporte completo para cámara
+- ✅ Soporte completo para cámara con `capture="environment"`
 - ✅ Optimizado para touch
 - ✅ Texto: "Seleccionar imágenes"
+- ✅ Configuración dinámica del input según la opción elegida
 
 ## 🔧 **Configuración Técnica**
 
@@ -218,3 +220,90 @@ console.log('Configuración:', window.ImageUploadOptimizer?.CONFIG);
 ---
 
 **Resultado:** El botón de selección de imágenes ahora responde **inmediatamente** en escritorio, mejorando significativamente la experiencia del usuario y eliminando la confusión causada por la activación accidental de la cámara.
+
+--
+-
+
+## 🔄 **Actualización: Soporte Completo para Cámara en Móviles**
+
+**Fecha:** 2025-11-19
+
+### **Cambios Implementados:**
+
+Se restauró la funcionalidad completa de cámara en dispositivos móviles manteniendo la optimización para escritorio:
+
+#### **1. Configuración Dinámica del Input File**
+
+El archivo `image-upload-optimized.js` ahora configura el input según el dispositivo:
+
+```javascript
+function optimizeFileInput() {
+    const input = document.getElementById('packageImages');
+    if (!input) return;
+    
+    if (isDesktopDevice()) {
+        // En escritorio: solo galería, sin cámara
+        input.removeAttribute('capture');
+        input.setAttribute('accept', CONFIG.ALLOWED_TYPES.join(','));
+        console.log('📁 Configurado para escritorio: solo galería');
+    } else {
+        // En móvil: permitir tomar foto con cámara
+        input.setAttribute('capture', 'environment');
+        input.setAttribute('accept', 'image/*');
+        console.log('📱 Configurado para móvil: cámara + galería');
+    }
+}
+```
+
+#### **2. Integración del Modal de Opciones en Móvil**
+
+El interceptor de clicks en `packages.html` ahora detecta el dispositivo y muestra el modal apropiado:
+
+```javascript
+// Detectar si es dispositivo móvil
+if (isMobileDevice()) {
+    // En móvil: mostrar modal con opciones (cámara o galería)
+    console.log('📱 Dispositivo móvil detectado - mostrando opciones');
+    showMobileCaptureOptions();
+} else {
+    // En escritorio: activar selector de archivos directamente
+    console.log('💻 Escritorio detectado - abriendo selector de archivos');
+    packageImagesInput.removeAttribute('capture');
+    packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+    packageImagesInput.click();
+}
+```
+
+#### **3. Modal de Opciones para Móvil**
+
+El modal `showMobileCaptureOptions()` ofrece dos opciones:
+
+- **"Tomar foto"**: Configura `capture="environment"` y abre la cámara
+- **"Seleccionar de galería"**: Remueve `capture` y abre la galería de fotos
+
+### **Comportamiento Final:**
+
+| Dispositivo | Acción al Click | Atributo `capture` | Resultado |
+|-------------|----------------|-------------------|-----------|
+| **Escritorio** | Abre selector de archivos | Removido | Solo galería |
+| **Móvil - Tomar foto** | Muestra modal → Tomar foto | `capture="environment"` | Abre cámara |
+| **Móvil - Galería** | Muestra modal → Galería | Removido | Abre galería |
+
+### **Ventajas:**
+
+✅ **Escritorio:** Respuesta inmediata sin intentar activar cámara  
+✅ **Móvil:** Flexibilidad total para elegir entre cámara o galería  
+✅ **UX Mejorada:** Cada dispositivo tiene el comportamiento más apropiado  
+✅ **Sin Romper Funcionalidad:** El sistema existente sigue funcionando perfectamente  
+
+### **Pruebas Recomendadas:**
+
+1. **En Escritorio:**
+   - Click en "Seleccionar imágenes" → Debe abrir selector de archivos inmediatamente
+   - No debe intentar activar cámara
+
+2. **En Móvil:**
+   - Click en "Seleccionar imágenes" → Debe mostrar modal con 2 opciones
+   - "Tomar foto" → Debe abrir la cámara del dispositivo
+   - "Seleccionar de galería" → Debe abrir la galería de fotos
+   - Límite de 3 imágenes debe respetarse en ambos casos

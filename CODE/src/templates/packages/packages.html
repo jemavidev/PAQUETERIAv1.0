@@ -4052,7 +4052,7 @@ document.addEventListener('DOMContentLoaded', function() {
         nextPageMobileBtn.addEventListener('click', goToNextPage);
     }
 
-    // Image upload events - OPTIMIZADO para escritorio (sin demoras)
+    // Image upload events - OPTIMIZADO con soporte móvil y escritorio
     document.addEventListener('click', function(e) {
         // Verificar si el click fue en el botón de selección de imágenes o en sus elementos hijos
         const clickedBtn = e.target.closest('#selectImagesBtn');
@@ -4074,17 +4074,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // OPTIMIZACIÓN: Activar inmediatamente sin demoras ni verificaciones complejas
-            try {
-                // Asegurar que solo seleccione archivos (no cámara)
-                packageImagesInput.removeAttribute('capture');
-                packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
-                
-                // Activar selector de archivos inmediatamente
-                packageImagesInput.click();
-            } catch (error) {
-                console.error('❌ Error al activar input:', error);
-                showErrorToast('Error', 'No se pudo abrir el selector de archivos. Por favor, intenta nuevamente.', 3000);
+            // Detectar si es dispositivo móvil
+            if (isMobileDevice()) {
+                // En móvil: mostrar modal con opciones (cámara o galería)
+                console.log('📱 Dispositivo móvil detectado - mostrando opciones');
+                showMobileCaptureOptions();
+            } else {
+                // En escritorio: activar selector de archivos directamente
+                console.log('💻 Escritorio detectado - abriendo selector de archivos');
+                try {
+                    packageImagesInput.removeAttribute('capture');
+                    packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+                    packageImagesInput.click();
+                } catch (error) {
+                    console.error('❌ Error al activar input:', error);
+                    showErrorToast('Error', 'No se pudo abrir el selector de archivos. Por favor, intenta nuevamente.', 3000);
+                }
             }
         }
     });

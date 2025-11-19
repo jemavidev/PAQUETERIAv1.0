@@ -46,9 +46,12 @@
             // En escritorio: solo galería, sin cámara
             input.removeAttribute('capture');
             input.setAttribute('accept', CONFIG.ALLOWED_TYPES.join(','));
+            console.log('📁 Configurado para escritorio: solo galería');
         } else {
-            // En móvil: mantener funcionalidad de cámara
+            // En móvil: permitir tomar foto con cámara
+            input.setAttribute('capture', 'environment');
             input.setAttribute('accept', 'image/*');
+            console.log('📱 Configurado para móvil: cámara + galería');
         }
     }
     
@@ -110,6 +113,9 @@
         if (button) {
             // Agregar feedback visual inmediato
             button.addEventListener('click', (e) => {
+                // Reconfigurar input antes de cada click para asegurar configuración correcta
+                optimizeFileInput();
+                
                 if (isDesktopDevice()) {
                     showButtonFeedback(button, 'loading');
                 }
