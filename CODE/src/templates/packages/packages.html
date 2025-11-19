@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+ {% extends "base/base.html" %}
 
 {% block title %}PAQUETES - PAQUETEX v4.0{% endblock %}
 
@@ -663,7 +663,109 @@
 }
 </style>
 <script>
+// ========================================
+// DETECCIÓN DE DISPOSITIVOS MÓVILES
+// ========================================
+// Detección mejorada de dispositivos móviles (más precisa)
+function isMobileDevice() {
+    // Detección más estricta para evitar falsos positivos en escritorio
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isSmallScreen = window.innerWidth <= 768;
+    const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
+    
+    const result = isMobileUA || (isSmallScreen && hasTouchOnly);
+    
+    // Log de depuración
+    console.log('🔍 Detección de dispositivo:', {
+        userAgent: userAgent,
+        isMobileUA: isMobileUA,
+        screenWidth: window.innerWidth,
+        isSmallScreen: isSmallScreen,
+        touchPoints: navigator.maxTouchPoints,
+        hasFinePonter: window.matchMedia('(pointer: fine)').matches,
+        hasTouchOnly: hasTouchOnly,
+        resultado: result ? '📱 MÓVIL' : '💻 ESCRITORIO'
+    });
+    
+    return result;
+}
+
+// Función optimizada para mostrar opciones de captura solo en móviles reales
+function showMobileCaptureOptions() {
+    // Solo mostrar opciones en dispositivos móviles reales
+    if (!isMobileDevice()) {
+        return false; // No es móvil, usar comportamiento normal (solo galería)
+    }
+    
+    // Crear modal de opciones para móviles
+    const optionsModal = document.createElement('div');
+    optionsModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4';
+    optionsModal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Seleccionar imágenes</h3>
+            <div class="space-y-3">
+                <button id="takePictureBtn" class="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Tomar foto
+                </button>
+                <button id="selectFromGalleryBtn" class="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Seleccionar de galería
+                </button>
+                <button id="cancelCaptureBtn" class="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(optionsModal);
+    
+    // Manejar opciones
+    const takePictureBtn = optionsModal.querySelector('#takePictureBtn');
+    const selectFromGalleryBtn = optionsModal.querySelector('#selectFromGalleryBtn');
+    const cancelBtn = optionsModal.querySelector('#cancelCaptureBtn');
+    const packageImagesInput = document.getElementById('packageImages');
+    
+    takePictureBtn.addEventListener('click', () => {
+        // Configurar input para cámara
+        packageImagesInput.setAttribute('capture', 'environment');
+        packageImagesInput.setAttribute('accept', 'image/*');
+        packageImagesInput.click();
+        document.body.removeChild(optionsModal);
+    });
+    
+    selectFromGalleryBtn.addEventListener('click', () => {
+        // Configurar input para galería (sin capture)
+        packageImagesInput.removeAttribute('capture');
+        packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+        packageImagesInput.click();
+        document.body.removeChild(optionsModal);
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(optionsModal);
+    });
+    
+    // Cerrar al hacer click fuera del modal
+    optionsModal.addEventListener('click', (e) => {
+        if (e.target === optionsModal) {
+            document.body.removeChild(optionsModal);
+        }
+    });
+    
+    return true; // Indica que se mostró el modal móvil
+}
+
+// ========================================
 // Sistema de Notificaciones Toast
+// ========================================
 function showToast(type, title, message, duration = 5000) {
     const container = document.getElementById('toastContainer');
     const toastId = 'toast-' + Date.now();
@@ -1421,7 +1523,7 @@ function showPackageModal(package, action) {
                     const newBtn = selectImagesBtn.cloneNode(true);
                     selectImagesBtn.parentNode.replaceChild(newBtn, selectImagesBtn);
                     
-                    // Agregar listener directo
+                    // Agregar listener directo con detección de dispositivo
                     newBtn.addEventListener('click', function(e) {
                         console.log('🔘 ===== CLICK DIRECTO EN BOTÓN =====');
                         e.preventDefault();
@@ -1436,8 +1538,16 @@ function showPackageModal(package, action) {
                         // Buscar input
                         const packageImagesInput = document.getElementById('packageImages');
                         if (packageImagesInput) {
-                            console.log('📁 Input encontrado, activando...');
-                            packageImagesInput.click();
+                            // Detectar si es dispositivo móvil
+                            if (isMobileDevice()) {
+                                console.log('📱 Dispositivo móvil detectado - mostrando opciones');
+                                showMobileCaptureOptions();
+                            } else {
+                                console.log('💻 Escritorio detectado - abriendo selector');
+                                packageImagesInput.removeAttribute('capture');
+                                packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+                                packageImagesInput.click();
+                            }
                         } else {
                             console.error('❌ Input no encontrado');
                         }
@@ -4256,91 +4366,8 @@ console.error('❌ No se encontró app_config en el template');
 window.appConfig = null;
 {% endif %}
 
-// Detección mejorada de dispositivos móviles (más precisa)
-function isMobileDevice() {
-    // Detección más estricta para evitar falsos positivos en escritorio
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    const isSmallScreen = window.innerWidth <= 768;
-    const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
-    
-    return isMobileUA || (isSmallScreen && hasTouchOnly);
-}
-
-// Función optimizada para mostrar opciones de captura solo en móviles reales
-function showMobileCaptureOptions() {
-    // Solo mostrar opciones en dispositivos móviles reales
-    if (!isMobileDevice()) {
-        return false; // No es móvil, usar comportamiento normal (solo galería)
-    }
-    
-    // Crear modal de opciones para móviles
-    const optionsModal = document.createElement('div');
-    optionsModal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4';
-    optionsModal.innerHTML = `
-        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Seleccionar imágenes</h3>
-            <div class="space-y-3">
-                <button id="takePictureBtn" class="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Tomar foto
-                </button>
-                <button id="selectFromGalleryBtn" class="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    Seleccionar de galería
-                </button>
-                <button id="cancelCaptureBtn" class="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(optionsModal);
-    
-    // Manejar opciones
-    const takePictureBtn = optionsModal.querySelector('#takePictureBtn');
-    const selectFromGalleryBtn = optionsModal.querySelector('#selectFromGalleryBtn');
-    const cancelBtn = optionsModal.querySelector('#cancelCaptureBtn');
-    const packageImagesInput = document.getElementById('packageImages');
-    
-    takePictureBtn.addEventListener('click', () => {
-        // Configurar input para cámara
-        packageImagesInput.setAttribute('capture', 'environment');
-        packageImagesInput.setAttribute('accept', 'image/*');
-        packageImagesInput.click();
-        document.body.removeChild(optionsModal);
-    });
-    
-    selectFromGalleryBtn.addEventListener('click', () => {
-        // Configurar input para galería (sin capture)
-        packageImagesInput.removeAttribute('capture');
-        packageImagesInput.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
-        packageImagesInput.click();
-        document.body.removeChild(optionsModal);
-    });
-    
-    cancelBtn.addEventListener('click', () => {
-        document.body.removeChild(optionsModal);
-    });
-    
-    // Cerrar al hacer click fuera del modal
-    optionsModal.addEventListener('click', (e) => {
-        if (e.target === optionsModal) {
-            document.body.removeChild(optionsModal);
-        }
-    });
-    
-    return true; // Indica que se mostró el modal móvil
-}
-
-// ELIMINADO: Interceptor que causaba demoras en escritorio
-// El comportamiento optimizado ya está en el listener principal
+// NOTA: Las funciones isMobileDevice() y showMobileCaptureOptions() 
+// están definidas al inicio del script para estar disponibles globalmente
 
 </script>
 {% endblock %}

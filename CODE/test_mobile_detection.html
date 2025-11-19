@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Detección Móvil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .info-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .mobile { background: #d4edda; }
+        .desktop { background: #cce5ff; }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Detección de Dispositivo</h1>
+    
+    <div id="deviceInfo" class="info-box"></div>
+    
+    <button onclick="testDetection()">🔄 Probar Detección</button>
+    
+    <div id="result"></div>
+
+    <script>
+        // Función de detección (igual que en packages.html)
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            const isSmallScreen = window.innerWidth <= 768;
+            const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
+            
+            return isMobileUA || (isSmallScreen && hasTouchOnly);
+        }
+
+        function testDetection() {
+            const isMobile = isMobileDevice();
+            const deviceInfo = document.getElementById('deviceInfo');
+            const result = document.getElementById('result');
+            
+            deviceInfo.className = 'info-box ' + (isMobile ? 'mobile' : 'desktop');
+            deviceInfo.innerHTML = `
+                <h3>${isMobile ? '📱 MÓVIL DETECTADO' : '💻 ESCRITORIO DETECTADO'}</h3>
+                <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                <p><strong>Ancho de pantalla:</strong> ${window.innerWidth}px</p>
+                <p><strong>Touch Points:</strong> ${navigator.maxTouchPoints}</p>
+                <p><strong>Pointer Fine:</strong> ${window.matchMedia('(pointer: fine)').matches ? 'Sí' : 'No'}</p>
+            `;
+            
+            result.innerHTML = `
+                <div class="info-box">
+                    <h3>Comportamiento esperado:</h3>
+                    <p>${isMobile ? 
+                        '✅ Se mostrará modal con opciones: "Tomar foto" y "Seleccionar de galería"' : 
+                        '✅ Se abrirá directamente el selector de archivos'
+                    }</p>
+                </div>
+            `;
+        }
+
+        // Ejecutar al cargar
+        testDetection();
+        
+        // Actualizar al cambiar tamaño de ventana
+        window.addEventListener('resize', testDetection);
+    </script>
+</body>
+</html>
