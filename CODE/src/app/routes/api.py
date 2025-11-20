@@ -1230,7 +1230,7 @@ async def get_packages(
                     "status": pkg.status.value if pkg.status else None,
                     "package_type": pkg.package_type.value if pkg.package_type else None,
                     "package_condition": pkg.package_condition.value if pkg.package_condition else None,
-                    "observations": pkg.observations,
+                    # "observations": pkg.observations,  # Campo eliminado del modelo Package
                     "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
                     "received_at": pkg.received_at.isoformat() if pkg.received_at else None,
                     "delivered_at": pkg.delivered_at.isoformat() if pkg.delivered_at else None,
