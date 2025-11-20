@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test de Botones - Paquetes</title>
+    <script>
+        // Script para probar en la consola del navegador
+        console.log('=== TEST DE BOTONES ===');
+        
+        // 1. Botón de Anunciar
+        const announceBtn = document.querySelector('button[onclick*="announce"]');
+        console.log('1. Botón Anunciar:', announceBtn ? '✅ Encontrado' : '❌ No encontrado');
+        
+        // 2. Botones de filtro de estado
+        const filterAnnounced = document.getElementById('filterAnnounced');
+        const filterReceived = document.getElementById('filterReceived');
+        const filterDelivered = document.getElementById('filterDelivered');
+        const filterCancelled = document.getElementById('filterCancelled');
+        
+        console.log('2. Botones de filtro:');
+        console.log('   - Anunciado:', filterAnnounced ? '✅' : '❌');
+        console.log('   - Recibido:', filterReceived ? '✅' : '❌');
+        console.log('   - Entregado:', filterDelivered ? '✅' : '❌');
+        console.log('   - Cancelado:', filterCancelled ? '✅' : '❌');
+        
+        // 3. Botón limpiar filtros
+        const clearFilters = document.getElementById('clearFilters');
+        console.log('3. Botón Limpiar:', clearFilters ? '✅' : '❌');
+        
+        // 4. Botones de acción en filas
+        const actionButtons = document.querySelectorAll('button[onclick*="openPackageAction"]');
+        console.log('4. Botones de acción en filas:', actionButtons.length, 'encontrados');
+        
+        // 5. Verificar funciones
+        console.log('5. Funciones disponibles:');
+        console.log('   - applyStatusFilter:', typeof applyStatusFilter);
+        console.log('   - clearFilters:', typeof clearFilters);
+        console.log('   - openPackageAction:', typeof openPackageAction);
+        console.log('   - loadPackages:', typeof loadPackages);
+    </script>
+</head>
+<body>
+    <h1>Ver consola del navegador</h1>
+</body>
+</html>

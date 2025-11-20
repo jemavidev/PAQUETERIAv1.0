@@ -230,14 +230,14 @@ async def list_packages(
     from datetime import datetime, timezone
     
     try:
-        # OPTIMIZACIÓN: Usar paginación en la consulta SQL y evitar joinedload innecesario
+        # Obtener todos los paquetes (sin paginación en SQL, se hará después de combinar con anuncios)
         packages_query = db.query(Package).options(
             joinedload(Package.customer),
             joinedload(Package.file_uploads)
-        ).order_by(Package.created_at.desc()).offset(skip).limit(limit).all()
+        ).order_by(Package.created_at.desc()).all()
         
-        # Contar total para paginación (solo si es necesario)
-        total_packages = db.query(Package).count()
+        # Contar total para paginación
+        total_packages = len(packages_query)
     except Exception as e:
         logger.error(f"Error querying packages: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
@@ -310,49 +310,45 @@ async def list_packages(
             logger.error(f"Error processing package {package.id}: {str(e)}")
             continue
 
-    # OPTIMIZACIÓN: Solo obtener anuncios si hay espacio en la paginación
-    announcements_data = []
-    if len(packages_data) < limit:
-        remaining_limit = limit - len(packages_data)
-        announcements_query = f"""
-            SELECT
-                CONCAT('announcement_', a.tracking_code) as id,
-                a.tracking_code as tracking_number,
-                'normal' as package_type,
-                CASE 
-                    WHEN a.is_active = false THEN 'cancelado'
-                    ELSE 'announced'
-                END as status,
-                'ok' as package_condition,
-                '' as access_code,
-                NULL as posicion,
-                NULL as observations,
-                a.announced_at,
-                NULL as received_at,
-                NULL as delivered_at,
-                CASE 
-                    WHEN a.is_active = false THEN a.updated_at
-                    ELSE NULL
-                END as cancelled_at,
-                {settings.base_delivery_rate_normal} as base_fee,
-                0.00 as storage_fee,
-                {settings.base_delivery_rate_normal} as total_amount,
-                a.customer_id,
-                a.announced_at as created_at,
-                a.announced_at as updated_at,
-                COALESCE(c.full_name, a.customer_name, 'Sin cliente') as customer_name,
-                COALESCE(c.phone, a.customer_phone, 'Sin teléfono') as customer_phone,
-                c.email as customer_email,
-                a.guide_number
-            FROM package_announcements_new a
-            LEFT JOIN customers c ON a.customer_id = c.id
-            WHERE a.is_processed = false
-            ORDER BY a.announced_at DESC
-            LIMIT {remaining_limit}
-        """
+    # Obtener anuncios no procesados (siempre, para mostrarlos junto con los paquetes)
+    announcements_query = f"""
+        SELECT
+            CONCAT('announcement_', a.tracking_code) as id,
+            a.tracking_code as tracking_number,
+            'normal' as package_type,
+            CASE 
+                WHEN a.is_active = false THEN 'cancelado'
+                ELSE 'announced'
+            END as status,
+            'ok' as package_condition,
+            '' as access_code,
+            NULL as posicion,
+            NULL as observations,
+            a.announced_at,
+            NULL as received_at,
+            NULL as delivered_at,
+            CASE 
+                WHEN a.is_active = false THEN a.updated_at
+                ELSE NULL
+            END as cancelled_at,
+            {settings.base_delivery_rate_normal} as base_fee,
+            0.00 as storage_fee,
+            {settings.base_delivery_rate_normal} as total_amount,
+            a.customer_id,
+            a.announced_at as created_at,
+            a.announced_at as updated_at,
+            COALESCE(c.full_name, a.customer_name, 'Sin cliente') as customer_name,
+            COALESCE(c.phone, a.customer_phone, 'Sin teléfono') as customer_phone,
+            c.email as customer_email,
+            a.guide_number
+        FROM package_announcements_new a
+        LEFT JOIN customers c ON a.customer_id = c.id
+        WHERE a.is_processed = false
+        ORDER BY a.announced_at DESC
+    """
 
-        announcements_result = db.execute(text(announcements_query))
-        announcements_data = announcements_result.fetchall()
+    announcements_result = db.execute(text(announcements_query))
+    announcements_data = announcements_result.fetchall()
 
     # Combine packages and announcements
     all_items = []
@@ -392,56 +388,20 @@ async def list_packages(
         }
         all_items.append(normalize_package_item(item_dict))
 
-    # OPTIMIZACIÓN: Aplicar filtros en la consulta SQL en lugar de Python
-    # Si hay filtro de estado, ya debería aplicarse en las consultas SQL anteriores
-    
-    # Combinar resultados (ya paginados)
-    all_items = []
-    for package_dict in packages_data:
-        all_items.append(normalize_package_item(package_dict))
-
-    for row in announcements_data:
-        item_dict = {
-            'id': row[0],
-            'tracking_number': row[1],
-            'package_type': row[2],
-            'status': row[3],
-            'package_condition': row[4],
-            'access_code': row[5],
-            'baroti': row[6],
-            'observations': row[7],
-            'announced_at': row[8].isoformat() if row[8] else None,
-            'received_at': row[9],
-            'delivered_at': row[10],
-            'cancelled_at': row[11],
-            'base_fee': float(row[12]),
-            'storage_fee': float(row[13]),
-            'storage_days': 0,
-            'total_amount': float(row[14]),
-            'customer_id': row[15],
-            'created_at': row[16].isoformat() if row[16] else None,
-            'updated_at': row[17].isoformat() if row[17] else None,
-            'customer_name': row[18],
-            'customer_phone': row[19],
-            'customer_email': row[20],
-            'guide_number': row[21],
-            'is_announcement': True,
-            'file_uploads': []
-        }
-        all_items.append(normalize_package_item(item_dict))
-
     # Sort by creation date (most recent first)
     all_items.sort(key=lambda x: x['created_at'] or '', reverse=True)
 
     # Calcular información de paginación
-    total_items = total_packages + len(announcements_data)  # Aproximado
+    total_items = total_packages + len(announcements_data)
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     current_page = (skip // limit) + 1
     has_prev = skip > 0
-    has_next = len(all_items) >= limit
+    has_next = skip + limit < total_items
 
-    # Los items ya están paginados por las consultas SQL
-    paginated_items = all_items
+    # Aplicar paginación después de combinar y ordenar
+    start_idx = skip
+    end_idx = skip + limit
+    paginated_items = all_items[start_idx:end_idx]
 
     # Preparar respuesta
     result = {

@@ -1176,8 +1176,8 @@ function createPackageCard(package, state) {
 
         <div class="flex justify-end space-x-2">
             ${actions.map(action => `
-                <button onclick="${action.type === 'receive' ? `window.location.href='/receive?id=${package.id}'` : `openPackageAction('${package.id}', '${action.type}')`}"
-                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md ${action.color} hover:opacity-80 transition-colors duration-200">
+                <button ${action.disabled ? 'disabled' : `onclick="openPackageAction('${package.id}', '${action.type}')"`}
+                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md ${action.color} ${action.disabled ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80'} transition-colors duration-200">
                     ${action.icon}
                     ${action.label}
                 </button>
@@ -2292,191 +2292,154 @@ function confirmAction() {
     showErrorToast('Error', 'Acción no válida.', 3000);
 }
 
-function confirmCancelAction() {
+async function confirmCancelAction() {
     console.log('🔄 confirmCancelAction called');
     
-    // NO limpiar el package_id - el backend ahora maneja tanto anuncios como paquetes
-    // Si es un anuncio, mantiene el prefijo 'announcement_', si es un paquete, es un número
+    // Deshabilitar botón para evitar doble click
+    const confirmButton = document.getElementById('confirmAction');
+    if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    }
+    
     const packageIdForRequest = currentPackageId.toString();
     
-    // Datos para cancelación (usar valores por defecto)
+    // Datos para cancelación
     const cancelData = {
-        reason: 'otro', // Razón por defecto (cliente_solicita, cliente_no_reclama, paquete_danado, paquete_perdido, anuncio_expirado, error_operador, otro)
-        observations: null, // Opcional
-        refund_amount: 0.00, // Por defecto 0
-        operator_id: 1 // TODO: Obtener del usuario actual
+        reason: 'otro',
+        observations: null,
+        refund_amount: 0.00,
+        operator_id: 1
     };
 
-    // Send the cancel request to the correct endpoint
-    console.log('📤 Sending cancel request to:', `/api/packages/${packageIdForRequest}/cancel`);
-    console.log('📦 Request data:', cancelData);
-    console.log('📦 Package ID type:', packageIdForRequest.startsWith('announcement_') ? 'ANUNCIO' : 'PAQUETE');
+    console.log('📤 Cancelando:', packageIdForRequest);
     
-    fetch(`/api/packages/${packageIdForRequest}/cancel`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(cancelData)
-    })
-    .then(response => {
-        console.log('📥 Response status:', response.status);
+    try {
+        const response = await fetch(`/api/packages/${packageIdForRequest}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(cancelData)
+        });
         
         if (!response.ok) {
-            return response.json().then(errorData => {
-                console.log('❌ Error response:', errorData);
-                throw new Error(errorData.detail || 'Error al cancelar el paquete');
-            });
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Error al cancelar');
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ Respuesta exitosa:', data);
         
-        // Verificar si fue exitoso (tanto para paquetes como anuncios)
+        const data = await response.json();
+        console.log('✅ Cancelado exitosamente');
+        
         if (data.success) {
-            // Determinar si es un anuncio o un paquete
             const isAnnouncement = currentPackageId.toString().startsWith('announcement_');
             const itemType = isAnnouncement ? 'anuncio' : 'paquete';
+            const successMessage = data.message || `${itemType} cancelado correctamente`;
             
-            // Mostrar mensaje de éxito
-            const successMessage = data.message || `El ${itemType} ha sido cancelado correctamente.`;
-            showSuccessToast('Éxito', successMessage, 4000);
+            // Cerrar modal inmediatamente
+            closeModal();
             
-            // Si es un paquete y tiene email, mostrar opción de email
-            if (!isAnnouncement && data.package && data.package.customer && data.package.customer.email) {
-                // Guardar información del paquete cancelado para mostrar botón
-                window.cancelledPackageForEmail = data.package;
-                showSuccessToast('Éxito', `${successMessage} Puedes enviar un email de notificación.`, 5000);
-            }
-        } else {
-            // Si no fue exitoso, mostrar el mensaje de error
-            showErrorToast('Error', data.message || 'No se pudo cancelar el elemento.', 5000);
-            return; // No cerrar modal ni recargar si hay error
-        }
-        
-        closeModal();
-        // Esperar un momento antes de recargar para que el usuario vea el mensaje
-        setTimeout(() => {
+            // Mostrar toast de éxito
+            showSuccessToast('✅ Cancelado', successMessage, 3000);
+            
+            // Recargar inmediatamente sin delay
             reloadPackages();
-        }, 500);
-    })
-    .catch(error => {
-        console.error('❌ Error cancelando paquete:', error);
-        console.error('❌ Error message:', error.message);
-        showErrorToast('Error', error.message || 'No se pudo cancelar el paquete.', 5000);
-    });
+        } else {
+            throw new Error(data.message || 'No se pudo cancelar');
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showErrorToast('Error', error.message, 4000);
+        
+        // Rehabilitar botón en caso de error
+        if (confirmButton) {
+            confirmButton.disabled = false;
+            confirmButton.innerHTML = 'Confirmar Cancelación';
+        }
+    }
 }
 
-function confirmDeliverAction() {
+async function confirmDeliverAction() {
     console.log('🔄 confirmDeliverAction called');
     
     // Validate required fields
     const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
-    // OBSERVATIONS DISABLED - No longer reading observations data
-    // const observations = document.getElementById('deliverObservations').value.trim();
-
-    console.log('💰 Payment amount:', paymentAmount);
 
     if (!paymentAmount || paymentAmount <= 0) {
-        console.log('❌ Invalid payment amount:', paymentAmount);
-        showErrorToast('Error', 'Debe ingresar un monto de pago válido.', 3000);
+        showErrorToast('Error', 'Debe ingresar un monto de pago válido', 3000);
         return;
     }
 
-    // Validar que el monto sea razonable (opcional)
+    // Validar que el monto sea razonable
     const calculatedAmount = parseFloat(document.getElementById('suggestedAmountText').textContent.replace('Valor calculado: $', ''));
     if (paymentAmount > calculatedAmount * 2) {
-        if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es significativamente mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Está seguro de continuar?`)) {
+        if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Continuar?`)) {
             return;
         }
     }
 
-    // Limpiar el package_id si tiene prefijo
+    // Deshabilitar botón inmediatamente
+    const confirmButton = document.getElementById('confirmAction');
+    if (confirmButton) {
+        confirmButton.disabled = true;
+        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    }
+
     const cleanPackageId = currentPackageId.toString().replace('announcement_', '');
-    
-    // Obtener información del paquete para customer_id
-    const packageData = packagesByState.received.find(p => p.id.toString() === cleanPackageId) ||
-                        packagesByState.announced.find(p => p.id.toString() === cleanPackageId) ||
-                        currentPackage;
-    
-    // Obtener customer_id correctamente (puede ser UUID string o null)
-    const customerId = packageData?.customer_id || 
-                       (packageData?.customer && packageData.customer.id) || 
-                       (currentPackage && currentPackage.customer_id) ||
-                       null;
+    const packageData = packagesByState.received.find(p => p.id.toString() === cleanPackageId) || currentPackage;
+    const customerId = packageData?.customer_id || null;
     
     const deliverData = {
-        payment_method: 'efectivo', // Siempre efectivo
+        payment_method: 'efectivo',
         payment_amount: paymentAmount,
-        customer_id: customerId, // UUID o null (opcional)
-        operator_id: 1, // TODO: Obtener del usuario actual
-        customer_signature: null // TODO: Implementar firma si es necesario
-        // OBSERVATIONS DISABLED - Not including observations
-        // observations: observations || null
+        customer_id: customerId,
+        operator_id: 1,
+        customer_signature: null
     };
 
-    // Send the delivery request to the correct endpoint
-    console.log('📤 Sending delivery request to:', `/api/packages/${cleanPackageId}/deliver`);
-    console.log('📦 Request data:', deliverData);
+    console.log('📤 Entregando paquete:', cleanPackageId);
     
-    fetch(`/api/packages/${cleanPackageId}/deliver`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(deliverData)
-    })
-    .then(response => {
-        console.log('📥 Response status:', response.status);
-        console.log('📥 Response headers:', response.headers);
+    try {
+        const response = await fetch(`/api/packages/${cleanPackageId}/deliver`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(deliverData)
+        });
         
         if (!response.ok) {
-            return response.json().then(errorData => {
-                console.log('❌ Error response:', errorData);
-                throw new Error(errorData.detail || 'Error al entregar el paquete');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ Respuesta exitosa:', data);
-        
-        // Verificar que el paquete se entregó correctamente
-        const packageData = data.package || data;
-        const status = packageData.status || (packageData.status?.value);
-        
-        if (status && (status === 'ENTREGADO' || status === 'DELIVERED' || status?.toUpperCase() === 'ENTREGADO')) {
-            // Mostrar botón de email si el cliente tiene email (después de entregar)
-            if (packageData.customer && packageData.customer.email) {
-                // Guardar información del paquete entregado para mostrar botón
-                window.deliveredPackageForEmail = packageData;
-                // Mostrar mensaje con opción de email
-                showSuccessToast('Éxito', 'El paquete ha sido entregado correctamente. Puedes enviar un email de confirmación.', 5000);
-            } else {
-                showSuccessToast('Éxito', data.message || 'El paquete ha sido entregado correctamente.', 4000);
-            }
-        } else {
-            // Si el estado no es ENTREGADO, mostrar advertencia
-            console.warn('⚠️ El paquete podría no haberse entregado correctamente. Estado recibido:', status);
-            showSuccessToast('Éxito', data.message || 'Operación completada.', 4000);
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Error al entregar');
         }
         
+        const data = await response.json();
+        console.log('✅ Entregado exitosamente');
+        
+        // Cerrar modal inmediatamente
         closeModal();
-        // Esperar un momento antes de recargar para que el usuario vea el mensaje
-        setTimeout(() => {
-            reloadPackages();
-        }, 500);
-    })
-    .catch(error => {
-        console.error('❌ Error entregando paquete:', error);
-        console.error('❌ Error message:', error.message);
-        showErrorToast('Error', error.message || 'No se pudo entregar el paquete.', 5000);
-    });
+        
+        // Mostrar toast de éxito
+        const packageData = data.package || data;
+        const hasEmail = packageData.customer && packageData.customer.email;
+        const message = hasEmail ? 'Paquete entregado. Email disponible' : 'Paquete entregado correctamente';
+        showSuccessToast('✅ Entregado', message, 3000);
+        
+        if (hasEmail) {
+            window.deliveredPackageForEmail = packageData;
+        }
+        
+        // Recargar inmediatamente SIN delay
+        reloadPackages();
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showErrorToast('Error', error.message, 4000);
+        
+        // Rehabilitar botón en caso de error
+        if (confirmButton) {
+            confirmButton.disabled = false;
+            confirmButton.innerHTML = 'Confirmar Entrega';
+        }
+    }
 }
-
 function confirmDeleteAction() {
     // Additional confirmation for delete action
     const confirmed = confirm(`⚠️ ¡ATENCIÓN! Esta acción eliminará permanentemente el paquete ${currentPackageId}.\n\n¿Estás completamente seguro de que deseas continuar?\n\nEsta acción NO SE PUEDE DESHACER.`);
