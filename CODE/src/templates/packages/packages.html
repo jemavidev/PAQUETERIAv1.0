@@ -3673,33 +3673,33 @@ function clearStatusFilter() {
 }
 
 function updateStatusButtonStyles() {
-    // Reset all status buttons to default style - Usar selector más específico
-    const statusButtonsContainer = document.querySelector('.flex.items-center.gap-1');
-    if (!statusButtonsContainer) {
-        console.warn('⚠️ No se encontró contenedor de botones de estado');
-        return;
-    }
+    // Obtener botones por ID directamente
+    const filterAnnounced = document.getElementById('filterAnnounced');
+    const filterReceived = document.getElementById('filterReceived');
+    const filterDelivered = document.getElementById('filterDelivered');
+    const filterCancelled = document.getElementById('filterCancelled');
     
-    const statusButtons = statusButtonsContainer.querySelectorAll('button');
-    console.log(`🎨 Actualizando estilos de ${statusButtons.length} botones, filtro activo: "${currentStatusFilter}"`);
+    const statusButtons = {
+        'announced': filterAnnounced,
+        'received': filterReceived,
+        'delivered': filterDelivered,
+        'cancelled': filterCancelled
+    };
     
-    statusButtons.forEach(button => {
-        button.classList.remove('ring-2', 'ring-offset-2', 'ring-papyrus-blue', 'bg-opacity-20');
-        // Mantener los colores hover originales
+    console.log(`🎨 Actualizando estilos, filtro activo: "${currentStatusFilter}"`);
+    
+    // Reset all status buttons to default style
+    Object.values(statusButtons).forEach(button => {
+        if (button) {
+            button.classList.remove('ring-2', 'ring-offset-2', 'ring-papyrus-blue', 'bg-opacity-20');
+        }
     });
 
     // Highlight active status button
-    if (currentStatusFilter) {
-        const filterIndex = ['announced', 'received', 'delivered', 'cancelled'].indexOf(currentStatusFilter);
-        console.log(`🎯 Aplicando estilo para filtro: ${currentStatusFilter} (índice: ${filterIndex})`);
-        
-        if (filterIndex !== -1 && statusButtons[filterIndex]) {
-            const activeButton = statusButtons[filterIndex];
-            activeButton.classList.add('ring-2', 'ring-offset-2', 'ring-papyrus-blue', 'bg-opacity-20');
-            console.log(`✅ Estilo aplicado al botón ${filterIndex}`);
-        } else {
-            console.warn(`❌ No se pudo aplicar estilo: filterIndex=${filterIndex}, buttons.length=${statusButtons.length}`);
-        }
+    if (currentStatusFilter && statusButtons[currentStatusFilter]) {
+        const activeButton = statusButtons[currentStatusFilter];
+        activeButton.classList.add('ring-2', 'ring-offset-2', 'ring-papyrus-blue', 'bg-opacity-20');
+        console.log(`✅ Estilo aplicado al botón: ${currentStatusFilter}`);
     }
 }
 
@@ -4067,25 +4067,37 @@ document.addEventListener('DOMContentLoaded', function() {
         clearFiltersBtn.addEventListener('click', clearFilters);
     }
 
-    // Status filter buttons - Usar selectores más específicos
-    const statusButtonsContainer = document.querySelector('.flex.items-center.gap-1');
-    if (statusButtonsContainer) {
-        const statusButtons = statusButtonsContainer.querySelectorAll('button');
-        console.log('🔘 Botones de estado encontrados:', statusButtons.length);
-        
-        if (statusButtons.length >= 4) {
-            // Agregar event listeners con mapeo correcto de estados
-            statusButtons[0].addEventListener('click', () => applyStatusFilter('announced')); // Amarillo - Anunciado
-            statusButtons[1].addEventListener('click', () => applyStatusFilter('received'));  // Azul - Recibido  
-            statusButtons[2].addEventListener('click', () => applyStatusFilter('delivered')); // Verde - Entregado
-            statusButtons[3].addEventListener('click', () => applyStatusFilter('cancelled')); // Rojo - Cancelado
-            
-            console.log('✅ Event listeners de estado configurados');
-        } else {
-            console.warn('⚠️ No se encontraron suficientes botones de estado');
-        }
+    // Status filter buttons - Usar IDs específicos para mayor confiabilidad
+    const filterAnnounced = document.getElementById('filterAnnounced');
+    const filterReceived = document.getElementById('filterReceived');
+    const filterDelivered = document.getElementById('filterDelivered');
+    const filterCancelled = document.getElementById('filterCancelled');
+    
+    if (filterAnnounced && filterReceived && filterDelivered && filterCancelled) {
+        filterAnnounced.addEventListener('click', () => {
+            console.log('🟡 Filtro Anunciado clickeado');
+            applyStatusFilter('announced');
+        });
+        filterReceived.addEventListener('click', () => {
+            console.log('🔵 Filtro Recibido clickeado');
+            applyStatusFilter('received');
+        });
+        filterDelivered.addEventListener('click', () => {
+            console.log('🟢 Filtro Entregado clickeado');
+            applyStatusFilter('delivered');
+        });
+        filterCancelled.addEventListener('click', () => {
+            console.log('🔴 Filtro Cancelado clickeado');
+            applyStatusFilter('cancelled');
+        });
+        console.log('✅ Event listeners de filtros de estado configurados correctamente');
     } else {
-        console.error('❌ No se encontró el contenedor de botones de estado');
+        console.error('❌ No se encontraron todos los botones de filtro:', {
+            announced: !!filterAnnounced,
+            received: !!filterReceived,
+            delivered: !!filterDelivered,
+            cancelled: !!filterCancelled
+        });
     }
 
     // Modal events - verificar que los elementos existan antes de agregar listeners

@@ -230,14 +230,32 @@ async def list_packages(
     from datetime import datetime, timezone
     
     try:
-        # Obtener todos los paquetes (sin paginación en SQL, se hará después de combinar con anuncios)
-        packages_query = db.query(Package).options(
+        # Construir query base
+        query = db.query(Package).options(
             joinedload(Package.customer),
             joinedload(Package.file_uploads)
-        ).order_by(Package.created_at.desc()).all()
+        )
+        
+        # Aplicar filtro de estado si se proporciona
+        if status_filter:
+            logger.info(f"🔍 Aplicando filtro de estado: {status_filter}")
+            # Normalizar el estado para comparación
+            from app.utils.normalization import normalize_status
+            normalized_status = normalize_status(status_filter)
+            if normalized_status:
+                query = query.filter(Package.status == normalized_status)
+                logger.info(f"✅ Filtro aplicado: {normalized_status}")
+        
+        # Aplicar filtro de cliente si se proporciona
+        if customer_id:
+            query = query.filter(Package.customer_id == customer_id)
+        
+        # Obtener paquetes ordenados
+        packages_query = query.order_by(Package.created_at.desc()).all()
         
         # Contar total para paginación
         total_packages = len(packages_query)
+        logger.info(f"📊 Paquetes encontrados: {total_packages}")
     except Exception as e:
         logger.error(f"Error querying packages: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
@@ -310,7 +328,23 @@ async def list_packages(
             logger.error(f"Error processing package {package.id}: {str(e)}")
             continue
 
-    # Obtener anuncios no procesados (siempre, para mostrarlos junto con los paquetes)
+    # Obtener anuncios no procesados (aplicar filtro de estado si existe)
+    # Construir WHERE clause dinámicamente
+    where_clauses = ["a.is_processed = false"]
+    
+    # Aplicar filtro de estado a anuncios si se proporciona
+    if status_filter:
+        normalized_status = normalize_status(status_filter)
+        if normalized_status == "ANUNCIADO":
+            where_clauses.append("a.is_active = true")
+        elif normalized_status == "CANCELADO":
+            where_clauses.append("a.is_active = false")
+        else:
+            # Si el filtro es RECIBIDO o ENTREGADO, no mostrar anuncios
+            where_clauses.append("1=0")  # Condición que siempre es falsa
+    
+    where_clause = " AND ".join(where_clauses)
+    
     announcements_query = f"""
         SELECT
             CONCAT('announcement_', a.tracking_code) as id,
@@ -343,12 +377,13 @@ async def list_packages(
             a.guide_number
         FROM package_announcements_new a
         LEFT JOIN customers c ON a.customer_id = c.id
-        WHERE a.is_processed = false
+        WHERE {where_clause}
         ORDER BY a.announced_at DESC
     """
 
     announcements_result = db.execute(text(announcements_query))
     announcements_data = announcements_result.fetchall()
+    logger.info(f"📢 Anuncios encontrados: {len(announcements_data)}")
 
     # Combine packages and announcements
     all_items = []

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Filtros</title>
+</head>
+<body>
+    <h1>Abrir consola del navegador en http://localhost:8000/packages</h1>
+    <p>Ejecutar estos comandos en la consola:</p>
+    <pre>
+// 1. Verificar que los botones existen
+console.log('filterAnnounced:', document.getElementById('filterAnnounced'));
+console.log('filterReceived:', document.getElementById('filterReceived'));
+console.log('filterDelivered:', document.getElementById('filterDelivered'));
+console.log('filterCancelled:', document.getElementById('filterCancelled'));
+
+// 2. Verificar que la función existe
+console.log('applyStatusFilter:', typeof applyStatusFilter);
+
+// 3. Probar manualmente
+applyStatusFilter('announced');
+
+// 4. Ver el filtro actual
+console.log('currentStatusFilter:', currentStatusFilter);
+
+// 5. Ver si hay paquetes cargados
+console.log('packagesByState:', packagesByState);
+    </pre>
+</body>
+</html>
