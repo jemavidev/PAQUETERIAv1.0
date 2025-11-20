@@ -448,63 +448,34 @@
 </div>
 {% endif %}
 
-<!-- Modal Posición - Estilo Simple y Limpio -->
+<!-- Modal Posición -->
 <div id="barotiModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[60]" onclick="closeBarotiModalOnBackdrop(event)">
-    <div class="relative top-20 mx-auto p-5 w-11/12 sm:w-10/12 md:w-3/4 lg:w-1/2 max-w-lg" onclick="event.stopPropagation()">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100">
-            
+    <div class="relative top-20 mx-auto p-5 w-11/12 sm:w-10/12 md:w-3/4 lg:w-1/2 max-w-2xl" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-xl shadow-2xl border-4 border-green-400">
             <!-- Header -->
-            <div class="border-b border-gray-100 px-6 py-5 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-light text-gray-900">Posición Asignada</h3>
-                </div>
-                <button onclick="closeBarotiModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+            <div class="bg-gradient-to-r from-green-500 to-blue-500 px-6 py-8 text-center rounded-t-lg">
+                <h2 class="text-3xl font-bold text-white tracking-wider">POSICIÓN</h2>
+                <p class="text-white text-sm mt-2 opacity-90">Posición Asignada</p>
             </div>
 
             <!-- Body -->
-            <div class="p-8">
-                <!-- Número de posición -->
-                <div class="text-center mb-6">
-                    <p class="text-sm text-gray-500 mb-3">Ubicación en bodega</p>
-                    <div class="bg-gray-50 rounded-lg p-8 border border-gray-200">
-                        <div id="barotiModalNumber" class="text-6xl font-bold text-gray-900 tracking-wider">
-                            <!-- Número de posición se mostrará aquí -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mensaje informativo -->
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div class="flex items-start space-x-3">
-                        <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <p class="text-sm text-green-800">
-                            El paquete ha sido almacenado exitosamente en esta ubicación.
-                        </p>
+            <div class="p-8 sm:p-12">
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-8 rounded-lg border-2 border-green-300">
+                    <div id="barotiModalNumber" class="text-5xl sm:text-6xl font-bold text-green-600 tracking-wider text-center">
+                        <!-- Número de posición se mostrará aquí -->
                     </div>
                 </div>
             </div>
 
             <!-- Sección de Email (se muestra dinámicamente si aplica) -->
-            <div id="barotiEmailSectionContent" class="px-6 pb-4">
+            <div id="barotiEmailSectionContent" class="px-6 py-4">
                 <!-- Se inserta aquí dinámicamente -->
             </div>
 
             <!-- Footer -->
-            <div class="border-t border-gray-100 px-6 py-4 bg-gray-50">
+            <div class="px-6 py-6 bg-gray-50 rounded-b-lg text-center">
                 <button onclick="closeBarotiModal()" 
-                        class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors touch-manipulation min-h-[48px]">
+                        class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg transition-all duration-200 active:scale-95 touch-manipulation min-h-[48px] flex items-center justify-center mx-auto">
                     Cerrar
                 </button>
             </div>
@@ -523,22 +494,6 @@
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-}
-
-/* Animación simple para el modal de posición */
-#barotiModalNumber {
-    animation: fadeInNumber 0.4s ease-out;
-}
-
-@keyframes fadeInNumber {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 /* Estilos para notificaciones toast */
@@ -2755,7 +2710,7 @@ function openBarotiModal(barotiNumber) {
         // Prevenir scroll del body
         document.body.style.overflow = 'hidden';
         
-        console.log('✅ Modal de posición mostrado:', barotiNumber);
+        console.log('✅ Modal de posición mostrado');
     } else {
         console.error('❌ No se encontraron elementos del modal de posición');
     }
