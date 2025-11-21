@@ -283,11 +283,23 @@ async def cookies_page(request: Request):
     context = get_auth_context_from_request(request)
     return templates.TemplateResponse("general/cookies.html", context)
 
+@router.get("/terms")
+async def terms_page(request: Request):
+    """Página de términos y condiciones - Pública"""
+    context = get_auth_context_from_request(request)
+    return templates.TemplateResponse("general/terms.html", context)
+
+@router.get("/privacy")
+async def privacy_page(request: Request):
+    """Página de políticas de privacidad - Pública"""
+    context = get_auth_context_from_request(request)
+    return templates.TemplateResponse("general/privacy.html", context)
+
 @router.get("/policies")
 async def policies_page(request: Request):
-    """Página de políticas - Pública"""
+    """Página de políticas - Pública (redirige a privacy)"""
     context = get_auth_context_from_request(request)
-    return templates.TemplateResponse("general/policies.html", context)
+    return templates.TemplateResponse("general/privacy.html", context)
 
 # ========================================
 # ENDPOINTS ADICIONALES PARA AUTENTICACIÓN
