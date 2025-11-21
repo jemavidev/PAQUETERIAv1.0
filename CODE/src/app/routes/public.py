@@ -286,14 +286,48 @@ async def cookies_page(request: Request):
 @router.get("/terms")
 async def terms_page(request: Request):
     """Página de términos y condiciones - Pública"""
-    context = get_auth_context_from_request(request)
-    return templates.TemplateResponse("general/terms.html", context)
+    try:
+        context = get_auth_context_from_request(request)
+        logger.info(f"Renderizando /terms con contexto: {list(context.keys())}")
+        return templates.TemplateResponse("general/terms.html", context)
+    except Exception as e:
+        logger.error(f"Error al renderizar /terms: {str(e)}", exc_info=True)
+        # Intentar con contexto mínimo
+        try:
+            minimal_context = {
+                "request": request,
+                "is_authenticated": False,
+                "user": None,
+                "user_name": None,
+                "user_role": None
+            }
+            return templates.TemplateResponse("general/terms.html", minimal_context)
+        except Exception as e2:
+            logger.error(f"Error con contexto mínimo: {str(e2)}", exc_info=True)
+            raise
 
 @router.get("/privacy")
 async def privacy_page(request: Request):
     """Página de políticas de privacidad - Pública"""
-    context = get_auth_context_from_request(request)
-    return templates.TemplateResponse("general/privacy.html", context)
+    try:
+        context = get_auth_context_from_request(request)
+        logger.info(f"Renderizando /privacy con contexto: {list(context.keys())}")
+        return templates.TemplateResponse("general/privacy.html", context)
+    except Exception as e:
+        logger.error(f"Error al renderizar /privacy: {str(e)}", exc_info=True)
+        # Intentar con contexto mínimo
+        try:
+            minimal_context = {
+                "request": request,
+                "is_authenticated": False,
+                "user": None,
+                "user_name": None,
+                "user_role": None
+            }
+            return templates.TemplateResponse("general/privacy.html", minimal_context)
+        except Exception as e2:
+            logger.error(f"Error con contexto mínimo: {str(e2)}", exc_info=True)
+            raise
 
 @router.get("/policies")
 async def policies_page(request: Request):
