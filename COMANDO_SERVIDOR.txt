@@ -1,0 +1,28 @@
+========================================
+COMANDO PARA EJECUTAR EN EL SERVIDOR
+========================================
+
+Copia y pega estos comandos en el servidor de producción:
+
+cd /ruta/al/proyecto && git pull origin main && chmod +x actualizar-produccion.sh && ./actualizar-produccion.sh
+
+========================================
+
+O paso a paso:
+
+1. cd /ruta/al/proyecto
+2. git pull origin main
+3. chmod +x actualizar-produccion.sh
+4. ./actualizar-produccion.sh
+
+========================================
+
+Resultado esperado:
+✅ Templates sincronizados
+✅ Contenedor reiniciado
+✅ URLs funcionando:
+   - /terms
+   - /privacy
+   - /help
+
+========================================
