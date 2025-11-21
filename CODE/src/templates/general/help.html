@@ -1,244 +1,603 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayuda - PAQUETEX</title>
-    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
-    <script src="/static/vendor/js/alpine.min.js?v=3.13.3" defer></script>
-    <link rel="stylesheet" href="/static/vendor/css/font-awesome.min.css?v=6.0.0">
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-blue-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-bold">PAQUETEX</h1>
-                    <span class="text-blue-200">Centro de Ayuda</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
-                        <i class="fas fa-home mr-1"></i>Inicio
-                    </a>
-                    <a href="/announce" class="bg-green-500 hover:bg-green-700 px-3 py-1 rounded text-sm">
-                        <i class="fas fa-plus mr-1"></i>Anunciar
-                    </a>
-                    <a href="/search" class="bg-purple-500 hover:bg-purple-700 px-3 py-1 rounded text-sm">
-                        <i class="fas fa-search mr-1"></i>Buscar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% extends "base/base.html" %}
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">
-                <i class="fas fa-question-circle text-blue-600 mr-3"></i>
-                Centro de Ayuda
-            </h1>
-            <p class="text-lg text-gray-600">
-                Encuentra respuestas a las preguntas más frecuentes sobre nuestro servicio
-            </p>
-        </div>
+{% block title %}Centro de Ayuda - PAQUETEX{% endblock %}
 
-        <!-- FAQ Accordion -->
-        <div class="space-y-4">
-            <!-- FAQ 1 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-box text-blue-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Cómo anunciar un paquete?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        Para anunciar un paquete, sigue estos pasos:
-                    </p>
-                    <ol class="list-decimal list-inside mt-2 space-y-1 text-gray-700">
-                        <li>Ve a la página principal o haz clic en "Anunciar Paquete"</li>
-                        <li>Ingresa el nombre completo del cliente</li>
-                        <li>Ingresa el número de teléfono colombiano (10 dígitos)</li>
-                        <li>Ingresa el número de guía proporcionado por el transportador</li>
-                        <li>Haz clic en "Anunciar Paquete"</li>
-                    </ol>
-                    <p class="text-gray-700 mt-2">
-                        El sistema generará automáticamente un código de seguimiento único y enviará un SMS de confirmación al cliente.
-                    </p>
-                </div>
-            </div>
-
-            <!-- FAQ 2 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-search text-green-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Cómo buscar un paquete?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        Puedes buscar paquetes de las siguientes formas:
-                    </p>
-                    <ul class="list-disc list-inside mt-2 space-y-1 text-gray-700">
-                        <li>Por número de guía del transportador</li>
-                        <li>Por código de seguimiento generado por el sistema</li>
-                        <li>Por nombre del cliente</li>
-                        <li>Por número de teléfono</li>
-                    </ul>
-                    <p class="text-gray-700 mt-2">
-                        Usa la página "Buscar" para encontrar información sobre paquetes anunciados o ya procesados.
-                    </p>
-                </div>
-            </div>
-
-            <!-- FAQ 3 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-mobile-alt text-purple-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Qué es el código de seguimiento?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        El código de seguimiento es un identificador único de 4 caracteres generado automáticamente por el sistema cuando se anuncia un paquete.
-                    </p>
-                    <p class="text-gray-700 mt-2">
-                        Este código se envía automáticamente por SMS al cliente y puede usarse para:
-                    </p>
-                    <ul class="list-disc list-inside mt-2 space-y-1 text-gray-700">
-                        <li>Rastrear el estado del paquete</li>
-                        <li>Consultar información del envío</li>
-                        <li>Acceder a detalles del paquete en línea</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- FAQ 4 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-sms text-orange-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Cómo funciona el sistema de SMS?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        El sistema envía automáticamente SMS de confirmación cuando:
-                    </p>
-                    <ul class="list-disc list-inside mt-2 space-y-1 text-gray-700">
-                        <li>Se anuncia un paquete nuevo</li>
-                        <li>El paquete es recibido en nuestras instalaciones</li>
-                        <li>El paquete es entregado al cliente</li>
-                        <li>Hay cambios importantes en el estado del envío</li>
-                    </ul>
-                    <p class="text-gray-700 mt-2">
-                        Los SMS incluyen información relevante como el código de seguimiento, estado del paquete y enlaces para más información.
-                    </p>
-                </div>
-            </div>
-
-            <!-- FAQ 5 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-envelope text-red-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Cómo contactar soporte?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        Para contactar soporte técnico o hacer consultas:
-                    </p>
-                    <div class="mt-3 space-y-2">
-                        <div class="flex items-center text-gray-700">
-                            <i class="fas fa-phone mr-2 text-blue-600"></i>
-                            <span>Teléfono: (333) 400-4007</span>
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <i class="fas fa-envelope mr-2 text-blue-600"></i>
-                            <span>Email: soporte@paqueteselclub.com</span>
-                        </div>
-                        <div class="flex items-center text-gray-700">
-                            <i class="fas fa-clock mr-2 text-blue-600"></i>
-                            <span>Horario: Lunes a Viernes, 8:00 AM - 6:00 PM</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FAQ 6 -->
-            <div class="bg-white rounded-lg shadow-md" x-data="{ open: false }">
-                <button @click="open = !open"
-                        class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50">
-                    <div class="flex items-center">
-                        <i class="fas fa-shield-alt text-indigo-600 mr-3"></i>
-                        <span class="font-medium text-gray-900">¿Es seguro el sistema?</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }"></i>
-                </button>
-                <div x-show="open" x-transition class="px-6 pb-4">
-                    <p class="text-gray-700">
-                        Sí, el sistema implementa múltiples medidas de seguridad:
-                    </p>
-                    <ul class="list-disc list-inside mt-2 space-y-1 text-gray-700">
-                        <li>Encriptación de datos sensibles</li>
-                        <li>Autenticación segura de usuarios</li>
-                        <li>Validación de datos de entrada</li>
-                        <li>Logs de auditoría de todas las acciones</li>
-                        <li>Backup automático de datos</li>
-                        <li>Conexión segura HTTPS</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contact Section -->
-        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-            <h2 class="text-2xl font-bold text-blue-900 mb-4">
-                <i class="fas fa-headset mr-2"></i>
-                ¿No encontraste lo que buscas?
-            </h2>
-            <p class="text-blue-700 mb-6">
-                Nuestro equipo de soporte está listo para ayudarte con cualquier pregunta o problema.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                <a href="tel:+573334004007"
-                   class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
-                    <i class="fas fa-phone mr-2"></i>
-                    Llamar Ahora
-                </a>
-                <a href="mailto:soporte@paqueteselclub.com"
-                   class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200">
-                    <i class="fas fa-envelope mr-2"></i>
-                    Enviar Email
-                </a>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="mt-12 text-center text-gray-500">
-            <p>&copy; 2025 PAQUETEX. Todos los derechos reservados.</p>
-            <div class="mt-2 space-x-4">
-                <a href="/policies" class="hover:text-blue-600">Políticas</a>
-                <a href="/cookies" class="hover:text-blue-600">Cookies</a>
-                <a href="/help" class="hover:text-blue-600 font-medium">Ayuda</a>
-            </div>
-        </footer>
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <!-- Logo PAPYRUS -->
+    <div class="text-center mb-8">
+        <img src="/static/images/logo.png?v=4.0" 
+             alt="PAPYRUS Logo" 
+             class="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain mb-4"
+             style="max-height: 120px; min-height: 80px;">
     </div>
-</body>
-</html>
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <span class="text-4xl mr-2">❓</span>
+            Centro de Ayuda
+        </h1>
+        <p class="text-base sm:text-lg text-gray-600">
+            Todo lo que necesitas saber sobre nuestro servicio de paquetería
+        </p>
+    </div>
+
+    <!-- Servicio Overview -->
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 sm:p-8 mb-8 text-white">
+        <h2 class="text-xl sm:text-2xl font-bold mb-4">
+            <span class="text-3xl mr-2">📦</span>
+            ¿Qué es PAQUETEX?
+        </h2>
+        <p class="text-base sm:text-lg mb-4 leading-relaxed">
+            Somos tu solución confiable para recibir y gestionar paquetes en edificios y conjuntos residenciales. 
+            Ofrecemos un servicio completo de anuncio, recepción, almacenamiento seguro y entrega de tus paquetes con notificaciones automáticas por SMS, Email y WhatsApp.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center hover:bg-opacity-30 transition-all">
+                <div class="text-4xl mb-2">🛡️</div>
+                <h3 class="font-bold text-lg">Seguro</h3>
+                <p class="text-sm">Almacenamiento protegido</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center hover:bg-opacity-30 transition-all">
+                <div class="text-4xl mb-2">⚡</div>
+                <h3 class="font-bold text-lg">Rápido</h3>
+                <p class="text-sm">Notificaciones instantáneas</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center hover:bg-opacity-30 transition-all">
+                <div class="text-4xl mb-2">📱</div>
+                <h3 class="font-bold text-lg">Fácil</h3>
+                <p class="text-sm">Seguimiento en línea</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarifas Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-8 border border-gray-100">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
+            <span class="text-3xl mr-2">💰</span>
+            Tarifas del Servicio
+        </h2>
+            
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Tarifa Paquete Normal -->
+            <div class="border-2 border-blue-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900">Paquete Normal</h3>
+                    <div class="text-4xl">📦</div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">
+                    $1,500 COP
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Tarifa base de recepción y entrega</p>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Hasta 30cm x 30cm x 30cm</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Peso inferior a 5 kg</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Notificaciones SMS, Email y WhatsApp</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Seguimiento en línea 24/7</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tarifa Paquete Extra Dimensionado -->
+            <div class="border-2 border-purple-200 rounded-lg p-6 hover:border-purple-400 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900">Extra Dimensionado</h3>
+                    <div class="text-4xl">📦📦</div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-2">
+                    $2,000 COP
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Para paquetes de mayor tamaño</p>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Dimensiones superiores a 30cm x 30cm x 30cm</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Peso superior a 5 kg</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Manejo especial y cuidadoso</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Todos los servicios incluidos</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tarifa de Almacenamiento -->
+        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 hover:shadow-md transition-all">
+            <div class="flex items-center mb-4">
+                <span class="text-3xl mr-3">🏪</span>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">Almacenamiento</h3>
+            </div>
+            <div class="flex items-baseline mb-2">
+                <span class="text-2xl sm:text-3xl font-bold text-yellow-600">$1,000 COP</span>
+                <span class="text-gray-600 ml-2 text-sm sm:text-base">por día adicional</span>
+            </div>
+            <p class="text-gray-700 text-sm">
+                <span class="text-blue-500 mr-1">ℹ️</span>
+                El almacenamiento se cobra por cada 24 horas después de la recepción. 
+                El primer día está incluido en la tarifa base. Recoge tu paquete dentro de las primeras 24 horas para evitar cargos adicionales.
+            </p>
+        </div>
+
+        <!-- Ejemplo de Cálculo -->
+        <div class="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h4 class="font-bold text-gray-900 mb-3 text-base sm:text-lg">
+                <span class="text-xl mr-2">🧮</span>
+                Ejemplo de Cálculo
+            </h4>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-700">Paquete Normal (base):</span>
+                    <span class="font-semibold">$1,500</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-700">Almacenamiento (2 días):</span>
+                    <span class="font-semibold">$2,000</span>
+                </div>
+                <div class="border-t border-gray-300 pt-2 flex justify-between text-base sm:text-lg font-bold">
+                    <span>Total:</span>
+                    <span class="text-blue-600">$3,500 COP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div class="space-y-4">
+        <!-- FAQ 1 - Cómo funciona el servicio -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">ℹ️</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cómo funciona el servicio?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+                <div x-show="open" x-transition class="px-6 pb-4">
+                    <p class="text-gray-700 mb-3">
+                        Nuestro servicio funciona en 4 pasos simples:
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
+                                <span class="font-bold text-blue-600">1</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Anuncio</h4>
+                                <p class="text-gray-600 text-sm">Cuando tu paquete llega, lo anunciamos en el sistema y te enviamos un SMS con tu código de seguimiento único.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
+                                <span class="font-bold text-green-600">2</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Recepción</h4>
+                                <p class="text-gray-600 text-sm">Recibimos tu paquete, lo fotografiamos y lo almacenamos de forma segura. Recibes otra notificación confirmando la recepción.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
+                                <span class="font-bold text-purple-600">3</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Seguimiento</h4>
+                                <p class="text-gray-600 text-sm">Puedes consultar el estado de tu paquete en cualquier momento usando tu código de seguimiento en nuestra página web.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
+                                <span class="font-bold text-yellow-600">4</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">Entrega</h4>
+                                <p class="text-gray-600 text-sm">Cuando recoges tu paquete, realizas el pago correspondiente y recibes una confirmación final por SMS.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- FAQ 2 - Tiempos de entrega -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">⏰</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cuánto tiempo tengo para recoger mi paquete?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    Te recomendamos recoger tu paquete lo antes posible para evitar cargos de almacenamiento:
+                </p>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2 text-lg">✓</span>
+                        <span><strong>Primer día:</strong> Sin cargo adicional de almacenamiento</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-yellow-500 mr-2 text-lg">⚠️</span>
+                        <span><strong>Días adicionales:</strong> $1,000 COP por cada día de almacenamiento</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2 text-lg">ℹ️</span>
+                        <span><strong>Horario de atención:</strong> Lunes a Viernes, 9:30 AM - 7:00 PM</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-red-500 mr-2 text-lg">⚠️</span>
+                        <span><strong>Tiempo máximo:</strong> 30 días calendario (después se considera abandonado)</span>
+                    </li>
+                </ul>
+                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-sm text-blue-800">
+                        <span class="mr-1">💡</span>
+                        <strong>Consejo:</strong> Recoge tu paquete el mismo día de la recepción para pagar solo la tarifa base.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 3 - Código de seguimiento -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🔢</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Qué es el código de seguimiento?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    El código de seguimiento es un identificador único de 4 caracteres que se genera automáticamente cuando tu paquete es anunciado.
+                </p>
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-3 rounded">
+                    <p class="text-sm text-purple-800">
+                        <strong>Ejemplo:</strong> AB3K, XY7M, PQ9R
+                    </p>
+                </div>
+                <p class="text-gray-700 mb-2 font-semibold text-sm sm:text-base">
+                    ¿Para qué sirve?
+                </p>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Rastrear el estado de tu paquete en tiempo real</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Ver el historial completo de tu envío</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Consultar fotos de tu paquete al momento de la recepción</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2">✓</span>
+                        <span>Hacer consultas o reportar problemas</span>
+                    </li>
+                </ul>
+                <p class="text-gray-700 mt-3 text-sm">
+                    <span class="text-blue-500 mr-1">💬</span>
+                    Recibirás este código por SMS, Email o WhatsApp automáticamente cuando tu paquete sea anunciado.
+                </p>
+                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-sm text-blue-800">
+                        <span class="mr-1">🔗</span>
+                        Puedes consultar tu paquete en: <a href="https://paquetex.papyrus.com.co/search" target="_blank" rel="noopener noreferrer" class="font-semibold hover:underline">paquetex.papyrus.com.co/search</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 4 - Cómo buscar paquete -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🔍</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cómo busco mi paquete?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    Puedes buscar tu paquete de varias formas:
+                </p>
+                <div class="space-y-3">
+                    <div class="bg-blue-50 rounded-lg p-4 hover:bg-blue-100 transition-colors">
+                        <h4 class="font-semibold text-blue-900 mb-2 text-sm sm:text-base">
+                            <span class="mr-2">🔢</span>
+                            Por Código de Seguimiento
+                        </h4>
+                        <p class="text-xs sm:text-sm text-gray-700">
+                            Usa el código de 4 caracteres que recibiste por SMS. Es la forma más rápida y precisa.
+                        </p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors">
+                        <h4 class="font-semibold text-green-900 mb-2 text-sm sm:text-base">
+                            <span class="mr-2">🚚</span>
+                            Por Número de Guía
+                        </h4>
+                        <p class="text-xs sm:text-sm text-gray-700">
+                            Usa el número de guía del transportador (ej: Servientrega, Coordinadora, Envia, etc.)
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <p class="text-sm text-yellow-800">
+                        <span class="mr-1">📸</span>
+                        <strong>Fotografías:</strong> Podrás ver las fotos de tu paquete tomadas al momento de la recepción (disponibles por 30 días después de la entrega).
+                    </p>
+                </div>
+                <div class="mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <p class="text-sm text-gray-700">
+                        <span class="text-blue-500 mr-1">👆</span>
+                        Ve a la página <a href="https://paquetex.papyrus.com.co/search" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold">Buscar</a> 
+                        e ingresa tu código o número de guía.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 5 - Notificaciones SMS -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">💬</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Qué notificaciones recibiré?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    Recibirás SMS automáticos en cada etapa importante:
+                </p>
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <div class="bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-xl">📢</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Paquete Anunciado</h4>
+                            <p class="text-xs sm:text-sm text-gray-600">Cuando tu paquete llega y es registrado en el sistema. Incluye tu código de seguimiento.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-green-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-xl">✅</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Paquete Recibido</h4>
+                            <p class="text-xs sm:text-sm text-gray-600">Cuando procesamos y almacenamos tu paquete. Ya puedes pasar a recogerlo.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-purple-100 rounded-full w-10 h-10 flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-xl">🎁</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Paquete Entregado</h4>
+                            <p class="text-xs sm:text-sm text-gray-600">Confirmación de que recogiste tu paquete exitosamente.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <p class="text-sm text-yellow-800">
+                        <span class="mr-1">⚠️</span>
+                        <strong>Importante:</strong> Asegúrate de que tu número de teléfono esté correcto al momento del anuncio.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 6 - Métodos de pago -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">💳</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cómo puedo pagar?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    El pago se realiza al momento de recoger tu paquete. Aceptamos:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors">
+                        <div class="text-3xl mb-2">💵</div>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Efectivo</h4>
+                        <p class="text-xs sm:text-sm text-gray-600">Pago en efectivo al momento de la entrega</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-4 hover:bg-blue-100 transition-colors">
+                        <div class="text-3xl mb-2">📱</div>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Transferencia</h4>
+                        <p class="text-xs sm:text-sm text-gray-600">Nequi, Daviplata, transferencia bancaria</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <p class="text-sm text-blue-800">
+                        <span class="mr-1">ℹ️</span>
+                        El monto a pagar incluye la tarifa base más cualquier día adicional de almacenamiento.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 7 - Seguridad -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🛡️</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Mi paquete está seguro?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-3 text-sm sm:text-base">
+                    Sí, implementamos múltiples medidas de seguridad:
+                </p>
+                <ul class="space-y-2 text-gray-700 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2 text-lg">📸</span>
+                        <span><strong>Fotografías:</strong> Tomamos fotos de cada paquete al recibirlo</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-500 mr-2 text-lg">🏪</span>
+                        <span><strong>Almacenamiento seguro:</strong> Área protegida con acceso controlado</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-purple-500 mr-2 text-lg">📋</span>
+                        <span><strong>Registro completo:</strong> Seguimiento de cada movimiento del paquete</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-red-500 mr-2 text-lg">🔐</span>
+                        <span><strong>Verificación de identidad:</strong> Solo el destinatario puede recoger el paquete</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-yellow-500 mr-2 text-lg">🔔</span>
+                        <span><strong>Notificaciones:</strong> Te mantenemos informado en todo momento</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FAQ 8 - Contacto -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🎧</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cómo contacto con soporte?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-4 text-sm sm:text-base">
+                    Estamos aquí para ayudarte. Contáctanos por cualquiera de estos medios:
+                </p>
+                <div class="space-y-3">
+                    <div class="flex items-center bg-blue-50 rounded-lg p-4 hover:bg-blue-100 transition-colors">
+                        <span class="text-3xl mr-4">📞</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Teléfono</h4>
+                            <p class="text-gray-700 text-sm">(333) 400-4007</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors">
+                        <span class="text-3xl mr-4">✉️</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Email</h4>
+                            <p class="text-gray-700 text-sm">paquetex@papyrus.com.co</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-purple-50 rounded-lg p-4 hover:bg-purple-100 transition-colors">
+                        <span class="text-3xl mr-4">📍</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Ubicación</h4>
+                            <p class="text-gray-700 text-sm">Cra. 91 #54-120, Local 12</p>
+                            <p class="text-xs text-gray-600">El Club Apartamentos, Cartagena</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-yellow-50 rounded-lg p-4 hover:bg-yellow-100 transition-colors">
+                        <span class="text-3xl mr-4">🕐</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Horario</h4>
+                            <p class="text-gray-700 text-sm">Lunes a Viernes</p>
+                            <p class="text-xs text-gray-600">9:30 AM - 7:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <a href="https://paquetex.papyrus.com.co/announce" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 hover:from-green-600 hover:to-green-700 hover:shadow-xl transition-all transform hover:-translate-y-1">
+            <div class="text-5xl mb-3">📢</div>
+            <h3 class="text-lg sm:text-xl font-bold mb-2">Anunciar Paquete</h3>
+            <p class="text-sm opacity-90">Registra un nuevo paquete en el sistema</p>
+        </a>
+        <a href="https://paquetex.papyrus.com.co/search" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 hover:from-purple-600 hover:to-purple-700 hover:shadow-xl transition-all transform hover:-translate-y-1">
+            <div class="text-5xl mb-3">🔍</div>
+            <h3 class="text-lg sm:text-xl font-bold mb-2">Buscar Paquete</h3>
+            <p class="text-sm opacity-90">Consulta el estado de tu envío</p>
+        </a>
+        <a href="tel:+573334004007" class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 hover:from-blue-600 hover:to-blue-700 hover:shadow-xl transition-all transform hover:-translate-y-1">
+            <div class="text-5xl mb-3">📞</div>
+            <h3 class="text-lg sm:text-xl font-bold mb-2">Contactar</h3>
+            <p class="text-sm opacity-90">Llámanos para ayuda inmediata</p>
+        </a>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="mt-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 sm:p-8 text-center text-white shadow-lg">
+        <h2 class="text-xl sm:text-2xl font-bold mb-4">
+            <span class="text-3xl mr-2">🎧</span>
+            ¿Necesitas más ayuda?
+        </h2>
+        <p class="text-base sm:text-lg mb-6 opacity-90">
+            Nuestro equipo está listo para atenderte y resolver cualquier duda sobre tu paquete.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <a href="tel:+573334004007"
+               class="w-full sm:w-auto bg-white text-blue-600 px-6 sm:px-8 py-3 rounded-lg hover:bg-gray-100 transition duration-200 font-semibold shadow-md">
+                <span class="mr-2">📞</span>
+                (333) 400-4007
+            </a>
+            <a href="mailto:paquetex@papyrus.com.co"
+               class="w-full sm:w-auto bg-green-500 text-white px-6 sm:px-8 py-3 rounded-lg hover:bg-green-600 transition duration-200 font-semibold shadow-md">
+                <span class="mr-2">✉️</span>
+                Enviar Email
+            </a>
+        </div>
+        <div class="mt-6 text-sm opacity-75">
+            <span class="mr-1">🕐</span>
+            Horario de atención: Lunes a Viernes, 9:30 AM - 7:00 PM
+        </div>
+    </div>
+</div>
+{% endblock %}
