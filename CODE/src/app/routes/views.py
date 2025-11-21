@@ -248,10 +248,19 @@ async def policies_page(request: Request):
 
 
 @router.get("/admin")
-async def admin_page(request: Request):
+async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
+    """Dashboard administrativo mejorado con estadísticas completas"""
     context = get_auth_context_required(request)
+    context["user"] = current_user
     
-    return templates.TemplateResponse("admin/admin.html", context)
+    # Verificar que sea admin o operador
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado. Solo administradores y operadores pueden acceder."
+        )
+    
+    return templates.TemplateResponse("admin/dashboard_enhanced.html", context)
 
 
 
