@@ -1,33 +1,52 @@
 {% extends "base/base.html" %}
 
-{% block title %}Política de Cookies - PAQUETEX v3.1{% endblock %}
+{% block title %}Política de Cookies - PAQUETEX{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <!-- Logo PAPYRUS -->
+    <div class="text-center mb-8">
+        <img src="/static/images/logo.png?v=4.0" 
+             alt="PAPYRUS Logo" 
+             class="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain mb-4"
+             style="max-height: 120px; min-height: 80px;">
+    </div>
+
     <!-- Header -->
-    <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Política de Cookies</h1>
-        <p class="text-lg text-gray-600">PAQUETEX - Sistema de Gestión de Paquetería</p>
-        <p class="text-sm text-gray-500 mt-2">Última actualización: 28/08/2025</p>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <span class="text-4xl mr-2">🍪</span>
+            Política de Cookies
+        </h1>
+        <p class="text-base sm:text-lg text-gray-600">PAQUETEX - Sistema de Gestión de Paquetería</p>
+        <p class="text-sm text-gray-500 mt-2">Última actualización: Enero 2025</p>
     </div>
 
     <!-- Contenido -->
-    <div class="bg-white rounded-lg shadow-lg p-8 space-y-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-8 border border-gray-100">
+        <!-- Introducción -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">¿Qué son las cookies?</h2>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">📋</span>
+                ¿Qué son las Cookies?
+            </h2>
             <p class="text-gray-700 leading-relaxed">
                 Las cookies son pequeños archivos de texto que se almacenan en su dispositivo (computadora, tablet o móvil) cuando visita nuestro sitio web. Estas cookies nos ayudan a mejorar su experiencia de navegación y a proporcionar funcionalidades esenciales para el correcto funcionamiento de nuestro servicio de paquetería.
             </p>
         </section>
 
+        <!-- Tipos de cookies -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Tipos de cookies que utilizamos</h2>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">📊</span>
+                Tipos de Cookies que Utilizamos
+            </h2>
             
             <div class="space-y-6">
-                <div class="border-l-4 border-blue-500 pl-4">
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">Cookies Esenciales</h3>
-                    <p class="text-gray-700 mb-2">Estas cookies son necesarias para el funcionamiento básico del sitio web y no se pueden desactivar.</p>
-                    <ul class="text-gray-600 text-sm space-y-1 ml-4">
+                <div class="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">🔐 Cookies Esenciales</h3>
+                    <p class="text-gray-700 mb-2 text-sm">Estas cookies son necesarias para el funcionamiento básico del sitio web y no se pueden desactivar.</p>
+                    <ul class="text-gray-700 text-sm space-y-1 ml-4">
                         <li>• Autenticación de usuarios</li>
                         <li>• Gestión de sesiones</li>
                         <li>• Seguridad del sistema</li>
@@ -35,10 +54,10 @@
                     </ul>
                 </div>
 
-                <div class="border-l-4 border-green-500 pl-4">
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">Cookies de Funcionalidad</h3>
-                    <p class="text-gray-700 mb-2">Mejoran la experiencia del usuario recordando sus preferencias y configuraciones.</p>
-                    <ul class="text-gray-600 text-sm space-y-1 ml-4">
+                <div class="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">⚙️ Cookies de Funcionalidad</h3>
+                    <p class="text-gray-700 mb-2 text-sm">Mejoran la experiencia del usuario recordando sus preferencias y configuraciones.</p>
+                    <ul class="text-gray-700 text-sm space-y-1 ml-4">
                         <li>• Preferencias de idioma</li>
                         <li>• Configuraciones de búsqueda</li>
                         <li>• Historial de consultas de paquetes</li>
@@ -46,10 +65,10 @@
                     </ul>
                 </div>
 
-                <div class="border-l-4 border-purple-500 pl-4">
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">Cookies de Rendimiento</h3>
-                    <p class="text-gray-700 mb-2">Nos ayudan a entender cómo los usuarios interactúan con nuestro sitio web.</p>
-                    <ul class="text-gray-600 text-sm space-y-1 ml-4">
+                <div class="border-l-4 border-purple-500 pl-4 bg-purple-50 p-4 rounded-r-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">📈 Cookies de Rendimiento</h3>
+                    <p class="text-gray-700 mb-2 text-sm">Nos ayudan a entender cómo los usuarios interactúan con nuestro sitio web.</p>
+                    <ul class="text-gray-700 text-sm space-y-1 ml-4">
                         <li>• Análisis de tráfico web</li>
                         <li>• Métricas de rendimiento</li>
                         <li>• Identificación de errores</li>
@@ -59,71 +78,167 @@
             </div>
         </section>
 
+        <!-- Cookies de terceros -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Cookies de terceros</h2>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">🤝</span>
+                Cookies de Terceros
+            </h2>
             <p class="text-gray-700 leading-relaxed mb-4">
                 Nuestro sitio web puede utilizar servicios de terceros que también establecen cookies:
             </p>
-            <ul class="text-gray-700 space-y-2 ml-4">
-                <li>• <strong>Google Analytics:</strong> Para análisis de tráfico y comportamiento de usuarios</li>
-                <li>• <strong>Servicios de email:</strong> Para el envío de notificaciones y recuperación de contraseñas</li>
-                <li>• <strong>Servicios de seguridad:</strong> Para proteger nuestro sitio web de amenazas</li>
-            </ul>
+            <div class="space-y-3">
+                <div class="flex items-start space-x-3 bg-blue-50 p-4 rounded-lg">
+                    <span class="text-2xl">📊</span>
+                    <div>
+                        <h3 class="font-medium text-gray-900 text-sm">Google Analytics</h3>
+                        <p class="text-gray-600 text-xs">Para análisis de tráfico y comportamiento de usuarios</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3 bg-green-50 p-4 rounded-lg">
+                    <span class="text-2xl">✉️</span>
+                    <div>
+                        <h3 class="font-medium text-gray-900 text-sm">Servicios de Email</h3>
+                        <p class="text-gray-600 text-xs">Para el envío de notificaciones y recuperación de contraseñas</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3 bg-purple-50 p-4 rounded-lg">
+                    <span class="text-2xl">🛡️</span>
+                    <div>
+                        <h3 class="font-medium text-gray-900 text-sm">Servicios de Seguridad</h3>
+                        <p class="text-gray-600 text-xs">Para proteger nuestro sitio web de amenazas</p>
+                    </div>
+                </div>
+            </div>
         </section>
 
+        <!-- Gestión de cookies -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Gestión de cookies</h2>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">⚙️</span>
+                Gestión de Cookies
+            </h2>
             <p class="text-gray-700 leading-relaxed mb-4">
                 Puede controlar y gestionar las cookies de varias maneras:
             </p>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="font-medium text-gray-900 mb-2">Configuración del navegador</h3>
-                    <p class="text-gray-600 text-sm">
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="text-3xl mb-2">🌐</div>
+                    <h3 class="font-medium text-gray-900 mb-2 text-sm">Configuración del Navegador</h3>
+                    <p class="text-gray-600 text-xs">
                         La mayoría de navegadores permiten configurar las cookies. Consulte la sección de ayuda de su navegador para obtener más información.
                     </p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="font-medium text-gray-900 mb-2">Eliminación de cookies</h3>
-                    <p class="text-gray-600 text-sm">
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div class="text-3xl mb-2">🗑️</div>
+                    <h3 class="font-medium text-gray-900 mb-2 text-sm">Eliminación de Cookies</h3>
+                    <p class="text-gray-600 text-xs">
                         Puede eliminar las cookies existentes en cualquier momento. Tenga en cuenta que esto puede afectar la funcionalidad del sitio web.
                     </p>
                 </div>
             </div>
         </section>
 
+        <!-- Impacto de desactivar cookies -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Impacto de desactivar cookies</h2>
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                <p class="text-gray-700">
-                    <strong>Importante:</strong> Si desactiva las cookies esenciales, es posible que no pueda acceder a ciertas funcionalidades del sitio web, como el inicio de sesión, la consulta de paquetes o el anuncio de nuevos envíos.
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">⚠️</span>
+                Impacto de Desactivar Cookies
+            </h2>
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                <p class="text-gray-700 text-sm">
+                    <strong>⚠️ Importante:</strong> Si desactiva las cookies esenciales, es posible que no pueda acceder a ciertas funcionalidades del sitio web, como el inicio de sesión, la consulta de paquetes o el anuncio de nuevos envíos.
                 </p>
+            </div>
+            <div class="mt-4 space-y-3">
+                <div class="flex items-start space-x-3">
+                    <span class="text-red-500 text-lg mt-1">✗</span>
+                    <p class="text-gray-700 text-sm">No podrá iniciar sesión en su cuenta</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <span class="text-red-500 text-lg mt-1">✗</span>
+                    <p class="text-gray-700 text-sm">No se guardarán sus preferencias</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <span class="text-red-500 text-lg mt-1">✗</span>
+                    <p class="text-gray-700 text-sm">Algunas funcionalidades pueden no estar disponibles</p>
+                </div>
             </div>
         </section>
 
+        <!-- Actualizaciones -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Actualizaciones de esta política</h2>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">🔄</span>
+                Actualizaciones de esta Política
+            </h2>
             <p class="text-gray-700 leading-relaxed">
-                Nos reservamos el derecho de actualizar esta política de cookies en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en nuestro sitio web. Le recomendamos revisar esta política periódicamente.
+                Nos reservamos el derecho de actualizar esta política de cookies en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en nuestro sitio web. Le recomendamos revisar esta política periódicamente para estar informado sobre cómo protegemos su información.
             </p>
         </section>
 
+        <!-- Contacto -->
         <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Contacto</h2>
-            <p class="text-gray-700 leading-relaxed">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+                <span class="text-2xl mr-2">📞</span>
+                Contacto
+            </h2>
+            <p class="text-gray-700 leading-relaxed mb-4">
                 Si tiene alguna pregunta sobre nuestra política de cookies, puede contactarnos:
             </p>
-            <div class="mt-4 space-y-2">
-                <p class="text-gray-700"><strong>Email:</strong> guia@papyrus.com.co</p>
-                <p class="text-gray-700"><strong>Teléfono:</strong> +57 333 400 4007</p>
-                <p class="text-gray-700"><strong>Dirección:</strong> Cra. 91 #54-120, Local 12</p>
+            <div class="space-y-3">
+                <div class="flex items-center bg-blue-50 rounded-lg p-4">
+                    <span class="text-2xl mr-3">✉️</span>
+                    <div>
+                        <p class="text-sm text-gray-600">Email</p>
+                        <p class="text-gray-900 font-medium">paquetex@papyrus.com.co</p>
+                    </div>
+                </div>
+                <div class="flex items-center bg-green-50 rounded-lg p-4">
+                    <span class="text-2xl mr-3">📞</span>
+                    <div>
+                        <p class="text-sm text-gray-600">Teléfono</p>
+                        <p class="text-gray-900 font-medium">(333) 400-4007</p>
+                    </div>
+                </div>
+                <div class="flex items-center bg-purple-50 rounded-lg p-4">
+                    <span class="text-2xl mr-3">📍</span>
+                    <div>
+                        <p class="text-sm text-gray-600">Dirección</p>
+                        <p class="text-gray-900 font-medium">Cra. 91 #54-120, Local 12</p>
+                        <p class="text-gray-600 text-xs">El Club Apartamentos, Cartagena</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enlaces relacionados -->
+        <section class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-center text-white">
+            <h3 class="text-lg font-semibold mb-3">
+                <span class="text-2xl mr-2">📚</span>
+                Documentos Relacionados
+            </h3>
+            <p class="text-sm mb-4 opacity-90">
+                Conoce más sobre cómo protegemos tu información
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <a href="/terms" 
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold shadow-md">
+                    <span class="mr-2">📜</span>
+                    Términos y Condiciones
+                </a>
+                <a href="/privacy" 
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-semibold shadow-md">
+                    <span class="mr-2">🔒</span>
+                    Políticas de Privacidad
+                </a>
             </div>
         </section>
     </div>
 
     <!-- Botón de regreso -->
     <div class="text-center mt-8">
-        <a href="/help" class="inline-flex items-center px-6 py-3 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+        <a href="/help" class="inline-flex items-center px-6 py-3 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
