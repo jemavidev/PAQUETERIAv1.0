@@ -74,7 +74,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         }
     )
 
-async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
     """
     Handler para excepciones HTTP de Starlette
     
@@ -83,22 +83,75 @@ async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPE
         exc: Excepción HTTP de Starlette
         
     Returns:
-        JSONResponse con error formateado
+        JSONResponse o HTMLResponse según el tipo de petición
     """
     logger.warning(f"Error Starlette en {request.url}: {exc}")
     
-    # Crear mensaje simple
-    simple_message = "Algo salió mal. Intenta nuevamente."
-    
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "message": simple_message
-        }
+    # Detectar si la petición espera HTML (navegador) o JSON (API)
+    accept_header = request.headers.get("accept", "")
+    is_api_request = (
+        request.url.path.startswith("/api/") or
+        "application/json" in accept_header
     )
+    
+    # Si es una petición de API, devolver JSON
+    if is_api_request:
+        simple_message = "Algo salió mal. Intenta nuevamente."
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "success": False,
+                "message": simple_message
+            }
+        )
+    
+    # Si es una petición de navegador, devolver HTML
+    from fastapi.responses import HTMLResponse
+    from app.utils.template_loader import get_templates
+    
+    templates = get_templates()
+    
+    # Intentar renderizar página de error personalizada
+    try:
+        context = {
+            "request": request,
+            "status_code": exc.status_code,
+            "detail": exc.detail if hasattr(exc, 'detail') else "Algo salió mal",
+            "is_authenticated": False,
+            "user": None
+        }
+        
+        # Si existe un template de error, usarlo
+        return templates.TemplateResponse(
+            "errors/error.html",
+            context,
+            status_code=exc.status_code
+        )
+    except Exception as template_error:
+        # Si falla el template, devolver HTML simple
+        logger.error(f"Error al renderizar template de error: {template_error}")
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error {exc.status_code}</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; text-align: center; }}
+                h1 {{ color: #e74c3c; }}
+                p {{ color: #555; }}
+                a {{ color: #3498db; text-decoration: none; }}
+            </style>
+        </head>
+        <body>
+            <h1>Error {exc.status_code}</h1>
+            <p>{exc.detail if hasattr(exc, 'detail') else 'Algo salió mal'}</p>
+            <p><a href="/">Volver al inicio</a></p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=exc.status_code)
 
-async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+async def generic_exception_handler(request: Request, exc: Exception):
     """
     Handler para excepciones genéricas
     
@@ -107,20 +160,84 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
         exc: Excepción genérica
         
     Returns:
-        JSONResponse con error formateado
+        JSONResponse o HTMLResponse según el tipo de petición
     """
     logger.error(f"Error inesperado en {request.url}: {exc}", exc_info=True)
     
-    # Crear mensaje simple
-    simple_message = "Ocurrió un error inesperado. Intenta nuevamente."
-    
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "message": simple_message
-        }
+    # Detectar si la petición espera HTML (navegador) o JSON (API)
+    accept_header = request.headers.get("accept", "")
+    is_api_request = (
+        request.url.path.startswith("/api/") or
+        "application/json" in accept_header
     )
+    
+    # Si es una petición de API, devolver JSON
+    if is_api_request:
+        simple_message = "Ocurrió un error inesperado. Intenta nuevamente."
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": simple_message
+            }
+        )
+    
+    # Si es una petición de navegador, devolver HTML
+    from fastapi.responses import HTMLResponse
+    from app.utils.template_loader import get_templates
+    
+    templates = get_templates()
+    
+    # Intentar renderizar página de error personalizada
+    try:
+        context = {
+            "request": request,
+            "status_code": 500,
+            "detail": "Ocurrió un error inesperado",
+            "is_authenticated": False,
+            "user": None
+        }
+        
+        return templates.TemplateResponse(
+            "errors/error.html",
+            context,
+            status_code=500
+        )
+    except Exception as template_error:
+        # Si falla el template, devolver HTML simple
+        logger.error(f"Error al renderizar template de error: {template_error}")
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error 500</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; text-align: center; }}
+                h1 {{ color: #e74c3c; }}
+                p {{ color: #555; }}
+                a {{ color: #3498db; text-decoration: none; }}
+                .error-details {{ 
+                    background: #f8f9fa; 
+                    padding: 20px; 
+                    border-radius: 8px; 
+                    margin: 20px auto;
+                    max-width: 600px;
+                    text-align: left;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>Error 500</h1>
+            <p>Ocurrió un error inesperado en el servidor</p>
+            <div class="error-details">
+                <strong>Detalles técnicos:</strong><br>
+                {str(exc)[:200]}
+            </div>
+            <p><a href="/">Volver al inicio</a></p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=500)
 
 def setup_error_handlers(app):
     """
