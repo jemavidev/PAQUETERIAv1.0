@@ -1,0 +1,51 @@
+========================================
+COMANDOS PARA EJECUTAR EN AWS
+========================================
+
+Ejecuta estos comandos en tu servidor AWS:
+
+# 1. Ir al directorio del proyecto
+cd /ruta/al/proyecto
+
+# 2. Hacer pull de los últimos cambios
+git pull origin main
+
+# 3. Reiniciar el contenedor para aplicar cambios
+docker compose -f docker-compose.prod.yml restart app
+
+# 4. Esperar 10 segundos
+sleep 10
+
+# 5. Verificar que funciona
+curl -I http://localhost:8000/terms
+curl -I http://localhost:8000/privacy
+
+========================================
+CAMBIOS APLICADOS:
+========================================
+
+✅ Error handler corregido
+   - Ahora detecta si es petición de navegador o API
+   - Devuelve HTML para navegador
+   - Devuelve JSON solo para API
+
+✅ Templates sincronizados
+   - /terms funcionará correctamente
+   - /privacy funcionará correctamente
+
+========================================
+RESULTADO ESPERADO:
+========================================
+
+Después de ejecutar los comandos:
+
+✅ https://paquetex.papyrus.com.co/terms
+   Mostrará la página HTML de términos
+
+✅ https://paquetex.papyrus.com.co/privacy
+   Mostrará la página HTML de privacidad
+
+✅ https://paquetex.papyrus.com.co/help
+   Mostrará el centro de ayuda con enlaces
+
+========================================
