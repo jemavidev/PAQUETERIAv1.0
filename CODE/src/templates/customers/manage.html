@@ -178,8 +178,8 @@
                                     {% else %}
                                     <div class="text-sm font-medium text-gray-400">Sin teléfono</div>
                                     {% endif %}
-                                    <!-- Iconos de contacto -->
-                                    <div class="flex items-center space-x-3">
+                                    <!-- Iconos de contacto y Badges de Paquetes -->
+                                    <div class="flex items-center space-x-3" data-customer-id="{{ customer.id }}">
                                         {% if customer.email %}
                                         <a href="mailto:{{ customer.email }}" 
                                            class="text-blue-600 hover:text-blue-800 transition-colors"
@@ -208,6 +208,19 @@
                                             </svg>
                                         </a>
                                         {% endif %}
+                                        <!-- Badges de Paquetes (al lado de los iconos) -->
+                                        <!-- Badge Anunciados -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Anunciados"
+                                             data-badge-type="announced">
+                                            <span class="package-count-announced">...</span>
+                                        </div>
+                                        <!-- Badge Recibidos -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-green-100 text-green-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Recibidos"
+                                             data-badge-type="received">
+                                            <span class="package-count-received">...</span>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -2075,6 +2088,88 @@ document.addEventListener('alpine:init', () => {
         showSuggestions: false,
         selectedIndex: -1
     });
+});
+
+// Función para cargar los contadores de paquetes de cada cliente
+async function loadPackageCounts() {
+    const rows = document.querySelectorAll('tbody tr[data-customer-id]');
+    
+    for (const row of rows) {
+        const customerId = row.getAttribute('data-customer-id');
+        if (!customerId) continue;
+        
+        const badgeContainer = row.querySelector(`[data-customer-id="${customerId}"]`);
+        if (!badgeContainer) continue;
+        
+        const announcedBadge = badgeContainer.querySelector('.package-count-announced');
+        const receivedBadge = badgeContainer.querySelector('.package-count-received');
+        const announcedBadgeParent = announcedBadge?.parentElement;
+        const receivedBadgeParent = receivedBadge?.parentElement;
+        
+        try {
+            // Obtener los paquetes del cliente
+            const response = await fetch(`/api/customers/${customerId}/packages?limit=50`);
+            
+            if (!response.ok) {
+                throw new Error('Error al cargar paquetes');
+            }
+            
+            const packages = await response.json();
+            
+            // Contar paquetes por estado
+            let announcedCount = 0;
+            let receivedCount = 0;
+            
+            packages.forEach(pkg => {
+                const status = pkg.status ? pkg.status.toUpperCase() : '';
+                
+                if (status === 'ANUNCIADO') {
+                    announcedCount++;
+                } else if (status === 'RECIBIDO') {
+                    receivedCount++;
+                }
+            });
+            
+            // Actualizar los badges y remover animación
+            if (announcedBadge && announcedBadgeParent) {
+                announcedBadge.textContent = announcedCount;
+                announcedBadgeParent.classList.remove('animate-pulse');
+                
+                // Agregar efecto visual si hay paquetes
+                if (announcedCount > 0) {
+                    announcedBadgeParent.classList.add('ring-1', 'ring-blue-400');
+                }
+            }
+            
+            if (receivedBadge && receivedBadgeParent) {
+                receivedBadge.textContent = receivedCount;
+                receivedBadgeParent.classList.remove('animate-pulse');
+                
+                // Agregar efecto visual si hay paquetes
+                if (receivedCount > 0) {
+                    receivedBadgeParent.classList.add('ring-1', 'ring-green-400');
+                }
+            }
+            
+        } catch (error) {
+            console.error(`Error al cargar paquetes del cliente ${customerId}:`, error);
+            
+            // Mostrar 0 en caso de error y remover animación
+            if (announcedBadge && announcedBadgeParent) {
+                announcedBadge.textContent = '0';
+                announcedBadgeParent.classList.remove('animate-pulse');
+            }
+            if (receivedBadge && receivedBadgeParent) {
+                receivedBadge.textContent = '0';
+                receivedBadgeParent.classList.remove('animate-pulse');
+            }
+        }
+    }
+}
+
+// Cargar los contadores cuando la página esté lista
+document.addEventListener('DOMContentLoaded', () => {
+    loadPackageCounts();
 });
 </script>
 
