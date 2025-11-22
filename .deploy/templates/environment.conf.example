@@ -1,0 +1,310 @@
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║                    TEMPLATE DE CONFIGURACIÓN DE ENTORNO                    ║
+# ║                          Deploy Manager Universal                          ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+#
+# INSTRUCCIONES:
+# 1. Copia este archivo: cp environment.conf.example ../config/mi-entorno.conf
+# 2. Edita el nuevo archivo con tus valores específicos
+# 3. Registra el entorno en deploy.conf: ENVIRONMENTS=("..." "mi-entorno")
+# 4. Usa: ./deploy.sh --env mi-entorno --deploy
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 1. INFORMACIÓN BÁSICA DEL ENTORNO                                          │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Define las características principales de este entorno
+
+ENV_NAME="mi-entorno"
+# Nombre único del entorno (sin espacios)
+# Ejemplos: "localhost", "papyrus", "staging", "production"
+
+ENV_TYPE="local"
+# Tipo de entorno:
+#   - "local"  : Ejecuta comandos localmente (desarrollo en tu máquina)
+#   - "remote" : Ejecuta comandos vía SSH (servidores remotos)
+
+ENV_DESCRIPTION="Mi Entorno de Desarrollo"
+# Descripción legible del entorno
+# Se muestra en el menú interactivo
+
+ENV_COLOR="blue"
+# Color para identificar visualmente el entorno en el menú:
+#   - "blue"   : Desarrollo/Local
+#   - "green"  : Producción
+#   - "yellow" : Staging/Pruebas
+#   - "red"    : Crítico
+#   - "cyan"   : Otros
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 2. CONFIGURACIÓN SSH (Solo para ENV_TYPE="remote")                         │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Configuración de conexión SSH para servidores remotos
+
+SSH_ENABLED=false
+# Habilitar conexión SSH (true solo si ENV_TYPE="remote")
+
+SSH_HOST="servidor.example.com"
+# Hostname, IP o alias SSH del servidor
+# Ejemplos: "papyrus", "192.168.1.100", "prod.miapp.com"
+# Tip: Configura alias en ~/.ssh/config para facilitar conexión
+
+SSH_USER="ubuntu"
+# Usuario SSH para conectarse al servidor
+# Común: "ubuntu" (AWS), "root", "deploy", tu usuario
+
+SSH_PORT=22
+# Puerto SSH (generalmente 22)
+
+SSH_KEY="~/.ssh/id_rsa"
+# Ruta a tu clave privada SSH
+# Asegúrate que tenga permisos correctos: chmod 600 ~/.ssh/id_rsa
+
+SSH_OPTIONS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+# Opciones adicionales de SSH
+# -o StrictHostKeyChecking=no : No preguntar por fingerprint
+# -o ConnectTimeout=10        : Timeout de conexión en segundos
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 3. CONFIGURACIÓN GIT                                                       │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Control de versiones y sincronización con repositorio
+
+GIT_ENABLED=true
+# Habilitar operaciones Git (commit, push, pull)
+
+GIT_AUTO_COMMIT=false
+# Hacer commit automático de cambios locales antes de deploy
+# true  : Commit automático con mensaje generado
+# false : Pedir confirmación y mensaje de commit
+
+GIT_AUTO_PUSH=false
+# Hacer push automático a GitHub después de commit
+# true  : Push automático sin confirmación
+# false : Pedir confirmación antes de push
+
+GIT_BRANCH="main"
+# Rama de Git a usar para este entorno
+# Ejemplos: "main", "develop", "staging", "production"
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 4. CONFIGURACIÓN DOCKER                                                    │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Gestión de contenedores y servicios Docker
+
+DOCKER_ENABLED=true
+# Habilitar operaciones Docker (up, down, restart, etc.)
+
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+# Archivo Docker Compose a usar
+# Ejemplos:
+#   - "docker-compose.dev.yml"       : Desarrollo local
+#   - "docker-compose.prod.yml"      : Producción
+#   - "docker-compose.lightsail.yml" : AWS Lightsail
+
+DOCKER_PROJECT_NAME="mi_proyecto"
+# Nombre del proyecto Docker (prefijo de contenedores)
+# Ejemplo: "paquetex_dev" genera contenedores "paquetex_dev_app_1"
+
+DOCKER_REBUILD_ON_DEPLOY=false
+# Reconstruir imágenes en cada deploy (lento pero seguro)
+# true  : docker compose build --no-cache (tarda varios minutos)
+# false : Usar imágenes existentes (más rápido)
+
+DOCKER_PULL_BEFORE_DEPLOY=false
+# Descargar últimas imágenes antes de deploy
+# true  : docker compose pull (útil si usas imágenes de registry)
+# false : Usar imágenes locales
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 5. RUTAS Y DIRECTORIOS                                                     │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Ubicación de archivos y directorios importantes
+
+PROJECT_PATH="."
+# Ruta del proyecto
+# Local  : "." (directorio actual)
+# Remote : "/home/ubuntu/paqueteria" (ruta absoluta en servidor)
+
+BACKUP_PATH="./backups"
+# Directorio donde se guardan los backups
+# Local  : "./backups" (relativo al proyecto)
+# Remote : "/home/ubuntu/backups" (ruta absoluta)
+# Se crea automáticamente si no existe
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 6. SERVICIOS DOCKER                                                        │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Define qué servicios gestionar
+
+SERVICES=("app" "redis" "postgres")
+# Lista de servicios principales del docker-compose
+# Deben coincidir con los nombres en tu docker-compose.yml
+
+MAIN_SERVICE="app"
+# Servicio principal de la aplicación
+# Se usa para ejecutar comandos (migraciones, tests, etc.)
+
+OPTIONAL_SERVICES=()
+# Servicios opcionales que pueden no estar siempre activos
+# Ejemplo: ("nginx" "celery" "worker")
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 7. URLs Y ENDPOINTS                                                        │
+# └────────────────────────────────────────────────────────────────────────────┘
+# URLs para acceder a la aplicación y verificar su estado
+
+BASE_URL="http://localhost:8000"
+# URL base de la aplicación
+# Local  : "http://localhost:8000"
+# Remote : "https://paquetex.papyrus.com.co"
+
+HEALTH_CHECK_URL="http://localhost:8000/health"
+# Endpoint de health check para verificar que la app funciona
+# Debe retornar HTTP 200 cuando todo está OK
+
+API_URL="http://localhost:8000/api"
+# URL base de la API (informativo)
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 8. HEALTH CHECK (Verificación de Salud)                                   │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Configuración para verificar que la aplicación funciona después de deploy
+
+HEALTH_CHECK_ENABLED=true
+# Habilitar verificación de health check después de deploy
+
+HEALTH_CHECK_TIMEOUT=30
+# Tiempo máximo de espera en segundos
+# Local  : 30s (arranque rápido)
+# Remote : 60s (puede tardar más)
+
+HEALTH_CHECK_RETRIES=10
+# Número de intentos antes de considerar fallido
+# Se intenta cada HEALTH_CHECK_INTERVAL segundos
+
+HEALTH_CHECK_INTERVAL=2
+# Segundos entre cada intento de health check
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 9. MIGRACIONES DE BASE DE DATOS                                           │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Gestión de migraciones de esquema de base de datos
+
+MIGRATIONS_ENABLED=true
+# Habilitar gestión de migraciones
+
+MIGRATIONS_AUTO=false
+# Ejecutar migraciones automáticamente en cada deploy
+# true  : Ejecuta automáticamente (útil en staging)
+# false : Pedir confirmación (recomendado en producción)
+
+MIGRATIONS_COMMAND="docker compose exec app alembic upgrade head"
+# Comando para ejecutar migraciones
+# Ajusta según tu ORM:
+#   - Alembic  : "alembic upgrade head"
+#   - Django   : "python manage.py migrate"
+#   - TypeORM  : "npm run migration:run"
+
+MIGRATIONS_ROLLBACK_COMMAND="docker compose exec app alembic downgrade -1"
+# Comando para revertir última migración
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 10. BACKUPS DE BASE DE DATOS                                              │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Configuración de respaldos automáticos
+
+BACKUP_ENABLED=true
+# Habilitar sistema de backups
+
+BACKUP_AUTO_BEFORE_DEPLOY=false
+# Crear backup automático antes de cada deploy
+# true  : Siempre hace backup (más seguro, más lento)
+# false : Solo cuando se solicita manualmente
+
+BACKUP_DB_COMMAND="docker compose exec -T postgres pg_dump -U postgres paqueteria"
+# Comando para crear backup de base de datos
+# PostgreSQL: "pg_dump -U usuario database"
+# MySQL     : "mysqldump -u usuario -p database"
+# MongoDB   : "mongodump --db database"
+
+BACKUP_RETENTION_DAYS=7
+# Días que se conservan los backups antes de eliminarlos
+# Local      : 7 días (espacio limitado)
+# Producción : 30 días (más seguridad)
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 11. TESTS AUTOMATIZADOS                                                   │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Ejecución de tests antes de deploy
+
+TESTS_ENABLED=false
+# Habilitar ejecución de tests
+
+TESTS_COMMAND="docker compose exec app pytest"
+# Comando para ejecutar tests
+# Ejemplos:
+#   - pytest  : "pytest"
+#   - jest    : "npm test"
+#   - phpunit : "phpunit"
+
+TESTS_REQUIRED=false
+# Tests obligatorios para continuar deploy
+# true  : Si tests fallan, cancela deploy
+# false : Muestra warning pero continúa
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 12. HOOKS PERSONALIZADOS                                                  │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Scripts personalizados que se ejecutan en momentos específicos
+
+PRE_DEPLOY_HOOK=""
+# Script a ejecutar ANTES del deploy
+# Ejemplo: "deploy/hooks/pre-deploy-papyrus.sh"
+# Útil para: verificaciones, notificaciones, backups extra
+
+POST_DEPLOY_HOOK=""
+# Script a ejecutar DESPUÉS del deploy
+# Ejemplo: "deploy/hooks/post-deploy-papyrus.sh"
+# Útil para: limpiar caché, warm-up, notificaciones
+
+PRE_BACKUP_HOOK=""
+# Script a ejecutar ANTES de crear backup
+
+POST_BACKUP_HOOK=""
+# Script a ejecutar DESPUÉS de crear backup
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ 13. NOTIFICACIONES                                                         │
+# └────────────────────────────────────────────────────────────────────────────┘
+# Alertas y notificaciones de eventos
+
+NOTIFY_ON_SUCCESS=false
+# Enviar notificación cuando deploy es exitoso
+# Requiere configurar webhook en deploy.conf
+
+NOTIFY_ON_ERROR=false
+# Enviar notificación cuando deploy falla
+# Útil para estar al tanto de problemas inmediatamente
+
+# ════════════════════════════════════════════════════════════════════════════
+# FIN DE CONFIGURACIÓN
+# ════════════════════════════════════════════════════════════════════════════
+#
+# NOTAS IMPORTANTES:
+# - Valores entre comillas: "valor"
+# - Arrays: ("item1" "item2" "item3")
+# - Booleanos: true o false (sin comillas)
+# - Números: 30 (sin comillas)
+# - Comentarios: Líneas que empiezan con #
+#
+# TROUBLESHOOTING:
+# - Si algo no funciona, verifica que los valores coincidan con tu setup
+# - Usa --dry-run para simular sin ejecutar: ./deploy.sh --env nombre --deploy --dry-run
+# - Usa --verbose para ver más detalles: ./deploy.sh --env nombre --deploy --verbose
+#
+# AYUDA:
+# - Ver documentación: cat deploy/README.md
+# - Ver ejemplos: cat deploy/EXAMPLES.md
+# - Inicio rápido: cat deploy/QUICKSTART.md
