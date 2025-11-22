@@ -52,13 +52,19 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      # Código fuente completo (incluye templates, CSS, JS, Python) desde el host
-      # Sin :ro para permitir hot reload y cambios en tiempo real
-      - ./CODE/src:/app/src
-      # Imágenes/archivos locales subidos por la app (persistencia)
+      # Código Python (read-only para seguridad, requiere restart para cambios)
+      - ./CODE/src/app:/app/src/app:ro
+      - ./CODE/src/scripts:/app/src/scripts:ro
+      - ./CODE/src/main.py:/app/src/main.py:ro
+      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Archivos estáticos editables sin rebuild (CSS, JS, imágenes, PDFs)
+      - ./CODE/src/static:/app/src/static
+      # Templates HTML editables sin rebuild
+      - ./CODE/src/templates:/app/src/templates
+      # Datos persistentes
       - uploads_data:/app/uploads
-      # Logs persistentes (opcional, útil para depurar)
       - logs_data:/app/logs
+      - backups_data:/app/backups
     command: ["sh", "-c", "mkdir -p /app/src/uploads /app/uploads && cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --access-log --log-level info"]
     networks:
       - paqueteria_network
@@ -86,10 +92,15 @@ services:
       retries: 3
       start_period: 60s
     volumes:
-      # Código fuente para worker (sin rebuild)
-      - ./CODE/src:/app/src:ro
+      # Código Python (read-only)
+      - ./CODE/src/app:/app/src/app:ro
+      - ./CODE/src/scripts:/app/src/scripts:ro
+      - ./CODE/src/main.py:/app/src/main.py:ro
+      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Datos persistentes
       - uploads_data:/app/uploads
       - logs_data:/app/logs
+      - backups_data:/app/backups
     networks:
       - paqueteria_network
 
@@ -110,10 +121,15 @@ services:
     restart: unless-stopped
     command: ["sh", "-c", "mkdir -p /app/celerybeat && cd /app && celery -A src.app.celery_app beat --loglevel=info --schedule=/app/celerybeat/celerybeat-schedule"]
     volumes:
-      # Código fuente para beat (sin rebuild)
-      - ./CODE/src:/app/src:ro
+      # Código Python (read-only)
+      - ./CODE/src/app:/app/src/app:ro
+      - ./CODE/src/scripts:/app/src/scripts:ro
+      - ./CODE/src/main.py:/app/src/main.py:ro
+      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Datos persistentes
       - celery_beat_data:/app/celerybeat
       - logs_data:/app/logs
+      - backups_data:/app/backups
     networks:
       - paqueteria_network
 
@@ -205,6 +221,8 @@ volumes:
   uploads_data:
     driver: local
   logs_data:
+    driver: local
+  backups_data:
     driver: local
   celery_beat_data:
     driver: local

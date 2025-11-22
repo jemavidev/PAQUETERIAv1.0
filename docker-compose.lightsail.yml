@@ -81,12 +81,19 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Código fuente en modo READ ONLY (sin hot reload)
-      - ./CODE/src:/app/src:ro
-      # Solo uploads es writable
+      # Código Python (read-only para seguridad y optimización)
+      - ./CODE/src/app:/app/src/app:ro
+      - ./CODE/src/scripts:/app/src/scripts:ro
+      - ./CODE/src/main.py:/app/src/main.py:ro
+      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Archivos estáticos editables sin rebuild (CSS, JS, imágenes, PDFs)
+      - ./CODE/src/static:/app/src/static
+      # Templates HTML editables sin rebuild
+      - ./CODE/src/templates:/app/src/templates
+      # Datos persistentes
       - uploads_data:/app/uploads
-      # Logs con límite de tamaño
       - logs_data:/app/logs
+      - backups_data:/app/backups
     command: >
       sh -c "mkdir -p /app/uploads && 
              cd /app && 
@@ -143,9 +150,15 @@ services:
       retries: 3
       start_period: 60s
     volumes:
-      - ./CODE/src:/app/src:ro
+      # Código Python (read-only)
+      - ./CODE/src/app:/app/src/app:ro
+      - ./CODE/src/scripts:/app/src/scripts:ro
+      - ./CODE/src/main.py:/app/src/main.py:ro
+      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Datos persistentes
       - uploads_data:/app/uploads
       - logs_data:/app/logs
+      - backups_data:/app/backups
     networks:
       - paqueteria_network
     logging:
@@ -163,6 +176,8 @@ volumes:
   uploads_data:
     driver: local
   logs_data:
+    driver: local
+  backups_data:
     driver: local
 
 # ========================================
