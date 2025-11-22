@@ -162,9 +162,36 @@
                             data-customer-apartment="{{ (customer.apartment or '')|replace('"', '&quot;') }}"
                             data-customer-is-active="{{ 'Activo' if customer.is_active else 'Inactivo' }}"
                             class="hover:bg-gray-50 transition-colors duration-200">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center space-x-2">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col space-y-2">
                                     <div class="text-sm font-medium text-gray-900">{{ customer.first_name }} {{ customer.last_name }}</div>
+                                    <!-- Badges de Paquetes (debajo del nombre) -->
+                                    <div class="flex items-center space-x-2" data-customer-id="{{ customer.id }}">
+                                        <!-- Badge Anunciados (Amarillo) -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Anunciados"
+                                             data-badge-type="announced">
+                                            <span class="package-count-announced">...</span>
+                                        </div>
+                                        <!-- Badge Recibidos (Azul) -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Recibidos"
+                                             data-badge-type="received">
+                                            <span class="package-count-received">...</span>
+                                        </div>
+                                        <!-- Badge Entregados (Verde) -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-green-100 text-green-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Entregados"
+                                             data-badge-type="delivered">
+                                            <span class="package-count-delivered">...</span>
+                                        </div>
+                                        <!-- Badge Cancelados (Rojo) -->
+                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-red-100 text-red-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
+                                             title="Paquetes Cancelados"
+                                             data-badge-type="cancelled">
+                                            <span class="package-count-cancelled">...</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
@@ -178,8 +205,8 @@
                                     {% else %}
                                     <div class="text-sm font-medium text-gray-400">Sin teléfono</div>
                                     {% endif %}
-                                    <!-- Iconos de contacto y Badges de Paquetes -->
-                                    <div class="flex items-center space-x-3" data-customer-id="{{ customer.id }}">
+                                    <!-- Iconos de contacto -->
+                                    <div class="flex items-center space-x-3">
                                         {% if customer.email %}
                                         <a href="mailto:{{ customer.email }}" 
                                            class="text-blue-600 hover:text-blue-800 transition-colors"
@@ -208,19 +235,6 @@
                                             </svg>
                                         </a>
                                         {% endif %}
-                                        <!-- Badges de Paquetes (al lado de los iconos) -->
-                                        <!-- Badge Anunciados -->
-                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
-                                             title="Paquetes Anunciados"
-                                             data-badge-type="announced">
-                                            <span class="package-count-announced">...</span>
-                                        </div>
-                                        <!-- Badge Recibidos -->
-                                        <div class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-green-100 text-green-700 text-xs font-bold shadow-sm hover:shadow transition-all duration-200 cursor-help animate-pulse" 
-                                             title="Paquetes Recibidos"
-                                             data-badge-type="received">
-                                            <span class="package-count-received">...</span>
-                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -2090,80 +2104,102 @@ document.addEventListener('alpine:init', () => {
     });
 });
 
-// Función para cargar los contadores de paquetes de cada cliente
+// Función optimizada para cargar los contadores de paquetes de todos los clientes de una vez
 async function loadPackageCounts() {
     const rows = document.querySelectorAll('tbody tr[data-customer-id]');
     
-    for (const row of rows) {
-        const customerId = row.getAttribute('data-customer-id');
-        if (!customerId) continue;
+    if (rows.length === 0) return;
+    
+    // Recopilar todos los IDs de clientes
+    const customerIds = Array.from(rows).map(row => row.getAttribute('data-customer-id')).filter(id => id);
+    
+    if (customerIds.length === 0) return;
+    
+    try {
+        // Hacer una sola petición para todos los clientes
+        const response = await fetch(`/api/customers/package-counts/batch?customer_ids=${customerIds.join(',')}`);
         
-        const badgeContainer = row.querySelector(`[data-customer-id="${customerId}"]`);
-        if (!badgeContainer) continue;
+        if (!response.ok) {
+            throw new Error('Error al cargar contadores de paquetes');
+        }
         
-        const announcedBadge = badgeContainer.querySelector('.package-count-announced');
-        const receivedBadge = badgeContainer.querySelector('.package-count-received');
-        const announcedBadgeParent = announcedBadge?.parentElement;
-        const receivedBadgeParent = receivedBadge?.parentElement;
+        const countsData = await response.json();
         
-        try {
-            // Obtener los paquetes del cliente
-            const response = await fetch(`/api/customers/${customerId}/packages?limit=50`);
+        // Actualizar cada badge con los datos recibidos
+        rows.forEach(row => {
+            const customerId = row.getAttribute('data-customer-id');
+            if (!customerId) return;
             
-            if (!response.ok) {
-                throw new Error('Error al cargar paquetes');
+            const badgeContainer = row.querySelector(`[data-customer-id="${customerId}"]`);
+            if (!badgeContainer) return;
+            
+            const announcedBadge = badgeContainer.querySelector('.package-count-announced');
+            const receivedBadge = badgeContainer.querySelector('.package-count-received');
+            const deliveredBadge = badgeContainer.querySelector('.package-count-delivered');
+            const cancelledBadge = badgeContainer.querySelector('.package-count-cancelled');
+            
+            const announcedBadgeParent = announcedBadge?.parentElement;
+            const receivedBadgeParent = receivedBadge?.parentElement;
+            const deliveredBadgeParent = deliveredBadge?.parentElement;
+            const cancelledBadgeParent = cancelledBadge?.parentElement;
+            
+            // Obtener los contadores para este cliente
+            const counts = countsData[customerId] || { announced: 0, received: 0, delivered: 0, cancelled: 0 };
+            
+            // Actualizar badge de Anunciados
+            if (announcedBadge && announcedBadgeParent) {
+                announcedBadge.textContent = counts.announced;
+                announcedBadgeParent.classList.remove('animate-pulse');
+                if (counts.announced > 0) {
+                    announcedBadgeParent.classList.add('ring-1', 'ring-yellow-400');
+                }
             }
             
-            const packages = await response.json();
+            // Actualizar badge de Recibidos
+            if (receivedBadge && receivedBadgeParent) {
+                receivedBadge.textContent = counts.received;
+                receivedBadgeParent.classList.remove('animate-pulse');
+                if (counts.received > 0) {
+                    receivedBadgeParent.classList.add('ring-1', 'ring-blue-400');
+                }
+            }
             
-            // Contar paquetes por estado
-            let announcedCount = 0;
-            let receivedCount = 0;
+            // Actualizar badge de Entregados
+            if (deliveredBadge && deliveredBadgeParent) {
+                deliveredBadge.textContent = counts.delivered;
+                deliveredBadgeParent.classList.remove('animate-pulse');
+                if (counts.delivered > 0) {
+                    deliveredBadgeParent.classList.add('ring-1', 'ring-green-400');
+                }
+            }
             
-            packages.forEach(pkg => {
-                const status = pkg.status ? pkg.status.toUpperCase() : '';
-                
-                if (status === 'ANUNCIADO') {
-                    announcedCount++;
-                } else if (status === 'RECIBIDO') {
-                    receivedCount++;
+            // Actualizar badge de Cancelados
+            if (cancelledBadge && cancelledBadgeParent) {
+                cancelledBadge.textContent = counts.cancelled;
+                cancelledBadgeParent.classList.remove('animate-pulse');
+                if (counts.cancelled > 0) {
+                    cancelledBadgeParent.classList.add('ring-1', 'ring-red-400');
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error al cargar contadores de paquetes:', error);
+        
+        // En caso de error, mostrar 0 en todos los badges
+        rows.forEach(row => {
+            const badgeContainer = row.querySelector(`[data-customer-id]`);
+            if (!badgeContainer) return;
+            
+            const badges = badgeContainer.querySelectorAll('[data-badge-type]');
+            badges.forEach(badge => {
+                const span = badge.querySelector('span');
+                if (span) {
+                    span.textContent = '0';
+                    badge.classList.remove('animate-pulse');
                 }
             });
-            
-            // Actualizar los badges y remover animación
-            if (announcedBadge && announcedBadgeParent) {
-                announcedBadge.textContent = announcedCount;
-                announcedBadgeParent.classList.remove('animate-pulse');
-                
-                // Agregar efecto visual si hay paquetes
-                if (announcedCount > 0) {
-                    announcedBadgeParent.classList.add('ring-1', 'ring-blue-400');
-                }
-            }
-            
-            if (receivedBadge && receivedBadgeParent) {
-                receivedBadge.textContent = receivedCount;
-                receivedBadgeParent.classList.remove('animate-pulse');
-                
-                // Agregar efecto visual si hay paquetes
-                if (receivedCount > 0) {
-                    receivedBadgeParent.classList.add('ring-1', 'ring-green-400');
-                }
-            }
-            
-        } catch (error) {
-            console.error(`Error al cargar paquetes del cliente ${customerId}:`, error);
-            
-            // Mostrar 0 en caso de error y remover animación
-            if (announcedBadge && announcedBadgeParent) {
-                announcedBadge.textContent = '0';
-                announcedBadgeParent.classList.remove('animate-pulse');
-            }
-            if (receivedBadge && receivedBadgeParent) {
-                receivedBadge.textContent = '0';
-                receivedBadgeParent.classList.remove('animate-pulse');
-            }
-        }
+        });
     }
 }
 

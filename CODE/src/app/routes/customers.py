@@ -391,6 +391,67 @@ async def get_customer_packages(
             detail=f"Error al obtener paquetes del cliente: {str(e)}"
         )
 
+@router.get("/package-counts/batch")
+async def get_package_counts_batch(
+    customer_ids: str = Query(..., description="IDs de clientes separados por comas"),
+    db: Session = Depends(get_db)
+):
+    """Obtener contadores de paquetes para múltiples clientes de una vez (optimizado)"""
+    try:
+        # Parsear los IDs
+        ids_list = [id.strip() for id in customer_ids.split(',') if id.strip()]
+        
+        if not ids_list:
+            return {}
+        
+        # Limitar a 50 clientes por petición para evitar sobrecarga
+        ids_list = ids_list[:50]
+        
+        # Query optimizada: contar paquetes por cliente y estado en una sola consulta
+        from sqlalchemy import case
+        
+        package_counts = db.query(
+            Package.customer_id,
+            func.sum(case((Package.status == PackageStatus.ANUNCIADO, 1), else_=0)).label('announced'),
+            func.sum(case((Package.status == PackageStatus.RECIBIDO, 1), else_=0)).label('received'),
+            func.sum(case((Package.status == PackageStatus.ENTREGADO, 1), else_=0)).label('delivered'),
+            func.sum(case((Package.status == PackageStatus.CANCELADO, 1), else_=0)).label('cancelled')
+        ).filter(
+            Package.customer_id.in_(ids_list),
+            Package.status.in_([
+                PackageStatus.ANUNCIADO,
+                PackageStatus.RECIBIDO,
+                PackageStatus.ENTREGADO,
+                PackageStatus.CANCELADO
+            ])
+        ).group_by(Package.customer_id).all()
+        
+        # Formatear resultados
+        result = {}
+        for customer_id, announced, received, delivered, cancelled in package_counts:
+            result[str(customer_id)] = {
+                'announced': announced or 0,
+                'received': received or 0,
+                'delivered': delivered or 0,
+                'cancelled': cancelled or 0
+            }
+        
+        # Agregar clientes sin paquetes con contadores en 0
+        for customer_id in ids_list:
+            if customer_id not in result:
+                result[customer_id] = {
+                    'announced': 0,
+                    'received': 0,
+                    'delivered': 0,
+                    'cancelled': 0
+                }
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error al obtener contadores de paquetes: {str(e)}", exc_info=True)
+        return {}
+
 @router.get("/search-suggestions")
 async def search_suggestions(
     q: str = Query(..., min_length=2),

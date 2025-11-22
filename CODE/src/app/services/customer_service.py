@@ -177,10 +177,16 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         # Obtener total
         total = base_query.count()
 
-        # Aplicar paginación y ordenamiento
-        customers = base_query.order_by(desc(Customer.created_at)).offset(skip).limit(limit).all()
+        # Ordenar por cantidad total de paquetes (suma de todos los estados)
+        # Importar Package para hacer el join
+        from app.models.package import Package
+        
+        # Hacer un left join con packages y contar por cliente
+        customers_with_counts = base_query.outerjoin(Package).group_by(Customer.id).order_by(
+            desc(func.count(Package.id))
+        ).offset(skip).limit(limit).all()
 
-        return customers, total
+        return customers_with_counts, total
 
     def get_customer_stats(self, db: Session) -> CustomerStatsResponse:
         """Obtener estadísticas generales de clientes"""
