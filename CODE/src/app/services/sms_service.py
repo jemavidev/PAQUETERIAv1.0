@@ -580,7 +580,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                     "consult_code": announcement.tracking_code,
                     "tracking_code": announcement.tracking_code,
                     "customer_name": announcement.customer_name,
-                    "tracking_url": f"{settings.tracking_base_url or 'https://papyrus.com.co'}?auto_search={announcement.tracking_code}"
+                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetex.papyrus.com.co/search'}?auto_search={announcement.tracking_code}"
                 })
 
         elif event_type in [NotificationEvent.PACKAGE_RECEIVED, NotificationEvent.PACKAGE_DELIVERED, NotificationEvent.PACKAGE_CANCELLED] and package_id:
@@ -595,7 +595,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                     "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'delivered_at') and package.delivered_at else "",
                     "package_type": package.package_type.value if hasattr(package, 'package_type') and package.package_type else "normal",
                     "package_condition": package.package_condition.value if hasattr(package, 'package_condition') and package.package_condition else "bueno",
-                    "tracking_url": f"{settings.tracking_base_url or 'https://papyrus.com.co'}/seguimiento/{package.tracking_number}"
+                    "tracking_url": f"{settings.tracking_base_url or 'https://paquetex.papyrus.com.co/search'}?auto_search={package.tracking_number}"
                 })
 
         elif event_type == NotificationEvent.PAYMENT_DUE and package_id:
@@ -614,7 +614,7 @@ class SMSService(BaseService[Notification, Any, Any]):
         variables.setdefault("consult_code", "N/A")
         variables.setdefault("tracking_code", "N/A")
         variables.setdefault("customer_name", "Cliente")
-        variables.setdefault("tracking_url", settings.tracking_base_url or "https://papyrus.com.co")
+        variables.setdefault("tracking_url", settings.tracking_base_url or "https://paquetex.papyrus.com.co/search")
 
         return variables
 

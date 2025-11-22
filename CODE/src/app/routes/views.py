@@ -279,13 +279,15 @@ async def packages_page(request: Request, current_user: User = Depends(get_curre
 
     # Agregar configuración de tarifas desde .env
     from app.config import settings
+    # Usar production_url como URL principal para enlaces públicos
+    base_url = settings.production_url if settings.environment == "production" else settings.development_url
     context["app_config"] = {
         "rates": {
             "normal": settings.base_delivery_rate_normal,
             "extra_dimensioned": settings.base_delivery_rate_extra_dimensioned,
             "storage_per_day": settings.base_storage_rate
         },
-        "development_url": settings.development_url,
+        "development_url": base_url,  # Usar la URL correcta según el entorno
         "production_url": settings.production_url
     }
 

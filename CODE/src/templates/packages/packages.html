@@ -1917,7 +1917,7 @@ function displayReceivePackageInfo(package) {
     receivePackageInfo.innerHTML = `
         <div class="flex items-center space-x-2">
             <span class="text-blue-600 font-medium">CÓDIGO DE CONSULTA:</span>
-            <a href="${window.appConfig?.development_url || 'http://localhost:8000'}/search?auto_search=${package.tracking_number || ''}" 
+            <a href="${window.appConfig?.development_url || 'https://paquetex.papyrus.com.co'}/search?auto_search=${package.tracking_number || ''}" 
                class="text-blue-600 hover:text-blue-800 underline font-mono bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" 
                target="_blank">
                ${package.tracking_number || 'N/D'}
@@ -1925,7 +1925,7 @@ function displayReceivePackageInfo(package) {
         </div>
         <div class="flex items-center space-x-2">
             <span class="text-blue-600 font-medium">NÚMERO DE GUÍA:</span>
-            <a href="${window.appConfig?.development_url || 'http://localhost:8000'}/search?auto_search=${package.guide_number || ''}" 
+            <a href="${window.appConfig?.development_url || 'https://paquetex.papyrus.com.co'}/search?auto_search=${package.guide_number || ''}" 
                class="text-blue-600 hover:text-blue-800 underline font-mono bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" 
                target="_blank">
                ${package.guide_number || 'N/D'}
@@ -2100,7 +2100,7 @@ function displayPackageDetails(package) {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div class="flex items-center space-x-2">
                         <span class="text-orange-600 font-medium">CÓDIGO DE CONSULTA:</span>
-                        <a href="${window.appConfig?.development_url || 'http://localhost:8000'}/search?auto_search=${package.tracking_number || ''}" 
+                        <a href="${window.appConfig?.development_url || 'https://paquetex.papyrus.com.co'}/search?auto_search=${package.tracking_number || ''}" 
                            class="text-blue-600 hover:text-blue-800 underline font-mono bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" 
                            target="_blank">
                            ${package.tracking_number || 'N/D'}
@@ -2108,7 +2108,7 @@ function displayPackageDetails(package) {
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="text-orange-600 font-medium">NÚMERO DE GUÍA:</span>
-                        <a href="${window.appConfig?.development_url || 'http://localhost:8000'}/search?auto_search=${package.guide_number || ''}" 
+                        <a href="${window.appConfig?.development_url || 'https://paquetex.papyrus.com.co'}/search?auto_search=${package.guide_number || ''}" 
                            class="text-blue-600 hover:text-blue-800 underline font-mono bg-gray-100 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" 
                            target="_blank">
                            ${package.guide_number || 'N/D'}
