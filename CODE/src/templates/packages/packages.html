@@ -397,14 +397,24 @@
                     </div>
 
                     <!-- Sección Posición Generada -->
-                    <div id="barotiSection" class="hidden mt-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+                    <div id="barotiSection" class="hidden mt-6 bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="font-bold text-green-800 text-lg">POSICIÓN ASIGNADA</h4>
+                        </div>
                         <div class="text-center">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-4">POSICION ASIGNADA</h3>
-                            <div class="bg-white p-6 rounded-lg shadow-lg border-2 border-green-300">
-                                <div id="barotiNumber" class="text-4xl font-bold text-green-600 tracking-wider">
+                            <p class="text-sm font-medium text-green-700 mb-3">Código de Ubicación</p>
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-green-200">
+                                <div id="barotiNumber" class="text-3xl sm:text-4xl font-bold text-green-600 tracking-wider">
                                     <!-- Número de posición se mostrará aquí -->
                                 </div>                           
                             </div>
+                            <p class="text-xs text-green-600 mt-3">✓ Posición registrada exitosamente</p>
                         </div>
                     </div>
 
@@ -450,34 +460,68 @@
 
 <!-- Modal Posición -->
 <div id="barotiModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-[60]" onclick="closeBarotiModalOnBackdrop(event)">
-    <div class="relative top-20 mx-auto p-5 w-11/12 sm:w-10/12 md:w-3/4 lg:w-1/2 max-w-2xl" onclick="event.stopPropagation()">
-        <div class="bg-white rounded-xl shadow-2xl border-4 border-green-400">
+    <div class="relative top-2 sm:top-4 md:top-8 lg:top-20 mx-auto p-2 sm:p-3 md:p-4 lg:p-5 w-11/12 sm:w-10/12 md:w-3/4 lg:w-1/2 max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-green-500 to-blue-500 px-6 py-8 text-center rounded-t-lg">
-                <h2 class="text-3xl font-bold text-white tracking-wider">POSICIÓN</h2>
-                <p class="text-white text-sm mt-2 opacity-90">Posición Asignada</p>
+            <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-medium text-gray-900">Posición Asignada</h3>
+                        <p class="text-xs sm:text-sm text-gray-600">Ubicación física del paquete</p>
+                    </div>
+                </div>
+                <button onclick="closeBarotiModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
 
             <!-- Body -->
-            <div class="p-8 sm:p-12">
-                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-8 rounded-lg border-2 border-green-300">
-                    <div id="barotiModalNumber" class="text-5xl sm:text-6xl font-bold text-green-600 tracking-wider text-center">
-                        <!-- Número de posición se mostrará aquí -->
+            <div class="p-4 sm:p-6 lg:p-8">
+                <!-- Sección de Posición con estilo consistente -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 sm:p-8 rounded-xl border border-green-200">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
                     </div>
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-green-700 mb-3">Código de Ubicación</p>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-green-200">
+                            <div id="barotiModalNumber" class="text-4xl sm:text-5xl font-bold text-green-600 tracking-wider">
+                                <!-- Número de posición se mostrará aquí -->
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-600 mt-3">✓ Posición registrada exitosamente</p>
+                    </div>
+                </div>
+
+                <!-- Sección de Email (se muestra dinámicamente si aplica) -->
+                <div id="barotiEmailSectionContent" class="mt-4">
+                    <!-- Se inserta aquí dinámicamente -->
                 </div>
             </div>
 
-            <!-- Sección de Email (se muestra dinámicamente si aplica) -->
-            <div id="barotiEmailSectionContent" class="px-6 py-4">
-                <!-- Se inserta aquí dinámicamente -->
-            </div>
-
             <!-- Footer -->
-            <div class="px-6 py-6 bg-gray-50 rounded-b-lg text-center">
-                <button onclick="closeBarotiModal()" 
-                        class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg transition-all duration-200 active:scale-95 touch-manipulation min-h-[48px] flex items-center justify-center mx-auto">
-                    Cerrar
-                </button>
+            <div class="border-t border-gray-100 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 bg-gray-50 rounded-b-xl">
+                <div class="flex flex-col space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-3">
+                    <button onclick="closeBarotiModal()" 
+                            class="w-full sm:w-auto px-6 py-3 sm:py-2.5 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-papyrus-blue hover:bg-blue-700 transition-all duration-200 active:scale-95 touch-manipulation min-h-[44px] flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Entendido
+                    </button>
+                </div>
             </div>
         </div>
     </div>
