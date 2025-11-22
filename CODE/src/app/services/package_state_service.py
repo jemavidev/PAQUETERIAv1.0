@@ -106,6 +106,21 @@ class PackageStateService:
         db.refresh(history_entry)
         db.refresh(package)
 
+        # INVALIDAR CACHÉ después de cambio de estado
+        try:
+            from app.cache_manager import cache_manager
+            cache_manager.invalidate_package_cache(
+                package_id=str(package.id),
+                customer_id=str(package.customer_id) if package.customer_id else None
+            )
+            import logging
+            logger = logging.getLogger("package_state_service")
+            logger.info(f"✅ Caché invalidado para paquete {package.id} después de cambio a {new_status.value}")
+        except Exception as e:
+            import logging
+            logger = logging.getLogger("package_state_service")
+            logger.warning(f"⚠️ Error invalidando caché para paquete {package.id}: {str(e)}")
+
         # Enviar notificación SMS automáticamente si hay un cliente asociado
         try:
             await cls._send_sms_notification(db, package, new_status, changed_by)

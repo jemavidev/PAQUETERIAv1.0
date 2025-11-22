@@ -451,8 +451,8 @@ async def list_packages(
         }
     }
     
-    # OPTIMIZACIÓN: Guardar en caché por 30 segundos
-    cache_manager.cache_packages_list(result, cache_filters, ttl=30)
+    # OPTIMIZACIÓN: Guardar en caché por 15 segundos (reducido para mejor refresco)
+    cache_manager.cache_packages_list(result, cache_filters, ttl=15)
     logger.info(f"📦 Datos guardados en caché - {len(paginated_items)} items")
     
     return result
@@ -769,6 +769,23 @@ async def deliver_package_with_payment(
             request=request
         )
 
+        # INVALIDAR CACHÉ después de entregar paquete
+        try:
+            from app.cache_manager import cache_manager
+            # Obtener customer_id del paquete para invalidar su caché también
+            package = db.query(Package).filter(Package.id == package_id).first()
+            cache_manager.invalidate_package_cache(
+                package_id=str(package_id),
+                customer_id=str(package.customer_id) if package and package.customer_id else None
+            )
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"✅ Caché invalidado para paquete {package_id} después de entrega")
+        except Exception as cache_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"⚠️ Error invalidando caché: {str(cache_error)}")
+
         return result
 
     except ValueError as e:
@@ -830,6 +847,18 @@ async def cancel_package_with_reason(
             db.commit()
             db.refresh(announcement)
             
+            # INVALIDAR CACHÉ después de cancelar anuncio
+            try:
+                from app.cache_manager import cache_manager
+                cache_manager.invalidate_package_cache()
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"✅ Caché invalidado después de cancelar anuncio {announcement.tracking_code}")
+            except Exception as cache_error:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"⚠️ Error invalidando caché: {str(cache_error)}")
+            
             # Return a response compatible with PackageCancelResponse
             return PackageCancelResponse(
                 success=True,
@@ -855,6 +884,23 @@ async def cancel_package_with_reason(
             package_id=package_id_int,
             request=request
         )
+
+        # INVALIDAR CACHÉ después de cancelar paquete
+        try:
+            from app.cache_manager import cache_manager
+            # Obtener customer_id del paquete para invalidar su caché también
+            package = db.query(Package).filter(Package.id == package_id_int).first()
+            cache_manager.invalidate_package_cache(
+                package_id=str(package_id_int),
+                customer_id=str(package.customer_id) if package and package.customer_id else None
+            )
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"✅ Caché invalidado para paquete {package_id_int} después de cancelación")
+        except Exception as cache_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"⚠️ Error invalidando caché: {str(cache_error)}")
 
         return result
 
@@ -1161,6 +1207,17 @@ async def receive_package_with_images(
 
         # El anuncio ya fue marcado como procesado por PackageStateService
         # No es necesario hacerlo nuevamente
+
+        # INVALIDAR CACHÉ después de recibir paquete
+        try:
+            from app.cache_manager import cache_manager
+            cache_manager.invalidate_package_cache(
+                package_id=str(db_package.id),
+                customer_id=str(db_package.customer_id) if db_package.customer_id else None
+            )
+            print(f"✅ Caché invalidado para paquete {db_package.id} después de recepción")
+        except Exception as cache_error:
+            print(f"⚠️ Error invalidando caché: {str(cache_error)}")
 
         return {
             "success": True,
