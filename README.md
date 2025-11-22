@@ -1,178 +1,238 @@
-# PAQUETERÍA v1.0 - Versión de Producción
+# 🚀 PAQUETEX v4.0 - Sistema de Gestión de Paquetería
 
-## 📋 Información
+Sistema completo de gestión de paquetería con recepción, almacenamiento y entrega de paquetes.
 
-Esta es la versión de producción del sistema PAQUETERÍA v1.0.
+## 📋 Descripción
 
-**Fecha de creación**: 2025-01-24  
-**Versión**: 1.0.0  
-**Estado**: Producción  
-**Stack**: PAQUETERIA v1.0 PROD
-
----
+PAQUETEX es un sistema web desarrollado con FastAPI (Python) que permite gestionar el ciclo completo de paquetes:
+- Anuncio de paquetes
+- Recepción con documentación fotográfica
+- Almacenamiento con sistema de posiciones
+- Entrega con registro de pagos
+- Notificaciones por SMS y Email
 
 ## 🚀 Inicio Rápido
 
-### Requisitos Previos
-
-- Docker y Docker Compose instalados
-- Archivo `.env` configurado en la raíz del proyecto
-- Credenciales de AWS RDS configuradas
-- Credenciales de AWS S3 configuradas
-
-### Despliegue Local
+### Desarrollo Local
 
 ```bash
-# 1. Configurar variables de entorno
-# Editar .env con valores de producción
+# 1. Levantar servicios
+./deploy.sh --env localhost --deploy
 
-# 2. Ejecutar migraciones (si es necesario)
-docker compose -f docker-compose.prod.yml run --rm app alembic upgrade head
-
-# 3. Iniciar servicios
-docker compose -f docker-compose.prod.yml up -d
-
-# O usar el script de inicio
-./start.sh
+# 2. Acceder a la aplicación
+http://localhost:8000
 ```
 
-### 🚀 Despliegue Automatizado a AWS
-
-**Flujo de trabajo:** Localhost → GitHub → AWS Server
+### Deploy a Producción
 
 ```bash
-# Despliegue en un solo comando
-./deploy-to-aws.sh "mensaje del commit"
+# Deploy a servidor AWS (papyrus)
+./deploy.sh --env papyrus --deploy
 ```
 
-**Documentación completa:**
-- 📖 **[EMPEZAR_HOY.md](EMPEZAR_HOY.md)** - Guía rápida de 15 minutos
-- 📚 **[GUIA_DESPLIEGUE_AUTOMATIZADO.md](GUIA_DESPLIEGUE_AUTOMATIZADO.md)** - Guía completa
-- 📊 **[DIAGRAMA_FLUJO_DESPLIEGUE.md](DIAGRAMA_FLUJO_DESPLIEGUE.md)** - Diagramas visuales
-- 📝 **[RESUMEN_DESPLIEGUE.md](RESUMEN_DESPLIEGUE.md)** - Resumen ejecutivo
+Ver documentación completa: [README_DEPLOY.md](README_DEPLOY.md)
 
----
-
-## 📁 Estructura
+## 📁 Estructura del Proyecto
 
 ```
-PAQUETERIA v1.0/
-├── CODE/
-│   ├── src/                  # Código fuente
-│   ├── alembic/              # Migraciones
-│   ├── requirements.txt      # Dependencias
-│   ├── Dockerfile            # Imagen Docker
-│   └── env.example           # Plantilla de variables de entorno
-├── DOCS/                     # Documentación y archivos no esenciales
-│   ├── documentacion/        # Documentación del proyecto
-│   ├── scripts/              # Scripts (despliegue, base de datos, monitoreo)
-│   │   └── deployment/       # Scripts de despliegue esenciales
-│   ├── tests/                # Tests
-│   ├── templates-prueba/     # Templates de prueba/debug
-│   └── componentes-docs/     # Documentación interna
-├── docker-compose.prod.yml   # Docker Compose producción
-├── start.sh                  # Script de inicio
-├── .env                      # Variables de entorno (crear desde env.example)
-└── README.md                 # Este archivo
+/
+├── CODE/                        # Código fuente de la aplicación
+│   ├── src/                     # Código Python
+│   │   ├── app/                 # Aplicación FastAPI
+│   │   ├── static/              # Archivos estáticos
+│   │   └── templates/           # Templates HTML
+│   ├── alembic/                 # Migraciones de BD
+│   └── requirements.txt         # Dependencias Python
+│
+├── deploy.sh                    # Sistema de deploy (ejecutable principal)
+├── .deploy/                     # Configuración de deploy
+│
+├── scripts/                     # Scripts utilitarios
+│   ├── deploy/                  # Scripts de deploy
+│   ├── sync/                    # Scripts de sincronización
+│   └── utils/                   # Utilidades
+│
+├── DOCS/                        # Documentación
+│   ├── deploy/                  # Docs de deploy
+│   ├── fixes/                   # Documentación de fixes
+│   ├── guides/                  # Guías y tutoriales
+│   └── archived/                # Archivos antiguos
+│
+├── docker-compose.*.yml         # Configuraciones Docker
+└── README_DEPLOY.md             # Guía de deploy
 ```
 
----
+## 🛠️ Tecnologías
+
+### Backend
+- **FastAPI** - Framework web Python
+- **PostgreSQL** - Base de datos
+- **Redis** - Caché y sesiones
+- **Alembic** - Migraciones de BD
+- **SQLAlchemy** - ORM
+
+### Frontend
+- **Jinja2** - Templates
+- **TailwindCSS** - Estilos
+- **JavaScript** - Interactividad
+
+### Infraestructura
+- **Docker** - Contenedores
+- **Nginx** - Reverse proxy
+- **AWS Lightsail** - Hosting
+- **AWS S3** - Almacenamiento de imágenes
 
 ## 🔧 Configuración
 
 ### Variables de Entorno
 
-Crear `.env` en la raíz del proyecto (usar `CODE/env.example` como plantilla):
-
-- `DATABASE_URL` - URL de PostgreSQL (AWS RDS)
-- `SECRET_KEY` - Clave secreta para JWT
-- `AWS_ACCESS_KEY_ID` - Credenciales AWS
-- `AWS_SECRET_ACCESS_KEY` - Credenciales AWS
-- `AWS_S3_BUCKET` - Bucket de S3
-- `REDIS_PASSWORD` - Contraseña de Redis
-- Y otras variables según necesidad
-
-### Configuración Rápida
-
+Copiar y configurar:
 ```bash
-# Copiar plantilla
-cp CODE/env.example .env
-
-# Editar con tus valores
-nano .env
-
-# Generar SECRET_KEY
-openssl rand -hex 32
+cp CODE/env.example CODE/.env
 ```
 
----
+Variables principales:
+- `DATABASE_URL` - Conexión a PostgreSQL
+- `REDIS_URL` - Conexión a Redis
+- `AWS_ACCESS_KEY_ID` - Credenciales AWS
+- `AWS_SECRET_ACCESS_KEY` - Credenciales AWS
+- `AWS_S3_BUCKET_NAME` - Bucket S3
+
+### Base de Datos
+
+```bash
+# Ejecutar migraciones
+./deploy.sh --env localhost --migrations
+```
 
 ## 📚 Documentación
 
-Toda la documentación detallada está en la carpeta `DOCS/`:
+### Guías Principales
+- [README_DEPLOY.md](README_DEPLOY.md) - Sistema de deploy
+- [DOCS/guides/](DOCS/guides/) - Guías y tutoriales
 
-### Documentación Técnica Principal
+### Documentación Técnica
+- [DOCS/fixes/](DOCS/fixes/) - Soluciones a problemas
+- [DOCS/deploy/](DOCS/deploy/) - Documentación de deploy
 
-- **🐳 Contenedores Docker**: `DOCS/documentacion/DOCUMENTACION_CONTENEDORES.md` - Descripción detallada de todos los contenedores del stack
-- **⚙️ Servicios de la Aplicación**: `DOCS/documentacion/DOCUMENTACION_SERVICIOS.md` - Documentación completa de todos los servicios y su funcionalidad
+### Scripts
+- [scripts/deploy/](scripts/deploy/) - Scripts de deploy
+- [scripts/sync/](scripts/sync/) - Scripts de sincronización
 
-### Documentación de Configuración
+## 🎯 Funcionalidades Principales
 
-- **Configuración RDS**: `DOCS/documentacion/CONFIGURACION_RDS.md`
-- **Configuración ENV**: `DOCS/documentacion/CONFIGURACION_ENV.md`
-- **Inicio Rápido**: `DOCS/documentacion/README_INICIO_RAPIDO.md`
-- **Despliegue**: `DOCS/documentacion/README_DEPLOY.md`
-- **Seguridad**: `DOCS/documentacion/SECURITY.md`
-- **Implementación**: `DOCS/documentacion/IMPLEMENTACION.md`
-- **Índice completo**: `DOCS/README.md`
+### 1. Gestión de Paquetes
+- ✅ Anuncio de paquetes
+- ✅ Recepción con fotos (AWS S3)
+- ✅ Sistema de posiciones (BAROTI)
+- ✅ Entrega con registro de pago
+- ✅ Cancelación de paquetes
 
----
+### 2. Gestión de Clientes
+- ✅ Registro de clientes
+- ✅ Historial de paquetes
+- ✅ Notificaciones automáticas
 
-## 🎯 Comandos Útiles
+### 3. Notificaciones
+- ✅ SMS automáticos (cambios de estado)
+- ✅ Emails con templates personalizados
+- ✅ Notificaciones en tiempo real
+
+### 4. Reportes
+- ✅ Reportes de paquetes
+- ✅ Estadísticas de operación
+- ✅ Exportación de datos
+
+## 🚀 Deploy
+
+### Entornos Disponibles
 
 ```bash
-# Iniciar servicios
-./start.sh
+# Desarrollo local
+./deploy.sh --env localhost --deploy
 
-# Ver logs
-docker compose -f docker-compose.prod.yml logs -f app
+# Servidor de producción (AWS)
+./deploy.sh --env papyrus --deploy
 
-# Ver estado
-docker compose -f docker-compose.prod.yml ps
-
-# Reiniciar aplicación
-docker compose -f docker-compose.prod.yml restart app
-
-# Detener servicios
-docker compose -f docker-compose.prod.yml down
-
-# Ejecutar migraciones
-docker compose -f docker-compose.prod.yml run --rm app alembic upgrade head
+# Servidor de staging
+./deploy.sh --env staging --deploy
 ```
 
+Ver documentación completa: [README_DEPLOY.md](README_DEPLOY.md)
+
+## 🔒 Seguridad
+
+- ✅ Autenticación con JWT
+- ✅ Roles de usuario (Admin, Operador, Cliente)
+- ✅ Validación de datos
+- ✅ Protección CSRF
+- ✅ HTTPS en producción
+- ✅ Backups automáticos
+
+## 📊 Monitoreo
+
+```bash
+# Ver estado de servicios
+./deploy.sh --env papyrus --status
+
+# Ver logs en tiempo real
+./deploy.sh --env papyrus --logs
+
+# Health check
+./deploy.sh --env papyrus --health
+```
+
+## 🐛 Troubleshooting
+
+### Problemas Comunes
+
+Ver documentación de fixes: [DOCS/fixes/](DOCS/fixes/)
+
+### Logs
+
+```bash
+# Logs de la aplicación
+./deploy.sh --env localhost --logs
+
+# Logs de Docker
+docker compose logs -f app
+```
+
+## 🤝 Contribuir
+
+1. Crear rama de feature
+2. Hacer cambios
+3. Probar en localhost
+4. Deploy a staging
+5. Merge a main
+6. Deploy a producción
+
+## 📞 Soporte
+
+- Documentación: [DOCS/](DOCS/)
+- Guías: [DOCS/guides/](DOCS/guides/)
+- Fixes: [DOCS/fixes/](DOCS/fixes/)
+
+## 📝 Changelog
+
+### v4.0.0 (2024-11-22)
+- ✅ Sistema de deploy unificado
+- ✅ Mejoras en caché (invalidación automática)
+- ✅ Modal de posición rediseñado
+- ✅ Documentación completa reorganizada
+
+### v3.x
+- Sistema de notificaciones
+- Integración con AWS S3
+- Sistema de posiciones BAROTI
+
+## 📄 Licencia
+
+Propietario - PAQUETEX © 2024
+
 ---
 
-## ✅ Características
-
-- ✅ Hot Reload activado (cambios sin reiniciar)
-- ✅ Conectado a AWS RDS
-- ✅ Almacenamiento en AWS S3
-- ✅ Email SMTP configurado
-- ✅ SMS LIWA.co configurado y funcionando
-- ✅ **Celery Worker** - Tareas asíncronas
-- ✅ **Celery Beat** - Tareas programadas
-- ✅ **Prometheus** - Métricas y monitoreo
-- ✅ **Grafana** - Dashboards de monitoreo
-- ✅ **Node Exporter** - Métricas del sistema
-- ✅ Logs estructurados
-- ✅ Health checks
-
----
-
-## 🆘 Soporte
-
-Para problemas o preguntas, consultar la documentación en `DOCS/documentacion/`.
-
----
-
-**Versión de Producción - PAQUETERÍA v1.0**
+**Versión:** 4.0.0  
+**Última actualización:** 2024-11-22  
+**Servidor:** AWS Lightsail (papyrus)  
+**URL:** https://paquetex.papyrus.com.co
