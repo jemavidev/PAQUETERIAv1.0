@@ -65,7 +65,7 @@ services:
       - uploads_data:/app/uploads
       - logs_data:/app/logs
       - backups_data:/app/backups
-    command: ["sh", "-c", "mkdir -p /app/src/uploads /app/uploads && cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 2 --worker-class uvicorn.workers.UvicornWorker --access-log --log-level info"]
+    command: ["sh", "-c", "mkdir -p /app/src/uploads /app/uploads && cd /app && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 2 --access-log --log-level info"]
     networks:
       - paqueteria_network
 
