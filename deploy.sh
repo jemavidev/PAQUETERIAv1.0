@@ -163,7 +163,37 @@ git_pull_only() {
         return 1
     fi
     
-    execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+    # Para entornos remotos, verificar cambios locales primero
+    if [ "$ENV_TYPE" = "remote" ]; then
+        local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
+        
+        if [ "$has_changes" -gt 0 ]; then
+            log_warning "Hay cambios locales sin commitear en el servidor"
+            echo ""
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
+            echo ""
+            read -p "¿Hacer stash y continuar? [y/N]: " -n 1 -r
+            echo ""
+            
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                execute_command "git stash push -m 'Auto stash $(date +%Y%m%d_%H%M%S)'" "Guardando cambios..."
+                execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+                
+                read -p "¿Restaurar cambios (stash pop)? [y/N]: " -n 1 -r
+                echo ""
+                [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
+            else
+                log_info "Pull cancelado"
+                return 1
+            fi
+        else
+            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+        fi
+    else
+        # Para entornos locales
+        execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+    fi
+    
     log_success "Pull completado"
 }
 
@@ -312,9 +342,35 @@ deploy_full() {
             fi
         fi
         
-        # Para entornos remotos: pull
+        # Para entornos remotos: pull (con manejo de cambios locales)
         if [ "$ENV_TYPE" = "remote" ]; then
-            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+            log_step "Verificando cambios locales en servidor remoto..."
+            
+            # Verificar si hay cambios locales
+            local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
+            
+            if [ "$has_changes" -gt 0 ]; then
+                log_warning "Hay cambios locales en el servidor remoto"
+                echo ""
+                ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
+                echo ""
+                read -p "¿Hacer stash de cambios locales y continuar? [y/N]: " -n 1 -r
+                echo ""
+                
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    execute_command "git stash push -m 'Auto stash before deploy $(date +%Y%m%d_%H%M%S)'" "Guardando cambios locales..."
+                    execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+                    
+                    read -p "¿Restaurar cambios guardados (stash pop)? [y/N]: " -n 1 -r
+                    echo ""
+                    [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
+                else
+                    log_error "Deploy cancelado por el usuario"
+                    return 1
+                fi
+            else
+                execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+            fi
         fi
     fi
     
