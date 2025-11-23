@@ -27,11 +27,268 @@ async def api_root():
             "auth": "/api/auth/",
             "packages": "/api/packages/",
             "announcements": "/api/announcements/",
+            "dashboard": "/api/dashboard/",
             "search": "/api/search",
             "health": "/api/health",
             "docs": "/docs"
         }
     }
+
+
+@router.get("/dashboard/packages")
+async def get_dashboard_packages(
+    page: int = 1,
+    limit: int = 8,
+    search: str = None,
+    status: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """Obtener paquetes para el dashboard con paginación y filtros"""
+    try:
+        # Calcular offset
+        offset = (page - 1) * limit
+        
+        # Query base
+        query = db.query(PackageAnnouncementNew)
+        
+        # Aplicar filtros
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    PackageAnnouncementNew.customer_name.ilike(search_term),
+                    PackageAnnouncementNew.customer_phone.ilike(search_term),
+                    PackageAnnouncementNew.guide_number.ilike(search_term),
+                    PackageAnnouncementNew.tracking_code.ilike(search_term)
+                )
+            )
+        
+        if status and status.strip():
+            if status.upper() == "PROCESADO":
+                query = query.filter(PackageAnnouncementNew.is_processed == True)
+            elif status.upper() == "PENDIENTE":
+                query = query.filter(PackageAnnouncementNew.is_processed == False)
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener paquetes paginados
+        packages = query.order_by(PackageAnnouncementNew.announced_at.desc()).offset(offset).limit(limit).all()
+        
+        # Formatear respuesta
+        packages_data = [
+            {
+                "id": str(pkg.id),
+                "customer_name": pkg.customer_name,
+                "customer_phone": pkg.customer_phone,
+                "guide_number": pkg.guide_number,
+                "tracking_code": pkg.tracking_code,
+                "is_processed": pkg.is_processed,
+                "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
+                "status": "PROCESADO" if pkg.is_processed else "PENDIENTE"
+            }
+            for pkg in packages
+        ]
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_prev = page > 1
+        has_next = page < total_pages
+        
+        return {
+            "success": True,
+            "packages": packages_data,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "total_pages": total_pages,
+                "has_prev": has_prev,
+                "has_next": has_next
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo paquetes del dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo paquetes: {str(e)}"
+        )
+
+
+@router.get("/dashboard/stats")
+async def get_dashboard_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """Obtener estadísticas para widgets del dashboard"""
+    try:
+        from datetime import datetime, timedelta
+        from app.models.customer import Customer
+        from app.models.message import Message
+        
+        # Estadísticas de paquetes
+        total_packages = db.query(PackageAnnouncementNew).count()
+        processed_packages = db.query(PackageAnnouncementNew).filter(PackageAnnouncementNew.is_processed == True).count()
+        pending_packages = db.query(PackageAnnouncementNew).filter(PackageAnnouncementNew.is_processed == False).count()
+        
+        # Paquetes de hoy
+        today = datetime.now().date()
+        today_packages = db.query(PackageAnnouncementNew).filter(
+            PackageAnnouncementNew.announced_at >= today
+        ).count()
+        
+        # Paquetes de esta semana
+        week_ago = datetime.now() - timedelta(days=7)
+        week_packages = db.query(PackageAnnouncementNew).filter(
+            PackageAnnouncementNew.announced_at >= week_ago
+        ).count()
+        
+        # Estadísticas de clientes
+        total_customers = db.query(Customer).count()
+        
+        # Estadísticas de mensajes
+        total_messages = db.query(Message).count()
+        
+        return {
+            "success": True,
+            "stats": {
+                "packages": {
+                    "total": total_packages,
+                    "processed": processed_packages,
+                    "pending": pending_packages,
+                    "today": today_packages,
+                    "this_week": week_packages
+                },
+                "customers": {
+                    "total": total_customers
+                },
+                "messages": {
+                    "total": total_messages
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo estadísticas del dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo estadísticas: {str(e)}"
+        )
+
+
+@router.get("/dashboard/export")
+async def export_dashboard_data(
+    format: str = "csv",
+    search: str = None,
+    status: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """Exportar datos del dashboard en diferentes formatos"""
+    try:
+        from fastapi.responses import StreamingResponse
+        import csv
+        import io
+        from datetime import datetime
+        
+        # Query base
+        query = db.query(PackageAnnouncementNew)
+        
+        # Aplicar filtros
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    PackageAnnouncementNew.customer_name.ilike(search_term),
+                    PackageAnnouncementNew.customer_phone.ilike(search_term),
+                    PackageAnnouncementNew.guide_number.ilike(search_term),
+                    PackageAnnouncementNew.tracking_code.ilike(search_term)
+                )
+            )
+        
+        if status and status.strip():
+            if status.upper() == "PROCESADO":
+                query = query.filter(PackageAnnouncementNew.is_processed == True)
+            elif status.upper() == "PENDIENTE":
+                query = query.filter(PackageAnnouncementNew.is_processed == False)
+        
+        # Obtener todos los paquetes
+        packages = query.order_by(PackageAnnouncementNew.announced_at.desc()).all()
+        
+        if format.lower() == "csv":
+            # Crear CSV en memoria
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Escribir encabezados
+            writer.writerow([
+                'ID', 'Cliente', 'Teléfono', 'Número de Guía', 
+                'Código de Tracking', 'Estado', 'Fecha de Anuncio'
+            ])
+            
+            # Escribir datos
+            for pkg in packages:
+                writer.writerow([
+                    str(pkg.id),
+                    pkg.customer_name,
+                    pkg.customer_phone,
+                    pkg.guide_number,
+                    pkg.tracking_code,
+                    'PROCESADO' if pkg.is_processed else 'PENDIENTE',
+                    pkg.announced_at.strftime('%Y-%m-%d %H:%M:%S') if pkg.announced_at else ''
+                ])
+            
+            # Preparar respuesta
+            output.seek(0)
+            filename = f"paquetes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}"
+                }
+            )
+        
+        elif format.lower() == "json":
+            # Exportar como JSON
+            packages_data = [
+                {
+                    "id": str(pkg.id),
+                    "customer_name": pkg.customer_name,
+                    "customer_phone": pkg.customer_phone,
+                    "guide_number": pkg.guide_number,
+                    "tracking_code": pkg.tracking_code,
+                    "is_processed": pkg.is_processed,
+                    "status": "PROCESADO" if pkg.is_processed else "PENDIENTE",
+                    "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None
+                }
+                for pkg in packages
+            ]
+            
+            return {
+                "success": True,
+                "total": len(packages_data),
+                "exported_at": datetime.now().isoformat(),
+                "data": packages_data
+            }
+        
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Formato no soportado. Use 'csv' o 'json'"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exportando datos del dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error exportando datos: {str(e)}"
+        )
 
 @router.post("/auth/set-cookies")
 async def set_auth_cookies(request: Request):

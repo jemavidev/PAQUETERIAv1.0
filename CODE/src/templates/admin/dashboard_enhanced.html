@@ -5,7 +5,7 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-4 sm:py-8" x-data="dashboardApp()">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Header con Estado del Sistema -->
         <div class="mb-6 sm:mb-8">
             <div class="flex justify-between items-start">
@@ -15,26 +15,21 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <!-- Health Status Badge -->
-                    <div x-show="systemHealth.status" class="flex items-center space-x-2 px-4 py-2 rounded-lg" 
-                         :c
-                             'bg-green-100 tex
-                             
-                             
-                             
-                             
-                             t-gr
-                             een-800': systemHealth.status === 'healthy',
-                             'bg-yellow-100 text-yellow-800': systemHealth.status === 'warning',
-                             'bg-red-100 text-red-800': systemHealth.status === 'error'
-                         }">
+                    <div x-show="systemHealth.status" class="flex items-center space-x-2 px-4 py-2 rounded-lg"
+                        :class="{'bg-green-100 text-green-800': systemHealth.status==='healthy', 'bg-yellow-100 text-yellow-800': systemHealth.status==='warning', 'bg-red-100 text-red-800': systemHealth.status==='error'}">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
                         </svg>
-                        <span class="text-sm font-medium" x-text="systemHealth.status === 'healthy' ? 'Sistema Operativo' : systemHealth.status === 'warning' ? 'Advertencias' : 'Error'"></span>
+                        <span class="text-sm font-medium"
+                            x-text="systemHealth.status === 'healthy' ? 'Sistema Operativo' : systemHealth.status === 'warning' ? 'Advertencias' : 'Error'"></span>
                     </div>
-                    <button @click="refreshData()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button @click="refreshData()"
+                        class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </button>
                 </div>
@@ -44,29 +39,44 @@
         <!-- Navegación de Tabs -->
         <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
             <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
-                <button @click="activeTab = 'overview'" 
-                        :class="activeTab === 'overview' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button @click="activeTab = 'overview'"
+                    :class="activeTab === 'overview' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Vista General
                 </button>
-                <button @click="activeTab = 'users'" 
-                        :class="activeTab === 'users' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button @click="activeTab = 'finance'"
+                    :class="activeTab === 'finance' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    💰 Finanzas
+                </button>
+                <button @click="activeTab = 'analytics'"
+                    :class="activeTab === 'analytics' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    📊 Analytics
+                </button>
+                <button @click="activeTab = 'notifications'"
+                    :class="activeTab === 'notifications' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    📱 Notificaciones
+                </button>
+                <button @click="activeTab = 'users'"
+                    :class="activeTab === 'users' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Usuarios
                 </button>
-                <button @click="activeTab = 'packages'" 
-                        :class="activeTab === 'packages' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button @click="activeTab = 'packages'"
+                    :class="activeTab === 'packages' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Paquetes
                 </button>
-                <button @click="activeTab = 'business'" 
-                        :class="activeTab === 'business' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button @click="activeTab = 'business'"
+                    :class="activeTab === 'business' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Métricas de Negocio
                 </button>
-                <button @click="activeTab = 'system'" 
-                        :class="activeTab === 'system' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button @click="activeTab = 'system'"
+                    :class="activeTab === 'system' ? 'border-papyrus-blue text-papyrus-blue' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                    class="whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Sistema
                 </button>
             </nav>
@@ -74,91 +84,111 @@
 
         <!-- TAB: Vista General -->
         <div x-show="activeTab === 'overview'" class="space-y-6">
-            
+
             <!-- Métricas Principales -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Total Usuarios -->
-                <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
-                                <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                                <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                 </svg>
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt class="text-sm font-medium text-gray-500 truncate">Total Usuarios</dt>
-                                    <dd class="text-2xl font-bold text-gray-900" x-text="stats.system_overview?.total_users || 0"></dd>
-                                    <dd class="text-xs text-green-600 mt-1" x-text="stats.system_overview?.active_users + ' activos'"></dd>
+                                    <dd class="text-2xl font-bold text-gray-900"
+                                        x-text="stats.system_overview?.total_users || 0"></dd>
+                                    <dd class="text-xs text-green-600 mt-1"
+                                        x-text="stats.system_overview?.active_users + ' activos'"></dd>
                                 </dl>
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-6 py-3">
-                        <a href="/admin/users" class="text-sm font-medium text-blue-600 hover:text-blue-700">Ver usuarios →</a>
+                        <a href="/admin/users" class="text-sm font-medium text-blue-600 hover:text-blue-700">Ver
+                            usuarios →</a>
                     </div>
                 </div>
 
                 <!-- Total Paquetes -->
-                <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt class="text-sm font-medium text-gray-500 truncate">Total Paquetes</dt>
-                                    <dd class="text-2xl font-bold text-gray-900" x-text="stats.system_overview?.total_packages || 0"></dd>
+                                    <dd class="text-2xl font-bold text-gray-900"
+                                        x-text="stats.system_overview?.total_packages || 0"></dd>
                                     <dd class="text-xs text-gray-600 mt-1">En el sistema</dd>
                                 </dl>
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-6 py-3">
-                        <a href="/packages" class="text-sm font-medium text-green-600 hover:text-green-700">Ver paquetes →</a>
+                        <a href="/packages" class="text-sm font-medium text-green-600 hover:text-green-700">Ver paquetes
+                            →</a>
                     </div>
                 </div>
 
                 <!-- Total Clientes -->
-                <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
-                                <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt class="text-sm font-medium text-gray-500 truncate">Total Clientes</dt>
-                                    <dd class="text-2xl font-bold text-gray-900" x-text="stats.system_overview?.total_customers || 0"></dd>
+                                    <dd class="text-2xl font-bold text-gray-900"
+                                        x-text="stats.system_overview?.total_customers || 0"></dd>
                                     <dd class="text-xs text-gray-600 mt-1">Registrados</dd>
                                 </dl>
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-6 py-3">
-                        <a href="/customers" class="text-sm font-medium text-purple-600 hover:text-purple-700">Ver clientes →</a>
+                        <a href="/customers" class="text-sm font-medium text-purple-600 hover:text-purple-700">Ver
+                            clientes →</a>
                     </div>
                 </div>
 
                 <!-- Total Mensajes -->
-                <div class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white overflow-hidden shadow-sm border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <div class="p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-orange-100 rounded-lg p-3">
-                                <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                <svg class="h-8 w-8 text-orange-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                 </svg>
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt class="text-sm font-medium text-gray-500 truncate">Mensajes</dt>
-                                    <dd class="text-2xl font-bold text-gray-900" x-text="stats.system_overview?.total_messages || 0"></dd>
+                                    <dd class="text-2xl font-bold text-gray-900"
+                                        x-text="stats.system_overview?.total_messages || 0"></dd>
                                     <dd class="text-xs text-gray-600 mt-1">Total enviados</dd>
                                 </dl>
                             </div>
@@ -176,11 +206,13 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">SMS Enviados</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" x-text="stats.business_metrics?.total_sms_sent || 0"></p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2"
+                                x-text="stats.business_metrics?.total_sms_sent || 0"></p>
                         </div>
                         <div class="bg-indigo-100 rounded-lg p-3">
                             <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
                     </div>
@@ -190,11 +222,14 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Costo SMS</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2">$<span x-text="(stats.business_metrics?.total_sms_cost_cop || 0).toLocaleString()"></span></p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2">$<span
+                                    x-text="(stats.business_metrics?.total_sms_cost_cop || 0).toLocaleString()"></span>
+                            </p>
                         </div>
                         <div class="bg-yellow-100 rounded-lg p-3">
                             <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                     </div>
@@ -204,11 +239,13 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Notificaciones</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" x-text="stats.system_overview?.total_notifications || 0"></p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2"
+                                x-text="stats.system_overview?.total_notifications || 0"></p>
                         </div>
                         <div class="bg-red-100 rounded-lg p-3">
                             <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                         </div>
                     </div>
@@ -224,13 +261,16 @@
                             <div class="flex-shrink-0">
                                 <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                                     <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                            clip-rule="evenodd" />
                                     </svg>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900" x-text="activity.description"></p>
-                                <p class="text-xs text-gray-500" x-text="new Date(activity.timestamp).toLocaleString('es-CO')"></p>
+                                <p class="text-xs text-gray-500"
+                                    x-text="new Date(activity.timestamp).toLocaleString('es-CO')"></p>
                             </div>
                         </div>
                     </template>
@@ -247,19 +287,23 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Administradores</span>
-                            <span class="text-lg font-bold text-blue-600" x-text="stats.user_management?.total_admins || 0"></span>
+                            <span class="text-lg font-bold text-blue-600"
+                                x-text="stats.user_management?.total_admins || 0"></span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Operadores</span>
-                            <span class="text-lg font-bold text-green-600" x-text="stats.user_management?.total_operators || 0"></span>
+                            <span class="text-lg font-bold text-green-600"
+                                x-text="stats.user_management?.total_operators || 0"></span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Usuarios</span>
-                            <span class="text-lg font-bold text-purple-600" x-text="stats.user_management?.total_clients || 0"></span>
+                            <span class="text-lg font-bold text-purple-600"
+                                x-text="stats.user_management?.total_clients || 0"></span>
                         </div>
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <a href="/admin/users" class="text-sm font-medium text-blue-600 hover:text-blue-700">Gestionar usuarios →</a>
+                        <a href="/admin/users" class="text-sm font-medium text-blue-600 hover:text-blue-700">Gestionar
+                            usuarios →</a>
                     </div>
                 </div>
 
@@ -269,15 +313,18 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Activos</span>
-                            <span class="text-lg font-bold text-green-600" x-text="stats.user_management?.users_by_status?.active || 0"></span>
+                            <span class="text-lg font-bold text-green-600"
+                                x-text="stats.user_management?.users_by_status?.active || 0"></span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Inactivos</span>
-                            <span class="text-lg font-bold text-red-600" x-text="stats.user_management?.users_by_status?.inactive || 0"></span>
+                            <span class="text-lg font-bold text-red-600"
+                                x-text="stats.user_management?.users_by_status?.inactive || 0"></span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Nuevos (30 días)</span>
-                            <span class="text-lg font-bold text-blue-600" x-text="stats.user_management?.recent_users || 0"></span>
+                            <span class="text-lg font-bold text-blue-600"
+                                x-text="stats.user_management?.recent_users || 0"></span>
                         </div>
                     </div>
                 </div>
@@ -286,13 +333,16 @@
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Acciones Rápidas</h3>
                     <div class="space-y-2">
-                        <a href="/admin/users?action=create" class="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors">
+                        <a href="/admin/users?action=create"
+                            class="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors">
                             Crear Usuario
                         </a>
-                        <a href="/admin/users?filter=inactive" class="block w-full px-4 py-2 bg-gray-100 text-gray-700 text-center rounded-lg hover:bg-gray-200 transition-colors">
+                        <a href="/admin/users?filter=inactive"
+                            class="block w-full px-4 py-2 bg-gray-100 text-gray-700 text-center rounded-lg hover:bg-gray-200 transition-colors">
                             Ver Inactivos
                         </a>
-                        <a href="/admin/users" class="block w-full px-4 py-2 bg-gray-100 text-gray-700 text-center rounded-lg hover:bg-gray-200 transition-colors">
+                        <a href="/admin/users"
+                            class="block w-full px-4 py-2 bg-gray-100 text-gray-700 text-center rounded-lg hover:bg-gray-200 transition-colors">
                             Lista Completa
                         </a>
                     </div>
@@ -312,8 +362,10 @@
                                 <p class="text-2xl font-bold text-gray-900 mt-2" x-text="count"></p>
                             </div>
                             <div class="bg-blue-100 rounded-lg p-3">
-                                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
                             </div>
                         </div>
@@ -325,19 +377,23 @@
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Gestión de Paquetes</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <a href="/packages" class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
+                    <a href="/packages"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
                         <div class="text-sm font-medium text-gray-900">Todos los Paquetes</div>
                         <div class="text-xs text-gray-500 mt-1">Ver lista completa</div>
                     </a>
-                    <a href="/packages?status=ANUNCIADO" class="p-4 border border-gray-200 rounded-lg hover:border-yellow-500 transition-colors">
+                    <a href="/packages?status=ANUNCIADO"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-yellow-500 transition-colors">
                         <div class="text-sm font-medium text-gray-900">Anunciados</div>
                         <div class="text-xs text-gray-500 mt-1">Pendientes de recibir</div>
                     </a>
-                    <a href="/packages?status=RECIBIDO" class="p-4 border border-gray-200 rounded-lg hover:border-green-500 transition-colors">
+                    <a href="/packages?status=RECIBIDO"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-green-500 transition-colors">
                         <div class="text-sm font-medium text-gray-900">Recibidos</div>
                         <div class="text-xs text-gray-500 mt-1">En bodega</div>
                     </a>
-                    <a href="/packages?status=ENTREGADO" class="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
+                    <a href="/packages?status=ENTREGADO"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
                         <div class="text-sm font-medium text-gray-900">Entregados</div>
                         <div class="text-xs text-gray-500 mt-1">Completados</div>
                     </a>
@@ -351,17 +407,20 @@
                 <!-- Clientes Nuevos -->
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Clientes Nuevos</h3>
-                    <div class="text-4xl font-bold text-blue-600" x-text="stats.business_metrics?.new_customers || 0"></div>
+                    <div class="text-4xl font-bold text-blue-600" x-text="stats.business_metrics?.new_customers || 0">
+                    </div>
                     <p class="text-sm text-gray-500 mt-2">En el período seleccionado</p>
                     <div class="mt-4">
-                        <a href="/customers" class="text-sm font-medium text-blue-600 hover:text-blue-700">Ver clientes →</a>
+                        <a href="/customers" class="text-sm font-medium text-blue-600 hover:text-blue-700">Ver clientes
+                            →</a>
                     </div>
                 </div>
 
                 <!-- Reportes Generados -->
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Reportes Generados</h3>
-                    <div class="text-4xl font-bold text-green-600" x-text="stats.business_metrics?.reports_generated || 0"></div>
+                    <div class="text-4xl font-bold text-green-600"
+                        x-text="stats.business_metrics?.reports_generated || 0"></div>
                     <p class="text-sm text-gray-500 mt-2">Total de reportes</p>
                     <div class="mt-4">
                         <span class="text-sm font-medium text-green-600">Sistema de reportes</span>
@@ -385,12 +444,13 @@
 
         <!-- TAB: Sistema -->
         <div x-show="activeTab === 'system'" class="space-y-6">
-            
+
             <!-- Health Check del Sistema -->
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium text-gray-900">Estado del Sistema</h3>
-                    <button @click="checkSystemHealth()" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
+                    <button @click="checkSystemHealth()"
+                        class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
                         Verificar
                     </button>
                 </div>
@@ -407,7 +467,9 @@
                                     'text-yellow-600': status === 'warning',
                                     'text-red-600': status === 'error'
                                 }" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd" />
                                 </svg>
                                 <span class="text-xs font-medium text-gray-700 capitalize" x-text="check"></span>
                             </div>
@@ -422,13 +484,17 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Reportes Fallidos</p>
-                            <p class="text-2xl font-bold mt-2" :class="stats.system_health?.failed_reports > 0 ? 'text-red-600' : 'text-green-600'" 
-                               x-text="stats.system_health?.failed_reports || 0"></p>
+                            <p class="text-2xl font-bold mt-2"
+                                :class="stats.system_health?.failed_reports > 0 ? 'text-red-600' : 'text-green-600'"
+                                x-text="stats.system_health?.failed_reports || 0"></p>
                         </div>
-                        <div :class="stats.system_health?.failed_reports > 0 ? 'bg-red-100' : 'bg-green-100'" class="rounded-lg p-3">
-                            <svg class="h-6 w-6" :class="stats.system_health?.failed_reports > 0 ? 'text-red-600' : 'text-green-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <div :class="stats.system_health?.failed_reports > 0 ? 'bg-red-100' : 'bg-green-100'"
+                            class="rounded-lg p-3">
+                            <svg class="h-6 w-6"
+                                :class="stats.system_health?.failed_reports > 0 ? 'text-red-600' : 'text-green-600'"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
                     </div>
@@ -438,11 +504,13 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Usuarios Inactivos</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" x-text="stats.system_health?.inactive_users || 0"></p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2"
+                                x-text="stats.system_health?.inactive_users || 0"></p>
                         </div>
                         <div class="bg-gray-100 rounded-lg p-3">
                             <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </div>
                     </div>
@@ -452,13 +520,17 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Paquetes Sin Procesar</p>
-                            <p class="text-2xl font-bold mt-2" :class="stats.system_health?.unprocessed_packages > 100 ? 'text-yellow-600' : 'text-green-600'" 
-                               x-text="stats.system_health?.unprocessed_packages || 0"></p>
+                            <p class="text-2xl font-bold mt-2"
+                                :class="stats.system_health?.unprocessed_packages > 100 ? 'text-yellow-600' : 'text-green-600'"
+                                x-text="stats.system_health?.unprocessed_packages || 0"></p>
                         </div>
-                        <div :class="stats.system_health?.unprocessed_packages > 100 ? 'bg-yellow-100' : 'bg-green-100'" class="rounded-lg p-3">
-                            <svg class="h-6 w-6" :class="stats.system_health?.unprocessed_packages > 100 ? 'text-yellow-600' : 'text-green-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        <div :class="stats.system_health?.unprocessed_packages > 100 ? 'bg-yellow-100' : 'bg-green-100'"
+                            class="rounded-lg p-3">
+                            <svg class="h-6 w-6"
+                                :class="stats.system_health?.unprocessed_packages > 100 ? 'text-yellow-600' : 'text-green-600'"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
                         </div>
                     </div>
@@ -468,11 +540,13 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Mensajes Pendientes</p>
-                            <p class="text-2xl font-bold text-blue-600 mt-2" x-text="stats.system_health?.pending_messages || 0"></p>
+                            <p class="text-2xl font-bold text-blue-600 mt-2"
+                                x-text="stats.system_health?.pending_messages || 0"></p>
                         </div>
                         <div class="bg-blue-100 rounded-lg p-3">
                             <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                             </svg>
                         </div>
                     </div>
@@ -483,10 +557,12 @@
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Administración del Sistema</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <a href="/api/admin/system/health" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-green-500 transition-colors">
+                    <a href="/api/admin/system/health" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-green-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Health Check</div>
@@ -495,10 +571,12 @@
                         </div>
                     </a>
 
-                    <a href="/api/admin/system/info" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
+                    <a href="/api/admin/system/info" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Info del Sistema</div>
@@ -507,11 +585,14 @@
                         </div>
                     </a>
 
-                    <a href="/api/admin/config" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
+                    <a href="/api/admin/config" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-purple-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Configuración</div>
@@ -520,10 +601,12 @@
                         </div>
                     </a>
 
-                    <a href="/api/admin/audit/logs" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-orange-500 transition-colors">
+                    <a href="/api/admin/audit/logs" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-orange-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Logs de Auditoría</div>
@@ -532,10 +615,12 @@
                         </div>
                     </a>
 
-                    <a href="/api/admin/stats/detailed" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-indigo-500 transition-colors">
+                    <a href="/api/admin/stats/detailed" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-indigo-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Estadísticas Detalladas</div>
@@ -544,10 +629,12 @@
                         </div>
                     </a>
 
-                    <a href="/api/admin/dashboard?period_days=30" target="_blank" class="p-4 border border-gray-200 rounded-lg hover:border-pink-500 transition-colors">
+                    <a href="/api/admin/dashboard?period_days=30" target="_blank"
+                        class="p-4 border border-gray-200 rounded-lg hover:border-pink-500 transition-colors">
                         <div class="flex items-center space-x-3">
                             <svg class="h-6 w-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">Dashboard API</div>
@@ -559,95 +646,458 @@
             </div>
         </div>
 
+        <!-- TAB: Finanzas -->
+        <div x-show="activeTab === 'finance'" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Ingresos Totales -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Ingresos Totales</p>
+                            <p class="text-2xl font-bold text-green-600 mt-2">
+                                $<span
+                                    x-text="(stats.financial_metrics?.total_revenue || 0).toLocaleString('es-CO')"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1"
+                                x-text="(stats.financial_metrics?.delivered_packages_count || 0) + ' paquetes entregados'">
+                            </p>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valor Promedio -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Valor Promedio</p>
+                            <p class="text-2xl font-bold text-blue-600 mt-2">
+                                $<span
+                                    x-text="Math.round(stats.financial_metrics?.average_package_value || 0).toLocaleString('es-CO')"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">Por paquete</p>
+                        </div>
+                        <div class="bg-blue-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarifas de Almacenamiento -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Almacenamiento</p>
+                            <p class="text-2xl font-bold text-orange-600 mt-2">
+                                $<span
+                                    x-text="(stats.financial_metrics?.total_storage_fees || 0).toLocaleString('es-CO')"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">Tarifas cobradas</p>
+                        </div>
+                        <div class="bg-orange-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagos Pendientes -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Pagos Pendientes</p>
+                            <p class="text-2xl font-bold text-yellow-600 mt-2">
+                                $<span
+                                    x-text="(stats.financial_metrics?.pending_payments || 0).toLocaleString('es-CO')"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1"
+                                x-text="(stats.financial_metrics?.pending_packages_count || 0) + ' paquetes'"></p>
+                        </div>
+                        <div class="bg-yellow-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingresos por Tipo de Paquete -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Ingresos por Tipo de Paquete</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <template x-for="(revenue, type) in stats.financial_metrics?.revenue_by_type" :key="type">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500 capitalize" x-text="type"></p>
+                            <p class="text-xl font-bold text-gray-900 mt-2">$<span
+                                    x-text="revenue.toLocaleString('es-CO')"></span></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Analytics -->
+        <div x-show="activeTab === 'analytics'" class="space-y-6">
+            <!-- Package Analytics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Días Promedio Almacenamiento</p>
+                            <p class="text-2xl font-bold text-purple-600 mt-2"
+                                x-text="stats.package_analytics?.average_storage_days || 0"></p>
+                        </div>
+                        <div class="bg-purple-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Tasa de Entrega</p>
+                            <p class="text-2xl font-bold text-green-600 mt-2"
+                                x-text="(stats.package_analytics?.delivery_rate || 0) + '%'"></p>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Posiciones Disponibles</p>
+                            <p class="text-2xl font-bold text-blue-600 mt-2"
+                                x-text="stats.package_analytics?.available_positions || 0"></p>
+                            <p class="text-xs text-gray-500 mt-1" x-text="'de 100 posiciones'"></p>
+                        </div>
+                        <div class="bg-blue-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Clientes VIP</p>
+                            <p class="text-2xl font-bold text-yellow-600 mt-2"
+                                x-text="stats.customer_analytics?.vip_customers || 0"></p>
+                        </div>
+                        <div class="bg-yellow-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Clientes -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Top 10 Clientes por Paquetes</h3>
+                    <div class="space-y-3">
+                        <template
+                            x-for="(customer, index) in stats.customer_analytics?.top_customers_by_packages?.slice(0, 10)"
+                            :key="index">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <span
+                                        class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold text-sm"
+                                        x-text="index + 1"></span>
+                                    <span class="text-sm font-medium text-gray-900" x-text="customer.name"></span>
+                                </div>
+                                <span class="text-sm font-bold text-blue-600"
+                                    x-text="customer.package_count + ' paquetes'"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Top 10 Clientes por Gasto</h3>
+                    <div class="space-y-3">
+                        <template
+                            x-for="(customer, index) in stats.customer_analytics?.top_customers_by_spending?.slice(0, 10)"
+                            :key="index">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <span
+                                        class="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 font-bold text-sm"
+                                        x-text="index + 1"></span>
+                                    <span class="text-sm font-medium text-gray-900" x-text="customer.name"></span>
+                                </div>
+                                <span class="text-sm font-bold text-green-600">$<span
+                                        x-text="customer.total_spent_cop.toLocaleString('es-CO')"></span></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes por Ciudad -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Clientes por Ciudad (Top 5)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                    <template x-for="city in stats.customer_analytics?.customers_by_city" :key="city.city">
+                        <div class="p-4 bg-gray-50 rounded-lg text-center">
+                            <p class="text-sm font-medium text-gray-500" x-text="city.city"></p>
+                            <p class="text-2xl font-bold text-gray-900 mt-2" x-text="city.count"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Notificaciones -->
+        <div x-show="activeTab === 'notifications'" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Total SMS Enviados -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">SMS Enviados</p>
+                            <p class="text-2xl font-bold text-indigo-600 mt-2"
+                                x-text="stats.notification_analytics?.total_sms_sent || 0"></p>
+                        </div>
+                        <div class="bg-indigo-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasa de Éxito -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Tasa de Éxito</p>
+                            <p class="text-2xl font-bold text-green-600 mt-2"
+                                x-text="(stats.notification_analytics?.sms_success_rate || 0) + '%'"></p>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Costo Promedio -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Costo Promedio</p>
+                            <p class="text-2xl font-bold text-orange-600 mt-2">
+                                $<span
+                                    x-text="(stats.notification_analytics?.cost_per_notification_cop || 0).toFixed(2)"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">Por notificación</p>
+                        </div>
+                        <div class="bg-orange-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Uso Diario -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Uso Diario</p>
+                            <p class="text-2xl font-bold text-blue-600 mt-2"
+                                x-text="stats.notification_analytics?.sms_daily_usage?.percentage?.toFixed(1) + '%'">
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span x-text="stats.notification_analytics?.sms_daily_usage?.sent"></span> /
+                                <span x-text="stats.notification_analytics?.sms_daily_usage?.limit"></span>
+                            </p>
+                        </div>
+                        <div class="bg-blue-100 rounded-lg p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS por Tipo de Evento -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">SMS por Tipo de Evento</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <template x-for="(count, event) in stats.notification_analytics?.sms_by_event" :key="event">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500 capitalize" x-text="event"></p>
+                            <p class="text-xl font-bold text-gray-900 mt-2" x-text="count"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Uso Mensual -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Uso Mensual de SMS</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Progreso Mensual</span>
+                            <span class="text-sm font-medium text-gray-700">
+                                <span x-text="stats.notification_analytics?.sms_monthly_usage?.sent"></span> /
+                                <span x-text="stats.notification_analytics?.sms_monthly_usage?.limit"></span>
+                                (<span
+                                    x-text="stats.notification_analytics?.sms_monthly_usage?.percentage?.toFixed(1)"></span>%)
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div class="bg-blue-600 h-4 rounded-full transition-all duration-500"
+                                :style="`width: ${Math.min(stats.notification_analytics?.sms_monthly_usage?.percentage || 0, 100)}%`">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
-function dashboardApp() {
-    return {
-        activeTab: 'overview',
-        stats: {
-            system_overview: {},
-            user_management: {},
-            business_metrics: {},
-            system_health: {},
-            recent_activity: []
-        },
-        systemHealth: {
-            status: 'healthy',
-            checks: {}
-        },
-        loading: false,
+    function dashboardApp() {
+        return {
+            activeTab: 'overview',
+            stats: {
+                system_overview: {},
+                user_management: {},
+                business_metrics: {},
+                system_health: {},
+                recent_activity: []
+            },
+            systemHealth: {
+                status: 'healthy',
+                checks: {}
+            },
+            loading: false,
 
-        init() {
-            this.loadDashboardData();
-            this.checkSystemHealth();
-            // Auto-refresh cada 5 minutos
-            setInterval(() => {
+            init() {
                 this.loadDashboardData();
-            }, 300000);
-        },
+                this.checkSystemHealth();
+                // Auto-refresh cada 5 minutos
+                setInterval(() => {
+                    this.loadDashboardData();
+                }, 300000);
+            },
 
-        async loadDashboardData() {
-            this.loading = true;
-            try {
-                const response = await fetch('/api/admin/dashboard?period_days=30', {
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    this.stats = data.data || {};
-                } else {
-                    console.error('Error loading dashboard data:', response.statusText);
+            async loadDashboardData() {
+                this.loading = true;
+                try {
+                    const response = await fetch('/api/admin/dashboard?period_days=30', {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.stats = data.data || {};
+                    } else if (response.status === 401 || response.status === 403) {
+                        // Token expirado o no autenticado - redirigir al login
+                        console.log('Sesión expirada, redirigiendo al login...');
+                        window.location.href = '/auth/login?redirect=/admin';
+                    } else {
+                        console.error('Error loading dashboard data:', response.statusText);
+                        // Mostrar mensaje de error al usuario
+                        this.systemHealth.status = 'error';
+                    }
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    this.systemHealth.status = 'error';
+                } finally {
+                    this.loading = false;
                 }
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            } finally {
-                this.loading = false;
-            }
-        },
+            },
 
-        async checkSystemHealth() {
-            try {
-                const response = await fetch('/api/admin/system/health', {
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    this.systemHealth = data;
-                } else {
+            async checkSystemHealth() {
+                try {
+                    const response = await fetch('/api/admin/system/health', {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.systemHealth = data;
+                    } else if (response.status === 401 || response.status === 403) {
+                        // Token expirado - no hacer nada, loadDashboardData se encargará del redirect
+                        console.log('Sesión expirada en health check');
+                    } else {
+                        this.systemHealth = {
+                            status: 'error',
+                            checks: {}
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error checking system health:', error);
                     this.systemHealth = {
                         status: 'error',
                         checks: {}
                     };
                 }
-            } catch (error) {
-                console.error('Error checking system health:', error);
-                this.systemHealth = {
-                    status: 'error',
-                    checks: {}
-                };
-            }
-        },
+            },
 
-        async refreshData() {
-            await this.loadDashboardData();
-            await this.checkSystemHealth();
-            
-            // Mostrar notificación de éxito
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            notification.textContent = 'Datos actualizados';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 2000);
+            async refreshData() {
+                await this.loadDashboardData();
+                await this.checkSystemHealth();
+
+                // Mostrar notificación de éxito
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                notification.textContent = 'Datos actualizados';
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
+            }
         }
     }
-}
 </script>
 
 {% endblock %}

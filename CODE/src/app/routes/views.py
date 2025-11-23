@@ -263,6 +263,15 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
     return templates.TemplateResponse("admin/dashboard_enhanced.html", context)
 
 
+@router.get("/dashboard")
+async def dashboard_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
+    """Dashboard mejorado de paquetes con widgets y estadísticas"""
+    context = get_auth_context_required(request)
+    context["user"] = current_user
+    
+    return templates.TemplateResponse("dashboard/dashboard_improved.html", context)
+
+
 
 
 

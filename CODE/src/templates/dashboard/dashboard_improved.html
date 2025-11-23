@@ -1,0 +1,487 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dashboard Mejorado - PAQUETEX v3.1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-6" x-data="dashboardImproved()">
+    <!-- Sistema de Notificaciones Toast -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-light text-gray-900">Dashboard</h1>
+                    <p class="mt-1 text-sm text-gray-500">Gestión de paquetes y estadísticas</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" 
+                                class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            <span class="text-sm">Exportar</span>
+                        </button>
+                        <div x-show="open" 
+                             @click.away="open = false"
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                            <a @click="exportData('csv'); open = false" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                                Exportar como CSV
+                            </a>
+                            <a @click="exportData('json'); open = false" 
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                                Exportar como JSON
+                            </a>
+                        </div>
+                    </div>
+                    <button @click="refreshData()" 
+                            class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span class="text-sm">Actualizar</span>
+                    </button>
+                    <a href="/announce" 
+                       class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        <span class="text-sm">Nuevo Paquete</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widgets de Estadísticas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total Paquetes -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Paquetes</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" x-text="stats.packages?.total || 0"></p>
+                        <p class="text-xs text-gray-500 mt-1">En el sistema</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paquetes Procesados -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Procesados</p>
+                        <p class="text-3xl font-bold text-green-600 mt-2" x-text="stats.packages?.processed || 0"></p>
+                        <p class="text-xs text-gray-500 mt-1">Completados</p>
+                    </div>
+                    <div class="bg-green-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paquetes Pendientes -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Pendientes</p>
+                        <p class="text-3xl font-bold text-yellow-600 mt-2" x-text="stats.packages?.pending || 0"></p>
+                        <p class="text-xs text-gray-500 mt-1">Por procesar</p>
+                    </div>
+                    <div class="bg-yellow-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paquetes de Hoy -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Hoy</p>
+                        <p class="text-3xl font-bold text-purple-600 mt-2" x-text="stats.packages?.today || 0"></p>
+                        <p class="text-xs text-gray-500 mt-1">Anunciados hoy</p>
+                    </div>
+                    <div class="bg-purple-100 rounded-lg p-3">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Resumen -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Resumen Visual</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Gráfico de barras simple -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Estado de Paquetes</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Procesados</span>
+                                <span class="font-medium text-green-600" x-text="stats.packages?.processed || 0"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full transition-all duration-500" 
+                                     :style="`width: ${stats.packages?.total > 0 ? (stats.packages.processed / stats.packages.total * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Pendientes</span>
+                                <span class="font-medium text-yellow-600" x-text="stats.packages?.pending || 0"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full transition-all duration-500" 
+                                     :style="`width: ${stats.packages?.total > 0 ? (stats.packages.pending / stats.packages.total * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicadores de actividad -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Actividad Reciente</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-100 rounded-lg p-2">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Hoy</p>
+                                    <p class="text-xs text-gray-500">Paquetes anunciados</p>
+                                </div>
+                            </div>
+                            <span class="text-2xl font-bold text-purple-600" x-text="stats.packages?.today || 0"></span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-100 rounded-lg p-2">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Esta Semana</p>
+                                    <p class="text-xs text-gray-500">Últimos 7 días</p>
+                                </div>
+                            </div>
+                            <span class="text-2xl font-bold text-blue-600" x-text="stats.packages?.this_week || 0"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                <div class="flex-1">
+                    <input x-model="searchTerm" 
+                           @input.debounce.500ms="loadPackages(1)"
+                           type="text"
+                           placeholder="Buscar por cliente, teléfono, guía, tracking..."
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+                <div class="flex items-center gap-2">
+                    <select x-model="statusFilter" 
+                            @change="loadPackages(1)"
+                            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendientes</option>
+                        <option value="PROCESADO">Procesados</option>
+                    </select>
+                    <button @click="clearFilters()" 
+                            class="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Paquetes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-900">Paquetes Recientes</h2>
+                    <span class="text-sm text-gray-500" x-show="pagination.total > 0">
+                        <span x-text="pagination.total"></span> resultados
+                    </span>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div x-show="loading" class="p-8 text-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+                <p class="mt-2 text-sm text-gray-500">Cargando paquetes...</p>
+            </div>
+
+            <!-- Lista -->
+            <div x-show="!loading && packages.length > 0" class="divide-y divide-gray-200">
+                <template x-for="pkg in packages" :key="pkg.id">
+                    <div @click="viewPackageDetail(pkg.guide_number)" 
+                         class="p-6 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-medium text-gray-900" x-text="pkg.customer_name"></h3>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                          :class="pkg.is_processed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                          x-text="pkg.status"></span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                        </svg>
+                                        <span x-text="pkg.customer_phone"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                        </svg>
+                                        <span x-text="pkg.guide_number"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        <span x-text="pkg.tracking_code"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span x-text="formatDate(pkg.announced_at)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Sin resultados -->
+            <div x-show="!loading && packages.length === 0" class="p-8 text-center">
+                <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">No hay paquetes</h3>
+                <p class="mt-2 text-sm text-gray-500">No se encontraron paquetes con los filtros aplicados.</p>
+            </div>
+
+            <!-- Paginación -->
+            <div x-show="pagination.total_pages > 1" class="border-t border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Página <span x-text="pagination.page"></span> de <span x-text="pagination.total_pages"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="loadPackages(pagination.page - 1)" 
+                                :disabled="!pagination.has_prev"
+                                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Anterior
+                        </button>
+                        <button @click="loadPackages(pagination.page + 1)" 
+                                :disabled="!pagination.has_next"
+                                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboardImproved() {
+    return {
+        packages: [],
+        stats: {},
+        loading: false,
+        searchTerm: '',
+        statusFilter: '',
+        pagination: {
+            page: 1,
+            limit: 8,
+            total: 0,
+            total_pages: 0,
+            has_prev: false,
+            has_next: false
+        },
+
+        init() {
+            this.loadStats();
+            this.loadPackages(1);
+        },
+
+        async loadStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.stats = data.stats || {};
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        },
+
+        async loadPackages(page = 1) {
+            this.loading = true;
+            
+            try {
+                const params = new URLSearchParams({
+                    page: page.toString(),
+                    limit: this.pagination.limit.toString()
+                });
+                
+                if (this.searchTerm) {
+                    params.append('search', this.searchTerm);
+                }
+                
+                if (this.statusFilter) {
+                    params.append('status', this.statusFilter);
+                }
+                
+                const response = await fetch(`/api/dashboard/packages?${params.toString()}`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.packages = data.packages || [];
+                    this.pagination = data.pagination || this.pagination;
+                }
+            } catch (error) {
+                console.error('Error loading packages:', error);
+                this.showToast('error', 'Error', 'No se pudieron cargar los paquetes');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async refreshData() {
+            await this.loadStats();
+            await this.loadPackages(this.pagination.page);
+            this.showToast('success', 'Actualizado', 'Datos actualizados correctamente');
+        },
+
+        clearFilters() {
+            this.searchTerm = '';
+            this.statusFilter = '';
+            this.loadPackages(1);
+        },
+
+        viewPackageDetail(guideNumber) {
+            window.location.href = `/announcements/guide/${guideNumber}`;
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        async exportData(format) {
+            try {
+                const params = new URLSearchParams({
+                    format: format
+                });
+                
+                if (this.searchTerm) {
+                    params.append('search', this.searchTerm);
+                }
+                
+                if (this.statusFilter) {
+                    params.append('status', this.statusFilter);
+                }
+                
+                const url = `/api/dashboard/export?${params.toString()}`;
+                
+                if (format === 'csv') {
+                    // Descargar CSV
+                    window.location.href = url;
+                    this.showToast('success', 'Exportando', 'Descargando archivo CSV...');
+                } else if (format === 'json') {
+                    // Abrir JSON en nueva pestaña
+                    window.open(url, '_blank');
+                    this.showToast('success', 'Exportando', 'Abriendo datos JSON...');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                this.showToast('error', 'Error', 'No se pudo exportar los datos');
+            }
+        },
+
+        showToast(type, title, message) {
+            const container = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const icons = {
+                success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500'
+            };
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transform transition-all duration-300`;
+            toast.innerHTML = `
+                <div>${icons[type]}</div>
+                <div>
+                    <div class="font-medium">${title}</div>
+                    <div class="text-sm opacity-90">${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    }
+}
+</script>
+{% endblock %}

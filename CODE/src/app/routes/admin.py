@@ -27,19 +27,20 @@ router = APIRouter(tags=["Administración"])
 @router.get("/dashboard")
 async def get_admin_dashboard(
     period_days: int = Query(30, ge=1, le=365),
+    include_analytics: bool = Query(True, description="Incluir métricas avanzadas de analytics"),
     current_user: User = Depends(get_current_admin_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Dashboard administrativo con estadísticas completas"""
+    """Dashboard administrativo con estadísticas completas y analytics opcionales"""
     try:
         service = AdminService(db)
-        stats = service.get_admin_dashboard_stats(period_days)
+        stats = service.get_admin_dashboard_stats(period_days, include_analytics)
 
         return {
             "success": True,
             "data": stats,
             "generated_at": get_colombia_now().isoformat(),
-            "generated_by": current_user.get("username")
+            "generated_by": current_user.username  # current_user es un objeto User, no un dict
         }
 
     except Exception as e:
