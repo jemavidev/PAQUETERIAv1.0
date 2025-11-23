@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Footer Móvil - PAQUETEX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'papyrus-blue': '#1e40af',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            padding-top: 64px;
+            padding-bottom: 56px;
+        }
+        
+        /* Mejorar interacción táctil en botones del footer móvil */
+        .mobile-footer-btn {
+            -webkit-tap-highlight-color: rgba(30, 64, 175, 0.1);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* Feedback visual al tocar (sin hover) */
+        .mobile-footer-btn:active {
+            background-color: rgba(30, 64, 175, 0.05);
+            transform: scale(0.95);
+        }
+        
+        /* Clase para feedback táctil */
+        .mobile-footer-btn.touch-active {
+            background-color: rgba(30, 64, 175, 0.1);
+            color: #1e40af;
+        }
+        
+        /* Prevenir comportamiento hover en dispositivos táctiles */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-footer-btn:hover {
+                color: inherit;
+            }
+        }
+        
+        .info-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header simulado -->
+    <nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-40 h-16">
+        <div class="flex items-center justify-center h-full">
+            <h1 class="text-xl font-bold text-gray-800">Test Footer Móvil</h1>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="p-4">
+        <div class="info-box">
+            <h2 class="text-lg font-bold mb-2">📱 Instrucciones de Prueba</h2>
+            <p class="text-sm mb-2">Este es un test del footer móvil mejorado para dispositivos táctiles.</p>
+            <ul class="text-sm list-disc list-inside space-y-1">
+                <li>Toca cualquier botón del menú inferior</li>
+                <li>Deberías ver un feedback visual inmediato</li>
+                <li>El botón NO debe desaparecer o parpadear</li>
+                <li>La navegación debe funcionar correctamente</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3 class="font-bold mb-2">🔧 Mejoras Implementadas:</h3>
+            <ul class="text-sm list-disc list-inside space-y-1">
+                <li>✅ Eliminado hover en favor de active</li>
+                <li>✅ Agregado touch-action: manipulation</li>
+                <li>✅ Feedback visual con touchstart/touchend</li>
+                <li>✅ Prevención de tap-highlight nativo</li>
+                <li>✅ Media query para detectar dispositivos táctiles</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3 class="font-bold mb-2">📊 Información del Dispositivo:</h3>
+            <p class="text-sm" id="device-info"></p>
+        </div>
+
+        <div class="space-y-2 mt-4">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-600">Contenido de ejemplo para scroll...</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-600">Más contenido...</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-600">Aún más contenido...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Móvil Mejorado -->
+    <footer class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+        <div class="flex justify-around items-center h-14 px-2">
+            <!-- Anunciar -->
+            <a href="#anunciar" 
+               class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 active:text-papyrus-blue transition-colors duration-200">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Anunciar</span>
+            </a>
+
+            <!-- Buscar -->
+            <a href="#buscar" 
+               class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 active:text-papyrus-blue transition-colors duration-200">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Buscar</span>
+            </a>
+
+            <!-- Ayuda -->
+            <a href="#ayuda" 
+               class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 active:text-papyrus-blue transition-colors duration-200">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Ayuda</span>
+            </a>
+
+            <!-- Login -->
+            <a href="#ingresar" 
+               class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 active:text-papyrus-blue transition-colors duration-200">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Ingresar</span>
+            </a>
+        </div>
+    </footer>
+
+    <!-- Toast para feedback -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-papyrus-blue text-white px-4 py-2 rounded-lg shadow-lg z-50 hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // Mostrar información del dispositivo
+        document.getElementById('device-info').innerHTML = `
+            <strong>User Agent:</strong> ${navigator.userAgent.includes('Mobile') ? '📱 Móvil' : '💻 Escritorio'}<br>
+            <strong>Ancho:</strong> ${window.innerWidth}px<br>
+            <strong>Touch Points:</strong> ${navigator.maxTouchPoints}<br>
+            <strong>Hover:</strong> ${window.matchMedia('(hover: hover)').matches ? 'Sí' : 'No'}<br>
+            <strong>Pointer:</strong> ${window.matchMedia('(pointer: coarse)').matches ? 'Coarse (táctil)' : 'Fine (mouse)'}
+        `;
+
+        // Función para mostrar toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = `✓ ${message} tocado`;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
+        }
+
+        // Mejorar interacción táctil
+        (function() {
+            const footerButtons = document.querySelectorAll('.mobile-footer-btn');
+            
+            footerButtons.forEach(button => {
+                let isNavigating = false;
+                
+                button.addEventListener('touchstart', function(e) {
+                    this.classList.add('touch-active');
+                    console.log('Touch start:', this.querySelector('span').textContent);
+                }, { passive: true });
+                
+                // Interceptar click para agregar delay
+                button.addEventListener('click', function(e) {
+                    if (isNavigating) return;
+                    
+                    e.preventDefault();
+                    isNavigating = true;
+                    
+                    this.classList.add('touch-active');
+                    const buttonName = this.querySelector('span').textContent;
+                    console.log('Click con delay:', buttonName);
+                    
+                    // Mostrar toast
+                    showToast(buttonName);
+                    
+                    // Simular navegación después del feedback
+                    setTimeout(() => {
+                        console.log('Navegación completada');
+                        isNavigating = false;
+                        this.classList.remove('touch-active');
+                    }, 500);
+                });
+                
+                button.addEventListener('touchend', function(e) {
+                    setTimeout(() => {
+                        if (!isNavigating) {
+                            this.classList.remove('touch-active');
+                        }
+                        console.log('Touch end:', this.querySelector('span').textContent);
+                    }, 150);
+                }, { passive: true });
+                
+                button.addEventListener('touchcancel', function(e) {
+                    this.classList.remove('touch-active');
+                    isNavigating = false;
+                    console.log('Touch cancel:', this.querySelector('span').textContent);
+                }, { passive: true });
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,72 +1,167 @@
-<!-- Footer Sticky para Móvil -->
-<footer class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-    <div class="flex justify-around items-center h-14 px-2">
+<!-- Footer Sticky para Móvil - Solo para usuarios no autenticados -->
+<footer id="mobile-footer-public" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+    <!-- Copyright -->
+    <div class="border-b border-gray-100 py-2 px-3">
+        <div class="text-xs text-gray-500 text-center">
+            Desarrollado por <a href="https://jemavi.co" class="text-papyrus-blue hover:text-blue-700 underline" target="_blank">JEMAVI</a> | © 2025 PAPYRUS
+        </div>
+    </div>
+    
+    <!-- Botones de navegación -->
+    <div class="flex justify-around items-center h-16 px-1">
         <!-- Anunciar -->
         <a href="/announce" 
-           class="flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 hover:text-papyrus-blue transition-colors duration-200 {% if request.path == '/announce' %}text-papyrus-blue{% endif %}">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1.5 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 {% if request.path == '/announce' %}text-papyrus-blue{% endif %}">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
             </svg>
-            <span class="text-[10px] font-medium">Anunciar</span>
+            <span class="text-xs font-medium whitespace-nowrap">Anunciar</span>
         </a>
 
         <!-- Buscar -->
         <a href="/search" 
-           class="flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 hover:text-papyrus-blue transition-colors duration-200 {% if request.path == '/search' %}text-papyrus-blue{% endif %}">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1.5 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 {% if request.path == '/search' %}text-papyrus-blue{% endif %}">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
-            <span class="text-[10px] font-medium">Buscar</span>
+            <span class="text-xs font-medium whitespace-nowrap">Buscar</span>
         </a>
 
         <!-- Ayuda -->
         <a href="/help" 
-           class="flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 hover:text-papyrus-blue transition-colors duration-200 {% if request.path == '/help' %}text-papyrus-blue{% endif %}">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1.5 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 {% if request.path == '/help' %}text-papyrus-blue{% endif %}">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <span class="text-[10px] font-medium">Ayuda</span>
+            <span class="text-xs font-medium whitespace-nowrap">Ayuda</span>
         </a>
 
         <!-- Login -->
         <a href="/auth/login" 
-           class="flex flex-col items-center justify-center flex-1 py-1 px-1 text-gray-600 hover:text-papyrus-blue transition-colors duration-200 {% if request.path == '/auth/login' %}text-papyrus-blue{% endif %}">
-            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1.5 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 {% if request.path == '/auth/login' %}text-papyrus-blue{% endif %}">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
             </svg>
-            <span class="text-[10px] font-medium">Ingresar</span>
+            <span class="text-xs font-medium whitespace-nowrap">Ingresar</span>
         </a>
     </div>
 </footer>
 
-<!-- Espaciador para evitar que el contenido quede oculto detrás del footer -->
-<div class="md:hidden h-14"></div>
-
-<!-- Estilos para ajustar el contenido entre header y footer en móvil -->
+<!-- Estilos para el footer móvil -->
 <style>
+    /* Estilos aplicados inmediatamente para evitar flash */
+    #mobile-footer-public {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
     @media (max-width: 768px) {
-        /* El header debe estar fijo en la parte superior */
-        nav {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 40 !important;
-        }
-        
-        /* Agregar padding-top al body para compensar el header fijo */
+        /* Agregar padding-bottom al body para compensar el footer fijo */
         body {
-            padding-top: 64px; /* Altura del header */
-            padding-bottom: 56px; /* Altura del footer */
+            padding-bottom: 92px !important; /* Altura del footer móvil (copyright + botones) */
         }
-        
-        /* El footer ya está fixed bottom-0, asegurar que sea visible */
-        footer {
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 50 !important;
+    }
+    
+    @media (min-width: 769px) {
+        /* Ocultar completamente en desktop */
+        #mobile-footer-public {
+            display: none !important;
+        }
+    }
+    
+    /* Mejorar interacción táctil en botones del footer móvil */
+    .mobile-footer-btn {
+        -webkit-tap-highlight-color: rgba(30, 64, 175, 0.1);
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    
+    /* Feedback visual al tocar (sin hover) */
+    .mobile-footer-btn:active {
+        background-color: rgba(30, 64, 175, 0.05);
+        transform: scale(0.95);
+    }
+    
+    /* Clase para feedback táctil con JavaScript */
+    .mobile-footer-btn.touch-active {
+        background-color: rgba(30, 64, 175, 0.1);
+        color: #1e40af;
+    }
+    
+    /* Prevenir comportamiento hover en dispositivos táctiles */
+    @media (hover: none) and (pointer: coarse) {
+        .mobile-footer-btn:hover {
+            color: inherit;
         }
     }
 </style>
+
+<!-- Script para mejorar la interacción táctil -->
+<script>
+(function() {
+    // Esperar a que el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileFooter);
+    } else {
+        initMobileFooter();
+    }
+    
+    function initMobileFooter() {
+        // Solo ejecutar en dispositivos móviles
+        if (window.innerWidth > 768) return;
+        
+        const footerButtons = document.querySelectorAll('.mobile-footer-btn');
+        
+        footerButtons.forEach(button => {
+            // Variable para almacenar el href original
+            let originalHref = button.getAttribute('href');
+            let isNavigating = false;
+            
+            // Prevenir navegación inmediata en touchstart
+            button.addEventListener('touchstart', function(e) {
+                // Agregar clase activa para feedback visual
+                this.classList.add('touch-active');
+                console.log('Touch start - Feedback visual activado');
+            }, { passive: true });
+            
+            // Manejar el click con delay para mostrar feedback
+            button.addEventListener('click', function(e) {
+                // Si ya estamos navegando, no hacer nada
+                if (isNavigating) return;
+                
+                // Prevenir navegación inmediata
+                e.preventDefault();
+                
+                // Marcar que estamos navegando
+                isNavigating = true;
+                
+                // Agregar feedback visual
+                this.classList.add('touch-active');
+                console.log('Click - Navegando a:', originalHref);
+                
+                // Navegar después de un breve delay para mostrar feedback
+                setTimeout(() => {
+                    window.location.href = originalHref;
+                }, 200);
+            });
+            
+            button.addEventListener('touchend', function(e) {
+                // Remover clase activa después de un breve delay
+                setTimeout(() => {
+                    if (!isNavigating) {
+                        this.classList.remove('touch-active');
+                    }
+                }, 150);
+            }, { passive: true });
+            
+            button.addEventListener('touchcancel', function(e) {
+                // Remover clase activa si se cancela el toque
+                this.classList.remove('touch-active');
+                isNavigating = false;
+            }, { passive: true });
+        });
+    }
+})();
+</script>

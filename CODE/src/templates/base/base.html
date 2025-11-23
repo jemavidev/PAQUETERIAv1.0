@@ -838,8 +838,8 @@
         {% endblock %}
     </main>
 
-    {# Footer Component (Sticky Footer) #}
-    <footer class="bg-white shadow-sm border-t flex-shrink-0">
+    {# Footer Component (Sticky Footer) - Oculto en móviles para usuarios no autenticados #}
+    <footer class="bg-white shadow-sm border-t flex-shrink-0 {% if not is_authenticated %}hidden md:block{% endif %}">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 sm:py-4 space-y-2 sm:space-y-0">
                 {# Copyright #}
@@ -871,6 +871,11 @@
             </div>
         </div>
     </footer>
+    
+    {# Footer Móvil para Usuarios No Autenticados #}
+    {% if not is_authenticated %}
+        {% include 'components/mobile-footer.html' %}
+    {% endif %}
 
     {# Scripts adicionales #}
     {% block extra_scripts %}{% endblock %}
@@ -1521,4 +1526,3 @@
     </script>
 </body>
 </html>
-<--remote-debugging-port=9222 TEST VOLUMEN TEMPLATE - Sat Nov 22 06:59:56 AM -05 2025 -->
