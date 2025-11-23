@@ -274,12 +274,6 @@ git_pull_to_commit() {
         return 1
     fi
     
-    clear
-    print_banner
-    echo -e "${WHITE}📜 ÚLTIMOS 15 COMMITS${NC}"
-    print_separator
-    echo ""
-    
     # Primero hacer fetch para obtener los últimos commits de GitHub
     log_step "Obteniendo últimos commits desde GitHub..."
     if [ "$ENV_TYPE" = "remote" ]; then
@@ -289,29 +283,103 @@ git_pull_to_commit() {
         git fetch origin "${GIT_BRANCH}" > /dev/null 2>&1
     fi
     
-    echo ""
+    local page=1
+    local per_page=15
+    local skip=0
     
-    # Obtener lista de commits desde origin (GitHub)
-    if [ "$ENV_TYPE" = "remote" ]; then
-        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'"
-    else
-        cd "$PROJECT_PATH"
-        git log "origin/${GIT_BRANCH}" --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'
-    fi
-    
-    echo ""
-    echo ""
-    print_separator
-    read -p "Ingresa el hash del commit (o Enter para cancelar): " commit_hash
-    
-    if [ -z "$commit_hash" ]; then
-        log_info "Operación cancelada"
-        return 0
-    fi
-    
-    log_step "Haciendo checkout a commit: $commit_hash"
-    execute_command "git checkout $commit_hash" "Cambiando a commit específico..."
-    log_success "Checkout completado"
+    while true; do
+        clear
+        print_banner
+        echo -e "${WHITE}📜 COMMITS DE GITHUB (Página $page)${NC}"
+        print_separator
+        echo ""
+        
+        # Obtener lista de commits desde origin (GitHub) con paginación
+        if [ "$ENV_TYPE" = "remote" ]; then
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline --skip=$skip -n $per_page --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'"
+        else
+            cd "$PROJECT_PATH"
+            git log "origin/${GIT_BRANCH}" --oneline --skip=$skip -n $per_page --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'
+        fi
+        
+        echo ""
+        echo ""
+        print_separator
+        echo -e "${WHITE}OPCIONES:${NC}"
+        print_separator
+        echo ""
+        echo -e "  ${CYAN}[N]${NC} Siguiente página (15 commits más antiguos)"
+        echo -e "  ${CYAN}[P]${NC} Página anterior"
+        echo -e "  ${CYAN}[B]${NC} Buscar por mensaje de commit"
+        echo -e "  ${CYAN}[Q]${NC} Volver al menú"
+        echo ""
+        echo -e "  ${GREEN}O ingresa el hash del commit para hacer checkout${NC}"
+        echo ""
+        print_separator
+        read -p "Opción o hash: " user_input
+        
+        case $user_input in
+            N|n)
+                skip=$((skip + per_page))
+                page=$((page + 1))
+                ;;
+            P|p)
+                if [ $skip -gt 0 ]; then
+                    skip=$((skip - per_page))
+                    page=$((page - 1))
+                else
+                    log_warning "Ya estás en la primera página"
+                    sleep 1
+                fi
+                ;;
+            B|b)
+                echo ""
+                read -p "Buscar commits que contengan: " search_term
+                if [ -n "$search_term" ]; then
+                    clear
+                    print_banner
+                    echo -e "${WHITE}📜 RESULTADOS DE BÚSQUEDA: '$search_term'${NC}"
+                    print_separator
+                    echo ""
+                    
+                    if [ "$ENV_TYPE" = "remote" ]; then
+                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline --grep='$search_term' -i -30 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'"
+                    else
+                        cd "$PROJECT_PATH"
+                        git log "origin/${GIT_BRANCH}" --oneline --grep="$search_term" -i -30 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'
+                    fi
+                    
+                    echo ""
+                    echo ""
+                    print_separator
+                    read -p "Ingresa el hash del commit (o Enter para volver): " commit_hash
+                    
+                    if [ -n "$commit_hash" ]; then
+                        log_step "Haciendo checkout a commit: $commit_hash"
+                        execute_command "git checkout $commit_hash" "Cambiando a commit específico..."
+                        log_success "Checkout completado"
+                        return 0
+                    fi
+                fi
+                ;;
+            Q|q|"")
+                log_info "Operación cancelada"
+                return 0
+                ;;
+            *)
+                # Asumir que es un hash de commit
+                log_step "Haciendo checkout a commit: $user_input"
+                execute_command "git checkout $user_input" "Cambiando a commit específico..."
+                if [ $? -eq 0 ]; then
+                    log_success "Checkout completado"
+                    return 0
+                else
+                    log_error "Hash de commit inválido"
+                    sleep 2
+                fi
+                ;;
+        esac
+    done
 }
 
 show_logs_interactive() {
