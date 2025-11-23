@@ -168,24 +168,22 @@ git_pull_only() {
         local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
         
         if [ "$has_changes" -gt 0 ]; then
-            log_warning "Hay cambios locales sin commitear en el servidor"
+            log_warning "Hay cambios locales que serán sobrescritos"
             echo ""
             ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
             echo ""
-            read -p "¿Hacer stash y continuar? [y/N]: " -n 1 -r
-            echo ""
             
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                execute_command "git stash push -m 'Auto stash $(date +%Y%m%d_%H%M%S)'" "Guardando cambios..."
-                execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
-                
-                read -p "¿Restaurar cambios (stash pop)? [y/N]: " -n 1 -r
-                echo ""
-                [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
-            else
-                log_info "Pull cancelado"
-                return 1
-            fi
+            # Limpiar cualquier merge en progreso
+            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+            
+            # Fetch primero para tener la última versión
+            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión..."
+            
+            # Reset hard a la versión remota (sobrescribe todo)
+            execute_command "git reset --hard origin/${GIT_BRANCH}" "Actualizando a versión de GitHub..."
+            
+            # Limpiar archivos no rastreados si existen
+            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
         else
             execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
         fi
@@ -194,7 +192,7 @@ git_pull_only() {
         execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
     fi
     
-    log_success "Pull completado"
+    log_success "Pull completado - Código actualizado desde GitHub"
 }
 
 git_pull_to_commit() {
@@ -354,19 +352,57 @@ deploy_full() {
                 echo ""
                 ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
                 echo ""
-                read -p "¿Hacer stash de cambios locales y continuar? [y/N]: " -n 1 -r
-                echo ""
                 
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    execute_command "git stash push -m 'Auto stash before deploy $(date +%Y%m%d_%H%M%S)'" "Guardando cambios locales..."
-                    execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-                    
-                    read -p "¿Restaurar cambios guardados (stash pop)? [y/N]: " -n 1 -r
+                # Verificar si hay conflictos de merge sin resolver
+                local has_conflicts=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain | grep -E '^(UU|AA|DD)'" | wc -l)
+                
+                if [ "$has_conflicts" -gt 0 ]; then
+                    log_error "Hay conflictos de merge sin resolver"
                     echo ""
-                    [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
+                    echo -e "${YELLOW}Opciones disponibles:${NC}"
+                    echo -e "  ${CYAN}[1]${NC} Abortar merge y continuar deploy (git merge --abort)"
+                    echo -e "  ${CYAN}[2]${NC} Resetear a versión remota y continuar (git reset --hard)"
+                    echo -e "  ${CYAN}[3]${NC} Cancelar deploy"
+                    echo ""
+                    read -p "Selecciona opción [1-3]: " conflict_option
+                    
+                    case $conflict_option in
+                        1)
+                            execute_command "git merge --abort" "Abortando merge..."
+                            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+                            ;;
+                        2)
+                            log_warning "Esto eliminará TODOS los cambios locales"
+                            read -p "¿Estás seguro? [y/N]: " -n 1 -r
+                            echo ""
+                            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                                execute_command "git reset --hard origin/${GIT_BRANCH}" "Reseteando a versión remota..."
+                            else
+                                log_error "Deploy cancelado"
+                                return 1
+                            fi
+                            ;;
+                        *)
+                            log_error "Deploy cancelado por el usuario"
+                            return 1
+                            ;;
+                    esac
                 else
-                    log_error "Deploy cancelado por el usuario"
-                    return 1
+                    # No hay conflictos, proceder con stash normal
+                    read -p "¿Hacer stash de cambios locales y continuar? [y/N]: " -n 1 -r
+                    echo ""
+                    
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        execute_command "git stash push -m 'Auto stash before deploy $(date +%Y%m%d_%H%M%S)'" "Guardando cambios locales..."
+                        execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+                        
+                        read -p "¿Restaurar cambios guardados (stash pop)? [y/N]: " -n 1 -r
+                        echo ""
+                        [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
+                    else
+                        log_error "Deploy cancelado por el usuario"
+                        return 1
+                    fi
                 fi
             else
                 execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
