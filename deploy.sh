@@ -575,15 +575,15 @@ show_main_menu() {
     print_separator
     echo ""
     echo -e "  ${CYAN}[1]${NC}  🚀 Deploy Completo"
-    echo -e "  ${CYAN}[2]${NC}  📥 Git Pull (solo descargar)"
-    echo -e "  ${CYAN}[3]${NC}  🔄 Restart Servicios"
-    echo -e "  ${CYAN}[4]${NC}  📊 Ver Estado"
-    echo -e "  ${CYAN}[5]${NC}  📋 Ver Logs"
-    echo -e "  ${CYAN}[6]${NC}  🔨 Rebuild Contenedores"
-    echo -e "  ${CYAN}[7]${NC}  🗄️  Migraciones"
-    echo -e "  ${CYAN}[8]${NC}  💾 Crear Backup"
-    echo -e "  ${CYAN}[9]${NC}  🔍 Health Check"
-    echo -e "  ${CYAN}[P]${NC}  📜 Pull a Commit Específico"
+    echo -e "  ${CYAN}[2]${NC}  📥 Git Pull (ultimo commit)"
+    echo -e "  ${CYAN}[3]${NC}  📜 Pull a Commit Específico"
+    echo -e "  ${CYAN}[4]${NC}  🔄 Restart Servicios"
+    echo -e "  ${CYAN}[5]${NC}  📊 Ver Estado"
+    echo -e "  ${CYAN}[6]${NC}  📋 Ver Logs"
+    echo -e "  ${CYAN}[7]${NC}  🔨 Rebuild Contenedores"
+    echo -e "  ${CYAN}[8]${NC}  🗄️  Migraciones"
+    echo -e "  ${CYAN}[9]${NC}  💾 Crear Backup"
+    echo -e "  ${CYAN}[H]${NC}  🔍 Health Check"
     echo ""
     print_separator
     echo -e "  ${CYAN}[0]${NC}  ❌ Salir"
@@ -690,14 +690,14 @@ main_interactive() {
                 ;;
             1) deploy_full; read -p "Presiona Enter para continuar..." ;;
             2) git_pull_only; read -p "Presiona Enter para continuar..." ;;
-            3) docker_operation "restart"; health_check; read -p "Presiona Enter para continuar..." ;;
-            4) docker_operation "ps"; read -p "Presiona Enter para continuar..." ;;
-            5) show_logs_interactive ;;
-            6) docker_operation "rebuild"; docker_operation "up"; health_check; read -p "Presiona Enter para continuar..." ;;
-            7) execute_command "$MIGRATIONS_COMMAND" "Ejecutando migraciones..."; read -p "Presiona Enter para continuar..." ;;
-            8) create_backup; read -p "Presiona Enter para continuar..." ;;
-            9) health_check; read -p "Presiona Enter para continuar..." ;;
-            P|p) git_pull_to_commit; read -p "Presiona Enter para continuar..." ;;
+            3) git_pull_to_commit; read -p "Presiona Enter para continuar..." ;;
+            4) docker_operation "restart"; health_check; read -p "Presiona Enter para continuar..." ;;
+            5) docker_operation "ps"; read -p "Presiona Enter para continuar..." ;;
+            6) show_logs_interactive ;;
+            7) docker_operation "rebuild"; docker_operation "up"; health_check; read -p "Presiona Enter para continuar..." ;;
+            8) execute_command "$MIGRATIONS_COMMAND" "Ejecutando migraciones..."; read -p "Presiona Enter para continuar..." ;;
+            9) create_backup; read -p "Presiona Enter para continuar..." ;;
+            H|h) health_check; read -p "Presiona Enter para continuar..." ;;
             0) log_success "¡Hasta luego! 👋"; exit 0 ;;
             *) log_error "Opción inválida"; sleep 2 ;;
         esac
