@@ -150,9 +150,81 @@ docker_operation() {
             execute_command "docker compose -f $compose_file logs -f" "Mostrando logs..."
             ;;
         ps)
-            execute_command "docker compose -f $compose_file ps" "Estado de servicios..."
+            show_docker_status
             ;;
     esac
+}
+
+show_docker_status() {
+    clear
+    print_banner
+    echo -e "${WHITE}📊 ESTADO DE SERVICIOS DOCKER${NC}"
+    print_double_separator
+    echo ""
+    
+    # Obtener información de contenedores
+    if [ "$ENV_TYPE" = "remote" ]; then
+        local containers_info=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE ps --format json" 2>/dev/null)
+    else
+        local containers_info=$(cd "$PROJECT_PATH" && docker compose -f "$DOCKER_COMPOSE_FILE" ps --format json 2>/dev/null)
+    fi
+    
+    # Si no hay formato JSON disponible, usar formato tabla mejorado
+    if [ -z "$containers_info" ]; then
+        if [ "$ENV_TYPE" = "remote" ]; then
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}'"
+        else
+            cd "$PROJECT_PATH" && docker compose -f "$DOCKER_COMPOSE_FILE" ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}'
+        fi
+    else
+        # Procesar y mostrar de forma amigable
+        if [ "$ENV_TYPE" = "remote" ]; then
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE ps" | while IFS= read -r line; do
+                if echo "$line" | grep -q "Up"; then
+                    echo -e "${GREEN}✓${NC} $line"
+                elif echo "$line" | grep -q "Exit"; then
+                    echo -e "${RED}✗${NC} $line"
+                else
+                    echo "$line"
+                fi
+            done
+        else
+            cd "$PROJECT_PATH" && docker compose -f "$DOCKER_COMPOSE_FILE" ps | while IFS= read -r line; do
+                if echo "$line" | grep -q "Up"; then
+                    echo -e "${GREEN}✓${NC} $line"
+                elif echo "$line" | grep -q "Exit"; then
+                    echo -e "${RED}✗${NC} $line"
+                else
+                    echo "$line"
+                fi
+            done
+        fi
+    fi
+    
+    echo ""
+    print_separator
+    echo -e "${WHITE}RESUMEN:${NC}"
+    print_separator
+    echo ""
+    
+    # Contar contenedores
+    if [ "$ENV_TYPE" = "remote" ]; then
+        local total=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE ps -q" | wc -l)
+        local running=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE ps --filter 'status=running' -q" | wc -l)
+    else
+        local total=$(cd "$PROJECT_PATH" && docker compose -f "$DOCKER_COMPOSE_FILE" ps -q | wc -l)
+        local running=$(cd "$PROJECT_PATH" && docker compose -f "$DOCKER_COMPOSE_FILE" ps --filter 'status=running' -q | wc -l)
+    fi
+    
+    local stopped=$((total - running))
+    
+    echo -e "  ${CYAN}📦 Total de servicios:${NC} $total"
+    echo -e "  ${GREEN}✓ Corriendo:${NC} $running"
+    [ "$stopped" -gt 0 ] && echo -e "  ${RED}✗ Detenidos:${NC} $stopped"
+    
+    echo ""
+    print_separator
+    echo ""
 }
 
 git_pull_only() {
@@ -208,12 +280,23 @@ git_pull_to_commit() {
     print_separator
     echo ""
     
-    # Obtener lista de commits
+    # Primero hacer fetch para obtener los últimos commits de GitHub
+    log_step "Obteniendo últimos commits desde GitHub..."
     if [ "$ENV_TYPE" = "remote" ]; then
-        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'"
+        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git fetch origin ${GIT_BRANCH}" > /dev/null 2>&1
     else
         cd "$PROJECT_PATH"
-        git log --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'
+        git fetch origin "${GIT_BRANCH}" > /dev/null 2>&1
+    fi
+    
+    echo ""
+    
+    # Obtener lista de commits desde origin (GitHub)
+    if [ "$ENV_TYPE" = "remote" ]; then
+        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'"
+    else
+        cd "$PROJECT_PATH"
+        git log "origin/${GIT_BRANCH}" --oneline -15 --pretty=format:'%C(yellow)%h%C(reset) - %C(cyan)%ar%C(reset) - %s %C(green)(%an)%C(reset)'
     fi
     
     echo ""
@@ -232,26 +315,26 @@ git_pull_to_commit() {
 }
 
 show_logs_interactive() {
-    local lines=100
+    local lines=10
     
     while true; do
         clear
         print_banner
-        echo -e "${WHITE}📋 LOGS DE DOCKER (Últimas $lines líneas)${NC}"
+        echo -e "${WHITE}📋 LOGS DE DOCKER (Últimas 10 líneas)${NC}"
         print_separator
         echo ""
         
-        # Usar execute_command para manejar tanto local como remoto
+        # Siempre mostrar solo 10 líneas
         if [ "$ENV_TYPE" = "remote" ]; then
-            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE logs --tail=$lines"
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && docker compose -f $DOCKER_COMPOSE_FILE logs --tail=10"
         else
             cd "$PROJECT_PATH"
-            docker compose -f "$DOCKER_COMPOSE_FILE" logs --tail="$lines"
+            docker compose -f "$DOCKER_COMPOSE_FILE" logs --tail=10
         fi
         
         echo ""
         print_separator
-        echo -e "  ${CYAN}[M]${NC} Ver 100 líneas más"
+        echo -e "  ${CYAN}[M]${NC} Ver siguientes 10 líneas"
         echo -e "  ${CYAN}[F]${NC} Seguir logs en tiempo real"
         echo -e "  ${CYAN}[Q]${NC} Volver al menú"
         echo ""
@@ -260,7 +343,8 @@ show_logs_interactive() {
         
         case $log_option in
             M|m)
-                lines=$((lines + 100))
+                # Solo refrescar, siempre muestra las últimas 10
+                continue
                 ;;
             F|f)
                 if [ "$ENV_TYPE" = "remote" ]; then
@@ -269,7 +353,6 @@ show_logs_interactive() {
                     cd "$PROJECT_PATH"
                     docker compose -f "$DOCKER_COMPOSE_FILE" logs -f
                 fi
-                lines=100
                 ;;
             Q|q)
                 return 0
