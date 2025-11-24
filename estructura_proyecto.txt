@@ -1,0 +1,60 @@
+.
+├── CODE
+│   ├── alembic
+│   ├── LOCAL
+│   ├── monitoring
+│   ├── nginx
+│   ├── scripts
+│   ├── src
+│   ├── alembic.ini
+│   ├── Dockerfile
+│   ├── Dockerfile.lightsail
+│   ├── env.example
+│   └── requirements.txt
+├── DOCS
+│   ├── 01-proyecto
+│   ├── 02-deploy
+│   ├── 03-sms
+│   ├── 04-fixes
+│   ├── 05-legal
+│   ├── 06-testing
+│   ├── 07-analisis
+│   ├── archived
+│   ├── componentes-docs
+│   ├── dashboard
+│   ├── deploy
+│   ├── diagnostico
+│   ├── diagnosticos
+│   ├── documentacion
+│   ├── fixes
+│   ├── guias
+│   ├── guides
+│   ├── IDEA DE NEGOCIO
+│   ├── implementacion
+│   ├── implementaciones
+│   ├── scripts
+│   ├── soluciones
+│   ├── templates-prueba
+│   ├── tests
+│   ├── CODIGO_BOTON_PREFERENCIAS.html
+│   ├── README.md
+│   ├── RESUMEN_COMPLETO_SOLUCION.md
+│   ├── RESUMEN_IMPLEMENTACION_PREFERENCIAS.md
+│   └── RESUMEN_SETTINGS.md
+├── scripts
+│   ├── database
+│   ├── deploy
+│   ├── email
+│   ├── sync
+│   ├── testing
+│   ├── utils
+│   └── README.md
+├── deploy.sh
+├── docker-compose.dev.yml
+├── docker-compose.lightsail.yml
+├── docker-compose.prod.yml
+├── estructura_proyecto.txt
+├── organize_files.sh
+└── README.md
+
+39 directories, 18 files

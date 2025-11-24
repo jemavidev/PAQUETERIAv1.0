@@ -1,178 +1,183 @@
-# 🔧 Scripts - PAQUETEX v4.0
+# 🛠️ Scripts del Proyecto PAQUETEX
 
-Scripts utilitarios para gestión del proyecto.
+Esta carpeta contiene todos los scripts de utilidad organizados por categoría.
 
-## 📁 Estructura
+## 📂 Estructura de Carpetas
 
-```
-scripts/
-├── deploy/                      # Scripts de deploy
-│   ├── deploy-lightsail.sh      # Deploy específico para Lightsail
-│   └── actualizar-produccion.sh # Actualización en producción
-├── sync/                        # Scripts de sincronización
-│   ├── sincronizar-static.sh    # Sincronizar archivos estáticos
-│   ├── sincronizar-templates.sh # Sincronizar templates
-│   └── verificar-templates.sh   # Verificar templates
-└── utils/                       # Utilidades generales
-```
+### `/database`
+Scripts relacionados con la base de datos:
 
-## 🚀 Scripts de Deploy
+**Creación de Tablas:**
+- `crear_tabla_customer_preferences.py` - Crea tabla de preferencias de clientes
+- `crear_tabla_customer_preferences.sql` - SQL para tabla de preferencias
+- `crear_tabla_preferencias.sh` - Script bash para crear preferencias
+- `crear_tabla_preferencias_simple.sh` - Versión simplificada
 
-### deploy-lightsail.sh
-Deploy optimizado para AWS Lightsail (1GB RAM, 20GB Disco).
+**Gestión de Usuarios:**
+- `crear_usuario_jveyes.py` - Crea usuario de prueba
+- `cambiar_password_jveyes.py` - Cambia contraseña de usuario
 
+**Uso:**
 ```bash
-./scripts/deploy/deploy-lightsail.sh
+# Crear tabla de preferencias
+python3 scripts/database/crear_tabla_customer_preferences.py
+
+# Crear usuario de prueba
+python3 scripts/database/crear_usuario_jveyes.py
+
+# Cambiar contraseña
+python3 scripts/database/cambiar_password_jveyes.py
 ```
-
-**Características:**
-- Optimizado para recursos limitados
-- Limpieza automática de recursos
-- Verificación de requisitos
-- Health checks completos
-
-**Nota:** Usar el nuevo sistema unificado: `./deploy.sh --env papyrus --deploy`
-
-### actualizar-produccion.sh
-Script para actualizar templates en producción.
-
-```bash
-./scripts/deploy/actualizar-produccion.sh
-```
-
-**Funciones:**
-- Pull desde GitHub
-- Verificación de templates
-- Reinicio de contenedores
-- Verificación de endpoints
-
-## 🔄 Scripts de Sincronización
-
-### sincronizar-static.sh
-Sincroniza archivos estáticos entre directorios.
-
-```bash
-./scripts/sync/sincronizar-static.sh
-```
-
-**Sincroniza:**
-- `/CODE/static` → `/CODE/src/static`
-- CSS, JS, imágenes
-- Mantiene estructura de directorios
-
-### sincronizar-templates.sh
-Sincroniza templates HTML.
-
-```bash
-./scripts/sync/sincronizar-templates.sh
-```
-
-**Sincroniza:**
-- Templates entre directorios
-- Verifica integridad
-- Backup automático
-
-### verificar-templates.sh
-Verifica que los templates existan y sean válidos.
-
-```bash
-./scripts/sync/verificar-templates.sh
-```
-
-**Verifica:**
-- Existencia de archivos
-- Sintaxis HTML básica
-- Referencias rotas
-
-## 📝 Uso
-
-### Permisos de Ejecución
-
-```bash
-# Dar permisos a todos los scripts
-chmod +x scripts/deploy/*.sh
-chmod +x scripts/sync/*.sh
-```
-
-### Ejecutar Scripts
-
-```bash
-# Desde la raíz del proyecto
-./scripts/deploy/deploy-lightsail.sh
-./scripts/sync/sincronizar-static.sh
-```
-
-## ⚠️ Notas Importantes
-
-### Sistema de Deploy Nuevo
-
-La mayoría de estos scripts han sido reemplazados por el nuevo sistema unificado de deploy:
-
-```bash
-# En lugar de scripts individuales, usar:
-./deploy.sh --env <entorno> --deploy
-```
-
-Ver documentación: [README_DEPLOY.md](../README_DEPLOY.md)
-
-### Scripts Mantenidos
-
-Estos scripts se mantienen para casos específicos:
-- `sincronizar-static.sh` - Sincronización manual de estáticos
-- `sincronizar-templates.sh` - Sincronización manual de templates
-- `verificar-templates.sh` - Verificación de templates
-
-### Scripts Archivados
-
-Scripts antiguos de deploy se mantienen en `DOCS/archived/` por referencia histórica.
-
-## 🔧 Desarrollo
-
-### Crear Nuevo Script
-
-1. Crear archivo en la carpeta apropiada
-2. Agregar shebang: `#!/bin/bash`
-3. Documentar uso en comentarios
-4. Dar permisos: `chmod +x script.sh`
-5. Actualizar este README
-
-### Mejores Prácticas
-
-```bash
-#!/bin/bash
-# ========================================
-# NOMBRE DEL SCRIPT
-# ========================================
-# Descripción breve
-# Uso: ./script.sh [opciones]
-# ========================================
-
-set -e  # Salir si hay error
-
-# Colores
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
-
-# Funciones
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-log_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-# Script principal
-log_success "Script iniciado"
-```
-
-## 📚 Documentación
-
-- [README principal](../README.md)
-- [Sistema de deploy](../README_DEPLOY.md)
-- [Documentación completa](../DOCS/INDEX.md)
 
 ---
 
-**Última actualización:** 2024-11-22
+### `/email`
+Scripts para testing y diagnóstico de emails:
+
+**Testing:**
+- `test_email_direct.py` - Prueba directa de envío SMTP
+- `test_email_reset.py` - Prueba email de reset de contraseña
+- `enviar_email_test.py` - Envío de email de prueba
+
+**Diagnóstico:**
+- `diagnosticar_smtp.sh` - Diagnóstico completo de SMTP
+
+**Uso:**
+```bash
+# Probar envío directo
+python3 scripts/email/test_email_direct.py
+
+# Diagnosticar SMTP
+bash scripts/email/diagnosticar_smtp.sh
+
+# Enviar email de prueba
+python3 scripts/email/enviar_email_test.py
+```
+
+---
+
+### `/testing`
+Scripts de verificación y testing del sistema:
+
+**Verificación de Componentes:**
+- `check_email_notifications.py` - Verifica notificaciones en BD
+- `verificar_preferencias.sh` - Verifica sistema de preferencias
+- `verificar_settings.sh` - Verifica configuración
+- `verificar_cambios.sh` - Verifica cambios aplicados
+
+**Testing Completo:**
+- `test_settings.sh` - Test del sistema de settings
+- `verificar_sistema_completo.sh` - Verificación completa del sistema
+
+**Uso:**
+```bash
+# Verificar notificaciones
+python3 scripts/testing/check_email_notifications.py
+
+# Verificar sistema completo
+bash scripts/testing/verificar_sistema_completo.sh
+
+# Test de settings
+bash scripts/testing/test_settings.sh
+```
+
+---
+
+## 🔧 Requisitos
+
+### Python Scripts
+Requieren las dependencias del proyecto:
+```bash
+cd CODE
+pip install -r requirements.txt
+```
+
+### Bash Scripts
+Requieren:
+- `bash` (incluido en Linux/Mac)
+- `curl` (para requests HTTP)
+- `jq` (para parsing JSON)
+
+Instalar en Ubuntu/Debian:
+```bash
+sudo apt-get install curl jq
+```
+
+---
+
+## 📝 Convenciones
+
+### Permisos
+Todos los scripts tienen permisos de ejecución:
+```bash
+chmod +x scripts/**/*.sh
+chmod +x scripts/**/*.py
+```
+
+### Variables de Entorno
+Los scripts Python cargan variables desde `CODE/.env`:
+```python
+from dotenv import load_dotenv
+load_dotenv('CODE/.env')
+```
+
+### Logging
+Los scripts incluyen logging detallado:
+- ✅ Operaciones exitosas
+- ❌ Errores
+- ℹ️ Información
+- ⚠️ Advertencias
+
+---
+
+## 🚀 Scripts Más Usados
+
+### 1. Verificación Rápida del Sistema
+```bash
+bash scripts/testing/verificar_sistema_completo.sh
+```
+
+### 2. Test de Email
+```bash
+python3 scripts/email/test_email_direct.py
+```
+
+### 3. Verificar Notificaciones
+```bash
+python3 scripts/testing/check_email_notifications.py
+```
+
+### 4. Crear Tabla de Preferencias
+```bash
+python3 scripts/database/crear_tabla_customer_preferences.py
+```
+
+---
+
+## 🔍 Troubleshooting
+
+### Error: "No module named 'dotenv'"
+```bash
+cd CODE
+pip install python-dotenv
+```
+
+### Error: "Permission denied"
+```bash
+chmod +x scripts/path/to/script.sh
+```
+
+### Error: "DATABASE_URL not found"
+Verifica que existe `CODE/.env` con la variable `DATABASE_URL`
+
+---
+
+## 📚 Documentación Relacionada
+
+- [Documentación Principal](../DOCS/README.md)
+- [Guías de Uso](../DOCS/guias/)
+- [Soluciones](../DOCS/soluciones/)
+
+---
+
+**Última actualización:** 24 de Noviembre, 2025

@@ -1,166 +1,77 @@
-# 📚 Documentación PAQUETEX v1.0
+# 📚 Documentación del Proyecto PAQUETEX
 
-Bienvenido a la documentación completa del proyecto PAQUETEX v1.0.
+Esta carpeta contiene toda la documentación del proyecto organizada por categorías.
 
-## 📁 Estructura de la Documentación
+## 📂 Estructura de Carpetas
 
-### 📂 [01-proyecto](./01-proyecto/) - Documentación del Proyecto
-Información general, estructura y organización del proyecto.
+### `/diagnosticos`
+Documentos de análisis y diagnóstico de problemas:
+- `ANALISIS_NOTIFICACIONES.md` - Análisis del sistema de notificaciones
+- `DIAGNOSTICO_FINAL.md` - Diagnóstico final de implementaciones
+- `CAMBIOS_APLICADOS.md` - Registro de cambios aplicados
+- `RESUMEN_CAMBIOS_SESION.md` - Resumen de cambios por sesión
 
-**Archivos principales:**
-- `README.md` - Documentación principal
-- `ESTRUCTURA_PROYECTO.md` - Estructura completa del proyecto
-- `ORGANIZACION_PROYECTO.md` - Organización y arquitectura
-- `VERIFICACION_INTEGRIDAD.md` - Verificación de integridad
-- `EMPEZAR_HOY.md` - Guía de inicio rápido
-- `INDICE*.md` - Índices de documentación
+### `/guias`
+Guías de uso y procedimientos:
+- `COMO_INICIAR_SERVIDOR.md` - Instrucciones para iniciar el servidor
+- `COMO_PROBAR_SETTINGS.md` - Cómo probar la configuración
+- `GUIA_RAPIDA_USO.md` - Guía rápida de uso del sistema
+- `GUIA_USO_PREFERENCIAS_NOTIFICACIONES.md` - Uso de preferencias
+- `INICIO_RAPIDO.md` - Inicio rápido del proyecto
+- `EJEMPLO_PRACTICO_COMPLETO.md` - Ejemplos prácticos
 
-### 📂 [02-deploy](./02-deploy/) - Deploy y Despliegue
-Guías y configuraciones para el despliegue del sistema.
+### `/implementaciones`
+Documentación de implementaciones realizadas:
+- `IMPLEMENTACION_BOTON_PREFERENCIAS_CLIENTES.md` - Botón de preferencias
+- `IMPLEMENTACION_PREFERENCIAS_CLIENTES.md` - Sistema de preferencias
+- `IMPLEMENTACION_SETTINGS_COMPLETA.md` - Sistema de configuración
+- `INSTRUCCIONES_DESPLIEGUE_PREFERENCIAS.md` - Despliegue de preferencias
+- `INSTRUCCIONES_FINALES_PREFERENCIAS.md` - Instrucciones finales
+- `FUTURO_PREFERENCIAS_CLIENTES.md` - Mejoras futuras
 
-**Contenido:**
-- Guías de despliegue automatizado
-- Configuración de servidores
-- Docker Compose
-- Procedimientos de deploy
+### `/soluciones`
+Soluciones a problemas específicos:
+- `SOLUCION_BOTON_PREFERENCIAS.md` - Fix del botón de preferencias
+- `SOLUCION_ERROR_PREFERENCIAS.md` - Solución de errores
+- `SOLUCION_FINAL_PREFERENCIAS.md` - Solución final implementada
+- `SOLUCION_LOOP_LOGIN.md` - Fix del loop de login
+- `FIX_FORGOT_PASSWORD.md` - Fix de recuperación de contraseña
+- `FIX_MODAL_NO_APARECE.md` - Fix de modales
+- `TROUBLESHOOTING_BOTON_PREFERENCIAS.md` - Troubleshooting
 
-### 📂 [03-sms](./03-sms/) - Sistema SMS
-Documentación completa del sistema de mensajería SMS.
-
-**Contenido:**
-- Configuración de SMS
-- Integración con Liwa
-- Plantillas y unificación
-- Guías de uso y troubleshooting
-
-### 📂 [04-fixes](./04-fixes/) - Correcciones y Soluciones
-Documentación de problemas resueltos y sus soluciones.
-
-**Contenido:**
-- Fixes aplicados
-- Soluciones a problemas comunes
-- Actualizaciones y mejoras
-- Correcciones de bugs
-
-### 📂 [05-legal](./05-legal/) - Documentación Legal
-Términos, condiciones y políticas del servicio.
-
-**Contenido:**
-- Términos y Condiciones
-- Políticas de Privacidad
-- Enlaces protegidos y públicos
-- Vistas legales
-
-### 📂 [06-testing](./06-testing/) - Testing y Pruebas
-Scripts de prueba y documentación de testing.
-
-**Contenido:**
-- Scripts de testing HTML
-- Pruebas de funcionalidad
-- Instrucciones de diagnóstico
-- Tests de componentes
-
-### 📂 [07-analisis](./07-analisis/) - Análisis y Reportes
-Análisis técnicos, reportes y documentación de mejoras.
-
-**Contenido:**
-- Análisis de sistemas
-- Reportes de rendimiento
-- Diagramas de flujo
-- Recomendaciones de mejora
-- Resúmenes y estados
-
----
-
-## 📂 Carpetas Adicionales
-
-### 📁 archived/
-Documentación archivada y obsoleta.
-
-### 📁 componentes-docs/
-Documentación de componentes específicos.
-
-### 📁 deploy/
-Archivos adicionales de deploy.
-
-### 📁 documentacion/
-Documentación adicional y miscelánea.
-
-### 📁 fixes/
-Fixes adicionales y parches.
-
-### 📁 guides/
-Guías adicionales de uso.
-
-### 📁 scripts/
-Scripts de documentación y utilidades.
-
-### 📁 templates-prueba/
-Templates de prueba.
-
-### 📁 tests/
-Tests adicionales.
-
-### 📁 IDEA DE NEGOCIO/
-Documentación del modelo de negocio.
-
----
-
-## 🚀 Inicio Rápido
-
-1. **Para empezar con el proyecto:** Lee `01-proyecto/EMPEZAR_HOY.md`
-2. **Para hacer deploy:** Consulta `02-deploy/`
-3. **Para configurar SMS:** Revisa `03-sms/SMS_QUICK_START.md`
-4. **Para resolver problemas:** Busca en `04-fixes/`
-
----
-
-## 📖 Índices Principales
-
-- **Índice General:** `01-proyecto/INDICE.md`
-- **Índice de Deploy:** `01-proyecto/INDICE_DESPLIEGUE.md`
-- **Índice de SMS:** `01-proyecto/INDICE_SMS_UNIFICADO.md`
-- **Índice Legal:** `01-proyecto/INDICE_DOCUMENTACION_LEGAL.md`
-
----
+### Archivos en Raíz de DOCS
+- `RESUMEN_COMPLETO_SOLUCION.md` - Resumen completo de todas las soluciones
+- `RESUMEN_IMPLEMENTACION_PREFERENCIAS.md` - Resumen de preferencias
+- `RESUMEN_SETTINGS.md` - Resumen del sistema de settings
+- `CODIGO_BOTON_PREFERENCIAS.html` - Ejemplo de código HTML
 
 ## 🔍 Búsqueda Rápida
 
 ### Por Tema:
-- **Deploy:** `02-deploy/`
-- **SMS:** `03-sms/`
-- **Errores:** `04-fixes/`
-- **Legal:** `05-legal/`
-- **Tests:** `06-testing/`
-- **Análisis:** `07-analisis/`
+- **Preferencias de Notificaciones:** Ver `/implementaciones` y `/soluciones`
+- **Sistema de Email:** Ver `/diagnosticos/ANALISIS_NOTIFICACIONES.md`
+- **Configuración:** Ver `/guias/COMO_PROBAR_SETTINGS.md`
+- **Problemas Resueltos:** Ver `/soluciones`
 
 ### Por Tipo:
-- **Guías:** `01-proyecto/GUIA_*.md`
-- **Soluciones:** `04-fixes/SOLUCION_*.md`
-- **Análisis:** `07-analisis/ANALISIS_*.md`
-- **Reportes:** `07-analisis/REPORTE_*.md`
-
----
+- **Guías de Uso:** `/guias`
+- **Solución de Problemas:** `/soluciones`
+- **Análisis Técnico:** `/diagnosticos`
+- **Implementaciones:** `/implementaciones`
 
 ## 📝 Convenciones
 
-- **Archivos MD:** Documentación en Markdown
-- **Archivos PDF:** Documentos oficiales
-- **Archivos TXT:** Notas y diagramas
-- **Archivos HTML:** Tests y demos
-- **Archivos PY:** Scripts de diagnóstico
+- Todos los archivos están en formato Markdown (.md)
+- Los nombres de archivo son descriptivos y en mayúsculas
+- Cada documento incluye fecha y contexto
+- Los ejemplos de código están en archivos separados
+
+## 🔗 Enlaces Útiles
+
+- [README Principal](../README.md)
+- [Scripts del Proyecto](../scripts/README.md)
+- [Código Fuente](../CODE/)
 
 ---
 
-## 🆘 Soporte
-
-Para dudas o problemas:
-1. Consulta la documentación relevante
-2. Revisa los fixes aplicados en `04-fixes/`
-3. Consulta los análisis en `07-analisis/`
-
----
-
-**Última actualización:** 2024-11-22  
-**Versión:** 1.0.0  
-**Proyecto:** PAQUETEX v1.0
+**Última actualización:** 24 de Noviembre, 2025
