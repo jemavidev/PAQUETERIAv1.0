@@ -3,11 +3,80 @@
 {% block title %}Iniciar Sesión - PAQUETEX v4.0{% endblock %}
 
 {% block extra_head %}
-<!-- VERSION: 2025-10-13 - CORRECCIÓN SISTEMA DE VALIDACIÓN Y SIMPLIFICACIÓN JS -->
-<!-- Sistema de Tooltips de Error -->
-{% include 'components/error_tooltip_fixed.html' %}
-<!-- Estilos específicos para esta página -->
 <style>
+    /* Toast notification - NO bloqueante */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    .toast {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        min-width: 300px;
+        max-width: 400px;
+        pointer-events: auto;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+    }
+
+    .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .toast.success {
+        border-left-color: #10b981;
+    }
+
+    .toast.error {
+        border-left-color: #ef4444;
+    }
+
+    .toast-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .toast-title {
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .toast-close:hover {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .toast-message {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
     /* Input con icono */
     .input-with-icon {
         position: relative;
@@ -56,6 +125,9 @@
 {% endblock %}
 
 {% block content %}
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
 <div class="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
     <!-- Logo PAPYRUS -->
     <div class="text-center mb-8 px-4">
@@ -127,16 +199,6 @@
                     </div>
                 </div>
                 
-                <!-- Mensaje de error -->
-                <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                    <div class="flex">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span id="errorText">Error en las credenciales</span>
-                    </div>
-                </div>
-                
                 <!-- Botón de Envío -->
                 <div class="pt-4">
                     <button type="submit" 
@@ -159,6 +221,41 @@
 
 {% block extra_scripts %}
 <script>
+    // Toast notification system
+    function showToast(title, message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = type === 'success' 
+            ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+            : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+        
+        toast.innerHTML = `
+            <div class="toast-header">
+                <div class="toast-title">
+                    ${icon}
+                    <span>${title}</span>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="toast-message">${message}</div>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
     (function() {
         const loginForm = document.getElementById('loginForm');
         
@@ -177,12 +274,12 @@
         
         // Validaciones básicas
         if (!username_or_email || !password) {
-            showLoginError('VALIDATION_ERROR');
+            showToast('Error', 'Por favor, completa todos los campos', 'error');
             return;
         }
         
         if (!isValidUsernameOrEmail(username_or_email)) {
-            showLoginError('INVALID_FORMAT');
+            showToast('Error', 'Por favor, ingresa un usuario o correo válido', 'error');
             return;
         }
         
@@ -190,7 +287,6 @@
         loginButton.disabled = true;
         loginButton.classList.add('loading');
         loginButtonText.textContent = 'Iniciando sesión...';
-        hideError();
         
         try {
             const response = await fetch('/api/auth/login', {
@@ -205,13 +301,13 @@
             });
             
             if (!response.ok) {
+                let errorMsg = 'Error al iniciar sesión';
                 if (response.status === 401) {
-                    showLoginError('INVALID_CREDENTIALS');
+                    errorMsg = 'Usuario o contraseña incorrectos';
                 } else if (response.status === 400) {
-                    showLoginError('INACTIVE_ACCOUNT');
-                } else {
-                    showLoginError('LOGIN_ERROR');
+                    errorMsg = 'Tu cuenta está inactiva. Contacta al administrador';
                 }
+                showToast('Error', errorMsg, 'error');
                 resetButton();
                 return;
             }
@@ -249,42 +345,10 @@
             
         } catch (error) {
             console.error('Error en login:', error);
-            showLoginError('CONNECTION_ERROR');
+            showToast('Error', 'Problema de conexión. Verifica tu internet', 'error');
             resetButton();
         }
     });
-    
-    function showLoginError(errorType) {
-        const errorMessages = {
-            'INVALID_CREDENTIALS': '🔐 Usuario o contraseña incorrectos. Por favor, verifica tus datos.',
-            'INACTIVE_ACCOUNT': '⚠️ Tu cuenta está inactiva. Contacta al administrador.',
-            'CONNECTION_ERROR': '🌐 Problema de conexión. Verifica tu internet.',
-            'LOGIN_ERROR': '❌ Error al iniciar sesión. Intenta nuevamente.',
-            'VALIDATION_ERROR': '📝 Por favor, completa todos los campos.',
-            'INVALID_FORMAT': '✉️ Por favor, ingresa un usuario o correo electrónico válido.'
-        };
-        
-        const errorMessage = errorMessages[errorType] || '❌ Error inesperado. Contacta al administrador.';
-        const usernameField = document.getElementById('username_or_email');
-        
-        if (usernameField && typeof window.mostrarErrorTooltip === 'function') {
-            window.mostrarErrorTooltip(usernameField, errorMessage);
-        } else {
-            showErrorFallback(errorMessage);
-        }
-    }
-    
-    function showErrorFallback(message) {
-        const errorMessageDiv = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        if (errorText) errorText.textContent = message;
-        if (errorMessageDiv) errorMessageDiv.classList.remove('hidden');
-    }
-    
-    function hideError() {
-        const errorMessageDiv = document.getElementById('errorMessage');
-        if (errorMessageDiv) errorMessageDiv.classList.add('hidden');
-    }
     
     function resetButton() {
         const loginButton = document.getElementById('loginButton');
@@ -331,10 +395,6 @@
         const usernameRegex = /^[a-zA-Z0-9_-]{3,}$/;
         return usernameRegex.test(input);
     }
-    
-    // Limpiar error cuando el usuario empiece a escribir
-    document.getElementById('username_or_email').addEventListener('input', hideError);
-    document.getElementById('password').addEventListener('input', hideError);
     
     // Focus automático y limpiar localStorage
     document.addEventListener('DOMContentLoaded', function() {

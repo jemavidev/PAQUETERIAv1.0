@@ -33,8 +33,9 @@ from src.app.database import init_db
 from src.app.routes.api import router as api_router
 from src.app.routes.views import router as views_router
 from src.app.routes.public import router as public_router
-from src.app.routes import auth, protected, customers, rates, notifications, messages, files, admin, announcements, profile, packages
+from src.app.routes import auth, protected, customers, rates, notifications, messages, files, admin, announcements, profile, packages, settings_api
 from src.app.routes.header_notifications import router as header_notifications
+from src.app.routes.customer_preferences import router as customer_preferences_router
 from src.app.routes.upload import router as upload_router
 from src.app.routes.images import router as images_router
 from src.app.routes.debug_standalone import router as debug_standalone_router
@@ -112,7 +113,8 @@ uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 # Configuración de templates
-templates = Jinja2Templates(directory="/app/src/templates", auto_reload=True)
+from src.app.utils.template_loader import get_templates
+templates = get_templates()
 
 # Manejadores de excepciones
 def handle_paqueteria_exception(request: Request, exc: PaqueteriaException):
@@ -162,6 +164,8 @@ app.include_router(header_notifications, prefix="/api/header", tags=["Notificaci
 app.include_router(files, prefix="/api/files", tags=["Archivos"])
 app.include_router(admin, prefix="/api/admin", tags=["Administración"])
 app.include_router(profile, prefix="/profile", tags=["Perfil"])
+app.include_router(settings_api, tags=["Configuración"])
+app.include_router(customer_preferences_router, tags=["Preferencias de Cliente"])
 app.include_router(upload_router, tags=["Upload"])
 app.include_router(images_router, tags=["Imágenes"])
 app.include_router(debug_standalone_router, tags=["Debug Standalone"])

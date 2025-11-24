@@ -20,9 +20,17 @@ def _resolve_templates_dir() -> str:
     return os.path.abspath(os.path.join(os.getcwd(), "src", "templates"))
 
 
+import json
+from markupsafe import Markup
+
+def tojson_filter(value):
+    return Markup(json.dumps(value))
+
 def get_templates() -> Jinja2Templates:
     """Obtener instancia de Jinja2Templates con auto_reload y ruta resuelta."""
     templates_dir = _resolve_templates_dir()
-    return Jinja2Templates(directory=templates_dir, auto_reload=True)
+    templates = Jinja2Templates(directory=templates_dir, auto_reload=True)
+    templates.env.filters["tojson"] = tojson_filter
+    return templates
 
 

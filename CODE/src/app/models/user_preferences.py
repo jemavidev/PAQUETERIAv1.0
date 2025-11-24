@@ -47,6 +47,58 @@ class UserPreferences(BaseModel):
     # Relación
     user = relationship("User", backref="preferences")
     
+    def should_send_notification(self, notification_type: str, event_type: str) -> bool:
+        """
+        Verifica si se debe enviar una notificación según las preferencias del usuario
+        
+        Args:
+            notification_type: Tipo de notificación (SMS, EMAIL, PUSH, etc.)
+            event_type: Tipo de evento (PACKAGE_RECEIVED, PACKAGE_DELIVERED, etc.)
+        
+        Returns:
+            bool: True si se debe enviar, False si está desactivado
+        """
+        # Importar aquí para evitar dependencias circulares
+        from app.models.notification import NotificationType, NotificationEvent
+        
+        # Lista de eventos críticos que SIEMPRE se envían (seguridad, legales, etc.)
+        CRITICAL_EVENTS = [
+            NotificationEvent.SECURITY_ALERT,
+            NotificationEvent.ACCOUNT_LOCKED,
+            NotificationEvent.PASSWORD_CHANGED,
+            NotificationEvent.PASSWORD_RESET,
+            NotificationEvent.LEGAL_NOTICE,
+        ]
+        
+        # Siempre enviar notificaciones críticas
+        if event_type in CRITICAL_EVENTS:
+            return True
+        
+        # Verificar preferencia general por tipo de notificación
+        if notification_type == NotificationType.SMS:
+            if not self.sms_notifications_enabled:
+                return False
+        elif notification_type == NotificationType.EMAIL:
+            if not self.email_notifications_enabled:
+                return False
+        elif notification_type == NotificationType.PUSH:
+            if not self.push_notifications_enabled:
+                return False
+        
+        # Verificar preferencia específica por evento
+        if event_type == NotificationEvent.PACKAGE_RECEIVED:
+            return self.notify_package_received
+        elif event_type == NotificationEvent.PACKAGE_DELIVERED:
+            return self.notify_package_delivered
+        elif event_type in [NotificationEvent.MESSAGE_RECEIVED, NotificationEvent.CUSTOM_MESSAGE]:
+            return self.notify_messages
+        elif event_type == NotificationEvent.MARKETING:
+            # Marketing se guarda en additional_preferences
+            return self.additional_preferences.get('marketing_enabled', False) if self.additional_preferences else False
+        
+        # Por defecto, permitir otras notificaciones (PACKAGE_ANNOUNCED, PAYMENT_DUE, etc.)
+        return True
+    
     def to_dict(self) -> dict:
         """Convertir preferencias a diccionario"""
         return {

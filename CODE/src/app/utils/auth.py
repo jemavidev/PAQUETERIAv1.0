@@ -278,15 +278,6 @@ def get_user_from_token(token: str) -> Optional[Dict[str, Any]]:
     Returns:
         Optional[Dict]: Información del usuario o None si inválido
     """
-    # Special handling for development fake token
-    if token == "fake_token_for_development":
-        logger.debug("Usando token de desarrollo fake")
-        return {
-            "user_id": "1",
-            "username": "jesus",
-            "role": "ADMIN"
-        }
-
     if not token:
         logger.warning("Token vacío o None en get_user_from_token")
         return None

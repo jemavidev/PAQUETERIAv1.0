@@ -129,18 +129,19 @@ class NotificationService(BaseService[Notification, NotificationCreate, dict]):
             html_content, text_content, subject = await email_service._render_template(
                 "password_reset.html",
                 variables,
-                NotificationEvent.CUSTOM_MESSAGE
+                NotificationEvent.PASSWORD_RESET
             )
             
-            # Enviar email usando EmailService
+            # Enviar email usando EmailService (PASSWORD_RESET es crítico, siempre se envía)
             result = await email_service.send_email(
                 db=db,
                 recipient=user.email,
                 subject=subject,
                 html_content=html_content,
                 text_content=text_content,
-                event_type=NotificationEvent.CUSTOM_MESSAGE,
-                priority=NotificationPriority.ALTA
+                event_type=NotificationEvent.PASSWORD_RESET,
+                priority=NotificationPriority.ALTA,
+                user_id=user.id  # ✅ Agregar user_id (aunque PASSWORD_RESET es crítico)
             )
             
             return result.get("success", False)

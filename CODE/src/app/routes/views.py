@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Package, Message
+from app.models.user import UserRole
 from app.dependencies import get_current_active_user_from_cookies
 from app.utils.auth_context import get_auth_context_from_request, get_auth_context_required
 from datetime import datetime
@@ -265,7 +266,11 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
 
 @router.get("/dashboard")
 async def dashboard_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
-    """Dashboard mejorado de paquetes con widgets y estadísticas"""
+    """Dashboard mejorado - redirige a admin si es admin/operador"""
+    # Redirigir admin/operador al dashboard administrativo
+    if current_user.role in [UserRole.ADMIN, UserRole.OPERADOR]:
+        return RedirectResponse(url="/admin", status_code=302)
+    
     context = get_auth_context_required(request)
     context["user"] = current_user
     
@@ -443,11 +448,32 @@ async def announcement_detail_by_guide_page(guide_number: str, request: Request,
 
 @router.get("/profile")
 async def profile_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
-    """Página de perfil del usuario actual"""
+    """Redirige a Settings > Mi Cuenta"""
+    return RedirectResponse(url="/settings?tab=account", status_code=302)
+
+@router.get("/settings")
+async def settings_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies), db: Session = Depends(get_db)):
+    """Página de configuración unificada"""
     context = get_auth_context_required(request)
     context["user"] = current_user
+    context["user_role"] = current_user.role.value
+    
+    # Cargar usuarios si es admin/operador (para tab de Usuarios)
+    if current_user.role in [UserRole.ADMIN, UserRole.OPERADOR]:
+        users = db.query(User).order_by(User.created_at.desc()).all()
+        context["users"] = users
+    else:
+        context["users"] = []
 
-    return templates.TemplateResponse("users/profile.html", context)
+    try:
+        return templates.TemplateResponse("settings/settings.html", context)
+    except Exception as e:
+        import logging
+        logging.error(f"Error rendering settings page: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error rendering template: {str(e)}"}
+        )
 
 @router.get("/profile/edit")
 async def edit_profile_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
@@ -459,11 +485,26 @@ async def edit_profile_page(request: Request, current_user: User = Depends(get_c
 
 @router.get("/profile/change-password")
 async def change_password_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
-    """Página de cambio de contraseña"""
-    context = get_auth_context_required(request)
-    context["user"] = current_user
+    """Redirige a Settings > Seguridad"""
+    return RedirectResponse(url="/settings?tab=security", status_code=302)
 
-    return templates.TemplateResponse("users/change-password.html", context)
+
+@router.get("/customer/preferences")
+async def customer_preferences_page(request: Request):
+    """
+    Página de preferencias para clientes (sin autenticación)
+    Los clientes acceden usando un token único en la URL
+    """
+    context = {
+        "request": request,
+        "is_authenticated": False,
+        "user": None,
+        "user_name": None,
+        "user_role": None,
+        "current_path": str(request.url.path),
+        "query_params": dict(request.query_params),
+    }
+    return templates.TemplateResponse("customer/preferences.html", context)
 
 
 # Health check movido a main.py para evitar duplicados

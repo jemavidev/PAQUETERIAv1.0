@@ -152,6 +152,7 @@ class EmailService(BaseService[Notification, Any, Any]):
         package_id: Optional[int] = None,
         customer_id: Optional[str] = None,
         announcement_id: Optional[str] = None,
+        user_id: Optional[int] = None,
         is_test: bool = False
     ) -> Dict[str, Any]:
         """
@@ -168,12 +169,101 @@ class EmailService(BaseService[Notification, Any, Any]):
             package_id: ID del paquete relacionado (opcional)
             customer_id: ID del cliente relacionado (opcional)
             announcement_id: ID del anuncio relacionado (opcional)
+            user_id: ID del usuario para verificar preferencias (opcional)
             is_test: Si es modo de prueba
             
         Returns:
             Dict con resultado del envío
         """
         try:
+            # ✅ NUEVO: Verificar preferencias del usuario (usuarios del sistema)
+            if user_id and not is_test:
+                from app.models.user_preferences import UserPreferences
+                user_prefs = db.query(UserPreferences).filter(
+                    UserPreferences.user_id == user_id
+                ).first()
+                
+                if user_prefs:
+                    # Verificar si el usuario permite este tipo de notificación
+                    if not user_prefs.should_send_notification(NotificationType.EMAIL, event_type):
+                        email_logger.info(f"📧❌ Email bloqueado por preferencias del usuario {user_id} (evento: {event_type.value})")
+                        
+                        # Crear registro de notificación bloqueada
+                        import re
+                        clean_text = re.sub(r'<[^>]+>', '', html_content)
+                        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                        message_preview = clean_text[:500] if clean_text else subject
+                        
+                        notification = Notification(
+                            notification_type=NotificationType.EMAIL,
+                            event_type=event_type,
+                            priority=priority,
+                            recipient=recipient,
+                            subject=subject,
+                            message=message_preview,
+                            status=NotificationStatus.BLOCKED,
+                            package_id=package_id,
+                            customer_id=customer_id,
+                            announcement_id=announcement_id,
+                            is_test=is_test,
+                            cost_cents=0,
+                            error_message="Bloqueado por preferencias del usuario"
+                        )
+                        db.add(notification)
+                        db.commit()
+                        db.refresh(notification)
+                        
+                        return {
+                            "success": False,
+                            "notification_id": notification.id,
+                            "status": "blocked",
+                            "message": "Notificación bloqueada por preferencias del usuario"
+                        }
+            
+            # ✅ NUEVO: Verificar preferencias del cliente (clientes sin cuenta)
+            if customer_id and not is_test:
+                from app.models.customer_preferences import CustomerPreferences
+                customer_prefs = db.query(CustomerPreferences).filter(
+                    CustomerPreferences.customer_id == customer_id
+                ).first()
+                
+                if customer_prefs:
+                    # Verificar si el cliente permite este tipo de notificación
+                    if not customer_prefs.should_send_notification(NotificationType.EMAIL, event_type):
+                        email_logger.info(f"📧❌ Email bloqueado por preferencias del cliente {customer_id} (evento: {event_type.value})")
+                        
+                        # Crear registro de notificación bloqueada
+                        import re
+                        clean_text = re.sub(r'<[^>]+>', '', html_content)
+                        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                        message_preview = clean_text[:500] if clean_text else subject
+                        
+                        notification = Notification(
+                            notification_type=NotificationType.EMAIL,
+                            event_type=event_type,
+                            priority=priority,
+                            recipient=recipient,
+                            subject=subject,
+                            message=message_preview,
+                            status=NotificationStatus.BLOCKED,
+                            package_id=package_id,
+                            customer_id=customer_id,
+                            announcement_id=announcement_id,
+                            is_test=is_test,
+                            cost_cents=0,
+                            error_message="Bloqueado por preferencias del cliente"
+                        )
+                        db.add(notification)
+                        db.commit()
+                        db.refresh(notification)
+                        
+                        return {
+                            "success": False,
+                            "notification_id": notification.id,
+                            "status": "blocked",
+                            "message": "Notificación bloqueada por preferencias del cliente"
+                        }
+            
             # Validar configuración
             if not self._validate_smtp_config():
                 raise ExternalServiceException("Configuración SMTP incompleta")
@@ -182,6 +272,12 @@ class EmailService(BaseService[Notification, Any, Any]):
             self._validate_email(recipient)
 
             # Crear registro de notificación
+            # Extraer texto limpio del HTML para el campo message (máximo 500 caracteres)
+            import re
+            clean_text = re.sub(r'<[^>]+>', '', html_content)  # Remover tags HTML
+            clean_text = re.sub(r'\s+', ' ', clean_text).strip()  # Limpiar espacios
+            message_preview = clean_text[:500] if clean_text else subject
+            
             notification = Notification(
                 notification_type=NotificationType.EMAIL,
                 event_type=event_type,
@@ -189,7 +285,7 @@ class EmailService(BaseService[Notification, Any, Any]):
                 recipient=recipient,
                 recipient_name=None,  # Se puede obtener del customer si está disponible
                 subject=subject,
-                message=text_content or html_content[:500],  # Primeros 500 chars para preview
+                message=message_preview,  # Preview limpio del contenido
                 status=NotificationStatus.PENDING,
                 package_id=package_id,
                 customer_id=customer_id,
@@ -243,6 +339,7 @@ class EmailService(BaseService[Notification, Any, Any]):
         package_id: Optional[int] = None,
         customer_id: Optional[str] = None,
         announcement_id: Optional[str] = None,
+        user_id: Optional[int] = None,
         priority: NotificationPriority = NotificationPriority.MEDIA,
         is_test: bool = False
     ) -> Dict[str, Any]:
@@ -257,6 +354,7 @@ class EmailService(BaseService[Notification, Any, Any]):
             package_id: ID del paquete (opcional)
             customer_id: ID del cliente (opcional)
             announcement_id: ID del anuncio (opcional)
+            user_id: ID del usuario para verificar preferencias (opcional)
             priority: Prioridad de la notificación
             is_test: Si es modo de prueba
             
@@ -298,6 +396,7 @@ class EmailService(BaseService[Notification, Any, Any]):
                 package_id=package_id,
                 customer_id=customer_id,
                 announcement_id=announcement_id,
+                user_id=user_id,
                 is_test=is_test
             )
 
@@ -314,6 +413,7 @@ class EmailService(BaseService[Notification, Any, Any]):
         text_content: Optional[str] = None,
         event_type: NotificationEvent = NotificationEvent.CUSTOM_MESSAGE,
         priority: NotificationPriority = NotificationPriority.MEDIA,
+        user_ids: Optional[List[int]] = None,
         is_test: bool = False
     ) -> Dict[str, Any]:
         """
@@ -327,6 +427,7 @@ class EmailService(BaseService[Notification, Any, Any]):
             text_content: Contenido texto plano (opcional)
             event_type: Tipo de evento
             priority: Prioridad
+            user_ids: Lista de user_ids correspondientes a cada recipient (opcional)
             is_test: Si es modo de prueba
             
         Returns:
@@ -334,10 +435,14 @@ class EmailService(BaseService[Notification, Any, Any]):
         """
         sent_count = 0
         failed_count = 0
+        blocked_count = 0
         results = []
 
-        for recipient in recipients:
+        for idx, recipient in enumerate(recipients):
             try:
+                # Obtener user_id correspondiente si está disponible
+                user_id = user_ids[idx] if user_ids and idx < len(user_ids) else None
+                
                 result = await self.send_email(
                     db=db,
                     recipient=recipient,
@@ -346,20 +451,34 @@ class EmailService(BaseService[Notification, Any, Any]):
                     text_content=text_content,
                     event_type=event_type,
                     priority=priority,
+                    user_id=user_id,
                     is_test=is_test
                 )
                 
-                if result["success"]:
+                if result.get("status") == "blocked":
+                    blocked_count += 1
+                    results.append({
+                        "recipient": recipient,
+                        "success": False,
+                        "status": "blocked",
+                        "notification_id": result.get("notification_id"),
+                        "message": "Bloqueado por preferencias"
+                    })
+                elif result["success"]:
                     sent_count += 1
+                    results.append({
+                        "recipient": recipient,
+                        "success": True,
+                        "notification_id": result.get("notification_id")
+                    })
                 else:
                     failed_count += 1
-                
-                results.append({
-                    "recipient": recipient,
-                    "success": result["success"],
-                    "notification_id": result.get("notification_id"),
-                    "error": result.get("error")
-                })
+                    results.append({
+                        "recipient": recipient,
+                        "success": False,
+                        "notification_id": result.get("notification_id"),
+                        "error": result.get("error")
+                    })
             except Exception as e:
                 failed_count += 1
                 results.append({
@@ -369,10 +488,11 @@ class EmailService(BaseService[Notification, Any, Any]):
                 })
                 email_logger.error(f"❌ Error enviando email a {recipient}: {str(e)}")
 
-        email_logger.info(f"📧 Envío masivo completado: {sent_count} enviados, {failed_count} fallidos")
+        email_logger.info(f"📧 Envío masivo completado: {sent_count} enviados, {blocked_count} bloqueados, {failed_count} fallidos")
         
         return {
             "sent_count": sent_count,
+            "blocked_count": blocked_count,
             "failed_count": failed_count,
             "total": len(recipients),
             "results": results

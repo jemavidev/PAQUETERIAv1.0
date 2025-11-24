@@ -336,19 +336,65 @@ async def policies_page(request: Request):
     return templates.TemplateResponse("general/privacy.html", context)
 
 # ========================================
+# RUTAS DE AUTENTICACIÓN
+# ========================================
+
+@router.get("/auth/login")
+async def login_page(request: Request):
+    """Página de login - Pública"""
+    try:
+        context = get_auth_context_from_request(request)
+        # Si ya está autenticado, redirigir al dashboard
+        if context.get("is_authenticated"):
+            redirect_url = request.query_params.get("redirect", "/packages")
+            return RedirectResponse(url=redirect_url, status_code=302)
+    except Exception:
+        # Usuario no autenticado, mostrar página de login
+        context = {
+            "request": request,
+            "is_authenticated": False,
+            "user": None,
+            "user_name": None,
+            "user_role": None
+        }
+    
+    # Agregar URL de redirección al contexto
+    context["redirect_url"] = request.query_params.get("redirect", "/packages")
+    return templates.TemplateResponse("auth/login.html", context)
+
+@router.get("/login")
+async def login_redirect(request: Request):
+    """Redirigir /login a /auth/login"""
+    redirect_url = request.query_params.get("redirect", "/packages")
+    return RedirectResponse(url=f"/auth/login?redirect={redirect_url}", status_code=302)
+
+# ========================================
 # ENDPOINTS ADICIONALES PARA AUTENTICACIÓN
 # ========================================
 
 @router.post("/api/auth/dev/set-cookies")
 async def set_auth_cookies(request: Request):
-    """Endpoint temporal para establecer cookies de autenticación - Solo para desarrollo"""
+    """
+    ⚠️ ENDPOINT DE DESARROLLO - NO USAR EN PRODUCCIÓN ⚠️
+    
+    Este endpoint establece cookies de autenticación falsas para pruebas.
+    DEBE SER DESHABILITADO EN PRODUCCIÓN por razones de seguridad.
+    """
+    # Verificar que estemos en modo desarrollo
+    from app.config import settings
+    if settings.environment == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este endpoint no está disponible en producción"
+        )
+    
     try:
         body = await request.json()
         username = body.get("username", "jesus")
 
         response = JSONResponse({
             "success": True,
-            "message": "Cookies establecidas",
+            "message": "⚠️ Cookies de desarrollo establecidas - NO USAR EN PRODUCCIÓN",
             "user": {
                 "username": username,
                 "first_name": username.title(),
@@ -356,8 +402,8 @@ async def set_auth_cookies(request: Request):
             }
         })
 
-        # Establecer cookies (24 horas)
-        response.set_cookie("access_token", "fake_token_for_development", max_age=86400)  # 24 horas = 86400 segundos
+        # ⚠️ TOKEN FAKE SOLO PARA DESARROLLO - NUNCA EN PRODUCCIÓN
+        response.set_cookie("access_token", "fake_token_for_development", max_age=86400)
         response.set_cookie("user_id", "1", max_age=86400)
         response.set_cookie("user_name", username, max_age=86400)
         response.set_cookie("user_role", "admin", max_age=86400)

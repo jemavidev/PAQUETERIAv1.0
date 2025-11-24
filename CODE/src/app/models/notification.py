@@ -26,6 +26,7 @@ class NotificationStatus(enum.Enum):
     DELIVERED = "delivered"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    BLOCKED = "blocked"  # Bloqueado por preferencias del usuario
 
 class NotificationPriority(enum.Enum):
     BAJA = "BAJA"
@@ -40,6 +41,14 @@ class NotificationEvent(enum.Enum):
     PACKAGE_CANCELLED = "package_cancelled"
     PAYMENT_DUE = "payment_due"
     CUSTOM_MESSAGE = "custom_message"
+    MESSAGE_RECEIVED = "message_received"
+    MARKETING = "marketing"
+    # Eventos críticos (siempre se envían)
+    SECURITY_ALERT = "security_alert"
+    ACCOUNT_LOCKED = "account_locked"
+    PASSWORD_CHANGED = "password_changed"
+    PASSWORD_RESET = "password_reset"
+    LEGAL_NOTICE = "legal_notice"
 
 class Notification(Base):
     """

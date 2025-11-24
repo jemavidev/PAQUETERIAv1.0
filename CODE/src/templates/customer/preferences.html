@@ -1,0 +1,272 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mis Preferencias de Notificaciones - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8" x-data="customerPreferencesApp()">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-papyrus-blue rounded-full mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-light text-gray-900">Preferencias de Notificaciones</h1>
+            <p class="mt-2 text-gray-600">Controla cómo y cuándo te contactamos</p>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-papyrus-blue"></div>
+            <p class="mt-4 text-gray-600">Cargando preferencias...</p>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="error" class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Error</h3>
+                    <p class="mt-1 text-sm text-red-700" x-text="error"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div x-show="!loading && !error" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Tu Información</h2>
+            <div class="space-y-2 text-sm">
+                <p><span class="font-medium text-gray-700">Nombre:</span> <span x-text="customer.full_name"></span></p>
+                <p><span class="font-medium text-gray-700">Teléfono:</span> <span x-text="customer.phone"></span></p>
+                <p x-show="customer.email"><span class="font-medium text-gray-700">Email:</span> <span x-text="customer.email"></span></p>
+            </div>
+        </div>
+
+        <!-- Preferences Form -->
+        <div x-show="!loading && !error" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">Preferencias de Notificaciones</h2>
+
+            <form @submit.prevent="savePreferences()">
+                <div class="space-y-6">
+
+                    <!-- Tipo de Notificaciones -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-4">Tipo de Notificaciones</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">📱 Notificaciones por SMS</p>
+                                    <p class="text-xs text-gray-500 mt-1">Recibe SMS sobre tus paquetes</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.sms_notifications_enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">📧 Notificaciones por Email</p>
+                                    <p class="text-xs text-gray-500 mt-1">Recibe emails sobre tus paquetes</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.email_notifications_enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Eventos de Paquetes -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-4">Notificaciones de Paquetes</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">📦 Paquete Anunciado</p>
+                                    <p class="text-xs text-gray-500 mt-1">Cuando anunciamos un paquete para ti</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.notify_package_announced" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">✅ Paquete Recibido</p>
+                                    <p class="text-xs text-gray-500 mt-1">Cuando tu paquete llega a nuestras instalaciones</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.notify_package_received" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">🎉 Paquete Entregado</p>
+                                    <p class="text-xs text-gray-500 mt-1">Cuando te entregamos tu paquete</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.notify_package_delivered" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">💰 Recordatorios de Pago</p>
+                                    <p class="text-xs text-gray-500 mt-1">Cuando tienes un pago pendiente</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="preferences.notify_payment_due" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Marketing -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-4">Comunicaciones Promocionales</h3>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">🎁 Ofertas y Promociones</p>
+                                <p class="text-xs text-gray-500 mt-1">Recibe ofertas especiales y descuentos</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" x-model="preferences.marketing_enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Save Button -->
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="submit" :disabled="saving"
+                        class="px-6 py-3 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!saving">Guardar Preferencias</span>
+                        <span x-show="saving">Guardando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Box -->
+        <div x-show="!loading && !error" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="ml-3 text-sm text-blue-700">
+                    <p><strong>Nota:</strong> Tus preferencias se guardan automáticamente. Puedes volver a esta página en cualquier momento usando el enlace que te enviamos por SMS o email.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function customerPreferencesApp() {
+        return {
+            loading: true,
+            saving: false,
+            error: null,
+            token: new URLSearchParams(window.location.search).get('token'),
+            customer: {
+                full_name: '',
+                phone: '',
+                email: ''
+            },
+            preferences: {
+                sms_notifications_enabled: true,
+                email_notifications_enabled: true,
+                notify_package_received: true,
+                notify_package_delivered: true,
+                notify_package_announced: true,
+                notify_payment_due: true,
+                marketing_enabled: false
+            },
+
+            init() {
+                if (!this.token) {
+                    this.error = 'Token no proporcionado. Por favor, usa el enlace que te enviamos por SMS o email.';
+                    this.loading = false;
+                    return;
+                }
+                this.loadPreferences();
+            },
+
+            async loadPreferences() {
+                try {
+                    const response = await fetch(`/api/customer/preferences?token=${this.token}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.detail || 'Error al cargar preferencias');
+                    }
+
+                    const data = await response.json();
+                    this.customer = data.customer;
+                    this.preferences = data.preferences;
+                    this.loading = false;
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.error = error.message;
+                    this.loading = false;
+                }
+            },
+
+            async savePreferences() {
+                this.saving = true;
+                try {
+                    const response = await fetch(`/api/customer/preferences?token=${this.token}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.preferences)
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.detail || 'Error al guardar preferencias');
+                    }
+
+                    const data = await response.json();
+                    this.showToast('success', 'Preferencias guardadas correctamente');
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showToast('error', error.message);
+                } finally {
+                    this.saving = false;
+                }
+            },
+
+            showToast(type, message) {
+                const toast = document.createElement('div');
+                toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        }
+    }
+</script>
+{% endblock %}

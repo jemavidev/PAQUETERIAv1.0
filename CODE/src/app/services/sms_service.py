@@ -126,10 +126,91 @@ class SMSService(BaseService[Notification, Any, Any]):
         package_id: Optional[str] = None,
         customer_id: Optional[str] = None,
         announcement_id: Optional[str] = None,
+        user_id: Optional[int] = None,
         is_test: bool = False
     ) -> SMSSendResponse:
         """Envía un SMS individual"""
         try:
+            # ✅ NUEVO: Verificar preferencias del usuario (usuarios del sistema)
+            if user_id and not is_test:
+                from app.models.user_preferences import UserPreferences
+                user_prefs = db.query(UserPreferences).filter(
+                    UserPreferences.user_id == user_id
+                ).first()
+                
+                if user_prefs:
+                    # Verificar si el usuario permite este tipo de notificación
+                    if not user_prefs.should_send_notification(NotificationType.SMS, event_type):
+                        import logging
+                        logger = logging.getLogger("sms_service")
+                        logger.info(f"📵 SMS bloqueado por preferencias del usuario {user_id} (evento: {event_type.value})")
+                        
+                        # Crear registro de notificación bloqueada
+                        notification = Notification(
+                            notification_type=NotificationType.SMS,
+                            event_type=event_type,
+                            priority=priority,
+                            recipient=recipient,
+                            message=message,
+                            status=NotificationStatus.BLOCKED,
+                            package_id=package_id,
+                            customer_id=customer_id,
+                            announcement_id=announcement_id,
+                            is_test=is_test,
+                            cost_cents=0,
+                            error_message="Bloqueado por preferencias del usuario"
+                        )
+                        db.add(notification)
+                        db.commit()
+                        db.refresh(notification)
+                        
+                        return SMSSendResponse(
+                            notification_id=notification.id,
+                            status="blocked",
+                            message="Notificación bloqueada por preferencias del usuario",
+                            cost_cents=0
+                        )
+            
+            # ✅ NUEVO: Verificar preferencias del cliente (clientes sin cuenta)
+            if customer_id and not is_test:
+                from app.models.customer_preferences import CustomerPreferences
+                customer_prefs = db.query(CustomerPreferences).filter(
+                    CustomerPreferences.customer_id == customer_id
+                ).first()
+                
+                if customer_prefs:
+                    # Verificar si el cliente permite este tipo de notificación
+                    if not customer_prefs.should_send_notification(NotificationType.SMS, event_type):
+                        import logging
+                        logger = logging.getLogger("sms_service")
+                        logger.info(f"📵 SMS bloqueado por preferencias del cliente {customer_id} (evento: {event_type.value})")
+                        
+                        # Crear registro de notificación bloqueada
+                        notification = Notification(
+                            notification_type=NotificationType.SMS,
+                            event_type=event_type,
+                            priority=priority,
+                            recipient=recipient,
+                            message=message,
+                            status=NotificationStatus.BLOCKED,
+                            package_id=package_id,
+                            customer_id=customer_id,
+                            announcement_id=announcement_id,
+                            is_test=is_test,
+                            cost_cents=0,
+                            error_message="Bloqueado por preferencias del cliente"
+                        )
+                        db.add(notification)
+                        db.commit()
+                        db.refresh(notification)
+                        
+                        return SMSSendResponse(
+                            notification_id=notification.id,
+                            status="blocked",
+                            message="Notificación bloqueada por preferencias del cliente",
+                            cost_cents=0
+                        )
+            
             # Validar número de teléfono
             self._validate_phone_number(recipient)
 
@@ -188,32 +269,47 @@ class SMSService(BaseService[Notification, Any, Any]):
         message: str,
         event_type: NotificationEvent = NotificationEvent.CUSTOM_MESSAGE,
         priority: NotificationPriority = NotificationPriority.MEDIA,
+        user_ids: Optional[List[int]] = None,
         is_test: bool = False
     ) -> SMSBulkSendResponse:
         """Envía SMS masivo"""
         sent_count = 0
         failed_count = 0
+        blocked_count = 0
         total_cost = 0
         results = []
 
-        for recipient in recipients:
+        for idx, recipient in enumerate(recipients):
             try:
+                # Obtener user_id correspondiente si está disponible
+                user_id = user_ids[idx] if user_ids and idx < len(user_ids) else None
+                
                 result = await self.send_sms(
                     db=db,
                     recipient=recipient,
                     message=message,
                     event_type=event_type,
                     priority=priority,
+                    user_id=user_id,
                     is_test=is_test
                 )
-                sent_count += 1
-                total_cost += result.cost_cents
-                results.append({
-                    "recipient": recipient,
-                    "status": "sent",
-                    "notification_id": str(result.notification_id),
-                    "cost_cents": result.cost_cents
-                })
+                if result.status == "blocked":
+                    blocked_count += 1
+                    results.append({
+                        "recipient": recipient,
+                        "status": "blocked",
+                        "notification_id": str(result.notification_id),
+                        "message": "Bloqueado por preferencias"
+                    })
+                else:
+                    sent_count += 1
+                    total_cost += result.cost_cents
+                    results.append({
+                        "recipient": recipient,
+                        "status": "sent",
+                        "notification_id": str(result.notification_id),
+                        "cost_cents": result.cost_cents
+                    })
             except Exception as e:
                 failed_count += 1
                 results.append({
@@ -254,7 +350,7 @@ class SMSService(BaseService[Notification, Any, Any]):
             # Renderizar mensaje
             message = template.render_message(variables)
 
-            # Determinar destinatario
+            # Determinar destinatario y user_id
             recipient = await self._get_event_recipient(
                 db,
                 event_request.event_type,
@@ -266,6 +362,14 @@ class SMSService(BaseService[Notification, Any, Any]):
             if not recipient:
                 raise ValidationException("No se pudo determinar el destinatario del SMS")
 
+            # Obtener user_id del destinatario
+            user_id = await self._get_user_id_from_event(
+                db,
+                event_request.package_id,
+                event_request.customer_id,
+                event_request.announcement_id
+            )
+
             # Enviar SMS
             return await self.send_sms(
                 db=db,
@@ -276,6 +380,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 package_id=str(event_request.package_id) if event_request.package_id else None,
                 customer_id=str(event_request.customer_id) if event_request.customer_id else None,
                 announcement_id=str(event_request.announcement_id) if event_request.announcement_id else None,
+                user_id=user_id,
                 is_test=event_request.is_test
             )
 
@@ -649,6 +754,32 @@ class SMSService(BaseService[Notification, Any, Any]):
             if announcement and hasattr(announcement, 'customer_phone'):
                 return announcement.customer_phone
 
+        return None
+
+    async def _get_user_id_from_event(
+        self,
+        db: Session,
+        package_id: Optional[int],
+        customer_id: Optional[str],
+        announcement_id: Optional[str]
+    ) -> Optional[int]:
+        """
+        Obtiene el user_id del destinatario para verificar preferencias
+        Prioridad: customer_id > package_id > announcement_id
+        """
+        if customer_id:
+            customer = db.query(Customer).filter(Customer.id == customer_id).first()
+            if customer and hasattr(customer, 'user_id'):
+                return customer.user_id
+
+        if package_id:
+            package = db.query(Package).filter(Package.id == package_id).first()
+            if package and package.customer and hasattr(package.customer, 'user_id'):
+                return package.customer.user_id
+
+        # Los anuncios normalmente no tienen user_id directo
+        # Se podría buscar por customer_phone si es necesario
+        
         return None
 
     # ========================================

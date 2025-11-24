@@ -22,6 +22,7 @@ from .files import router as files
 from .admin import router as admin
 from .announcements import router as announcements
 from .profile import router as profile
+from .settings_api import router as settings_api
 # from .public import router as public  # Archivo no existe
 # from .protected import router as protected  # Archivo no existe
 
@@ -36,6 +37,7 @@ __all__ = [
     "admin",
     "announcements",
     "profile",
+    "settings_api",
     # "public",  # Archivo no existe
     # "protected"  # Archivo no existe
 ]

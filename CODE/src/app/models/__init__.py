@@ -18,12 +18,14 @@ from .rate import Rate, RateType
 from .announcement_new import PackageAnnouncementNew
 from .package_event import PackageEvent, EventType
 from .user_preferences import UserPreferences
+from .customer_preferences import CustomerPreferences
 
 __all__ = [
     "BaseModel",
     "User",
     "UserPreferences",
     "Customer",
+    "CustomerPreferences",
     "Package",
     "Message",
     "FileUpload",

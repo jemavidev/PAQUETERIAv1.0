@@ -1311,6 +1311,14 @@ function createPackageElement(package) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                             </svg>
                         </a>
+                        <button class="epb text-purple-600 hover:text-purple-800 transition-colors" 
+                                id="epb-${package.id}" 
+                                title="Enviar email con link de preferencias" 
+                                onclick="sendPreferencesEmail('${package.id}', '${package.status}', '${package.customer_email}')">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                        </button>
                     ` : ''}
                     ${package.customer_phone ? `
                         <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, te contacto por tu paquete`)}" 
@@ -4374,6 +4382,117 @@ function showCorrectFees(package) {
             </div>
         </div>
     `;
+}
+
+/**
+ * Enviar email con link de preferencias al cliente
+ * @param {string} packageId - ID del paquete
+ * @param {string} packageStatus - Estado actual del paquete
+ * @param {string} customerEmail - Email del cliente
+ */
+async function sendPreferencesEmail(packageId, packageStatus, customerEmail) {
+    try {
+        console.log('📧 Enviando email de preferencias:', { packageId, packageStatus, customerEmail });
+        
+        // Mapear estado a event_type
+        const statusMap = {
+            'RECIBIDO': 'received',
+            'ENTREGADO': 'delivered',
+            'CANCELADO': 'cancelled',
+            'received': 'received',
+            'delivered': 'delivered',
+            'cancelled': 'cancelled'
+        };
+        
+        const eventType = statusMap[packageStatus] || statusMap[packageStatus.toUpperCase()];
+        
+        if (!eventType) {
+            showErrorToast('Estado Inválido', 'Solo se pueden enviar emails para paquetes RECIBIDOS, ENTREGADOS o CANCELADOS', 4000);
+            return;
+        }
+        
+        // Limpiar el ID del paquete (remover prefijo 'announcement_' si existe)
+        const cleanPackageId = packageId.replace('announcement_', '');
+        
+        // Deshabilitar botón temporalmente
+        const button = document.getElementById(`epb-${packageId}`);
+        if (button) {
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        
+        // Enviar petición
+        const response = await fetch(`/api/packages/${cleanPackageId}/send-email?event_type=${eventType}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            console.log('✅ Email enviado exitosamente:', data);
+            showSuccessToast(
+                '✅ Email Enviado', 
+                `Email con link de preferencias enviado a ${customerEmail}`, 
+                5000
+            );
+            
+            // Cambiar icono del botón a check
+            if (button) {
+                button.innerHTML = `
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `;
+                button.classList.remove('text-purple-600', 'hover:text-purple-800');
+                button.classList.add('text-green-600');
+                
+                // Restaurar después de 3 segundos
+                setTimeout(() => {
+                    button.innerHTML = `
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                    `;
+                    button.classList.remove('text-green-600');
+                    button.classList.add('text-purple-600', 'hover:text-purple-800');
+                    button.disabled = false;
+                    button.classList.remove('opacity-50', 'cursor-not-allowed');
+                }, 3000);
+            }
+        } else {
+            console.error('❌ Error al enviar email:', data);
+            showErrorToast(
+                'Error al Enviar', 
+                data.detail || 'No se pudo enviar el email. Por favor, intenta nuevamente.', 
+                5000
+            );
+            
+            // Restaurar botón
+            if (button) {
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error en sendPreferencesEmail:', error);
+        showErrorToast(
+            'Error de Conexión', 
+            'No se pudo conectar con el servidor. Verifica tu conexión e intenta nuevamente.', 
+            5000
+        );
+        
+        // Restaurar botón
+        const button = document.getElementById(`epb-${packageId}`);
+        if (button) {
+            button.disabled = false;
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
 }
 
 // Configuración de la aplicación desde el backend

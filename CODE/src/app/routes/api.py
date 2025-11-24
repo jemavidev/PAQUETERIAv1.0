@@ -292,14 +292,27 @@ async def export_dashboard_data(
 
 @router.post("/auth/set-cookies")
 async def set_auth_cookies(request: Request):
-    """Endpoint temporal para establecer cookies de autenticación - Solo para desarrollo"""
+    """
+    ⚠️ ENDPOINT DE DESARROLLO - NO USAR EN PRODUCCIÓN ⚠️
+    
+    Este endpoint establece cookies de autenticación falsas para pruebas.
+    DEBE SER DESHABILITADO EN PRODUCCIÓN por razones de seguridad.
+    """
+    # Verificar que estemos en modo desarrollo
+    from app.config import settings
+    if settings.environment == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este endpoint no está disponible en producción"
+        )
+    
     try:
         body = await request.json()
         username = body.get("username", "jesus")
         
         response = JSONResponse({
             "success": True,
-            "message": "Cookies establecidas",
+            "message": "⚠️ Cookies de desarrollo establecidas - NO USAR EN PRODUCCIÓN",
             "user": {
                 "username": username,
                 "first_name": username.title(),
@@ -307,7 +320,8 @@ async def set_auth_cookies(request: Request):
             }
         })
         
-        response.set_cookie("access_token", "fake_token_for_development", max_age=86400)  # 24 horas = 86400 segundos
+        # ⚠️ TOKEN FAKE SOLO PARA DESARROLLO - NUNCA EN PRODUCCIÓN
+        response.set_cookie("access_token", "fake_token_for_development", max_age=86400)
         response.set_cookie("user_id", "1", max_age=86400)
         response.set_cookie("user_name", username, max_age=86400)
         response.set_cookie("user_role", "admin", max_age=86400)

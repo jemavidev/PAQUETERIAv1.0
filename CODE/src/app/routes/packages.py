@@ -35,6 +35,7 @@ from app.services.email_service import EmailService
 from app.models.notification import NotificationEvent, NotificationPriority
 from app.utils.datetime_utils import get_colombia_now
 from app.utils.normalization import normalize_package_item, normalize_status, normalize_type, normalize_condition
+from app.utils.customer_preferences_helper import get_preferences_url
 
 # Crear router
 router = APIRouter(
@@ -1673,12 +1674,16 @@ async def send_package_email_notification(
         tracking_base = settings.tracking_base_url.rstrip("/")
         tracking_url = f"{tracking_base}?auto_search={consult_code}"
 
+        # Obtener o crear el link de preferencias del cliente
+        preferences_url = get_preferences_url(db, package.customer_id)
+
         variables = {
             "first_name": first_name,
             "current_status": package.status.value if hasattr(package.status, "value") else str(package.status),
             "guide_number": package.guide_number or None,
             "consult_code": consult_code,
             "tracking_url": tracking_url,
+            "preferences_url": preferences_url,  # Link de preferencias del cliente
         }
         
         # Enviar email usando EmailService

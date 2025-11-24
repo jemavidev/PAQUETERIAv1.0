@@ -132,21 +132,6 @@ def get_current_user_from_cookies(
         
         logger.debug(f"Usuario extraído del token: {user_data.get('username')}")
 
-        # Special handling for fake development token
-        if token == "fake_token_for_development":
-            # Create a fake user object for development
-            from .models.user import User, UserRole
-            fake_user = User()
-            fake_user.id = 1
-            fake_user.username = user_data["username"]
-            fake_user.email = f"{user_data['username']}@example.com"
-            fake_user.full_name = user_data["username"].title()
-            # Convert role to lowercase for enum compatibility
-            role_value = user_data["role"].lower() if user_data["role"] else "operator"
-            fake_user.role = UserRole(role_value)
-            fake_user.is_active = True
-            return fake_user
-
         # Obtener usuario de la base de datos
         user_service = UserService()
         user_id = int(user_data["user_id"])
@@ -184,26 +169,12 @@ def get_current_active_user_from_cookies(
             token = auth_header.split(" ")[1]
             user_data = get_user_from_token(token)
             if user_data:
-                # For development token
-                if token == "fake_token_for_development":
-                    from .models.user import User, UserRole
-                    fake_user = User()
-                    fake_user.id = 1
-                    fake_user.username = user_data["username"]
-                    fake_user.email = f"{user_data['username']}@example.com"
-                    fake_user.full_name = user_data["username"].title()
-                    # Convert role to lowercase for enum compatibility
-                    role_value = user_data["role"].lower() if user_data["role"] else "operator"
-                    fake_user.role = UserRole(role_value)
-                    fake_user.is_active = True
-                    return fake_user
-                else:
-                    # Get from database
-                    from .services.user_service import UserService
-                    user_service = UserService()
-                    user = user_service.get_by_id(db, int(user_data["user_id"]))
-                    if user and user.is_active:
-                        return user
+                # Get from database
+                from .services.user_service import UserService
+                user_service = UserService()
+                user = user_service.get_by_id(db, int(user_data["user_id"]))
+                if user and user.is_active:
+                    return user
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
