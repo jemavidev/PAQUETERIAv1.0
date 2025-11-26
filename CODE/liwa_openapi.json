@@ -1,0 +1,524 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "LIWA Empresas API",
+    "description": "LIWA Empresas API SMS permite a nuestros clientes enviar de forma segura y eficiente mensajes de texto. Hemos habilitado destinos internacionales en nuestra nueva versión. Se requiere la utilización de JWT para la autenticación y uso de un API Key mediante el backoffice. Puedes agregar la IP 0.0.0.0 para consumirla desde un servidor sin ip fija.",
+    "termsOfService": "https://www.cellvoz.com/wp-content/uploads/2021/03/Terminos-y-Condiciones-022021.pdf",
+    "contact": {
+      "email": "contacto@cellvoz.com.co"
+    },
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.liwa.co/v2",
+      "description": "Production"
+    },
+    {
+      "url": "https://api-dev.liwa.co/v2",
+      "description": "Staging"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Autenticación de cuentas."
+    },
+    {
+      "name": "sms",
+      "description": "Envio de SMS"
+    },
+    {
+      "name": "bulk_sms",
+      "description": "Envio másivo de mensajes de texto"
+    },
+    {
+      "name": "text2speech",
+      "description": "Mensajes de Texto a Voz o solo texto"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Obtener Token de autorización",
+        "operationId": "login",
+        "requestBody": {
+          "description": "Cuenta y clave del cliente LIWA",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Credenciales validas, se obtiene el token que debe ser enviado en cada transacción segura. El token de autorización tiene una duración de 24 horas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Credenciales invalidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/sms/single": {
+      "get": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Enviar mensajes de texto sencillos",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "API KEY de tu cuenta Liwa",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "9843d06eb765a5977dff2d7bffcd9b98be0876c"
+            }
+          },
+          {
+            "name": "account",
+            "in": "header",
+            "description": "Número de tu cuenta Liwa",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "685495483"
+            }
+          },
+          {
+            "name": "password",
+            "in": "header",
+            "description": "Contraseña de tu cuenta Liwa",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "PassW0rd2021.*"
+            }
+          },
+          {
+            "name": "message",
+            "in": "header",
+            "description": "Texto del mensaje a enviar no debe superar los 466 caracteres",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "Tu Codigo es 202020"
+            }
+          },
+          {
+            "name": "number",
+            "in": "header",
+            "description": "El formato del número de celular debe ser codigopais + número",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "573113455666"
+            }
+          },
+          {
+            "name": "type",
+            "in": "header",
+            "description": "Tipo de mensaje de texto, este puede ser ( 1 ) o ( 3 ) para mensajes de una vía internacional o ( 2 ) para mensajes de doble vía",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El envío se realizó correctamente y esta próximo a ser entregado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SMSResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de formato ya sea por que el mensaje contiene palabras invalidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de autenticación, se sugiere verificar el TOKEN o el Api Key o su IP de acceso no esta permitida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Errores varios el mensaje del objeto identifica claramente el error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body"
+      },
+      "post": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Enviar mensajes de texto sencillos, para el envio se debe enviar el JWT Token y el API Key",
+        "operationId": "sms",
+        "requestBody": {
+          "description": "Envio de un mensaje de texto para celulares, el formato del numero de celular debe ser codigopais+numero, Ejemplo  Telefono en Colombia 573113455666, la longitud del texto a enviar no debe superar los 466 caracteres.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SMSRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "El envío se realizó correctamente y esta próximo a ser entregado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SMSResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de formato ya sea por que el mensaje contiene palabras invalidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de autenticación, se sugiere verificar el TOKEN o el Api Key o su IP de acceso no esta permitida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Errores varios el mensaje del objeto identifica claramente el error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseApi"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "api_key": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/sms/multiple": {
+      "post": {
+        "tags": [
+          "bulk_sms"
+        ],
+        "summary": "Envio másivo mensajes de texto sencillos. Para el envio se debe enviar el JWT Token y el API Key",
+        "operationId": "bulk_sms",
+        "requestBody": {
+          "description": "Envio másivo mensajes de texto sencillos. Para el envio se debe enviar el JWT Token y el API Key",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultiSMSRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "El envío se realizó correctamente y esta próximo a ser entregado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SMSResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "api_key": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/sms/text2speech": {
+      "post": {
+        "tags": [
+          "text2speech"
+        ],
+        "summary": "Envío de un mensaje de Texto o de Texto a Voz o ambos. Con este servicio se puede enviar un mensaje el cual puede ser entregado como un SMS o como una llamada o ambos.",
+        "operationId": "notify",
+        "requestBody": {
+          "description": "Envio de notificaciones. Para el envio se debe enviar el JWT Token y el API Key",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "El envío se realizó correctamente y esta próximo a ser entregado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "api_key": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Login": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string",
+            "description": "Numero de cuenta Liwa"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña de cuenta Liwa"
+          }
+        }
+      },
+      "ErrorResponseApi": {
+        "type": "object",
+        "properties": {
+          "succes": {
+            "type": "boolean",
+            "default": false
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "SMSRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Codigo país + Numero de celular"
+          },
+          "message": {
+            "type": "string",
+            "description": "Texto del mensaje a enviar no debe superar los 466 caracteres"
+          },
+          "type": {
+            "type": "number",
+            "description": "Tipo de mensaje de texto, este puede ser ( 1 ) o ( 3 ) para mensajes de una vía internacional o ( 2 ) para mensajes de doble vía"
+          }
+        }
+      },
+      "MultipleSMSMessageRequest": {
+        "type": "object",
+        "properties": {
+          "codeCountry": {
+            "type": "string",
+            "description": "Código del país"
+          },
+          "number": {
+            "type": "string",
+            "description": "Numero de celular"
+          },
+          "message": {
+            "type": "string",
+            "description": "Texto del mensaje a enviar no debe superar los 466 caracteres"
+          },
+          "type": {
+            "type": "number",
+            "description": "Tipo de mensaje de texto, este puede ser ( 1 ) o ( 3 ) para mensajes de una vía internacional o ( 2 ) para mensajes de doble vía"
+          }
+        }
+      },
+      "SMSResponse": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Numero de celular enviado en el request"
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string",
+            "description": "Identificador del texto enviado"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MultiSMSRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre de la campaña"
+          },
+          "sendingDate": {
+            "type": "string",
+            "description": "Fecha para envio de la campaña, en el caso de no requerirse una fecha y hora especifica de envio de la campaña se puede omitir esta propiedad"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MultipleSMSMessageRequest"
+            }
+          }
+        }
+      },
+      "NotificationMessage": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Numero de telefono al cual desea enviar, se debe incluir el indicativo de la ciudad para los telefonos locales en el caso sea una notificacion de texto a voz."
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "Codigo del país a donde se desea llamar, por defecto debe usarse el codigo 57 correspondiente a COLOMBIA."
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensaje a ser enviado."
+          },
+          "type": {
+            "type": "number",
+            "description": "Tipo de entrega del mensaje, 0 SMS, 1 VOZ, 2 Ambos."
+          }
+        }
+      },
+      "NotificationMessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Identificador del numero enviado"
+          },
+          "status": {
+            "type": "boolean",
+            "description": "Estado de la entrega del mensaje"
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensaje del estado de la entrega del mensaje"
+          }
+        }
+      },
+      "NotificationResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/NotificationMessageResponse"
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "api_key": {
+        "type": "apiKey",
+        "name": "api-key",
+        "in": "header"
+      }
+    }
+  }
+}

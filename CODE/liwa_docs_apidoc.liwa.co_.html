@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>LIWA empresas API</title>
+    <!-- needed for adaptive design -->
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800%7CMuli:100,300,400,600,800">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/style.css">
+    <!--
+    ReDoc doesn't change outer page styles
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="rd-navbar-wrap">
+        <nav class="rd-navbar rd-navbar-modern" data-layout="rd-navbar-fixed" data-sm-layout="rd-navbar-fixed" data-md-layout="rd-navbar-fixed" data-md-device-layout="rd-navbar-fixed" data-lg-layout="rd-navbar-fixed" data-lg-device-layout="rd-navbar-fixed" data-xl-layout="rd-navbar-static" data-xl-device-layout="rd-navbar-static" data-xxl-layout="rd-navbar-static" data-xxl-device-layout="rd-navbar-static" data-lg-stick-up-offset="10px" data-xl-stick-up-offset="10px" data-xxl-stick-up-offset="10px" data-lg-stick-up="true" data-xl-stick-up="true" data-xxl-stick-up="true">
+          <div class="rd-navbar-main">
+            <!-- RD Navbar Panel-->
+            <div class="rd-navbar-panel">
+              <!-- RD Navbar Toggle-->
+              <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
+              <!-- RD Navbar Brand-->
+              <div class="rd-navbar-brand"> <a class="brand" href="index.html"><img class="brand-logo-dark" src="./images/logoLiwa.png" alt="" width="109" height="39" srcset="./images/logoLiwa.png"/></a></div>
+            </div>
+            <div class="rd-navbar-nav-wrap">
+              <!-- RD Navbar Nav-->
+              <ul class="rd-navbar-nav align-content-end dato-nav">
+                <li class="rd-nav-item"><a class="rd-nav-link" href="#">Lenguajes</a>
+                  <!-- RD Navbar Megamenu-->
+                  <div class="rd-menu rd-navbar-megamenu">
+                    <ul class="rd-navbar-megamenu-inner">
+                      <li class="rd-megamenu-item">
+                        <ul class="rd-megamenu-list">
+                          <li class="rd-megamenu-list-item"><a class="rd-megamenu-list-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/javascript-client-generated+(1).zip">NodeJs</a></li>
+                          <li class="rd-megamenu-list-item"><a class="rd-megamenu-list-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/python-client-generated.zip">Python</a></li>
+                          <li class="rd-megamenu-list-item"><a class="rd-megamenu-list-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/java-client-generated.zip">Java</a></li>
+                          <li class="rd-megamenu-list-item"><a class="rd-megamenu-list-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/php-client-generated.zip">Php</a></li>
+                          <li class="rd-megamenu-list-item"><a class="rd-megamenu-list-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/typescript-angular-client-generated.zip">Angular</a></li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="rd-navbar-element bg-accent"> 
+              <a class="button button-sm button-default-outline button-winona" data-multitoggle="#rd-navbar-aside" aria-label="Sidebar toggle">Lenguajes</a>
+              <!--<button class="rd-navbar-aside-open-toggle" data-multitoggle="#rd-navbar-aside" aria-label="Sidebar toggle">Lenguajes</button>-->
+              <a class="button button-sm button-default-outline button-winona" href="https://www.liwa.co">Liwa empresas</a>
+              
+            </div>
+            <div class="rd-navbar-dummy"></div>
+          </div>
+          <div class="rd-navbar-aside" id="rd-navbar-aside"> 
+            <div class="rd-navbar-aside-header">
+              <p class="rd-navbar-aside-title">Lenguajes</p>
+              <button class="rd-navbar-aside-close-toggle linearicons-cross2" data-multitoggle="#rd-navbar-aside" data-scope=".rd-navbar" aria-label="Sidebar toggle"></button>
+            </div>
+            <div class="rd-navbar-aside-main">
+              <div class="rd-navbar-aside-group navbar" data-navbar="{&quot;stuck&quot;: false, &quot;anchor&quot;: {&quot;offsetRef&quot;: &quot;.rd-navbar-main&quot;}}">
+                <div class="navbar-inner">
+                  <a class="rd-navbar-aside-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/javascript-client-generated+(1).zip">NodeJs</a>
+                  <a class="rd-navbar-aside-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/python-client-generated.zip">Python</a>
+                  <a class="rd-navbar-aside-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/java-client-generated.zip">Java</a>
+                  <a class="rd-navbar-aside-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/php-client-generated.zip">Php</a>
+                  <a class="rd-navbar-aside-link" href="https://liwarepo.s3.us-west-2.amazonaws.com/api-cellvoz/typescript-angular-client-generated.zip">Angular</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+    <section class="section section-md bg-gray-100 text-center" id="features">
+      <redoc spec-url='openapi.json'></redoc>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
+    <script src="js/core.min.js"></script>
+    <script src="js/script.js"></script>
+  </body>
+</html>
