@@ -203,13 +203,17 @@ async def list_packages(
     limit: int = Query(10, ge=1, le=100),
     status_filter: Optional[str] = Query(None, description="Filtrar por estado"),
     customer_id: Optional[int] = Query(None, description="Filtrar por cliente"),
+    search: Optional[str] = Query(None, description="Buscar por número de guía, cliente o teléfono"),
+    date_from: Optional[str] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
     # Temporarily disabled for testing: current_user: dict = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Listar paquetes con filtros opcionales y paginación (10 por página) - OPTIMIZADO"""
-    from sqlalchemy import text
+    from sqlalchemy import text, or_, and_
     import logging
     from app.cache_manager import cache_manager
+    from datetime import datetime
     
     logger = logging.getLogger(__name__)
     
@@ -218,7 +222,10 @@ async def list_packages(
         "skip": skip,
         "limit": limit,
         "status_filter": status_filter,
-        "customer_id": customer_id
+        "customer_id": customer_id,
+        "search": search,
+        "date_from": date_from,
+        "date_to": date_to
     }
     
     cached_result = cache_manager.get_cached_packages_list(cache_filters)
@@ -250,6 +257,41 @@ async def list_packages(
         # Aplicar filtro de cliente si se proporciona
         if customer_id:
             query = query.filter(Package.customer_id == customer_id)
+        
+        # Aplicar filtro de búsqueda por texto
+        if search:
+            search_term = f"%{search}%"
+            from app.models.customer import Customer
+            query = query.join(Package.customer, isouter=True).filter(
+                or_(
+                    Package.tracking_number.ilike(search_term),
+                    Package.guide_number.ilike(search_term),
+                    Customer.full_name.ilike(search_term),
+                    Customer.phone.ilike(search_term)
+                )
+            )
+            logger.info(f"🔍 Aplicando filtro de búsqueda: {search}")
+        
+        # Aplicar filtro de fecha desde
+        if date_from:
+            try:
+                date_from_obj = datetime.strptime(date_from, "%Y-%m-%d")
+                query = query.filter(Package.created_at >= date_from_obj)
+                logger.info(f"📅 Aplicando filtro fecha desde: {date_from}")
+            except ValueError:
+                logger.warning(f"⚠️ Formato de fecha inválido: {date_from}")
+        
+        # Aplicar filtro de fecha hasta
+        if date_to:
+            try:
+                date_to_obj = datetime.strptime(date_to, "%Y-%m-%d")
+                # Agregar 1 día para incluir todo el día seleccionado
+                from datetime import timedelta
+                date_to_obj = date_to_obj + timedelta(days=1)
+                query = query.filter(Package.created_at < date_to_obj)
+                logger.info(f"📅 Aplicando filtro fecha hasta: {date_to}")
+            except ValueError:
+                logger.warning(f"⚠️ Formato de fecha inválido: {date_to}")
         
         # Obtener paquetes ordenados
         packages_query = query.order_by(Package.created_at.desc()).all()
@@ -329,7 +371,7 @@ async def list_packages(
             logger.error(f"Error processing package {package.id}: {str(e)}")
             continue
 
-    # Obtener anuncios no procesados (aplicar filtro de estado si existe)
+    # Obtener anuncios no procesados (aplicar filtros si existen)
     # Construir WHERE clause dinámicamente
     where_clauses = ["a.is_processed = false"]
     
@@ -343,6 +385,29 @@ async def list_packages(
         else:
             # Si el filtro es RECIBIDO o ENTREGADO, no mostrar anuncios
             where_clauses.append("1=0")  # Condición que siempre es falsa
+    
+    # Aplicar filtro de búsqueda a anuncios si se proporciona
+    if search:
+        search_term = f"%{search}%"
+        where_clauses.append(f"""(
+            a.tracking_code ILIKE :search_term OR
+            a.guide_number ILIKE :search_term OR
+            a.customer_name ILIKE :search_term OR
+            a.customer_phone ILIKE :search_term OR
+            c.full_name ILIKE :search_term OR
+            c.phone ILIKE :search_term
+        )""")
+        logger.info(f"🔍 Aplicando filtro de búsqueda a anuncios: {search}")
+    
+    # Aplicar filtro de fecha desde a anuncios
+    if date_from:
+        where_clauses.append(f"a.announced_at >= :date_from")
+        logger.info(f"📅 Aplicando filtro fecha desde a anuncios: {date_from}")
+    
+    # Aplicar filtro de fecha hasta a anuncios
+    if date_to:
+        where_clauses.append(f"a.announced_at < :date_to")
+        logger.info(f"📅 Aplicando filtro fecha hasta a anuncios: {date_to}")
     
     where_clause = " AND ".join(where_clauses)
     
@@ -382,7 +447,24 @@ async def list_packages(
         ORDER BY a.announced_at DESC
     """
 
-    announcements_result = db.execute(text(announcements_query))
+    # Preparar parámetros para la query de anuncios
+    announcement_params = {}
+    if search:
+        announcement_params['search_term'] = f"%{search}%"
+    if date_from:
+        try:
+            announcement_params['date_from'] = datetime.strptime(date_from, "%Y-%m-%d")
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            from datetime import timedelta
+            date_to_obj = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+            announcement_params['date_to'] = date_to_obj
+        except ValueError:
+            pass
+    
+    announcements_result = db.execute(text(announcements_query), announcement_params)
     announcements_data = announcements_result.fetchall()
     logger.info(f"📢 Anuncios encontrados: {len(announcements_data)}")
 

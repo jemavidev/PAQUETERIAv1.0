@@ -940,6 +940,13 @@ function loadPackages(page = 1) {
         limit: currentLimit.toString()
     });
     
+    // Agregar filtro de búsqueda si está activo
+    const searchTerm = domCache.searchInput?.value?.trim() || '';
+    if (searchTerm) {
+        params.append('search', searchTerm);
+        console.log('🔍 Aplicando búsqueda en servidor:', searchTerm);
+    }
+    
     // Agregar filtro de estado si está activo
     if (currentStatusFilter) {
         // Mapear el estado del frontend al formato del backend
@@ -951,6 +958,7 @@ function loadPackages(page = 1) {
         };
         const backendStatus = statusMap[currentStatusFilter] || currentStatusFilter.toUpperCase();
         params.append('status_filter', backendStatus);
+        console.log('📊 Aplicando filtro de estado en servidor:', backendStatus);
     }
 
     fetch(`/api/packages/?${params.toString()}`, {
@@ -3613,78 +3621,27 @@ function closeModalOnBackdrop(event) {
     }
 }
 
-// Filtrado mejorado con mejor mapeo de estados
+// Filtrado mejorado con búsqueda en servidor (AJAX)
 function applyPackageFilter() {
-    const searchTerm = domCache.searchInput?.value?.toLowerCase().trim() || '';
-
-    const tableBody = domCache.packagesTableBody;
-    const rows = tableBody.querySelectorAll('tr[data-search]');
-    const emptyElement = document.getElementById('packagesEmpty');
-
-    let totalVisible = 0;
-    let totalPackages = rows.length;
-
-    console.log(`🔍 Aplicando filtros - Texto: "${searchTerm}", Estado: "${currentStatusFilter}", Filas totales: ${totalPackages}`);
-
-    rows.forEach((row, index) => {
-        const searchData = row.getAttribute('data-search') || '';
-        const statusData = row.getAttribute('data-status') || '';
-        let isVisible = true;
-
-        // Filter by search term (searches all fields)
-        if (searchTerm) {
-            const searchTerms = searchTerm.split(' ').filter(term => term.length > 0);
-            const allTermsFound = searchTerms.every(term => searchData.includes(term));
-            if (!allTermsFound) {
-                isVisible = false;
-            }
-        }
-
-        // Filter by status if a status filter is active - Mejorado con mapeo
-        if (currentStatusFilter && isVisible) {
-            const normalizedStatus = normalizeStatusForFilter(statusData);
-            const normalizedFilter = normalizeStatusForFilter(currentStatusFilter);
-            
-            if (index < 3) { // Solo mostrar log para las primeras 3 filas
-                console.log(`Fila ${index}: Status="${statusData}" -> "${normalizedStatus}", Filtro="${currentStatusFilter}" -> "${normalizedFilter}"`);
-            }
-            
-            if (normalizedStatus !== normalizedFilter) {
-                isVisible = false;
-            }
-        }
-
-        row.style.display = isVisible ? 'table-row' : 'none';
-        if (isVisible) {
-            totalVisible++;
-        }
-    });
-
-    console.log(`✅ Filtrado completado: ${totalVisible} de ${totalPackages} filas visibles`);
-
-    // Mostrar/ocultar mensaje vacío
-    if (totalVisible === 0 && totalPackages > 0) {
-        emptyElement?.classList.remove('hidden');
-        tableBody?.classList.add('hidden');
-    } else {
-        emptyElement?.classList.add('hidden');
-        tableBody?.classList.remove('hidden');
-    }
-
-    // Actualizar contadores visuales
-    updateStateCounts();
-
+    const searchTerm = domCache.searchInput?.value?.trim() || '';
+    
+    console.log(`🔍 Aplicando filtros en servidor - Texto: "${searchTerm}", Estado: "${currentStatusFilter}"`);
+    
+    // Recargar paquetes desde el servidor con los filtros aplicados
+    // Esto hará una petición AJAX con los parámetros search y status_filter
+    loadPackages(1); // Volver a la página 1 cuando se aplican filtros
+    
     // Mostrar notificación si hay filtros activos
     if (searchTerm || currentStatusFilter) {
         let filterMessage = '';
         if (searchTerm && currentStatusFilter) {
             filterMessage = `Búsqueda y filtro de estado aplicados`;
         } else if (searchTerm) {
-            filterMessage = `Búsqueda aplicada`;
+            filterMessage = `Buscando: "${searchTerm}"`;
         } else if (currentStatusFilter) {
             filterMessage = `Filtro de estado aplicado: ${getStatusText(currentStatusFilter)}`;
         }
-        showInfoToast(filterMessage, `Mostrando ${totalVisible} de ${totalPackages} paquetes`, 2000);
+        showInfoToast(filterMessage, 'Buscando en toda la base de datos...', 2000);
     }
 }
 
@@ -4106,12 +4063,26 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDOMCache();
     loadPackages();
 
+    // Función debounce para evitar demasiadas peticiones al servidor
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
     // Event listeners
     const searchFilter = document.getElementById('searchFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
 
     if (searchFilter) {
-        searchFilter.addEventListener('input', applyPackageFilter);
+        // Aplicar debounce de 500ms para la búsqueda
+        searchFilter.addEventListener('input', debounce(applyPackageFilter, 500));
         // Focus on search filter when page loads
         searchFilter.focus();
     }
