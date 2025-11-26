@@ -313,14 +313,16 @@ async def list_messages(
     status_filter: Optional[MessageStatus] = None,
     type_filter: Optional[MessageType] = None,
     priority_filter: Optional[MessagePriority] = None,
+    search: Optional[str] = Query(None, description="Buscar por cliente, teléfono, tracking o contenido"),
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Listar mensajes con filtros opcionales"""
+    """Listar mensajes con filtros opcionales y búsqueda de texto"""
     filters = MessageSearchFilters(
         status=status_filter,
         message_type=type_filter,
-        priority=priority_filter
+        priority=priority_filter,
+        search_text=search
     )
 
     # Aplicar filtros de permisos según el rol del usuario

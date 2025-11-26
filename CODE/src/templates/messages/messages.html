@@ -1004,10 +1004,24 @@ document.addEventListener('DOMContentLoaded', function() {
         applyMessageFilter();
     }, 200);
 
+    // Función debounce para evitar demasiadas peticiones al servidor
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
     // Event listeners para filtros
-    document.getElementById('searchFilter').addEventListener('input', function() {
-        debouncedSearch();
-    });
+    document.getElementById('searchFilter').addEventListener('input', debounce(function() {
+        console.log('🔍 Búsqueda activada, recargando mensajes desde servidor...');
+        loadMessages(1); // Volver a página 1 al buscar
+    }, 500));
     document.getElementById('clearFilters').addEventListener('click', clearFilters);
 
     // Botones de estado: ABIERTO / RESPONDIDO
@@ -1128,8 +1142,18 @@ function loadMessages(page = 1) {
         limit: currentLimit.toString()
     });
 
-    // Nota: La búsqueda se hace solo del lado del cliente para buscar en todos los campos
-    // No enviamos el parámetro 'search' al backend
+    // Agregar búsqueda si está activa (ahora se hace en el servidor)
+    const searchTerm = document.getElementById('searchFilter')?.value?.trim() || '';
+    if (searchTerm) {
+        params.append('search', searchTerm);
+        console.log('🔍 Aplicando búsqueda en servidor:', searchTerm);
+    }
+
+    // Agregar filtro de estado si está activo
+    if (currentStatusFilter) {
+        params.append('status_filter', currentStatusFilter);
+        console.log('📊 Aplicando filtro de estado en servidor:', currentStatusFilter);
+    }
     
     fetch(`/api/messages/?${params.toString()}`, {
         method: 'GET',
@@ -2453,26 +2477,13 @@ function applyMessageFilter() {
     const startTime = performance.now();
     log('🚀 Iniciando applyMessageFilter...');
     
-    // Inicializar cache de DOM si no está disponible
-    if (!domCache.messageCards) {
-        initializeDOMCache();
-    }
+    // Recopilar filtros
+    const searchText = document.getElementById('searchFilter')?.value?.trim() || '';
     
-    // Recopilar filtros usando cache de DOM
-    const searchText = domCache.searchInput?.value?.trim() || '';
+    log('🔍 Aplicando filtros en servidor:', { searchText, status: currentStatusFilter });
     
-    log('🔍 Aplicando filtros:', { searchText });
-    
-    // SISTEMA HÍBRIDO: Si hay búsqueda o filtro de estado activo, usar API. Si no, filtrar localmente
-    if (searchText.length >= 2 || (currentStatusFilter && currentStatusFilter.length > 0)) {
-        // MODO API: Búsqueda global en todos los mensajes
-        isSearchMode = true;
-        searchMessagesAPI(searchText, 1);
-    } else {
-        // MODO LOCAL: Sin búsqueda o búsqueda muy corta, usar filtrado local
-        isSearchMode = false;
-        applyLocalFilter(searchText);
-    }
+    // Siempre usar el servidor para búsqueda (busca en toda la BD)
+    loadMessages(1); // Volver a página 1 al aplicar filtros
 }
 
 // Función para búsqueda global via API
