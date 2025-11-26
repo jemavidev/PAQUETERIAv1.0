@@ -446,6 +446,32 @@ async def get_package_counts_batch(
                     'cancelled': 0
                 }
         
+        # IMPORTANTE: Contar también los anuncios no procesados (activos y cancelados)
+        announcement_counts = db.query(
+            PackageAnnouncementNew.customer_id,
+            func.sum(case((PackageAnnouncementNew.is_active == True, 1), else_=0)).label('active_announcements'),
+            func.sum(case((PackageAnnouncementNew.is_active == False, 1), else_=0)).label('cancelled_announcements')
+        ).filter(
+            PackageAnnouncementNew.customer_id.in_(ids_list),
+            PackageAnnouncementNew.is_processed == False
+        ).group_by(PackageAnnouncementNew.customer_id).all()
+        
+        # Agregar los anuncios a los contadores
+        for customer_id, active_announcements, cancelled_announcements in announcement_counts:
+            customer_id_str = str(customer_id)
+            if customer_id_str not in result:
+                result[customer_id_str] = {
+                    'announced': 0,
+                    'received': 0,
+                    'delivered': 0,
+                    'cancelled': 0
+                }
+            
+            # Los anuncios activos se cuentan como ANUNCIADOS
+            result[customer_id_str]['announced'] += (active_announcements or 0)
+            # Los anuncios cancelados se cuentan como CANCELADOS
+            result[customer_id_str]['cancelled'] += (cancelled_announcements or 0)
+        
         return result
         
     except Exception as e:
