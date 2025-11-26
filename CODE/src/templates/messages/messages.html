@@ -976,8 +976,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Aplicar filtro inicial para mostrar todos los mensajes
-        applyMessageFilter();
+        // NO aplicar filtro inicial aquí para evitar loop infinito
+        // Los mensajes ya están cargados desde el servidor
         
         log('✅ Sistema de búsqueda de mensajes inicializado correctamente');
         
@@ -997,12 +997,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listeners
     // Nota: refreshButton no existe en esta página, se removió
-
-    // Debounce optimizado con indicador de carga
-    const debouncedSearch = debounce(function() {
-        log('🔍 Evento de búsqueda disparado');
-        applyMessageFilter();
-    }, 200);
 
     // Función debounce para evitar demasiadas peticiones al servidor
     function debounce(func, wait) {
@@ -1031,7 +1025,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Toggle: si está activo y se vuelve a pulsar, limpiar filtro
         currentStatusFilter = (currentStatusFilter === status) ? null : status;
         updateStatusButtonsUI();
-        applyMessageFilter();
+        // Recargar mensajes desde el servidor con el nuevo filtro
+        loadMessages(1);
     }
     function updateStatusButtonsUI() {
         if (btnAbierto) {
@@ -1133,8 +1128,14 @@ function loadMessages(page = 1) {
     
     document.getElementById('messagesLoading').classList.remove('hidden');
     document.getElementById('messagesList').innerHTML = '';
+    document.getElementById('messagesListMobile').innerHTML = '';
     document.getElementById('noMessages').classList.add('hidden');
-    document.getElementById('pagination').classList.add('hidden');
+    
+    // Ocultar paginación si existe
+    const paginationContainer = document.getElementById('paginationContainer');
+    if (paginationContainer) {
+        paginationContainer.classList.add('hidden');
+    }
     
     // Construir parámetros de consulta
     const params = new URLSearchParams({
@@ -1220,14 +1221,14 @@ function displayMessages(messages, pagination = null) {
             displayPagination(pagination);
         }
         
-        // Inicializar filtrado local después de cargar mensajes
+        // Inicializar cache de DOM después de cargar mensajes (sin aplicar filtros)
         setTimeout(() => {
-            log('🔄 Inicializando filtrado local después de cargar mensajes');
+            log('🔄 Inicializando cache de DOM después de cargar mensajes');
             // Reconstruir cache de DOM con nuevos mensajes
             initializeDOMCache();
             // Limpiar cache de filtros para forzar recálculo
             filterCache.clear();
-            applyMessageFilter();
+            // NO llamar a applyMessageFilter() aquí para evitar loop infinito
         }, 200);
     }
     
@@ -1235,7 +1236,11 @@ function displayMessages(messages, pagination = null) {
 }
 
 function displayPagination(pagination) {
-    const paginationDiv = document.getElementById('pagination');
+    const paginationDiv = document.getElementById('paginationContainer');
+    if (!paginationDiv) {
+        console.warn('Elemento de paginación no encontrado');
+        return;
+    }
     paginationDiv.classList.remove('hidden');
     
     let paginationHTML = `
@@ -2352,8 +2357,8 @@ function filterByStatus(status) {
     // Limpiar cache de filtros
     filterCache.clear();
 
-    // Aplicar filtrado local
-    applyMessageFilter();
+    // Recargar mensajes desde el servidor con el nuevo filtro
+    loadMessages(1);
 
     // Mostrar notificación de filtro aplicado
     const statusNames = {
