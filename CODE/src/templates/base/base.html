@@ -569,7 +569,7 @@
                                     d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                             </svg>
                             <span>Paquetes</span>
-                            <!-- Badge de Paquetes RECIBIDO -->
+                            <!-- Badge de Paquetes ANUNCIADOS (pendientes de recibir) -->
                             <div id="packages-badge"
                                 class="hidden absolute -top-1 -right-1 bg-papyrus-blue text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] animate-pulse">
                                 <span id="packages-count">0</span>
@@ -738,7 +738,7 @@
                             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                     </svg>
                     <span>Paquetes</span>
-                    <!-- Badge Móvil Paquetes RECIBIDO -->
+                    <!-- Badge Móvil Paquetes ANUNCIADOS (pendientes de recibir) -->
                     <div id="packages-badge-mobile"
                         class="hidden absolute -top-1 -right-1 bg-papyrus-blue text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] animate-pulse">
                         <span id="packages-count-mobile">0</span>
@@ -1366,7 +1366,7 @@
             if (mobileCount) mobileCount.textContent = '0';
         }
 
-        // Contador de paquetes en estado ANUNCIADO
+        // Contador de paquetes anunciados (pendientes de recibir)
         function loadPackagesReceivedCount() {
             const desktopBadge = document.getElementById('packages-badge');
             const mobileBadge = document.getElementById('packages-badge-mobile');

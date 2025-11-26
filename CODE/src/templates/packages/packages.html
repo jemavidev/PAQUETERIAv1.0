@@ -1136,11 +1136,9 @@ function updateStateCounts() {
         }).length;
     }
 
-    // Actualizar contador local en la cabecera de la tabla
-    const countElement = document.getElementById('totalPackagesCount');
-    if (countElement) {
-        countElement.textContent = `Anunciados: ${visibleAnnouncedCount || announcedCount}`;
-    }
+    // NO actualizar el contador totalPackagesCount aquí
+    // Ese contador debe mostrar la información de paginación del backend (total de resultados)
+    // Solo actualizar el badge del header con los anunciados
 
     // Sincronizar inmediatamente el badge del header (desktop y móvil)
     // para que refleje el número de ANUNCIADOS sin esperar al polling

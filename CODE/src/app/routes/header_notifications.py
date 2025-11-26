@@ -155,23 +155,22 @@ async def get_announced_packages_count(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Obtener el contador de paquetes en estado ANUNCIADO y anuncios no procesados para mostrar en el header."""
+    """Obtener el contador de paquetes pendientes (anuncios no procesados) para mostrar en el header.
+    
+    Solo cuenta anuncios activos que no han sido procesados (convertidos a paquetes).
+    Esto evita conteo duplicado entre anuncios y paquetes.
+    """
     try:
         from app.models.announcement_new import PackageAnnouncementNew
         
-        # Contar paquetes en estado ANUNCIADO
-        packages_announced = db.query(Package).filter(Package.status == PackageStatus.ANUNCIADO).count()
-        
-        # Contar anuncios no procesados y activos
+        # Contar solo anuncios no procesados y activos
+        # Estos son los paquetes que están esperando ser recibidos
         announcements_not_processed = db.query(PackageAnnouncementNew).filter(
             PackageAnnouncementNew.is_processed == False,
             PackageAnnouncementNew.is_active == True
         ).count()
         
-        # Total: paquetes anunciados + anuncios no procesados
-        total_count = packages_announced + announcements_not_processed
-        
-        return {"count": total_count}
+        return {"count": announcements_not_processed}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
