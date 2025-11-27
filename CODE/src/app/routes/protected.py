@@ -170,12 +170,21 @@ async def save_settings(
         return templates.TemplateResponse("users/settings.html", context)
 
 @router.get("/admin")
-async def admin_page(request: Request):
+async def admin_page(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
     """Página de administración - Solo para administradores"""
     context = get_auth_context_required(request)
 
     if not context["is_authenticated"]:
         return RedirectResponse(url="/auth/login?redirect=/admin", status_code=302)
+
+    # Verificar que el usuario sea administrador u operador
+    if current_user.role not in [UserRole.ADMIN, UserRole.OPERADOR]:
+        # Usuario sin permisos - redirigir a la página principal con mensaje
+        return RedirectResponse(url="/?error=no_admin_permissions", status_code=302)
 
     return templates.TemplateResponse("admin/admin.html", context)
 

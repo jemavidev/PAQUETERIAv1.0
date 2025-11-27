@@ -66,11 +66,12 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    """Obtener usuario administrador actual"""
-    if not current_user.is_admin:
+    """Obtener usuario administrador o operador actual"""
+    # Permitir tanto ADMIN como OPERADOR
+    if current_user.role not in [UserRole.ADMIN, UserRole.OPERADOR]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Se requieren permisos de administrador"
+            detail="Acceso denegado. Se requieren permisos de administrador o operador"
         )
     return current_user
 
@@ -78,7 +79,7 @@ def get_current_admin_user_from_cookies(
     request: Request,
     db: Session = Depends(get_db)
 ) -> User:
-    """Obtener usuario administrador actual desde cookies (para páginas web)"""
+    """Obtener usuario administrador o operador actual desde cookies (para páginas web)"""
     user = get_current_user_from_cookies(request, db)
     if not user:
         raise HTTPException(
@@ -90,10 +91,11 @@ def get_current_admin_user_from_cookies(
             },
         )
     
-    if not user.is_admin:
+    # Permitir tanto ADMIN como OPERADOR
+    if user.role not in [UserRole.ADMIN, UserRole.OPERADOR]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Se requieren permisos de administrador"
+            detail="Acceso denegado. Se requieren permisos de administrador o operador"
         )
     return user
 

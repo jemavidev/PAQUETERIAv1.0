@@ -1038,10 +1038,17 @@
                     if (response.ok) {
                         const data = await response.json();
                         this.stats = data.data || {};
-                    } else if (response.status === 401 || response.status === 403) {
-                        // Token expirado o no autenticado - redirigir al login
+                    } else if (response.status === 401) {
+                        // Sesión expirada - redirigir al login
                         console.log('Sesión expirada, redirigiendo al login...');
                         window.location.href = '/auth/login?redirect=/admin';
+                    } else if (response.status === 403) {
+                        // Usuario sin permisos de administrador
+                        console.log('Usuario sin permisos de administrador');
+                        this.systemHealth.status = 'error';
+                        // Mostrar mensaje al usuario
+                        alert('No tienes permisos de administrador para acceder a esta página');
+                        window.location.href = '/';
                     } else {
                         console.error('Error loading dashboard data:', response.statusText);
                         // Mostrar mensaje de error al usuario
@@ -1064,9 +1071,12 @@
                     if (response.ok) {
                         const data = await response.json();
                         this.systemHealth = data;
-                    } else if (response.status === 401 || response.status === 403) {
-                        // Token expirado - no hacer nada, loadDashboardData se encargará del redirect
+                    } else if (response.status === 401) {
+                        // Sesión expirada - loadDashboardData se encargará del redirect
                         console.log('Sesión expirada en health check');
+                    } else if (response.status === 403) {
+                        // Usuario sin permisos - no hacer nada, loadDashboardData se encargará
+                        console.log('Usuario sin permisos para health check');
                     } else {
                         this.systemHealth = {
                             status: 'error',
