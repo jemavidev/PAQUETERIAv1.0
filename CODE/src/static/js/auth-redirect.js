@@ -253,16 +253,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Verificar estado de autenticación al cargar la página SOLO en rutas protegidas
     const protectedPaths = ['/profile', '/settings', '/admin', '/dashboard', '/messages', '/packages', '/receive'];
-    const publicPaths = ['/announce', '/search', '/auth/login', '/auth/register', '/help', '/cookies', '/policies', '/', '/error-demo'];
+    const publicPaths = ['/announce', '/search', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/help', '/cookies', '/policies', '/terms', '/privacy', '/', '/error-demo', '/login'];
     const currentPath = window.location.pathname;
 
     // No verificar autenticación en rutas públicas
     const isPublic = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
     const isProtected = protectedPaths.some(path => currentPath.startsWith(path));
 
-    if (isProtected && !isPublic) {
+    // IMPORTANTE: NO verificar autenticación en la página de login para evitar loops
+    if (isProtected && !isPublic && currentPath !== '/auth/login' && currentPath !== '/login') {
         window.authRedirectHandler.checkAuthStatus();
     }
+    
+    console.log('🔐 AuthRedirectHandler inicializado', {
+        currentPath,
+        isPublic,
+        isProtected,
+        willCheckAuth: isProtected && !isPublic && currentPath !== '/auth/login' && currentPath !== '/login'
+    });
 });
 
 // Exportar para uso global

@@ -233,20 +233,7 @@ async def demo_error_system_page(request: Request):
     context = get_auth_context_from_request(request)
     return templates.TemplateResponse("demo_error_system.html", context)
 
-@router.get("/login")
-async def login_page(request: Request):
-    """Página de login - Pública"""
-    context = get_auth_context_from_request(request)
-    return templates.TemplateResponse("auth/login.html", context)
-
-@router.get("/auth/login")
-async def auth_login_page(request: Request):
-    """Página de login - Pública (ruta alternativa)"""
-    # Obtener parámetro de redirección
-    redirect_url = request.query_params.get("redirect", "/dashboard")
-    context = get_auth_context_from_request(request)
-    context["redirect_url"] = redirect_url
-    return templates.TemplateResponse("auth/login.html", context)
+# NOTA: Rutas /login y /auth/login movidas más abajo con el fix de redirección
 
 @router.get("/auth/register")
 async def auth_register_page(request: Request):
@@ -342,13 +329,39 @@ async def policies_page(request: Request):
 @router.get("/auth/login")
 async def login_page(request: Request):
     """Página de login - Pública"""
+    redirect_url = request.query_params.get("redirect", "/packages")
+    
     try:
         context = get_auth_context_from_request(request)
-        # Si ya está autenticado, redirigir al dashboard
+        
+        # Si ya está autenticado, redirigir inmediatamente
         if context.get("is_authenticated"):
-            redirect_url = request.query_params.get("redirect", "/packages")
+            logger.info(f"Usuario ya autenticado, redirigiendo a: {redirect_url}")
             return RedirectResponse(url=redirect_url, status_code=302)
-    except Exception:
+        
+        # Si hay cookies pero no está autenticado, significa que el token expiró
+        # Limpiar cookies inválidas
+        access_token = request.cookies.get("access_token")
+        if access_token:
+            logger.warning("Token expirado o inválido detectado, limpiando cookies")
+            response = templates.TemplateResponse("auth/login.html", {
+                "request": request,
+                "is_authenticated": False,
+                "user": None,
+                "user_name": None,
+                "user_role": None,
+                "redirect_url": redirect_url,
+                "show_session_expired_message": True  # Mostrar mensaje de sesión expirada
+            })
+            # Limpiar cookies inválidas
+            response.delete_cookie("access_token")
+            response.delete_cookie("user_id")
+            response.delete_cookie("user_name")
+            response.delete_cookie("user_role")
+            return response
+            
+    except Exception as e:
+        logger.error(f"Error en login_page: {e}")
         # Usuario no autenticado, mostrar página de login
         context = {
             "request": request,
@@ -359,7 +372,7 @@ async def login_page(request: Request):
         }
     
     # Agregar URL de redirección al contexto
-    context["redirect_url"] = request.query_params.get("redirect", "/packages")
+    context["redirect_url"] = redirect_url
     return templates.TemplateResponse("auth/login.html", context)
 
 @router.get("/login")

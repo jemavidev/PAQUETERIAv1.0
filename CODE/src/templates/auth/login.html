@@ -136,6 +136,26 @@
              class="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain mb-4"
              style="max-height: 120px; min-height: 80px;">
     </div>
+    
+    <!-- Mensaje de sesión expirada -->
+    {% if show_session_expired_message %}
+    <div class="max-w-md mx-auto mb-6">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        Tu sesión ha expirado. Por favor, inicia sesión nuevamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Contenedor centrado para el formulario -->
     <div class="flex justify-center">
