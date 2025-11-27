@@ -1,28 +1,33 @@
 /**
- * PAQUETES EL CLUB v4.0 - Manejo de Redirección de Autenticación
- * Archivo: CODE/LOCAL/src/static/js/auth-redirect.js
- * Versión: 1.0.0
- * Fecha: 2025-01-24
+ * PAQUETES EL CLUB v2.0 - Manejo de Redirección de Autenticación (Refactorizado)
+ * Archivo: CODE/src/static/js/auth-redirect-v2.js
+ * Versión: 2.0.0
+ * Fecha: 2025-01-27
  * Autor: Equipo de Desarrollo
+ * 
+ * RESPONSABILIDADES:
+ * - SOLO interceptar respuestas 401 de fetch/XMLHttpRequest
+ * - Mostrar notificación al usuario
+ * - Redirigir a página de login
+ * 
+ * NO HACE:
+ * - Verificar autenticación al cargar página (eso es del backend)
+ * - Mantener lista de rutas públicas (eso es del backend)
+ * - Decidir si verificar o no según la ruta (eso es del backend)
  */
 
-/**
- * Manejo automático de redirección de autenticación para llamadas AJAX
- */
 class AuthRedirectHandler {
     constructor() {
         this.loginUrl = '/auth/login';
         this.setupInterceptors();
+        console.log('🔐 AuthRedirectHandler v2.0 inicializado (solo intercepta 401)');
     }
 
     /**
      * Configurar interceptores para fetch y XMLHttpRequest
      */
     setupInterceptors() {
-        // Interceptor para fetch
         this.interceptFetch();
-        
-        // Interceptor para XMLHttpRequest (para compatibilidad)
         this.interceptXHR();
     }
 
@@ -31,15 +36,29 @@ class AuthRedirectHandler {
      */
     interceptFetch() {
         const originalFetch = window.fetch;
+        const self = this;
         
-        window.fetch = async (...args) => {
+        window.fetch = async function(...args) {
             try {
                 const response = await originalFetch(...args);
                 
-                // Verificar si la respuesta es 401
+                // Solo manejar respuestas 401
                 if (response.status === 401) {
-                    await this.handleUnauthorized(response, args[0]);
-                    return response;
+                    // Clonar response para poder leerla
+                    const clonedResponse = response.clone();
+                    
+                    try {
+                        const data = await clonedResponse.json();
+                        
+                        // Verificar si requiere autenticación
+                        if (data.requires_auth || data.redirect_url) {
+                            self.handleUnauthorized(data);
+                        }
+                    } catch (jsonError) {
+                        // Si no es JSON, asumir que requiere autenticación
+                        console.warn('Respuesta 401 sin JSON válido, redirigiendo a login');
+                        self.handleUnauthorized({});
+                    }
                 }
                 
                 return response;
@@ -54,6 +73,7 @@ class AuthRedirectHandler {
      * Interceptor para XMLHttpRequest
      */
     interceptXHR() {
+        const self = this;
         const originalOpen = XMLHttpRequest.prototype.open;
         const originalSend = XMLHttpRequest.prototype.send;
         
@@ -63,9 +83,19 @@ class AuthRedirectHandler {
         };
         
         XMLHttpRequest.prototype.send = function(data) {
-            this.addEventListener('readystatechange', () => {
+            this.addEventListener('readystatechange', function() {
                 if (this.readyState === 4 && this.status === 401) {
-                    this.handleUnauthorizedResponse();
+                    try {
+                        const responseData = JSON.parse(this.responseText);
+                        
+                        if (responseData.requires_auth || responseData.redirect_url) {
+                            self.handleUnauthorized(responseData);
+                        }
+                    } catch (jsonError) {
+                        // Si no es JSON, asumir que requiere autenticación
+                        console.warn('Respuesta 401 XHR sin JSON válido, redirigiendo a login');
+                        self.handleUnauthorized({});
+                    }
                 }
             });
             
@@ -74,72 +104,33 @@ class AuthRedirectHandler {
     }
 
     /**
-     * Manejar respuesta 401 de fetch
+     * Manejar respuesta 401
      */
-    async handleUnauthorized(response, requestInfo) {
-        try {
-            const data = await response.json();
-            
-            // Verificar si la respuesta indica que se requiere autenticación
-            if (data.requires_auth || data.redirect_url) {
-                const redirectUrl = data.redirect_url || this.loginUrl;
-                const originalUrl = data.original_url || window.location.href;
-                
-                // Mostrar notificación al usuario
-                this.showAuthNotification();
-                
-                // Redirigir después de un breve delay
-                setTimeout(() => {
-                    this.redirectToLogin(redirectUrl, originalUrl);
-                }, 1500);
-            }
-        } catch (error) {
-            console.error('Error al procesar respuesta 401:', error);
-            // Redirigir de todas formas si hay error
-            this.redirectToLogin();
-        }
-    }
-
-    /**
-     * Manejar respuesta 401 de XMLHttpRequest
-     */
-    handleUnauthorizedResponse() {
-        try {
-            const responseText = this.responseText;
-            const data = JSON.parse(responseText);
-            
-            if (data.requires_auth || data.redirect_url) {
-                const redirectUrl = data.redirect_url || '/auth/login';
-                const originalUrl = data.original_url || window.location.href;
-                
-                // Mostrar notificación
-                if (window.authRedirectHandler) {
-                    window.authRedirectHandler.showAuthNotification();
-                }
-                
-                // Redirigir
-                setTimeout(() => {
-                    if (window.authRedirectHandler) {
-                        window.authRedirectHandler.redirectToLogin(redirectUrl, originalUrl);
-                    }
-                }, 1500);
-            }
-        } catch (error) {
-            console.error('Error al procesar respuesta 401 de XHR:', error);
-            // Redirigir de todas formas
-            setTimeout(() => {
-                if (window.authRedirectHandler) {
-                    window.authRedirectHandler.redirectToLogin();
-                }
-            }, 1000);
-        }
+    handleUnauthorized(data) {
+        const redirectUrl = data.redirect_url || this.loginUrl;
+        const originalUrl = data.original_url || window.location.href;
+        
+        console.log('🔒 Sesión expirada, redirigiendo a login');
+        
+        // Mostrar notificación
+        this.showAuthNotification();
+        
+        // Redirigir después de un breve delay
+        setTimeout(() => {
+            this.redirectToLogin(redirectUrl, originalUrl);
+        }, 1500);
     }
 
     /**
      * Mostrar notificación de autenticación requerida
      */
     showAuthNotification() {
-        // Crear notificación toast
+        // Verificar si ya existe una notificación
+        if (document.querySelector('.auth-notification')) {
+            return;
+        }
+        
+        // Crear notificación
         const notification = document.createElement('div');
         notification.className = 'auth-notification';
         notification.innerHTML = `
@@ -152,7 +143,7 @@ class AuthRedirectHandler {
             </div>
         `;
         
-        // Estilos para la notificación
+        // Estilos inline para la notificación
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -168,9 +159,9 @@ class AuthRedirectHandler {
         `;
         
         // Agregar estilos CSS si no existen
-        if (!document.getElementById('auth-notification-styles')) {
+        if (!document.getElementById('auth-notification-styles-v2')) {
             const styles = document.createElement('style');
-            styles.id = 'auth-notification-styles';
+            styles.id = 'auth-notification-styles-v2';
             styles.textContent = `
                 @keyframes slideIn {
                     from { transform: translateX(100%); opacity: 0; }
@@ -200,7 +191,7 @@ class AuthRedirectHandler {
         
         document.body.appendChild(notification);
         
-        // Remover la notificación después de 3 segundos
+        // Remover después de 3 segundos
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
@@ -214,63 +205,20 @@ class AuthRedirectHandler {
     redirectToLogin(loginUrl = this.loginUrl, originalUrl = null) {
         let redirectUrl = loginUrl;
         
-        // Agregar la URL original como parámetro de redirección
+        // Agregar URL original como parámetro
         if (originalUrl && originalUrl !== window.location.href) {
             const separator = loginUrl.includes('?') ? '&' : '?';
             redirectUrl += `${separator}redirect=${encodeURIComponent(originalUrl)}`;
         }
         
-        console.log('Redirigiendo al login:', redirectUrl);
+        console.log('Redirigiendo a:', redirectUrl);
         window.location.href = redirectUrl;
-    }
-
-    /**
-     * Verificar si el usuario está autenticado
-     */
-    async checkAuthStatus() {
-        try {
-            const response = await fetch('/api/auth/me', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            
-            if (response.status === 401) {
-                this.redirectToLogin();
-                return false;
-            }
-            
-            return response.ok;
-        } catch (error) {
-            console.error('Error al verificar estado de autenticación:', error);
-            return false;
-        }
     }
 }
 
-// Inicializar el manejador de redirección de autenticación
+// Inicializar SOLO el interceptor (sin verificación de autenticación)
 document.addEventListener('DOMContentLoaded', () => {
     window.authRedirectHandler = new AuthRedirectHandler();
-    
-    // Verificar estado de autenticación al cargar la página SOLO en rutas protegidas
-    const protectedPaths = ['/profile', '/settings', '/admin', '/dashboard', '/messages', '/packages', '/receive'];
-    const publicPaths = ['/announce', '/search', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/help', '/cookies', '/policies', '/terms', '/privacy', '/', '/error-demo', '/login'];
-    const currentPath = window.location.pathname;
-
-    // No verificar autenticación en rutas públicas
-    const isPublic = publicPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
-    const isProtected = protectedPaths.some(path => currentPath.startsWith(path));
-
-    // IMPORTANTE: NO verificar autenticación en la página de login para evitar loops
-    if (isProtected && !isPublic && currentPath !== '/auth/login' && currentPath !== '/login') {
-        window.authRedirectHandler.checkAuthStatus();
-    }
-    
-    console.log('🔐 AuthRedirectHandler inicializado', {
-        currentPath,
-        isPublic,
-        isProtected,
-        willCheckAuth: isProtected && !isPublic && currentPath !== '/auth/login' && currentPath !== '/login'
-    });
 });
 
 // Exportar para uso global

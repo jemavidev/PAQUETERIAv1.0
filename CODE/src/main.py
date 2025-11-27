@@ -40,9 +40,10 @@ from src.app.routes.upload import router as upload_router
 from src.app.routes.images import router as images_router
 from src.app.routes.debug_standalone import router as debug_standalone_router
 from src.app.routes.package_events import router as package_events_router
+from src.app.routes.config import router as config_router  # ✨ Nuevo: Endpoints de configuración
 from src.app.middleware.rate_limiting import limiter, rate_limit_exceeded_handler
 from src.app.middleware.error_handler import setup_error_handlers
-from src.app.middleware.auth_redirect import AuthRedirectMiddleware
+from src.app.middleware.auth_middleware import AuthMiddleware  # Middleware refactorizado v2
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.middleware import SlowAPIMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -94,8 +95,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Middleware de redirección de autenticación
-app.add_middleware(AuthRedirectMiddleware, login_url="/auth/login")
+# Middleware de autenticación (refactorizado v2)
+app.add_middleware(AuthMiddleware, login_url="/auth/login")
 
 # Configuración de Rate Limiting
 app.add_middleware(SlowAPIMiddleware)
@@ -182,6 +183,7 @@ app.include_router(files, prefix="/api/files", tags=["Archivos"])
 app.include_router(admin, prefix="/api/admin", tags=["Administración"])
 app.include_router(profile, prefix="/profile", tags=["Perfil"])
 app.include_router(settings_api, tags=["Configuración"])
+app.include_router(config_router, tags=["Configuración"])  # ✨ Nuevo: Endpoints de configuración
 app.include_router(customer_preferences_router, tags=["Preferencias de Cliente"])
 app.include_router(upload_router, tags=["Upload"])
 app.include_router(images_router, tags=["Imágenes"])

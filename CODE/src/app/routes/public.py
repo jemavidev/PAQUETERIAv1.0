@@ -328,7 +328,15 @@ async def policies_page(request: Request):
 
 @router.get("/auth/login")
 async def login_page(request: Request):
-    """Página de login - Pública"""
+    """
+    Página de login - Simplificada (Refactor v2)
+    
+    Responsabilidades:
+    1. Verificar si ya está autenticado → redirect
+    2. Limpiar cookies inválidas si existen
+    3. Mostrar mensaje de sesión expirada si aplica
+    4. Renderizar formulario de login
+    """
     redirect_url = request.query_params.get("redirect", "/packages")
     
     try:
@@ -361,7 +369,7 @@ async def login_page(request: Request):
             return response
             
     except Exception as e:
-        logger.error(f"Error en login_page: {e}")
+        logger.debug(f"Usuario no autenticado en login_page: {e}")
         # Usuario no autenticado, mostrar página de login
         context = {
             "request": request,

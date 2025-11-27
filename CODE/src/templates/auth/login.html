@@ -334,22 +334,8 @@
             
             const data = await response.json();
             
-            if (data.access_token) {
-                // Guardar token
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('user_info', JSON.stringify(data.user));
-                
-                // Configurar cookies
-                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const cookieOptions = `path=/; max-age=86400; ${isLocalhost ? 'SameSite=Lax' : 'SameSite=None; Secure'}`;  // 24 horas = 86400 segundos
-
-                document.cookie = `access_token=${data.access_token}; ${cookieOptions}`;
-                if (data.user) {
-                    document.cookie = `user_name=${data.user.username}; ${cookieOptions}`;
-                    document.cookie = `user_role=${data.user.role}; ${cookieOptions}`;
-                    document.cookie = `user_id=${data.user.id}; ${cookieOptions}`;
-                }
-            }
+            // Las cookies se establecen automáticamente por el backend
+            // No necesitamos guardar en localStorage ni establecer cookies manualmente
             
             // Simular login en el header (si existe la función)
             if (typeof simulateLogin === 'function') {
@@ -416,13 +402,10 @@
         return usernameRegex.test(input);
     }
     
-    // Focus automático y limpiar localStorage
+    // Focus automático (simplificado v2)
     document.addEventListener('DOMContentLoaded', function() {
         const usernameField = document.getElementById('username_or_email');
         if (usernameField) usernameField.focus();
-        
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_info');
     });
     })();
 </script>
