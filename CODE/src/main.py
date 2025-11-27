@@ -148,6 +148,23 @@ setup_error_handlers(app)
 # Mantener handlers específicos existentes
 app.add_exception_handler(PaqueteriaException, handle_paqueteria_exception)
 
+# Handler para 404
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Manejador personalizado para errores 404"""
+    # Si es una petición API, devolver JSON
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Recurso no encontrado"}
+        )
+    # Si es una petición web, mostrar página 404
+    return templates.TemplateResponse(
+        "errors/404.html",
+        {"request": request},
+        status_code=404
+    )
+
 # Incluir routers
 app.include_router(api_router, prefix="/api")
 app.include_router(public_router, tags=["Público"])  # Rutas públicas (debe ir primero)

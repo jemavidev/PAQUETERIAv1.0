@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Página no encontrada | PAQUETEX</title>
+    
+    {# Favicon #}
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon.png?v=3.1">
+    <link rel="shortcut icon" href="/static/images/favicon.ico?v=3.1">
+    
+    {# Tailwind CSS #}
+    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'papyrus-blue': '#1e40af',
+                        'papyrus-green': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-2xl w-full text-center fade-in">
+        {# Icono de paquete perdido #}
+        <div class="mb-8 flex justify-center">
+            <div class="bounce">
+                <svg class="w-32 h-32 text-papyrus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </div>
+        </div>
+        
+        {# Código de error #}
+        <h1 class="text-8xl font-bold text-papyrus-blue mb-4">404</h1>
+        
+        {# Mensaje principal #}
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4">Página no encontrada</h2>
+        
+        {# Descripción #}
+        <p class="text-lg text-gray-600 mb-8">
+            Lo sentimos, la página que buscas no existe o ha sido movida.
+        </p>
+        
+        {# Botones de acción #}
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="/" 
+               class="inline-flex items-center px-6 py-3 bg-papyrus-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Ir al inicio
+            </a>
+            
+            <button onclick="history.back()" 
+                    class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Volver atrás
+            </button>
+        </div>
+        
+        {# Enlaces útiles #}
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500 mb-4">¿Necesitas ayuda? Prueba estos enlaces:</p>
+            <div class="flex flex-wrap gap-4 justify-center text-sm">
+                <a href="/announce" class="text-papyrus-blue hover:underline">Anuncios</a>
+                <a href="/search" class="text-papyrus-blue hover:underline">Buscar paquetes</a>
+                <a href="/help" class="text-papyrus-blue hover:underline">Ayuda</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
