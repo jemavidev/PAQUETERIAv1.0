@@ -159,14 +159,14 @@
     <script src="/static/vendor/js/htmx.min.js?v=1.9.10"></script>
 
     {# Form Validation #}
-    <script src="/static/js/form-validation.js"></script>
-    <script src="/static/js/auth-redirect.js?v=2.0.0"></script>  {# Refactorizado v2 #}
+    <script src="/static/js/form-validation.js?v=2025-11-28"></script>
+    <script src="/static/js/auth-redirect.js?v=2.0.1"></script>  {# Refactorizado v2 #}
 
     {# Optimización de Selección de Imágenes #}
-    <script src="/static/js/image-upload-optimized.js?v=1.0"></script>
+    <script src="/static/js/image-upload-optimized.js?v=1.1"></script>
     
     {# Mobile Scroll Fix #}
-    <script src="/static/js/mobile-scroll-debug.js?v=1.0"></script>
+    <script src="/static/js/mobile-scroll-debug.js?v=1.1"></script>
 
     {# Custom JavaScript for Dropdowns #}
     <script>
@@ -867,7 +867,7 @@
         </div>
     </footer>
 
-    {# Footer Móvil para Usuarios No Autenticados #}
+    {# Footer Móvil para Usuarios No Autenticados - v2025-11-28 #}
     {% if not is_authenticated %}
     {% include 'components/mobile-footer.html' %}
     {% endif %}
