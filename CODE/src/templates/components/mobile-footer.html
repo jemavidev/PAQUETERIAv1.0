@@ -1,5 +1,12 @@
 <!-- Footer Sticky para Móvil - Solo para usuarios no autenticados -->
 <footer id="mobile-footer-public" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+    <!-- Copyright -->
+    <div class="border-b border-gray-100 py-2 px-3">
+        <div class="text-xs text-gray-500 text-center">
+            Desarrollado por <a href="https://jemavi.co" class="text-papyrus-blue hover:text-blue-700 underline" target="_blank">JEMAVI</a> | © 2025 PAPYRUS
+        </div>
+    </div>
+    
     <!-- Botones de navegación -->
     <div class="flex justify-around items-center h-16 px-1">
         <!-- Anunciar -->
@@ -53,6 +60,11 @@
         /* Agregar padding-bottom al body para compensar el footer fijo */
         body {
             padding-bottom: 92px !important; /* Altura del footer móvil (copyright + botones) */
+        }
+        
+        /* Forzar ocultar el footer desktop en móvil */
+        #desktop-footer {
+            display: none !important;
         }
     }
     
@@ -108,51 +120,21 @@
         const footerButtons = document.querySelectorAll('.mobile-footer-btn');
         
         footerButtons.forEach(button => {
-            // Variable para almacenar el href original
-            let originalHref = button.getAttribute('href');
-            let isNavigating = false;
-            
-            // Prevenir navegación inmediata en touchstart
+            // Agregar feedback visual en touchstart
             button.addEventListener('touchstart', function(e) {
-                // Agregar clase activa para feedback visual
                 this.classList.add('touch-active');
-                console.log('Touch start - Feedback visual activado');
             }, { passive: true });
             
-            // Manejar el click con delay para mostrar feedback
-            button.addEventListener('click', function(e) {
-                // Si ya estamos navegando, no hacer nada
-                if (isNavigating) return;
-                
-                // Prevenir navegación inmediata
-                e.preventDefault();
-                
-                // Marcar que estamos navegando
-                isNavigating = true;
-                
-                // Agregar feedback visual
-                this.classList.add('touch-active');
-                console.log('Click - Navegando a:', originalHref);
-                
-                // Navegar después de un breve delay para mostrar feedback
-                setTimeout(() => {
-                    window.location.href = originalHref;
-                }, 200);
-            });
-            
+            // Remover feedback visual en touchend
             button.addEventListener('touchend', function(e) {
-                // Remover clase activa después de un breve delay
                 setTimeout(() => {
-                    if (!isNavigating) {
-                        this.classList.remove('touch-active');
-                    }
+                    this.classList.remove('touch-active');
                 }, 150);
             }, { passive: true });
             
+            // Remover feedback visual si se cancela el toque
             button.addEventListener('touchcancel', function(e) {
-                // Remover clase activa si se cancela el toque
                 this.classList.remove('touch-active');
-                isNavigating = false;
             }, { passive: true });
         });
     }
