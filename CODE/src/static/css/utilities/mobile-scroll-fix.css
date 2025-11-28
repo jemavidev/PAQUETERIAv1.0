@@ -1,0 +1,277 @@
+/*
+ * PAQUETES EL CLUB v4.0 - Mobile Scroll Fix
+ * Versión: 4.0.1
+ * Autor: Sistema PAQUETES EL CLUB
+ * Fecha: 2024-11-27
+ * 
+ * Correcciones específicas para problemas de scroll en dispositivos móviles
+ */
+
+/* ========================================
+ * FIX GLOBAL PARA SCROLL EN MÓVILES
+ * ======================================== */
+
+/* Asegurar que html y body permitan scroll completo */
+html {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-height: 100%;
+  height: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* ========================================
+ * FIX PARA iOS SAFARI VIEWPORT
+ * ======================================== */
+
+/* Soporte para altura de viewport en iOS */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari específico */
+  body {
+    min-height: -webkit-fill-available;
+  }
+  
+  html {
+    height: -webkit-fill-available;
+  }
+}
+
+/* ========================================
+ * CONTENEDOR PRINCIPAL
+ * ======================================== */
+
+/* Asegurar que el main permita scroll */
+main {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  position: relative;
+}
+
+/* ========================================
+ * FIX PARA CONTENEDORES CON ALTURA FIJA
+ * ======================================== */
+
+/* Prevenir que contenedores bloqueen el scroll */
+.container,
+.max-w-7xl,
+.mx-auto {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* ========================================
+ * SCROLL SUAVE EN MÓVILES
+ * ======================================== */
+
+/* Habilitar scroll suave en todos los contenedores scrollables */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll,
+.overflow-y-scroll,
+.overflow-x-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ========================================
+ * FIX PARA MODALES Y OVERLAYS
+ * ======================================== */
+
+/* Prevenir que modales bloqueen el scroll del body */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Permitir scroll dentro de modales */
+.modal-content,
+.dialog-content,
+.overlay-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 90vh;
+}
+
+/* ========================================
+ * FIX PARA FORMULARIOS LARGOS
+ * ======================================== */
+
+/* Asegurar que formularios largos sean scrollables */
+form {
+  overflow-y: visible;
+  height: auto;
+}
+
+.form-container,
+.form-wrapper {
+  overflow-y: visible;
+  height: auto;
+  max-height: none;
+}
+
+/* ========================================
+ * FIX PARA TABLAS Y GRIDS
+ * ======================================== */
+
+/* Permitir scroll horizontal en tablas */
+.table-container,
+.overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+/* Prevenir que grids bloqueen el scroll */
+.grid,
+.card-grid,
+[class*="grid-"] {
+  height: auto;
+  overflow: visible;
+}
+
+/* ========================================
+ * FIX PARA NAVEGACIÓN STICKY
+ * ======================================== */
+
+/* Asegurar que el header sticky no bloquee el scroll */
+nav.sticky,
+header.sticky,
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 40;
+}
+
+/* Compensar altura del header en el contenido */
+main.with-sticky-header {
+  padding-top: 64px; /* Altura del header */
+}
+
+@media (max-width: 767px) {
+  main.with-sticky-header {
+    padding-top: 56px; /* Altura del header móvil */
+  }
+}
+
+/* ========================================
+ * FIX PARA FOOTER STICKY
+ * ======================================== */
+
+/* Asegurar que el footer no bloquee contenido */
+footer {
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* ========================================
+ * PREVENIR BOUNCE SCROLL EN iOS
+ * ======================================== */
+
+/* Opcional: Prevenir el "bounce" en iOS cuando se llega al final */
+body.no-bounce {
+  overscroll-behavior-y: none;
+}
+
+/* ========================================
+ * FIX PARA CONTENIDO DINÁMICO
+ * ======================================== */
+
+/* Asegurar que contenido cargado dinámicamente sea scrollable */
+[x-data],
+[x-show],
+[x-if] {
+  overflow: visible;
+  height: auto;
+}
+
+/* ========================================
+ * DEBUGGING (Comentar en producción)
+ * ======================================== */
+
+/* Descomentar para debug visual de problemas de scroll */
+/*
+body {
+  outline: 2px solid red !important;
+}
+
+main {
+  outline: 2px solid blue !important;
+}
+
+.container {
+  outline: 2px solid green !important;
+}
+*/
+
+/* ========================================
+ * MEDIA QUERIES ESPECÍFICAS
+ * ======================================== */
+
+/* Dispositivos muy pequeños (< 375px) */
+@media (max-width: 374px) {
+  body {
+    font-size: 13px;
+  }
+  
+  main {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Dispositivos pequeños en landscape */
+@media (max-width: 767px) and (orientation: landscape) {
+  /* Reducir padding vertical en landscape */
+  main {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Hacer header más compacto */
+  nav,
+  header {
+    height: 48px;
+  }
+}
+
+/* ========================================
+ * ACCESIBILIDAD
+ * ======================================== */
+
+/* Respetar preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  * {
+    -webkit-overflow-scrolling: auto;
+  }
+}
+
+/* ========================================
+ * PERFORMANCE
+ * ======================================== */
+
+/* Optimizar rendering de scroll */
+.scroll-container {
+  will-change: scroll-position;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Lazy loading para imágenes en scroll */
+img[loading="lazy"] {
+  content-visibility: auto;
+}

@@ -32,6 +32,7 @@
 @import './utilities/animations.css';
 @import './utilities/scrollbar.css';
 @import './utilities/input-icons.css';
+@import './utilities/mobile-scroll-fix.css';
 
 /* Importar responsive */
 @import './responsive/mobile.css';

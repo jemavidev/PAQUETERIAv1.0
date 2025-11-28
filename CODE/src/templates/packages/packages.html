@@ -922,15 +922,8 @@ let totalPages = 1;
 let totalPackages = 0;
 
 function loadPackages(page = 1) {
-    const token = getAuthToken();
-
-    if (!token) {
-        console.error('No hay token de autenticación disponible');
-        window.location.href = '/auth/login';
-        return;
-    }
-
-    console.log('Cargando paquetes con token:', token ? 'presente' : 'ausente');
+    // Las cookies httponly se envían automáticamente, no necesitamos verificar el token aquí
+    console.log('Cargando paquetes...');
 
     // Mostrar loading en todas las secciones
     showLoadingStates(true);

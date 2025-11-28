@@ -712,4 +712,61 @@
       transition: none;
     }
   }
+  
+  /* ========================================
+   * FIX SCROLL MÓVIL - CRÍTICO
+   * ======================================== */
+  
+  /* Asegurar scroll completo en body */
+  html {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    min-height: 100%;
+    height: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+  
+  /* Fix para iOS Safari */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      min-height: -webkit-fill-available;
+    }
+    
+    html {
+      height: -webkit-fill-available;
+    }
+  }
+  
+  /* Asegurar que main permita scroll */
+  main {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+    height: auto !important;
+  }
+  
+  /* Prevenir que contenedores bloqueen scroll */
+  .container,
+  .max-w-7xl,
+  .mx-auto {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  
+  /* Asegurar scroll en contenido de páginas */
+  .page-content,
+  .content-wrapper,
+  [role="main"] {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+  }
 }
