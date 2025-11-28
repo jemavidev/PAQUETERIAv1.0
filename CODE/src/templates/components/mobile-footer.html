@@ -1,6 +1,6 @@
 <!-- Footer Sticky para Móvil - Solo para usuarios no autenticados -->
-<!-- VERSION: 2025-11-28-v2 - Footer con 4 iconos sticky -->
-<footer id="mobile-footer-public" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+<!-- VERSION: 2025-11-28-v3 - Footer con detección inteligente de dispositivos móviles -->
+<footer id="mobile-footer-public" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
     <!-- Copyright -->
     <div class="border-b border-gray-100 py-2 px-3">
         <div class="text-xs text-gray-500 text-center">
@@ -50,27 +50,54 @@
 
 <!-- Estilos para el footer móvil -->
 <style>
-    /* Estilos aplicados inmediatamente para evitar flash */
-    #mobile-footer-public {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
+    /* 
+     * Detección inteligente de dispositivos móviles
+     * Usa múltiples criterios para identificar dispositivos táctiles
+     */
     
-    @media (max-width: 768px) {
-        /* Agregar padding-bottom al body para compensar el footer fijo */
-        body {
-            padding-bottom: 92px !important; /* Altura del footer móvil (copyright + botones) */
+    /* Regla 1: Dispositivos táctiles con pantalla pequeña o mediana (hasta 1024px) */
+    @media (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+        #mobile-footer-public {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
-        /* Forzar ocultar el footer desktop en móvil */
+        body {
+            padding-bottom: 92px !important;
+        }
+        
         #desktop-footer {
             display: none !important;
         }
     }
     
-    @media (min-width: 769px) {
-        /* Ocultar completamente en desktop */
+    /* Regla 2: Dispositivos con orientación portrait (típico de móviles) */
+    @media (orientation: portrait) and (max-width: 1024px) {
+        #mobile-footer-public {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        body {
+            padding-bottom: 92px !important;
+        }
+        
+        #desktop-footer {
+            display: none !important;
+        }
+    }
+    
+    /* Regla 3: Ocultar en desktop (pantallas grandes con mouse) */
+    @media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
+        #mobile-footer-public {
+            display: none !important;
+        }
+    }
+    
+    /* Regla 4: Tablets en landscape - mostrar footer desktop */
+    @media (orientation: landscape) and (min-width: 1024px) {
         #mobile-footer-public {
             display: none !important;
         }
@@ -102,9 +129,17 @@
             color: inherit;
         }
     }
+    
+    /* Animación para el badge de debug */
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-10px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+    }
 </style>
 
-<!-- Script para mejorar la interacción táctil -->
+<!-- Script para detección inteligente y mejora de interacción táctil -->
 <script>
 (function() {
     // Esperar a que el DOM esté listo
@@ -115,29 +150,157 @@
     }
     
     function initMobileFooter() {
-        // Solo ejecutar en dispositivos móviles
-        if (window.innerWidth > 768) return;
+        const footer = document.getElementById('mobile-footer-public');
+        if (!footer) return;
         
-        const footerButtons = document.querySelectorAll('.mobile-footer-btn');
+        // Detección inteligente de dispositivo móvil
+        const isMobileDevice = detectMobileDevice();
         
-        footerButtons.forEach(button => {
-            // Agregar feedback visual en touchstart
-            button.addEventListener('touchstart', function(e) {
-                this.classList.add('touch-active');
-            }, { passive: true });
-            
-            // Remover feedback visual en touchend
-            button.addEventListener('touchend', function(e) {
-                setTimeout(() => {
-                    this.classList.remove('touch-active');
-                }, 150);
-            }, { passive: true });
-            
-            // Remover feedback visual si se cancela el toque
-            button.addEventListener('touchcancel', function(e) {
-                this.classList.remove('touch-active');
-            }, { passive: true });
+        console.log('🔍 Detección de dispositivo:', {
+            isMobile: isMobileDevice,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            touchSupport: 'ontouchstart' in window,
+            orientation: window.screen.orientation?.type || 'unknown',
+            userAgent: navigator.userAgent.substring(0, 50) + '...'
         });
+        
+        // 🎯 INDICADOR VISUAL TEMPORAL (para debugging sin DevTools)
+        // Mostrar un pequeño badge temporal que indica si fue detectado como móvil
+        if (isMobileDevice) {
+            const debugBadge = document.createElement('div');
+            debugBadge.id = 'mobile-debug-badge';
+            debugBadge.innerHTML = '✅ Móvil Detectado';
+            debugBadge.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: #10b981;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                animation: fadeInOut 4s ease-in-out;
+            `;
+            document.body.appendChild(debugBadge);
+            
+            // Remover después de 4 segundos
+            setTimeout(() => {
+                debugBadge.style.opacity = '0';
+                debugBadge.style.transition = 'opacity 0.5s';
+                setTimeout(() => debugBadge.remove(), 500);
+            }, 3500);
+        } else {
+            const debugBadge = document.createElement('div');
+            debugBadge.id = 'mobile-debug-badge';
+            debugBadge.innerHTML = '❌ Desktop Detectado';
+            debugBadge.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: #ef4444;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                animation: fadeInOut 4s ease-in-out;
+            `;
+            document.body.appendChild(debugBadge);
+            
+            // Remover después de 4 segundos
+            setTimeout(() => {
+                debugBadge.style.opacity = '0';
+                debugBadge.style.transition = 'opacity 0.5s';
+                setTimeout(() => debugBadge.remove(), 500);
+            }, 3500);
+        }
+        
+        // Si es móvil, asegurar que el footer esté visible
+        if (isMobileDevice) {
+            footer.style.display = 'block';
+            footer.style.visibility = 'visible';
+            footer.style.opacity = '1';
+            document.body.style.paddingBottom = '92px';
+            
+            // Ocultar footer desktop
+            const desktopFooter = document.getElementById('desktop-footer');
+            if (desktopFooter) {
+                desktopFooter.style.display = 'none';
+            }
+        } else {
+            footer.style.display = 'none';
+        }
+        
+        // Configurar feedback táctil solo en dispositivos móviles
+        if (isMobileDevice) {
+            const footerButtons = document.querySelectorAll('.mobile-footer-btn');
+            
+            footerButtons.forEach(button => {
+                button.addEventListener('touchstart', function(e) {
+                    this.classList.add('touch-active');
+                }, { passive: true });
+                
+                button.addEventListener('touchend', function(e) {
+                    setTimeout(() => {
+                        this.classList.remove('touch-active');
+                    }, 150);
+                }, { passive: true });
+                
+                button.addEventListener('touchcancel', function(e) {
+                    this.classList.remove('touch-active');
+                }, { passive: true });
+            });
+        }
+        
+        // Redetectar en cambios de orientación
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                const newIsMobile = detectMobileDevice();
+                if (newIsMobile !== isMobileDevice) {
+                    location.reload(); // Recargar para aplicar cambios
+                }
+            }, 200);
+        });
+    }
+    
+    function detectMobileDevice() {
+        // Criterio 1: Soporte táctil
+        const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Criterio 2: Ancho de pantalla (hasta 1024px para incluir móviles grandes)
+        const isNarrowScreen = window.innerWidth <= 1024;
+        
+        // Criterio 3: User Agent (detección de dispositivos móviles conocidos)
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        const isMobileUA = mobileRegex.test(navigator.userAgent);
+        
+        // Criterio 4: Orientación portrait (típico de móviles)
+        const isPortrait = window.innerHeight > window.innerWidth;
+        
+        // Criterio 5: Detección de pointer coarse (pantalla táctil)
+        const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+        
+        // Criterio 6: No tiene hover (típico de dispositivos táctiles)
+        const noHover = window.matchMedia('(hover: none)').matches;
+        
+        // Decisión: Es móvil si cumple al menos 2 de estos criterios
+        const mobileScore = [
+            hasTouch,
+            isNarrowScreen,
+            isMobileUA,
+            (isPortrait && isNarrowScreen),
+            hasCoarsePointer,
+            noHover
+        ].filter(Boolean).length;
+        
+        // Es móvil si tiene score >= 2 o si es definitivamente un móvil por UA
+        return mobileScore >= 2 || isMobileUA;
     }
 })();
 </script>
