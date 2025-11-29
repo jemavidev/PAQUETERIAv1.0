@@ -5,14 +5,27 @@
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
 # Sistema unificado de deploy multi-entorno
-# Versión: 2.0.0
-# Fecha: 2024-11-22
+# Versión: 2.2.0
+# Fecha: 2025-11-29
+# Última modificación: Deploy a commit específico
 #
 # USO:
 #   ./deploy.sh                          # Modo interactivo
 #   ./deploy.sh --env localhost --deploy # Deploy en localhost
 #   ./deploy.sh --env papyrus --deploy   # Deploy en papyrus
+#   ./deploy.sh --env staging --deploy   # Deploy en staging
 #   ./deploy.sh --help                   # Ver ayuda
+#
+# MEJORAS v2.2.0:
+#   - Deploy completo ahora permite seleccionar commit específico
+#   - Opción de desplegar último commit o cualquier commit del historial
+#   - Disponible para todos los entornos (localhost, staging, papyrus)
+#   - Rollback rápido a versiones anteriores
+#
+# MEJORAS v2.1.0:
+#   - Git sync usa fetch + reset --hard en entornos remotos (más robusto)
+#   - Evita problemas de ramas divergentes en staging/producción
+#   - Sincronización 100% con GitHub sin conflictos
 #
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -235,7 +248,7 @@ git_pull_only() {
         return 1
     fi
     
-    # Para entornos remotos, verificar cambios locales primero
+    # Para entornos remotos, usar fetch + reset (más robusto)
     if [ "$ENV_TYPE" = "remote" ]; then
         local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
         
@@ -244,27 +257,26 @@ git_pull_only() {
             echo ""
             ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
             echo ""
-            
-            # Limpiar cualquier merge en progreso
-            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
-            
-            # Fetch primero para tener la última versión
-            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión..."
-            
-            # Reset hard a la versión remota (sobrescribe todo)
-            execute_command "git reset --hard origin/${GIT_BRANCH}" "Actualizando a versión de GitHub..."
-            
-            # Limpiar archivos no rastreados si existen
-            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
-        else
-            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
         fi
+        
+        # Limpiar cualquier merge en progreso
+        execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+        
+        # Fetch primero para tener la última versión
+        execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
+        
+        # Reset hard a la versión remota (sobrescribe todo, evita problemas de divergencia)
+        execute_command "git reset --hard origin/${GIT_BRANCH}" "Sincronizando con versión de GitHub..."
+        
+        # Limpiar archivos no rastreados si existen
+        execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+        
+        log_success "Código sincronizado 100% con GitHub (rama: ${GIT_BRANCH})"
     else
-        # Para entornos locales
+        # Para entornos locales, usar pull tradicional
         execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+        log_success "Pull completado - Código actualizado desde GitHub"
     fi
-    
-    log_success "Pull completado - Código actualizado desde GitHub"
 }
 
 git_pull_to_commit() {
@@ -477,18 +489,71 @@ deploy_full() {
     if [ "$GIT_ENABLED" = true ]; then
         echo -e "${CYAN}[1/6]${NC} Git Operations"
         
-        # Para entornos locales: commit y push
+        # Para entornos locales: commit y push, o checkout a commit específico
         if [ "$ENV_TYPE" = "local" ]; then
-            if git_check_status; then
-                git_show_status
-                if [ "$GIT_AUTO_COMMIT" = true ]; then
-                    git_commit_and_push "auto deploy $(date +%Y%m%d_%H%M%S)"
-                else
-                    read -p "¿Hacer commit y push? [y/N]: " -n 1 -r
+            # Preguntar si quiere trabajar con cambios locales o commit específico
+            echo ""
+            echo -e "${YELLOW}¿Qué versión deseas desplegar?${NC}"
+            echo -e "  ${CYAN}[1]${NC} Cambios actuales (commit y push si hay cambios)"
+            echo -e "  ${CYAN}[2]${NC} Commit específico del historial"
+            echo ""
+            read -p "Selecciona opción [1-2]: " local_commit_option
+            
+            case $local_commit_option in
+                2)
+                    # Mostrar lista de commits
                     echo ""
-                    [[ $REPLY =~ ^[Yy]$ ]] && git_commit_and_push ""
-                fi
-            fi
+                    log_step "Commits disponibles en rama ${GIT_BRANCH}:"
+                    echo ""
+                    git log ${GIT_BRANCH} --oneline -20 | nl -w2 -s'. '
+                    echo ""
+                    read -p "Selecciona commit [1-20] (0=cancelar): " commit_choice
+                    
+                    if [ "$commit_choice" -eq 0 ] 2>/dev/null; then
+                        log_error "Deploy cancelado por el usuario"
+                        return 1
+                    fi
+                    
+                    if [ "$commit_choice" -ge 1 ] && [ "$commit_choice" -le 20 ] 2>/dev/null; then
+                        local target_commit=$(git log ${GIT_BRANCH} --oneline -20 | sed -n "${commit_choice}p" | awk '{print $1}')
+                        
+                        if [ -n "$target_commit" ]; then
+                            log_info "Commit seleccionado: $target_commit"
+                            echo ""
+                            git log --oneline -1 $target_commit
+                            echo ""
+                            read -p "¿Confirmar checkout a este commit? [y/N]: " -n 1 -r
+                            echo ""
+                            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                                git checkout $target_commit
+                                log_success "Checkout realizado a commit: $target_commit"
+                            else
+                                log_error "Deploy cancelado por el usuario"
+                                return 1
+                            fi
+                        else
+                            log_error "No se pudo obtener el commit seleccionado"
+                            return 1
+                        fi
+                    else
+                        log_error "Opción inválida"
+                        return 1
+                    fi
+                    ;;
+                1|*)
+                    # Trabajar con cambios actuales
+                    if git_check_status; then
+                        git_show_status
+                        if [ "$GIT_AUTO_COMMIT" = true ]; then
+                            git_commit_and_push "auto deploy $(date +%Y%m%d_%H%M%S)"
+                        else
+                            read -p "¿Hacer commit y push? [y/N]: " -n 1 -r
+                            echo ""
+                            [[ $REPLY =~ ^[Yy]$ ]] && git_commit_and_push ""
+                        fi
+                    fi
+                    ;;
+            esac
         fi
         
         # Para entornos remotos: pull (con manejo de cambios locales)
@@ -503,61 +568,86 @@ deploy_full() {
                 echo ""
                 ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
                 echo ""
-                
-                # Verificar si hay conflictos de merge sin resolver
-                local has_conflicts=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain | grep -E '^(UU|AA|DD)'" | wc -l)
-                
-                if [ "$has_conflicts" -gt 0 ]; then
-                    log_error "Hay conflictos de merge sin resolver"
+                log_warning "Los cambios locales serán sobrescritos con la versión de GitHub"
+            fi
+            
+            # Limpiar cualquier merge en progreso
+            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+            
+            # Preguntar si quiere último commit o commit específico
+            echo ""
+            echo -e "${YELLOW}¿Qué versión deseas desplegar?${NC}"
+            echo -e "  ${CYAN}[1]${NC} Último commit de la rama ${GIT_BRANCH}"
+            echo -e "  ${CYAN}[2]${NC} Commit específico"
+            echo ""
+            read -p "Selecciona opción [1-2]: " commit_option
+            
+            local target_commit=""
+            
+            case $commit_option in
+                2)
+                    # Mostrar lista de commits
                     echo ""
-                    echo -e "${YELLOW}Opciones disponibles:${NC}"
-                    echo -e "  ${CYAN}[1]${NC} Abortar merge y continuar deploy (git merge --abort)"
-                    echo -e "  ${CYAN}[2]${NC} Resetear a versión remota y continuar (git reset --hard)"
-                    echo -e "  ${CYAN}[3]${NC} Cancelar deploy"
-                    echo ""
-                    read -p "Selecciona opción [1-3]: " conflict_option
+                    log_step "Obteniendo lista de commits desde GitHub..."
+                    execute_command "git fetch origin ${GIT_BRANCH}" "Actualizando referencias..."
                     
-                    case $conflict_option in
-                        1)
-                            execute_command "git merge --abort" "Abortando merge..."
-                            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-                            ;;
-                        2)
-                            log_warning "Esto eliminará TODOS los cambios locales"
-                            read -p "¿Estás seguro? [y/N]: " -n 1 -r
-                            echo ""
-                            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                                execute_command "git reset --hard origin/${GIT_BRANCH}" "Reseteando a versión remota..."
-                            else
-                                log_error "Deploy cancelado"
-                                return 1
-                            fi
-                            ;;
-                        *)
-                            log_error "Deploy cancelado por el usuario"
-                            return 1
-                            ;;
-                    esac
-                else
-                    # No hay conflictos, proceder con stash normal
-                    read -p "¿Hacer stash de cambios locales y continuar? [y/N]: " -n 1 -r
+                    echo ""
+                    echo -e "${YELLOW}Últimos 20 commits disponibles:${NC}"
                     echo ""
                     
-                    if [[ $REPLY =~ ^[Yy]$ ]]; then
-                        execute_command "git stash push -m 'Auto stash before deploy $(date +%Y%m%d_%H%M%S)'" "Guardando cambios locales..."
-                        execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-                        
-                        read -p "¿Restaurar cambios guardados (stash pop)? [y/N]: " -n 1 -r
-                        echo ""
-                        [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
-                    else
+                    # Obtener y mostrar commits
+                    if [ "$ENV_TYPE" = "remote" ]; then
+                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20" | nl -w2 -s'. '
+                    fi
+                    
+                    echo ""
+                    read -p "Selecciona commit [1-20] (0=cancelar): " commit_choice
+                    
+                    if [ "$commit_choice" -eq 0 ] 2>/dev/null; then
                         log_error "Deploy cancelado por el usuario"
                         return 1
                     fi
-                fi
-            else
-                execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-            fi
+                    
+                    if [ "$commit_choice" -ge 1 ] && [ "$commit_choice" -le 20 ] 2>/dev/null; then
+                        # Obtener el hash del commit seleccionado
+                        target_commit=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20 | sed -n '${commit_choice}p' | awk '{print \$1}'")
+                        
+                        if [ -n "$target_commit" ]; then
+                            log_info "Commit seleccionado: $target_commit"
+                            echo ""
+                            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1 $target_commit"
+                            echo ""
+                            read -p "¿Confirmar deploy de este commit? [y/N]: " -n 1 -r
+                            echo ""
+                            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                                log_error "Deploy cancelado por el usuario"
+                                return 1
+                            fi
+                        else
+                            log_error "No se pudo obtener el commit seleccionado"
+                            return 1
+                        fi
+                    else
+                        log_error "Opción inválida"
+                        return 1
+                    fi
+                    ;;
+                1|*)
+                    # Usar último commit de la rama
+                    target_commit="origin/${GIT_BRANCH}"
+                    log_info "Desplegando último commit de la rama ${GIT_BRANCH}"
+                    ;;
+            esac
+            
+            # Fetch + Reset al commit seleccionado
+            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
+            execute_command "git reset --hard $target_commit" "Sincronizando con commit seleccionado..."
+            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+            
+            # Mostrar commit actual
+            echo ""
+            log_success "Código sincronizado con commit:"
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
         fi
     fi
     
