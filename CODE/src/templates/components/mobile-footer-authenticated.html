@@ -21,17 +21,16 @@
             <span class="text-xs font-medium whitespace-nowrap">Buscar</span>
         </a>
 
-        <!-- Paquetes -->
+        <!-- Paquetes - Icono destacado sin texto -->
         <a href="/packages" 
-           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-1.5 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 relative {% if request.path == '/packages' %}text-papyrus-blue{% endif %}">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+           class="mobile-footer-btn flex flex-col items-center justify-center flex-1 py-2 px-0.5 text-gray-600 active:text-papyrus-blue transition-colors duration-200 relative {% if request.path == '/packages' %}text-papyrus-blue{% endif %}">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
             </svg>
-            <span class="text-xs font-medium whitespace-nowrap">Paquetes</span>
             <!-- Badge de Paquetes ANUNCIADOS (pendientes de recibir) -->
             <div id="packages-badge-footer"
-                class="hidden absolute -top-0.5 -right-0.5 bg-papyrus-blue text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] animate-pulse">
-                <span id="packages-count-footer" class="text-[10px]">0</span>
+                class="hidden absolute top-1 right-2 bg-papyrus-blue text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] animate-pulse shadow-lg">
+                <span id="packages-count-footer" class="text-[11px]">0</span>
             </div>
         </a>
 
