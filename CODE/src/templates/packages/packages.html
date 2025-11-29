@@ -4074,8 +4074,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchFilter) {
         // Aplicar debounce de 500ms para la búsqueda
         searchFilter.addEventListener('input', debounce(applyPackageFilter, 500));
-        // Focus on search filter when page loads
-        searchFilter.focus();
+        
+        // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+        if (!isMobile) {
+            // Solo aplicar focus en desktop
+            searchFilter.focus();
+        }
     }
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', clearFilters);
