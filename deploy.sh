@@ -5,14 +5,21 @@
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
 # Sistema unificado de deploy multi-entorno
-# Versión: 2.0.0
-# Fecha: 2024-11-22
+# Versión: 2.1.0
+# Fecha: 2025-11-29
+# Última modificación: Mejorado git sync para evitar problemas de divergencia
 #
 # USO:
 #   ./deploy.sh                          # Modo interactivo
 #   ./deploy.sh --env localhost --deploy # Deploy en localhost
 #   ./deploy.sh --env papyrus --deploy   # Deploy en papyrus
+#   ./deploy.sh --env staging --deploy   # Deploy en staging
 #   ./deploy.sh --help                   # Ver ayuda
+#
+# MEJORAS v2.1.0:
+#   - Git sync usa fetch + reset --hard en entornos remotos (más robusto)
+#   - Evita problemas de ramas divergentes en staging/producción
+#   - Sincronización 100% con GitHub sin conflictos
 #
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -235,7 +242,7 @@ git_pull_only() {
         return 1
     fi
     
-    # Para entornos remotos, verificar cambios locales primero
+    # Para entornos remotos, usar fetch + reset (más robusto)
     if [ "$ENV_TYPE" = "remote" ]; then
         local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
         
@@ -244,27 +251,26 @@ git_pull_only() {
             echo ""
             ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
             echo ""
-            
-            # Limpiar cualquier merge en progreso
-            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
-            
-            # Fetch primero para tener la última versión
-            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión..."
-            
-            # Reset hard a la versión remota (sobrescribe todo)
-            execute_command "git reset --hard origin/${GIT_BRANCH}" "Actualizando a versión de GitHub..."
-            
-            # Limpiar archivos no rastreados si existen
-            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
-        else
-            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
         fi
+        
+        # Limpiar cualquier merge en progreso
+        execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+        
+        # Fetch primero para tener la última versión
+        execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
+        
+        # Reset hard a la versión remota (sobrescribe todo, evita problemas de divergencia)
+        execute_command "git reset --hard origin/${GIT_BRANCH}" "Sincronizando con versión de GitHub..."
+        
+        # Limpiar archivos no rastreados si existen
+        execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+        
+        log_success "Código sincronizado 100% con GitHub (rama: ${GIT_BRANCH})"
     else
-        # Para entornos locales
+        # Para entornos locales, usar pull tradicional
         execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios desde GitHub..."
+        log_success "Pull completado - Código actualizado desde GitHub"
     fi
-    
-    log_success "Pull completado - Código actualizado desde GitHub"
 }
 
 git_pull_to_commit() {
@@ -503,61 +509,18 @@ deploy_full() {
                 echo ""
                 ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
                 echo ""
-                
-                # Verificar si hay conflictos de merge sin resolver
-                local has_conflicts=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain | grep -E '^(UU|AA|DD)'" | wc -l)
-                
-                if [ "$has_conflicts" -gt 0 ]; then
-                    log_error "Hay conflictos de merge sin resolver"
-                    echo ""
-                    echo -e "${YELLOW}Opciones disponibles:${NC}"
-                    echo -e "  ${CYAN}[1]${NC} Abortar merge y continuar deploy (git merge --abort)"
-                    echo -e "  ${CYAN}[2]${NC} Resetear a versión remota y continuar (git reset --hard)"
-                    echo -e "  ${CYAN}[3]${NC} Cancelar deploy"
-                    echo ""
-                    read -p "Selecciona opción [1-3]: " conflict_option
-                    
-                    case $conflict_option in
-                        1)
-                            execute_command "git merge --abort" "Abortando merge..."
-                            execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-                            ;;
-                        2)
-                            log_warning "Esto eliminará TODOS los cambios locales"
-                            read -p "¿Estás seguro? [y/N]: " -n 1 -r
-                            echo ""
-                            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                                execute_command "git reset --hard origin/${GIT_BRANCH}" "Reseteando a versión remota..."
-                            else
-                                log_error "Deploy cancelado"
-                                return 1
-                            fi
-                            ;;
-                        *)
-                            log_error "Deploy cancelado por el usuario"
-                            return 1
-                            ;;
-                    esac
-                else
-                    # No hay conflictos, proceder con stash normal
-                    read -p "¿Hacer stash de cambios locales y continuar? [y/N]: " -n 1 -r
-                    echo ""
-                    
-                    if [[ $REPLY =~ ^[Yy]$ ]]; then
-                        execute_command "git stash push -m 'Auto stash before deploy $(date +%Y%m%d_%H%M%S)'" "Guardando cambios locales..."
-                        execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
-                        
-                        read -p "¿Restaurar cambios guardados (stash pop)? [y/N]: " -n 1 -r
-                        echo ""
-                        [[ $REPLY =~ ^[Yy]$ ]] && execute_command "git stash pop" "Restaurando cambios..."
-                    else
-                        log_error "Deploy cancelado por el usuario"
-                        return 1
-                    fi
-                fi
-            else
-                execute_command "git pull origin ${GIT_BRANCH}" "Descargando cambios..."
+                log_warning "Los cambios locales serán sobrescritos con la versión de GitHub"
             fi
+            
+            # Limpiar cualquier merge en progreso
+            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+            
+            # Fetch + Reset (método robusto que evita problemas de divergencia)
+            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
+            execute_command "git reset --hard origin/${GIT_BRANCH}" "Sincronizando con versión de GitHub..."
+            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+            
+            log_success "Código sincronizado 100% con GitHub (rama: ${GIT_BRANCH})"
         fi
     fi
     
