@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!customerName) {
                 console.log('❌ Validación fallida: nombre vacío');
                 showError('📝 Campo Requerido', 'El nombre del cliente es requerido');
-                
+                document.getElementById('customer_name').focus();
                 return;
             }
             
