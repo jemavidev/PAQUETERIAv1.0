@@ -5,9 +5,9 @@
 # ╚════════════════════════════════════════════════════════════════════════════╝
 #
 # Sistema unificado de deploy multi-entorno
-# Versión: 2.1.0
+# Versión: 2.2.0
 # Fecha: 2025-11-29
-# Última modificación: Mejorado git sync para evitar problemas de divergencia
+# Última modificación: Deploy a commit específico
 #
 # USO:
 #   ./deploy.sh                          # Modo interactivo
@@ -15,6 +15,12 @@
 #   ./deploy.sh --env papyrus --deploy   # Deploy en papyrus
 #   ./deploy.sh --env staging --deploy   # Deploy en staging
 #   ./deploy.sh --help                   # Ver ayuda
+#
+# MEJORAS v2.2.0:
+#   - Deploy completo ahora permite seleccionar commit específico
+#   - Opción de desplegar último commit o cualquier commit del historial
+#   - Disponible para todos los entornos (localhost, staging, papyrus)
+#   - Rollback rápido a versiones anteriores
 #
 # MEJORAS v2.1.0:
 #   - Git sync usa fetch + reset --hard en entornos remotos (más robusto)
@@ -483,18 +489,71 @@ deploy_full() {
     if [ "$GIT_ENABLED" = true ]; then
         echo -e "${CYAN}[1/6]${NC} Git Operations"
         
-        # Para entornos locales: commit y push
+        # Para entornos locales: commit y push, o checkout a commit específico
         if [ "$ENV_TYPE" = "local" ]; then
-            if git_check_status; then
-                git_show_status
-                if [ "$GIT_AUTO_COMMIT" = true ]; then
-                    git_commit_and_push "auto deploy $(date +%Y%m%d_%H%M%S)"
-                else
-                    read -p "¿Hacer commit y push? [y/N]: " -n 1 -r
+            # Preguntar si quiere trabajar con cambios locales o commit específico
+            echo ""
+            echo -e "${YELLOW}¿Qué versión deseas desplegar?${NC}"
+            echo -e "  ${CYAN}[1]${NC} Cambios actuales (commit y push si hay cambios)"
+            echo -e "  ${CYAN}[2]${NC} Commit específico del historial"
+            echo ""
+            read -p "Selecciona opción [1-2]: " local_commit_option
+            
+            case $local_commit_option in
+                2)
+                    # Mostrar lista de commits
                     echo ""
-                    [[ $REPLY =~ ^[Yy]$ ]] && git_commit_and_push ""
-                fi
-            fi
+                    log_step "Commits disponibles en rama ${GIT_BRANCH}:"
+                    echo ""
+                    git log ${GIT_BRANCH} --oneline -20 | nl -w2 -s'. '
+                    echo ""
+                    read -p "Selecciona commit [1-20] (0=cancelar): " commit_choice
+                    
+                    if [ "$commit_choice" -eq 0 ] 2>/dev/null; then
+                        log_error "Deploy cancelado por el usuario"
+                        return 1
+                    fi
+                    
+                    if [ "$commit_choice" -ge 1 ] && [ "$commit_choice" -le 20 ] 2>/dev/null; then
+                        local target_commit=$(git log ${GIT_BRANCH} --oneline -20 | sed -n "${commit_choice}p" | awk '{print $1}')
+                        
+                        if [ -n "$target_commit" ]; then
+                            log_info "Commit seleccionado: $target_commit"
+                            echo ""
+                            git log --oneline -1 $target_commit
+                            echo ""
+                            read -p "¿Confirmar checkout a este commit? [y/N]: " -n 1 -r
+                            echo ""
+                            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                                git checkout $target_commit
+                                log_success "Checkout realizado a commit: $target_commit"
+                            else
+                                log_error "Deploy cancelado por el usuario"
+                                return 1
+                            fi
+                        else
+                            log_error "No se pudo obtener el commit seleccionado"
+                            return 1
+                        fi
+                    else
+                        log_error "Opción inválida"
+                        return 1
+                    fi
+                    ;;
+                1|*)
+                    # Trabajar con cambios actuales
+                    if git_check_status; then
+                        git_show_status
+                        if [ "$GIT_AUTO_COMMIT" = true ]; then
+                            git_commit_and_push "auto deploy $(date +%Y%m%d_%H%M%S)"
+                        else
+                            read -p "¿Hacer commit y push? [y/N]: " -n 1 -r
+                            echo ""
+                            [[ $REPLY =~ ^[Yy]$ ]] && git_commit_and_push ""
+                        fi
+                    fi
+                    ;;
+            esac
         fi
         
         # Para entornos remotos: pull (con manejo de cambios locales)
@@ -515,12 +574,80 @@ deploy_full() {
             # Limpiar cualquier merge en progreso
             execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
             
-            # Fetch + Reset (método robusto que evita problemas de divergencia)
+            # Preguntar si quiere último commit o commit específico
+            echo ""
+            echo -e "${YELLOW}¿Qué versión deseas desplegar?${NC}"
+            echo -e "  ${CYAN}[1]${NC} Último commit de la rama ${GIT_BRANCH}"
+            echo -e "  ${CYAN}[2]${NC} Commit específico"
+            echo ""
+            read -p "Selecciona opción [1-2]: " commit_option
+            
+            local target_commit=""
+            
+            case $commit_option in
+                2)
+                    # Mostrar lista de commits
+                    echo ""
+                    log_step "Obteniendo lista de commits desde GitHub..."
+                    execute_command "git fetch origin ${GIT_BRANCH}" "Actualizando referencias..."
+                    
+                    echo ""
+                    echo -e "${YELLOW}Últimos 20 commits disponibles:${NC}"
+                    echo ""
+                    
+                    # Obtener y mostrar commits
+                    if [ "$ENV_TYPE" = "remote" ]; then
+                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20" | nl -w2 -s'. '
+                    fi
+                    
+                    echo ""
+                    read -p "Selecciona commit [1-20] (0=cancelar): " commit_choice
+                    
+                    if [ "$commit_choice" -eq 0 ] 2>/dev/null; then
+                        log_error "Deploy cancelado por el usuario"
+                        return 1
+                    fi
+                    
+                    if [ "$commit_choice" -ge 1 ] && [ "$commit_choice" -le 20 ] 2>/dev/null; then
+                        # Obtener el hash del commit seleccionado
+                        target_commit=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20 | sed -n '${commit_choice}p' | awk '{print \$1}'")
+                        
+                        if [ -n "$target_commit" ]; then
+                            log_info "Commit seleccionado: $target_commit"
+                            echo ""
+                            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1 $target_commit"
+                            echo ""
+                            read -p "¿Confirmar deploy de este commit? [y/N]: " -n 1 -r
+                            echo ""
+                            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                                log_error "Deploy cancelado por el usuario"
+                                return 1
+                            fi
+                        else
+                            log_error "No se pudo obtener el commit seleccionado"
+                            return 1
+                        fi
+                    else
+                        log_error "Opción inválida"
+                        return 1
+                    fi
+                    ;;
+                1|*)
+                    # Usar último commit de la rama
+                    target_commit="origin/${GIT_BRANCH}"
+                    log_info "Desplegando último commit de la rama ${GIT_BRANCH}"
+                    ;;
+            esac
+            
+            # Fetch + Reset al commit seleccionado
             execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
-            execute_command "git reset --hard origin/${GIT_BRANCH}" "Sincronizando con versión de GitHub..."
+            execute_command "git reset --hard $target_commit" "Sincronizando con commit seleccionado..."
             execute_command "git clean -fd" "Limpiando archivos no rastreados..."
             
-            log_success "Código sincronizado 100% con GitHub (rama: ${GIT_BRANCH})"
+            # Mostrar commit actual
+            echo ""
+            log_success "Código sincronizado con commit:"
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
         fi
     fi
     
