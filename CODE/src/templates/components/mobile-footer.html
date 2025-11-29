@@ -1,13 +1,6 @@
 <!-- Footer Sticky para Móvil - Solo para usuarios no autenticados -->
-<!-- VERSION: 2025-11-28-v3 - Footer con detección inteligente de dispositivos móviles -->
+<!-- VERSION: 2025-11-28-v4 - Footer SOLO con iconos de navegación (sin copyright duplicado) -->
 <footer id="mobile-footer-public" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-    <!-- Copyright -->
-    <div class="border-b border-gray-100 py-2 px-3">
-        <div class="text-xs text-gray-500 text-center">
-            Desarrollado por <a href="https://jemavi.co" class="text-papyrus-blue hover:text-blue-700 underline" target="_blank">JEMAVI</a> | © 2025 PAPYRUS
-        </div>
-    </div>
-    
     <!-- Botones de navegación -->
     <div class="flex justify-around items-center h-16 px-1">
         <!-- Anunciar -->
@@ -64,7 +57,7 @@
         }
         
         body {
-            padding-bottom: 92px !important;
+            padding-bottom: 64px !important;
         }
         
         #desktop-footer {
@@ -81,7 +74,7 @@
         }
         
         body {
-            padding-bottom: 92px !important;
+            padding-bottom: 64px !important;
         }
         
         #desktop-footer {
@@ -226,7 +219,7 @@
             footer.style.display = 'block';
             footer.style.visibility = 'visible';
             footer.style.opacity = '1';
-            document.body.style.paddingBottom = '92px';
+            document.body.style.paddingBottom = '64px';
             
             // Ocultar footer desktop
             const desktopFooter = document.getElementById('desktop-footer');
