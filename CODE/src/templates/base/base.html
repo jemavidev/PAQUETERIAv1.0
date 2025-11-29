@@ -826,8 +826,9 @@
         {% endblock %}
     </main>
 
-    {# Footer Component - Oculto en móviles para usuarios no autenticados (tienen footer sticky) #}
-    <footer id="desktop-footer" class="bg-white shadow-sm border-t flex-shrink-0 {% if not is_authenticated %}hidden md:block{% endif %}">
+    {# Footer Desktop - Solo para usuarios autenticados o pantallas grandes #}
+    {% if is_authenticated %}
+    <footer id="desktop-footer" class="bg-white shadow-sm border-t flex-shrink-0">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
             <div
                 class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 sm:py-4 space-y-2 sm:space-y-0">
@@ -869,6 +870,7 @@
             </div>
         </div>
     </footer>
+    {% endif %}
 
     {# Footer Móvil para Usuarios No Autenticados - v2025-11-28 #}
     {% if not is_authenticated %}
