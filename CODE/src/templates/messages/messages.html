@@ -910,14 +910,21 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMessageStats();
     // loadMessages(1); // Deshabilitado - usando datos del backend
     
-    // Enfocar automáticamente el campo de búsqueda
+    // Enfocar automáticamente el campo de búsqueda (solo en desktop)
     setTimeout(() => {
         const searchInput = document.getElementById('searchFilter');
         if (searchInput) {
             // Limpiar el campo de búsqueda antes de enfocar
             searchInput.value = '';
-            searchInput.focus();
-            console.log('Campo de búsqueda limpiado y enfocado automáticamente');
+            
+            // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+            if (!isMobile) {
+                searchInput.focus();
+                console.log('Campo de búsqueda limpiado y enfocado automáticamente (desktop)');
+            } else {
+                console.log('Autofocus deshabilitado en móvil');
+            }
         }
     }, 500); // Pequeño delay para asegurar que la página esté completamente cargada
     
