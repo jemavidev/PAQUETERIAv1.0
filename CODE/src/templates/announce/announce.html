@@ -42,7 +42,6 @@
                            id="customer_name" 
                            name="customer_name" 
                            required
-                           autofocus
                            class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
                            placeholder="Nombre del cliente"
                            oninput="this.value = this.value.toUpperCase()">
@@ -412,9 +411,15 @@ function applyFocus() {
     console.log('Aplicando focus...');
     const customerNameField = document.getElementById('customer_name');
     if (customerNameField) {
-        console.log('Campo de nombre encontrado, aplicando focus...');
-        customerNameField.focus();
-        console.log('Focus aplicado exitosamente');
+        // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+        if (!isMobile) {
+            console.log('Campo de nombre encontrado, aplicando focus (desktop)...');
+            customerNameField.focus();
+            console.log('Focus aplicado exitosamente');
+        } else {
+            console.log('Autofocus deshabilitado en móvil');
+        }
     } else {
         console.error('❌ Campo de nombre NO encontrado');
     }
