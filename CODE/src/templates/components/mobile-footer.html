@@ -122,14 +122,6 @@
             color: inherit;
         }
     }
-    
-    /* Animación para el badge de debug */
-    @keyframes fadeInOut {
-        0% { opacity: 0; transform: translateY(-10px); }
-        10% { opacity: 1; transform: translateY(0); }
-        90% { opacity: 1; transform: translateY(0); }
-        100% { opacity: 0; transform: translateY(-10px); }
-    }
 </style>
 
 <!-- Script para detección inteligente y mejora de interacción táctil -->
@@ -157,62 +149,6 @@
             orientation: window.screen.orientation?.type || 'unknown',
             userAgent: navigator.userAgent.substring(0, 50) + '...'
         });
-        
-        // 🎯 INDICADOR VISUAL TEMPORAL (para debugging sin DevTools)
-        // Mostrar un pequeño badge temporal que indica si fue detectado como móvil
-        if (isMobileDevice) {
-            const debugBadge = document.createElement('div');
-            debugBadge.id = 'mobile-debug-badge';
-            debugBadge.innerHTML = '✅ Móvil Detectado';
-            debugBadge.style.cssText = `
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                background: #10b981;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-size: 12px;
-                font-weight: bold;
-                z-index: 9999;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                animation: fadeInOut 4s ease-in-out;
-            `;
-            document.body.appendChild(debugBadge);
-            
-            // Remover después de 4 segundos
-            setTimeout(() => {
-                debugBadge.style.opacity = '0';
-                debugBadge.style.transition = 'opacity 0.5s';
-                setTimeout(() => debugBadge.remove(), 500);
-            }, 3500);
-        } else {
-            const debugBadge = document.createElement('div');
-            debugBadge.id = 'mobile-debug-badge';
-            debugBadge.innerHTML = '❌ Desktop Detectado';
-            debugBadge.style.cssText = `
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                background: #ef4444;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-size: 12px;
-                font-weight: bold;
-                z-index: 9999;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                animation: fadeInOut 4s ease-in-out;
-            `;
-            document.body.appendChild(debugBadge);
-            
-            // Remover después de 4 segundos
-            setTimeout(() => {
-                debugBadge.style.opacity = '0';
-                debugBadge.style.transition = 'opacity 0.5s';
-                setTimeout(() => debugBadge.remove(), 500);
-            }, 3500);
-        }
         
         // Si es móvil, asegurar que el footer esté visible
         if (isMobileDevice) {
