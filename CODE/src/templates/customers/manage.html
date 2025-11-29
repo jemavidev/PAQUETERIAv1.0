@@ -1219,7 +1219,12 @@ function clearManageSearch() {
     input.value = '';
     cancelManageSearchDebounce();
     submitManageSearch();
-    input.focus();
+    
+    // Prevenir autofocus en móviles
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+    if (!isMobile) {
+        input.focus();
+    }
 }
 
 function initManageSearchAutoSubmit() {
@@ -1228,8 +1233,10 @@ function initManageSearchAutoSubmit() {
         return;
     }
 
-    // Auto focus al cargar la vista
-    if (document.activeElement !== input) {
+    // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+    if (!isMobile && document.activeElement !== input) {
+        // Solo aplicar focus en desktop
         input.focus();
     }
 

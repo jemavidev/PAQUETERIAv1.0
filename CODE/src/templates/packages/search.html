@@ -508,8 +508,12 @@
                     searchPackage(autoSearchQuery);
                 }, 500);
             } else {
-                // Focus automático normal si no hay parámetros de búsqueda
-                searchQueryField.focus();
+                // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+                if (!isMobile) {
+                    // Solo aplicar focus en desktop
+                    searchQueryField.focus();
+                }
             }
         }
 

@@ -4,17 +4,6 @@
 
 {% block extra_head %}
 <script src="/static/js/phone-utils.js"></script>
-<style>
-    /* Deshabilitar footer móvil en la página de announce */
-    #mobile-footer-public {
-        display: none !important;
-    }
-    
-    /* Remover padding-bottom del body que se agrega para el footer móvil */
-    body {
-        padding-bottom: 0 !important;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -417,7 +406,36 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Focus automático deshabilitado para evitar que el teclado móvil se abra automáticamente
+// Focus automático en el campo de nombre del cliente al cargar la página
+function applyFocus() {
+    console.log('Aplicando focus...');
+    const customerNameField = document.getElementById('customer_name');
+    if (customerNameField) {
+        // Prevenir autofocus en móviles (evita que se abra el teclado automáticamente)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+        if (!isMobile) {
+            console.log('Campo de nombre encontrado, aplicando focus (desktop)...');
+            customerNameField.focus();
+            console.log('Focus aplicado exitosamente');
+        } else {
+            console.log('Autofocus deshabilitado en móvil');
+        }
+    } else {
+        console.error('❌ Campo de nombre NO encontrado');
+    }
+}
+
+// Intentar focus en diferentes momentos del ciclo de carga
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, configurando focus...');
+    setTimeout(applyFocus, 100);
+});
+
+// Respaldo con window.onload
+window.addEventListener('load', function() {
+    console.log('Window cargado, verificando focus...');
+    setTimeout(applyFocus, 50);
+});
 
 </script>
 {% endblock %}
