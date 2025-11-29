@@ -780,8 +780,7 @@
         {% endblock %}
     </main>
 
-    {# Footer Desktop - Solo para usuarios autenticados o pantallas grandes #}
-    {% if is_authenticated %}
+    {# Footer Desktop - Visible para todos (oculto en móvil por CSS del mobile-footer) #}
     <footer id="desktop-footer" class="bg-white shadow-sm border-t flex-shrink-0">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
             <div
@@ -824,7 +823,6 @@
             </div>
         </div>
     </footer>
-    {% endif %}
 
     {# Footer Móvil para Usuarios No Autenticados - v2025-11-28 #}
     {% if not is_authenticated %}
