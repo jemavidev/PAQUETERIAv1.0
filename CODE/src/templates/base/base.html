@@ -824,8 +824,12 @@
         </div>
     </footer>
 
-    {# Footer Móvil para Usuarios No Autenticados - v2025-11-28 #}
-    {% if not is_authenticated %}
+    {# Footer Móvil Condicional según Autenticación #}
+    {% if is_authenticated %}
+    {# Footer para Usuarios Autenticados #}
+    {% include 'components/mobile-footer-authenticated.html' %}
+    {% else %}
+    {# Footer para Usuarios No Autenticados #}
     {% include 'components/mobile-footer.html' %}
     {% endif %}
 
