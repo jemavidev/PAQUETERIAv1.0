@@ -44,24 +44,25 @@
                                 spellcheck="false">
                     </div>
 
-                    <!-- Filtros rápidos por estado (estilo similar a Paquetes) -->
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                        <!-- ABIERTO -->
-                        <button id="btnStatusAbierto" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 active:scale-95 touch-manipulation" title="ABIERTO">
-                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </button>
-                        <!-- RESPONDIDO -->
-                        <button id="btnStatusRespondido" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation" title="RESPONDIDO">
-                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Botón de limpiar filtros -->
+                    <!-- Botones de acción inline (estilo Paquetes) -->
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Botones de estado agrupados -->
+                        <div class="flex items-center gap-1">
+                            <!-- ABIERTO -->
+                            <button id="btnStatusAbierto" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 active:scale-95 touch-manipulation" title="ABIERTO">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </button>
+                            <!-- RESPONDIDO -->
+                            <button id="btnStatusRespondido" type="button" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation" title="RESPONDIDO">
+                                <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Botón de limpiar filtros -->
                         <button id="clearFilters"
                                 class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation"
                                 title="Limpiar filtros">
