@@ -403,11 +403,12 @@
         </button>
 
         <!-- Contenedor de la imagen -->
-        <div class="relative max-w-4xl max-h-full flex items-center justify-center">
+        <div class="relative max-w-4xl max-h-full flex items-center justify-center overflow-hidden">
             <img id="galleryImage" 
                  src="" 
                  alt="Imagen del paquete" 
-                 class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+                 class="max-w-full max-h-full object-contain rounded-lg shadow-2xl touch-none"
+                 style="transform-origin: center center;">
             
             <!-- Indicador de carga -->
             <div id="imageLoader" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg hidden">
@@ -2387,6 +2388,17 @@
     
     let galleryImages = [];
     let currentImageIndex = 0;
+    
+    // Variables para gestos táctiles
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    
+    // Variables para zoom con pinch
+    let initialDistance = 0;
+    let currentScale = 1;
+    let isPinching = false;
 
     function openImageGallery(images, startIndex = 0) {
         console.log('🖼️ Abriendo galería con', images.length, 'imágenes');
@@ -2434,6 +2446,9 @@
         // Generar thumbnails
         generateThumbnails();
         
+        // Inicializar gestos táctiles
+        initTouchGestures();
+        
         // Prevenir scroll del body
         document.body.style.overflow = 'hidden';
     }
@@ -2448,6 +2463,9 @@
         // Restaurar scroll del body
         document.body.style.overflow = '';
         
+        // Resetear zoom
+        resetZoom();
+        
         // Limpiar datos
         galleryImages = [];
         currentImageIndex = 0;
@@ -2458,6 +2476,9 @@
         
         const galleryImage = document.getElementById('galleryImage');
         const imageLoader = document.getElementById('imageLoader');
+        
+        // Resetear zoom al cambiar de imagen
+        resetZoom();
         
         // Mostrar loader
         imageLoader.classList.remove('hidden');
@@ -2541,6 +2562,124 @@
             updateImageCounter();
             updateThumbnailsActive();
         }
+    }
+    
+    // ========================================
+    // GESTOS TÁCTILES (SWIPE)
+    // ========================================
+    
+    function initTouchGestures() {
+        const galleryImage = document.getElementById('galleryImage');
+        const modal = document.getElementById('imageGalleryModal');
+        
+        if (!galleryImage || !modal) return;
+        
+        // Touch events para swipe
+        galleryImage.addEventListener('touchstart', handleTouchStart, { passive: true });
+        galleryImage.addEventListener('touchmove', handleTouchMove, { passive: false });
+        galleryImage.addEventListener('touchend', handleTouchEnd, { passive: true });
+        
+        console.log('✅ Gestos táctiles inicializados');
+    }
+    
+    function handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            // Un dedo - swipe
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isPinching = false;
+        } else if (e.touches.length === 2) {
+            // Dos dedos - pinch zoom
+            isPinching = true;
+            initialDistance = getDistance(e.touches[0], e.touches[1]);
+        }
+    }
+    
+    function handleTouchMove(e) {
+        if (isPinching && e.touches.length === 2) {
+            // Zoom con pinch
+            e.preventDefault();
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const scale = currentDistance / initialDistance;
+            applyZoom(currentScale * scale);
+        }
+    }
+    
+    function handleTouchEnd(e) {
+        if (isPinching) {
+            // Finalizar pinch zoom
+            isPinching = false;
+            return;
+        }
+        
+        // Detectar swipe
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+        
+        handleSwipeGesture();
+    }
+    
+    function handleSwipeGesture() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const minSwipeDistance = 50; // Distancia mínima para considerar un swipe
+        
+        // Determinar si es swipe horizontal o vertical
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Swipe horizontal
+            if (Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // Swipe derecha - imagen anterior
+                    console.log('👉 Swipe derecha detectado');
+                    prevImage();
+                } else {
+                    // Swipe izquierda - siguiente imagen
+                    console.log('👈 Swipe izquierda detectado');
+                    nextImage();
+                }
+            }
+        } else {
+            // Swipe vertical
+            if (Math.abs(deltaY) > minSwipeDistance && deltaY > 0) {
+                // Swipe hacia abajo - cerrar galería
+                console.log('👇 Swipe hacia abajo detectado');
+                closeImageGallery();
+            }
+        }
+    }
+    
+    // ========================================
+    // ZOOM CON PINCH
+    // ========================================
+    
+    function getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    function applyZoom(scale) {
+        const galleryImage = document.getElementById('galleryImage');
+        if (!galleryImage) return;
+        
+        // Limitar el zoom entre 1x y 4x
+        const minScale = 1;
+        const maxScale = 4;
+        currentScale = Math.max(minScale, Math.min(maxScale, scale));
+        
+        galleryImage.style.transform = `scale(${currentScale})`;
+        galleryImage.style.transition = 'transform 0.1s ease-out';
+        
+        console.log('🔍 Zoom aplicado:', currentScale.toFixed(2) + 'x');
+    }
+    
+    function resetZoom() {
+        const galleryImage = document.getElementById('galleryImage');
+        if (!galleryImage) return;
+        
+        currentScale = 1;
+        galleryImage.style.transform = 'scale(1)';
+        galleryImage.style.transition = 'transform 0.3s ease-out';
     }
 
     // MANEJO DE ERRORES DE IMÁGENES
@@ -2764,6 +2903,11 @@
 
 #galleryImage {
     transition: opacity 0.3s ease-in-out;
+    touch-action: none; /* Prevenir comportamiento por defecto del navegador */
+    user-select: none; /* Prevenir selección de imagen */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .thumbnail {
