@@ -1059,18 +1059,29 @@
 
             const toTopBtn = document.getElementById('toTopBtn');
             if (toTopBtn) {
-                window.addEventListener('scroll', function () {
-                    if (window.pageYOffset > 300) {
-                        toTopBtn.classList.remove('opacity-0', 'invisible', 'scale-90');
-                        toTopBtn.classList.add('opacity-100', 'visible', 'scale-100');
-                    } else {
-                        toTopBtn.classList.add('opacity-0', 'invisible', 'scale-90');
-                        toTopBtn.classList.remove('opacity-100', 'visible', 'scale-100');
-                    }
-                });
-                toTopBtn.addEventListener('click', function () {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
+                // Rutas donde el botón TO TOP debe estar activo
+                const allowedPaths = ['/help', '/terms', '/privacy', '/cookies'];
+                const currentPath = window.location.pathname;
+                const isAllowedPath = allowedPaths.includes(currentPath);
+                
+                if (isAllowedPath) {
+                    // Solo activar el botón en las rutas permitidas
+                    window.addEventListener('scroll', function () {
+                        if (window.pageYOffset > 300) {
+                            toTopBtn.classList.remove('opacity-0', 'invisible', 'scale-90');
+                            toTopBtn.classList.add('opacity-100', 'visible', 'scale-100');
+                        } else {
+                            toTopBtn.classList.add('opacity-0', 'invisible', 'scale-90');
+                            toTopBtn.classList.remove('opacity-100', 'visible', 'scale-100');
+                        }
+                    });
+                    toTopBtn.addEventListener('click', function () {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                } else {
+                    // En otras rutas, ocultar el botón permanentemente
+                    toTopBtn.style.display = 'none';
+                }
             }
 
             // Inicializar sistema de notificaciones
