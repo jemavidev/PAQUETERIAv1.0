@@ -8,10 +8,12 @@ ENV PYTHONPATH=/app:/app/src
 # Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema (incluyendo Node.js para Tailwind)
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements
@@ -20,10 +22,19 @@ COPY requirements.txt .
 # Instalar dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copiar archivos de configuración de Tailwind
+COPY package.json tailwind.config.js ./
+
+# Instalar dependencias de Node.js
+RUN npm install
+
 # Copiar código fuente
 COPY src/ /app/src/
 COPY alembic/ /app/alembic/
 COPY alembic.ini /app/
+
+# Compilar Tailwind CSS
+RUN npm run build:css
 
 # Crear directorios necesarios
 RUN mkdir -p /app/uploads /app/logs /app/backups/database

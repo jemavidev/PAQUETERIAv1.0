@@ -614,7 +614,12 @@ const PackageApp = {
     }
 };
 
-// Global fetch interceptor for authentication errors
+// NOTA: El interceptor de fetch está ahora en auth-redirect.js
+// Este código está deshabilitado para evitar interceptores duplicados
+// que pueden causar loops infinitos y bloquear el navegador
+
+/*
+// Global fetch interceptor for authentication errors - DESHABILITADO
 const originalFetch = window.fetch;
 window.fetch = async function(...args) {
     try {
@@ -624,29 +629,26 @@ window.fetch = async function(...args) {
             const clonedResponse = response.clone();
             try {
                 const data = await clonedResponse.json();
-                console.log('Fetch interceptor: 401 error with data:', data);
                 if (data.detail === "No autenticado") {
-                    console.log('Fetch interceptor: Redirecting to login due to "No autenticado"');
                     window.location.href = '/auth/login';
-                    // Return a pending promise to prevent further processing
                     return new Promise(() => {});
                 }
             } catch (e) {
-                console.log('Fetch interceptor: Could not parse response as JSON');
                 // Not json, ignore
             }
         }
         return response;
     } catch (error) {
-        console.log('Fetch interceptor: Network error:', error);
         throw error;
     }
 };
+*/
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    PackageApp.init();
-});
+// NOTA: Deshabilitado temporalmente para debugging
+// document.addEventListener('DOMContentLoaded', function() {
+//     PackageApp.init();
+// });
 
 // Exportar para uso global
 window.PackageApp = PackageApp;

@@ -580,7 +580,7 @@
                             this.totalCustomers = data.total || 0;
                         }
                     } catch (error) {
-                        console.error('Error loading customers:', error);
+                        error('Error loading customers:', error);
                     }
                 },
 
@@ -591,7 +591,7 @@
                             this.stats = await response.json();
                         }
                     } catch (error) {
-                        console.error('Error loading stats:', error);
+                        error('Error loading stats:', error);
                     }
                 },
 
@@ -617,7 +617,7 @@
                             showError('Error al guardar cliente', error.detail || 'Error desconocido');
                         }
                     } catch (error) {
-                        console.error('Error saving customer:', error);
+                        error('Error saving customer:', error);
                         showError('Error de conexión', 'Error al guardar cliente');
                     }
                 },
@@ -639,7 +639,7 @@
                             showError('Error al cambiar estado', 'Error al cambiar estado del cliente');
                         }
                     } catch (error) {
-                        console.error('Error toggling customer status:', error);
+                        error('Error toggling customer status:', error);
                     }
                 },
 
@@ -671,7 +671,7 @@
                             showError('Error en la importación', error.detail || 'Error desconocido');
                         }
                     } catch (error) {
-                        console.error('Error importing customers:', error);
+                        error('Error importing customers:', error);
                         showError('Error de conexión', 'Error al importar clientes');
                     }
                 },
@@ -699,7 +699,7 @@
                             showError('Error al exportar', 'Error al exportar clientes');
                         }
                     } catch (error) {
-                        console.error('Error exporting customers:', error);
+                        error('Error exporting customers:', error);
                     }
                 },
 
