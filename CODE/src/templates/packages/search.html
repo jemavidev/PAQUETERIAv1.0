@@ -439,7 +439,7 @@
                 try {
                     return originalQuerySelectorAll.call(this, selector);
                 } catch (error) {
-                    console.warn('Error en search.html querySelectorAll:', error);
+                    warn('Error en search.html querySelectorAll:', error);
                     return [];
                 }
             };
@@ -484,11 +484,24 @@
         `;
     }
 
+    // ========================================
+    // SISTEMA DE LOGGING CONDICIONAL
+    // ========================================
+    // Detectar si estamos en localhost (desarrollo) o en producción/staging
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname.includes('192.168.');
+    
+    // Crear funciones de logging que solo funcionan en localhost
+    const log = isLocalhost ? console.log.bind(console) : () => {};
+    const error = isLocalhost ? console.error.bind(console) : () => {};
+    const warn = isLocalhost ? console.warn.bind(console) : () => {};
+    
     // Funcionalidad de búsqueda
-    console.log('🚀🚀🚀 INICIALIZANDO JAVASCRIPT DE BÚSQUEDA - VERSIÓN 2025-09-07-12:30 🚀🚀🚀');
+    log('🚀🚀🚀 INICIALIZANDO JAVASCRIPT DE BÚSQUEDA - VERSIÓN 2025-09-07-12:30 🚀🚀🚀');
     
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM cargado, configurando event listener...');
+        log('DOM cargado, configurando event listener...');
 
         // Verificar si hay un parámetro auto_search en la URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -498,13 +511,13 @@
         if (searchQueryField) {
             if (autoSearchQuery) {
                 // Si hay auto_search o searchQuery, llenar el campo y ejecutar búsqueda automáticamente
-                console.log('Auto-búsqueda detectada:', autoSearchQuery);
+                log('Auto-búsqueda detectada:', autoSearchQuery);
                 searchQueryField.value = autoSearchQuery;
 
                 // Ejecutar búsqueda automáticamente después de un breve delay
                 setTimeout(() => {
-                    console.log('🚀 Ejecutando búsqueda automática para:', autoSearchQuery);
-                    console.log('🔧 URL actual:', window.location.href);
+                    log('🚀 Ejecutando búsqueda automática para:', autoSearchQuery);
+                    log('🔧 URL actual:', window.location.href);
                     showLoading();
                     searchPackage(autoSearchQuery);
                 }, 500);
@@ -520,13 +533,13 @@
 
         const searchForm = document.getElementById('searchForm');
         if (searchForm) {
-            console.log('Formulario encontrado, agregando event listener...');
+            log('Formulario encontrado, agregando event listener...');
             searchForm.addEventListener('submit', function(e) {
-                console.log('Formulario enviado!');
+                log('Formulario enviado!');
                 e.preventDefault();
                 
                 const searchQuery = document.getElementById('searchQuery').value.trim();
-                console.log('Query de búsqueda:', searchQuery);
+                log('Query de búsqueda:', searchQuery);
                 
                 if (!searchQuery) {
                     showWarningMessage('📝 Por favor, ingresa el número de guía de tu paquete para buscar');
@@ -540,7 +553,7 @@
                 searchPackage(searchQuery);
             });
         } else {
-            console.error('❌ Formulario de búsqueda NO encontrado!');
+            error('❌ Formulario de búsqueda NO encontrado!');
         }
     });
 
@@ -597,7 +610,7 @@
             displayResults(data);
             
         } catch (error) {
-            console.error('Error en búsqueda:', error);
+            error('Error en búsqueda:', error);
             hideLoading();
             showSearchError('SEARCH_ERROR');
         }
@@ -623,12 +636,12 @@
         const trackingCode = document.getElementById('trackingCode');
         
         // Debug logs para customer_phone
-        console.log('🔧 DEBUG: data.announcement:', data.announcement);
-        console.log('🔧 DEBUG: data.announcement exists:', data.announcement !== undefined && data.announcement !== null);
+        log('🔧 DEBUG: data.announcement:', data.announcement);
+        log('🔧 DEBUG: data.announcement exists:', data.announcement !== undefined && data.announcement !== null);
 
         // Validar que data.announcement existe
         if (!data.announcement) {
-            console.error('❌ ERROR: data.announcement es undefined o null');
+            error('❌ ERROR: data.announcement es undefined o null');
             // Mostrar mensaje de error en lugar de intentar acceder a propiedades
             if (customerName) customerName.textContent = 'No disponible';
             if (customerPhone) customerPhone.innerHTML = '<span class="text-sm text-gray-500">No disponible</span>';
@@ -637,13 +650,13 @@
             return;
         }
 
-        console.log('🔧 DEBUG: data.announcement.customer_phone:', data.announcement.customer_phone);
-        console.log('🔧 DEBUG: typeof data.announcement.customer_phone:', typeof data.announcement.customer_phone);
-        console.log('🔧 DEBUG: customerPhone element:', customerPhone);
+        log('🔧 DEBUG: data.announcement.customer_phone:', data.announcement.customer_phone);
+        log('🔧 DEBUG: typeof data.announcement.customer_phone:', typeof data.announcement.customer_phone);
+        log('🔧 DEBUG: customerPhone element:', customerPhone);
 
         if (customerName) customerName.textContent = data.announcement.customer_name || 'No disponible';
         if (customerPhone) {
-            console.log('🔧 DEBUG: Setting customerPhone with WhatsApp link:', data.announcement.customer_phone);
+            log('🔧 DEBUG: Setting customerPhone with WhatsApp link:', data.announcement.customer_phone);
 
             // Validación robusta para customer_phone y crear enlace de WhatsApp
             const phoneValue = data.announcement.customer_phone;
@@ -651,11 +664,11 @@
                 // Crear enlace de WhatsApp con mensaje personalizado
                 const message = `Hola, tengo una consulta sobre mi paquete ${data.announcement.tracking_code || data.announcement.guide_number}`;
                 customerPhone.innerHTML = createWhatsAppLinkHTML(phoneValue, message);
-                console.log('🔧 DEBUG: customerPhone updated with WhatsApp link');
+                log('🔧 DEBUG: customerPhone updated with WhatsApp link');
             } else {
-                console.error('❌ ERROR: customer_phone es undefined, null, vacío o string "undefined"');
-                console.error('❌ Valor recibido:', phoneValue);
-                console.error('❌ Tipo:', typeof phoneValue);
+                error('❌ ERROR: customer_phone es undefined, null, vacío o string "undefined"');
+                error('❌ Valor recibido:', phoneValue);
+                error('❌ Tipo:', typeof phoneValue);
                 customerPhone.innerHTML = '<span class="text-sm text-gray-500">No disponible</span>';
             }
         }
@@ -668,14 +681,14 @@
         
                 // Guardar el estado actual en variable global para uso en otras funciones
                 window.currentPackageStatus = data.current_status;
-                console.log('🔍 Estado guardado en window.currentPackageStatus:', window.currentPackageStatus);
+                log('🔍 Estado guardado en window.currentPackageStatus:', window.currentPackageStatus);
                 
                 // Mostrar información de validación y nomenclatura
                 if (data.validation) {
-                    console.log('🔍 Validación de identificador:', data.validation);
+                    log('🔍 Validación de identificador:', data.validation);
                 }
                 if (data.nomenclature) {
-                    console.log('🔍 Información de nomenclatura:', data.nomenclature);
+                    log('🔍 Información de nomenclatura:', data.nomenclature);
                 }
         
         // Usar la información del backend para controlar la visibilidad de las secciones
@@ -683,26 +696,26 @@
         const inquiryInfo = data.inquiry_info;
         
         // Controlar visibilidad del timeline del paquete
-        console.log('🔧 DEBUG: queryType =', queryType);
-        console.log('🔧 DEBUG: inquiryInfo =', inquiryInfo);
-        console.log('🔧 DEBUG: should_show_history =', queryType ? queryType.should_show_history : 'undefined');
+        log('🔧 DEBUG: queryType =', queryType);
+        log('🔧 DEBUG: inquiryInfo =', inquiryInfo);
+        log('🔧 DEBUG: should_show_history =', queryType ? queryType.should_show_history : 'undefined');
         
         if (queryType && queryType.should_show_history) {
             // Es consulta por código de tracking: mostrar timeline del paquete
-            console.log('✅ MOSTRANDO timeline del paquete para tracking code');
-            console.log('🔍 Datos del historial:', data.history);
+            log('✅ MOSTRANDO timeline del paquete para tracking code');
+            log('🔍 Datos del historial:', data.history);
             const packageHistory = document.getElementById('packageHistory');
-            console.log('🔍 Elemento packageHistory encontrado:', packageHistory);
+            log('🔍 Elemento packageHistory encontrado:', packageHistory);
             if (packageHistory) {
                 packageHistory.classList.remove('hidden');
-                console.log('✅ Clase hidden removida de packageHistory');
+                log('✅ Clase hidden removida de packageHistory');
                 displayTimeline(data.history);
             } else {
-                console.log('❌ No se encontró el elemento packageHistory');
+                log('❌ No se encontró el elemento packageHistory');
             }
         } else {
             // Es consulta por número de guía: ocultar timeline del paquete
-            console.log('❌ OCULTANDO timeline del paquete para número de guía');
+            log('❌ OCULTANDO timeline del paquete para número de guía');
             const packageHistory = document.getElementById('packageHistory');
             if (packageHistory) packageHistory.classList.add('hidden');
             // Limpiar el contenido del timeline para evitar que se muestre
@@ -731,8 +744,8 @@
             const allowedStatuses = ['ANUNCIADO', 'RECIBIDO'];
             const canMakeInquiries = allowedStatuses.includes(currentStatus);
             
-            console.log('🔍 Estado actual del paquete:', currentStatus);
-            console.log('🔍 ¿Puede hacer consultas?', canMakeInquiries);
+            log('🔍 Estado actual del paquete:', currentStatus);
+            log('🔍 ¿Puede hacer consultas?', canMakeInquiries);
             
             if (data.query_type && data.query_type.should_show_inquiry_form && data.announcement && canMakeInquiries) {
                 // Verificar adicionalmente que no hay mensajes pendientes
@@ -740,7 +753,7 @@
 
                 if (!hasPendingMessages) {
                     // Mostrar formulario solo si hay datos de anuncio disponibles, NO hay mensajes pendientes y el estado permite consultas
-                    console.log('✅ MOSTRANDO FORMULARIO - Estado permite consultas:', currentStatus);
+                    log('✅ MOSTRANDO FORMULARIO - Estado permite consultas:', currentStatus);
                     inquiryFormContainer.classList.remove('hidden');
 
                     // Establecer información del paquete para el envío del formulario
@@ -750,20 +763,20 @@
                         guide_number: data.announcement.guide_number || '',
                         tracking_code: data.announcement.tracking_code || ''
                     };
-                    console.log('✅ Información del paquete establecida para envío:', window.currentPackageInfo);
+                    log('✅ Información del paquete establecida para envío:', window.currentPackageInfo);
                 } else {
                     // Ocultar formulario si hay mensajes pendientes
                     inquiryFormContainer.classList.add('hidden');
-                    console.log('❌ Formulario ocultado - hay mensajes pendientes para este paquete');
+                    log('❌ Formulario ocultado - hay mensajes pendientes para este paquete');
                 }
             } else {
                 // Ocultar formulario si no hay datos de anuncio, no se permite consulta, o el estado no permite consultas
-                console.log('❌ OCULTANDO FORMULARIO - Estado:', currentStatus, 'CanMakeInquiries:', canMakeInquiries);
+                log('❌ OCULTANDO FORMULARIO - Estado:', currentStatus, 'CanMakeInquiries:', canMakeInquiries);
                 inquiryFormContainer.classList.add('hidden');
                 if (!canMakeInquiries) {
-                    console.log('❌ Formulario ocultado - el estado del paquete (' + currentStatus + ') no permite consultas. Solo se permiten consultas para estados ANUNCIADO y RECIBIDO');
+                    log('❌ Formulario ocultado - el estado del paquete (' + currentStatus + ') no permite consultas. Solo se permiten consultas para estados ANUNCIADO y RECIBIDO');
                 } else {
-                    console.log('❌ Formulario ocultado - no hay datos de anuncio disponibles o no se permite consulta');
+                    log('❌ Formulario ocultado - no hay datos de anuncio disponibles o no se permite consulta');
                 }
             }
         }
@@ -846,7 +859,7 @@
             
             return `${day}/${month}/${year} ${displayHours}:${displayMinutes} ${ampm}`;
         } catch (error) {
-            console.error('Error formateando fecha:', error);
+            error('Error formateando fecha:', error);
             return dateString;
         }
     }
@@ -912,16 +925,16 @@
     }
 
     function displayTimeline(history) {
-        console.log('🚀 INICIANDO displayTimeline con historial:', history);
+        log('🚀 INICIANDO displayTimeline con historial:', history);
         const timelineContainer = document.getElementById('timelineEvents');
-        console.log('🔍 Elemento timelineContainer encontrado:', timelineContainer);
+        log('🔍 Elemento timelineContainer encontrado:', timelineContainer);
         if (!timelineContainer) {
-            console.log('❌ No se encontró el elemento timelineContainer');
+            log('❌ No se encontró el elemento timelineContainer');
             return;
         }
         
         timelineContainer.innerHTML = '';
-        console.log('✅ Contenido de timelineContainer limpiado');
+        log('✅ Contenido de timelineContainer limpiado');
         
         // Filtrar solo eventos con información (timestamp o details relevantes)
         const filtered = (history || []).filter(item => {
@@ -933,7 +946,7 @@
 
         // Ordenar historial por timestamp
         filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        console.log('✅ Historial ordenado:', history);
+        log('✅ Historial ordenado:', history);
         
         filtered.forEach((item, index) => {
             const isLast = index === history.length - 1;
@@ -978,45 +991,45 @@
             timelineContainer.appendChild(timelineItem);
         });
         
-        console.log('✅ Timeline completado. Elementos agregados:', timelineContainer.children.length);
-        console.log('🔍 Contenido final de timelineContainer:', timelineContainer.innerHTML.substring(0, 200) + '...');
+        log('✅ Timeline completado. Elementos agregados:', timelineContainer.children.length);
+        log('🔍 Contenido final de timelineContainer:', timelineContainer.innerHTML.substring(0, 200) + '...');
     }
 
     function displayConversationHistory(trackingCode) {
-        console.log('🚀 INICIANDO displayConversationHistory para tracking:', trackingCode);
-        console.log('🔍 Estado inicial de conversationHistory:', document.getElementById('conversationHistory')?.classList.toString());
+        log('🚀 INICIANDO displayConversationHistory para tracking:', trackingCode);
+        log('🔍 Estado inicial de conversationHistory:', document.getElementById('conversationHistory')?.classList.toString());
         
         const conversationContainer = document.getElementById('conversationContainer');
         const conversationHistory = document.getElementById('conversationHistory');
         
         if (!conversationContainer) {
-            console.log('❌ No se encontró conversationContainer');
+            log('❌ No se encontró conversationContainer');
             return;
         }
         
-        console.log('✅ conversationContainer encontrado');
+        log('✅ conversationContainer encontrado');
         conversationContainer.innerHTML = '';
         
         // Hacer llamada a la API para obtener los mensajes
         fetch(`/api/messages/tracking/${encodeURIComponent(trackingCode)}`)
             .then(response => {
-                console.log('📡 Response status para mensajes:', response.status);
+                log('📡 Response status para mensajes:', response.status);
                 if (!response.ok) {
                     throw new Error('Error al obtener mensajes');
                 }
                 return response.json();
             })
             .then(messages => {
-                console.log('✅ Mensajes recibidos:', messages);
-                console.log('🔍 Tipo de messages:', typeof messages);
-                console.log('🔍 Es array:', Array.isArray(messages));
-                console.log('🔍 Longitud:', messages ? messages.length : 'undefined');
+                log('✅ Mensajes recibidos:', messages);
+                log('🔍 Tipo de messages:', typeof messages);
+                log('🔍 Es array:', Array.isArray(messages));
+                log('🔍 Longitud:', messages ? messages.length : 'undefined');
                 
                 if (!messages || !Array.isArray(messages) || messages.length === 0) {
                     // Ocultar la sección completa si no hay mensajes
                     if (conversationHistory) {
                         conversationHistory.classList.add('hidden');
-                        console.log('✅ Sección de conversaciones ocultada - no hay mensajes');
+                        log('✅ Sección de conversaciones ocultada - no hay mensajes');
                     }
                     return;
                 }
@@ -1024,7 +1037,7 @@
                 // Mostrar la sección solo si hay mensajes
                 if (conversationHistory) {
                     conversationHistory.classList.remove('hidden');
-                    console.log('✅ Sección de conversaciones mostrada - hay mensajes');
+                    log('✅ Sección de conversaciones mostrada - hay mensajes');
                 }
                 
                 // Ordenar mensajes por fecha (más antiguos primero para mostrar conversación cronológica)
@@ -1108,14 +1121,14 @@
                     conversationContainer.appendChild(conversationGroup);
                 });
                 
-                console.log('✅ Historial de conversaciones mostrado');
+                log('✅ Historial de conversaciones mostrado');
             })
             .catch(error => {
-                console.error('❌ Error obteniendo mensajes:', error);
+                error('❌ Error obteniendo mensajes:', error);
                 // En caso de error, ocultar la sección
                 if (conversationHistory) {
                     conversationHistory.classList.add('hidden');
-                    console.log('✅ Sección de conversaciones ocultada - error al cargar mensajes');
+                    log('✅ Sección de conversaciones ocultada - error al cargar mensajes');
                 }
                 conversationContainer.innerHTML = `
                     <div class="text-center py-8 text-red-500">
@@ -1457,7 +1470,7 @@
     });
 
     function checkExistingEmailForTracking(trackingCode) {
-        console.log('🔍 Verificando si existe email registrado para tracking:', trackingCode);
+        log('🔍 Verificando si existe email registrado para tracking:', trackingCode);
         
         // Verificar el estado del paquete antes de mostrar el formulario
         const currentStatus = window.currentPackageStatus || 'UNKNOWN';
@@ -1465,34 +1478,34 @@
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
         if (!canMakeInquiries) {
-            console.log('❌ checkExistingEmailForTracking - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ checkExistingEmailForTracking - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
         // Hacer llamada a la API para verificar si existe un email registrado para este tracking code
         fetch(`/api/messages/check-tracking-inquiries?package_tracking_code=${encodeURIComponent(trackingCode)}`)
             .then(response => {
-                console.log('📡 Response status para verificar email:', response.status);
+                log('📡 Response status para verificar email:', response.status);
                 if (!response.ok) {
                     throw new Error('Error al verificar email registrado');
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Datos de verificación de email:', data);
+                log('✅ Datos de verificación de email:', data);
                 
                 // Verificar si existe un mensaje PENDING o UNREAD para este tracking code
                 if (data.exists && data.count > 0) {
                     // Verificar si hay algún mensaje con estado PENDING o UNREAD
                     if (data.has_pending || data.has_unread) {
-                        console.log('🚫 MENSAJE PENDIENTE ENCONTRADO - No se puede enviar nueva consulta');
+                        log('🚫 MENSAJE PENDIENTE ENCONTRADO - No se puede enviar nueva consulta');
                         showPendingMessageWarning(data);
                         return;
                     }
                     
                     // Si no hay mensajes PENDING o UNREAD, verificar si existe email registrado
                     if (data.latest_inquiry && data.latest_inquiry.customer_email) {
-                        console.log('🔥🔥🔥 EMAIL YA REGISTRADO:', data.latest_inquiry.customer_email);
+                        log('🔥🔥🔥 EMAIL YA REGISTRADO:', data.latest_inquiry.customer_email);
                         
                         // Guardar el email registrado en una variable global para usar en el envío
                         window.registeredEmailForTracking = data.latest_inquiry.customer_email;
@@ -1507,20 +1520,20 @@
                         
                         showEmailRegisteredMessage(emailInfo);
                     } else {
-                        console.log('✅ No existe email registrado, mostrando formulario completo');
+                        log('✅ No existe email registrado, mostrando formulario completo');
                         // Limpiar la variable global
                         window.registeredEmailForTracking = null;
                         showInquiryFormContainer();
                     }
                 } else {
-                    console.log('✅ No existe email registrado, mostrando formulario completo');
+                    log('✅ No existe email registrado, mostrando formulario completo');
                     // Limpiar la variable global
                     window.registeredEmailForTracking = null;
                     showInquiryFormContainer();
                 }
             })
             .catch(error => {
-                console.error('❌ Error verificando email registrado:', error);
+                error('❌ Error verificando email registrado:', error);
                 // En caso de error, limpiar variable y mostrar formulario completo
                 window.registeredEmailForTracking = null;
                 showInquiryFormContainer();
@@ -1528,26 +1541,26 @@
     }
 
     function showInquiryFormWithInfo(announcement, inquiryInfo) {
-        console.log('🚀 INICIANDO showInquiryFormWithInfo');
-        console.log('📋 announcement:', announcement);
-        console.log('📋 inquiryInfo:', inquiryInfo);
+        log('🚀 INICIANDO showInquiryFormWithInfo');
+        log('📋 announcement:', announcement);
+        log('📋 inquiryInfo:', inquiryInfo);
 
         // Verificar el estado del paquete antes de mostrar el formulario
         const currentStatus = window.currentPackageStatus || 'UNKNOWN';
         const allowedStatuses = ['ANUNCIADO', 'RECIBIDO'];
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
-        console.log('🔍 showInquiryFormWithInfo - Estado actual:', currentStatus);
-        console.log('🔍 showInquiryFormWithInfo - ¿Puede hacer consultas?', canMakeInquiries);
+        log('🔍 showInquiryFormWithInfo - Estado actual:', currentStatus);
+        log('🔍 showInquiryFormWithInfo - ¿Puede hacer consultas?', canMakeInquiries);
         
         if (!canMakeInquiries) {
-            console.log('❌ showInquiryFormWithInfo - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ showInquiryFormWithInfo - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
 
         // Validar que announcement existe
         if (!announcement) {
-            console.error('❌ ERROR: announcement es undefined o null en showInquiryFormWithInfo');
+            error('❌ ERROR: announcement es undefined o null en showInquiryFormWithInfo');
             return;
         }
 
@@ -1559,19 +1572,19 @@
             tracking_code: announcement.tracking_code || ''
         };
         
-        console.log('📋 Mostrando formulario de consulta con información:', inquiryInfo);
-        console.log('🔧 DEBUG: inquiryInfo es null/undefined?', inquiryInfo === null || inquiryInfo === undefined);
-        console.log('🔧 DEBUG: inquiryInfo.has_existing_email =', inquiryInfo ? inquiryInfo.has_existing_email : 'undefined');
+        log('📋 Mostrando formulario de consulta con información:', inquiryInfo);
+        log('🔧 DEBUG: inquiryInfo es null/undefined?', inquiryInfo === null || inquiryInfo === undefined);
+        log('🔧 DEBUG: inquiryInfo.has_existing_email =', inquiryInfo ? inquiryInfo.has_existing_email : 'undefined');
         
         // Verificar si ya existen consultas con email para este tracking code
         if (announcement && announcement.tracking_code) {
             checkExistingEmailForTracking(announcement.tracking_code);
         } else if (inquiryInfo && inquiryInfo.has_existing_email) {
-            console.log('🔥🔥🔥 YA EXISTE EMAIL REGISTRADO, MOSTRANDO MENSAJE INFORMATIVO 🔥🔥🔥');
+            log('🔥🔥🔥 YA EXISTE EMAIL REGISTRADO, MOSTRANDO MENSAJE INFORMATIVO 🔥🔥🔥');
             showEmailRegisteredMessage(inquiryInfo);
         } else {
-            console.log('✅ No existe email registrado, mostrando formulario completo');
-            console.log('🔧 DEBUG: Llamando a showInquiryFormContainer');
+            log('✅ No existe email registrado, mostrando formulario completo');
+            log('🔧 DEBUG: Llamando a showInquiryFormContainer');
             showInquiryFormContainer();
         }
     }
@@ -1582,30 +1595,30 @@
     }
     
     function checkTrackingInquiries(trackingCode) {
-        console.log('🔍 Verificando consultas existentes para tracking:', trackingCode);
+        log('🔍 Verificando consultas existentes para tracking:', trackingCode);
         
         fetch(`/api/messages/check-tracking-inquiries?package_tracking_code=${encodeURIComponent(trackingCode)}`)
             .then(response => {
-                console.log('📡 Response status:', response.status);
+                log('📡 Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Error al verificar consultas del tracking');
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Datos de consultas del tracking:', data);
+                log('✅ Datos de consultas del tracking:', data);
                 if (data.exists && data.count > 0) {
                     // Ya existen consultas para este tracking code
-                    console.log('❌ Ya existen consultas para este tracking code:', data.count);
+                    log('❌ Ya existen consultas para este tracking code:', data.count);
                     hideEmailFieldAndShowMessage(data.latest_inquiry.created_at);
                 } else {
                     // No existen consultas, mostrar formulario completo
-                    console.log('✅ No existen consultas previas, mostrando formulario completo');
+                    log('✅ No existen consultas previas, mostrando formulario completo');
                     showInquiryFormContainer();
                 }
             })
             .catch(error => {
-                console.error('❌ Error verificando consultas del tracking:', error);
+                error('❌ Error verificando consultas del tracking:', error);
                 // En caso de error, mostrar el formulario por defecto
                 showInquiryFormContainer();
             });
@@ -1618,7 +1631,7 @@
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
         if (!canMakeInquiries) {
-            console.log('❌ checkExistingInquiry - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ checkExistingInquiry - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
@@ -1633,34 +1646,34 @@
         }
         
         // Verificar si ya existe una consulta con este email y código de tracking
-        console.log('🔍 Verificando consulta existente para:', customerEmail, 'y tracking:', trackingCode);
+        log('🔍 Verificando consulta existente para:', customerEmail, 'y tracking:', trackingCode);
         
         fetch(`/api/messages/check-inquiry-exists?customer_email=${encodeURIComponent(customerEmail)}&package_tracking_code=${encodeURIComponent(trackingCode)}`)
             .then(response => {
-                console.log('📡 Response status:', response.status);
+                log('📡 Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Error al verificar consulta existente');
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Datos de verificación:', data);
+                log('✅ Datos de verificación:', data);
                 if (data.exists && data.has_pending) {
                     // Ya existe una consulta PENDIENTE, ocultar el campo de email y mostrar mensaje
-                    console.log('❌ Ya existe una consulta PENDIENTE para este email y paquete');
+                    log('❌ Ya existe una consulta PENDIENTE para este email y paquete');
                     hideEmailFieldAndShowMessage(data.created_at);
                 } else if (data.exists && !data.has_pending) {
                     // Existe una consulta pero está RESUELTA, permitir nueva consulta
-                    console.log('✅ Existe consulta RESUELTA, permitiendo nueva consulta');
+                    log('✅ Existe consulta RESUELTA, permitiendo nueva consulta');
                     showInquiryFormContainer();
                 } else {
                     // No existe consulta previa, mostrar el formulario completo
-                    console.log('✅ No existe consulta previa, mostrando formulario completo');
+                    log('✅ No existe consulta previa, mostrando formulario completo');
                     showInquiryFormContainer();
                 }
             })
             .catch(error => {
-                console.error('❌ Error verificando consulta existente:', error);
+                error('❌ Error verificando consulta existente:', error);
                 // En caso de error, mostrar el formulario por defecto
                 showInquiryFormContainer();
             });
@@ -1672,11 +1685,11 @@
         const allowedStatuses = ['ANUNCIADO', 'RECIBIDO'];
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
-        console.log('🔍 showInquiryFormContainer - Estado actual:', currentStatus);
-        console.log('🔍 showInquiryFormContainer - ¿Puede hacer consultas?', canMakeInquiries);
+        log('🔍 showInquiryFormContainer - Estado actual:', currentStatus);
+        log('🔍 showInquiryFormContainer - ¿Puede hacer consultas?', canMakeInquiries);
         
         if (!canMakeInquiries) {
-            console.log('❌ showInquiryFormContainer - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ showInquiryFormContainer - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
@@ -1704,7 +1717,7 @@
         // Restaurar el atributo required del campo de email cuando se muestra
         if (emailField) {
             emailField.setAttribute('required', 'required');
-            console.log('✅ Atributo required restaurado en el campo de email');
+            log('✅ Atributo required restaurado en el campo de email');
         }
         
         // Restaurar campos de contenido y botón de envío
@@ -1714,14 +1727,14 @@
         
         if (contentField) {
             contentField.style.display = 'block';
-            console.log('✅ Campo de contenido restaurado');
+            log('✅ Campo de contenido restaurado');
         }
         
         if (submitButton) {
             submitButton.style.display = 'inline-flex';
             submitButton.disabled = false;
             submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            console.log('✅ Botón de envío restaurado');
+            log('✅ Botón de envío restaurado');
         }
         
         if (submitButtonText) {
@@ -1730,8 +1743,8 @@
     }
     
     function showPendingMessageWarning(data) {
-        console.log('🚀 INICIANDO showPendingMessageWarning');
-        console.log('🔧 DEBUG: showPendingMessageWarning ejecutándose con:', data);
+        log('🚀 INICIANDO showPendingMessageWarning');
+        log('🔧 DEBUG: showPendingMessageWarning ejecutándose con:', data);
         
         // Verificar el estado del paquete antes de mostrar el formulario
         const currentStatus = window.currentPackageStatus || 'UNKNOWN';
@@ -1739,7 +1752,7 @@
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
         if (!canMakeInquiries) {
-            console.log('❌ showPendingMessageWarning - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ showPendingMessageWarning - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
@@ -1758,7 +1771,7 @@
         const emailFieldContainer = document.getElementById('emailFieldContainer');
         if (emailFieldContainer) {
             emailFieldContainer.classList.add('hidden');
-            console.log('✅ Campo de email ocultado');
+            log('✅ Campo de email ocultado');
         }
         
         // Mostrar mensaje de consulta pendiente
@@ -1767,7 +1780,7 @@
         
         if (existingInquiryMessage) {
             existingInquiryMessage.classList.remove('hidden');
-            console.log('✅ Mensaje de consulta pendiente mostrado');
+            log('✅ Mensaje de consulta pendiente mostrado');
             
             // Mostrar información de la consulta pendiente
             const inquiryMessageContainer = document.getElementById('existingInquiryMessage');
@@ -1795,24 +1808,24 @@
         
         if (contentField) {
             contentField.style.display = 'none';
-            console.log('✅ Campo de contenido ocultado');
+            log('✅ Campo de contenido ocultado');
         }
         
         if (submitButton) {
             submitButton.style.display = 'none';
-            console.log('✅ Botón de envío ocultado');
+            log('✅ Botón de envío ocultado');
         }
         
         if (submitButtonText) {
             submitButtonText.style.display = 'none';
         }
         
-        console.log('✅ Formulario mostrado con restricción completa de consulta PENDIENTE');
+        log('✅ Formulario mostrado con restricción completa de consulta PENDIENTE');
     }
 
     function showEmailRegisteredMessage(inquiryInfo) {
-        console.log('🚀 INICIANDO showEmailRegisteredMessage');
-        console.log('🔧 DEBUG: showEmailRegisteredMessage ejecutándose con:', inquiryInfo);
+        log('🚀 INICIANDO showEmailRegisteredMessage');
+        log('🔧 DEBUG: showEmailRegisteredMessage ejecutándose con:', inquiryInfo);
         
         // Verificar el estado del paquete antes de mostrar el formulario
         const currentStatus = window.currentPackageStatus || 'UNKNOWN';
@@ -1820,7 +1833,7 @@
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
         if (!canMakeInquiries) {
-            console.log('❌ showEmailRegisteredMessage - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ showEmailRegisteredMessage - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
@@ -1839,27 +1852,27 @@
         const emailField = document.getElementById('customer_email');
         if (emailFieldContainer) {
             emailFieldContainer.classList.add('hidden');
-            console.log('✅ Campo de email ocultado');
+            log('✅ Campo de email ocultado');
         }
         
         // Remover el atributo required del campo de email para evitar errores de validación
         if (emailField) {
             emailField.removeAttribute('required');
-            console.log('✅ Atributo required removido del campo de email');
+            log('✅ Atributo required removido del campo de email');
         }
         
         // Mostrar mensaje de email registrado
         const existingEmailMessage = document.getElementById('existingEmailMessage');
         const registeredEmail = document.getElementById('registeredEmail');
         
-        console.log('🔧 DEBUG: existingEmailMessage encontrado?', existingEmailMessage !== null);
-        console.log('🔧 DEBUG: registeredEmail encontrado?', registeredEmail !== null);
+        log('🔧 DEBUG: existingEmailMessage encontrado?', existingEmailMessage !== null);
+        log('🔧 DEBUG: registeredEmail encontrado?', registeredEmail !== null);
         
         if (existingEmailMessage) {
             existingEmailMessage.classList.add('hidden');
-            console.log('✅ Mensaje de email registrado OCULTADO');
+            log('✅ Mensaje de email registrado OCULTADO');
         } else {
-            console.log('❌ No se encontró existingEmailMessage');
+            log('❌ No se encontró existingEmailMessage');
         }
         
         // Ocultar otros mensajes
@@ -1870,27 +1883,27 @@
     }
     
     function hideEmailFieldAndShowMessage(createdAt) {
-        console.log('🔧 DEBUG: hideEmailFieldAndShowMessage ejecutándose con fecha:', createdAt);
+        log('🔧 DEBUG: hideEmailFieldAndShowMessage ejecutándose con fecha:', createdAt);
         
         // Ocultar el campo de email
         const emailFieldContainer = document.getElementById('emailFieldContainer');
         const existingInquiryMessage = document.getElementById('existingInquiryMessage');
         const existingInquiryDate = document.getElementById('existingInquiryDate');
         
-        console.log('🔧 DEBUG: emailFieldContainer encontrado?', emailFieldContainer !== null);
-        console.log('🔧 DEBUG: existingInquiryMessage encontrado?', existingInquiryMessage !== null);
+        log('🔧 DEBUG: emailFieldContainer encontrado?', emailFieldContainer !== null);
+        log('🔧 DEBUG: existingInquiryMessage encontrado?', existingInquiryMessage !== null);
         
         if (emailFieldContainer) {
             emailFieldContainer.classList.add('hidden');
-            console.log('✅ Campo de email ocultado');
+            log('✅ Campo de email ocultado');
         } else {
-            console.log('❌ No se encontró emailFieldContainer');
+            log('❌ No se encontró emailFieldContainer');
         }
         
         // Mostrar mensaje informativo
         if (existingInquiryMessage) {
             existingInquiryMessage.classList.remove('hidden');
-            console.log('✅ Mensaje de consulta existente mostrado');
+            log('✅ Mensaje de consulta existente mostrado');
             
             // Formatear fecha si está disponible
             if (createdAt && existingInquiryDate) {
@@ -1904,14 +1917,14 @@
                         minute: '2-digit'
                     });
                     existingInquiryDate.textContent = `Consulta enviada el ${formattedDate}. Te responderemos pronto.`;
-                    console.log('✅ Fecha formateada y mostrada:', formattedDate);
+                    log('✅ Fecha formateada y mostrada:', formattedDate);
                 } catch (error) {
                     existingInquiryDate.textContent = 'Ya has enviado una consulta PENDIENTE para este paquete anteriormente.';
-                    console.log('⚠️ Error formateando fecha, usando mensaje por defecto');
+                    log('⚠️ Error formateando fecha, usando mensaje por defecto');
                 }
             }
         } else {
-            console.log('❌ No se encontró existingInquiryMessage');
+            log('❌ No se encontró existingInquiryMessage');
         }
         
         // Verificar el estado del paquete antes de mostrar el formulario
@@ -1920,7 +1933,7 @@
         const canMakeInquiries = allowedStatuses.includes(currentStatus);
         
         if (!canMakeInquiries) {
-            console.log('❌ hideEmailFieldAndShowMessage - No se puede mostrar formulario para estado:', currentStatus);
+            log('❌ hideEmailFieldAndShowMessage - No se puede mostrar formulario para estado:', currentStatus);
             return;
         }
         
@@ -1928,14 +1941,14 @@
         const inquiryFormContainer = document.getElementById('inquiryFormContainer');
         if (inquiryFormContainer) {
             inquiryFormContainer.classList.remove('hidden');
-            console.log('✅ Formulario de consulta mostrado');
+            log('✅ Formulario de consulta mostrado');
             // Scroll al formulario
             // Scroll automático desactivado
             // inquiryFormContainer.scrollIntoView({ 
             //     behavior: 'smooth' 
             // });
         } else {
-            console.log('❌ No se encontró inquiryFormContainer');
+            log('❌ No se encontró inquiryFormContainer');
         }
     }
     
@@ -2012,7 +2025,7 @@
         const emailToUse = formData.customer_email || window.registeredEmailForTracking || null;
 
         if (window.registeredEmailForTracking && !formData.customer_email) {
-            console.log('📧 Usando email registrado previamente (enviado de forma oculta):', window.registeredEmailForTracking);
+            log('📧 Usando email registrado previamente (enviado de forma oculta):', window.registeredEmailForTracking);
         }
 
         // Preparar datos completos para enviar
@@ -2026,8 +2039,8 @@
             content: formData.content
         };
         
-        console.log('📤 Datos que se van a enviar:', completeData);
-        console.log('📤 JSON que se va a enviar:', JSON.stringify(completeData, null, 2));
+        log('📤 Datos que se van a enviar:', completeData);
+        log('📤 JSON que se va a enviar:', JSON.stringify(completeData, null, 2));
         
         // Mostrar estado de carga
         if (submitButton) submitButton.disabled = true;
@@ -2043,14 +2056,14 @@
             body: JSON.stringify(completeData)
         })
         .then(response => {
-            console.log('📡 Response status:', response.status);
-            console.log('📡 Response headers:', response.headers);
+            log('📡 Response status:', response.status);
+            log('📡 Response headers:', response.headers);
             
             if (!response.ok) {
                 // Para errores 422, intentar obtener detalles del error
                 if (response.status === 422) {
                     return response.json().then(errorData => {
-                        console.error('❌ Error 422 - Detalles:', errorData);
+                        error('❌ Error 422 - Detalles:', errorData);
                         throw new Error(`Error de validación: ${JSON.stringify(errorData)}`);
                     });
                 } else {
@@ -2060,7 +2073,7 @@
             return response.json();
         })
         .then(data => {
-            console.log('Consulta enviada:', data);
+            log('Consulta enviada:', data);
             
             // Mostrar éxito inmediatamente
             showInquirySuccess();
@@ -2078,9 +2091,9 @@
             });
         })
         .catch(error => {
-            console.error('Error al enviar consulta:', error);
-            console.error('Tipo de error:', typeof error);
-            console.error('Error completo:', JSON.stringify(error, null, 2));
+            error('Error al enviar consulta:', error);
+            error('Tipo de error:', typeof error);
+            error('Error completo:', JSON.stringify(error, null, 2));
             
             // Determinar el tipo de error y mostrar mensaje específico
             let errorMessage = 'Error desconocido al enviar la consulta';
@@ -2122,13 +2135,13 @@
         // NUEVA FUNCIONALIDAD: Ocultar formulario y mostrar conversación
         if (inquiryFormContainer) {
             inquiryFormContainer.classList.add('hidden');
-            console.log('✅ Formulario de consulta ocultado después del envío exitoso');
+            log('✅ Formulario de consulta ocultado después del envío exitoso');
         }
         
         // Mostrar la sección de conversación
         if (conversationHistory) {
             conversationHistory.classList.remove('hidden');
-            console.log('✅ Sección de conversación mostrada después del envío exitoso');
+            log('✅ Sección de conversación mostrada después del envío exitoso');
             
             // Actualizar la conversación con la nueva pregunta
             updateConversationWithNewMessage();
@@ -2141,14 +2154,14 @@
     }
 
     function updateConversationWithNewMessage() {
-        console.log('🔄 Actualizando conversación con nueva pregunta enviada');
+        log('🔄 Actualizando conversación con nueva pregunta enviada');
         
         // Obtener la pregunta que se acaba de enviar
         const contentField = document.getElementById('content');
         const customerEmailField = document.getElementById('customer_email');
         
         if (!contentField) {
-            console.log('❌ No se encontró el campo de contenido');
+            log('❌ No se encontró el campo de contenido');
             return;
         }
         
@@ -2156,14 +2169,14 @@
         const customerEmail = customerEmailField ? customerEmailField.value.trim() : 'Usuario';
         
         if (!newQuestion) {
-            console.log('❌ No hay pregunta para agregar a la conversación');
+            log('❌ No hay pregunta para agregar a la conversación');
             return;
         }
         
         // Obtener el contenedor de conversación
         const conversationContainer = document.getElementById('conversationContainer');
         if (!conversationContainer) {
-            console.log('❌ No se encontró conversationContainer');
+            log('❌ No se encontró conversationContainer');
             return;
         }
         
@@ -2187,7 +2200,7 @@
             });
         }, 100);
         
-        console.log('✅ Nueva pregunta agregada a la conversación');
+        log('✅ Nueva pregunta agregada a la conversación');
     }
     
     function createMessageElement(message) {
@@ -2345,12 +2358,12 @@
     }
     
     function updateInquiryRestriction() {
-        console.log('🔄 Actualizando restricción de consulta inmediatamente...');
+        log('🔄 Actualizando restricción de consulta inmediatamente...');
 
         // Obtener el tracking code actual
         const trackingCode = window.currentPackageInfo && window.currentPackageInfo.tracking_code ? window.currentPackageInfo.tracking_code : null;
         if (!trackingCode) {
-            console.log('❌ No hay tracking code disponible para actualizar restricción');
+            log('❌ No hay tracking code disponible para actualizar restricción');
             return;
         }
         
@@ -2363,21 +2376,21 @@
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Datos de restricción actualizados:', data);
+                log('✅ Datos de restricción actualizados:', data);
                 
                 // Si hay consultas pendientes, aplicar restricción inmediatamente
                 if (data.exists && data.count > 0) {
                     if (data.has_pending || data.has_unread) {
-                        console.log('🚫 Aplicando restricción inmediata - hay consultas PENDIENTES');
+                        log('🚫 Aplicando restricción inmediata - hay consultas PENDIENTES');
                         showPendingMessageWarning(data);
                     } else {
-                        console.log('✅ No hay consultas pendientes, manteniendo formulario abierto');
+                        log('✅ No hay consultas pendientes, manteniendo formulario abierto');
                         // Mantener el formulario abierto si no hay consultas pendientes
                     }
                 }
             })
             .catch(error => {
-                console.error('❌ Error actualizando restricción:', error);
+                error('❌ Error actualizando restricción:', error);
                 // En caso de error, mantener el formulario como está
             });
     }
@@ -2411,22 +2424,22 @@
     let lastPanY = 0;
 
     function openImageGallery(images, startIndex = 0) {
-        console.log('🖼️ Abriendo galería con', images.length, 'imágenes');
-        console.log('🖼️ Imágenes recibidas:', images);
-        console.log('🖼️ Índice inicial:', startIndex);
+        log('🖼️ Abriendo galería con', images.length, 'imágenes');
+        log('🖼️ Imágenes recibidas:', images);
+        log('🖼️ Índice inicial:', startIndex);
         
         if (!images || !Array.isArray(images)) {
-            console.error('❌ Error: images no es un array válido');
+            error('❌ Error: images no es un array válido');
             return;
         }
         
         galleryImages = images.filter(img => img && img.s3_url); // Solo imágenes con URL válida
         currentImageIndex = startIndex;
         
-        console.log('🖼️ Imágenes filtradas:', galleryImages.length);
+        log('🖼️ Imágenes filtradas:', galleryImages.length);
         
         if (galleryImages.length === 0) {
-            console.log('❌ No hay imágenes válidas para mostrar');
+            log('❌ No hay imágenes válidas para mostrar');
             showInfoMessage('No hay imágenes disponibles para mostrar');
             return;
         }
@@ -2437,11 +2450,11 @@
         const thumbnailContainer = document.getElementById('thumbnailContainer');
         
         if (!modal) {
-            console.error('❌ Error: No se encontró el modal imageGalleryModal');
+            error('❌ Error: No se encontró el modal imageGalleryModal');
             return;
         }
         
-        console.log('✅ Modal encontrado, mostrando galería');
+        log('✅ Modal encontrado, mostrando galería');
         
         // Mostrar modal
         modal.classList.remove('hidden');
@@ -2464,7 +2477,7 @@
     }
 
     function closeImageGallery() {
-        console.log('🚪 Cerrando galería');
+        log('🚪 Cerrando galería');
         
         const modal = document.getElementById('imageGalleryModal');
         modal.classList.add('hidden');
@@ -2500,11 +2513,11 @@
             galleryImage.src = this.src;
             galleryImage.style.opacity = '1';
             imageLoader.classList.add('hidden');
-            console.log('✅ Imagen cargada:', galleryImages[index].s3_url);
+            log('✅ Imagen cargada:', galleryImages[index].s3_url);
         };
         
         img.onerror = function() {
-            console.error('❌ Error cargando imagen:', galleryImages[index].s3_url);
+            error('❌ Error cargando imagen:', galleryImages[index].s3_url);
             imageLoader.classList.add('hidden');
             galleryImage.style.opacity = '1';
             // Mostrar imagen de error o placeholder
@@ -2567,7 +2580,7 @@
         
         // Feedback visual en los límites
         if (currentImageIndex === 0 && galleryImages.length > 1) {
-            console.log('🔄 Volviendo al inicio del carrusel');
+            log('🔄 Volviendo al inicio del carrusel');
         }
     }
 
@@ -2580,7 +2593,7 @@
         
         // Feedback visual en los límites
         if (currentImageIndex === galleryImages.length - 1 && galleryImages.length > 1) {
-            console.log('🔄 Volviendo al final del carrusel');
+            log('🔄 Volviendo al final del carrusel');
         }
     }
     
@@ -2599,7 +2612,7 @@
         galleryImage.addEventListener('touchmove', handleTouchMove, { passive: false });
         galleryImage.addEventListener('touchend', handleTouchEnd, { passive: false });
         
-        console.log('✅ Gestos táctiles inicializados');
+        log('✅ Gestos táctiles inicializados');
     }
     
     function handleTouchStart(e) {
@@ -2707,24 +2720,24 @@
             // Swipe horizontal
             if (Math.abs(deltaX) > minSwipeDistance) {
                 if (deltaX > 0) {
-                    console.log('👉 Swipe derecha detectado');
+                    log('👉 Swipe derecha detectado');
                     prevImage();
                 } else {
-                    console.log('👈 Swipe izquierda detectado');
+                    log('👈 Swipe izquierda detectado');
                     nextImage();
                 }
             }
         } else {
             // Swipe vertical
             if (Math.abs(deltaY) > minSwipeDistance && deltaY > 0) {
-                console.log('👇 Swipe hacia abajo detectado');
+                log('👇 Swipe hacia abajo detectado');
                 closeImageGallery();
             }
         }
     }
     
     function handleDoubleTap() {
-        console.log('👆👆 Doble tap detectado');
+        log('👆👆 Doble tap detectado');
         
         if (currentScale > 1) {
             // Si hay zoom, resetear
@@ -2774,7 +2787,7 @@
         // Ocultar controles de navegación cuando hay zoom
         toggleNavigationControls(currentScale <= 1);
         
-        console.log('🔍 Zoom aplicado:', currentScale.toFixed(2) + 'x');
+        log('🔍 Zoom aplicado:', currentScale.toFixed(2) + 'x');
     }
     
     function applyPan() {
@@ -2802,7 +2815,7 @@
         // Mostrar controles de navegación
         toggleNavigationControls(true);
         
-        console.log('🔄 Zoom reseteado');
+        log('🔄 Zoom reseteado');
     }
     
     function toggleNavigationControls(show) {
@@ -2838,14 +2851,14 @@
     // ========================================
     
     function handleImageError(imgElement, filename, errorMsg) {
-        console.error(`❌ Error cargando imagen: ${filename} - ${errorMsg}`);
+        error(`❌ Error cargando imagen: ${filename} - ${errorMsg}`);
         
         // OPCIÓN 1: Sistema de fallback mejorado
         const originalSrc = imgElement.src;
         
         // Si ya intentamos el fallback, mostrar placeholder
         if (imgElement.dataset.fallbackAttempted === 'true') {
-            console.log(`🔧 Fallback ya intentado, mostrando placeholder: ${filename}`);
+            log(`🔧 Fallback ya intentado, mostrando placeholder: ${filename}`);
             showImagePlaceholder(imgElement, filename, 'Imagen no disponible');
             return;
         }
@@ -2854,11 +2867,11 @@
         imgElement.dataset.fallbackAttempted = 'true';
         
         // Intentar diferentes estrategias de fallback
-        console.log(`🔄 Intentando fallback para: ${filename}`);
+        log(`🔄 Intentando fallback para: ${filename}`);
         
         // Estrategia 1: Si es URL interna, intentar recargar
         if (originalSrc.includes('/api/images/')) {
-            console.log(`🔄 Recargando URL interna: ${originalSrc}`);
+            log(`🔄 Recargando URL interna: ${originalSrc}`);
             setTimeout(() => {
                 imgElement.src = originalSrc + '?retry=' + Date.now();
             }, 1000);
@@ -2886,7 +2899,7 @@
             }
         }
         
-        console.log(`🔧 Placeholder mostrado para: ${filename} - ${errorMsg}`);
+        log(`🔧 Placeholder mostrado para: ${filename} - ${errorMsg}`);
     }
 
     function retryImageLoad(imgElement, maxRetries = 2) {
@@ -2894,14 +2907,14 @@
         
         if (retryCount < maxRetries) {
             imgElement.dataset.retryCount = (retryCount + 1).toString();
-            console.log(`🔄 Reintentando carga de imagen (${retryCount + 1}/${maxRetries})`);
+            log(`🔄 Reintentando carga de imagen (${retryCount + 1}/${maxRetries})`);
             
             setTimeout(() => {
                 const originalSrc = imgElement.dataset.originalSrc || imgElement.src;
                 imgElement.src = originalSrc + '?retry=' + Date.now();
             }, 1000 * (retryCount + 1)); // Esperar más tiempo en cada intento
         } else {
-            console.log(`❌ Máximo de reintentos alcanzado para imagen`);
+            log(`❌ Máximo de reintentos alcanzado para imagen`);
             const filename = imgElement.alt || 'imagen';
             showImagePlaceholder(imgElement, filename, 'Error después de reintentos');
         }
@@ -2913,10 +2926,10 @@
         const loadedImages = Array.from(allImages).filter(img => img.complete && img.naturalHeight !== 0);
         const failedImages = Array.from(allImages).filter(img => img.style.display === 'none');
         
-        console.log(`📊 Estadísticas de imágenes:`);
-        console.log(`   Total: ${allImages.length}`);
-        console.log(`   Cargadas: ${loadedImages.length}`);
-        console.log(`   Fallidas: ${failedImages.length}`);
+        log(`📊 Estadísticas de imágenes:`);
+        log(`   Total: ${allImages.length}`);
+        log(`   Cargadas: ${loadedImages.length}`);
+        log(`   Fallidas: ${failedImages.length}`);
         
         return {
             total: allImages.length,
@@ -2952,28 +2965,28 @@
                 e.preventDefault();
                 e.stopPropagation();
                 
-                console.log('🖼️ Click detectado en trigger de galería');
+                log('🖼️ Click detectado en trigger de galería');
                 
                 try {
                     const imagesData = trigger.getAttribute('data-images');
                     const indexData = trigger.getAttribute('data-index');
                     
-                    console.log('🖼️ Data images:', imagesData);
-                    console.log('🖼️ Data index:', indexData);
+                    log('🖼️ Data images:', imagesData);
+                    log('🖼️ Data index:', indexData);
                     
                     if (imagesData && indexData !== null) {
                         const images = JSON.parse(imagesData);
                         const index = parseInt(indexData);
                         
-                        console.log('🖼️ Imágenes parseadas:', images);
-                        console.log('🖼️ Índice parseado:', index);
+                        log('🖼️ Imágenes parseadas:', images);
+                        log('🖼️ Índice parseado:', index);
                         
                         openImageGallery(images, index);
                     } else {
-                        console.error('❌ Error: No se pudieron obtener los datos de la imagen');
+                        error('❌ Error: No se pudieron obtener los datos de la imagen');
                     }
                 } catch (error) {
-                    console.error('❌ Error al procesar click en galería:', error);
+                    error('❌ Error al procesar click en galería:', error);
                 }
             }
         });
@@ -3111,8 +3124,8 @@
 <script>
     // OPCIÓN 1: Función de fallback para carga de imágenes con retry logic
     function loadImageWithFallback(imgElement, primaryUrl, filename, index) {
-        console.log(`🖼️ Error cargando imagen ${index + 1}: ${filename}`);
-        console.log(`🔗 URL original: ${primaryUrl}`);
+        log(`🖼️ Error cargando imagen ${index + 1}: ${filename}`);
+        log(`🔗 URL original: ${primaryUrl}`);
         
         // Marcar que esta imagen tuvo error
         imgElement.setAttribute('data-error', 'true');
@@ -3121,16 +3134,16 @@
         const fallbackStrategies = [
             // Estrategia 1: Reintentar la URL original después de un delay
             () => {
-                console.log(`🔄 Estrategia 1: Reintentando URL original para ${filename}`);
+                log(`🔄 Estrategia 1: Reintentando URL original para ${filename}`);
                 setTimeout(() => {
                     const newImg = new Image();
                     newImg.onload = () => {
-                        console.log(`✅ Estrategia 1 exitosa para ${filename}`);
+                        log(`✅ Estrategia 1 exitosa para ${filename}`);
                         imgElement.src = primaryUrl;
                         imgElement.removeAttribute('data-error');
                     };
                     newImg.onerror = () => {
-                        console.log(`❌ Estrategia 1 falló para ${filename}`);
+                        log(`❌ Estrategia 1 falló para ${filename}`);
                         tryNextStrategy();
                     };
                     newImg.src = primaryUrl + '?retry=' + Date.now();
@@ -3139,16 +3152,16 @@
             
             // Estrategia 2: Intentar con endpoint de fallback directo
             () => {
-                console.log(`🔄 Estrategia 2: Usando endpoint de fallback para ${filename}`);
+                log(`🔄 Estrategia 2: Usando endpoint de fallback para ${filename}`);
                 const fallbackUrl = `/api/images/fallback?filename=${encodeURIComponent(filename)}&timestamp=${Date.now()}`;
                 const newImg = new Image();
                 newImg.onload = () => {
-                    console.log(`✅ Estrategia 2 exitosa para ${filename}`);
+                    log(`✅ Estrategia 2 exitosa para ${filename}`);
                     imgElement.src = fallbackUrl;
                     imgElement.removeAttribute('data-error');
                 };
                 newImg.onerror = () => {
-                    console.log(`❌ Estrategia 2 falló para ${filename}`);
+                    log(`❌ Estrategia 2 falló para ${filename}`);
                     tryNextStrategy();
                 };
                 newImg.src = fallbackUrl;
@@ -3156,7 +3169,7 @@
             
             // Estrategia 3: Mostrar placeholder con información del error
             () => {
-                console.log(`🔄 Estrategia 3: Mostrando placeholder para ${filename}`);
+                log(`🔄 Estrategia 3: Mostrando placeholder para ${filename}`);
                 showImagePlaceholder(imgElement, filename, index);
             }
         ];
@@ -3175,7 +3188,7 @@
     }
     
     function showImagePlaceholder(imgElement, filename, index) {
-        console.log(`🖼️ Mostrando placeholder para ${filename}`);
+        log(`🖼️ Mostrando placeholder para ${filename}`);
         
         // Ocultar la imagen original
         imgElement.style.display = 'none';
@@ -3209,7 +3222,7 @@
     
     // Función para manejar errores de imagen (legacy - mantener compatibilidad)
     function handleImageError(imgElement, filename, error) {
-        console.log(`❌ handleImageError (legacy): ${filename} - ${error}`);
+        log(`❌ handleImageError (legacy): ${filename} - ${error}`);
         loadImageWithFallback(imgElement, imgElement.src, filename, 0);
     }
 </script>

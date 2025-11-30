@@ -769,12 +769,21 @@
 let currentMessageId = null;
 
 // ========================================
+// SISTEMA DE LOGGING CONDICIONAL
+// ========================================
+// Detectar si estamos en localhost (desarrollo) o en producción/staging
+const isLocalhost = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' || 
+                    window.location.hostname.includes('192.168.');
+
+// Crear funciones de logging que solo funcionan en localhost
+const log = isLocalhost ? console.log.bind(console) : () => {};
+const error = isLocalhost ? console.error.bind(console) : () => {};
+const warn = isLocalhost ? console.warn.bind(console) : () => {};
+
+// ========================================
 // OPTIMIZACIONES DE RENDIMIENTO
 // ========================================
-
-// Configuración de debug (cambiar a false en producción)
-const DEBUG_FILTERING = false;
-const log = DEBUG_FILTERING ? console.log : () => {};
 
 // Cache de elementos DOM para evitar queries repetitivas
 const domCache = {

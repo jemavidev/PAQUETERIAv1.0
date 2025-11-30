@@ -607,12 +607,12 @@ function loadPackages(page = 1, searchTerm = '') {
         return response.json();
     })
     .then(data => {
-        console.log('Datos recibidos desde API:', data);
+        log('Datos recibidos desde API:', data);
         currentPage = page;
         displayPackages(data.packages, data.pagination, searchTerm);
     })
     .catch(error => {
-        console.error('Error cargando paquetes:', error);
+        error('Error cargando paquetes:', error);
         document.getElementById('packagesLoading').classList.add('hidden');
         document.getElementById('noPackages').classList.remove('hidden');
 
@@ -723,7 +723,7 @@ function createPackageElement(package) {
 
     div.className = `bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-papyrus-blue transition-all duration-200 cursor-pointer transform hover:scale-[1.02] touch-manipulation`;
     div.onclick = () => {
-        console.log('Click en paquete:', package.id);
+        log('Click en paquete:', package.id);
         viewAnnouncementDetail(package.guide_number);
     };
 
@@ -825,7 +825,7 @@ function getAuthToken() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard cargado');
+    log('Dashboard cargado');
 
     // Cargar paquetes iniciales
     loadPackages(1);
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Limpiar el campo de búsqueda antes de enfocar
             searchInput.value = '';
             searchInput.focus();
-            console.log('Campo de búsqueda limpiado y enfocado automáticamente');
+            log('Campo de búsqueda limpiado y enfocado automáticamente');
         }
     }, 500); // Pequeño delay para asegurar que la página esté completamente cargada
 
