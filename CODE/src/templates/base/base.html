@@ -53,40 +53,8 @@
 
     <title>{% block title %}PAQUETEX v3.1{% endblock %}</title>
 
-    {# Tailwind CSS - CDN (Local JIT causaba alto CPU por MutationObserver) #}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'papyrus-blue': '#1e40af',
-                        'papyrus-green': '#059669',
-                        'papyrus-orange': '#ea580c',
-                        'papyrus-red': '#dc2626',
-                        'papyrus-yellow': '#d97706',
-                        'papyrus-purple': '#7c3aed',
-                        'papyrus-pink': '#db2777',
-                        'papyrus-indigo': '#4f46e5',
-                        'papyrus-teal': '#0d9488',
-                        'papyrus-cyan': '#0891b2',
-                        'papyrus-lime': '#65a30d',
-                        'papyrus-emerald': '#10b981',
-                        'papyrus-rose': '#e11d48',
-                        'papyrus-violet': '#7c3aed',
-                        'papyrus-fuchsia': '#c026d3',
-                        'papyrus-sky': '#0284c7',
-                        'papyrus-amber': '#d97706',
-                        'papyrus-stone': '#78716c',
-                        'papyrus-neutral': '#525252',
-                        'papyrus-slate': '#475569',
-                        'papyrus-gray': '#6b7280',
-                        'papyrus-zinc': '#71717a',
-                    }
-                }
-            }
-        }
-    </script>
+    {# Tailwind CSS - Compilado localmente (sin JIT en tiempo real) #}
+    <link rel="stylesheet" href="/static/css/tailwind.css?v=4.0">
 
     {# Configuración de la aplicación #}
     <script src="/static/js/config.js"></script>
