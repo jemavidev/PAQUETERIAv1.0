@@ -715,38 +715,60 @@ const isLocalhost = window.location.hostname === 'localhost' ||
                     window.location.hostname === '127.0.0.1' || 
                     window.location.hostname.includes('192.168.');
 
-// Crear funciones de logging que solo funcionan en localhost
-const log = isLocalhost ? console.log.bind(console) : () => {};
-const error = isLocalhost ? console.error.bind(console) : () => {};
-const warn = isLocalhost ? console.warn.bind(console) : () => {};
+// FLAG PARA DESHABILITAR LOGS (útil cuando DevTools causa problemas)
+const ENABLE_VERBOSE_LOGS = false; // Cambiar a true para ver todos los logs
+
+// Crear funciones de logging que solo funcionan en localhost Y si está habilitado
+const log = (isLocalhost && ENABLE_VERBOSE_LOGS) ? console.log.bind(console) : () => {};
+const error = isLocalhost ? console.error.bind(console) : () => {}; // Errores siempre se muestran
+const warn = (isLocalhost && ENABLE_VERBOSE_LOGS) ? console.warn.bind(console) : () => {};
 
 // ========================================
 // DETECCIÓN DE DISPOSITIVOS MÓVILES
 // ========================================
-// Detección mejorada de dispositivos móviles (más precisa)
-function isMobileDevice() {
-    // Detección más estricta para evitar falsos positivos en escritorio
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    const isSmallScreen = window.innerWidth <= 768;
-    const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
+// Detección mejorada de dispositivos móviles (más precisa) con caché
+const isMobileDevice = (function() {
+    let cachedResult = null;
+    let lastCheck = 0;
+    const CACHE_DURATION = 5000; // 5 segundos de caché
     
-    const result = isMobileUA || (isSmallScreen && hasTouchOnly);
-    
-    // Log de depuración
-    log('🔍 Detección de dispositivo:', {
-        userAgent: userAgent,
-        isMobileUA: isMobileUA,
-        screenWidth: window.innerWidth,
-        isSmallScreen: isSmallScreen,
-        touchPoints: navigator.maxTouchPoints,
-        hasFinePonter: window.matchMedia('(pointer: fine)').matches,
-        hasTouchOnly: hasTouchOnly,
-        resultado: result ? '📱 MÓVIL' : '💻 ESCRITORIO'
-    });
-    
-    return result;
-}
+    return function() {
+        const now = Date.now();
+        
+        // Usar resultado cacheado si está disponible y es reciente
+        if (cachedResult !== null && (now - lastCheck) < CACHE_DURATION) {
+            return cachedResult;
+        }
+        
+        // Detección más estricta para evitar falsos positivos en escritorio
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+        const isSmallScreen = window.innerWidth <= 768;
+        const hasTouchOnly = navigator.maxTouchPoints > 0 && !window.matchMedia('(pointer: fine)').matches;
+        
+        const result = isMobileUA || (isSmallScreen && hasTouchOnly);
+        
+        // Log de depuración SOLO la primera vez o cada 5 segundos
+        if (cachedResult === null || (now - lastCheck) >= CACHE_DURATION) {
+            log('🔍 Detección de dispositivo:', {
+                userAgent: userAgent.substring(0, 50) + '...', // Truncar para evitar logs largos
+                isMobileUA: isMobileUA,
+                screenWidth: window.innerWidth,
+                isSmallScreen: isSmallScreen,
+                touchPoints: navigator.maxTouchPoints,
+                hasFinePonter: window.matchMedia('(pointer: fine)').matches,
+                hasTouchOnly: hasTouchOnly,
+                resultado: result ? '📱 MÓVIL' : '💻 ESCRITORIO'
+            });
+        }
+        
+        // Actualizar caché
+        cachedResult = result;
+        lastCheck = now;
+        
+        return result;
+    };
+})();
 
 // Función optimizada para mostrar opciones de captura solo en móviles reales
 function showMobileCaptureOptions() {

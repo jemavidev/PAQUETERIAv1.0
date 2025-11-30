@@ -13,7 +13,8 @@
     
     // Configuración
     const DEBUG_MODE = false; // Cambiar a true para activar logs detallados
-    const AUTO_FIX = true; // Intentar corregir problemas automáticamente
+    const AUTO_FIX = false; // DESHABILITADO: Estaba causando problemas de rendimiento
+    const ENABLE_MONITOR = false; // DESHABILITADO: MutationObserver bloqueaba el navegador
     
     /**
      * Detecta si estamos en un dispositivo móvil
@@ -162,8 +163,16 @@
     
     /**
      * Monitorea cambios en el DOM que puedan afectar el scroll
+     * DESHABILITADO: Causaba problemas de rendimiento
      */
     function setupScrollMonitor() {
+        if (!ENABLE_MONITOR) {
+            if (DEBUG_MODE) {
+                console.log('⏸️ Monitor de scroll deshabilitado (mejora de rendimiento)');
+            }
+            return;
+        }
+        
         const observer = new MutationObserver((mutations) => {
             // Verificar si algún cambio afecta el scroll
             let needsCheck = false;
@@ -239,6 +248,14 @@
      * Inicialización
      */
     function init() {
+        // DESHABILITADO TEMPORALMENTE para debugging
+        // Este script estaba causando problemas de rendimiento
+        if (DEBUG_MODE) {
+            console.log('⏸️ mobile-scroll-debug.js deshabilitado temporalmente');
+        }
+        return;
+        
+        /* CÓDIGO ORIGINAL COMENTADO
         // Solo ejecutar en dispositivos móviles o en modo debug
         if (!isMobileDevice() && !DEBUG_MODE) {
             return;
@@ -281,6 +298,7 @@
         if (DEBUG_MODE) {
             console.log('✅ Análisis de scroll móvil completado');
         }
+        */
     }
     
     // Exponer funciones globalmente para debugging manual
