@@ -155,14 +155,18 @@
         // Detección inteligente de dispositivo móvil
         const isMobileDevice = detectMobileDevice();
         
-        console.log('🔍 Detección de dispositivo:', {
-            isMobile: isMobileDevice,
-            width: window.innerWidth,
-            height: window.innerHeight,
-            touchSupport: 'ontouchstart' in window,
-            orientation: window.screen.orientation?.type || 'unknown',
-            userAgent: navigator.userAgent.substring(0, 50) + '...'
-        });
+        // LOGS DESHABILITADOS - Cambiar ENABLE_FOOTER_LOGS a true para debugging
+        const ENABLE_FOOTER_LOGS = false;
+        if (ENABLE_FOOTER_LOGS) {
+            console.log('🔍 Detección de dispositivo:', {
+                isMobile: isMobileDevice,
+                width: window.innerWidth,
+                height: window.innerHeight,
+                touchSupport: 'ontouchstart' in window,
+                orientation: window.screen.orientation?.type || 'unknown',
+                userAgent: navigator.userAgent.substring(0, 50) + '...'
+            });
+        }
         
         // Si es móvil, asegurar que el footer esté visible
         if (isMobileDevice) {

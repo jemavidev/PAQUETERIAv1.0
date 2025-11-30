@@ -159,14 +159,18 @@
         // Detección inteligente de dispositivo móvil
         const isMobileDevice = detectMobileDevice();
         
-        console.log('🔍 Detección de dispositivo (autenticado):', {
-            isMobile: isMobileDevice,
-            width: window.innerWidth,
-            height: window.innerHeight,
-            touchSupport: 'ontouchstart' in window,
-            orientation: window.screen.orientation?.type || 'unknown',
-            userAgent: navigator.userAgent.substring(0, 50) + '...'
-        });
+        // LOGS DESHABILITADOS - Cambiar ENABLE_FOOTER_LOGS a true para debugging
+        const ENABLE_FOOTER_LOGS = false;
+        if (ENABLE_FOOTER_LOGS) {
+            console.log('🔍 Detección de dispositivo (autenticado):', {
+                isMobile: isMobileDevice,
+                width: window.innerWidth,
+                height: window.innerHeight,
+                touchSupport: 'ontouchstart' in window,
+                orientation: window.screen.orientation?.type || 'unknown',
+                userAgent: navigator.userAgent.substring(0, 50) + '...'
+            });
+        }
         
         // Si es móvil, asegurar que el footer esté visible
         if (isMobileDevice) {
@@ -223,6 +227,10 @@
     
     // Función para sincronizar badges del footer con el header
     function syncFooterBadges() {
+        // MUTATION OBSERVERS DESHABILITADOS - Causan alto uso de CPU
+        // Cambiar ENABLE_BADGE_SYNC a true para reactivar sincronización automática
+        const ENABLE_BADGE_SYNC = false;
+        
         // Sincronizar badge de mensajes
         const headerMessagesBadge = document.getElementById('messages-badge');
         const headerMessagesCount = document.getElementById('messages-count');
@@ -230,28 +238,28 @@
         const footerMessagesCount = document.getElementById('messages-count-footer');
         
         if (headerMessagesBadge && footerMessagesBadge) {
-            // Observar cambios en el badge del header
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                        // Sincronizar visibilidad
-                        if (headerMessagesBadge.classList.contains('hidden')) {
-                            footerMessagesBadge.classList.add('hidden');
-                        } else {
-                            footerMessagesBadge.classList.remove('hidden');
-                        }
-                    }
-                });
-            });
-            
-            observer.observe(headerMessagesBadge, { attributes: true });
-            
-            // Sincronizar estado inicial
+            // Sincronizar estado inicial (una sola vez)
             if (!headerMessagesBadge.classList.contains('hidden')) {
                 footerMessagesBadge.classList.remove('hidden');
                 if (headerMessagesCount && footerMessagesCount) {
                     footerMessagesCount.textContent = headerMessagesCount.textContent;
                 }
+            }
+            
+            // MutationObserver DESHABILITADO para evitar alto uso de CPU
+            if (ENABLE_BADGE_SYNC) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (headerMessagesBadge.classList.contains('hidden')) {
+                                footerMessagesBadge.classList.add('hidden');
+                            } else {
+                                footerMessagesBadge.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+                observer.observe(headerMessagesBadge, { attributes: true });
             }
         }
         
@@ -262,44 +270,46 @@
         const footerPackagesCount = document.getElementById('packages-count-footer');
         
         if (headerPackagesBadge && footerPackagesBadge) {
-            // Observar cambios en el badge del header
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                        // Sincronizar visibilidad
-                        if (headerPackagesBadge.classList.contains('hidden')) {
-                            footerPackagesBadge.classList.add('hidden');
-                        } else {
-                            footerPackagesBadge.classList.remove('hidden');
-                        }
-                    }
-                });
-            });
-            
-            observer.observe(headerPackagesBadge, { attributes: true });
-            
-            // Sincronizar estado inicial
+            // Sincronizar estado inicial (una sola vez)
             if (!headerPackagesBadge.classList.contains('hidden')) {
                 footerPackagesBadge.classList.remove('hidden');
                 if (headerPackagesCount && footerPackagesCount) {
                     footerPackagesCount.textContent = headerPackagesCount.textContent;
                 }
             }
+            
+            // MutationObserver DESHABILITADO para evitar alto uso de CPU
+            if (ENABLE_BADGE_SYNC) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (headerPackagesBadge.classList.contains('hidden')) {
+                                footerPackagesBadge.classList.add('hidden');
+                            } else {
+                                footerPackagesBadge.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+                observer.observe(headerPackagesBadge, { attributes: true });
+            }
         }
         
-        // Observar cambios en los contadores de texto
-        if (headerMessagesCount && footerMessagesCount) {
-            const messagesObserver = new MutationObserver(function() {
-                footerMessagesCount.textContent = headerMessagesCount.textContent;
-            });
-            messagesObserver.observe(headerMessagesCount, { childList: true, characterData: true, subtree: true });
-        }
-        
-        if (headerPackagesCount && footerPackagesCount) {
-            const packagesObserver = new MutationObserver(function() {
-                footerPackagesCount.textContent = headerPackagesCount.textContent;
-            });
-            packagesObserver.observe(headerPackagesCount, { childList: true, characterData: true, subtree: true });
+        // Observar cambios en los contadores de texto - DESHABILITADO
+        if (ENABLE_BADGE_SYNC) {
+            if (headerMessagesCount && footerMessagesCount) {
+                const messagesObserver = new MutationObserver(function() {
+                    footerMessagesCount.textContent = headerMessagesCount.textContent;
+                });
+                messagesObserver.observe(headerMessagesCount, { childList: true, characterData: true, subtree: true });
+            }
+            
+            if (headerPackagesCount && footerPackagesCount) {
+                const packagesObserver = new MutationObserver(function() {
+                    footerPackagesCount.textContent = headerPackagesCount.textContent;
+                });
+                packagesObserver.observe(headerPackagesCount, { childList: true, characterData: true, subtree: true });
+            }
         }
     }
     
