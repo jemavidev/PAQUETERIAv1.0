@@ -53,10 +53,8 @@
 
     <title>{% block title %}PAQUETEX v3.1{% endblock %}</title>
 
-    {# Tailwind CSS - Local - DESHABILITADO TEMPORALMENTE PARA DEBUG #}
-    {# NOTA: Tailwind JIT tiene un MutationObserver que puede causar alto CPU #}
-    {# <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script> #}
-    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    {# Tailwind CSS - CDN (Local JIT causaba alto CPU por MutationObserver) #}
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
