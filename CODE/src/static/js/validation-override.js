@@ -6,7 +6,10 @@
 (function() {
     'use strict';
     
-    console.log('🚨 Inicializando OVERRIDE completo de validación nativa...');
+    // DEBUG MODE - Cambiar a false para producción
+    const DEBUG_VALIDATION = false;
+    
+    if (DEBUG_VALIDATION) console.log('🚨 Inicializando OVERRIDE completo de validación nativa...');
     
     // Referencias a los elementos del DOM
     let container, title, message, fieldName, closeBtn;
@@ -20,17 +23,17 @@
         closeBtn = document.getElementById('validation-override-close-btn');
         
         if (!container) {
-            console.error('❌ No se encontró el contenedor de validación');
+            if (DEBUG_VALIDATION) console.error('❌ No se encontró el contenedor de validación');
             return false;
         }
         
-        console.log('✅ Referencias del DOM inicializadas correctamente');
+        if (DEBUG_VALIDATION) console.log('✅ Referencias del DOM inicializadas correctamente');
         return true;
     }
     
     // Función para mostrar error de validación
     function mostrarErrorValidacion(campo, mensaje, tipoValidacion) {
-        console.log('📝 Mostrando error de validación:', { campo, mensaje, tipoValidacion });
+        if (DEBUG_VALIDATION) console.log('📝 Mostrando error de validación:', { campo, mensaje, tipoValidacion });
         
         if (!inicializarReferencias()) {
             console.error('❌ No se pueden mostrar errores sin las referencias del DOM');
@@ -152,16 +155,16 @@
     
     // DESHABILITAR COMPLETAMENTE LA VALIDACIÓN NATIVA
     function deshabilitarValidacionNativa() {
-        console.log('🔧 Deshabilitando validación nativa del navegador...');
+        if (DEBUG_VALIDATION) console.log('🔧 Deshabilitando validación nativa del navegador...');
         
         // Interceptar TODOS los eventos de formulario
         document.addEventListener('submit', function(event) {
-            console.log('📤 Evento submit interceptado:', event);
+            if (DEBUG_VALIDATION) console.log('📤 Evento submit interceptado:', event);
             event.preventDefault(); // Prevenir envío nativo
             event.stopPropagation(); // Detener propagación
             
             const formulario = event.target;
-            console.log('📋 Formulario interceptado:', formulario);
+            if (DEBUG_VALIDATION) console.log('📋 Formulario interceptado:', formulario);
             
             // Validar manualmente
             validarFormularioManual(formulario);
@@ -170,7 +173,7 @@
         // Interceptar TODOS los eventos de click en botones submit
         document.addEventListener('click', function(event) {
             if (event.target.type === 'submit' || event.target.tagName === 'BUTTON') {
-                console.log('🖱️ Click en botón interceptado:', event.target);
+                if (DEBUG_VALIDATION) console.log('🖱️ Click en botón interceptado:', event.target);
                 event.preventDefault();
                 event.stopPropagation();
                 
@@ -184,7 +187,7 @@
         // Interceptar eventos de teclado (Enter)
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
-                console.log('⌨️ Enter en input interceptado:', event.target);
+                if (DEBUG_VALIDATION) console.log('⌨️ Enter en input interceptado:', event.target);
                 event.preventDefault();
                 event.stopPropagation();
                 
@@ -198,7 +201,7 @@
     
     // VALIDACIÓN MANUAL COMPLETA
     function validarFormularioManual(formulario) {
-        console.log('🔍 Validando formulario manualmente:', formulario);
+        if (DEBUG_VALIDATION) console.log('🔍 Validando formulario manualmente:', formulario);
         
         // Obtener todos los campos del formulario
         const campos = formulario.querySelectorAll('input, select, textarea');
@@ -208,7 +211,7 @@
         // Validar cada campo
         campos.forEach(campo => {
             if (campo.hasAttribute('required') && !campo.value.trim()) {
-                console.log('❌ Campo requerido vacío:', campo);
+                if (DEBUG_VALIDATION) console.log('❌ Campo requerido vacío:', campo);
                 esValido = false;
                 if (!primerCampoInvalido) {
                     primerCampoInvalido = campo;
@@ -216,7 +219,7 @@
             } else if (campo.hasAttribute('minlength')) {
                 const minLength = parseInt(campo.getAttribute('minlength'));
                 if (campo.value.length < minLength) {
-                    console.log('❌ Campo con longitud mínima:', campo);
+                    if (DEBUG_VALIDATION) console.log('❌ Campo con longitud mínima:', campo);
                     esValido = false;
                     if (!primerCampoInvalido) {
                         primerCampoInvalido = campo;
@@ -225,7 +228,7 @@
             } else if (campo.type === 'email' && campo.value) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(campo.value)) {
-                    console.log('❌ Email inválido:', campo);
+                    if (DEBUG_VALIDATION) console.log('❌ Email inválido:', campo);
                     esValido = false;
                     if (!primerCampoInvalido) {
                         primerCampoInvalido = campo;
@@ -234,7 +237,7 @@
             } else if (campo.hasAttribute('pattern') && campo.value) {
                 const pattern = new RegExp(campo.getAttribute('pattern'));
                 if (!pattern.test(campo.value)) {
-                    console.log('❌ Patrón inválido:', campo);
+                    if (DEBUG_VALIDATION) console.log('❌ Patrón inválido:', campo);
                     esValido = false;
                     if (!primerCampoInvalido) {
                         primerCampoInvalido = campo;
@@ -244,11 +247,11 @@
         });
         
         if (esValido) {
-            console.log('✅ Formulario válido, enviando...');
+            if (DEBUG_VALIDATION) console.log('✅ Formulario válido, enviando...');
             // Aquí puedes enviar el formulario
             alert('✅ Formulario válido! Datos enviados correctamente.');
         } else {
-            console.log('❌ Formulario inválido, mostrando error...');
+            if (DEBUG_VALIDATION) console.log('❌ Formulario inválido, mostrando error...');
             const mensaje = obtenerMensajeValidacion(primerCampoInvalido);
             mostrarErrorValidacion(primerCampoInvalido, mensaje, 'validacion');
             primerCampoInvalido.focus();
@@ -289,7 +292,7 @@
     
     // Función de prueba
     window.probarOverrideValidacion = function() {
-        console.log('🧪 Probando override de validación...');
+        if (DEBUG_VALIDATION) console.log('🧪 Probando override de validación...');
         const campo = document.querySelector('input[required]');
         if (campo) {
             campo.value = '';
@@ -300,16 +303,16 @@
     
     // Inicializar cuando el DOM esté listo
     function inicializar() {
-        console.log('🚀 Inicializando override de validación...');
+        if (DEBUG_VALIDATION) console.log('🚀 Inicializando override de validación...');
         
         // Esperar un poco para que el DOM esté completamente cargado
         setTimeout(() => {
             if (inicializarReferencias()) {
                 configurarEventListeners();
                 deshabilitarValidacionNativa();
-                console.log('✅ Override de validación inicializado correctamente');
+                if (DEBUG_VALIDATION) console.log('✅ Override de validación inicializado correctamente');
             } else {
-                console.error('❌ No se pudo inicializar el override de validación');
+                if (DEBUG_VALIDATION) console.error('❌ No se pudo inicializar el override de validación');
             }
         }, 100);
     }
@@ -320,6 +323,6 @@
         inicializar();
     }
     
-    console.log('🎯 Override de validación nativa cargado');
+    if (DEBUG_VALIDATION) console.log('🎯 Override de validación nativa cargado');
 })();
 
