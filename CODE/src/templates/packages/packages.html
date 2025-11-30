@@ -1235,7 +1235,7 @@ function createPackageCard(package, state) {
                 </div>
                 <div class="text-sm text-gray-700 truncate">${package.customer_name || 'Sin nombre'}</div>
                 <div class="text-xs text-gray-500 mt-1">
-                    ${formatPhoneLinks(package.customer_phone, package.customer_name)}
+                    ${formatPhoneLinks(package.customer_phone, package.customer_name, package.tracking_number)}
                 </div>
             </div>
         </div>
@@ -1355,7 +1355,7 @@ function createPackageElement(package) {
                         </button>
                     ` : ''}
                     ${package.customer_phone ? `
-                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, te contacto por tu paquete`)}" 
+                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
                            target="_blank"
                            class="text-green-600 hover:text-green-800 transition-colors"
                            title="Contactar por WhatsApp">
@@ -2023,7 +2023,7 @@ function displayReceivePackageInfo(package) {
         </div>
         <div class="flex items-center space-x-2">
             <span class="text-blue-600 font-medium">TELÉFONO:</span>
-            <a href="https://wa.me/57${package.customer_phone?.replace(/\D/g, '') || ''}?text=Hola%20${encodeURIComponent(package.customer_name || 'CLIENTE')}%2C%20te%20contacto%20por%20tu%20paquete" 
+            <a href="https://wa.me/57${package.customer_phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`Hola ${package.customer_name || 'CLIENTE'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
                class="text-green-600 hover:text-green-800 underline font-medium" 
                target="_blank">
                ${package.customer_phone || 'N/D'}
@@ -2206,7 +2206,7 @@ function displayPackageDetails(package) {
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="text-orange-600 font-medium">TELÉFONO:</span>
-                        <a href="https://wa.me/57${package.customer_phone?.replace(/\D/g, '') || ''}?text=Hola%20${encodeURIComponent(package.customer_name || 'CLIENTE')}%2C%20te%20contacto%20por%20tu%20paquete" 
+                        <a href="https://wa.me/57${package.customer_phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`Hola ${package.customer_name || 'CLIENTE'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
                            class="text-green-600 hover:text-green-800 underline font-medium" 
                            target="_blank">
                            ${package.customer_phone || 'N/D'}
@@ -3930,7 +3930,7 @@ function formatDate(dateString) {
     return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 }
 
-function formatPhoneLinks(phoneNumber, customerName = '') {
+function formatPhoneLinks(phoneNumber, customerName = '', trackingNumber = '') {
     if (!phoneNumber || phoneNumber === 'Sin teléfono' || phoneNumber === 'N/A') {
         return phoneNumber || 'Sin teléfono';
     }
@@ -3941,9 +3941,12 @@ function formatPhoneLinks(phoneNumber, customerName = '') {
         cleanNumber = cleanNumber.substring(3);
     }
 
-    // Create WhatsApp link
+    // Create WhatsApp link with tracking link
     const whatsappLink = `https://wa.me/57${cleanNumber}`;
-    const whatsappText = `Hola ${customerName || 'cliente'}, te contacto por tu paquete`;
+    const searchLink = trackingNumber ? `${window.location.origin}/search?auto_search=${trackingNumber}` : '';
+    const whatsappText = trackingNumber 
+        ? `Hola ${customerName || 'cliente'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${searchLink}`
+        : `Hola ${customerName || 'cliente'}, te contacto por tu paquete`;
 
     // Create phone call link
     const telLink = `tel:+57${cleanNumber}`;
