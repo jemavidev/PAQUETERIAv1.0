@@ -97,7 +97,7 @@ class CustomerPortalService:
 
             # Enviar SMS con código
             message = (
-                f"PAQUETEX: Su código de verificación es: {otp.otp_code}\n"
+                f"PAQUETEX: Su código de verificación es: {otp.otp_code}. "
                 f"Válido por 5 minutos. No comparta este código."
             )
 
