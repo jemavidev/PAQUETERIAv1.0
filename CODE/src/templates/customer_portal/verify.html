@@ -1,0 +1,230 @@
+{% extends "base/base.html" %}
+
+{% block title %}Verificar Código - Portal de Clientes{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Verificar Código
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Ingresa el código de 6 dígitos enviado por SMS
+            </p>
+        </div>
+
+        <!-- Formulario de Verificación -->
+        <div class="bg-white shadow-xl rounded-lg p-8">
+            <form id="verifyForm" class="space-y-6">
+                <div>
+                    <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
+                        Código de Verificación
+                    </label>
+                    <input 
+                        type="text" 
+                        id="code" 
+                        name="code" 
+                        required
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        placeholder="000000"
+                        class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl tracking-widest font-mono sm:text-3xl"
+                        autocomplete="off"
+                    >
+                    <p class="mt-2 text-xs text-gray-500 text-center">
+                        El código expira en 5 minutos
+                    </p>
+                </div>
+
+                <!-- Mensaje de error/éxito -->
+                <div id="messageContainer" class="hidden">
+                    <div id="messageContent" class="rounded-md p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg id="messageIcon" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p id="messageText" class="text-sm font-medium"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button 
+                        type="submit" 
+                        id="submitBtn"
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                    >
+                        <span id="btnText">Verificar Código</span>
+                        <span id="btnLoader" class="hidden">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Opciones adicionales -->
+            <div class="mt-6 flex items-center justify-between">
+                <button 
+                    id="resendBtn"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                    Reenviar código
+                </button>
+                <a 
+                    href="/customer-portal" 
+                    class="text-sm text-gray-600 hover:text-gray-800"
+                >
+                    Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Verificar que tenemos el teléfono guardado
+const phone = sessionStorage.getItem('customer_phone');
+if (!phone) {
+    window.location.href = '/customer-portal';
+}
+
+// Auto-focus en el input
+document.getElementById('code').focus();
+
+// Verificar código
+document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const code = document.getElementById('code').value.trim();
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
+    const messageContainer = document.getElementById('messageContainer');
+    const messageContent = document.getElementById('messageContent');
+    const messageText = document.getElementById('messageText');
+    const messageIcon = document.getElementById('messageIcon');
+    
+    // Validar código
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+        showMessage('error', 'El código debe tener 6 dígitos');
+        return;
+    }
+    
+    // Deshabilitar botón y mostrar loader
+    submitBtn.disabled = true;
+    btnText.classList.add('hidden');
+    btnLoader.classList.remove('hidden');
+    messageContainer.classList.add('hidden');
+    
+    try {
+        const response = await fetch('/api/customer-portal/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                phone: phone,
+                code: code 
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Éxito - guardar token y redirigir
+            localStorage.setItem('customer_token', data.access_token);
+            sessionStorage.removeItem('customer_phone');
+            
+            showMessage('success', '¡Verificación exitosa! Redirigiendo...');
+            
+            setTimeout(() => {
+                window.location.href = '/customer-portal/dashboard';
+            }, 1000);
+        } else {
+            throw new Error(data.detail || data.message || 'Código incorrecto');
+        }
+    } catch (error) {
+        showMessage('error', error.message);
+        
+        // Rehabilitar botón
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoader.classList.add('hidden');
+        
+        // Limpiar código
+        document.getElementById('code').value = '';
+        document.getElementById('code').focus();
+    }
+});
+
+// Reenviar código
+document.getElementById('resendBtn').addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    
+    try {
+        const response = await fetch('/api/customer-portal/request-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phone: phone })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            showMessage('success', 'Código reenviado exitosamente');
+            btn.textContent = 'Código enviado';
+            setTimeout(() => {
+                btn.textContent = 'Reenviar código';
+                btn.disabled = false;
+            }, 30000); // 30 segundos
+        } else {
+            throw new Error(data.detail || 'Error al reenviar código');
+        }
+    } catch (error) {
+        showMessage('error', error.message);
+        btn.textContent = 'Reenviar código';
+        btn.disabled = false;
+    }
+});
+
+// Función auxiliar para mostrar mensajes
+function showMessage(type, text) {
+    const messageContainer = document.getElementById('messageContainer');
+    const messageContent = document.getElementById('messageContent');
+    const messageText = document.getElementById('messageText');
+    const messageIcon = document.getElementById('messageIcon');
+    
+    messageContainer.classList.remove('hidden');
+    
+    if (type === 'success') {
+        messageContent.className = 'rounded-md p-4 bg-green-50';
+        messageIcon.className = 'h-5 w-5 text-green-400';
+        messageText.className = 'text-sm font-medium text-green-800';
+    } else {
+        messageContent.className = 'rounded-md p-4 bg-red-50';
+        messageIcon.className = 'h-5 w-5 text-red-400';
+        messageText.className = 'text-sm font-medium text-red-800';
+    }
+    
+    messageText.textContent = text;
+}
+
+// Solo permitir números en el input
+document.getElementById('code').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
+{% endblock %}

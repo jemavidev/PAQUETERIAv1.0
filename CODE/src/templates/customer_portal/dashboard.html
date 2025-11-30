@@ -1,0 +1,449 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mi Portal - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="customerDashboard()">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900" x-text="customerData.full_name || 'Mi Portal'"></h1>
+                    <p class="text-sm text-gray-600" x-text="customerData.phone"></p>
+                </div>
+                <button 
+                    @click="logout()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button 
+                        @click="activeTab = 'data'"
+                        :class="activeTab === 'data' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Mis Datos
+                    </button>
+                    <button 
+                        @click="activeTab = 'packages'"
+                        :class="activeTab === 'packages' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Mis Paquetes
+                        <span 
+                            x-show="packages.length > 0"
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            x-text="packages.length"
+                        ></span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab: Mis Datos -->
+        <div x-show="activeTab === 'data'" class="space-y-6">
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Paquetes Recibidos</dt>
+                                    <dd class="text-lg font-semibold text-gray-900" x-text="customerData.total_packages_received || 0"></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Paquetes Entregados</dt>
+                                    <dd class="text-lg font-semibold text-gray-900" x-text="customerData.total_packages_delivered || 0"></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
+                                    <dd class="text-lg font-semibold text-gray-900" x-text="(customerData.total_packages_received || 0) - (customerData.total_packages_delivered || 0)"></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Edición -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        Información Personal
+                    </h3>
+                    
+                    <form @submit.prevent="updateData()" class="space-y-6">
+                        <!-- Nombre y Apellido -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.first_name"
+                                    required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Apellido</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.last_name"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Teléfono (solo lectura) y Email -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.phone"
+                                    disabled
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-100 text-gray-500 cursor-not-allowed sm:text-sm"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">El teléfono no puede ser modificado</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input 
+                                    type="email" 
+                                    x-model="customerData.email"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Dirección -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                            <input 
+                                type="text" 
+                                x-model="customerData.address_street"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            >
+                        </div>
+
+                        <!-- Ciudad y Estado -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.address_city"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Departamento</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.address_state"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Edificio -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Conjunto Residencial</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.building_name"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Torre</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.tower"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Apartamento</label>
+                                <input 
+                                    type="text" 
+                                    x-model="customerData.apartment"
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Mensaje -->
+                        <div x-show="message" x-transition>
+                            <div :class="messageType === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'" class="rounded-md p-4 border">
+                                <p :class="messageType === 'success' ? 'text-green-800' : 'text-red-800'" class="text-sm" x-text="message"></p>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="flex justify-end">
+                            <button 
+                                type="submit"
+                                :disabled="loading"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                            >
+                                <span x-show="!loading">Guardar Cambios</span>
+                                <span x-show="loading">Guardando...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Mis Paquetes -->
+        <div x-show="activeTab === 'packages'">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        Historial de Paquetes
+                    </h3>
+
+                    <!-- Loading -->
+                    <div x-show="loadingPackages" class="text-center py-8">
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">Cargando paquetes...</p>
+                    </div>
+
+                    <!-- Lista de Paquetes -->
+                    <div x-show="!loadingPackages && packages.length > 0" class="space-y-4">
+                        <template x-for="pkg in packages" :key="pkg.id">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="text-sm font-medium text-gray-900" x-text="pkg.tracking_number"></span>
+                                            <span 
+                                                :class="{
+                                                    'bg-yellow-100 text-yellow-800': pkg.status === 'ANUNCIADO',
+                                                    'bg-blue-100 text-blue-800': pkg.status === 'RECIBIDO',
+                                                    'bg-green-100 text-green-800': pkg.status === 'ENTREGADO',
+                                                    'bg-red-100 text-red-800': pkg.status === 'CANCELADO'
+                                                }"
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                x-text="pkg.status"
+                                            ></span>
+                                        </div>
+                                        <div class="mt-2 text-sm text-gray-500">
+                                            <span x-show="pkg.guide_number">Guía: <span x-text="pkg.guide_number"></span></span>
+                                            <span x-show="pkg.carrier" class="ml-3">Transportadora: <span x-text="pkg.carrier"></span></span>
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-400">
+                                            <span x-show="pkg.announced_at">Anunciado: <span x-text="formatDate(pkg.announced_at)"></span></span>
+                                            <span x-show="pkg.received_at" class="ml-3">Recibido: <span x-text="formatDate(pkg.received_at)"></span></span>
+                                            <span x-show="pkg.delivered_at" class="ml-3">Entregado: <span x-text="formatDate(pkg.delivered_at)"></span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Sin paquetes -->
+                    <div x-show="!loadingPackages && packages.length === 0" class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">No tienes paquetes registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function customerDashboard() {
+    return {
+        activeTab: 'data',
+        customerData: {},
+        packages: [],
+        loading: false,
+        loadingPackages: false,
+        message: '',
+        messageType: 'success',
+
+        async init() {
+            // Verificar token
+            const token = localStorage.getItem('customer_token');
+            if (!token) {
+                window.location.href = '/customer-portal';
+                return;
+            }
+
+            await this.loadCustomerData();
+            await this.loadPackages();
+        },
+
+        async loadCustomerData() {
+            try {
+                const token = localStorage.getItem('customer_token');
+                const response = await fetch('/api/customer-portal/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Sesión expirada');
+                }
+
+                this.customerData = await response.json();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                localStorage.removeItem('customer_token');
+                window.location.href = '/customer-portal';
+            }
+        },
+
+        async loadPackages() {
+            this.loadingPackages = true;
+            try {
+                const token = localStorage.getItem('customer_token');
+                const response = await fetch('/api/customer-portal/packages', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.packages = data.packages || [];
+                }
+            } catch (error) {
+                console.error('Error loading packages:', error);
+            } finally {
+                this.loadingPackages = false;
+            }
+        },
+
+        async updateData() {
+            this.loading = true;
+            this.message = '';
+
+            try {
+                const token = localStorage.getItem('customer_token');
+                const response = await fetch('/api/customer-portal/me', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        first_name: this.customerData.first_name,
+                        last_name: this.customerData.last_name,
+                        email: this.customerData.email,
+                        address_street: this.customerData.address_street,
+                        address_city: this.customerData.address_city,
+                        address_state: this.customerData.address_state,
+                        building_name: this.customerData.building_name,
+                        tower: this.customerData.tower,
+                        apartment: this.customerData.apartment
+                    })
+                });
+
+                if (response.ok) {
+                    this.customerData = await response.json();
+                    this.message = '¡Datos actualizados exitosamente!';
+                    this.messageType = 'success';
+                } else {
+                    throw new Error('Error al actualizar datos');
+                }
+            } catch (error) {
+                this.message = 'Error al guardar cambios. Intente nuevamente.';
+                this.messageType = 'error';
+            } finally {
+                this.loading = false;
+                setTimeout(() => { this.message = ''; }, 5000);
+            }
+        },
+
+        async logout() {
+            const token = localStorage.getItem('customer_token');
+            
+            try {
+                await fetch('/api/customer-portal/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
+
+            localStorage.removeItem('customer_token');
+            window.location.href = '/customer-portal';
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-CO', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

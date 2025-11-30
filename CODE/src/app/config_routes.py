@@ -40,6 +40,11 @@ PUBLIC_ROUTES: Set[str] = {
     "/auth/reset-password",
     "/login",             # Alias de /auth/login
     
+    # Portal de Clientes (público con OTP)
+    "/customer-portal",
+    "/customer-portal/verify",
+    "/customer-portal/dashboard",
+    
     # Páginas informativas
     "/help",
     "/cookies",
@@ -82,6 +87,13 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
     
+    # Portal de Clientes (APIs públicas con OTP)
+    "/api/customer-portal/request-otp",
+    "/api/customer-portal/verify-otp",
+    "/api/customer-portal/me",
+    "/api/customer-portal/packages",
+    "/api/customer-portal/logout",
+    
     # Anuncios y búsqueda (públicos)
     "/api/announcements/direct",
     "/api/announcements/search/package",
@@ -96,6 +108,9 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/health",
     "/health",
     "/metrics",
+    
+    # Debug (público)
+    "/api/debug/portal-routes",
     
     # Desarrollo (solo en dev)
     "/api/auth/dev/set-cookies",

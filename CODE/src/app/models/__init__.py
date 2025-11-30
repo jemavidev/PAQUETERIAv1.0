@@ -9,6 +9,7 @@ Autor: Equipo de Desarrollo
 from .base import BaseModel
 from .user import User
 from .customer import Customer
+from .customer_otp import CustomerOTP
 from .package import Package
 from .message import Message
 from .file_upload import FileUpload
@@ -25,6 +26,7 @@ __all__ = [
     "User",
     "UserPreferences",
     "Customer",
+    "CustomerOTP",
     "CustomerPreferences",
     "Package",
     "Message",
