@@ -73,23 +73,37 @@ class CustomerOTP(Base):
 
     def verify(self, code: str) -> bool:
         """Verifica el código OTP"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Verificar validez ANTES de incrementar intentos
-        if not self.is_valid():
+        is_valid = self.is_valid()
+        logger.info(f"🔍 OTP.verify() - is_valid: {is_valid}, attempts: {self.attempts}/{self.max_attempts}")
+        
+        if not is_valid:
+            logger.info(f"❌ OTP no válido - verified: {self.is_verified}, expired: {self.is_expired}")
             return False
         
         # Incrementar intentos
         self.attempts += 1
+        logger.info(f"📊 Intentos incrementados a: {self.attempts}")
         
         # Verificar código
-        if self.otp_code == code:
+        codes_match = (self.otp_code == code)
+        logger.info(f"🔍 Comparación - '{self.otp_code}' == '{code}': {codes_match}")
+        
+        if codes_match:
             self.is_verified = True
             self.verified_at = get_colombia_now()
+            logger.info(f"✅ Código correcto! Marcado como verificado")
             return True
         
         # Si alcanzó el máximo de intentos, marcar como expirado
         if self.attempts >= self.max_attempts:
             self.is_expired = True
+            logger.info(f"❌ Máximo de intentos alcanzado, marcando como expirado")
         
+        logger.info(f"❌ Código incorrecto, intentos: {self.attempts}/{self.max_attempts}")
         return False
 
     def mark_as_expired(self):
