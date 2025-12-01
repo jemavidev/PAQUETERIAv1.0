@@ -614,8 +614,8 @@ function customerDashboard() {
         },
 
         goToSearch(trackingNumber) {
-            // Redirigir a la página de búsqueda con el código
-            window.location.href = `/search?code=${trackingNumber}`;
+            // Redirigir a la página de búsqueda con auto-búsqueda
+            window.location.href = `/search?auto_search=${encodeURIComponent(trackingNumber)}`;
         }
     }
 }
