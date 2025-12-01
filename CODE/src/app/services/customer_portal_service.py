@@ -152,6 +152,7 @@ class CustomerPortalService:
                 )
 
             # Verificar código
+            logger.info(f"🔍 Verificando código - Recibido: '{request.code}' (len={len(request.code)}) vs Esperado: '{otp.otp_code}' (len={len(otp.otp_code)})")
             if not otp.verify(request.code):
                 db.commit()  # Guardar intento fallido
                 
