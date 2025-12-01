@@ -33,13 +33,22 @@ class CustomerOTP(Base):
     is_verified = Column(Boolean, default=False, nullable=False)
     is_expired = Column(Boolean, default=False, nullable=False)
     
-    # Timestamps
-    created_at = Column(DateTime, default=get_colombia_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    verified_at = Column(DateTime, nullable=True)
+    # Timestamps (con timezone)
+    created_at = Column(DateTime(timezone=True), default=get_colombia_now, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    verified_at = Column(DateTime(timezone=True), nullable=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Inicializar valores por defecto
+        if self.attempts is None:
+            self.attempts = 0
+        if self.max_attempts is None:
+            self.max_attempts = 3
+        if self.is_verified is None:
+            self.is_verified = False
+        if self.is_expired is None:
+            self.is_expired = False
         if not self.otp_code:
             self.otp_code = self.generate_otp()
         if not self.expires_at:
@@ -53,16 +62,16 @@ class CustomerOTP(Base):
     def is_valid(self) -> bool:
         """Verifica si el OTP es válido"""
         from datetime import timezone
+        import pytz
         
         now = get_colombia_now()
         
         # Asegurar que expires_at tenga timezone para comparación
         expires_at = self.expires_at
         if expires_at.tzinfo is None:
-            # Si no tiene timezone, asumir UTC y convertir a Colombia
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-            colombia_offset = timezone(timedelta(hours=-5))
-            expires_at = expires_at.astimezone(colombia_offset)
+            # Si no tiene timezone, asumir que está en hora de Colombia
+            colombia_tz = pytz.timezone('America/Bogota')
+            expires_at = colombia_tz.localize(expires_at)
         
         return (
             not self.is_verified and
