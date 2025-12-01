@@ -73,11 +73,14 @@ class CustomerOTP(Base):
 
     def verify(self, code: str) -> bool:
         """Verifica el código OTP"""
-        self.attempts += 1
-        
+        # Verificar validez ANTES de incrementar intentos
         if not self.is_valid():
             return False
         
+        # Incrementar intentos
+        self.attempts += 1
+        
+        # Verificar código
         if self.otp_code == code:
             self.is_verified = True
             self.verified_at = get_colombia_now()
