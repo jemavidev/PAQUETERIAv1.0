@@ -70,10 +70,12 @@ class CustomerPortalService:
                 )
 
             # Verificar rate limiting (máximo 5 OTPs por hora)
+            # Solo contar OTPs que NO fueron verificados exitosamente
             one_hour_ago = get_colombia_now() - timedelta(hours=1)
             recent_otps = db.query(CustomerOTP).filter(
                 CustomerOTP.customer_phone == phone,
-                CustomerOTP.created_at >= one_hour_ago
+                CustomerOTP.created_at >= one_hour_ago,
+                CustomerOTP.is_verified == False  # Solo contar los no verificados
             ).count()
 
             if recent_otps >= 5:
