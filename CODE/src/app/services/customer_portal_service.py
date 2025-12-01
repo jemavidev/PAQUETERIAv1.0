@@ -69,14 +69,14 @@ class CustomerPortalService:
                     "Por favor contacte al administrador."
                 )
 
-            # Verificar rate limiting (máximo 3 OTPs por hora)
+            # Verificar rate limiting (máximo 5 OTPs por hora)
             one_hour_ago = get_colombia_now() - timedelta(hours=1)
             recent_otps = db.query(CustomerOTP).filter(
                 CustomerOTP.customer_phone == phone,
                 CustomerOTP.created_at >= one_hour_ago
             ).count()
 
-            if recent_otps >= 3:
+            if recent_otps >= 5:
                 raise ValidationException(
                     "Ha excedido el límite de intentos. "
                     "Por favor intente nuevamente en 1 hora."
