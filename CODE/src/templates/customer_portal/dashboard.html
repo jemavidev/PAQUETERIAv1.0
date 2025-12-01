@@ -461,10 +461,14 @@ function customerDashboard() {
                 if (response.ok) {
                     const data = await response.json();
                     this.packages = data.packages || [];
-                    console.log('Paquetes cargados:', this.packages.length);
+                    console.log('📦 Paquetes cargados:', this.packages.length);
+                    console.log('📦 Total reportado por backend:', data.total);
+                    console.log('📦 Detalles de paquetes:', this.packages);
+                } else {
+                    console.error('❌ Error al cargar paquetes:', response.status, response.statusText);
                 }
             } catch (error) {
-                console.error('Error loading packages:', error);
+                console.error('❌ Error loading packages:', error);
             } finally {
                 this.loadingPackages = false;
             }
