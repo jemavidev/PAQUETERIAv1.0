@@ -2,6 +2,7 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
     <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-medium text-gray-900">Gestión de Usuarios</h3>
+        {% if user_role == 'ADMIN' %}
         <button onclick="openCreateUserModal()"
             class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -9,6 +10,7 @@
             </svg>
             Crear Usuario
         </button>
+        {% endif %}
     </div>
 
     {# Barra de búsqueda #}
@@ -83,8 +85,8 @@
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center gap-1">
-                            {# Botón Editar #}
-                            {% if user_item.role.value in ['ADMIN', 'OPERADOR'] %}
+                            {# Botón Editar - Solo ADMIN #}
+                            {% if user_role == 'ADMIN' %}
                             <button
                                 onclick="editUser('{{ user_item.id }}', '{{ user_item.username }}', '{{ user_item.email }}', '{{ user_item.full_name }}', '{{ user_item.phone or '' }}', '{{ user_item.role.value }}', {{ 'true' if user_item.is_active else 'false' }})"
                                 class="bg-blue-100 text-blue-800 hover:bg-blue-200 p-1.5 rounded transition-colors"
@@ -97,7 +99,7 @@
                             </button>
                             {% else %}
                             <button class="bg-gray-100 text-gray-400 p-1.5 rounded cursor-not-allowed opacity-50"
-                                disabled title="No disponible">
+                                disabled title="Solo administradores">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -106,25 +108,35 @@
                             </button>
                             {% endif %}
 
-                            {# Botón Activar/Desactivar #}
-                            {% if not user_item.is_active %}
-                            <button onclick="activateUser('{{ user_item.id }}', '{{ user_item.username }}')"
-                                class="bg-green-100 text-green-800 hover:bg-green-200 p-1.5 rounded transition-colors"
-                                title="Activar">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </button>
+                            {# Botón Activar/Desactivar - Solo ADMIN #}
+                            {% if user_role == 'ADMIN' %}
+                                {% if not user_item.is_active %}
+                                <button onclick="activateUser('{{ user_item.id }}', '{{ user_item.username }}')"
+                                    class="bg-green-100 text-green-800 hover:bg-green-200 p-1.5 rounded transition-colors"
+                                    title="Activar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                                {% else %}
+                                <button onclick="deactivateUser('{{ user_item.id }}', '{{ user_item.username }}')"
+                                    class="bg-orange-100 text-orange-800 hover:bg-orange-200 p-1.5 rounded transition-colors"
+                                    title="Desactivar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                                {% endif %}
                             {% else %}
-                            <button onclick="deactivateUser('{{ user_item.id }}', '{{ user_item.username }}')"
-                                class="bg-orange-100 text-orange-800 hover:bg-orange-200 p-1.5 rounded transition-colors"
-                                title="Desactivar">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </button>
+                                <button class="bg-gray-100 text-gray-400 p-1.5 rounded cursor-not-allowed opacity-50"
+                                    disabled title="Solo administradores">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
                             {% endif %}
                         </div>
                     </td>

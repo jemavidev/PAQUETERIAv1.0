@@ -142,8 +142,15 @@ async def create_user(
     current_user: User = Depends(get_current_admin_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Crea un nuevo usuario"""
+    """Crea un nuevo usuario - Solo ADMIN"""
     try:
+        # Verificar que solo ADMIN puede crear usuarios
+        if current_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=403, 
+                detail="Acceso denegado. Solo administradores pueden crear usuarios."
+            )
+        
         # Validar datos requeridos
         required_fields = ["username", "email", "full_name", "password", "role"]
         for field in required_fields:
