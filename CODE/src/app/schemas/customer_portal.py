@@ -117,7 +117,7 @@ class CustomerPortalUpdate(BaseModel):
 
 class CustomerPackageHistory(BaseModel):
     """Historial de paquetes del cliente"""
-    id: UUID
+    id: int  # Package usa Integer ID, no UUID
     tracking_number: str
     guide_number: Optional[str]
     status: str

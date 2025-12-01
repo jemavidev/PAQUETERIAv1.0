@@ -153,6 +153,17 @@ class CustomerPortalService:
 
             # Verificar código
             logger.info(f"🔍 Verificando código - Recibido: '{request.code}' (len={len(request.code)}) vs Esperado: '{otp.otp_code}' (len={len(otp.otp_code)})")
+            
+            # Si el código es correcto, resetear intentos de OTPs anteriores del mismo teléfono
+            if otp.otp_code == request.code:
+                logger.info(f"✅ Código correcto, reseteando intentos de OTPs anteriores")
+                # Resetear intentos de otros OTPs no verificados del mismo teléfono
+                db.query(CustomerOTP).filter(
+                    CustomerOTP.customer_phone == phone,
+                    CustomerOTP.is_verified == False,
+                    CustomerOTP.id != otp.id
+                ).update({"attempts": 0, "is_expired": False})
+            
             if not otp.verify(request.code):
                 db.commit()  # Guardar intento fallido
                 
@@ -257,6 +268,111 @@ class CustomerPortalService:
         logger.info(f"✅ Cliente actualizado: {customer.full_name} ({customer.phone})")
 
         return CustomerPortalData.model_validate(customer)
+
+    def get_notification_preferences(
+        self,
+        db: Session,
+        customer_id: str
+    ) -> Dict[str, Any]:
+        """Obtiene las preferencias de notificación del cliente"""
+        from app.models.customer_preferences import CustomerPreferences
+        
+        customer = db.query(Customer).filter(
+            Customer.id == customer_id,
+            Customer.is_active == True
+        ).first()
+
+        if not customer:
+            raise ValidationException("Cliente no encontrado")
+
+        # Obtener preferencias (o crear con valores por defecto)
+        preferences = db.query(CustomerPreferences).filter(
+            CustomerPreferences.customer_id == customer_id
+        ).first()
+
+        if not preferences:
+            # Crear preferencias por defecto
+            preferences = CustomerPreferences(
+                customer_id=customer_id,
+                token=CustomerPreferences.generate_token()
+            )
+            db.add(preferences)
+            db.commit()
+            db.refresh(preferences)
+
+        return {
+            # Notificaciones SMS
+            "sms_notifications_enabled": preferences.sms_notifications_enabled,
+            "sms_on_package_announced": preferences.notify_package_announced,
+            "sms_on_package_received": preferences.notify_package_received,
+            "sms_on_package_delivered": preferences.notify_package_delivered,
+            
+            # Notificaciones Email
+            "email_notifications_enabled": preferences.email_notifications_enabled,
+            "email_on_package_announced": preferences.notify_package_announced if preferences.email_notifications_enabled else False,
+            "email_on_package_received": preferences.notify_package_received if preferences.email_notifications_enabled else False,
+            "email_on_package_delivered": preferences.notify_package_delivered if preferences.email_notifications_enabled else False,
+            
+            # Otras preferencias
+            "notify_payment_due": preferences.notify_payment_due,
+            "marketing_enabled": preferences.marketing_enabled,
+        }
+
+    def update_notification_preferences(
+        self,
+        db: Session,
+        customer_id: str,
+        preferences_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Actualiza las preferencias de notificación del cliente"""
+        from app.models.customer_preferences import CustomerPreferences
+        
+        customer = db.query(Customer).filter(
+            Customer.id == customer_id,
+            Customer.is_active == True
+        ).first()
+
+        if not customer:
+            raise ValidationException("Cliente no encontrado")
+
+        # Obtener o crear preferencias
+        preferences = db.query(CustomerPreferences).filter(
+            CustomerPreferences.customer_id == customer_id
+        ).first()
+
+        if not preferences:
+            preferences = CustomerPreferences(
+                customer_id=customer_id,
+                token=CustomerPreferences.generate_token()
+            )
+            db.add(preferences)
+
+        # Mapear campos del request a campos del modelo
+        field_mapping = {
+            "sms_notifications_enabled": "sms_notifications_enabled",
+            "sms_on_package_announced": "notify_package_announced",
+            "sms_on_package_received": "notify_package_received",
+            "sms_on_package_delivered": "notify_package_delivered",
+            "email_notifications_enabled": "email_notifications_enabled",
+            "email_on_package_announced": "notify_package_announced",
+            "email_on_package_received": "notify_package_received",
+            "email_on_package_delivered": "notify_package_delivered",
+            "notify_payment_due": "notify_payment_due",
+            "marketing_enabled": "marketing_enabled",
+        }
+
+        # Actualizar solo los campos proporcionados
+        for request_field, model_field in field_mapping.items():
+            if request_field in preferences_data and preferences_data[request_field] is not None:
+                setattr(preferences, model_field, preferences_data[request_field])
+
+        preferences.updated_at = get_colombia_now()
+        db.commit()
+        db.refresh(preferences)
+
+        logger.info(f"✅ Preferencias actualizadas para cliente: {customer_id}")
+
+        return self.get_notification_preferences(db, customer_id)
 
     def get_customer_packages(
         self,

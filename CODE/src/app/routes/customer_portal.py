@@ -217,6 +217,76 @@ async def get_my_packages(
         raise HTTPException(status_code=500, detail="Error al obtener paquetes")
 
 
+@router.get("/preferences/notifications")
+async def get_notification_preferences(
+    current_customer: dict = Depends(get_current_customer),
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene las preferencias de notificación del cliente
+    
+    Incluye:
+    - Preferencias de SMS
+    - Preferencias de Email
+    - Horarios de silencio
+    """
+    try:
+        service = CustomerPortalService()
+        preferences = service.get_notification_preferences(
+            db,
+            current_customer["customer_id"]
+        )
+        return preferences
+    
+    except ValidationException as e:
+        status_code = 404 if "no encontrado" in str(e).lower() else 400
+        raise HTTPException(status_code=status_code, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error en get_notification_preferences: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error al obtener preferencias")
+
+
+@router.put("/preferences/notifications")
+async def update_notification_preferences(
+    preferences: dict,
+    current_customer: dict = Depends(get_current_customer),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualiza las preferencias de notificación del cliente
+    
+    Campos editables:
+    - sms_on_package_announced
+    - sms_on_package_received
+    - sms_on_package_ready
+    - sms_on_package_delivered
+    - email_on_package_announced
+    - email_on_package_received
+    - email_on_package_ready
+    - email_on_package_delivered
+    - notify_on_weekends
+    - notify_on_holidays
+    - quiet_hours_enabled
+    - quiet_hours_start (formato HH:MM)
+    - quiet_hours_end (formato HH:MM)
+    """
+    try:
+        service = CustomerPortalService()
+        updated_preferences = service.update_notification_preferences(
+            db,
+            current_customer["customer_id"],
+            preferences
+        )
+        return updated_preferences
+    
+    except ValidationException as e:
+        status_code = 404 if "no encontrado" in str(e).lower() else 400
+        raise HTTPException(status_code=status_code, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error en update_notification_preferences: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error al actualizar preferencias")
+
+
 @router.post("/logout")
 async def logout(
     current_customer: dict = Depends(get_current_customer)
