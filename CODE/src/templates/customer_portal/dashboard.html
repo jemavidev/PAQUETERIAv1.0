@@ -49,6 +49,13 @@
                             x-text="packages.length"
                         ></span>
                     </button>
+                    <button 
+                        @click="activeTab = 'preferences'"
+                        :class="activeTab === 'preferences' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Preferencias
+                    </button>
                 </nav>
             </div>
         </div>
@@ -244,6 +251,237 @@
             </div>
         </div>
 
+        <!-- Tab: Preferencias -->
+        <div x-show="activeTab === 'preferences'">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        Preferencias de Notificaciones
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        Configura cómo y cuándo deseas recibir notificaciones sobre tus paquetes
+                    </p>
+
+                    <!-- Loading -->
+                    <div x-show="loadingPreferences" class="text-center py-8">
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">Cargando preferencias...</p>
+                    </div>
+
+                    <!-- Formulario de Preferencias -->
+                    <form x-show="!loadingPreferences" @submit.prevent="updatePreferences()" class="space-y-8">
+                        
+                        <!-- Notificaciones SMS -->
+                        <div class="border-b border-gray-200 pb-6">
+                            <h4 class="text-base font-medium text-gray-900 mb-4 flex items-center">
+                                <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Notificaciones por SMS
+                            </h4>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es anunciado</label>
+                                        <p class="text-xs text-gray-500">Te avisamos cuando registramos que viene un paquete para ti</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.sms_on_package_announced" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es recibido</label>
+                                        <p class="text-xs text-gray-500">Te avisamos cuando tu paquete llega a nuestras instalaciones</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.sms_on_package_received" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete está listo para recoger</label>
+                                        <p class="text-xs text-gray-500">Te avisamos cuando tu paquete está disponible para entrega</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.sms_on_package_ready" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es entregado</label>
+                                        <p class="text-xs text-gray-500">Te confirmamos cuando tu paquete ha sido entregado</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.sms_on_package_delivered" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notificaciones Email -->
+                        <div class="border-b border-gray-200 pb-6">
+                            <h4 class="text-base font-medium text-gray-900 mb-4 flex items-center">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                Notificaciones por Email
+                            </h4>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es anunciado</label>
+                                        <p class="text-xs text-gray-500">Recibe un email cuando registramos un nuevo paquete</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.email_on_package_announced" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es recibido</label>
+                                        <p class="text-xs text-gray-500">Recibe un email cuando tu paquete llega</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.email_on_package_received" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete está listo para recoger</label>
+                                        <p class="text-xs text-gray-500">Recibe un email cuando tu paquete está disponible</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.email_on_package_ready" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Cuando un paquete es entregado</label>
+                                        <p class="text-xs text-gray-500">Recibe confirmación por email de la entrega</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.email_on_package_delivered" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuración Adicional -->
+                        <div class="pb-6">
+                            <h4 class="text-base font-medium text-gray-900 mb-4 flex items-center">
+                                <svg class="h-5 w-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                                </svg>
+                                Configuración Adicional
+                            </h4>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Notificar en fines de semana</label>
+                                        <p class="text-xs text-gray-500">Recibe notificaciones también los sábados y domingos</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.notify_on_weekends" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="text-sm font-medium text-gray-700">Notificar en días festivos</label>
+                                        <p class="text-xs text-gray-500">Recibe notificaciones también en días festivos</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                        <input type="checkbox" x-model="preferences.notify_on_holidays" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="border-t border-gray-200 pt-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex-1">
+                                            <label class="text-sm font-medium text-gray-700">Horario de silencio</label>
+                                            <p class="text-xs text-gray-500">No recibir notificaciones en un horario específico</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                            <input type="checkbox" x-model="preferences.quiet_hours_enabled" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div x-show="preferences.quiet_hours_enabled" x-transition class="grid grid-cols-2 gap-4 mt-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Desde</label>
+                                            <input 
+                                                type="time" 
+                                                x-model="preferences.quiet_hours_start"
+                                                class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Hasta</label>
+                                            <input 
+                                                type="time" 
+                                                x-model="preferences.quiet_hours_end"
+                                                class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mensaje -->
+                        <div x-show="preferencesMessage" x-transition>
+                            <div :class="preferencesMessageType === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'" class="rounded-md p-4 border">
+                                <p :class="preferencesMessageType === 'success' ? 'text-green-800' : 'text-red-800'" class="text-sm" x-text="preferencesMessage"></p>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="flex justify-end space-x-3">
+                            <button 
+                                type="button"
+                                @click="loadPreferences()"
+                                class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                Restablecer
+                            </button>
+                            <button 
+                                type="submit"
+                                :disabled="loadingPreferences"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                            >
+                                <span x-show="!loadingPreferences">Guardar Preferencias</span>
+                                <span x-show="loadingPreferences">Guardando...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Tab: Mis Paquetes -->
         <div x-show="activeTab === 'packages'">
             <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -314,10 +552,28 @@ function customerDashboard() {
         activeTab: 'data',
         customerData: {},
         packages: [],
+        preferences: {
+            sms_on_package_announced: true,
+            sms_on_package_received: true,
+            sms_on_package_ready: true,
+            sms_on_package_delivered: true,
+            email_on_package_announced: true,
+            email_on_package_received: true,
+            email_on_package_ready: true,
+            email_on_package_delivered: true,
+            notify_on_weekends: true,
+            notify_on_holidays: true,
+            quiet_hours_enabled: false,
+            quiet_hours_start: '22:00',
+            quiet_hours_end: '08:00'
+        },
         loading: false,
         loadingPackages: false,
+        loadingPreferences: false,
         message: '',
         messageType: 'success',
+        preferencesMessage: '',
+        preferencesMessageType: 'success',
 
         async init() {
             // Verificar token
@@ -329,6 +585,7 @@ function customerDashboard() {
 
             await this.loadCustomerData();
             await this.loadPackages();
+            await this.loadPreferences();
         },
 
         async loadCustomerData() {
@@ -411,6 +668,68 @@ function customerDashboard() {
             } finally {
                 this.loading = false;
                 setTimeout(() => { this.message = ''; }, 5000);
+            }
+        },
+
+        async loadPreferences() {
+            this.loadingPreferences = true;
+            this.preferencesMessage = '';
+            try {
+                const token = localStorage.getItem('customer_token');
+                const response = await fetch('/api/customer-portal/preferences/notifications', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Actualizar preferencias con los datos del servidor
+                    if (data.preferences) {
+                        this.preferences = { ...this.preferences, ...data.preferences };
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+                this.preferencesMessage = 'Error al cargar preferencias';
+                this.preferencesMessageType = 'error';
+            } finally {
+                this.loadingPreferences = false;
+            }
+        },
+
+        async updatePreferences() {
+            this.loadingPreferences = true;
+            this.preferencesMessage = '';
+
+            try {
+                const token = localStorage.getItem('customer_token');
+                const response = await fetch('/api/customer-portal/preferences/notifications', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.preferences)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.preferences) {
+                        this.preferences = { ...this.preferences, ...data.preferences };
+                    }
+                    this.preferencesMessage = '¡Preferencias actualizadas exitosamente!';
+                    this.preferencesMessageType = 'success';
+                } else {
+                    throw new Error('Error al actualizar preferencias');
+                }
+            } catch (error) {
+                console.error('Error updating preferences:', error);
+                this.preferencesMessage = 'Error al guardar preferencias. Intente nuevamente.';
+                this.preferencesMessageType = 'error';
+            } finally {
+                this.loadingPreferences = false;
+                setTimeout(() => { this.preferencesMessage = ''; }, 5000);
             }
         },
 
