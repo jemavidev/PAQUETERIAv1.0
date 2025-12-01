@@ -339,34 +339,45 @@
                     </div>
 
                     <!-- Lista de Paquetes -->
-                    <div x-show="!loadingPackages && packages.length > 0" class="space-y-4">
+                    <div x-show="!loadingPackages && packages.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <template x-for="pkg in packages" :key="pkg.id">
-                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex-1">
-                                        <div class="flex items-center space-x-3">
-                                            <span class="text-sm font-medium text-gray-900" x-text="pkg.tracking_number"></span>
-                                            <span 
-                                                :class="{
-                                                    'bg-yellow-100 text-yellow-800': pkg.status === 'ANUNCIADO',
-                                                    'bg-blue-100 text-blue-800': pkg.status === 'RECIBIDO',
-                                                    'bg-green-100 text-green-800': pkg.status === 'ENTREGADO',
-                                                    'bg-red-100 text-red-800': pkg.status === 'CANCELADO'
-                                                }"
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                                x-text="pkg.status"
-                                            ></span>
-                                        </div>
-                                        <div class="mt-2 text-sm text-gray-500">
-                                            <span x-show="pkg.guide_number">Guía: <span x-text="pkg.guide_number"></span></span>
-                                            <span x-show="pkg.carrier" class="ml-3">Transportadora: <span x-text="pkg.carrier"></span></span>
-                                        </div>
-                                        <div class="mt-1 text-xs text-gray-400">
-                                            <span x-show="pkg.announced_at">Anunciado: <span x-text="formatDate(pkg.announced_at)"></span></span>
-                                            <span x-show="pkg.received_at" class="ml-3">Recibido: <span x-text="formatDate(pkg.received_at)"></span></span>
-                                            <span x-show="pkg.delivered_at" class="ml-3">Entregado: <span x-text="formatDate(pkg.delivered_at)"></span></span>
-                                        </div>
-                                    </div>
+                            <div 
+                                @click="goToSearch(pkg.tracking_number)"
+                                class="border border-gray-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer bg-white"
+                            >
+                                <!-- Header con estado -->
+                                <div class="flex items-center justify-between mb-2">
+                                    <span 
+                                        :class="{
+                                            'bg-yellow-100 text-yellow-800': pkg.status === 'ANUNCIADO',
+                                            'bg-blue-100 text-blue-800': pkg.status === 'RECIBIDO',
+                                            'bg-green-100 text-green-800': pkg.status === 'ENTREGADO',
+                                            'bg-red-100 text-red-800': pkg.status === 'CANCELADO'
+                                        }"
+                                        class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold"
+                                        x-text="pkg.status"
+                                    ></span>
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </div>
+
+                                <!-- Guía -->
+                                <div class="mb-2">
+                                    <div class="text-xs text-gray-500 mb-0.5">GUÍA</div>
+                                    <div class="text-sm font-semibold text-gray-900 font-mono" x-text="pkg.guide_number || 'N/A'"></div>
+                                </div>
+
+                                <!-- Código -->
+                                <div class="mb-2">
+                                    <div class="text-xs text-gray-500 mb-0.5">CÓDIGO</div>
+                                    <div class="text-sm font-semibold text-blue-600 font-mono" x-text="pkg.tracking_number"></div>
+                                </div>
+
+                                <!-- Fecha -->
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-0.5">FECHA</div>
+                                    <div class="text-xs text-gray-700" x-text="formatDateShort(pkg.delivered_at || pkg.received_at || pkg.announced_at)"></div>
                                 </div>
                             </div>
                         </template>
@@ -441,7 +452,7 @@ function customerDashboard() {
             this.loadingPackages = true;
             try {
                 const token = localStorage.getItem('customer_token');
-                const response = await fetch('/api/customer-portal/packages', {
+                const response = await fetch('/api/customer-portal/packages?limit=50', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -450,6 +461,7 @@ function customerDashboard() {
                 if (response.ok) {
                     const data = await response.json();
                     this.packages = data.packages || [];
+                    console.log('Paquetes cargados:', this.packages.length);
                 }
             } catch (error) {
                 console.error('Error loading packages:', error);
@@ -589,6 +601,21 @@ function customerDashboard() {
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        },
+
+        formatDateShort(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-CO', { 
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        },
+
+        goToSearch(trackingNumber) {
+            // Redirigir a la página de búsqueda con el código
+            window.location.href = `/search?code=${trackingNumber}`;
         }
     }
 }
