@@ -180,6 +180,14 @@ class CustomerPortalService:
 
             # Código correcto - guardar verificación
             db.commit()
+            
+            # Limpiar todos los OTPs antiguos del teléfono (resetear rate limiting)
+            logger.info(f"🧹 Limpiando OTPs antiguos para resetear rate limiting")
+            db.query(CustomerOTP).filter(
+                CustomerOTP.customer_phone == phone,
+                CustomerOTP.id != otp.id
+            ).update({"is_expired": True})
+            db.commit()
 
             # Verificar que el cliente existe
             customer = db.query(Customer).filter(
@@ -195,7 +203,7 @@ class CustomerPortalService:
                 data={"customer_id": str(customer.id), "phone": phone}
             )
 
-            logger.info(f"✅ Cliente autenticado: {customer.full_name} ({phone})")
+            logger.info(f"✅ Cliente autenticado: {customer.full_name} ({phone}) - Rate limiting reseteado")
 
             return OTPVerifyResponse(
                 success=True,

@@ -62,16 +62,15 @@ class CustomerOTP(Base):
     def is_valid(self) -> bool:
         """Verifica si el OTP es válido"""
         from datetime import timezone
-        import pytz
         
         now = get_colombia_now()
         
         # Asegurar que expires_at tenga timezone para comparación
         expires_at = self.expires_at
         if expires_at.tzinfo is None:
-            # Si no tiene timezone, asumir que está en hora de Colombia
-            colombia_tz = pytz.timezone('America/Bogota')
-            expires_at = colombia_tz.localize(expires_at)
+            # Si no tiene timezone, agregar timezone de Colombia (UTC-5)
+            colombia_tz = timezone(timedelta(hours=-5))
+            expires_at = expires_at.replace(tzinfo=colombia_tz)
         
         return (
             not self.is_verified and
