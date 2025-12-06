@@ -89,6 +89,19 @@ app = FastAPI(
 # Configurar métricas de Prometheus
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
+# Montar archivos estáticos ANTES de los middlewares
+# Esto es importante porque los middlewares se ejecutan antes que las rutas montadas
+from pathlib import Path
+
+# Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
+app.mount("/static", StaticFiles(directory="/app/src/static"), name="static")
+
+# Montar uploads desde /app/uploads (volumen dedicado)
+# Crear directorio si no existe
+uploads_dir = Path("/app/uploads")
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
@@ -105,16 +118,6 @@ app.add_middleware(AuthMiddleware, login_url="/auth/login")
 app.add_middleware(SlowAPIMiddleware)
 app.state.limiter = limiter  # Set the limiter in app state for middleware
 app.add_exception_handler(429, rate_limit_exceeded_handler)
-
-# Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
-app.mount("/static", StaticFiles(directory="/app/src/static"), name="static")
-
-# Montar uploads desde /app/uploads (volumen dedicado)
-# Crear directorio si no existe
-from pathlib import Path
-uploads_dir = Path("/app/uploads")
-uploads_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 # Configuración de templates
 from src.app.utils.template_loader import get_templates
