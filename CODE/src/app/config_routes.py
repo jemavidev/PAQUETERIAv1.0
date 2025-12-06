@@ -99,6 +99,12 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/announcements/search/package",
     "/api/search",
     
+    # Mensajes de tracking (público - para consulta de estado de paquetes)
+    "/api/messages/tracking",
+    "/api/messages/check-tracking-inquiries",
+    "/api/messages/customer-inquiry",
+    "/api/messages/check-inquiry-exists",
+    
     # Configuración (públicos)
     "/api/config/public-routes",
     "/api/config/app",
@@ -188,6 +194,8 @@ def is_api_public_route(path: str) -> bool:
         True
         >>> is_api_public_route("/api/packages")
         False
+        >>> is_api_public_route("/api/messages/tracking/ABC123")
+        True
     """
     # Normalizar ruta (remover barra final si existe)
     normalized_path = path.rstrip("/") if path != "/" else path
@@ -200,6 +208,12 @@ def is_api_public_route(path: str) -> bool:
     path_without_query = normalized_path.split("?")[0]
     if path_without_query in API_PUBLIC_ROUTES:
         return True
+    
+    # Verificación de prefijos para rutas con parámetros dinámicos
+    # Ejemplo: /api/messages/tracking/ABC123 coincide con /api/messages/tracking
+    for public_route in API_PUBLIC_ROUTES:
+        if path_without_query.startswith(public_route + "/"):
+            return True
     
     return False
 
