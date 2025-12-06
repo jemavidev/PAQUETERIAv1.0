@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 import logging
 import os
 
@@ -91,8 +92,6 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 
 # Montar archivos estáticos ANTES de los middlewares
 # Esto es importante porque los middlewares se ejecutan antes que las rutas montadas
-from pathlib import Path
-
 # Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
 app.mount("/static", StaticFiles(directory="/app/src/static"), name="static")
 
