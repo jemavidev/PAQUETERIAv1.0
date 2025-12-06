@@ -40,6 +40,11 @@ PUBLIC_ROUTES: Set[str] = {
     "/auth/reset-password",
     "/login",             # Alias de /auth/login
     
+    # Portal de Clientes (público con OTP)
+    "/customer-portal",
+    "/customer-portal/verify",
+    "/customer-portal/dashboard",
+    
     # Páginas informativas
     "/help",
     "/cookies",
@@ -82,10 +87,23 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
     
+    # Portal de Clientes (APIs públicas con OTP)
+    "/api/customer-portal/request-otp",
+    "/api/customer-portal/verify-otp",
+    "/api/customer-portal/me",
+    "/api/customer-portal/packages",
+    "/api/customer-portal/logout",
+    
     # Anuncios y búsqueda (públicos)
     "/api/announcements/direct",
     "/api/announcements/search/package",
     "/api/search",
+    
+    # Mensajes de tracking (público - para consulta de estado de paquetes)
+    "/api/messages/tracking",
+    "/api/messages/check-tracking-inquiries",
+    "/api/messages/customer-inquiry",
+    "/api/messages/check-inquiry-exists",
     
     # Configuración (públicos)
     "/api/config/public-routes",
@@ -96,6 +114,9 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/health",
     "/health",
     "/metrics",
+    
+    # Debug (público)
+    "/api/debug/portal-routes",
     
     # Desarrollo (solo en dev)
     "/api/auth/dev/set-cookies",
@@ -138,8 +159,11 @@ def is_public_route(path: str) -> bool:
         >>> is_public_route("/static/css/style.css")
         True
     """
+    # Normalizar ruta (remover barra final si existe, excepto para "/")
+    normalized_path = path.rstrip("/") if path != "/" else path
+    
     # Verificación exacta
-    if path in PUBLIC_ROUTES:
+    if normalized_path in PUBLIC_ROUTES:
         return True
     
     # Verificación de prefijos estáticos
@@ -148,7 +172,7 @@ def is_public_route(path: str) -> bool:
             return True
     
     # Verificación de rutas con query params
-    path_without_query = path.split("?")[0]
+    path_without_query = normalized_path.split("?")[0]
     if path_without_query in PUBLIC_ROUTES:
         return True
     
@@ -170,15 +194,26 @@ def is_api_public_route(path: str) -> bool:
         True
         >>> is_api_public_route("/api/packages")
         False
+        >>> is_api_public_route("/api/messages/tracking/ABC123")
+        True
     """
+    # Normalizar ruta (remover barra final si existe)
+    normalized_path = path.rstrip("/") if path != "/" else path
+    
     # Verificación exacta
-    if path in API_PUBLIC_ROUTES:
+    if normalized_path in API_PUBLIC_ROUTES:
         return True
     
     # Verificación de rutas con query params
-    path_without_query = path.split("?")[0]
+    path_without_query = normalized_path.split("?")[0]
     if path_without_query in API_PUBLIC_ROUTES:
         return True
+    
+    # Verificación de prefijos para rutas con parámetros dinámicos
+    # Ejemplo: /api/messages/tracking/ABC123 coincide con /api/messages/tracking
+    for public_route in API_PUBLIC_ROUTES:
+        if path_without_query.startswith(public_route + "/"):
+            return True
     
     return False
 

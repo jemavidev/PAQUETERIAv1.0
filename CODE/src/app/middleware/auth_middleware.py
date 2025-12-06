@@ -35,6 +35,8 @@ from app.utils.auth import verify_token
 
 logger = logging.getLogger(__name__)
 
+from app.config_routes import is_public_route, is_api_public_route, is_static_route
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
     """
