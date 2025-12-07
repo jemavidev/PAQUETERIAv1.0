@@ -3675,18 +3675,8 @@ function applyPackageFilter() {
     // Esto hará una petición AJAX con los parámetros search y status_filter
     loadPackages(1); // Volver a la página 1 cuando se aplican filtros
     
-    // Mostrar notificación si hay filtros activos
-    if (searchTerm || currentStatusFilter) {
-        let filterMessage = '';
-        if (searchTerm && currentStatusFilter) {
-            filterMessage = `Búsqueda y filtro de estado aplicados`;
-        } else if (searchTerm) {
-            filterMessage = `Buscando: "${searchTerm}"`;
-        } else if (currentStatusFilter) {
-            filterMessage = `Filtro de estado aplicado: ${getStatusText(currentStatusFilter)}`;
-        }
-        showInfoToast(filterMessage, 'Buscando en toda la base de datos...', 2000);
-    }
+    // Notificaciones deshabilitadas para evitar acumulación durante la escritura
+    // El usuario ya ve el campo de búsqueda y los resultados se actualizan automáticamente
 }
 
 // Función auxiliar para normalizar estados para filtrado
