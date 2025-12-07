@@ -105,6 +105,9 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/messages/customer-inquiry",
     "/api/messages/check-inquiry-exists",
     
+    # Imágenes (público - para visualización en búsqueda de paquetes)
+    "/api/images",
+    
     # Configuración (públicos)
     "/api/config/public-routes",
     "/api/config/app",
