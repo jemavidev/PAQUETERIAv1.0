@@ -39,7 +39,74 @@ Se agregó un botón de confirmación adicional en la línea del título "Confir
 
 ---
 
-## 2. Sincronización de Estado "Procesando..."
+## 2. Botones Responsive (Móvil vs Desktop)
+
+### Problema
+Tener dos botones visibles simultáneamente podía ser confuso y ocupaba espacio innecesario.
+
+### Solución
+Se implementó lógica responsive para mostrar solo un botón según el dispositivo:
+- **Móvil (< 768px)**: Solo botón superior visible
+- **Desktop (≥ 768px)**: Solo botón inferior visible
+
+### Implementación
+
+#### Botón Superior (Móvil)
+```html
+<button id="confirmActionTop"
+        class="hidden md:!hidden ...">
+    <span id="confirmButtonTextTop">Recibir Paquete</span>
+</button>
+```
+
+**Clases:**
+- `hidden`: Oculto por defecto
+- `md:!hidden`: Forzar oculto en desktop con `!important`
+
+#### Botón Inferior (Desktop)
+```html
+<div class="mt-6 hidden md:flex flex-row justify-end space-x-2 flex-nowrap">
+    <button id="confirmAction" class="...">
+        <span id="confirmButtonText">Confirmar</span>
+    </button>
+</div>
+```
+
+**Clases del Contenedor:**
+- `hidden`: Oculto en móvil
+- `md:flex`: Visible en desktop
+
+### Visualización
+
+**Móvil:**
+```
+┌─────────────────────────────────────────┐
+│ Confirmar Recepción    [Recibir Paquete]│ ← VISIBLE
+├─────────────────────────────────────────┤
+│ Contenido del modal...                  │
+│                                         │ ← OCULTO
+└─────────────────────────────────────────┘
+```
+
+**Desktop:**
+```
+┌─────────────────────────────────────────┐
+│ Confirmar Recepción                     │ ← OCULTO
+├─────────────────────────────────────────┤
+│ Contenido del modal...                  │
+│                    [Recibir Paquete]    │ ← VISIBLE
+└─────────────────────────────────────────┘
+```
+
+### Archivo Modificado
+- `CODE/src/templates/packages/packages.html` (líneas ~187, ~485)
+
+### Documentación
+- `CODE/BOTONES_RESPONSIVE.md`
+
+---
+
+## 3. Sincronización de Estado "Procesando..."
 
 ### Problema
 El botón superior no mostraba el estado "Procesando..." cuando se presionaba, lo que podía confundir al usuario.
@@ -88,7 +155,7 @@ function setConfirmButtonsState(disabled, content) {
 
 ---
 
-## 3. Botones de Pago Rápido
+## 4. Botones de Pago Rápido
 
 ### Problema
 En el modal "Entregar Paquete", ingresar el monto de pago manualmente era lento, especialmente en dispositivos móviles.
@@ -133,7 +200,7 @@ highlightSelectedPaymentButton(amount)  // Resalta el botón activo
 
 ---
 
-## 4. Validación de Pago con Valor Cero ($0)
+## 5. Validación de Pago con Valor Cero ($0)
 
 ### Problema
 El sistema rechazaba entregas con valor $0, mostrando error: "Debe ingresar un monto de pago válido".
