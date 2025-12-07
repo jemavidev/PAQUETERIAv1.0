@@ -14,10 +14,13 @@ Los botones incluyen los siguientes valores:
 
 ## Características
 
-### 1. Diseño Responsive
+### 1. Diseño Compacto
+Los botones están diseñados para ser pequeños y compactos, dispuestos en una sola línea horizontal con wrap automático:
 ```
-Móvil (< 640px):  3 columnas (2 filas)
-Desktop (≥ 640px): 6 columnas (1 fila)
+Layout: flex flex-wrap (se ajusta automáticamente al ancho disponible)
+Tamaño: Botones pequeños (px-2.5 py-1.5, text-xs)
+Espaciado: gap-1.5 (mínimo espacio entre botones)
+Etiqueta: text-xs (texto pequeño)
 ```
 
 ### 2. Feedback Visual
@@ -40,21 +43,21 @@ Desktop (≥ 640px): 6 columnas (1 fila)
 
 ## Implementación
 
-### HTML (línea ~354-385)
+### HTML (línea ~354-385) - Diseño Compacto
 ```html
-<!-- Botones de valores predefinidos -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700 mb-2">
+<!-- Botones de valores predefinidos - Compactos -->
+<div class="mb-3">
+    <label class="block text-xs font-medium text-gray-600 mb-1.5">
         Valores rápidos
     </label>
-    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+    <div class="flex flex-wrap gap-1.5">
         <button type="button" onclick="setPaymentAmount(0)" 
-                class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
             $0
         </button>
         <!-- ... más botones ... -->
         <button type="button" onclick="clearPaymentAmount()" 
-                class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-orange-50 hover:border-orange-500 hover:text-orange-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-orange-50 hover:border-orange-500 hover:text-orange-700 transition-all duration-150 active:scale-95">
             Otro
         </button>
     </div>
@@ -151,19 +154,20 @@ function highlightSelectedPaymentButton(amount) {
 
 ### Escenario 1: Seleccionar un valor predefinido
 1. Usuario abre el modal "Entregar Paquete"
-2. Ve los botones de valores rápidos
-3. Hace clic en un botón (ej: $2000)
-4. El botón se resalta en azul
-5. El campo de entrada muestra "2000.00"
-6. El campo se enfoca con un anillo azul temporal
-7. Usuario puede confirmar o ajustar el valor manualmente
+2. El campo "Total" está **vacío** (sin valor por defecto)
+3. Ve los botones compactos de valores rápidos en una línea
+4. Hace clic en un botón (ej: $2000)
+5. El botón se resalta en azul
+6. El campo de entrada muestra "2000.00"
+7. El campo se enfoca con un anillo azul temporal
+8. Usuario puede confirmar o ajustar el valor manualmente
 
 ### Escenario 2: Ingresar un valor personalizado
 1. Usuario abre el modal "Entregar Paquete"
-2. Ve los botones de valores rápidos
-3. Hace clic en "Otro"
-4. El campo se limpia
-5. El campo se enfoca con un anillo naranja temporal
+2. El campo "Total" está **vacío** (sin valor por defecto)
+3. Ve los botones compactos de valores rápidos
+4. Hace clic en "Otro" o directamente en el campo
+5. El campo se enfoca con un anillo naranja temporal (si usa "Otro")
 6. Usuario ingresa el valor deseado manualmente
 
 ### Escenario 3: Cambiar de valor predefinido
