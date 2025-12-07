@@ -2386,6 +2386,27 @@ function displayPackageDetails(package) {
     actionMessage.style.display = 'none';
 }
 
+/**
+ * Helper function para actualizar el estado de ambos botones de confirmación
+ */
+function setConfirmButtonsState(disabled, content) {
+    const confirmButton = document.getElementById('confirmAction');
+    const confirmButtonTop = document.getElementById('confirmActionTop');
+    
+    if (confirmButton) {
+        confirmButton.disabled = disabled;
+        confirmButton.innerHTML = content;
+    }
+    
+    if (confirmButtonTop && !confirmButtonTop.classList.contains('hidden')) {
+        confirmButtonTop.disabled = disabled;
+        const textSpan = confirmButtonTop.querySelector('#confirmButtonTextTop');
+        if (textSpan) {
+            textSpan.textContent = typeof content === 'string' && !content.includes('<') ? content : 'Procesando...';
+        }
+    }
+}
+
 function confirmAction() {
     log('🔄 confirmAction called');
     log('📦 Current package ID:', currentPackageId);
@@ -2425,12 +2446,9 @@ function confirmAction() {
 async function confirmCancelAction() {
     log('🔄 confirmCancelAction called');
     
-    // Deshabilitar botón para evitar doble click
+    // Deshabilitar ambos botones para evitar doble click
     const confirmButton = document.getElementById('confirmAction');
-    if (confirmButton) {
-        confirmButton.disabled = true;
-        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    }
+    setConfirmButtonsState(true, 'Procesando...');
     
     const packageIdForRequest = currentPackageId.toString();
     
@@ -2480,11 +2498,8 @@ async function confirmCancelAction() {
         error('❌ Error:', error);
         showErrorToast('Error', error.message, 4000);
         
-        // Rehabilitar botón en caso de error
-        if (confirmButton) {
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = 'Confirmar Cancelación';
-        }
+        // Rehabilitar ambos botones en caso de error
+        setConfirmButtonsState(false, 'Cancelar Paquete');
     }
 }
 
@@ -2507,12 +2522,10 @@ async function confirmDeliverAction() {
         }
     }
 
-    // Deshabilitar botón inmediatamente
+    // Deshabilitar ambos botones inmediatamente
     const confirmButton = document.getElementById('confirmAction');
-    if (confirmButton) {
-        confirmButton.disabled = true;
-        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    }
+    const spinnerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    setConfirmButtonsState(true, 'Procesando...');
 
     const cleanPackageId = currentPackageId.toString().replace('announcement_', '');
     const packageData = packagesByState.received.find(p => p.id.toString() === cleanPackageId) || currentPackage;
@@ -2563,11 +2576,8 @@ async function confirmDeliverAction() {
         error('❌ Error:', error);
         showErrorToast('Error', error.message, 4000);
         
-        // Rehabilitar botón en caso de error
-        if (confirmButton) {
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = 'Confirmar Entrega';
-        }
+        // Rehabilitar ambos botones en caso de error
+        setConfirmButtonsState(false, 'Entregar Paquete');
     }
 }
 function confirmDeleteAction() {
@@ -2578,11 +2588,10 @@ function confirmDeleteAction() {
         return;
     }
 
-    // Show loading state
+    // Show loading state en ambos botones
     const confirmButton = document.getElementById('confirmAction');
     const originalText = confirmButton.innerHTML;
-    confirmButton.disabled = true;
-    confirmButton.innerHTML = 'Eliminando...';
+    setConfirmButtonsState(true, 'Eliminando...');
 
     // Determine if it's a package ID or announcement ID
     let endpoint;
@@ -2621,9 +2630,8 @@ function confirmDeleteAction() {
         showErrorToast('Error', error.message || 'No se pudo eliminar el paquete. Verifica que tengas permisos de administrador.', 7000);
     })
     .finally(() => {
-        // Restore button state
-        confirmButton.disabled = false;
-        confirmButton.innerHTML = originalText;
+        // Restore button state en ambos botones
+        setConfirmButtonsState(false, originalText);
         
         // Hide upload progress indicator
         const uploadProgress = document.getElementById('uploadProgress');
@@ -2648,11 +2656,10 @@ async function confirmReceiveAction() {
         return;
     }
 
-    // Show loading state
+    // Show loading state en ambos botones
     const confirmButton = document.getElementById('confirmAction');
     const originalText = confirmButton.innerHTML;
-    confirmButton.disabled = true;
-    confirmButton.innerHTML = 'Procesando...';
+    setConfirmButtonsState(true, 'Procesando...');
 
     try {
         // Procesar recepción con S3
@@ -2692,9 +2699,8 @@ async function confirmReceiveAction() {
         error('Error en recepción del paquete:', error);
         showErrorToast('Error', error.message || 'No se pudo recibir el paquete.', 5000);
     } finally {
-        // Restore button state
-        confirmButton.disabled = false;
-        confirmButton.innerHTML = originalText;
+        // Restore button state en ambos botones
+        setConfirmButtonsState(false, originalText);
     }
 }
 

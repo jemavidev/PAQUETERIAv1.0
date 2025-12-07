@@ -99,5 +99,50 @@ if (confirmActionTopBtn) {
 5. Confirmar que ambos botones (superior e inferior) funcionan correctamente
 6. Repetir el proceso con "Entregar Paquete"
 
+## Actualización: Sincronización de Estado "Procesando..."
+
+### Problema Adicional
+El botón superior no mostraba el estado "Procesando..." cuando se presionaba, lo que podía confundir al usuario sobre si la acción se estaba ejecutando.
+
+### Solución Implementada
+Se creó una función helper `setConfirmButtonsState()` que sincroniza el estado de ambos botones (superior e inferior) simultáneamente:
+
+```javascript
+/**
+ * Helper function para actualizar el estado de ambos botones de confirmación
+ */
+function setConfirmButtonsState(disabled, content) {
+    const confirmButton = document.getElementById('confirmAction');
+    const confirmButtonTop = document.getElementById('confirmActionTop');
+    
+    if (confirmButton) {
+        confirmButton.disabled = disabled;
+        confirmButton.innerHTML = content;
+    }
+    
+    if (confirmButtonTop && !confirmButtonTop.classList.contains('hidden')) {
+        confirmButtonTop.disabled = disabled;
+        const textSpan = confirmButtonTop.querySelector('#confirmButtonTextTop');
+        if (textSpan) {
+            textSpan.textContent = typeof content === 'string' && !content.includes('<') ? content : 'Procesando...';
+        }
+    }
+}
+```
+
+### Funciones Actualizadas
+Todas las funciones de confirmación ahora usan `setConfirmButtonsState()`:
+- `confirmReceiveAction()` - Recibir paquete
+- `confirmDeliverAction()` - Entregar paquete
+- `confirmCancelAction()` - Cancelar paquete
+- `confirmDeleteAction()` - Eliminar paquete
+
+### Estados Sincronizados
+Ambos botones ahora muestran:
+- ✅ "Procesando..." cuando se está ejecutando la acción
+- ✅ Estado deshabilitado durante el procesamiento
+- ✅ Restauración del texto original al completar o en caso de error
+- ✅ Mensajes de error específicos según la acción
+
 ## Fecha de Implementación
 7 de diciembre de 2025
