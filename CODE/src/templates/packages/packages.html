@@ -350,6 +350,40 @@
                         <!-- CAMPOS DE PAGO -->
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <h3 class="font-bold text-gray-800 text-lg mb-3">CONFIRMACIÓN DE PAGO</h3>
+                            
+                            <!-- Botones de valores predefinidos -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Valores rápidos
+                                </label>
+                                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                    <button type="button" onclick="setPaymentAmount(0)" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        $0
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(1500)" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        $1500
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(2000)" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        $2000
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(2500)" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        $2500
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(3000)" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        $3000
+                                    </button>
+                                    <button type="button" onclick="clearPaymentAmount()" 
+                                            class="payment-quick-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-orange-50 hover:border-orange-500 hover:text-orange-700 transition-all duration-200 active:scale-95 touch-manipulation">
+                                        Otro
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <!-- Monto Total a Pagar -->
                             <div>
                                 <label for="paymentAmount" class="block text-sm font-medium text-gray-700 mb-2">
@@ -1873,6 +1907,69 @@ function loadPaymentSummaryFallback(package) {
     // Pre-cargar monto calculado
     paymentAmountInput.value = totalAmount.toFixed(2);
     suggestedAmountText.textContent = `Valor calculado: $${totalAmount.toFixed(2)}`;
+}
+
+/**
+ * Establecer un valor predefinido en el campo de pago
+ */
+function setPaymentAmount(amount) {
+    const paymentAmountInput = document.getElementById('paymentAmount');
+    if (paymentAmountInput) {
+        paymentAmountInput.value = amount.toFixed(2);
+        
+        // Resaltar el botón seleccionado
+        highlightSelectedPaymentButton(amount);
+        
+        // Mostrar feedback visual
+        paymentAmountInput.focus();
+        paymentAmountInput.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+            paymentAmountInput.classList.remove('ring-2', 'ring-blue-500');
+        }, 500);
+    }
+}
+
+/**
+ * Limpiar el campo de pago para ingresar un valor personalizado
+ */
+function clearPaymentAmount() {
+    const paymentAmountInput = document.getElementById('paymentAmount');
+    if (paymentAmountInput) {
+        paymentAmountInput.value = '';
+        paymentAmountInput.focus();
+        
+        // Remover resaltado de todos los botones
+        highlightSelectedPaymentButton(null);
+        
+        // Mostrar feedback visual
+        paymentAmountInput.classList.add('ring-2', 'ring-orange-500');
+        setTimeout(() => {
+            paymentAmountInput.classList.remove('ring-2', 'ring-orange-500');
+        }, 500);
+    }
+}
+
+/**
+ * Resaltar el botón de pago seleccionado
+ */
+function highlightSelectedPaymentButton(amount) {
+    const buttons = document.querySelectorAll('.payment-quick-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-600');
+        btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+    });
+    
+    if (amount !== null) {
+        const selectedBtn = Array.from(buttons).find(btn => {
+            const btnText = btn.textContent.trim().replace('$', '');
+            return parseFloat(btnText) === amount;
+        });
+        
+        if (selectedBtn) {
+            selectedBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+            selectedBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-600');
+        }
+    }
 }
 
 function loadDatesSummary(package) {
