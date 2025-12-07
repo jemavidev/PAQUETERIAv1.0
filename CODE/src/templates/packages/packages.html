@@ -167,18 +167,11 @@
         <div class="bg-white rounded-xl shadow-lg border border-gray-100">
             <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex items-center justify-between">
                 <h3 id="modalTitle" class="text-lg sm:text-xl font-light text-gray-900">Acción del Paquete</h3>
-                <div class="flex items-center gap-2">
-                    <!-- Botón superior de confirmación (visible solo en modo receive) -->
-                    <button id="confirmActionTop"
-                            class="hidden flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 border border-transparent rounded-lg shadow-lg text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center whitespace-nowrap">
-                        <span id="confirmButtonTextTop">Recibir Paquete</span>
-                    </button>
-                    <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
 
             <div class="p-3 sm:p-4 lg:p-6">
@@ -188,7 +181,14 @@
 
                 <!-- Formulario de acción -->
                 <div id="actionForm" class="mt-3 sm:mt-4 border-gray-200">
-                    <h4 id="actionTitle" class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Confirmar Acción</h4>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <h4 id="actionTitle" class="text-base sm:text-lg font-medium text-gray-900">Confirmar Acción</h4>
+                        <!-- Botón superior de confirmación (visible solo en modo receive/deliver) -->
+                        <button id="confirmActionTop"
+                                class="hidden flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 border border-transparent rounded-lg shadow-lg text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center whitespace-nowrap">
+                            <span id="confirmButtonTextTop">Recibir Paquete</span>
+                        </button>
+                    </div>
                     
                     <!-- Input de archivo optimizado para escritorio (fuera del receiveForm para que siempre sea accesible) -->
                     <input type="file" id="packageImages" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="position: absolute; left: -9999px; opacity: 0; pointer-events: auto; width: 1px; height: 1px; z-index: 1000;" />
