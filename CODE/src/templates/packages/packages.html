@@ -724,6 +724,24 @@ const error = isLocalhost ? console.error.bind(console) : () => {}; // Errores s
 const warn = (isLocalhost && ENABLE_VERBOSE_LOGS) ? console.warn.bind(console) : () => {};
 
 // ========================================
+// FUNCIONES DE UTILIDAD
+// ========================================
+/**
+ * Convierte el estado técnico del paquete a texto amigable para WhatsApp
+ * @param {string} status - Estado del paquete (announced, received, delivered, cancelled)
+ * @returns {string} - Texto amigable del estado
+ */
+function getStatusText(status) {
+    const statusMap = {
+        'announced': 'ANUNCIADO',
+        'received': 'RECIBIDO EN BODEGA',
+        'delivered': 'ENTREGADO',
+        'cancelled': 'CANCELADO'
+    };
+    return statusMap[status?.toLowerCase()] || 'EN PROCESO';
+}
+
+// ========================================
 // DETECCIÓN DE DISPOSITIVOS MÓVILES
 // ========================================
 // Detección mejorada de dispositivos móviles (más precisa) con caché
@@ -1355,7 +1373,7 @@ function createPackageElement(package) {
                         </button>
                     ` : ''}
                     ${package.customer_phone ? `
-                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
+                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, tu paquete con código *${package.tracking_number}* está *${getStatusText(package.status)}*. Puedes consultar más detalles aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
                            target="_blank"
                            class="text-green-600 hover:text-green-800 transition-colors"
                            title="Contactar por WhatsApp">
