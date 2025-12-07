@@ -49,12 +49,16 @@ Ver documentación completa: [README_DEPLOY.md](README_DEPLOY.md)
 │
 ├── scripts/                     # Scripts utilitarios
 │   ├── deploy/                  # Scripts de deploy
+│   ├── testing/                 # Scripts de pruebas
 │   ├── sync/                    # Scripts de sincronización
 │   └── utils/                   # Utilidades
 │
 ├── DOCS/                        # Documentación
-│   ├── deploy/                  # Docs de deploy
+│   ├── analisis/                # Análisis de problemas
 │   ├── fixes/                   # Documentación de fixes
+│   ├── pruebas/                 # Documentación de pruebas
+│   ├── resumenes/               # Resúmenes ejecutivos
+│   ├── deploy/                  # Docs de deploy
 │   ├── guides/                  # Guías y tutoriales
 │   └── archived/                # Archivos antiguos
 │
@@ -215,11 +219,15 @@ docker compose logs -f app
 
 ## 📝 Changelog
 
-### v4.0.0 (2024-11-22)
+### v4.0.0 (2024-12-07)
 - ✅ Sistema de deploy unificado
 - ✅ Mejoras en caché (invalidación automática)
 - ✅ Modal de posición rediseñado
 - ✅ Documentación completa reorganizada
+- ✅ Fix de visualización de imágenes (S3)
+- ✅ Corrección de validación de roles
+- ✅ Portal de clientes con OTP
+- ✅ Scripts de pruebas automatizadas
 
 ### v3.x
 - Sistema de notificaciones
@@ -233,6 +241,24 @@ Propietario - PAQUETEX © 2024
 ---
 
 **Versión:** 4.0.0  
-**Última actualización:** 2024-11-22  
+**Última actualización:** 2024-12-07  
 **Servidor:** AWS Lightsail (papyrus)  
 **URL:** https://paquetex.papyrus.com.co
+
+---
+
+## 📂 Organización de Archivos
+
+### Documentación (`DOCS/`)
+- **analisis/** - Análisis de problemas y diagnósticos
+- **fixes/** - Soluciones y correcciones aplicadas
+- **pruebas/** - Documentación de pruebas
+- **resumenes/** - Resúmenes ejecutivos
+
+### Scripts (`scripts/`)
+- **deploy/** - Scripts de deploy y limpieza
+- **testing/** - Scripts de pruebas automatizadas
+- **sync/** - Scripts de sincronización
+- **utils/** - Utilidades generales
+
+Ver README en cada carpeta para más detalles.
