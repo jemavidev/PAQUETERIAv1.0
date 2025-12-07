@@ -39,7 +39,7 @@ async def require_admin_access(
     current_user: User = Depends(get_current_active_user_from_cookies)
 ):
     """Verificar que el usuario actual sea administrador"""
-    if not current_user or current_user.role != UserRole.ADMIN:
+    if not current_user or current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden acceder al debug dashboard."

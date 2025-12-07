@@ -145,7 +145,7 @@ async def create_user(
     """Crea un nuevo usuario - Solo ADMIN"""
     try:
         # Verificar que solo ADMIN puede crear usuarios
-        if current_user.role != UserRole.ADMIN:
+        if current_user.role.value != "ADMIN":
             raise HTTPException(
                 status_code=403, 
                 detail="Acceso denegado. Solo administradores pueden crear usuarios."

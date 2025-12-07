@@ -1692,7 +1692,7 @@ async def cleanup_database(
     """Endpoint temporal para limpiar la base de datos - Solo para administradores"""
     
     # Verificar que el usuario sea administrador
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo los administradores pueden ejecutar esta operación"

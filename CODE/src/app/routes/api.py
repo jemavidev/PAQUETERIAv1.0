@@ -407,10 +407,8 @@ async def create_user(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Crear un nuevo usuario - Solo ADMIN (Endpoint legacy - delega a AdminService)"""
-    from app.models.user import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
+    """Crear un nuevo usuario - Solo para administradores (Endpoint legacy - delega a AdminService)"""
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden crear usuarios."
@@ -474,10 +472,8 @@ async def update_user(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Actualizar un usuario existente - Solo ADMIN (Endpoint legacy - delega a AdminService)"""
-    from app.models.user import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
+    """Actualizar un usuario existente - Solo para administradores (Endpoint legacy - delega a AdminService)"""
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden actualizar usuarios."
@@ -640,10 +636,8 @@ async def delete_user(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Eliminar un usuario - Solo ADMIN (Endpoint legacy - delega a AdminService)"""
-    from app.models.user import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
+    """Eliminar un usuario - Solo para administradores (Endpoint legacy - delega a AdminService)"""
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden eliminar usuarios."
@@ -736,10 +730,8 @@ async def toggle_user_status(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Activar/Desactivar un usuario - Solo ADMIN (Endpoint legacy - delega a AdminService)"""
-    from app.models.user import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
+    """Activar/Desactivar un usuario - Solo para administradores (Endpoint legacy - delega a AdminService)"""
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden cambiar el estado de usuarios."
@@ -817,10 +809,8 @@ async def reset_user_password(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """Restablecer contraseña de un usuario - Solo ADMIN (Endpoint legacy - delega a AdminService)"""
-    from app.models.user import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
+    """Restablecer contraseña de un usuario - Solo para administradores (Endpoint legacy - delega a AdminService)"""
+    if current_user.role.value != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acceso denegado. Solo administradores pueden restablecer contraseñas."
