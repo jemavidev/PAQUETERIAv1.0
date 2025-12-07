@@ -2604,18 +2604,22 @@ async function confirmDeliverAction() {
     log('🔄 confirmDeliverAction called');
     
     // Validate required fields
-    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+    const paymentAmountValue = document.getElementById('paymentAmount').value;
+    const paymentAmount = parseFloat(paymentAmountValue);
 
-    if (!paymentAmount || paymentAmount <= 0) {
-        showErrorToast('Error', 'Debe ingresar un monto de pago válido', 3000);
+    // Validar que el campo no esté vacío y que sea un número válido >= 0
+    if (paymentAmountValue === '' || isNaN(paymentAmount) || paymentAmount < 0) {
+        showErrorToast('Error', 'Debe ingresar un monto de pago válido (puede ser $0)', 3000);
         return;
     }
 
-    // Validar que el monto sea razonable
-    const calculatedAmount = parseFloat(document.getElementById('suggestedAmountText').textContent.replace('Valor calculado: $', ''));
-    if (paymentAmount > calculatedAmount * 2) {
-        if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Continuar?`)) {
-            return;
+    // Validar que el monto sea razonable (solo si no es cero)
+    if (paymentAmount > 0) {
+        const calculatedAmount = parseFloat(document.getElementById('suggestedAmountText').textContent.replace('Valor calculado: $', ''));
+        if (paymentAmount > calculatedAmount * 2) {
+            if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Continuar?`)) {
+                return;
+            }
         }
     }
 
