@@ -881,11 +881,15 @@ class EmailService(BaseService[Notification, Any, Any]):
             <td style="padding: 40px 20px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
-                    <!-- Header con gradiente -->
+                    <!-- Header con logo -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: 1px;">PAQUETEX</h1>
-                            <p style="color: #dbeafe; margin: 8px 0 0 0; font-size: 15px; font-weight: 500;">Portal de Cliente</p>
+                        <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 30px 30px; text-align: center;">
+                            <!-- Logo PAPYRUS -->
+                            <img src="https://staging.jemavi.co/static/images/logo.png?v=4.0" 
+                                 alt="PAPYRUS - Mucho más que solo papeles" 
+                                 style="max-width: 280px; height: auto; display: block; margin: 0 auto 15px auto;"
+                                 width="280">
+                            <p style="color: #dbeafe; margin: 0; font-size: 15px; font-weight: 500;">Portal de Cliente</p>
                         </td>
                     </tr>
                     
