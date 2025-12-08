@@ -883,13 +883,13 @@ class EmailService(BaseService[Notification, Any, Any]):
                     
                     <!-- Header con logo -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 30px 30px; text-align: center;">
+                        <td style="background-color: #ffffff; padding: 40px 30px 30px 30px; text-align: center; border-bottom: 3px solid #2563eb;">
                             <!-- Logo PAPYRUS -->
                             <img src="https://staging.jemavi.co/static/images/logo.png?v=4.0" 
                                  alt="PAPYRUS - Mucho más que solo papeles" 
-                                 style="max-width: 280px; height: auto; display: block; margin: 0 auto 15px auto;"
-                                 width="280">
-                            <p style="color: #dbeafe; margin: 0; font-size: 15px; font-weight: 500;">Portal de Cliente</p>
+                                 style="max-width: 300px; height: auto; display: block; margin: 0 auto 12px auto;"
+                                 width="300">
+                            <p style="color: #2563eb; margin: 0; font-size: 15px; font-weight: 600;">Portal de Cliente</p>
                         </td>
                     </tr>
                     
