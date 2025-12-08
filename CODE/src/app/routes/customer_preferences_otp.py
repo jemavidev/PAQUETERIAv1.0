@@ -109,68 +109,43 @@ async def request_preferences_otp(
         db.commit()
         db.refresh(otp)
 
-        # IMPORTANTE: El OTP de acceso SIEMPRE se envía por SMS (es crítico para acceder)
-        # Las preferencias solo aplican para notificaciones de paquetes, NO para OTP de acceso
-        sent_methods = []
-        
-        # SIEMPRE enviar por SMS (es el método principal de acceso)
+        # Enviar SMS con contraseña temporal
         sms_service = SMSService()
         sms_message = (
             f"PAQUETEX: Su contraseña temporal es: {otp.otp_code}. "
             f"Válida por 5 minutos. No comparta esta contraseña."
         )
+
+        await sms_service.send_sms(
+            db=db,
+            recipient=phone,
+            message=sms_message,
+            event_type="CUSTOM_MESSAGE",
+            customer_id=str(customer.id),
+            is_test=False
+        )
+
+        logger.info(f"✅ Contraseña temporal enviada por SMS a {phone} (código: {otp.otp_code})")
         
-        try:
-            await sms_service.send_sms(
-                db=db,
-                recipient=phone,
-                message=sms_message,
-                event_type="CUSTOM_MESSAGE",
-                customer_id=str(customer.id),
-                is_test=False
-            )
-            sent_methods.append("SMS")
-            logger.info(f"✅ Contraseña temporal enviada por SMS a {phone}")
-        except Exception as e:
-            logger.error(f"❌ Error al enviar SMS: {str(e)}")
-        
-        # TAMBIÉN enviar por Email si el cliente tiene email registrado (canal adicional)
+        # OPCIONAL: También enviar por Email si el cliente tiene email (canal adicional)
         if customer.email:
-            from app.services.email_service import EmailService
-            email_service = EmailService()
-            
             try:
+                from app.services.email_service import EmailService
+                email_service = EmailService()
                 await email_service.send_otp_email(
                     recipient_email=customer.email,
                     recipient_name=customer.full_name,
                     otp_code=otp.otp_code,
                     expires_minutes=5
                 )
-                sent_methods.append("Email")
-                logger.info(f"✅ Contraseña temporal enviada por Email a {customer.email}")
+                logger.info(f"✅ Contraseña temporal también enviada por Email a {customer.email}")
             except Exception as e:
-                logger.error(f"❌ Error al enviar Email: {str(e)}")
-        
-        # Verificar que se envió al menos por un método
-        if not sent_methods:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="No se pudo enviar la contraseña temporal. Por favor intente nuevamente."
-            )
-        
-        # Mensaje de respuesta según los métodos usados
-        if len(sent_methods) == 2:
-            response_message = "Contraseña temporal enviada por SMS y Email"
-        elif "SMS" in sent_methods:
-            response_message = "Contraseña temporal enviada por SMS"
-        else:
-            response_message = "Contraseña temporal enviada por Email"
-        
-        logger.info(f"✅ Contraseña temporal enviada a {customer.full_name} ({phone}) por: {', '.join(sent_methods)} (código: {otp.otp_code})")
+                # Email es opcional, si falla no importa
+                logger.warning(f"⚠️ No se pudo enviar email (opcional): {str(e)}")
 
         return PreferencesOTPResponse(
             success=True,
-            message=response_message,
+            message="Contraseña temporal enviada por SMS",
             expires_in_seconds=300
         )
 
