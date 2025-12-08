@@ -860,74 +860,127 @@ class EmailService(BaseService[Notification, Any, Any]):
             # Validar email
             self._validate_email(recipient_email)
             
-            # Crear contenido HTML del email
+            # Crear contenido HTML del email con diseño mejorado
             html_content = f"""
-            <!DOCTYPE html>
-            <html lang="es">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Contraseña Temporal - PAQUETEX</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f3f4f6; margin: 0; padding: 0;">
-                <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <!-- Header -->
-                    <div style="background-color: #2563eb; padding: 30px 20px; text-align: center;">
-                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">PAQUETEX</h1>
-                        <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 14px;">Portal de Cliente</p>
-                    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Contraseña Temporal - PAQUETEX</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {{font-family: Arial, sans-serif !important;}}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f3f4f6;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                     
-                    <!-- Content -->
-                    <div style="padding: 40px 30px;">
-                        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 20px;">Hola {recipient_name},</h2>
-                        
-                        <p style="color: #4b5563; margin: 0 0 20px 0; font-size: 16px;">
-                            Has solicitado acceso a tu portal de cliente. Usa la siguiente contraseña temporal para ingresar:
-                        </p>
-                        
-                        <!-- OTP Code Box -->
-                        <div style="background-color: #eff6ff; border: 2px solid #2563eb; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
-                            <div style="color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
-                                Contraseña Temporal
-                            </div>
-                            <div style="color: #2563eb; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                                {otp_code}
-                            </div>
-                        </div>
-                        
-                        <!-- Info Box -->
-                        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                            <p style="margin: 0; color: #92400e; font-size: 14px;">
-                                <strong>⚠️ Importante:</strong><br>
-                                • Esta contraseña es válida por <strong>{expires_minutes} minutos</strong><br>
-                                • No compartas este código con nadie<br>
-                                • Si no solicitaste este código, ignora este mensaje
+                    <!-- Header con gradiente -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: 1px;">PAQUETEX</h1>
+                            <p style="color: #dbeafe; margin: 8px 0 0 0; font-size: 15px; font-weight: 500;">Portal de Cliente</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Contenido principal -->
+                    <tr>
+                        <td style="padding: 50px 40px;">
+                            <!-- Saludo -->
+                            <h2 style="color: #111827; margin: 0 0 24px 0; font-size: 22px; font-weight: 600;">
+                                ¡Hola {recipient_name}! 👋
+                            </h2>
+                            
+                            <p style="color: #4b5563; margin: 0 0 30px 0; font-size: 16px; line-height: 1.6;">
+                                Has solicitado acceso a tu portal de cliente. Usa la siguiente <strong>contraseña temporal</strong> para ingresar de forma segura:
                             </p>
-                        </div>
-                        
-                        <p style="color: #6b7280; margin: 30px 0 0 0; font-size: 14px;">
-                            Una vez que ingreses con esta contraseña, podrás acceder a:
-                        </p>
-                        
-                        <ul style="color: #6b7280; font-size: 14px; line-height: 1.8;">
-                            <li>Ver y editar tus datos personales</li>
-                            <li>Consultar el historial de tus paquetes</li>
-                            <li>Configurar tus preferencias de notificación</li>
-                        </ul>
-                    </div>
+                            
+                            <!-- Caja del código OTP mejorada -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 35px 0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 3px solid #2563eb; border-radius: 12px; padding: 35px 20px; text-align: center; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);">
+                                        <div style="color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
+                                            🔐 CONTRASEÑA TEMPORAL
+                                        </div>
+                                        <div style="color: #1e40af; font-size: 42px; font-weight: 800; letter-spacing: 12px; font-family: 'Courier New', Courier, monospace; text-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);">
+                                            {otp_code}
+                                        </div>
+                                        <div style="color: #6b7280; font-size: 12px; margin-top: 12px; font-weight: 500;">
+                                            Válida por {expires_minutes} minutos
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Advertencia de seguridad mejorada -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
+                                <tr>
+                                    <td style="background-color: #fef3c7; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 20px 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+                                        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.7;">
+                                            <strong style="font-size: 15px;">⚠️ Importante - Seguridad</strong><br><br>
+                                            <span style="display: block; margin-bottom: 6px;">✓ Esta contraseña expira en <strong>{expires_minutes} minutos</strong></span>
+                                            <span style="display: block; margin-bottom: 6px;">✓ No compartas este código con nadie</span>
+                                            <span style="display: block;">✓ Si no solicitaste acceso, ignora este mensaje</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Beneficios con iconos -->
+                            <div style="margin-top: 35px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+                                <p style="color: #374151; margin: 0 0 20px 0; font-size: 15px; font-weight: 600;">
+                                    Con tu portal podrás:
+                                </p>
+                                
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">👤</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Ver y editar tus datos personales</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">📦</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Consultar el historial de tus paquetes</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">🔔</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Configurar tus preferencias de notificación</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
                     
-                    <!-- Footer -->
-                    <div style="background-color: #f9fafb; padding: 20px 30px; border-top: 1px solid #e5e7eb;">
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 12px;">
-                            Este es un mensaje automático, por favor no respondas a este email.
-                        </p>
-                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                            &copy; 2025 PAQUETEX. Todos los derechos reservados.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
+                    <!-- Footer mejorado -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 13px; line-height: 1.6; text-align: center;">
+                                Este es un mensaje automático generado por nuestro sistema.<br>
+                                Por favor, no respondas a este email.
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                &copy; 2025 <strong>PAQUETEX</strong>. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
             """
             
             # Crear contenido en texto plano
