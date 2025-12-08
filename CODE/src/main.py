@@ -36,6 +36,7 @@ from src.app.routes.public import router as public_router
 from src.app.routes import auth, protected, customers, rates, notifications, messages, files, admin, announcements, profile, packages, settings_api
 from src.app.routes.header_notifications import router as header_notifications
 from src.app.routes.customer_preferences import router as customer_preferences_router
+from src.app.routes.customer_preferences_otp import router as customer_preferences_otp_router
 from src.app.routes.upload import router as upload_router
 from src.app.routes.images import router as images_router
 from src.app.routes.debug_standalone import router as debug_standalone_router
@@ -188,6 +189,7 @@ app.include_router(profile, prefix="/profile", tags=["Perfil"])
 app.include_router(settings_api, tags=["Configuración"])
 app.include_router(config_router, tags=["Configuración"])  # ✨ Nuevo: Endpoints de configuración
 app.include_router(customer_preferences_router, tags=["Preferencias de Cliente"])
+app.include_router(customer_preferences_otp_router, tags=["Preferencias de Cliente - OTP"])
 app.include_router(upload_router, tags=["Upload"])
 app.include_router(images_router, tags=["Imágenes"])
 app.include_router(debug_standalone_router, tags=["Debug Standalone"])
