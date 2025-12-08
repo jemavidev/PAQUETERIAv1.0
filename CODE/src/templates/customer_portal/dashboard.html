@@ -282,45 +282,45 @@
                     </div>
 
                     <!-- Lista de Paquetes -->
-                    <div x-show="!loadingPackages && packages.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div x-show="!loadingPackages && packages.length > 0" class="space-y-2">
                         <template x-for="pkg in packages" :key="pkg.id">
                             <div 
                                 @click="goToSearch(pkg.tracking_number)"
-                                class="border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer bg-white"
+                                class="border border-gray-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer bg-white"
                             >
-                                <!-- Header con estado -->
-                                <div class="flex items-center justify-between mb-3">
-                                    <span 
-                                        :class="{
-                                            'bg-yellow-100 text-yellow-800': pkg.status === 'ANUNCIADO',
-                                            'bg-blue-100 text-blue-800': pkg.status === 'RECIBIDO',
-                                            'bg-green-100 text-green-800': pkg.status === 'ENTREGADO',
-                                            'bg-red-100 text-red-800': pkg.status === 'CANCELADO'
-                                        }"
-                                        class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold"
-                                        x-text="pkg.status"
-                                    ></span>
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <!-- Línea 1: Estado + Guía + Código -->
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center space-x-4">
+                                        <span 
+                                            :class="{
+                                                'bg-yellow-100 text-yellow-800': pkg.status === 'ANUNCIADO',
+                                                'bg-blue-100 text-blue-800': pkg.status === 'RECIBIDO',
+                                                'bg-green-100 text-green-800': pkg.status === 'ENTREGADO',
+                                                'bg-red-100 text-red-800': pkg.status === 'CANCELADO'
+                                            }"
+                                            class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold"
+                                            x-text="pkg.status"
+                                        ></span>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-xs text-gray-500 font-medium">GUÍA:</span>
+                                            <span class="text-sm font-semibold text-gray-900 font-mono" x-text="pkg.guide_number || 'N/A'"></span>
+                                        </div>
+                                    </div>
+                                    <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                     </svg>
                                 </div>
 
-                                <!-- Guía -->
-                                <div class="mb-2">
-                                    <div class="text-xs font-medium text-gray-500 mb-1">GUÍA</div>
-                                    <div class="text-sm font-semibold text-gray-900 font-mono" x-text="pkg.guide_number || 'N/A'"></div>
-                                </div>
-
-                                <!-- Código -->
-                                <div class="mb-2">
-                                    <div class="text-xs font-medium text-gray-500 mb-1">CÓDIGO</div>
-                                    <div class="text-sm font-semibold text-blue-600 font-mono" x-text="pkg.tracking_number"></div>
-                                </div>
-
-                                <!-- Fecha -->
-                                <div>
-                                    <div class="text-xs font-medium text-gray-500 mb-1">FECHA</div>
-                                    <div class="text-sm text-gray-700" x-text="formatDateShort(pkg.delivered_at || pkg.received_at || pkg.announced_at)"></div>
+                                <!-- Línea 2: Código + Fecha -->
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-gray-500 font-medium">CÓDIGO:</span>
+                                        <span class="text-sm font-semibold text-blue-600 font-mono" x-text="pkg.tracking_number"></span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-gray-500 font-medium">FECHA:</span>
+                                        <span class="text-sm text-gray-700" x-text="formatDateShort(pkg.delivered_at || pkg.received_at || pkg.announced_at)"></span>
+                                    </div>
                                 </div>
                             </div>
                         </template>
