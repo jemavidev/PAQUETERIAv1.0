@@ -44,7 +44,9 @@ class PreferencesOTPVerifyRequest(BaseModel):
 class PreferencesOTPVerifyResponse(BaseModel):
     success: bool
     message: str
-    preferences_token: str
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
     redirect_url: str
 
 
@@ -147,10 +149,11 @@ async def verify_preferences_otp(
     db: Session = Depends(get_db)
 ):
     """
-    Verifica el código OTP y retorna el token de preferencias
+    Verifica el código OTP y genera token JWT para acceder al portal completo
     
     - Valida el código de 6 dígitos
-    - Retorna el token único de preferencias del cliente
+    - Genera token JWT válido por 1 hora
+    - Redirige al dashboard completo del portal
     - Máximo 3 intentos por código
     """
     try:
@@ -176,7 +179,7 @@ async def verify_preferences_otp(
             )
 
         # Verificar código
-        logger.info(f"🔍 Verificando código para preferencias - Recibido: '{request.code}' vs Esperado: '{otp.otp_code}'")
+        logger.info(f"🔍 Verificando código para portal - Recibido: '{request.code}' vs Esperado: '{otp.otp_code}'")
         
         if not otp.verify(request.code):
             db.commit()  # Guardar intento fallido
@@ -216,7 +219,26 @@ async def verify_preferences_otp(
                 detail="Cliente no encontrado"
             )
 
-        # Obtener o crear preferencias del cliente
+        # Generar token JWT para acceso al portal completo
+        from jose import jwt
+        from datetime import timedelta
+        from app.config import settings
+        from app.utils.datetime_utils import get_colombia_now
+        
+        SECRET_KEY = settings.secret_key
+        ALGORITHM = "HS256"
+        ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 hora
+        
+        expire = get_colombia_now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode = {
+            "customer_id": str(customer.id),
+            "phone": phone,
+            "exp": expire,
+            "type": "customer_portal"
+        }
+        access_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        
+        # Obtener o crear preferencias del cliente (para tenerlas listas)
         preferences = db.query(CustomerPreferences).filter(
             CustomerPreferences.customer_id == customer.id
         ).first()
@@ -232,22 +254,24 @@ async def verify_preferences_otp(
             db.refresh(preferences)
             logger.info(f"✅ Preferencias creadas para cliente: {customer.full_name}")
 
-        # Retornar token de preferencias
-        redirect_url = f"/customer/preferences?token={preferences.token}"
+        # Redirigir al dashboard completo del portal
+        redirect_url = "/customer-portal/dashboard"
         
-        logger.info(f"✅ Cliente verificado para preferencias: {customer.full_name} ({phone})")
+        logger.info(f"✅ Cliente verificado para portal completo: {customer.full_name} ({phone})")
 
         return PreferencesOTPVerifyResponse(
             success=True,
             message="Verificación exitosa",
-            preferences_token=preferences.token,
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             redirect_url=redirect_url
         )
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error al verificar OTP para preferencias: {str(e)}", exc_info=True)
+        logger.error(f"Error al verificar OTP para portal: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error en verificación: {str(e)}"
@@ -292,8 +316,8 @@ async def send_verify_link(
         # Enviar SMS con link
         sms_service = SMSService()
         message = (
-            f"PAQUETEX: Para gestionar tus preferencias de notificaciones, "
-            f"ingresa aquí: {verify_link}"
+            f"PAQUETEX: Accede a tu portal de cliente (datos, paquetes y preferencias). "
+            f"Ingresa aquí: {verify_link}"
         )
 
         await sms_service.send_sms(

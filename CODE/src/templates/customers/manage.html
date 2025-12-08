@@ -2666,21 +2666,21 @@ function openPreferencesModal(customerId, customerName) {
             <div x-show="!preferencesLoading" class="px-6 py-6">
                 
                 <!-- Link de Verificación -->
-                <div class="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div class="flex items-start">
-                        <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                         </svg>
                         <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-purple-800">Acceso Seguro a Preferencias</p>
-                            <p class="mt-1 text-xs text-purple-700">El cliente debe verificar su identidad con un código SMS antes de acceder</p>
+                            <p class="text-sm font-medium text-blue-800">Acceso Seguro al Portal de Cliente</p>
+                            <p class="mt-1 text-xs text-blue-700">El cliente verificará su identidad con un código SMS y accederá a su portal completo (datos, paquetes y preferencias)</p>
                             <div class="mt-3 flex items-center space-x-2">
                                 <input type="text" 
                                        x-model="verifyUrl" 
                                        readonly
-                                       class="flex-1 px-3 py-2 text-sm border border-purple-300 rounded-lg bg-white">
+                                       class="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg bg-white">
                                 <button @click="copyVerifyUrl()" 
-                                        class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap">
+                                        class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
                                     <span x-show="!verifyUrlCopied">Copiar</span>
                                     <span x-show="verifyUrlCopied">✓ Copiado</span>
                                 </button>
