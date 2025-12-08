@@ -356,24 +356,22 @@ class CustomerPortalService:
             )
             db.add(preferences)
 
-        # Mapear campos del request a campos del modelo
-        field_mapping = {
-            "sms_notifications_enabled": "sms_notifications_enabled",
-            "sms_on_package_announced": "notify_package_announced",
-            "sms_on_package_received": "notify_package_received",
-            "sms_on_package_delivered": "notify_package_delivered",
-            "email_notifications_enabled": "email_notifications_enabled",
-            "email_on_package_announced": "notify_package_announced",
-            "email_on_package_received": "notify_package_received",
-            "email_on_package_delivered": "notify_package_delivered",
-            "notify_payment_due": "notify_payment_due",
-            "marketing_enabled": "marketing_enabled",
-        }
+        # Actualizar campos directamente (los nombres coinciden)
+        allowed_fields = [
+            "sms_notifications_enabled",
+            "email_notifications_enabled",
+            "notify_package_announced",
+            "notify_package_received",
+            "notify_package_delivered",
+            "notify_payment_due",
+            "marketing_enabled"
+        ]
 
-        # Actualizar solo los campos proporcionados
-        for request_field, model_field in field_mapping.items():
-            if request_field in preferences_data and preferences_data[request_field] is not None:
-                setattr(preferences, model_field, preferences_data[request_field])
+        # Actualizar solo los campos proporcionados y permitidos
+        for field in allowed_fields:
+            if field in preferences_data and preferences_data[field] is not None:
+                setattr(preferences, field, preferences_data[field])
+                logger.info(f"📝 Actualizando {field} = {preferences_data[field]} para cliente {customer_id}")
 
         preferences.updated_at = get_colombia_now()
         db.commit()
