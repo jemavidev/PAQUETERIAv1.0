@@ -832,3 +832,151 @@ class EmailService(BaseService[Notification, Any, Any]):
             "period_days": days
         }
 
+
+    # ========================================
+    # ENVÍO DE OTP POR EMAIL
+    # ========================================
+
+    async def send_otp_email(
+        self,
+        recipient_email: str,
+        recipient_name: str,
+        otp_code: str,
+        expires_minutes: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Envía un email con el código OTP para acceso al portal
+        
+        Args:
+            recipient_email: Email del destinatario
+            recipient_name: Nombre del destinatario
+            otp_code: Código OTP de 6 dígitos
+            expires_minutes: Minutos de validez del código
+            
+        Returns:
+            Dict con resultado del envío
+        """
+        try:
+            # Validar email
+            self._validate_email(recipient_email)
+            
+            # Crear contenido HTML del email
+            html_content = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Contraseña Temporal - PAQUETEX</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f3f4f6; margin: 0; padding: 0;">
+                <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <div style="background-color: #2563eb; padding: 30px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">PAQUETEX</h1>
+                        <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 14px;">Portal de Cliente</p>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 20px;">Hola {recipient_name},</h2>
+                        
+                        <p style="color: #4b5563; margin: 0 0 20px 0; font-size: 16px;">
+                            Has solicitado acceso a tu portal de cliente. Usa la siguiente contraseña temporal para ingresar:
+                        </p>
+                        
+                        <!-- OTP Code Box -->
+                        <div style="background-color: #eff6ff; border: 2px solid #2563eb; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+                            <div style="color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+                                Contraseña Temporal
+                            </div>
+                            <div style="color: #2563eb; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                                {otp_code}
+                            </div>
+                        </div>
+                        
+                        <!-- Info Box -->
+                        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                <strong>⚠️ Importante:</strong><br>
+                                • Esta contraseña es válida por <strong>{expires_minutes} minutos</strong><br>
+                                • No compartas este código con nadie<br>
+                                • Si no solicitaste este código, ignora este mensaje
+                            </p>
+                        </div>
+                        
+                        <p style="color: #6b7280; margin: 30px 0 0 0; font-size: 14px;">
+                            Una vez que ingreses con esta contraseña, podrás acceder a:
+                        </p>
+                        
+                        <ul style="color: #6b7280; font-size: 14px; line-height: 1.8;">
+                            <li>Ver y editar tus datos personales</li>
+                            <li>Consultar el historial de tus paquetes</li>
+                            <li>Configurar tus preferencias de notificación</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="background-color: #f9fafb; padding: 20px 30px; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 12px;">
+                            Este es un mensaje automático, por favor no respondas a este email.
+                        </p>
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                            &copy; 2025 PAQUETEX. Todos los derechos reservados.
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # Crear contenido en texto plano
+            text_content = f"""
+PAQUETEX - Portal de Cliente
+
+Hola {recipient_name},
+
+Has solicitado acceso a tu portal de cliente. Usa la siguiente contraseña temporal para ingresar:
+
+CONTRASEÑA TEMPORAL: {otp_code}
+
+IMPORTANTE:
+- Esta contraseña es válida por {expires_minutes} minutos
+- No compartas este código con nadie
+- Si no solicitaste este código, ignora este mensaje
+
+Una vez que ingreses con esta contraseña, podrás acceder a:
+- Ver y editar tus datos personales
+- Consultar el historial de tus paquetes
+- Configurar tus preferencias de notificación
+
+---
+Este es un mensaje automático, por favor no respondas a este email.
+© 2025 PAQUETEX. Todos los derechos reservados.
+            """
+            
+            # Asunto del email
+            subject = "Tu Contraseña Temporal - PAQUETEX"
+            
+            # Enviar email usando SMTP directamente (sin guardar en BD de notificaciones)
+            result = await self._send_real_email(
+                recipient=recipient_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+            
+            if result["success"]:
+                email_logger.info(f"✅ OTP enviado por email a {recipient_email} (código: {otp_code})")
+            else:
+                email_logger.error(f"❌ Error enviando OTP por email a {recipient_email}: {result.get('error')}")
+            
+            return result
+            
+        except Exception as e:
+            email_logger.error(f"❌ Error al enviar OTP por email: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "error_code": "OTP_EMAIL_ERROR"
+            }

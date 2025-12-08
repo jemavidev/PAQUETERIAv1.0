@@ -109,27 +109,85 @@ async def request_preferences_otp(
         db.commit()
         db.refresh(otp)
 
-        # Enviar SMS con contraseña temporal
-        sms_service = SMSService()
-        message = (
-            f"PAQUETEX: Su contraseña temporal es: {otp.otp_code}. "
-            f"Válida por 5 minutos. No comparta esta contraseña."
-        )
-
-        await sms_service.send_sms(
-            db=db,
-            recipient=phone,
-            message=message,
-            event_type="CUSTOM_MESSAGE",
-            customer_id=str(customer.id),
-            is_test=False
-        )
-
-        logger.info(f"✅ Contraseña temporal enviada a {phone} (código: {otp.otp_code})")
+        # Obtener preferencias del cliente
+        preferences = db.query(CustomerPreferences).filter(
+            CustomerPreferences.customer_id == customer.id
+        ).first()
+        
+        # Si no tiene preferencias, crearlas con valores por defecto
+        if not preferences:
+            preferences = CustomerPreferences(
+                customer_id=customer.id,
+                token=CustomerPreferences.generate_token(),
+                sms_notifications_enabled=True,
+                email_notifications_enabled=True
+            )
+            db.add(preferences)
+            db.commit()
+            db.refresh(preferences)
+        
+        # Enviar contraseña temporal según preferencias
+        sent_methods = []
+        
+        # Enviar por SMS si está habilitado
+        if preferences.sms_notifications_enabled:
+            sms_service = SMSService()
+            sms_message = (
+                f"PAQUETEX: Su contraseña temporal es: {otp.otp_code}. "
+                f"Válida por 5 minutos. No comparta esta contraseña."
+            )
+            
+            try:
+                await sms_service.send_sms(
+                    db=db,
+                    recipient=phone,
+                    message=sms_message,
+                    event_type="CUSTOM_MESSAGE",
+                    customer_id=str(customer.id),
+                    is_test=False
+                )
+                sent_methods.append("SMS")
+                logger.info(f"✅ Contraseña temporal enviada por SMS a {phone}")
+            except Exception as e:
+                logger.error(f"❌ Error al enviar SMS: {str(e)}")
+        
+        # Enviar por Email si está habilitado y tiene email
+        if preferences.email_notifications_enabled and customer.email:
+            from app.services.email_service import EmailService
+            email_service = EmailService()
+            
+            try:
+                await email_service.send_otp_email(
+                    recipient_email=customer.email,
+                    recipient_name=customer.full_name,
+                    otp_code=otp.otp_code,
+                    expires_minutes=5
+                )
+                sent_methods.append("Email")
+                logger.info(f"✅ Contraseña temporal enviada por Email a {customer.email}")
+            except Exception as e:
+                logger.error(f"❌ Error al enviar Email: {str(e)}")
+        
+        # Verificar que se envió al menos por un método
+        if not sent_methods:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo enviar la contraseña temporal. Verifique sus preferencias de notificación."
+            )
+        
+        # Mensaje de respuesta según los métodos usados
+        if len(sent_methods) == 2:
+            response_message = "Contraseña temporal enviada por SMS y Email"
+        elif "SMS" in sent_methods:
+            response_message = "Contraseña temporal enviada por SMS"
+        else:
+            response_message = "Contraseña temporal enviada por Email"
+        
+        logger.info(f"✅ Contraseña temporal enviada a {customer.full_name} ({phone}) por: {', '.join(sent_methods)} (código: {otp.otp_code})")
 
         return PreferencesOTPResponse(
             success=True,
-            message="Contraseña temporal enviada por SMS",
+            message=response_message,
             expires_in_seconds=300
         )
 
