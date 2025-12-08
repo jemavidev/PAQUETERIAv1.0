@@ -96,6 +96,7 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/customer-portal/verify-otp",
     "/api/customer-portal/me",
     "/api/customer-portal/packages",
+    "/api/customer-portal/preferences/notifications",
     "/api/customer-portal/logout",
     
     # Preferencias de Cliente (APIs públicas con OTP)

@@ -26,7 +26,7 @@
                 <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
                     <div class="text-center">
                         <h2 class="text-xl sm:text-2xl font-light text-gray-900">Portal de Cliente</h2>
-                        <p class="text-sm text-gray-500 mt-1">Verifica tu identidad para acceder</p>
+                        <p class="text-sm text-gray-500 mt-1">Ingresa tu teléfono para recibir tu contraseña temporal</p>
                     </div>
                 </div>
                 
@@ -76,7 +76,7 @@
                                 id="submitBtn1"
                                 class="w-full bg-papyrus-blue text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-all duration-200 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
                             >
-                                <span id="btnText1">Enviar Código de Verificación</span>
+                                <span id="btnText1">Solicitar Contraseña Temporal</span>
                                 <span id="btnLoader1" class="hidden">
                                     <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -101,9 +101,9 @@
                 {# Header #}
                 <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
                     <div class="text-center">
-                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Verificar Código</h2>
+                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Ingresa tu Contraseña</h2>
                         <p class="text-sm text-gray-500 mt-1">
-                            Código enviado al <span id="phoneDisplay" class="font-semibold"></span>
+                            Contraseña temporal enviada al <span id="phoneDisplay" class="font-semibold"></span>
                         </p>
                     </div>
                 </div>
@@ -111,10 +111,10 @@
                 {# Contenido #}
                 <div class="p-4 sm:p-8">
                     <form id="otpVerifyForm" class="space-y-6">
-                        {# Código OTP #}
+                        {# Contraseña Temporal #}
                         <div>
                             <label for="code" class="block text-sm font-medium text-gray-700 mb-2 text-center">
-                                Código de Verificación
+                                Contraseña Temporal (6 dígitos)
                             </label>
                             <input 
                                 type="text" 
@@ -129,10 +129,10 @@
                             >
                             <div class="mt-2 flex items-center justify-between text-xs">
                                 <p class="text-gray-500">
-                                    ⏱️ Expira en <span id="countdown" class="font-semibold">5:00</span>
+                                    ⏱️ Válida por <span id="countdown" class="font-semibold">5:00</span> minutos
                                 </p>
                                 <button type="button" id="resendBtn" class="text-papyrus-blue hover:text-blue-700 font-medium">
-                                    Reenviar código
+                                    Reenviar contraseña
                                 </button>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                                 id="submitBtn2"
                                 class="w-full bg-papyrus-blue text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-all duration-200 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
                             >
-                                <span id="btnText2">Verificar Código</span>
+                                <span id="btnText2">Acceder a mi Portal</span>
                                 <span id="btnLoader2" class="hidden">
                                     <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -184,11 +184,11 @@
             <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex items-start">
                     <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                     <div class="ml-3 text-sm text-blue-700">
-                        <p><strong>¿Por qué necesito verificar mi identidad?</strong></p>
-                        <p class="mt-1">Para proteger tu privacidad, verificamos que eres el dueño del número de teléfono antes de permitirte acceder a tu información personal, historial de paquetes y preferencias.</p>
+                        <p><strong>🔐 Acceso Seguro</strong></p>
+                        <p class="mt-1">Recibirás una contraseña temporal de 6 dígitos por SMS. Esta contraseña es válida por 5 minutos y te permite acceder de forma segura a tu información personal, historial de paquetes y preferencias.</p>
                     </div>
                 </div>
             </div>
@@ -253,7 +253,7 @@ async function requestOTP() {
             }, 1000);
         } else {
             // Error
-            throw new Error(data.detail || data.message || 'Error al enviar código');
+            throw new Error(data.detail || data.message || 'Error al enviar contraseña');
         }
     } catch (error) {
         // Mostrar error
@@ -311,21 +311,46 @@ document.getElementById('otpVerifyForm').addEventListener('submit', async functi
             messageText.className = 'text-sm font-medium text-green-800';
             messageText.textContent = '✅ Verificación exitosa. Accediendo a tu portal...';
             
-            // Guardar token JWT en localStorage
-            localStorage.setItem('customer_token', data.access_token);
-            
-            // Detener countdown
+            // Detener countdown primero
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
             
-            // Redirigir al dashboard completo del portal
-            setTimeout(() => {
-                window.location.href = data.redirect_url;
-            }, 1500);
+            // Guardar token JWT en localStorage de forma síncrona
+            try {
+                localStorage.setItem('customer_token', data.access_token);
+                
+                // Verificar que el token se guardó correctamente
+                const savedToken = localStorage.getItem('customer_token');
+                console.log('🔑 Token guardado:', savedToken ? 'Sí' : 'No');
+                console.log('🔑 Token length:', savedToken ? savedToken.length : 0);
+                console.log('🔑 Token preview:', savedToken ? savedToken.substring(0, 20) + '...' : 'N/A');
+                
+                if (!savedToken) {
+                    throw new Error('No se pudo guardar el token');
+                }
+                
+                // Redirigir al dashboard completo del portal
+                // Usar replace en lugar de href para evitar problemas de caché
+                setTimeout(() => {
+                    window.location.replace(data.redirect_url);
+                }, 1500);
+                
+            } catch (storageError) {
+                console.error('❌ Error al guardar token:', storageError);
+                messageText.textContent = '⚠️ Error al guardar sesión. Por favor intente nuevamente.';
+                messageContent.className = 'rounded-lg p-4 bg-yellow-50 border border-yellow-200';
+                messageIcon.className = 'h-5 w-5 text-yellow-400';
+                messageText.className = 'text-sm font-medium text-yellow-800';
+                
+                // Rehabilitar botón
+                submitBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
         } else {
             // Error
-            throw new Error(data.detail || data.message || 'Error al verificar código');
+            throw new Error(data.detail || data.message || 'Contraseña incorrecta');
         }
     } catch (error) {
         // Mostrar error
@@ -359,7 +384,7 @@ document.getElementById('resendBtn').addEventListener('click', async function() 
     this.textContent = 'Reenviando...';
     await requestOTP();
     this.disabled = false;
-    this.textContent = 'Reenviar código';
+    this.textContent = 'Reenviar contraseña';
 });
 
 // Countdown timer
@@ -385,7 +410,7 @@ function startCountdown(seconds) {
     }, 1000);
 }
 
-// Auto-focus y validación del código
+// Auto-focus y validación de la contraseña
 document.getElementById('code').addEventListener('input', function(e) {
     // Solo permitir números
     this.value = this.value.replace(/[^0-9]/g, '');

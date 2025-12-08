@@ -109,11 +109,11 @@ async def request_preferences_otp(
         db.commit()
         db.refresh(otp)
 
-        # Enviar SMS con código
+        # Enviar SMS con contraseña temporal
         sms_service = SMSService()
         message = (
-            f"PAQUETEX: Su código para gestionar preferencias es: {otp.otp_code}. "
-            f"Válido por 5 minutos. No comparta este código."
+            f"PAQUETEX: Su contraseña temporal es: {otp.otp_code}. "
+            f"Válida por 5 minutos. No comparta esta contraseña."
         )
 
         await sms_service.send_sms(
@@ -125,11 +125,11 @@ async def request_preferences_otp(
             is_test=False
         )
 
-        logger.info(f"✅ OTP para preferencias enviado a {phone} (código: {otp.otp_code})")
+        logger.info(f"✅ Contraseña temporal enviada a {phone} (código: {otp.otp_code})")
 
         return PreferencesOTPResponse(
             success=True,
-            message="Código de verificación enviado por SMS",
+            message="Contraseña temporal enviada por SMS",
             expires_in_seconds=300
         )
 
@@ -139,7 +139,7 @@ async def request_preferences_otp(
         logger.error(f"Error al solicitar OTP para preferencias: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al enviar código: {str(e)}"
+            detail=f"Error al enviar contraseña temporal: {str(e)}"
         )
 
 
@@ -175,11 +175,11 @@ async def verify_preferences_otp(
         if not otp:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Código no encontrado o expirado. Solicite un nuevo código."
+                detail="Contraseña no encontrada o expirada. Solicite una nueva contraseña."
             )
 
-        # Verificar código
-        logger.info(f"🔍 Verificando código para portal - Recibido: '{request.code}' vs Esperado: '{otp.otp_code}'")
+        # Verificar contraseña temporal
+        logger.info(f"🔍 Verificando contraseña temporal para portal - Recibido: '{request.code}' vs Esperado: '{otp.otp_code}'")
         
         if not otp.verify(request.code):
             db.commit()  # Guardar intento fallido
@@ -188,19 +188,19 @@ async def verify_preferences_otp(
             if remaining > 0:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Código incorrecto. Le quedan {remaining} intentos."
+                    detail=f"Contraseña incorrecta. Le quedan {remaining} intentos."
                 )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ha excedido el número de intentos. Solicite un nuevo código."
+                    detail="Ha excedido el número de intentos. Solicite una nueva contraseña."
                 )
 
-        # Código correcto - guardar verificación
+        # Contraseña correcta - guardar verificación
         db.commit()
         
         # Limpiar OTPs antiguos del teléfono
-        logger.info(f"🧹 Limpiando OTPs antiguos para {phone}")
+        logger.info(f"🧹 Limpiando contraseñas temporales antiguas para {phone}")
         db.query(CustomerOTP).filter(
             CustomerOTP.customer_phone == phone,
             CustomerOTP.id != otp.id
