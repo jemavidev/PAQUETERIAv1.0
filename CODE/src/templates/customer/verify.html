@@ -2,167 +2,198 @@
 
 {% block title %}Verificar Identidad - PAQUETEX{% endblock %}
 
+{% block extra_head %}
+<script src="/static/js/phone-utils.js"></script>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        
-        <!-- Logo y Header -->
-        <div class="text-center">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                </svg>
-            </div>
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
-                Portal de Cliente
-            </h2>
-            <p class="mt-2 text-sm text-gray-600">
-                Verifica tu identidad para acceder a tu información, paquetes y preferencias
-            </p>
-        </div>
+<div class="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+    {# Logo PAPYRUS #}
+    <div class="text-center mb-8 px-4">
+        <img src="/static/images/logo.png?v=4.0" 
+             alt="PAPYRUS - Mucho más que solo papeles" 
+             class="mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain mb-4"
+             style="max-height: 120px; min-height: 80px;">
+    </div>
 
-        <!-- Paso 1: Solicitar OTP -->
-        <div id="step1" class="bg-white shadow-xl rounded-lg p-8">
-            <h3 class="text-lg font-medium text-gray-900 mb-6">Paso 1: Ingresa tu teléfono</h3>
+    {# Formulario de Verificación #}
+    <div class="flex justify-center">
+        <div class="max-w-md w-full">
             
-            <form id="otpRequestForm" class="space-y-6">
-                <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-                        📱 Número de Teléfono
-                    </label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        name="phone" 
-                        required
-                        placeholder="+573001234567 o 3001234567"
-                        class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                    <p class="mt-2 text-xs text-gray-500">
-                        Ingresa el número registrado en nuestro sistema
-                    </p>
-                </div>
-
-                <!-- Mensaje de error/éxito -->
-                <div id="messageContainer1" class="hidden">
-                    <div id="messageContent1" class="rounded-md p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg id="messageIcon1" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p id="messageText1" class="text-sm font-medium"></p>
-                            </div>
-                        </div>
+            <!-- Paso 1: Solicitar OTP -->
+            <div id="step1" class="bg-white rounded-2xl shadow-lg border border-gray-200">
+                {# Header #}
+                <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
+                    <div class="text-center">
+                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Portal de Cliente</h2>
+                        <p class="text-sm text-gray-500 mt-1">Verifica tu identidad para acceder</p>
                     </div>
                 </div>
-
-                <div>
-                    <button 
-                        type="submit" 
-                        id="submitBtn1"
-                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
-                    >
-                        <span id="btnText1">Enviar Código de Verificación</span>
-                        <span id="btnLoader1" class="hidden">
-                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                
+                {# Contenido #}
+                <div class="p-4 sm:p-8">
+                    <form id="otpRequestForm" class="space-y-6">
+                        {# Teléfono #}
+                        <div class="input-with-icon">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                             </svg>
-                        </span>
-                    </button>
-                </div>
-            </form>
-        </div>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                required
+                                minlength="10"
+                                maxlength="20"
+                                class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
+                                placeholder="+573001234567 o 3001234567"
+                                onblur="if(window.normalizePhone) this.value = window.normalizePhone(this.value)"
+                                inputmode="tel"
+                                autocomplete="off"
+                            >
+                        </div>
 
-        <!-- Paso 2: Verificar OTP (oculto inicialmente) -->
-        <div id="step2" class="bg-white shadow-xl rounded-lg p-8 hidden">
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Paso 2: Ingresa el código</h3>
-            <p class="text-sm text-gray-600 mb-6">
-                Enviamos un código de 6 dígitos al <span id="phoneDisplay" class="font-semibold"></span>
-            </p>
-            
-            <form id="otpVerifyForm" class="space-y-6">
-                <div>
-                    <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
-                        🔐 Código de Verificación
-                    </label>
-                    <input 
-                        type="text" 
-                        id="code" 
-                        name="code" 
-                        required
-                        maxlength="6"
-                        pattern="[0-9]{6}"
-                        placeholder="123456"
-                        class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl tracking-widest font-mono sm:text-xl"
-                        autocomplete="off"
-                    >
-                    <div class="mt-2 flex items-center justify-between">
-                        <p class="text-xs text-gray-500">
-                            ⏱️ Expira en <span id="countdown" class="font-semibold">5:00</span>
+                        <!-- Mensaje de error/éxito -->
+                        <div id="messageContainer1" class="hidden">
+                            <div id="messageContent1" class="rounded-lg p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg id="messageIcon1" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p id="messageText1" class="text-sm font-medium"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Botón #}
+                        <div>
+                            <button 
+                                type="submit" 
+                                id="submitBtn1"
+                                class="w-full bg-papyrus-blue text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-all duration-200 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
+                            >
+                                <span id="btnText1">Enviar Código de Verificación</span>
+                                <span id="btnLoader1" class="hidden">
+                                    <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        {# Info adicional #}
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500">
+                                ¿No estás registrado? Contacta al administrador
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Paso 2: Verificar OTP (oculto inicialmente) -->
+            <div id="step2" class="bg-white rounded-2xl shadow-lg border border-gray-200 hidden">
+                {# Header #}
+                <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
+                    <div class="text-center">
+                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Verificar Código</h2>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Código enviado al <span id="phoneDisplay" class="font-semibold"></span>
                         </p>
-                        <button type="button" id="resendBtn" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                            Reenviar código
-                        </button>
                     </div>
                 </div>
-
-                <!-- Mensaje de error/éxito -->
-                <div id="messageContainer2" class="hidden">
-                    <div id="messageContent2" class="rounded-md p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg id="messageIcon2" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p id="messageText2" class="text-sm font-medium"></p>
+                
+                {# Contenido #}
+                <div class="p-4 sm:p-8">
+                    <form id="otpVerifyForm" class="space-y-6">
+                        {# Código OTP #}
+                        <div>
+                            <label for="code" class="block text-sm font-medium text-gray-700 mb-2 text-center">
+                                Código de Verificación
+                            </label>
+                            <input 
+                                type="text" 
+                                id="code" 
+                                name="code" 
+                                required
+                                maxlength="6"
+                                pattern="[0-9]{6}"
+                                placeholder="000000"
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-papyrus-blue focus:ring-0 text-center text-2xl tracking-widest font-mono transition-colors"
+                                autocomplete="off"
+                            >
+                            <div class="mt-2 flex items-center justify-between text-xs">
+                                <p class="text-gray-500">
+                                    ⏱️ Expira en <span id="countdown" class="font-semibold">5:00</span>
+                                </p>
+                                <button type="button" id="resendBtn" class="text-papyrus-blue hover:text-blue-700 font-medium">
+                                    Reenviar código
+                                </button>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div>
-                    <button 
-                        type="submit" 
-                        id="submitBtn2"
-                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
-                    >
-                        <span id="btnText2">Verificar Código</span>
-                        <span id="btnLoader2" class="hidden">
-                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
+                        <!-- Mensaje de error/éxito -->
+                        <div id="messageContainer2" class="hidden">
+                            <div id="messageContent2" class="rounded-lg p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg id="messageIcon2" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p id="messageText2" class="text-sm font-medium"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="text-center">
-                    <button type="button" id="backBtn" class="text-sm text-gray-600 hover:text-gray-800">
-                        ← Cambiar número de teléfono
-                    </button>
-                </div>
-            </form>
-        </div>
+                        {# Botón #}
+                        <div>
+                            <button 
+                                type="submit" 
+                                id="submitBtn2"
+                                class="w-full bg-papyrus-blue text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-all duration-200 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
+                            >
+                                <span id="btnText2">Verificar Código</span>
+                                <span id="btnLoader2" class="hidden">
+                                    <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                            </button>
+                        </div>
 
-        <!-- Información adicional -->
-        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="flex items-start">
-                <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <div class="ml-3 text-sm text-blue-700">
-                    <p><strong>¿Por qué necesito verificar mi identidad?</strong></p>
-                    <p class="mt-1">Para proteger tu privacidad, verificamos que eres el dueño del número de teléfono antes de permitirte gestionar tus preferencias de notificaciones.</p>
+                        {# Botón volver #}
+                        <div class="text-center">
+                            <button type="button" id="backBtn" class="text-sm text-gray-600 hover:text-gray-800">
+                                ← Cambiar número de teléfono
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
 
+            {# Info Box #}
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="ml-3 text-sm text-blue-700">
+                        <p><strong>¿Por qué necesito verificar mi identidad?</strong></p>
+                        <p class="mt-1">Para proteger tu privacidad, verificamos que eres el dueño del número de teléfono antes de permitirte acceder a tu información personal, historial de paquetes y preferencias.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
 
@@ -206,7 +237,7 @@ async function requestOTP() {
         if (response.ok && data.success) {
             // Éxito - mostrar mensaje y cambiar a paso 2
             messageContainer.classList.remove('hidden');
-            messageContent.className = 'rounded-md p-4 bg-green-50';
+            messageContent.className = 'rounded-lg p-4 bg-green-50 border border-green-200';
             messageIcon.className = 'h-5 w-5 text-green-400';
             messageText.className = 'text-sm font-medium text-green-800';
             messageText.textContent = data.message;
@@ -227,7 +258,7 @@ async function requestOTP() {
     } catch (error) {
         // Mostrar error
         messageContainer.classList.remove('hidden');
-        messageContent.className = 'rounded-md p-4 bg-red-50';
+        messageContent.className = 'rounded-lg p-4 bg-red-50 border border-red-200';
         messageIcon.className = 'h-5 w-5 text-red-400';
         messageText.className = 'text-sm font-medium text-red-800';
         messageText.textContent = error.message;
@@ -275,7 +306,7 @@ document.getElementById('otpVerifyForm').addEventListener('submit', async functi
         if (response.ok && data.success) {
             // Éxito - guardar token JWT y redirigir al dashboard
             messageContainer.classList.remove('hidden');
-            messageContent.className = 'rounded-md p-4 bg-green-50';
+            messageContent.className = 'rounded-lg p-4 bg-green-50 border border-green-200';
             messageIcon.className = 'h-5 w-5 text-green-400';
             messageText.className = 'text-sm font-medium text-green-800';
             messageText.textContent = '✅ Verificación exitosa. Accediendo a tu portal...';
@@ -299,7 +330,7 @@ document.getElementById('otpVerifyForm').addEventListener('submit', async functi
     } catch (error) {
         // Mostrar error
         messageContainer.classList.remove('hidden');
-        messageContent.className = 'rounded-md p-4 bg-red-50';
+        messageContent.className = 'rounded-lg p-4 bg-red-50 border border-red-200';
         messageIcon.className = 'h-5 w-5 text-red-400';
         messageText.className = 'text-sm font-medium text-red-800';
         messageText.textContent = error.message;
@@ -360,4 +391,28 @@ document.getElementById('code').addEventListener('input', function(e) {
     this.value = this.value.replace(/[^0-9]/g, '');
 });
 </script>
+
+<style>
+/* Estilos para inputs con iconos (igual que announce) */
+.input-with-icon {
+    position: relative;
+    padding-left: 2.5rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #9CA3AF;
+    pointer-events: none;
+}
+
+.input-with-icon input:focus + .input-icon,
+.input-with-icon input:not(:placeholder-shown) + .input-icon {
+    color: #2563EB;
+}
+</style>
 {% endblock %}
