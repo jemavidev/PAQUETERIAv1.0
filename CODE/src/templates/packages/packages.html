@@ -181,7 +181,14 @@
 
                 <!-- Formulario de acción -->
                 <div id="actionForm" class="mt-3 sm:mt-4 border-gray-200">
-                    <h4 id="actionTitle" class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-3">Confirmar Acción</h4>
+                    <div class="flex items-center justify-between mb-2 sm:mb-3">
+                        <h4 id="actionTitle" class="text-base sm:text-lg font-medium text-gray-900">Confirmar Acción</h4>
+                        <!-- Botón superior de confirmación (visible solo en MÓVIL, oculto en DESKTOP via CSS) -->
+                        <button id="confirmActionTop"
+                                class="hidden flex-shrink-0 px-3 py-2 sm:px-4 sm:py-2 border border-transparent rounded-lg shadow-lg text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center whitespace-nowrap">
+                            <span id="confirmButtonTextTop">Recibir Paquete</span>
+                        </button>
+                    </div>
                     
                     <!-- Input de archivo optimizado para escritorio (fuera del receiveForm para que siempre sea accesible) -->
                     <input type="file" id="packageImages" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="position: absolute; left: -9999px; opacity: 0; pointer-events: auto; width: 1px; height: 1px; z-index: 1000;" />
@@ -343,6 +350,40 @@
                         <!-- CAMPOS DE PAGO -->
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                             <h3 class="font-bold text-gray-800 text-lg mb-3">CONFIRMACIÓN DE PAGO</h3>
+                            
+                            <!-- Botones de valores predefinidos - Compactos -->
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                                    Valores rápidos
+                                </label>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="setPaymentAmount(0)" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
+                                        $0
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(1500)" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
+                                        $1500
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(2000)" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
+                                        $2000
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(2500)" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
+                                        $2500
+                                    </button>
+                                    <button type="button" onclick="setPaymentAmount(3000)" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-500 hover:text-blue-700 transition-all duration-150 active:scale-95">
+                                        $3000
+                                    </button>
+                                    <button type="button" onclick="clearPaymentAmount()" 
+                                            class="payment-quick-btn px-2.5 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-orange-50 hover:border-orange-500 hover:text-orange-700 transition-all duration-150 active:scale-95">
+                                        Otro
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <!-- Monto Total a Pagar -->
                             <div>
                                 <label for="paymentAmount" class="block text-sm font-medium text-gray-700 mb-2">
@@ -540,6 +581,17 @@
     -webkit-box-orient: vertical;
 }
 
+/* Control de visibilidad de botones responsive */
+/* Botón superior: siempre oculto en desktop */
+@media (min-width: 768px) {
+    #confirmActionTop {
+        display: none !important;
+    }
+}
+
+/* Botón inferior: visible por defecto en móvil */
+/* JavaScript controlará cuándo ocultarlo (solo para receive/deliver) */
+
 /* Estilos para notificaciones toast */
 .toast {
     min-width: 280px;
@@ -722,6 +774,24 @@ const ENABLE_VERBOSE_LOGS = false; // Cambiar a true para ver todos los logs
 const log = (isLocalhost && ENABLE_VERBOSE_LOGS) ? console.log.bind(console) : () => {};
 const error = isLocalhost ? console.error.bind(console) : () => {}; // Errores siempre se muestran
 const warn = (isLocalhost && ENABLE_VERBOSE_LOGS) ? console.warn.bind(console) : () => {};
+
+// ========================================
+// FUNCIONES DE UTILIDAD
+// ========================================
+/**
+ * Convierte el estado técnico del paquete a texto amigable para WhatsApp
+ * @param {string} status - Estado del paquete (announced, received, delivered, cancelled)
+ * @returns {string} - Texto amigable del estado
+ */
+function getStatusText(status) {
+    const statusMap = {
+        'announced': 'ANUNCIADO',
+        'received': 'RECIBIDO EN BODEGA',
+        'delivered': 'ENTREGADO',
+        'cancelled': 'CANCELADO'
+    };
+    return statusMap[status?.toLowerCase()] || 'EN PROCESO';
+}
 
 // ========================================
 // DETECCIÓN DE DISPOSITIVOS MÓVILES
@@ -1355,7 +1425,7 @@ function createPackageElement(package) {
                         </button>
                     ` : ''}
                     ${package.customer_phone ? `
-                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, te contacto por tu paquete. Puedes consultar el estado aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
+                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, tu paquete con código *${package.tracking_number}* está *${getStatusText(package.status)}*. Puedes consultar más detalles aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
                            target="_blank"
                            class="text-green-600 hover:text-green-800 transition-colors"
                            title="Contactar por WhatsApp">
@@ -1564,6 +1634,13 @@ function showPackageModal(package, action) {
 
     // Set modal title and show appropriate form based on action
     const confirmButtonText = document.getElementById('confirmButtonText');
+    const confirmButtonTextTop = document.getElementById('confirmButtonTextTop');
+    const confirmActionTopBtn = document.getElementById('confirmActionTop');
+    
+    // Ocultar botón superior por defecto
+    if (confirmActionTopBtn) {
+        confirmActionTopBtn.classList.add('hidden');
+    }
     
     switch(action) {
         case 'visualizar':
@@ -1571,6 +1648,12 @@ function showPackageModal(package, action) {
             actionTitle.textContent = '';
             genericForm.classList.remove('hidden');
             confirmButtonText.textContent = 'Cerrar';
+            
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonVis = document.getElementById('confirmAction');
+            if (confirmButtonVis) {
+                confirmButtonVis.style.display = 'flex';
+            }
             
             // Mostrar información completa del paquete
             displayPackageDetails(package);
@@ -1584,6 +1667,18 @@ function showPackageModal(package, action) {
             actionTitle.textContent = 'Confirmar Recepción';
             receiveForm.classList.remove('hidden');
             confirmButtonText.textContent = 'Recibir Paquete';
+            
+            // Mostrar y configurar botón superior
+            if (confirmActionTopBtn) {
+                confirmActionTopBtn.classList.remove('hidden');
+                confirmButtonTextTop.textContent = 'Recibir Paquete';
+            }
+            
+            // Ocultar botón inferior en móvil (solo para receive)
+            const confirmButton = document.getElementById('confirmAction');
+            if (confirmButton && window.innerWidth < 768) {
+                confirmButton.style.display = 'none';
+            }
 
             // Reset receive form
             document.getElementById('packageType').value = 'normal';
@@ -1651,6 +1746,18 @@ function showPackageModal(package, action) {
             actionTitle.textContent = 'Confirmar Entrega';
             deliverForm.classList.remove('hidden');
             confirmButtonText.textContent = 'Entregar Paquete';
+            
+            // Mostrar y configurar botón superior
+            if (confirmActionTopBtn) {
+                confirmActionTopBtn.classList.remove('hidden');
+                confirmButtonTextTop.textContent = 'Entregar Paquete';
+            }
+            
+            // Ocultar botón inferior en móvil (solo para deliver)
+            const confirmButtonDeliver = document.getElementById('confirmAction');
+            if (confirmButtonDeliver && window.innerWidth < 768) {
+                confirmButtonDeliver.style.display = 'none';
+            }
 
             // Load payment summary
             loadPaymentSummary(package);
@@ -1676,6 +1783,12 @@ function showPackageModal(package, action) {
             actionMessage.textContent = `¿Estás seguro de que deseas cancelar el paquete ${package.tracking_number}? Esta acción no se puede deshacer.`;
             confirmButtonText.textContent = 'Cancelar Paquete';
             
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonCancel = document.getElementById('confirmAction');
+            if (confirmButtonCancel) {
+                confirmButtonCancel.style.display = 'flex';
+            }
+            
             // Mostrar botón de email si el cliente tiene email
             checkAndShowEmailButton(package, 'cancelled');
             break;
@@ -1685,6 +1798,12 @@ function showPackageModal(package, action) {
             genericForm.classList.remove('hidden');
             actionMessage.textContent = `¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE el paquete ${package.tracking_number}? Esta acción eliminará todos los datos relacionados y NO SE PUEDE DESHACER. Solo los administradores pueden realizar esta acción.`;
             confirmButtonText.textContent = 'Eliminar Paquete';
+            
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonDelete = document.getElementById('confirmAction');
+            if (confirmButtonDelete) {
+                confirmButtonDelete.style.display = 'flex';
+            }
             break;
     }
 
@@ -1775,8 +1894,8 @@ async function loadPaymentSummary(package) {
             // Cargar fechas importantes
             loadDatesSummary(package);
             
-            // Pre-cargar monto calculado
-            paymentAmountInput.value = calculation.total_fee.toFixed(2);
+            // NO pre-cargar monto - dejar campo vacío para que usuario seleccione
+            paymentAmountInput.value = '';
             suggestedAmountText.textContent = `Valor calculado: $${calculation.total_fee.toFixed(2)}`;
             
         } else {
@@ -1826,9 +1945,72 @@ function loadPaymentSummaryFallback(package) {
     // Cargar fechas importantes
     loadDatesSummary(package);
     
-    // Pre-cargar monto calculado
-    paymentAmountInput.value = totalAmount.toFixed(2);
+    // NO pre-cargar monto - dejar campo vacío para que usuario seleccione
+    paymentAmountInput.value = '';
     suggestedAmountText.textContent = `Valor calculado: $${totalAmount.toFixed(2)}`;
+}
+
+/**
+ * Establecer un valor predefinido en el campo de pago
+ */
+function setPaymentAmount(amount) {
+    const paymentAmountInput = document.getElementById('paymentAmount');
+    if (paymentAmountInput) {
+        paymentAmountInput.value = amount.toFixed(2);
+        
+        // Resaltar el botón seleccionado
+        highlightSelectedPaymentButton(amount);
+        
+        // Mostrar feedback visual
+        paymentAmountInput.focus();
+        paymentAmountInput.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+            paymentAmountInput.classList.remove('ring-2', 'ring-blue-500');
+        }, 500);
+    }
+}
+
+/**
+ * Limpiar el campo de pago para ingresar un valor personalizado
+ */
+function clearPaymentAmount() {
+    const paymentAmountInput = document.getElementById('paymentAmount');
+    if (paymentAmountInput) {
+        paymentAmountInput.value = '';
+        paymentAmountInput.focus();
+        
+        // Remover resaltado de todos los botones
+        highlightSelectedPaymentButton(null);
+        
+        // Mostrar feedback visual
+        paymentAmountInput.classList.add('ring-2', 'ring-orange-500');
+        setTimeout(() => {
+            paymentAmountInput.classList.remove('ring-2', 'ring-orange-500');
+        }, 500);
+    }
+}
+
+/**
+ * Resaltar el botón de pago seleccionado
+ */
+function highlightSelectedPaymentButton(amount) {
+    const buttons = document.querySelectorAll('.payment-quick-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-600');
+        btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+    });
+    
+    if (amount !== null) {
+        const selectedBtn = Array.from(buttons).find(btn => {
+            const btnText = btn.textContent.trim().replace('$', '');
+            return parseFloat(btnText) === amount;
+        });
+        
+        if (selectedBtn) {
+            selectedBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+            selectedBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-600');
+        }
+    }
 }
 
 function loadDatesSummary(package) {
@@ -2342,6 +2524,27 @@ function displayPackageDetails(package) {
     actionMessage.style.display = 'none';
 }
 
+/**
+ * Helper function para actualizar el estado de ambos botones de confirmación
+ */
+function setConfirmButtonsState(disabled, content) {
+    const confirmButton = document.getElementById('confirmAction');
+    const confirmButtonTop = document.getElementById('confirmActionTop');
+    
+    if (confirmButton) {
+        confirmButton.disabled = disabled;
+        confirmButton.innerHTML = content;
+    }
+    
+    if (confirmButtonTop && !confirmButtonTop.classList.contains('hidden')) {
+        confirmButtonTop.disabled = disabled;
+        const textSpan = confirmButtonTop.querySelector('#confirmButtonTextTop');
+        if (textSpan) {
+            textSpan.textContent = typeof content === 'string' && !content.includes('<') ? content : 'Procesando...';
+        }
+    }
+}
+
 function confirmAction() {
     log('🔄 confirmAction called');
     log('📦 Current package ID:', currentPackageId);
@@ -2381,12 +2584,9 @@ function confirmAction() {
 async function confirmCancelAction() {
     log('🔄 confirmCancelAction called');
     
-    // Deshabilitar botón para evitar doble click
+    // Deshabilitar ambos botones para evitar doble click
     const confirmButton = document.getElementById('confirmAction');
-    if (confirmButton) {
-        confirmButton.disabled = true;
-        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    }
+    setConfirmButtonsState(true, 'Procesando...');
     
     const packageIdForRequest = currentPackageId.toString();
     
@@ -2436,11 +2636,8 @@ async function confirmCancelAction() {
         error('❌ Error:', error);
         showErrorToast('Error', error.message, 4000);
         
-        // Rehabilitar botón en caso de error
-        if (confirmButton) {
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = 'Confirmar Cancelación';
-        }
+        // Rehabilitar ambos botones en caso de error
+        setConfirmButtonsState(false, 'Cancelar Paquete');
     }
 }
 
@@ -2448,27 +2645,29 @@ async function confirmDeliverAction() {
     log('🔄 confirmDeliverAction called');
     
     // Validate required fields
-    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+    const paymentAmountValue = document.getElementById('paymentAmount').value;
+    const paymentAmount = parseFloat(paymentAmountValue);
 
-    if (!paymentAmount || paymentAmount <= 0) {
-        showErrorToast('Error', 'Debe ingresar un monto de pago válido', 3000);
+    // Validar que el campo no esté vacío y que sea un número válido >= 0
+    if (paymentAmountValue === '' || isNaN(paymentAmount) || paymentAmount < 0) {
+        showErrorToast('Error', 'Debe ingresar un monto de pago válido (puede ser $0)', 3000);
         return;
     }
 
-    // Validar que el monto sea razonable
-    const calculatedAmount = parseFloat(document.getElementById('suggestedAmountText').textContent.replace('Valor calculado: $', ''));
-    if (paymentAmount > calculatedAmount * 2) {
-        if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Continuar?`)) {
-            return;
+    // Validar que el monto sea razonable (solo si no es cero)
+    if (paymentAmount > 0) {
+        const calculatedAmount = parseFloat(document.getElementById('suggestedAmountText').textContent.replace('Valor calculado: $', ''));
+        if (paymentAmount > calculatedAmount * 2) {
+            if (!confirm(`El monto ingresado ($${paymentAmount.toFixed(2)}) es mayor al calculado ($${calculatedAmount.toFixed(2)}). ¿Continuar?`)) {
+                return;
+            }
         }
     }
 
-    // Deshabilitar botón inmediatamente
+    // Deshabilitar ambos botones inmediatamente
     const confirmButton = document.getElementById('confirmAction');
-    if (confirmButton) {
-        confirmButton.disabled = true;
-        confirmButton.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    }
+    const spinnerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    setConfirmButtonsState(true, 'Procesando...');
 
     const cleanPackageId = currentPackageId.toString().replace('announcement_', '');
     const packageData = packagesByState.received.find(p => p.id.toString() === cleanPackageId) || currentPackage;
@@ -2519,11 +2718,8 @@ async function confirmDeliverAction() {
         error('❌ Error:', error);
         showErrorToast('Error', error.message, 4000);
         
-        // Rehabilitar botón en caso de error
-        if (confirmButton) {
-            confirmButton.disabled = false;
-            confirmButton.innerHTML = 'Confirmar Entrega';
-        }
+        // Rehabilitar ambos botones en caso de error
+        setConfirmButtonsState(false, 'Entregar Paquete');
     }
 }
 function confirmDeleteAction() {
@@ -2534,11 +2730,10 @@ function confirmDeleteAction() {
         return;
     }
 
-    // Show loading state
+    // Show loading state en ambos botones
     const confirmButton = document.getElementById('confirmAction');
     const originalText = confirmButton.innerHTML;
-    confirmButton.disabled = true;
-    confirmButton.innerHTML = 'Eliminando...';
+    setConfirmButtonsState(true, 'Eliminando...');
 
     // Determine if it's a package ID or announcement ID
     let endpoint;
@@ -2577,9 +2772,8 @@ function confirmDeleteAction() {
         showErrorToast('Error', error.message || 'No se pudo eliminar el paquete. Verifica que tengas permisos de administrador.', 7000);
     })
     .finally(() => {
-        // Restore button state
-        confirmButton.disabled = false;
-        confirmButton.innerHTML = originalText;
+        // Restore button state en ambos botones
+        setConfirmButtonsState(false, originalText);
         
         // Hide upload progress indicator
         const uploadProgress = document.getElementById('uploadProgress');
@@ -2604,11 +2798,10 @@ async function confirmReceiveAction() {
         return;
     }
 
-    // Show loading state
+    // Show loading state en ambos botones
     const confirmButton = document.getElementById('confirmAction');
     const originalText = confirmButton.innerHTML;
-    confirmButton.disabled = true;
-    confirmButton.innerHTML = 'Procesando...';
+    setConfirmButtonsState(true, 'Procesando...');
 
     try {
         // Procesar recepción con S3
@@ -2648,9 +2841,8 @@ async function confirmReceiveAction() {
         error('Error en recepción del paquete:', error);
         showErrorToast('Error', error.message || 'No se pudo recibir el paquete.', 5000);
     } finally {
-        // Restore button state
-        confirmButton.disabled = false;
-        confirmButton.innerHTML = originalText;
+        // Restore button state en ambos botones
+        setConfirmButtonsState(false, originalText);
     }
 }
 
@@ -3657,18 +3849,8 @@ function applyPackageFilter() {
     // Esto hará una petición AJAX con los parámetros search y status_filter
     loadPackages(1); // Volver a la página 1 cuando se aplican filtros
     
-    // Mostrar notificación si hay filtros activos
-    if (searchTerm || currentStatusFilter) {
-        let filterMessage = '';
-        if (searchTerm && currentStatusFilter) {
-            filterMessage = `Búsqueda y filtro de estado aplicados`;
-        } else if (searchTerm) {
-            filterMessage = `Buscando: "${searchTerm}"`;
-        } else if (currentStatusFilter) {
-            filterMessage = `Filtro de estado aplicado: ${getStatusText(currentStatusFilter)}`;
-        }
-        showInfoToast(filterMessage, 'Buscando en toda la base de datos...', 2000);
-    }
+    // Notificaciones deshabilitadas para evitar acumulación durante la escritura
+    // El usuario ya ve el campo de búsqueda y los resultados se actualizan automáticamente
 }
 
 // Función auxiliar para normalizar estados para filtrado
@@ -4171,6 +4353,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmActionBtn = document.getElementById('confirmAction');
     if (confirmActionBtn) {
         confirmActionBtn.addEventListener('click', confirmAction);
+    }
+
+    // Event listener para el botón superior de confirmación (mismo comportamiento)
+    const confirmActionTopBtn = document.getElementById('confirmActionTop');
+    if (confirmActionTopBtn) {
+        confirmActionTopBtn.addEventListener('click', confirmAction);
     }
 
     // Pagination events - verificar que los elementos existan antes de agregar listeners
