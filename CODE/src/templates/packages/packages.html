@@ -582,19 +582,15 @@
 }
 
 /* Control de visibilidad de botones responsive */
-/* Botón superior: visible en móvil, oculto en desktop */
+/* Botón superior: siempre oculto en desktop */
 @media (min-width: 768px) {
     #confirmActionTop {
         display: none !important;
     }
 }
 
-/* Botón inferior: oculto en móvil, visible en desktop */
-@media (max-width: 767px) {
-    #confirmAction {
-        display: none !important;
-    }
-}
+/* Botón inferior: visible por defecto en móvil */
+/* JavaScript controlará cuándo ocultarlo (solo para receive/deliver) */
 
 /* Estilos para notificaciones toast */
 .toast {
@@ -1653,6 +1649,12 @@ function showPackageModal(package, action) {
             genericForm.classList.remove('hidden');
             confirmButtonText.textContent = 'Cerrar';
             
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonVis = document.getElementById('confirmAction');
+            if (confirmButtonVis) {
+                confirmButtonVis.style.display = 'flex';
+            }
+            
             // Mostrar información completa del paquete
             displayPackageDetails(package);
             // Cargar información de pago dinámicamente
@@ -1670,6 +1672,12 @@ function showPackageModal(package, action) {
             if (confirmActionTopBtn) {
                 confirmActionTopBtn.classList.remove('hidden');
                 confirmButtonTextTop.textContent = 'Recibir Paquete';
+            }
+            
+            // Ocultar botón inferior en móvil (solo para receive)
+            const confirmButton = document.getElementById('confirmAction');
+            if (confirmButton && window.innerWidth < 768) {
+                confirmButton.style.display = 'none';
             }
 
             // Reset receive form
@@ -1744,6 +1752,12 @@ function showPackageModal(package, action) {
                 confirmActionTopBtn.classList.remove('hidden');
                 confirmButtonTextTop.textContent = 'Entregar Paquete';
             }
+            
+            // Ocultar botón inferior en móvil (solo para deliver)
+            const confirmButtonDeliver = document.getElementById('confirmAction');
+            if (confirmButtonDeliver && window.innerWidth < 768) {
+                confirmButtonDeliver.style.display = 'none';
+            }
 
             // Load payment summary
             loadPaymentSummary(package);
@@ -1769,6 +1783,12 @@ function showPackageModal(package, action) {
             actionMessage.textContent = `¿Estás seguro de que deseas cancelar el paquete ${package.tracking_number}? Esta acción no se puede deshacer.`;
             confirmButtonText.textContent = 'Cancelar Paquete';
             
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonCancel = document.getElementById('confirmAction');
+            if (confirmButtonCancel) {
+                confirmButtonCancel.style.display = 'flex';
+            }
+            
             // Mostrar botón de email si el cliente tiene email
             checkAndShowEmailButton(package, 'cancelled');
             break;
@@ -1778,6 +1798,12 @@ function showPackageModal(package, action) {
             genericForm.classList.remove('hidden');
             actionMessage.textContent = `¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE el paquete ${package.tracking_number}? Esta acción eliminará todos los datos relacionados y NO SE PUEDE DESHACER. Solo los administradores pueden realizar esta acción.`;
             confirmButtonText.textContent = 'Eliminar Paquete';
+            
+            // Asegurar que el botón inferior sea visible en móvil
+            const confirmButtonDelete = document.getElementById('confirmAction');
+            if (confirmButtonDelete) {
+                confirmButtonDelete.style.display = 'flex';
+            }
             break;
     }
 
