@@ -110,18 +110,22 @@ async def request_preferences_otp(
         db.refresh(otp)
 
         # Enviar SMS con contraseña temporal
+        from app.models.notification import NotificationEvent
+        
         sms_service = SMSService()
         sms_message = (
             f"PAQUETEX: Su contraseña temporal es: {otp.otp_code}. "
             f"Válida por 5 minutos. No comparta esta contraseña."
         )
 
+        # IMPORTANTE: No pasar customer_id para OTP de autenticación
+        # Los OTPs de acceso deben enviarse SIEMPRE, sin verificar preferencias
         await sms_service.send_sms(
             db=db,
             recipient=phone,
             message=sms_message,
-            event_type="CUSTOM_MESSAGE",
-            customer_id=str(customer.id),
+            event_type=NotificationEvent.CUSTOM_MESSAGE,
+            customer_id=None,  # No verificar preferencias para OTP de autenticación
             is_test=False
         )
 
@@ -330,6 +334,8 @@ async def send_verify_link(
         verify_link = f"{base_url}/customer/verify"
 
         # Enviar SMS con link
+        from app.models.notification import NotificationEvent
+        
         sms_service = SMSService()
         message = (
             f"PAQUETEX: Accede a tu portal de cliente (datos, paquetes y preferencias). "
@@ -340,7 +346,7 @@ async def send_verify_link(
             db=db,
             recipient=phone,
             message=message,
-            event_type="CUSTOM_MESSAGE",
+            event_type=NotificationEvent.CUSTOM_MESSAGE,
             customer_id=str(customer.id),
             is_test=False
         )

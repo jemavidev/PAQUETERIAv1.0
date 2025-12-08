@@ -15,6 +15,7 @@ import logging
 from app.models.customer import Customer
 from app.models.customer_otp import CustomerOTP
 from app.models.package import Package, PackageStatus
+from app.models.notification import NotificationEvent
 from app.schemas.customer_portal import (
     OTPRequest, OTPResponse, OTPVerifyRequest, OTPVerifyResponse,
     CustomerPortalData, CustomerPortalUpdate, CustomerPackageHistory
@@ -106,7 +107,7 @@ class CustomerPortalService:
                 db=db,
                 recipient=phone,
                 message=message,
-                event_type="CUSTOM_MESSAGE",
+                event_type=NotificationEvent.CUSTOM_MESSAGE,
                 customer_id=str(customer.id),
                 is_test=False
             )
