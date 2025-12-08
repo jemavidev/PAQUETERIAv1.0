@@ -223,13 +223,23 @@ class EmailService(BaseService[Notification, Any, Any]):
             # ✅ NUEVO: Verificar preferencias del cliente (clientes sin cuenta)
             if customer_id and not is_test:
                 from app.models.customer_preferences import CustomerPreferences
+                
+                email_logger.info(f"🔍 [EMAIL] Verificando preferencias para customer_id: {customer_id} (tipo: {type(customer_id)})")
+                
                 customer_prefs = db.query(CustomerPreferences).filter(
                     CustomerPreferences.customer_id == customer_id
                 ).first()
                 
                 if customer_prefs:
+                    email_logger.info(f"📋 [EMAIL] Preferencias encontradas para cliente {customer_id}")
+                    email_logger.info(f"   Email habilitado: {customer_prefs.email_notifications_enabled}")
+                    email_logger.info(f"   Evento: {event_type.value}")
+                    
                     # Verificar si el cliente permite este tipo de notificación
-                    if not customer_prefs.should_send_notification(NotificationType.EMAIL, event_type):
+                    should_send = customer_prefs.should_send_notification(NotificationType.EMAIL, event_type)
+                    email_logger.info(f"   ¿Debe enviar?: {should_send}")
+                    
+                    if not should_send:
                         email_logger.info(f"📧❌ Email bloqueado por preferencias del cliente {customer_id} (evento: {event_type.value})")
                         
                         # Crear registro de notificación bloqueada
@@ -263,6 +273,10 @@ class EmailService(BaseService[Notification, Any, Any]):
                             "status": "blocked",
                             "message": "Notificación bloqueada por preferencias del cliente"
                         }
+                    else:
+                        email_logger.info(f"✅ [EMAIL] Email permitido por preferencias del cliente {customer_id}")
+                else:
+                    email_logger.warning(f"⚠️ [EMAIL] No se encontraron preferencias para cliente {customer_id}")
             
             # Validar configuración
             if not self._validate_smtp_config():

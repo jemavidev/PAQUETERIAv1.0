@@ -379,15 +379,22 @@ function customerDashboard() {
                     }
                 });
 
+                if (response.status === 401) {
+                    // Token expirado - redirigir a login de cliente
+                    localStorage.removeItem('customer_token');
+                    window.location.href = '/customer/verify';
+                    return;
+                }
+
                 if (!response.ok) {
-                    throw new Error('Sesión expirada');
+                    throw new Error('Error al cargar datos');
                 }
 
                 this.customerData = await response.json();
             } catch (error) {
                 console.error('Error loading data:', error);
                 localStorage.removeItem('customer_token');
-                window.location.href = '/customer-portal';
+                window.location.href = '/customer/verify';
             }
         },
 
@@ -400,6 +407,13 @@ function customerDashboard() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
+
+                if (response.status === 401) {
+                    // Token expirado - redirigir a login de cliente
+                    localStorage.removeItem('customer_token');
+                    window.location.href = '/customer/verify';
+                    return;
+                }
 
                 if (response.ok) {
                     const data = await response.json();
@@ -442,6 +456,14 @@ function customerDashboard() {
                     })
                 });
 
+                if (response.status === 401) {
+                    // Token expirado - redirigir a login de cliente
+                    localStorage.removeItem('customer_token');
+                    alert('Tu sesión ha expirado. Por favor ingresa nuevamente.');
+                    window.location.href = '/customer/verify';
+                    return;
+                }
+
                 if (response.ok) {
                     this.customerData = await response.json();
                     this.message = '¡Datos actualizados exitosamente!';
@@ -468,6 +490,13 @@ function customerDashboard() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
+
+                if (response.status === 401) {
+                    // Token expirado - redirigir a login de cliente
+                    localStorage.removeItem('customer_token');
+                    window.location.href = '/customer/verify';
+                    return;
+                }
 
                 if (response.ok) {
                     const data = await response.json();
@@ -499,6 +528,14 @@ function customerDashboard() {
                     },
                     body: JSON.stringify(this.preferences)
                 });
+
+                if (response.status === 401) {
+                    // Token expirado - redirigir a login de cliente
+                    localStorage.removeItem('customer_token');
+                    alert('Tu sesión ha expirado. Por favor ingresa nuevamente.');
+                    window.location.href = '/customer/verify';
+                    return;
+                }
 
                 if (response.ok) {
                     const data = await response.json();
