@@ -269,6 +269,7 @@
                                     <button class="btn-preferences inline-flex items-center justify-center w-9 h-9 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors duration-200"
                                             data-customer-id="{{ customer.id }}"
                                             data-customer-name="{{ customer.full_name }}"
+                                            data-customer-phone="{{ customer.phone }}"
                                             title="Gestionar Preferencias de Notificaciones">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
@@ -1944,26 +1945,19 @@ function customerManagement() {
             marketing_enabled: false
         },
         
-        async openPreferencesModal(customerId, customerName) {
-            console.log('🔵 openPreferencesModal iniciado', { customerId, customerName });
+        async openPreferencesModal(customerId, customerName, customerPhone) {
+            console.log('🔵 openPreferencesModal iniciado', { customerId, customerName, customerPhone });
             
             this.showPreferencesModal = true;
             this.preferencesCustomerId = customerId;
             this.preferencesCustomerName = customerName;
+            this.preferencesCustomerPhone = customerPhone;
             this.preferencesLoading = true;
             this.verifyUrlCopied = false;
+            this.urlCopied = false;
             this.sendingSMS = false;
             
             try {
-                // Obtener datos del cliente para el teléfono
-                const customerResponse = await fetch(`/api/customers/${customerId}`);
-                if (!customerResponse.ok) {
-                    throw new Error('Error al obtener datos del cliente');
-                }
-                
-                const customerData = await customerResponse.json();
-                this.preferencesCustomerPhone = customerData.phone;
-                
                 // Generar URLs
                 this.verifyUrl = window.location.origin + '/customer/verify';
                 this.preferencesUrl = window.location.origin + '/customer/verify';
@@ -2575,11 +2569,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const customerId = btn.getAttribute('data-customer-id');
             const customerName = btn.getAttribute('data-customer-name');
+            const customerPhone = btn.getAttribute('data-customer-phone');
             
-            console.log('🔵 Botón de preferencias clickeado', { customerId, customerName });
+            console.log('🔵 Botón de preferencias clickeado', { customerId, customerName, customerPhone });
             
             if (customerId) {
-                openPreferencesModal(customerId, customerName || 'Cliente');
+                openPreferencesModal(customerId, customerName || 'Cliente', customerPhone);
             } else {
                 console.error('❌ No se encontró customer-id en el botón');
             }
@@ -2588,13 +2583,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Función global para abrir modal de preferencias
-function openPreferencesModal(customerId, customerName) {
-    console.log('🔵 openPreferencesModal llamado', { customerId, customerName });
+function openPreferencesModal(customerId, customerName, customerPhone) {
+    console.log('🔵 openPreferencesModal llamado', { customerId, customerName, customerPhone });
     
     // Método 1: Usar la instancia global guardada
     if (window.customerAppInstance && typeof window.customerAppInstance.openPreferencesModal === 'function') {
         console.log('✅ Usando instancia global');
-        window.customerAppInstance.openPreferencesModal(customerId, customerName);
+        window.customerAppInstance.openPreferencesModal(customerId, customerName, customerPhone);
         return;
     }
     
@@ -2606,7 +2601,7 @@ function openPreferencesModal(customerId, customerName) {
                 const alpineData = Alpine.$data(element);
                 if (alpineData && typeof alpineData.openPreferencesModal === 'function') {
                     console.log('✅ Usando Alpine.$data');
-                    alpineData.openPreferencesModal(customerId, customerName);
+                    alpineData.openPreferencesModal(customerId, customerName, customerPhone);
                     return;
                 }
             }
@@ -2622,7 +2617,7 @@ function openPreferencesModal(customerId, customerName) {
             const alpineData = element.__x.$data;
             if (alpineData && typeof alpineData.openPreferencesModal === 'function') {
                 console.log('✅ Usando __x.$data');
-                alpineData.openPreferencesModal(customerId, customerName);
+                alpineData.openPreferencesModal(customerId, customerName, customerPhone);
                 return;
             }
         }
