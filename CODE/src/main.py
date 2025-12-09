@@ -133,7 +133,16 @@ def handle_http_exception(request: Request, exc: HTTPException):
     if exc.status_code == 401:
         if "/api/auth/login" not in str(request.url):
             headers = dict(exc.headers) if exc.headers else {}
-            headers["Location"] = "/auth/login"
+            
+            # Determinar si es una ruta de cliente o administrador
+            request_path = str(request.url.path)
+            if "/customer-portal" in request_path or "/customer/" in request_path:
+                # Ruta de cliente - redirigir a login de cliente
+                headers["Location"] = "/customer/verify"
+            else:
+                # Ruta de administrador - redirigir a login de admin
+                headers["Location"] = "/auth/login"
+            
             headers["Content-Type"] = "application/json"
 
             return JSONResponse(
