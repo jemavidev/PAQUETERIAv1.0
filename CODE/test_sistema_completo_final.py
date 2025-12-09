@@ -77,10 +77,16 @@ class TestRunner:
     async def test_otp_request(self) -> bool:
         """Prueba 1: Solicitar código OTP"""
         try:
+            url = f"{BASE_URL}/api/customer/preferences-otp/request"
+            print(f"   🌐 Intentando: {url}")
+            
             response = await self.client.post(
-                f"{BASE_URL}/api/customer/preferences-otp/request",
+                url,
                 json={"phone": TEST_PHONE}
             )
+            
+            print(f"   📡 Status: {response.status_code}")
+            print(f"   📄 Response: {response.text[:200]}")
             
             if response.status_code == 200:
                 data = response.json()
