@@ -223,13 +223,23 @@ class EmailService(BaseService[Notification, Any, Any]):
             # ✅ NUEVO: Verificar preferencias del cliente (clientes sin cuenta)
             if customer_id and not is_test:
                 from app.models.customer_preferences import CustomerPreferences
+                
+                email_logger.info(f"🔍 [EMAIL] Verificando preferencias para customer_id: {customer_id} (tipo: {type(customer_id)})")
+                
                 customer_prefs = db.query(CustomerPreferences).filter(
                     CustomerPreferences.customer_id == customer_id
                 ).first()
                 
                 if customer_prefs:
+                    email_logger.info(f"📋 [EMAIL] Preferencias encontradas para cliente {customer_id}")
+                    email_logger.info(f"   Email habilitado: {customer_prefs.email_notifications_enabled}")
+                    email_logger.info(f"   Evento: {event_type.value}")
+                    
                     # Verificar si el cliente permite este tipo de notificación
-                    if not customer_prefs.should_send_notification(NotificationType.EMAIL, event_type):
+                    should_send = customer_prefs.should_send_notification(NotificationType.EMAIL, event_type)
+                    email_logger.info(f"   ¿Debe enviar?: {should_send}")
+                    
+                    if not should_send:
                         email_logger.info(f"📧❌ Email bloqueado por preferencias del cliente {customer_id} (evento: {event_type.value})")
                         
                         # Crear registro de notificación bloqueada
@@ -263,6 +273,10 @@ class EmailService(BaseService[Notification, Any, Any]):
                             "status": "blocked",
                             "message": "Notificación bloqueada por preferencias del cliente"
                         }
+                    else:
+                        email_logger.info(f"✅ [EMAIL] Email permitido por preferencias del cliente {customer_id}")
+                else:
+                    email_logger.warning(f"⚠️ [EMAIL] No se encontraron preferencias para cliente {customer_id}")
             
             # Validar configuración
             if not self._validate_smtp_config():
@@ -832,3 +846,208 @@ class EmailService(BaseService[Notification, Any, Any]):
             "period_days": days
         }
 
+
+    # ========================================
+    # ENVÍO DE OTP POR EMAIL
+    # ========================================
+
+    async def send_otp_email(
+        self,
+        recipient_email: str,
+        recipient_name: str,
+        otp_code: str,
+        expires_minutes: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Envía un email con el código OTP para acceso al portal
+        
+        Args:
+            recipient_email: Email del destinatario
+            recipient_name: Nombre del destinatario
+            otp_code: Código OTP de 6 dígitos
+            expires_minutes: Minutos de validez del código
+            
+        Returns:
+            Dict con resultado del envío
+        """
+        try:
+            # Validar email
+            self._validate_email(recipient_email)
+            
+            # Crear contenido HTML del email con diseño mejorado
+            html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Contraseña Temporal - PAQUETEX</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {{font-family: Arial, sans-serif !important;}}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f3f4f6;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header con logo -->
+                    <tr>
+                        <td style="background-color: #ffffff; padding: 40px 30px 30px 30px; text-align: center; border-bottom: 3px solid #2563eb;">
+                            <!-- Logo PAPYRUS -->
+                            <img src="https://staging.jemavi.co/static/images/logo.png?v=4.0" 
+                                 alt="PAPYRUS - Mucho más que solo papeles" 
+                                 style="max-width: 300px; height: auto; display: block; margin: 0 auto 12px auto;"
+                                 width="300">
+                            <p style="color: #2563eb; margin: 0; font-size: 15px; font-weight: 600;">Portal de Cliente</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Contenido principal -->
+                    <tr>
+                        <td style="padding: 50px 40px;">
+                            <!-- Saludo -->
+                            <h2 style="color: #111827; margin: 0 0 24px 0; font-size: 22px; font-weight: 600;">
+                                ¡Hola {recipient_name}! 👋
+                            </h2>
+                            
+                            <p style="color: #4b5563; margin: 0 0 30px 0; font-size: 16px; line-height: 1.6;">
+                                Has solicitado acceso a tu portal de cliente. Usa la siguiente <strong>contraseña temporal</strong> para ingresar de forma segura:
+                            </p>
+                            
+                            <!-- Caja del código OTP mejorada -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 35px 0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 3px solid #2563eb; border-radius: 12px; padding: 35px 20px; text-align: center; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);">
+                                        <div style="color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
+                                            🔐 CONTRASEÑA TEMPORAL
+                                        </div>
+                                        <div style="color: #1e40af; font-size: 42px; font-weight: 800; letter-spacing: 12px; font-family: 'Courier New', Courier, monospace; text-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);">
+                                            {otp_code}
+                                        </div>
+                                        <div style="color: #6b7280; font-size: 12px; margin-top: 12px; font-weight: 500;">
+                                            Válida por {expires_minutes} minutos
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Advertencia de seguridad mejorada -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 30px 0;">
+                                <tr>
+                                    <td style="background-color: #fef3c7; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 20px 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+                                        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.7;">
+                                            <strong style="font-size: 15px;">⚠️ Importante - Seguridad</strong><br><br>
+                                            <span style="display: block; margin-bottom: 6px;">✓ Esta contraseña expira en <strong>{expires_minutes} minutos</strong></span>
+                                            <span style="display: block; margin-bottom: 6px;">✓ No compartas este código con nadie</span>
+                                            <span style="display: block;">✓ Si no solicitaste acceso, ignora este mensaje</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Beneficios con iconos -->
+                            <div style="margin-top: 35px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+                                <p style="color: #374151; margin: 0 0 20px 0; font-size: 15px; font-weight: 600;">
+                                    Con tu portal podrás:
+                                </p>
+                                
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">👤</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Ver y editar tus datos personales</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">📦</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Consultar el historial de tus paquetes</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 0;">
+                                            <span style="color: #2563eb; font-size: 18px; margin-right: 12px;">🔔</span>
+                                            <span style="color: #4b5563; font-size: 15px;">Configurar tus preferencias de notificación</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer mejorado -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 13px; line-height: 1.6; text-align: center;">
+                                Este es un mensaje automático generado por nuestro sistema.<br>
+                                Por favor, no respondas a este email.
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                &copy; 2025 <strong>PAQUETEX</strong>. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+            """
+            
+            # Crear contenido en texto plano
+            text_content = f"""
+PAQUETEX - Portal de Cliente
+
+Hola {recipient_name},
+
+Has solicitado acceso a tu portal de cliente. Usa la siguiente contraseña temporal para ingresar:
+
+CONTRASEÑA TEMPORAL: {otp_code}
+
+IMPORTANTE:
+- Esta contraseña es válida por {expires_minutes} minutos
+- No compartas este código con nadie
+- Si no solicitaste este código, ignora este mensaje
+
+Una vez que ingreses con esta contraseña, podrás acceder a:
+- Ver y editar tus datos personales
+- Consultar el historial de tus paquetes
+- Configurar tus preferencias de notificación
+
+---
+Este es un mensaje automático, por favor no respondas a este email.
+© 2025 PAQUETEX. Todos los derechos reservados.
+            """
+            
+            # Asunto del email
+            subject = "Tu Contraseña Temporal - PAQUETEX"
+            
+            # Enviar email usando SMTP directamente (sin guardar en BD de notificaciones)
+            result = await self._send_real_email(
+                recipient=recipient_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+            
+            if result["success"]:
+                email_logger.info(f"✅ OTP enviado por email a {recipient_email} (código: {otp_code})")
+            else:
+                email_logger.error(f"❌ Error enviando OTP por email a {recipient_email}: {result.get('error')}")
+            
+            return result
+            
+        except Exception as e:
+            email_logger.error(f"❌ Error al enviar OTP por email: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "error_code": "OTP_EMAIL_ERROR"
+            }

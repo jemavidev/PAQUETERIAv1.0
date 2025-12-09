@@ -45,6 +45,10 @@ PUBLIC_ROUTES: Set[str] = {
     "/customer-portal/verify",
     "/customer-portal/dashboard",
     
+    # Preferencias de Cliente (público con OTP)
+    "/customer/verify",
+    "/customer/preferences",
+    
     # Páginas informativas
     "/help",
     "/cookies",
@@ -92,7 +96,14 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/customer-portal/verify-otp",
     "/api/customer-portal/me",
     "/api/customer-portal/packages",
+    "/api/customer-portal/preferences/notifications",
     "/api/customer-portal/logout",
+    
+    # Preferencias de Cliente (APIs públicas con OTP)
+    "/api/customer/preferences-otp/request",
+    "/api/customer/preferences-otp/verify",
+    "/api/customer/preferences-otp/send-link",
+    "/api/customer/preferences",
     
     # Anuncios y búsqueda (públicos)
     "/api/announcements/direct",

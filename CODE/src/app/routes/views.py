@@ -489,6 +489,24 @@ async def change_password_page(request: Request, current_user: User = Depends(ge
     return RedirectResponse(url="/settings?tab=security", status_code=302)
 
 
+@router.get("/customer/verify")
+async def customer_verify_page(request: Request):
+    """
+    Página de verificación OTP para acceder a preferencias (sin autenticación)
+    Los clientes ingresan su teléfono y reciben un código SMS
+    """
+    context = {
+        "request": request,
+        "is_authenticated": False,
+        "user": None,
+        "user_name": None,
+        "user_role": None,
+        "current_path": str(request.url.path),
+        "query_params": dict(request.query_params),
+    }
+    return templates.TemplateResponse("customer/verify.html", context)
+
+
 @router.get("/customer/preferences")
 async def customer_preferences_page(request: Request):
     """

@@ -174,15 +174,25 @@ class SMSService(BaseService[Notification, Any, Any]):
             # ✅ NUEVO: Verificar preferencias del cliente (clientes sin cuenta)
             if customer_id and not is_test:
                 from app.models.customer_preferences import CustomerPreferences
+                import logging
+                logger = logging.getLogger("sms_service")
+                
+                logger.info(f"🔍 Verificando preferencias para customer_id: {customer_id} (tipo: {type(customer_id)})")
+                
                 customer_prefs = db.query(CustomerPreferences).filter(
                     CustomerPreferences.customer_id == customer_id
                 ).first()
                 
                 if customer_prefs:
+                    logger.info(f"📋 Preferencias encontradas para cliente {customer_id}")
+                    logger.info(f"   SMS habilitado: {customer_prefs.sms_notifications_enabled}")
+                    logger.info(f"   Evento: {event_type.value}")
+                    
                     # Verificar si el cliente permite este tipo de notificación
-                    if not customer_prefs.should_send_notification(NotificationType.SMS, event_type):
-                        import logging
-                        logger = logging.getLogger("sms_service")
+                    should_send = customer_prefs.should_send_notification(NotificationType.SMS, event_type)
+                    logger.info(f"   ¿Debe enviar?: {should_send}")
+                    
+                    if not should_send:
                         logger.info(f"📵 SMS bloqueado por preferencias del cliente {customer_id} (evento: {event_type.value})")
                         
                         # Crear registro de notificación bloqueada
@@ -210,6 +220,10 @@ class SMSService(BaseService[Notification, Any, Any]):
                             message="Notificación bloqueada por preferencias del cliente",
                             cost_cents=0
                         )
+                    else:
+                        logger.info(f"✅ SMS permitido por preferencias del cliente {customer_id}")
+                else:
+                    logger.warning(f"⚠️ No se encontraron preferencias para cliente {customer_id}")
             
             # Validar número de teléfono
             self._validate_phone_number(recipient)

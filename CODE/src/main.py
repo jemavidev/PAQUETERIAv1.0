@@ -36,6 +36,7 @@ from src.app.routes.public import router as public_router
 from src.app.routes import auth, protected, customers, rates, notifications, messages, files, admin, announcements, profile, packages, settings_api
 from src.app.routes.header_notifications import router as header_notifications
 from src.app.routes.customer_preferences import router as customer_preferences_router
+from src.app.routes.customer_preferences_otp import router as customer_preferences_otp_router
 from src.app.routes.upload import router as upload_router
 from src.app.routes.images import router as images_router
 from src.app.routes.debug_standalone import router as debug_standalone_router
@@ -132,7 +133,16 @@ def handle_http_exception(request: Request, exc: HTTPException):
     if exc.status_code == 401:
         if "/api/auth/login" not in str(request.url):
             headers = dict(exc.headers) if exc.headers else {}
-            headers["Location"] = "/auth/login"
+            
+            # Determinar si es una ruta de cliente o administrador
+            request_path = str(request.url.path)
+            if "/customer-portal" in request_path or "/customer/" in request_path:
+                # Ruta de cliente - redirigir a login de cliente
+                headers["Location"] = "/customer/verify"
+            else:
+                # Ruta de administrador - redirigir a login de admin
+                headers["Location"] = "/auth/login"
+            
             headers["Content-Type"] = "application/json"
 
             return JSONResponse(
@@ -188,6 +198,7 @@ app.include_router(profile, prefix="/profile", tags=["Perfil"])
 app.include_router(settings_api, tags=["Configuración"])
 app.include_router(config_router, tags=["Configuración"])  # ✨ Nuevo: Endpoints de configuración
 app.include_router(customer_preferences_router, tags=["Preferencias de Cliente"])
+app.include_router(customer_preferences_otp_router, tags=["Preferencias de Cliente - OTP"])
 app.include_router(upload_router, tags=["Upload"])
 app.include_router(images_router, tags=["Imágenes"])
 app.include_router(debug_standalone_router, tags=["Debug Standalone"])

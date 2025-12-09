@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <!-- Utilidades de teléfono -->
-<script src="{{ url_for('static', path='/js/phone-utils.js') }}"></script>
+<script src="https://{{ request.url.hostname }}/static/js/phone-utils.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -269,6 +269,7 @@
                                     <button class="btn-preferences inline-flex items-center justify-center w-9 h-9 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors duration-200"
                                             data-customer-id="{{ customer.id }}"
                                             data-customer-name="{{ customer.full_name }}"
+                                            data-customer-phone="{{ customer.phone }}"
                                             title="Gestionar Preferencias de Notificaciones">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
@@ -1925,11 +1926,15 @@ function customerManagement() {
         showPreferencesModal: false,
         preferencesLoading: false,
         preferencesSaving: false,
+        sendingSMS: false,
         preferencesCustomerId: null,
         preferencesCustomerName: '',
+        preferencesCustomerPhone: '',
+        verifyUrl: '',
+        verifyUrlCopied: false,
         preferencesUrl: '',
-        preferencesToken: '',
         urlCopied: false,
+        preferencesToken: '',
         preferences: {
             sms_notifications_enabled: true,
             email_notifications_enabled: true,
@@ -1940,28 +1945,25 @@ function customerManagement() {
             marketing_enabled: false
         },
         
-        async openPreferencesModal(customerId, customerName) {
-            console.log('🔵 openPreferencesModal iniciado', { customerId, customerName });
-            console.log('🔵 showPreferencesModal ANTES:', this.showPreferencesModal);
+        async openPreferencesModal(customerId, customerName, customerPhone) {
+            console.log('🔵 openPreferencesModal iniciado', { customerId, customerName, customerPhone });
             
             this.showPreferencesModal = true;
-            console.log('🔵 showPreferencesModal DESPUÉS:', this.showPreferencesModal);
-            
             this.preferencesCustomerId = customerId;
             this.preferencesCustomerName = customerName;
+            this.preferencesCustomerPhone = customerPhone;
             this.preferencesLoading = true;
+            this.verifyUrlCopied = false;
             this.urlCopied = false;
-            
-            console.log('🔵 Estado del modal:', {
-                showPreferencesModal: this.showPreferencesModal,
-                preferencesCustomerId: this.preferencesCustomerId,
-                preferencesCustomerName: this.preferencesCustomerName,
-                preferencesLoading: this.preferencesLoading
-            });
+            this.sendingSMS = false;
             
             try {
-                console.log('🔵 Creando preferencias...');
-                // Crear o obtener preferencias
+                // Generar URLs
+                this.verifyUrl = window.location.origin + '/customer/verify';
+                this.preferencesUrl = window.location.origin + '/customer/verify';
+                
+                console.log('🔵 Crear o obtener preferencias...');
+                // Crear o obtener preferencias (para tenerlas listas)
                 const createResponse = await fetch(`/api/customer/preferences/create`, {
                     method: 'POST',
                     headers: {
@@ -1970,34 +1972,23 @@ function customerManagement() {
                     body: JSON.stringify({ customer_id: customerId })
                 });
                 
-                console.log('🔵 Respuesta create:', createResponse.status);
-                
                 if (!createResponse.ok) {
                     throw new Error('Error al crear preferencias');
                 }
                 
                 const createData = await createResponse.json();
-                console.log('🔵 Datos create:', createData);
-                
                 this.preferencesToken = createData.token;
-                this.preferencesUrl = window.location.origin + createData.preferences_url;
                 
-                console.log('🔵 Cargando preferencias...');
                 // Cargar preferencias actuales
                 const getResponse = await fetch(`/api/customer/preferences?token=${createData.token}`);
-                
-                console.log('🔵 Respuesta get:', getResponse.status);
-                
                 if (!getResponse.ok) {
                     throw new Error('Error al cargar preferencias');
                 }
                 
                 const getData = await getResponse.json();
-                console.log('🔵 Datos get:', getData);
-                
                 this.preferences = getData.preferences;
                 
-                console.log('🔵 Preferencias cargadas exitosamente');
+                console.log('✅ Modal de preferencias listo');
                 
             } catch (error) {
                 console.error('🔴 Error en openPreferencesModal:', error);
@@ -2005,8 +1996,6 @@ function customerManagement() {
                 this.closePreferencesModal();
             } finally {
                 this.preferencesLoading = false;
-                console.log('🔵 preferencesLoading = false');
-                console.log('🔵 showPreferencesModal FINAL:', this.showPreferencesModal);
             }
         },
         
@@ -2014,9 +2003,13 @@ function customerManagement() {
             this.showPreferencesModal = false;
             this.preferencesCustomerId = null;
             this.preferencesCustomerName = '';
+            this.preferencesCustomerPhone = '';
+            this.verifyUrl = '';
             this.preferencesUrl = '';
             this.preferencesToken = '';
+            this.verifyUrlCopied = false;
             this.urlCopied = false;
+            this.sendingSMS = false;
         },
         
         async savePreferences() {
@@ -2046,6 +2039,18 @@ function customerManagement() {
             }
         },
         
+        copyVerifyUrl() {
+            navigator.clipboard.writeText(this.verifyUrl).then(() => {
+                this.verifyUrlCopied = true;
+                setTimeout(() => {
+                    this.verifyUrlCopied = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                alert('Error al copiar el link');
+            });
+        },
+        
         copyPreferencesUrl() {
             navigator.clipboard.writeText(this.preferencesUrl).then(() => {
                 this.urlCopied = true;
@@ -2056,6 +2061,42 @@ function customerManagement() {
                 console.error('Error al copiar:', err);
                 alert('Error al copiar el link');
             });
+        },
+        
+        async sendVerifySMS() {
+            if (!this.preferencesCustomerPhone) {
+                alert('No se encontró el teléfono del cliente');
+                return;
+            }
+            
+            this.sendingSMS = true;
+            
+            try {
+                const response = await fetch('/api/customer/preferences-otp/send-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customer_id: this.preferencesCustomerId,
+                        phone: this.preferencesCustomerPhone
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Error al enviar SMS');
+                }
+                
+                const data = await response.json();
+                this.showSuccessToast('Éxito', 'SMS enviado correctamente al cliente');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                this.showErrorToast('Error', 'Error al enviar SMS: ' + error.message);
+            } finally {
+                this.sendingSMS = false;
+            }
         }
         
     }
@@ -2528,11 +2569,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const customerId = btn.getAttribute('data-customer-id');
             const customerName = btn.getAttribute('data-customer-name');
+            const customerPhone = btn.getAttribute('data-customer-phone');
             
-            console.log('🔵 Botón de preferencias clickeado', { customerId, customerName });
+            console.log('🔵 Botón de preferencias clickeado', { customerId, customerName, customerPhone });
             
             if (customerId) {
-                openPreferencesModal(customerId, customerName || 'Cliente');
+                openPreferencesModal(customerId, customerName || 'Cliente', customerPhone);
             } else {
                 console.error('❌ No se encontró customer-id en el botón');
             }
@@ -2541,13 +2583,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Función global para abrir modal de preferencias
-function openPreferencesModal(customerId, customerName) {
-    console.log('🔵 openPreferencesModal llamado', { customerId, customerName });
+function openPreferencesModal(customerId, customerName, customerPhone) {
+    console.log('🔵 openPreferencesModal llamado', { customerId, customerName, customerPhone });
     
     // Método 1: Usar la instancia global guardada
     if (window.customerAppInstance && typeof window.customerAppInstance.openPreferencesModal === 'function') {
         console.log('✅ Usando instancia global');
-        window.customerAppInstance.openPreferencesModal(customerId, customerName);
+        window.customerAppInstance.openPreferencesModal(customerId, customerName, customerPhone);
         return;
     }
     
@@ -2559,7 +2601,7 @@ function openPreferencesModal(customerId, customerName) {
                 const alpineData = Alpine.$data(element);
                 if (alpineData && typeof alpineData.openPreferencesModal === 'function') {
                     console.log('✅ Usando Alpine.$data');
-                    alpineData.openPreferencesModal(customerId, customerName);
+                    alpineData.openPreferencesModal(customerId, customerName, customerPhone);
                     return;
                 }
             }
@@ -2575,7 +2617,7 @@ function openPreferencesModal(customerId, customerName) {
             const alpineData = element.__x.$data;
             if (alpineData && typeof alpineData.openPreferencesModal === 'function') {
                 console.log('✅ Usando __x.$data');
-                alpineData.openPreferencesModal(customerId, customerName);
+                alpineData.openPreferencesModal(customerId, customerName, customerPhone);
                 return;
             }
         }
@@ -2635,26 +2677,34 @@ function openPreferencesModal(customerId, customerName) {
             <!-- Content -->
             <div x-show="!preferencesLoading" class="px-6 py-6">
                 
-                <!-- Link de Preferencias -->
+                <!-- Link de Verificación -->
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div class="flex items-start">
                         <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                         </svg>
                         <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-blue-800">Link de Preferencias del Cliente</p>
-                            <div class="mt-2 flex items-center space-x-2">
+                            <p class="text-sm font-medium text-blue-800">Acceso Seguro al Portal de Cliente</p>
+                            <p class="mt-1 text-xs text-blue-700">El cliente verificará su identidad con un código SMS y accederá a su portal completo (datos, paquetes y preferencias)</p>
+                            <div class="mt-3 flex items-center space-x-2">
                                 <input type="text" 
-                                       x-model="preferencesUrl" 
+                                       x-model="verifyUrl" 
                                        readonly
                                        class="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg bg-white">
-                                <button @click="copyPreferencesUrl()" 
+                                <button @click="copyVerifyUrl()" 
                                         class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
-                                    <span x-show="!urlCopied">Copiar</span>
-                                    <span x-show="urlCopied">✓ Copiado</span>
+                                    <span x-show="!verifyUrlCopied">Copiar</span>
+                                    <span x-show="verifyUrlCopied">✓ Copiado</span>
                                 </button>
                             </div>
-                            <p class="mt-2 text-xs text-blue-700">Envía este link al cliente para que gestione sus preferencias</p>
+                            <div class="mt-3">
+                                <button @click="sendVerifySMS()" 
+                                        :disabled="sendingSMS"
+                                        class="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span x-show="!sendingSMS">📱 Enviar Link por SMS</span>
+                                    <span x-show="sendingSMS">Enviando...</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

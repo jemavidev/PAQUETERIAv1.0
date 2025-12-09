@@ -236,7 +236,8 @@ async def get_notification_preferences(
             db,
             current_customer["customer_id"]
         )
-        return preferences
+        # Envolver en objeto para que el frontend lo procese correctamente
+        return {"preferences": preferences}
     
     except ValidationException as e:
         status_code = 404 if "no encontrado" in str(e).lower() else 400
@@ -256,19 +257,13 @@ async def update_notification_preferences(
     Actualiza las preferencias de notificación del cliente
     
     Campos editables:
-    - sms_on_package_announced
-    - sms_on_package_received
-    - sms_on_package_ready
-    - sms_on_package_delivered
-    - email_on_package_announced
-    - email_on_package_received
-    - email_on_package_ready
-    - email_on_package_delivered
-    - notify_on_weekends
-    - notify_on_holidays
-    - quiet_hours_enabled
-    - quiet_hours_start (formato HH:MM)
-    - quiet_hours_end (formato HH:MM)
+    - sms_notifications_enabled
+    - email_notifications_enabled
+    - notify_package_announced
+    - notify_package_received
+    - notify_package_delivered
+    - notify_payment_due
+    - marketing_enabled
     """
     try:
         service = CustomerPortalService()
@@ -277,7 +272,8 @@ async def update_notification_preferences(
             current_customer["customer_id"],
             preferences
         )
-        return updated_preferences
+        # Envolver en objeto para que el frontend lo procese correctamente
+        return {"preferences": updated_preferences}
     
     except ValidationException as e:
         status_code = 404 if "no encontrado" in str(e).lower() else 400
