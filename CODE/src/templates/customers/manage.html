@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <!-- Utilidades de teléfono -->
-<script src="{{ url_for('static', path='/js/phone-utils.js') }}"></script>
+<script src="https://{{ request.url.hostname }}/static/js/phone-utils.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -1931,6 +1931,8 @@ function customerManagement() {
         preferencesCustomerPhone: '',
         verifyUrl: '',
         verifyUrlCopied: false,
+        preferencesUrl: '',
+        urlCopied: false,
         preferencesToken: '',
         preferences: {
             sms_notifications_enabled: true,
@@ -1962,8 +1964,9 @@ function customerManagement() {
                 const customerData = await customerResponse.json();
                 this.preferencesCustomerPhone = customerData.phone;
                 
-                // Generar URL de verificación
+                // Generar URLs
                 this.verifyUrl = window.location.origin + '/customer/verify';
+                this.preferencesUrl = window.location.origin + '/customer/verify';
                 
                 console.log('🔵 Crear o obtener preferencias...');
                 // Crear o obtener preferencias (para tenerlas listas)
@@ -2008,8 +2011,10 @@ function customerManagement() {
             this.preferencesCustomerName = '';
             this.preferencesCustomerPhone = '';
             this.verifyUrl = '';
+            this.preferencesUrl = '';
             this.preferencesToken = '';
             this.verifyUrlCopied = false;
+            this.urlCopied = false;
             this.sendingSMS = false;
         },
         
@@ -2045,6 +2050,18 @@ function customerManagement() {
                 this.verifyUrlCopied = true;
                 setTimeout(() => {
                     this.verifyUrlCopied = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                alert('Error al copiar el link');
+            });
+        },
+        
+        copyPreferencesUrl() {
+            navigator.clipboard.writeText(this.preferencesUrl).then(() => {
+                this.urlCopied = true;
+                setTimeout(() => {
+                    this.urlCopied = false;
                 }, 2000);
             }).catch(err => {
                 console.error('Error al copiar:', err);
