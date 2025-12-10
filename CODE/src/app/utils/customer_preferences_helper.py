@@ -56,8 +56,9 @@ def get_preferences_url(db: Session, customer_id: UUID) -> str:
         customer_id: ID del cliente
     
     Returns:
-        str: URL completa para gestionar preferencias
+        str: URL completa para gestionar preferencias (nuevo flujo OTP)
     """
+    # Asegurar que el cliente tiene preferencias creadas
     prefs = get_or_create_customer_preferences(db, customer_id)
     
     # Determinar URL base según ambiente
@@ -67,7 +68,9 @@ def get_preferences_url(db: Session, customer_id: UUID) -> str:
         else settings.development_url
     )
     
-    return f"{base_url}/customer/preferences?token={prefs.token}"
+    # NUEVO FLUJO: Redirigir al portal con autenticación OTP
+    # El cliente debe autenticarse con su teléfono para acceder a sus preferencias
+    return f"{base_url}/customer/verify"
 
 
 def add_preferences_footer_to_sms(message: str, preferences_url: str) -> str:

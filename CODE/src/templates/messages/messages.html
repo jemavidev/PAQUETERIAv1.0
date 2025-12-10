@@ -798,6 +798,9 @@ const domCache = {
     resultsCount: null
 };
 
+// Variable de debug para filtrado (inicializada en false)
+let DEBUG_FILTERING = false;
+
 // Cache de resultados de filtrado
 const filterCache = new Map();
 const CACHE_SIZE_LIMIT = 50;
@@ -2807,21 +2810,20 @@ function showNoMessagesMessage(show) {
 
 function getAuthToken() {
     // Intentar obtener token desde cookies primero (más confiable)
-    const cookieValue = `; ${document.cookie}`;
-    const cookieParts = cookieValue.split(`; access_token=`);
-    if (cookieParts.length === 2) {
-        const token = cookieParts.pop().split(';').shift();
-        if (token && token !== 'undefined' && token !== 'null') {
-            return token;
-        }
-    }
-
-    // Si no está en cookies, intentar desde localStorage
-    let token = localStorage.getItem('access_token');
-    if (token && token !== 'undefined' && token !== 'null') {
+    const token = getCookie('access_token');
+    if (token && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
+        console.log('✅ Token encontrado en cookies');
         return token;
     }
 
+    // Si no está en cookies, intentar desde localStorage
+    const localToken = localStorage.getItem('access_token');
+    if (localToken && localToken !== 'undefined' && localToken !== 'null' && localToken.trim() !== '') {
+        console.log('✅ Token encontrado en localStorage');
+        return localToken;
+    }
+
+    console.warn('⚠️ No se encontró token de autenticación');
     return null;
 }
 

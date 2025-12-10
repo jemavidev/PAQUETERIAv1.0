@@ -568,7 +568,110 @@
             </div>
         </div>
 
-        <!-- FAQ 8 - Contacto -->
+        <!-- FAQ 8 - Preferencias de Notificaciones (NUEVO) -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
+            <button @click="open = !open"
+                    class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">⚙️</span>
+                    <span class="font-medium text-gray-900 text-sm sm:text-base">¿Cómo gestiono mis preferencias de notificaciones?</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200" :class="{ 'transform rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="px-4 sm:px-6 pb-4">
+                <p class="text-gray-700 mb-4 text-sm sm:text-base">
+                    Tienes control total sobre las notificaciones que recibes. Puedes gestionar tus preferencias desde nuestro portal de clientes:
+                </p>
+                
+                <!-- Acceso al Portal -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded">
+                    <h4 class="font-semibold text-blue-900 mb-2 text-sm sm:text-base">
+                        <span class="mr-2">🔐</span>
+                        Acceso al Portal de Clientes
+                    </h4>
+                    <ol class="space-y-2 text-sm text-blue-800 ml-4">
+                        <li>1. Visita: <a href="/customer/verify" class="font-semibold underline hover:text-blue-600">/customer/verify</a></li>
+                        <li>2. Ingresa tu número de teléfono</li>
+                        <li>3. Recibirás un código de 6 dígitos por SMS</li>
+                        <li>4. Ingresa el código para acceder a tu dashboard</li>
+                    </ol>
+                </div>
+
+                <!-- Qué puedes controlar -->
+                <div class="space-y-3 mb-4">
+                    <h4 class="font-semibold text-gray-900 text-sm sm:text-base">
+                        <span class="mr-2">🎛️</span>
+                        ¿Qué puedes controlar?
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-green-50 rounded-lg p-3 hover:bg-green-100 transition-colors">
+                            <div class="flex items-center mb-2">
+                                <span class="text-2xl mr-2">📱</span>
+                                <h5 class="font-semibold text-gray-900 text-sm">Notificaciones SMS</h5>
+                            </div>
+                            <p class="text-xs text-gray-600">Activa o desactiva mensajes de texto</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3 hover:bg-purple-100 transition-colors">
+                            <div class="flex items-center mb-2">
+                                <span class="text-2xl mr-2">📧</span>
+                                <h5 class="font-semibold text-gray-900 text-sm">Notificaciones Email</h5>
+                            </div>
+                            <p class="text-xs text-gray-600">Activa o desactiva correos electrónicos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipos de notificaciones -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">
+                        <span class="mr-2">🔔</span>
+                        Tipos de notificaciones que puedes configurar:
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-start">
+                            <span class="text-blue-500 mr-2">✓</span>
+                            <span><strong>Paquete Anunciado:</strong> Cuando tu paquete llega</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span><strong>Paquete Recibido:</strong> Cuando está listo para recoger</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-500 mr-2">✓</span>
+                            <span><strong>Paquete Entregado:</strong> Confirmación de entrega</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-yellow-500 mr-2">✓</span>
+                            <span><strong>Recordatorios de Pago:</strong> Avisos de pagos pendientes</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Nota importante -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <p class="text-sm text-yellow-800">
+                        <span class="mr-1">⚠️</span>
+                        <strong>Importante:</strong> Los códigos de autenticación (OTP) siempre se enviarán por SMS, sin importar tus preferencias, para garantizar la seguridad de tu cuenta.
+                    </p>
+                </div>
+
+                <!-- Botón de acceso directo -->
+                <div class="mt-4 text-center">
+                    <a href="/customer/verify" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Gestionar Mis Preferencias
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ 9 - Contacto -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100" x-data="{ open: false }">
             <button @click="open = !open"
                     class="w-full px-4 sm:px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:bg-gray-50 rounded-xl transition-colors">

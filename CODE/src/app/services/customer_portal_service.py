@@ -15,6 +15,7 @@ import logging
 from app.models.customer import Customer
 from app.models.customer_otp import CustomerOTP
 from app.models.package import Package, PackageStatus
+from app.models.announcement_new import PackageAnnouncementNew
 from app.models.notification import NotificationEvent
 from app.schemas.customer_portal import (
     OTPRequest, OTPResponse, OTPVerifyRequest, OTPVerifyResponse,
@@ -390,7 +391,8 @@ class CustomerPortalService:
     ) -> Dict[str, Any]:
         """
         Obtiene el historial de paquetes del cliente
-        Solo muestra estados: ANUNCIADO, RECIBIDO, ENTREGADO, CANCELADO
+        Incluye: paquetes procesados (RECIBIDO, ENTREGADO, CANCELADO) 
+                 + anuncios pendientes (ANUNCIADO)
         """
         customer = db.query(Customer).filter(
             Customer.id == customer_id,
@@ -400,22 +402,30 @@ class CustomerPortalService:
         if not customer:
             raise ValidationException("Cliente no encontrado")
 
-        # Estados permitidos
+        # Estados permitidos para paquetes procesados
         allowed_statuses = [
-            PackageStatus.ANUNCIADO,
             PackageStatus.RECIBIDO,
             PackageStatus.ENTREGADO,
             PackageStatus.CANCELADO
         ]
 
-        # Obtener paquetes
+        # 1. Obtener paquetes procesados de la tabla packages
         packages = db.query(Package).filter(
             Package.customer_id == customer_id,
             Package.status.in_(allowed_statuses)
-        ).order_by(desc(Package.created_at)).limit(limit).all()
+        ).order_by(desc(Package.created_at)).all()
 
-        # Serializar
+        # 2. Obtener anuncios pendientes (no procesados) de package_announcements_new
+        announcements = db.query(PackageAnnouncementNew).filter(
+            PackageAnnouncementNew.customer_id == customer_id,
+            PackageAnnouncementNew.is_processed == False,
+            PackageAnnouncementNew.is_active == True
+        ).order_by(desc(PackageAnnouncementNew.announced_at)).all()
+
+        # 3. Combinar y serializar
         packages_data = []
+        
+        # Agregar paquetes procesados
         for pkg in packages:
             packages_data.append(CustomerPackageHistory(
                 id=pkg.id,
@@ -428,6 +438,41 @@ class CustomerPortalService:
                 package_type=pkg.package_type.value if hasattr(pkg, 'package_type') and pkg.package_type else None,
                 carrier=pkg.carrier if hasattr(pkg, 'carrier') else None
             ))
+        
+        # Agregar anuncios pendientes (estado ANUNCIADO)
+        # Nota: Los anuncios usan UUID, pero el schema espera int
+        # Usamos hash del UUID para generar un ID único temporal
+        for ann in announcements:
+            # Generar un ID temporal único basado en el UUID del anuncio
+            # Usamos hash() para convertir UUID a int (puede ser negativo)
+            temp_id = hash(str(ann.id)) % (10 ** 8)  # Limitar a 8 dígitos
+            
+            packages_data.append(CustomerPackageHistory(
+                id=temp_id,  # ID temporal generado del UUID
+                tracking_number=ann.tracking_code,  # Código de tracking del anuncio
+                guide_number=ann.guide_number,
+                status="ANUNCIADO",  # Estado fijo para anuncios pendientes
+                announced_at=ann.announced_at,
+                received_at=None,
+                delivered_at=None,
+                package_type=None,
+                carrier=None
+            ))
+
+        # 4. Ordenar por fecha de anuncio (más recientes primero)
+        # Convertir todas las fechas a timestamp para evitar problemas de timezone
+        def get_sort_key(item):
+            if item.announced_at is None:
+                return 0  # Poner None al final
+            try:
+                return item.announced_at.timestamp()
+            except:
+                return 0
+        
+        packages_data.sort(key=get_sort_key, reverse=True)
+        
+        # 5. Aplicar límite
+        packages_data = packages_data[:limit]
 
         return {
             "packages": packages_data,
