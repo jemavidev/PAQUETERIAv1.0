@@ -109,13 +109,13 @@ async def announce_page(request: Request):
     
     return templates.TemplateResponse("announce/announce.html", context)
 
-@router.get("/announce-quick")
-async def announce_quick_page(request: Request):
-    """Página de anuncio rápido - Solo teléfono"""
+@router.get("/announce-papyrus")
+async def announce_papyrus_page(request: Request):
+    """Página de anuncio PAPYRUS - Solo teléfono"""
     try:
         context = get_auth_context_from_request(request)
     except Exception as auth_error:
-        logger.debug(f"Usuario no autenticado en /announce-quick: {auth_error}")
+        logger.debug(f"Usuario no autenticado en /announce-papyrus: {auth_error}")
         context = {
             "is_authenticated": False,
             "user": None,
@@ -1730,11 +1730,12 @@ async def search_customer_by_phone_public(
 
 @router.post("/api/announcements/quick")
 async def create_quick_announcement(request: Request, db: Session = Depends(get_db)):
-    """Crear anuncio rápido - Solo con teléfono, genera guía automática"""
+    """Crear anuncio PAPYRUS - Solo con teléfono, genera guía automática con formato PAPYRUS-XXXXXX"""
     try:
         # Obtener datos del request
         body = await request.json()
         customer_phone = body.get("customer_phone", "").strip()
+        customer_name_input = body.get("customer_name", "").strip()
 
         # Validación básica
         if not customer_phone:
@@ -1759,34 +1760,66 @@ async def create_quick_announcement(request: Request, db: Session = Depends(get_
         customer_service = CustomerService()
         existing_customer = customer_service.get_customer_by_phone(db, customer_phone)
         
-        if not existing_customer:
-            # Cliente no encontrado - no se puede crear anuncio sin nombre
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Cliente no encontrado. Por favor, use el formulario completo para registrar un nuevo cliente."}
-            )
-        
-        customer_id = existing_customer.id
-        customer_name = existing_customer.full_name
+        if existing_customer:
+            # Cliente existente
+            customer_id = existing_customer.id
+            customer_name = existing_customer.full_name
+            logger.info(f"✅ Cliente existente encontrado: {customer_id} - {customer_name}")
+        else:
+            # Cliente nuevo - validar que se haya proporcionado el nombre
+            if not customer_name_input:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "El nombre del cliente es requerido para crear un nuevo cliente"}
+                )
+            
+            # Crear nuevo cliente
+            try:
+                # Separar nombre y apellido
+                name_parts = [part.strip() for part in customer_name_input.split() if part.strip()]
+                first_name = name_parts[0] if name_parts else customer_name_input
+                last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else "PENDIENTE"
+                
+                # Respetar longitudes máximas
+                first_name = first_name[:50]
+                last_name = last_name[:50] or "PENDIENTE"
+                
+                customer_data = CustomerCreate(
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=customer_phone
+                )
+                
+                new_customer = customer_service.create_customer(db, customer_data)
+                customer_id = new_customer.id
+                customer_name = new_customer.full_name
+                logger.info(f"✅ Cliente nuevo creado: {customer_id} - {customer_name}")
+                
+            except Exception as customer_error:
+                logger.error(f"❌ Error creando cliente: {customer_error}", exc_info=True)
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Error al crear cliente: {str(customer_error)}"}
+                )
 
-        # Generar número de guía temporal único
+        # Generar número de guía PAPYRUS único
         import string
         import random
         
-        def generate_temp_guide():
-            """Generar número de guía temporal con formato TEMP-XXXX"""
+        def generate_papyrus_guide():
+            """Generar número de guía con formato PAPYRUS-XXXXXX"""
             allowed_chars = string.ascii_uppercase + string.digits
-            return f"TEMP-{''.join(random.choice(allowed_chars) for _ in range(6))}"
+            return f"PAPYRUS-{''.join(random.choice(allowed_chars) for _ in range(6))}"
         
         # Intentar generar guía única (máximo 10 intentos)
         guide_number = None
         for _ in range(10):
-            temp_guide = generate_temp_guide()
+            papyrus_guide = generate_papyrus_guide()
             existing = db.query(PackageAnnouncementNew).filter(
-                PackageAnnouncementNew.guide_number == temp_guide
+                PackageAnnouncementNew.guide_number == papyrus_guide
             ).first()
             if not existing:
-                guide_number = temp_guide
+                guide_number = papyrus_guide
                 break
         
         if not guide_number:

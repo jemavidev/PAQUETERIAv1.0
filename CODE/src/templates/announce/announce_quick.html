@@ -24,7 +24,7 @@
                 {# Header del formulario #}
                 <div class="border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6">
                     <div class="text-center">
-                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Anuncio Rápido</h2>
+                        <h2 class="text-xl sm:text-2xl font-light text-gray-900">Anuncio PAPYRUS</h2>
                         <p class="text-sm text-gray-500 mt-1">Solo necesitas tu número de teléfono</p>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                             </div>
                         </div>
                         
-                        {# Nombre del Cliente (autocompletado) #}
+                        {# Nombre del Cliente (autocompletado o editable) #}
                         <div id="customerNameContainer" class="hidden">
                             <div class="input-with-icon">
                                 <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,11 +64,11 @@
                                 <input type="text" 
                                        id="customer_name" 
                                        name="customer_name" 
-                                       readonly
-                                       class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 bg-gray-50 text-sm sm:text-base cursor-not-allowed"
-                                       placeholder="Nombre del cliente">
+                                       class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
+                                       placeholder="Nombre del cliente"
+                                       oninput="this.value = this.value.toUpperCase()">
                             </div>
-                            <p class="text-xs text-gray-500 mt-1 ml-1">
+                            <p class="text-xs mt-1 ml-1">
                                 <span id="customerStatus"></span>
                             </p>
                         </div>
@@ -80,28 +80,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 <p class="text-sm text-blue-800">
-                                    El sistema generará automáticamente un número de guía temporal para tu paquete.
-                                </p>
-                            </div>
-                        </div>
-                        
-                        {# Términos y Condiciones #}
-                        <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center h-5">
-                                <input id="terms_conditions" 
-                                       name="terms_conditions" 
-                                       type="checkbox" 
-                                       required
-                                       class="h-4 w-4 text-papyrus-blue focus:ring-papyrus-blue border-gray-300 rounded">
-                            </div>
-                            <div class="text-sm">
-                                <label for="terms_conditions" class="font-medium text-gray-700">
-                                    Acepto los términos y condiciones *
-                                </label>
-                                <p class="text-gray-500 mt-1">
-                                    Al marcar esta casilla, confirmo que he leído y acepto los 
-                                    <a href="/terms" target="_blank" class="text-papyrus-blue hover:text-blue-700 underline">términos y condiciones</a> 
-                                    del servicio.
+                                    El sistema generará automáticamente un número de guía PAPYRUS para tu paquete.
                                 </p>
                             </div>
                         </div>
@@ -196,18 +175,28 @@ async function searchCustomerByPhone(phone) {
             const data = await response.json();
             customerData = data;
             
-            // Mostrar nombre del cliente
+            // Cliente existente - mostrar nombre (solo lectura)
             customerNameInput.value = data.full_name || data.display_name || '';
+            customerNameInput.readOnly = true;
+            customerNameInput.classList.add('bg-gray-50', 'cursor-not-allowed');
+            customerNameInput.classList.remove('bg-transparent');
             customerNameContainer.classList.remove('hidden');
             customerStatus.textContent = '✓ Cliente encontrado en el sistema';
             customerStatus.className = 'text-green-600 font-medium';
         } else if (response.status === 404) {
-            // Cliente no encontrado - nuevo cliente
+            // Cliente no encontrado - permitir ingresar nombre
             customerData = null;
             customerNameInput.value = '';
+            customerNameInput.readOnly = false;
+            customerNameInput.classList.remove('bg-gray-50', 'cursor-not-allowed');
+            customerNameInput.classList.add('bg-transparent');
+            customerNameInput.required = true;
             customerNameContainer.classList.remove('hidden');
-            customerStatus.textContent = '⚠ Número no registrado. Se creará un nuevo cliente.';
-            customerStatus.className = 'text-orange-600 font-medium';
+            customerStatus.textContent = '✏️ Ingresa el nombre del cliente para crear uno nuevo';
+            customerStatus.className = 'text-blue-600 font-medium';
+            
+            // Enfocar el campo de nombre
+            setTimeout(() => customerNameInput.focus(), 100);
         } else {
             throw new Error('Error al buscar cliente');
         }
@@ -242,7 +231,7 @@ document.getElementById('customer_phone').addEventListener('input', function(e) 
 });
 
 // Enviar anuncio rápido
-async function enviarAnuncioRapido(customerPhone, termsConditions) {
+async function enviarAnuncioRapido(customerPhone, customerName) {
     const submitButton = document.getElementById('submitButton');
     const submitButtonText = document.getElementById('submitButtonText');
     
@@ -260,12 +249,20 @@ async function enviarAnuncioRapido(customerPhone, termsConditions) {
             throw new Error('Número de teléfono inválido. Use formato: +573001234567 o 3001234567');
         }
         
+        // Preparar datos
+        const requestData = {
+            customer_phone: normalizedPhone
+        };
+        
+        // Si hay nombre, incluirlo (para clientes nuevos)
+        if (customerName && customerName.trim()) {
+            requestData.customer_name = customerName.trim().toUpperCase();
+        }
+        
         const response = await fetch('/api/announcements/quick', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                customer_phone: normalizedPhone
-            })
+            body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
@@ -318,7 +315,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const customerPhone = document.getElementById('customer_phone').value.trim();
-            const termsConditions = document.getElementById('terms_conditions').checked;
+            const customerName = document.getElementById('customer_name').value.trim();
+            const customerNameInput = document.getElementById('customer_name');
             
             // Validaciones
             if (!customerPhone) {
@@ -333,13 +331,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            if (!termsConditions) {
-                showError('📋 Términos y Condiciones', 'Debe aceptar los términos y condiciones');
-                document.getElementById('terms_conditions').focus();
+            // Si el campo de nombre está visible y no es readonly, validar que tenga contenido
+            if (!customerNameInput.classList.contains('hidden') && !customerNameInput.readOnly && !customerName) {
+                showError('📝 Campo Requerido', 'El nombre del cliente es requerido');
+                customerNameInput.focus();
                 return;
             }
             
-            await enviarAnuncioRapido(customerPhone, termsConditions);
+            await enviarAnuncioRapido(customerPhone, customerName);
         });
     }
 });
