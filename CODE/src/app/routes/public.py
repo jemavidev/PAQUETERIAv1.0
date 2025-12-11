@@ -109,6 +109,24 @@ async def announce_page(request: Request):
     
     return templates.TemplateResponse("announce/announce.html", context)
 
+@router.get("/announce-papyrus")
+async def announce_papyrus_page(request: Request):
+    """Página de anuncio PAPYRUS - Solo teléfono"""
+    try:
+        context = get_auth_context_from_request(request)
+    except Exception as auth_error:
+        logger.debug(f"Usuario no autenticado en /announce-papyrus: {auth_error}")
+        context = {
+            "is_authenticated": False,
+            "user": None,
+            "user_name": None,
+            "user_role": None,
+            "request": request
+        }
+    
+    context["current_path"] = str(request.url.path)
+    return templates.TemplateResponse("announce/announce_quick.html", context)
+
 @router.get("/search")
 async def search_page(request: Request):
     """Página de consulta de paquetes - Pública"""
@@ -1664,3 +1682,275 @@ async def test_s3_endpoint():
             "error": str(e)
         }
 
+
+# ========================================
+# ENDPOINTS DE ANUNCIO RÁPIDO
+# ========================================
+
+@router.get("/api/customers/search-by-phone")
+async def search_customer_by_phone_public(
+    phone: str,
+    db: Session = Depends(get_db)
+):
+    """Buscar cliente por teléfono - Endpoint público para anuncio rápido"""
+    try:
+        from app.utils.phone_utils import normalize_phone
+        from app.services.customer_service import CustomerService
+        
+        # Normalizar teléfono
+        normalized_phone = normalize_phone(phone)
+        
+        # Buscar cliente
+        customer_service = CustomerService()
+        customer = customer_service.get_customer_by_phone(db, normalized_phone)
+        
+        if not customer:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Cliente no encontrado"}
+            )
+        
+        # Retornar datos básicos del cliente
+        return {
+            "id": str(customer.id),
+            "full_name": customer.full_name,
+            "display_name": customer.display_name,
+            "phone": customer.phone,
+            "email": customer.email,
+            "is_vip": customer.is_vip,
+            "total_packages_received": customer.total_packages_received
+        }
+        
+    except Exception as e:
+        logger.error(f"Error buscando cliente por teléfono: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error al buscar cliente: {str(e)}"}
+        )
+
+@router.post("/api/announcements/quick")
+async def create_quick_announcement(request: Request, db: Session = Depends(get_db)):
+    """Crear anuncio PAPYRUS - Solo con teléfono, genera guía automática con formato PAPYRUS-XXXXXX"""
+    try:
+        # Obtener datos del request
+        body = await request.json()
+        customer_phone = body.get("customer_phone", "").strip()
+        customer_name_input = body.get("customer_name", "").strip()
+
+        # Validación básica
+        if not customer_phone:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "El teléfono del cliente es requerido"}
+            )
+
+        # Normalizar y validar teléfono
+        from app.utils.phone_utils import normalize_phone, validate_phone
+        customer_phone = normalize_phone(customer_phone)
+        if not validate_phone(customer_phone):
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Número de teléfono inválido. Use formato: +573001234567 o 3001234567"}
+            )
+
+        # Buscar cliente existente
+        from app.services.customer_service import CustomerService
+        from app.schemas.customer import CustomerCreate
+        
+        customer_service = CustomerService()
+        existing_customer = customer_service.get_customer_by_phone(db, customer_phone)
+        
+        if existing_customer:
+            # Cliente existente
+            customer_id = existing_customer.id
+            customer_name = existing_customer.full_name
+            logger.info(f"✅ Cliente existente encontrado: {customer_id} - {customer_name}")
+        else:
+            # Cliente nuevo - validar que se haya proporcionado el nombre
+            if not customer_name_input:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "El nombre del cliente es requerido para crear un nuevo cliente"}
+                )
+            
+            # Crear nuevo cliente
+            try:
+                # Separar nombre y apellido
+                name_parts = [part.strip() for part in customer_name_input.split() if part.strip()]
+                first_name = name_parts[0] if name_parts else customer_name_input
+                last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else "PENDIENTE"
+                
+                # Respetar longitudes máximas
+                first_name = first_name[:50]
+                last_name = last_name[:50] or "PENDIENTE"
+                
+                customer_data = CustomerCreate(
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone=customer_phone
+                )
+                
+                new_customer = customer_service.create_customer(db, customer_data)
+                customer_id = new_customer.id
+                customer_name = new_customer.full_name
+                logger.info(f"✅ Cliente nuevo creado: {customer_id} - {customer_name}")
+                
+            except Exception as customer_error:
+                logger.error(f"❌ Error creando cliente: {customer_error}", exc_info=True)
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Error al crear cliente: {str(customer_error)}"}
+                )
+
+        # Generar número de guía PAPYRUS único
+        import string
+        import random
+        
+        def generate_papyrus_guide():
+            """Generar número de guía con formato PAPYRUS-XXXXXX"""
+            allowed_chars = string.ascii_uppercase + string.digits
+            return f"PAPYRUS-{''.join(random.choice(allowed_chars) for _ in range(6))}"
+        
+        # Intentar generar guía única (máximo 10 intentos)
+        guide_number = None
+        for _ in range(10):
+            papyrus_guide = generate_papyrus_guide()
+            existing = db.query(PackageAnnouncementNew).filter(
+                PackageAnnouncementNew.guide_number == papyrus_guide
+            ).first()
+            if not existing:
+                guide_number = papyrus_guide
+                break
+        
+        if not guide_number:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "No se pudo generar un número de guía único. Intente nuevamente."}
+            )
+
+        # Generar código de tracking único
+        allowed_chars = string.ascii_uppercase.replace('O', '') + string.digits.replace('0', '')
+        
+        tracking_code = None
+        for _ in range(10):
+            temp_tracking = ''.join(random.choice(allowed_chars) for _ in range(4))
+            existing = db.query(PackageAnnouncementNew).filter(
+                PackageAnnouncementNew.tracking_code == temp_tracking
+            ).first()
+            if not existing:
+                tracking_code = temp_tracking
+                break
+        
+        if not tracking_code:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "No se pudo generar un código de tracking único. Intente nuevamente."}
+            )
+
+        # Crear anuncio
+        announcement = PackageAnnouncementNew(
+            id=uuid.uuid4(),
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+            guide_number=guide_number,
+            tracking_code=tracking_code,
+            customer_id=customer_id,
+            is_active=True,
+            is_processed=False,
+            announced_at=get_colombia_now(),
+            created_at=get_colombia_now(),
+            updated_at=get_colombia_now()
+        )
+
+        db.add(announcement)
+        db.commit()
+        db.refresh(announcement)
+
+        # Enviar SMS de confirmación
+        try:
+            from app.schemas.notification import SMSByEventRequest
+            from app.models.notification import NotificationPriority, NotificationEvent
+            from app.services.sms_service import SMSService
+            
+            sms_service = SMSService()
+            
+            custom_variables = {
+                "guide_number": announcement.guide_number,
+                "consult_code": announcement.tracking_code,
+                "tracking_code": announcement.tracking_code,
+                "customer_name": announcement.customer_name,
+                "tracking_url": f"{settings.tracking_base_url}?auto_search={announcement.tracking_code}"
+            }
+            
+            sms_result = await sms_service.send_sms_by_event(
+                db=db,
+                event_request=SMSByEventRequest(
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    package_id=None,
+                    customer_id=None,
+                    announcement_id=announcement.id,
+                    custom_variables=custom_variables,
+                    priority=NotificationPriority.ALTA,
+                    is_test=False
+                )
+            )
+            
+            if sms_result.status == "sent":
+                logger.info(f"✅ SMS de anuncio rápido enviado para {announcement.id}")
+            else:
+                logger.warning(f"⚠️ SMS de anuncio rápido falló: {sms_result.message}")
+                
+        except Exception as sms_error:
+            logger.error(f"❌ Error al enviar SMS: {sms_error}", exc_info=True)
+        
+        # Enviar EMAIL si el cliente tiene email
+        try:
+            if existing_customer.email:
+                from app.services.email_service import EmailService
+                
+                email_service = EmailService()
+                first_name = existing_customer.full_name.split(" ")[0] if existing_customer.full_name else "Cliente"
+                tracking_base = settings.tracking_base_url.rstrip("/")
+                tracking_url = f"{tracking_base}?auto_search={announcement.tracking_code}"
+                
+                variables = {
+                    "first_name": first_name,
+                    "current_status": "ANUNCIADO",
+                    "guide_number": announcement.guide_number,
+                    "consult_code": announcement.tracking_code,
+                    "tracking_url": tracking_url,
+                }
+                
+                await email_service.send_email_by_event(
+                    db=db,
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    recipient=existing_customer.email,
+                    variables=variables
+                )
+                
+                logger.info(f"✅ Email de anuncio rápido enviado a {existing_customer.email}")
+                
+        except Exception as email_error:
+            logger.warning(f"No se pudo enviar email: {email_error}")
+
+        return {
+            "success": True,
+            "message": "Anuncio creado exitosamente",
+            "announcement": {
+                "id": str(announcement.id),
+                "customer_name": announcement.customer_name,
+                "customer_phone": announcement.customer_phone,
+                "guide_number": announcement.guide_number,
+                "tracking_code": announcement.tracking_code,
+                "announced_at": announcement.announced_at.isoformat() if announcement.announced_at else None,
+                "status": "pendiente"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error creando anuncio rápido: {e}", exc_info=True)
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error al crear anuncio: {str(e)}"}
+        )
