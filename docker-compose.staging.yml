@@ -86,7 +86,7 @@ services:
     command: >
       sh -c "mkdir -p /app/uploads && 
              cd /app && 
-             python -c 'import uvicorn; uvicorn.run(\"src.main:app\", host=\"0.0.0.0\", port=8000, limit_concurrency=100, timeout_keep_alive=30, log_level=\"info\")'"
+             python -c 'from src.uvicorn_config import *; import uvicorn; uvicorn.run(\"src.main:app\", host=HOST, port=PORT, workers=WORKERS, limit_concurrency=LIMIT_CONCURRENCY, timeout_keep_alive=TIMEOUT_KEEP_ALIVE, log_level=LOG_LEVEL)'"
     networks:
       - paqueteria_staging_network
     logging:
