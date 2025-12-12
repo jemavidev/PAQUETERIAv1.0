@@ -250,7 +250,7 @@ async def policies_page(request: Request):
 
 @router.get("/admin")
 async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
-    """Dashboard administrativo mejorado con estadísticas completas"""
+    """Dashboard administrativo con estadísticas completas"""
     context = get_auth_context_required(request)
     context["user"] = current_user
     
@@ -261,7 +261,7 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
             detail="Acceso denegado. Solo administradores y operadores pueden acceder."
         )
     
-    return templates.TemplateResponse("admin/dashboard_enhanced.html", context)
+    return templates.TemplateResponse("admin/admin_dashboard.html", context)
 
 
 @router.get("/dashboard")
