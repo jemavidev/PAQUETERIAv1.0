@@ -5,12 +5,20 @@ import os
 HOST = "0.0.0.0"
 PORT = int(os.getenv("PORT", 8000))
 
-# Configuración de workers
-WORKERS = 1
+# Detectar entorno
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production").lower()
+IS_STAGING = ENVIRONMENT in ["staging", "development", "dev"]
+
+# Configuración de workers adaptativa
+# STAGING: 2 workers (servidor con 416MB RAM)
+# PRODUCCIÓN: 3 workers (servidor con 914MB RAM, balance óptimo)
+WORKERS = 2 if IS_STAGING else 3
 
 # Configuración de timeouts
 TIMEOUT_KEEP_ALIVE = 30
-LIMIT_CONCURRENCY = 100
+LIMIT_CONCURRENCY = 100 if IS_STAGING else 200
 
 # Configuración de logging
 LOG_LEVEL = "info"
+
+print(f"🚀 Uvicorn Config: {ENVIRONMENT.upper()} | Workers: {WORKERS} | Concurrency: {LIMIT_CONCURRENCY}")

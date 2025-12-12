@@ -21,25 +21,42 @@ DATABASE_URL = settings.database_url
 # ========================================
 # CONFIGURACIÓN OPTIMIZADA DEL ENGINE
 # ========================================
-# Pool size calculado para 50 usuarios simultáneos con 2 workers uvicorn:
-# - 2 workers × 10 conexiones = 20 conexiones máximo
-# - pool_size: 10 conexiones base por worker
-# - max_overflow: 5 conexiones adicionales por worker en picos
-# - Total máximo: 20 + 10 = 30 conexiones (cubre 50 usuarios con margen)
+# Pool size adaptativo según entorno:
+# - STAGING (416MB RAM): pool_size=5, max_overflow=3 (8 conexiones máx)
+# - PRODUCCIÓN (más RAM): pool_size=15, max_overflow=8 (23 conexiones máx)
+# Detecta automáticamente el entorno por ENVIRONMENT variable
+
+# Detectar entorno
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production").lower()
+IS_STAGING = ENVIRONMENT in ["staging", "development", "dev"]
+
+# Configuración adaptativa de pool
+if IS_STAGING:
+    # Configuración para servidores con recursos limitados (staging)
+    POOL_SIZE = 5
+    MAX_OVERFLOW = 3
+    POOL_TIMEOUT = 20
+    logger.info("🔧 Configuración de BD: STAGING (recursos limitados)")
+else:
+    # Configuración para producción con más recursos
+    POOL_SIZE = 15
+    MAX_OVERFLOW = 8
+    POOL_TIMEOUT = 30
+    logger.info("🔧 Configuración de BD: PRODUCCIÓN (recursos normales)")
 
 engine = create_engine(
     DATABASE_URL,
     echo=False,  # Desactivar logging de queries en producción
     pool_pre_ping=True,  # Verificar conexión antes de usar
     pool_recycle=300,  # Reciclar conexiones cada 5 minutos
-    pool_size=20,  # AUMENTADO: Conexiones base en el pool
-    max_overflow=10,  # AUMENTADO: Conexiones adicionales permitidas
-    pool_timeout=30,  # AUMENTADO: Timeout para obtener conexión del pool
+    pool_size=POOL_SIZE,  # Adaptativo según entorno
+    max_overflow=MAX_OVERFLOW,  # Adaptativo según entorno
+    pool_timeout=POOL_TIMEOUT,  # Adaptativo según entorno
     poolclass=QueuePool,  # Usar QueuePool explícitamente
     connect_args={
         "options": "-c timezone=America/Bogota",
         "connect_timeout": 10,  # Timeout de conexión
-        "application_name": "paqueteria_v1_app"
+        "application_name": f"paqueteria_v1_{ENVIRONMENT}"
     } if "postgresql" in DATABASE_URL else {},
     execution_options={
         "isolation_level": "READ COMMITTED"  # Nivel de aislamiento óptimo
@@ -52,16 +69,23 @@ engine = create_engine(
 
 @event.listens_for(engine, "connect")
 def set_postgresql_optimizations(dbapi_connection, connection_record):
-    """Optimizaciones a nivel de conexión PostgreSQL"""
+    """Optimizaciones a nivel de conexión PostgreSQL adaptativas por entorno"""
     cursor = dbapi_connection.cursor()
     try:
-        # Optimizaciones de performance MEJORADAS
-        cursor.execute("SET work_mem = '32MB'")  # AUMENTADO: Memoria para operaciones de ordenamiento
-        cursor.execute("SET maintenance_work_mem = '128MB'")  # AUMENTADO: Memoria para VACUUM, CREATE INDEX
-        cursor.execute("SET effective_cache_size = '1GB'")  # AUMENTADO: Estimación de cache disponible
+        if IS_STAGING:
+            # Optimizaciones para recursos limitados (staging)
+            cursor.execute("SET work_mem = '8MB'")  # Reducido para staging
+            cursor.execute("SET maintenance_work_mem = '32MB'")  # Reducido para staging
+            cursor.execute("SET effective_cache_size = '256MB'")  # Reducido para staging
+        else:
+            # Optimizaciones para producción con más recursos
+            cursor.execute("SET work_mem = '32MB'")
+            cursor.execute("SET maintenance_work_mem = '128MB'")
+            cursor.execute("SET effective_cache_size = '1GB'")
+        
+        # Optimizaciones comunes para ambos entornos
         cursor.execute("SET random_page_cost = 1.1")  # Optimizado para SSD
         cursor.execute("SET effective_io_concurrency = 200")  # Para SSD
-        cursor.execute("SET shared_preload_libraries = 'pg_stat_statements'")  # Para monitoreo de queries
         
         # Optimizaciones de query
         cursor.execute("SET enable_seqscan = ON")
@@ -71,7 +95,7 @@ def set_postgresql_optimizations(dbapi_connection, connection_record):
         # Timeout para queries lentas (30 segundos)
         cursor.execute("SET statement_timeout = '30000'")
         
-        logger.debug("Optimizaciones PostgreSQL aplicadas a la conexión")
+        logger.debug(f"Optimizaciones PostgreSQL aplicadas ({ENVIRONMENT})")
     except Exception as e:
         logger.warning(f"No se pudieron aplicar todas las optimizaciones: {e}")
     finally:
