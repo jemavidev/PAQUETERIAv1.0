@@ -1425,7 +1425,7 @@ function createPackageElement(package) {
                         </button>
                     ` : ''}
                     ${package.customer_phone ? `
-                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(`Hola ${package.customer_name || 'cliente'}, tu paquete con código *${package.tracking_number}* está *${getStatusText(package.status)}*. Puedes consultar más detalles aquí: ${window.location.origin}/search?auto_search=${package.tracking_number}`)}" 
+                        <a href="https://wa.me/57${package.customer_phone.replace(/[\s\-\(\)]/g, '').replace(/^\+57/, '')}?text=${encodeURIComponent(getWhatsAppMessage(package))}" 
                            target="_blank"
                            class="text-green-600 hover:text-green-800 transition-colors"
                            title="Contactar por WhatsApp">
@@ -4075,6 +4075,32 @@ function getStatusText(status) {
         case 'cancelled': return 'CANCELADO';
         default: return status || 'DESCONOCIDO';
     }
+}
+
+/**
+ * Genera el mensaje de WhatsApp según el estado del paquete
+ * @param {Object} package - Objeto del paquete
+ * @returns {string} - Mensaje formateado para WhatsApp
+ */
+function getWhatsAppMessage(package) {
+    const customerName = package.customer_name || 'cliente';
+    const trackingNumber = package.tracking_number;
+    const status = getStatusText(package.status);
+    const searchUrl = `${window.location.origin}/search?auto_search=${trackingNumber}`;
+    
+    // Mensaje base
+    let message = `Hola ${customerName}, tu paquete con código *${trackingNumber}* está *${status}*.`;
+    
+    // Agregar horarios solo para estado RECIBIDO
+    const normalizedStatus = normalizeStatusForFilter(package.status);
+    if (normalizedStatus?.toLowerCase() === 'received') {
+        message += `\n\nPuedes recogerlo en:\n📍 Papelería Papyrus\n🕒 Lun-Vie: 9:30 AM - 7:00 PM`;
+    }
+    
+    // Agregar link de consulta
+    message += `\n\nConsulta más detalles aquí: ${searchUrl}`;
+    
+    return message;
 }
 
 function getStatusIcon(status) {

@@ -439,3 +439,68 @@ def process_email_queue(self, batch_size: int = 50):
         raise self.retry(countdown=60, max_retries=3, exc=e)
     finally:
         db.close()
+
+
+# ========================================
+# TAREA DE LIMPIEZA DE PAQUETES ANUNCIADOS
+# ========================================
+
+@celery_app.task(bind=True, name="src.tasks.cleanup_old_announced_packages")
+def cleanup_old_announced_packages(self, days_old: int = 15):
+    """
+    Eliminar paquetes con estado ANUNCIADO que tengan más de X días sin cambiar de estado.
+    Por defecto elimina paquetes ANUNCIADOS con más de 15 días.
+    """
+    logger.info(f"🧹 Iniciando limpieza de paquetes ANUNCIADOS con más de {days_old} días")
+
+    db = SessionLocal()
+    try:
+        from datetime import datetime, timedelta
+        from app.models.package import Package, PackageStatus
+        from app.utils.datetime_utils import get_colombia_now
+
+        # Calcular fecha límite
+        cutoff_date = get_colombia_now() - timedelta(days=days_old)
+        
+        # Buscar paquetes ANUNCIADOS antiguos (basado en updated_at)
+        old_announced_packages = db.query(Package).filter(
+            Package.status == PackageStatus.ANUNCIADO,
+            Package.updated_at < cutoff_date
+        ).all()
+
+        deleted_count = 0
+        deleted_tracking_numbers = []
+
+        for package in old_announced_packages:
+            try:
+                tracking_number = package.tracking_number
+                logger.info(f"🗑️ Eliminando paquete ANUNCIADO antiguo: {tracking_number} (última actualización: {package.updated_at})")
+                
+                # Eliminar el paquete (las relaciones en cascada se encargarán del resto)
+                db.delete(package)
+                deleted_count += 1
+                deleted_tracking_numbers.append(tracking_number)
+                
+            except Exception as e:
+                logger.error(f"❌ Error eliminando paquete {package.tracking_number}: {str(e)}")
+                continue
+
+        # Commit de todos los cambios
+        db.commit()
+
+        result = {
+            "deleted_count": deleted_count,
+            "deleted_tracking_numbers": deleted_tracking_numbers,
+            "cutoff_date": cutoff_date.isoformat(),
+            "days_old": days_old
+        }
+
+        logger.info(f"✅ Limpieza completada: {deleted_count} paquetes ANUNCIADOS eliminados")
+        return result
+
+    except Exception as e:
+        logger.error(f"❌ Error en limpieza de paquetes ANUNCIADOS: {str(e)}")
+        db.rollback()
+        raise self.retry(countdown=3600, max_retries=2, exc=e)
+    finally:
+        db.close()

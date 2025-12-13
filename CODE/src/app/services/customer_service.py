@@ -131,9 +131,11 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         is_vip: Optional[bool] = None,
         city: Optional[str] = None,
         skip: int = 0,
-        limit: int = 50
+        limit: int = 50,
+        sort_by: str = "name",  # name, packages, recent
+        sort_order: str = "asc"  # asc, desc
     ) -> Tuple[List[Customer], int]:
-        """Búsqueda avanzada de clientes"""
+        """Búsqueda avanzada de clientes con ordenamiento configurable"""
         base_query = db.query(Customer)
 
         # Aplicar filtros de estado
@@ -177,16 +179,38 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         # Obtener total
         total = base_query.count()
 
-        # Ordenar por cantidad total de paquetes (suma de todos los estados)
-        # Importar Package para hacer el join
-        from app.models.package import Package
+        # Aplicar ordenamiento según parámetros
+        if sort_by == "name":
+            # Ordenar alfabéticamente por nombre completo
+            if sort_order == "desc":
+                base_query = base_query.order_by(desc(Customer.full_name))
+            else:
+                base_query = base_query.order_by(Customer.full_name)
         
-        # Hacer un left join con packages y contar por cliente
-        customers_with_counts = base_query.outerjoin(Package).group_by(Customer.id).order_by(
-            desc(func.count(Package.id))
-        ).offset(skip).limit(limit).all()
+        elif sort_by == "packages":
+            # Ordenar por cantidad total de paquetes
+            from app.models.package import Package
+            base_query = base_query.outerjoin(Package).group_by(Customer.id)
+            if sort_order == "desc":
+                base_query = base_query.order_by(desc(func.count(Package.id)))
+            else:
+                base_query = base_query.order_by(func.count(Package.id))
+        
+        elif sort_by == "recent":
+            # Ordenar por fecha de creación (más recientes primero)
+            if sort_order == "desc":
+                base_query = base_query.order_by(desc(Customer.created_at))
+            else:
+                base_query = base_query.order_by(Customer.created_at)
+        
+        else:
+            # Por defecto: ordenar alfabéticamente
+            base_query = base_query.order_by(Customer.full_name)
 
-        return customers_with_counts, total
+        # Aplicar paginación
+        customers = base_query.offset(skip).limit(limit).all()
+
+        return customers, total
 
     def get_customer_stats(self, db: Session) -> CustomerStatsResponse:
         """Obtener estadísticas generales de clientes"""
