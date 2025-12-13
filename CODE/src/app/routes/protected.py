@@ -1602,8 +1602,8 @@ async def get_dashboard_packages(
                 )
             )
 
-        # Ordenar por fecha de anuncio descendente
-        packages_query = packages_query.order_by(Package.announced_at.desc())
+        # Ordenar por fecha de última actualización descendente (más nuevo primero)
+        packages_query = packages_query.order_by(Package.updated_at.desc())
 
         # Calcular offset
         offset = (page - 1) * limit

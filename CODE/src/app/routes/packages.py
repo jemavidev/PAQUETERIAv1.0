@@ -293,8 +293,8 @@ async def list_packages(
             except ValueError:
                 logger.warning(f"⚠️ Formato de fecha inválido: {date_to}")
         
-        # Obtener paquetes ordenados
-        packages_query = query.order_by(Package.created_at.desc()).all()
+        # Obtener paquetes ordenados por última actualización (más nuevo primero)
+        packages_query = query.order_by(Package.updated_at.desc()).all()
         
         # Contar total para paginación
         total_packages = len(packages_query)

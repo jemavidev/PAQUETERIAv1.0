@@ -32,6 +32,7 @@ celery_app.conf.update(
         "app.tasks.send_bulk_sms": {"queue": "sms"},
         "app.tasks.process_file_upload": {"queue": "files"},
         "app.tasks.cleanup_old_data": {"queue": "maintenance"},
+        "src.tasks.cleanup_old_announced_packages": {"queue": "maintenance"},
     },
 
     # Configuración de colas
@@ -69,6 +70,11 @@ celery_app.conf.update(
         "update-dashboard-metrics": {
             "task": "app.tasks.update_dashboard_metrics",
             "schedule": 300.0,  # Cada 5 minutos
+        },
+        "cleanup-old-announced-packages": {
+            "task": "src.tasks.cleanup_old_announced_packages",
+            "schedule": 86400.0,  # Cada 24 horas
+            "kwargs": {"days_old": 15},  # Eliminar paquetes ANUNCIADOS con más de 15 días
         },
     },
 )
