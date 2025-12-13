@@ -110,19 +110,34 @@
         <!-- Tabla de Clientes -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden" id="customers-manage-content">
             <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                     <h2 class="text-base sm:text-lg font-medium text-gray-900">Lista de Clientes</h2>
-                    {% if pagination and pagination.total > 0 %}
-                    <div class="text-sm text-gray-700">
-                        Mostrando 
-                        <span class="font-medium">{{ ((pagination.page - 1) * pagination.limit) + 1 }}</span>
-                        a 
-                        <span class="font-medium">{{ [pagination.page * pagination.limit, pagination.total]|min }}</span>
-                        de 
-                        <span class="font-medium">{{ pagination.total }}</span> 
-                        resultados
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- Selector de Ordenamiento -->
+                        <div class="flex items-center space-x-2">
+                            <label class="text-xs text-gray-600 hidden sm:inline">Ordenar:</label>
+                            <select onchange="changeSortOrder(this.value)" 
+                                    class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white">
+                                <option value="name-asc" {{ 'selected' if sort_by == 'name' and sort_order == 'asc' else '' }}>A-Z (Nombre)</option>
+                                <option value="name-desc" {{ 'selected' if sort_by == 'name' and sort_order == 'desc' else '' }}>Z-A (Nombre)</option>
+                                <option value="packages-desc" {{ 'selected' if sort_by == 'packages' and sort_order == 'desc' else '' }}>Más paquetes</option>
+                                <option value="packages-asc" {{ 'selected' if sort_by == 'packages' and sort_order == 'asc' else '' }}>Menos paquetes</option>
+                                <option value="recent-desc" {{ 'selected' if sort_by == 'recent' and sort_order == 'desc' else '' }}>Más recientes</option>
+                                <option value="recent-asc" {{ 'selected' if sort_by == 'recent' and sort_order == 'asc' else '' }}>Más antiguos</option>
+                            </select>
+                        </div>
+                        
+                        {% if pagination and pagination.total > 0 %}
+                        <div class="text-sm text-gray-700 hidden md:block">
+                            <span class="font-medium">{{ ((pagination.page - 1) * pagination.limit) + 1 }}</span>
+                            -
+                            <span class="font-medium">{{ [pagination.page * pagination.limit, pagination.total]|min }}</span>
+                            de 
+                            <span class="font-medium">{{ pagination.total }}</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
 
@@ -1167,7 +1182,7 @@ function cancelManageSearchDebounce() {
 function buildManageUrl(extraParams = {}) {
     const baseUrl = new URL('/customers/manage', window.location.origin);
     const currentParams = new URLSearchParams(window.location.search);
-    const preservedKeys = ['search', 'limit', 'page'];
+    const preservedKeys = ['search', 'limit', 'page', 'sort_by', 'sort_order'];
 
     preservedKeys.forEach((key) => {
         const value = currentParams.get(key);
@@ -1185,6 +1200,19 @@ function buildManageUrl(extraParams = {}) {
     });
 
     return baseUrl.pathname + (baseUrl.search ? baseUrl.search : '');
+}
+
+function changeSortOrder(value) {
+    // value format: "name-asc", "packages-desc", etc.
+    const [sortBy, sortOrder] = value.split('-');
+    const params = {
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        page: '1'  // Reset to first page when changing sort
+    };
+    
+    const targetUrl = buildManageUrl(params);
+    window.location.href = targetUrl;
 }
 
 function submitManageSearch() {

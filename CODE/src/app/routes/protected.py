@@ -406,9 +406,11 @@ async def customers_manage_page(
     db: Session = Depends(get_db),
     page: int = 1,
     limit: int = 10,
-    search: str = ""
+    search: str = "",
+    sort_by: str = "name",  # name, packages, recent
+    sort_order: str = "asc"  # asc, desc
 ):
-    """Vista de gestión de clientes con paginación (10 clientes por página)"""
+    """Vista de gestión de clientes con paginación y ordenamiento"""
     context = get_auth_context_required(request)
     context["user"] = current_user
     
@@ -423,7 +425,9 @@ async def customers_manage_page(
             db=db,
             query=search_query,
             skip=skip,
-            limit=limit
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order
         )
         if total > 0 and skip >= total:
             # Ajustar a la última página disponible
@@ -452,6 +456,8 @@ async def customers_manage_page(
             "has_prev": has_prev
         }
         context["search_term"] = search_query
+        context["sort_by"] = sort_by
+        context["sort_order"] = sort_order
     except Exception as e:
         context["customers"] = []
         context["pagination"] = {
