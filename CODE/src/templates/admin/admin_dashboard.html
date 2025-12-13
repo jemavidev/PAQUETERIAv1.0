@@ -22,32 +22,44 @@
 
         <!-- Navegación con Tabs -->
         <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6 sm:mb-8">
-            <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm">
+            <nav class="flex space-x-2 sm:space-x-4 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm">
                     <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
-                    Dashboard
+                    <span class="hidden sm:inline">Dashboard</span>
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <button onclick="switchTab('users')" id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Usuarios</span>
+                </button>
+                <button onclick="switchTab('packages')" id="tab-packages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Paquetes</span>
+                </button>
+                <button onclick="switchTab('customers')" id="tab-customers" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Clientes</span>
+                </button>
+                <button onclick="switchTab('messages')" id="tab-messages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Mensajes</span>
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
                     <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    Settings
+                    <span class="hidden sm:inline">Settings</span>
                 </button>
-                <a href="/admin/users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                    </svg>
-                    Usuarios
-                </a>
-                <a href="/packages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                    Paquetes
-                </a>
             </nav>
         </div>
 
@@ -565,6 +577,83 @@
             </div>
 
         </div>
+
+        <!-- TAB: USUARIOS -->
+        <div id="users-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Usuarios</h2>
+                    <button onclick="window.location.href='/admin/users'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-papyrus-blue hover:bg-blue-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Ir a Gestión Completa
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de usuarios del sistema. Para gestión completa, usa el botón superior.</p>
+                <div id="users-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando usuarios...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PAQUETES -->
+        <div id="packages-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Paquetes</h2>
+                    <button onclick="window.location.href='/packages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        Ver Todos los Paquetes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de paquetes recientes. Para gestión completa, usa el botón superior.</p>
+                <div id="packages-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando paquetes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CLIENTES -->
+        <div id="customers-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Clientes</h2>
+                    <button onclick="window.location.href='/customers'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Ver Todos los Clientes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de clientes. Para gestión completa, usa el botón superior.</p>
+                <div id="customers-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando clientes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: MENSAJES -->
+        <div id="messages-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Sistema de Mensajes</h2>
+                    <button onclick="window.location.href='/messages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                        </svg>
+                        Ver Todos los Mensajes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de mensajes recientes. Para gestión completa, usa el botón superior.</p>
+                <div id="messages-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando mensajes...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -818,25 +907,219 @@ function populateHealthStats(stats) {
 
 // Función para cambiar entre tabs
 function switchTab(tabName) {
-    // Ocultar todos los contenidos
-    document.getElementById('dashboard-content').classList.add('hidden');
-    document.getElementById('settings-content').classList.add('hidden');
+    // Lista de todos los tabs
+    const tabs = ['dashboard', 'users', 'packages', 'customers', 'messages', 'settings'];
     
-    // Remover estilos activos de todos los tabs
-    document.getElementById('tab-dashboard').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
-    document.getElementById('tab-dashboard').classList.add('border-transparent', 'text-gray-500');
-    document.getElementById('tab-settings').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
-    document.getElementById('tab-settings').classList.add('border-transparent', 'text-gray-500');
+    // Ocultar todos los contenidos
+    tabs.forEach(tab => {
+        const content = document.getElementById(`${tab}-content`);
+        if (content) content.classList.add('hidden');
+        
+        const tabButton = document.getElementById(`tab-${tab}`);
+        if (tabButton) {
+            tabButton.classList.remove('border-papyrus-blue', 'text-papyrus-blue');
+            tabButton.classList.add('border-transparent', 'text-gray-500');
+        }
+    });
     
     // Mostrar el contenido seleccionado y activar su tab
-    if (tabName === 'dashboard') {
-        document.getElementById('dashboard-content').classList.remove('hidden');
-        document.getElementById('tab-dashboard').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('tab-dashboard').classList.add('border-papyrus-blue', 'text-papyrus-blue');
-    } else if (tabName === 'settings') {
-        document.getElementById('settings-content').classList.remove('hidden');
-        document.getElementById('tab-settings').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('tab-settings').classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    const selectedContent = document.getElementById(`${tabName}-content`);
+    const selectedTab = document.getElementById(`tab-${tabName}`);
+    
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+    }
+    
+    if (selectedTab) {
+        selectedTab.classList.remove('border-transparent', 'text-gray-500');
+        selectedTab.classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    }
+    
+    // Cargar datos específicos del tab si es necesario
+    if (tabName === 'users') {
+        loadUsersTab();
+    } else if (tabName === 'packages') {
+        loadPackagesTab();
+    } else if (tabName === 'customers') {
+        loadCustomersTab();
+    } else if (tabName === 'messages') {
+        loadMessagesTab();
+    }
+}
+
+// Función para cargar el tab de usuarios
+async function loadUsersTab() {
+    const usersList = document.getElementById('users-list');
+    usersList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando usuarios...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar usuarios');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const userManagement = stats.user_management || {};
+        
+        usersList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-sm text-blue-700">Total Usuarios</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(stats.system_overview?.total_users || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Usuarios Activos</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(stats.system_overview?.active_users || 0)}</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-sm text-purple-700">Administradores</p>
+                    <p class="text-3xl font-bold text-purple-900">${formatNumber(userManagement.admin_count || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para gestión completa de usuarios, incluyendo crear, editar y eliminar</p>
+                <button onclick="window.location.href='/admin/users'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-papyrus-blue hover:bg-blue-700">
+                    Ir a Gestión de Usuarios
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        usersList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar usuarios</div>';
+    }
+}
+
+// Función para cargar el tab de paquetes
+async function loadPackagesTab() {
+    const packagesList = document.getElementById('packages-list');
+    packagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando paquetes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar paquetes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const byStatus = stats.business_metrics?.packages_by_status || {};
+        
+        packagesList.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-yellow-700">Anunciados</p>
+                    <p class="text-3xl font-bold text-yellow-900">${formatNumber(byStatus.ANUNCIADO || 0)}</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-blue-700">Recibidos</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(byStatus.RECIBIDO || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-green-700">Entregados</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(byStatus.ENTREGADO || 0)}</p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-red-700">Cancelados</p>
+                    <p class="text-3xl font-bold text-red-900">${formatNumber(byStatus.CANCELADO || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para ver detalles completos, buscar y gestionar paquetes</p>
+                <button onclick="window.location.href='/packages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    Ver Todos los Paquetes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        packagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar paquetes</div>';
+    }
+}
+
+// Función para cargar el tab de clientes
+async function loadCustomersTab() {
+    const customersList = document.getElementById('customers-list');
+    customersList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando clientes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30&include_analytics=true');
+        if (!response.ok) throw new Error('Error al cargar clientes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const customerAnalytics = stats.customer_analytics || {};
+        
+        customersList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-sm text-purple-700">Total Clientes</p>
+                    <p class="text-3xl font-bold text-purple-900">${formatNumber(stats.system_overview?.total_customers || 0)}</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-sm text-blue-700">Clientes VIP</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(customerAnalytics.vip_customers || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Nuevos Este Mes</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(stats.business_metrics?.new_customers || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para gestión completa de clientes y sus paquetes</p>
+                <button onclick="window.location.href='/customers'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+                    Ver Todos los Clientes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        customersList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar clientes</div>';
+    }
+}
+
+// Función para cargar el tab de mensajes
+async function loadMessagesTab() {
+    const messagesList = document.getElementById('messages-list');
+    messagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando mensajes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar mensajes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const systemHealth = stats.system_health || {};
+        
+        messagesList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-orange-50 p-4 rounded-lg">
+                    <p class="text-sm text-orange-700">Mensajes Pendientes</p>
+                    <p class="text-3xl font-bold text-orange-900">${formatNumber(systemHealth.pending_messages || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Mensajes Resueltos</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(systemHealth.resolved_messages || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para ver y responder mensajes de clientes</p>
+                <button onclick="window.location.href='/messages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                    Ver Todos los Mensajes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        messagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar mensajes</div>';
     }
 }
 
