@@ -294,6 +294,9 @@ class AdminService:
         ).all()
         pending_payments = sum((p.base_fee + p.storage_fee) for p in pending_packages)
         
+        # Agregar ventas por período (día/semana/mes)
+        sales_by_period = self.get_sales_by_period()
+        
         return {
             "total_revenue": float(total_revenue),
             "average_package_value": float(average_package_value),
@@ -302,7 +305,8 @@ class AdminService:
             "total_delivery_fees": float(total_delivery_fees),
             "pending_payments": float(pending_payments),
             "delivered_packages_count": len(delivered_packages),
-            "pending_packages_count": len(pending_packages)
+            "pending_packages_count": len(pending_packages),
+            "sales_by_period": sales_by_period
         }
 
     def _get_package_analytics(self) -> Dict[str, Any]:
@@ -957,4 +961,65 @@ class AdminService:
             "last_backup": "2025-09-20T10:00:00Z",
             "disk_usage": "45%",
             "memory_usage": "60%"
+        }
+
+
+    def get_sales_by_period(self) -> Dict[str, Any]:
+        """Obtiene ventas por día, semana y mes"""
+        from decimal import Decimal
+        
+        now = get_colombia_now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = now - timedelta(days=7)
+        month_start = now - timedelta(days=30)
+        
+        # Ventas de hoy
+        today_packages = self.db.query(Package).filter(
+            and_(
+                Package.status == PackageStatus.ENTREGADO,
+                Package.delivered_at >= today_start
+            )
+        ).all()
+        
+        revenue_today = sum((p.base_fee + p.storage_fee) for p in today_packages)
+        packages_today = len(today_packages)
+        
+        # Ventas de la semana
+        week_packages = self.db.query(Package).filter(
+            and_(
+                Package.status == PackageStatus.ENTREGADO,
+                Package.delivered_at >= week_start
+            )
+        ).all()
+        
+        revenue_week = sum((p.base_fee + p.storage_fee) for p in week_packages)
+        packages_week = len(week_packages)
+        
+        # Ventas del mes
+        month_packages = self.db.query(Package).filter(
+            and_(
+                Package.status == PackageStatus.ENTREGADO,
+                Package.delivered_at >= month_start
+            )
+        ).all()
+        
+        revenue_month = sum((p.base_fee + p.storage_fee) for p in month_packages)
+        packages_month = len(month_packages)
+        
+        return {
+            "today": {
+                "revenue": float(revenue_today),
+                "packages": packages_today,
+                "average": float(revenue_today / packages_today) if packages_today > 0 else 0
+            },
+            "week": {
+                "revenue": float(revenue_week),
+                "packages": packages_week,
+                "average": float(revenue_week / packages_week) if packages_week > 0 else 0
+            },
+            "month": {
+                "revenue": float(revenue_month),
+                "packages": packages_month,
+                "average": float(revenue_month / packages_month) if packages_month > 0 else 0
+            }
         }

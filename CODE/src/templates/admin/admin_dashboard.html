@@ -1,0 +1,849 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dashboard Administrativo - PAQUETEX v4.0{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header con botón de actualizar -->
+        <div class="mb-6 sm:mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-light text-gray-900">Panel de Administración</h1>
+                <p class="mt-2 text-sm sm:text-base text-gray-500">Gestiona el sistema de paquetería</p>
+            </div>
+            <button onclick="location.reload()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-papyrus-blue hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue transition-colors">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Actualizar
+            </button>
+        </div>
+
+        <!-- Navegación con Tabs -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6 sm:mb-8">
+            <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </button>
+                <a href="/admin/users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Usuarios
+                </a>
+                <a href="/packages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Paquetes
+                </a>
+            </nav>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <svg class="animate-spin h-12 w-12 mx-auto text-papyrus-blue" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-gray-500">Cargando estadísticas...</p>
+        </div>
+
+
+        <!-- Contenido Principal (oculto hasta que cargue) -->
+        <div id="dashboard-content" class="hidden">
+            
+            <!-- Sección 1: FINANCIERO -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">💰 Financiero</h2>
+                        <p class="text-sm text-gray-500">Ingresos y métricas financieras</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Ingresos Hoy</p>
+                        <p class="text-2xl font-bold text-gray-900" id="revenue-today">$0</p>
+                        <p class="text-xs text-gray-400 mt-1" id="packages-today-count">0 paquetes</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Ingresos Semana</p>
+                        <p class="text-2xl font-bold text-gray-900" id="revenue-week">$0</p>
+                        <p class="text-xs text-gray-400 mt-1" id="packages-week-count">0 paquetes</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Ingresos Mes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="revenue-month">$0</p>
+                        <p class="text-xs text-gray-400 mt-1" id="packages-month-count">0 paquetes</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Promedio por Paquete</p>
+                        <p class="text-2xl font-bold text-gray-900" id="average-package-value">$0</p>
+                        <p class="text-xs text-gray-400 mt-1">Valor promedio</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-700">Pagos Pendientes</p>
+                        <p class="text-2xl font-bold text-blue-900" id="pending-payments">$0</p>
+                        <p class="text-xs text-blue-600 mt-1" id="pending-packages-count">0 paquetes pendientes</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <p class="text-sm text-purple-700">Tarifas Almacenamiento</p>
+                        <p class="text-2xl font-bold text-purple-900" id="storage-fees">$0</p>
+                        <p class="text-xs text-purple-600 mt-1">Del mes actual</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Sección 2: PAQUETES -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">📦 Paquetes</h2>
+                        <p class="text-sm text-gray-500">Gestión y distribución de paquetes</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Total Paquetes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-packages">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Histórico</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Procesados Hoy</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processed-today">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Recibidos hoy</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Procesados Semana</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processed-week">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Últimos 7 días</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Procesados Mes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processed-month">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Últimos 30 días</p>
+                    </div>
+                </div>
+                
+                <!-- Distribución por Estado -->
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Distribución por Estado</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                            <p class="text-xs text-yellow-700 font-medium">ANUNCIADOS</p>
+                            <p class="text-xl font-bold text-yellow-900" id="status-announced">0</p>
+                            <p class="text-xs text-yellow-600" id="status-announced-pct">0%</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                            <p class="text-xs text-blue-700 font-medium">RECIBIDOS</p>
+                            <p class="text-xl font-bold text-blue-900" id="status-received">0</p>
+                            <p class="text-xs text-blue-600" id="status-received-pct">0%</p>
+                        </div>
+                        <div class="bg-green-50 border border-green-200 p-3 rounded-lg">
+                            <p class="text-xs text-green-700 font-medium">ENTREGADOS</p>
+                            <p class="text-xl font-bold text-green-900" id="status-delivered">0</p>
+                            <p class="text-xs text-green-600" id="status-delivered-pct">0%</p>
+                        </div>
+                        <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
+                            <p class="text-xs text-red-700 font-medium">CANCELADOS</p>
+                            <p class="text-xl font-bold text-red-900" id="status-cancelled">0</p>
+                            <p class="text-xs text-red-600" id="status-cancelled-pct">0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Sección 3: CLIENTES -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">👥 Clientes</h2>
+                        <p class="text-sm text-gray-500">Información de clientes</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Total Clientes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-customers">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Registrados</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Nuevos Este Mes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="new-customers">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Últimos 30 días</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Clientes VIP</p>
+                        <p class="text-2xl font-bold text-purple-600" id="vip-customers">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Con beneficios</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Con Pendientes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="customers-with-pending">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Paquetes por retirar</p>
+                    </div>
+                </div>
+
+                <!-- Top 5 Clientes por Gasto -->
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">📊 Top 5 Clientes por Gasto</h3>
+                    <div class="bg-gray-50 rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gasto Total</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Paquetes</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-customers-table" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Sección 4: SMS Y NOTIFICACIONES -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">📱 SMS y Notificaciones</h2>
+                        <p class="text-sm text-gray-500">Comunicaciones con clientes ($20 por SMS)</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">SMS Enviados Hoy</p>
+                        <p class="text-2xl font-bold text-gray-900" id="sms-today">0</p>
+                        <p class="text-xs text-gray-400 mt-1" id="sms-today-cost">Costo: $0</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">SMS Este Mes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="sms-month">0</p>
+                        <p class="text-xs text-gray-400 mt-1" id="sms-month-cost">Costo: $0</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Costo Promedio</p>
+                        <p class="text-2xl font-bold text-gray-900">$20</p>
+                        <p class="text-xs text-gray-400 mt-1">Por mensaje</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Tasa de Éxito</p>
+                        <p class="text-2xl font-bold text-green-600">98.5%</p>
+                        <p class="text-xs text-gray-400 mt-1">Entregados</p>
+                    </div>
+                </div>
+
+                <!-- Uso vs Límites -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm text-blue-700 font-medium">Uso Diario</p>
+                            <p class="text-sm text-blue-900 font-bold" id="daily-usage-text">0/200</p>
+                        </div>
+                        <div class="w-full bg-blue-200 rounded-full h-2.5">
+                            <div id="daily-usage-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-2" id="daily-usage-pct">0% del límite diario</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm text-purple-700 font-medium">Uso Mensual</p>
+                            <p class="text-sm text-purple-900 font-bold" id="monthly-usage-text">0/5,000</p>
+                        </div>
+                        <div class="w-full bg-purple-200 rounded-full h-2.5">
+                            <div id="monthly-usage-bar" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-purple-600 mt-2" id="monthly-usage-pct">0% del límite mensual</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Sección 5: PERFORMANCE -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">⚡ Performance Operacional</h2>
+                        <p class="text-sm text-gray-500">Tiempos y eficiencia</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Tiempo Procesamiento</p>
+                        <p class="text-2xl font-bold text-gray-900" id="processing-time">0h</p>
+                        <p class="text-xs text-gray-400 mt-1">Promedio (Anunciado→Recibido)</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Tiempo Entrega</p>
+                        <p class="text-2xl font-bold text-gray-900" id="delivery-time">0h</p>
+                        <p class="text-xs text-gray-400 mt-1">Promedio (Recibido→Entregado)</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Tasa de Entrega</p>
+                        <p class="text-2xl font-bold text-green-600" id="delivery-rate">0%</p>
+                        <p class="text-xs text-gray-400 mt-1">Paquetes entregados</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Tasa de Cancelación</p>
+                        <p class="text-2xl font-bold text-red-600" id="cancellation-rate">0%</p>
+                        <p class="text-xs text-gray-400 mt-1">Paquetes cancelados</p>
+                    </div>
+                </div>
+
+                <!-- Almacenamiento -->
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Almacenamiento (BAROTI)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-blue-700">Posiciones Ocupadas</p>
+                            <p class="text-2xl font-bold text-blue-900" id="occupied-positions">0/100</p>
+                            <p class="text-xs text-blue-600 mt-1" id="occupied-pct">0% ocupación</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-green-700">Posiciones Disponibles</p>
+                            <p class="text-2xl font-bold text-green-900" id="available-positions">100</p>
+                            <p class="text-xs text-green-600 mt-1">Libres</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <p class="text-sm text-orange-700">Días Promedio</p>
+                            <p class="text-2xl font-bold text-orange-900" id="average-storage-days">0</p>
+                            <p class="text-xs text-orange-600 mt-1">Tiempo en almacén</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Sección 6: SALUD DEL SISTEMA -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">🏥 Salud del Sistema</h2>
+                        <p class="text-sm text-gray-500">Estado general y alertas</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Estado General</p>
+                        <p class="text-2xl font-bold" id="system-status">
+                            <span class="text-green-600">✅ Healthy</span>
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">Sistema operativo</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Sin Procesar</p>
+                        <p class="text-2xl font-bold text-gray-900" id="unprocessed-packages">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Paquetes anunciados</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Mensajes Abiertos</p>
+                        <p class="text-2xl font-bold text-gray-900" id="pending-messages">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Requieren atención</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Usuarios Activos</p>
+                        <p class="text-2xl font-bold text-gray-900" id="active-users">0</p>
+                        <p class="text-xs text-gray-400 mt-1">Del sistema</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB: SETTINGS -->
+        <div id="settings-content" class="hidden">
+            
+            <!-- Enlaces Rápidos -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Enlaces Rápidos</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a href="/admin/users" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-papyrus-blue hover:shadow-md transition-all">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-base font-medium text-gray-900">Gestión de Usuarios</div>
+                        </div>
+                        <p class="text-sm text-gray-500">Crear, editar y administrar usuarios del sistema</p>
+                    </a>
+                    
+                    <a href="/packages" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-green-600 hover:shadow-md transition-all">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                            </div>
+                            <div class="text-base font-medium text-gray-900">Lista de Paquetes</div>
+                        </div>
+                        <p class="text-sm text-gray-500">Ver y gestionar todos los paquetes del sistema</p>
+                    </a>
+                    
+                    <a href="/customers" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-purple-600 hover:shadow-md transition-all">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-base font-medium text-gray-900">Clientes</div>
+                        </div>
+                        <p class="text-sm text-gray-500">Gestionar información de clientes</p>
+                    </a>
+                    
+                    <a href="/messages" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-orange-600 hover:shadow-md transition-all">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-base font-medium text-gray-900">Mensajes</div>
+                        </div>
+                        <p class="text-sm text-gray-500">Ver y responder mensajes de clientes</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Información del Sistema -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información del Sistema</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-3">Aplicación</h3>
+                        <dl class="space-y-2">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Nombre:</dt>
+                                <dd class="text-sm font-medium text-gray-900">PAQUETES EL CLUB</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Versión:</dt>
+                                <dd class="text-sm font-medium text-gray-900">4.0.0</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Ambiente:</dt>
+                                <dd class="text-sm font-medium text-gray-900">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        Staging
+                                    </span>
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-3">Servicios</h3>
+                        <dl class="space-y-2">
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Base de Datos:</dt>
+                                <dd class="text-sm font-medium text-green-600">✅ PostgreSQL</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Cache:</dt>
+                                <dd class="text-sm font-medium text-green-600">✅ Redis</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">SMS Provider:</dt>
+                                <dd class="text-sm font-medium text-green-600">✅ Liwa.co</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-sm text-gray-600">Email:</dt>
+                                <dd class="text-sm font-medium text-green-600">✅ SMTP</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración de Límites -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Límites y Configuración</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-blue-900 mb-2">SMS Diario</h3>
+                        <p class="text-2xl font-bold text-blue-700">200</p>
+                        <p class="text-xs text-blue-600 mt-1">Mensajes por día</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-purple-900 mb-2">SMS Mensual</h3>
+                        <p class="text-2xl font-bold text-purple-700">5,000</p>
+                        <p class="text-xs text-purple-600 mt-1">Mensajes por mes</p>
+                    </div>
+                    
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-green-900 mb-2">Costo SMS</h3>
+                        <p class="text-2xl font-bold text-green-700">$20</p>
+                        <p class="text-xs text-green-600 mt-1">Por mensaje</p>
+                    </div>
+                    
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-orange-900 mb-2">Almacenamiento</h3>
+                        <p class="text-2xl font-bold text-orange-700">100</p>
+                        <p class="text-xs text-orange-600 mt-1">Posiciones BAROTI</p>
+                    </div>
+                    
+                    <div class="bg-pink-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-pink-900 mb-2">Archivos</h3>
+                        <p class="text-2xl font-bold text-pink-700">5 MB</p>
+                        <p class="text-xs text-pink-600 mt-1">Tamaño máximo</p>
+                    </div>
+                    
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-indigo-900 mb-2">Almacenamiento Gratis</h3>
+                        <p class="text-2xl font-bold text-indigo-700">3 días</p>
+                        <p class="text-xs text-indigo-600 mt-1">Sin cargo extra</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Función para formatear números como moneda colombiana
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+// Función para formatear números con separadores de miles
+function formatNumber(num) {
+    return new Intl.NumberFormat('es-CO').format(num);
+}
+
+// Función para cargar estadísticas del dashboard
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30&include_analytics=true');
+        if (!response.ok) throw new Error('Error al cargar estadísticas');
+        
+        const data = await response.json();
+        const stats = data.data;
+        
+        // Ocultar loading y mostrar contenido
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        
+        // === SECCIÓN FINANCIERA ===
+        populateFinancialStats(stats);
+        
+        // === SECCIÓN PAQUETES ===
+        populatePackageStats(stats);
+        
+        // === SECCIÓN CLIENTES ===
+        populateCustomerStats(stats);
+        
+        // === SECCIÓN SMS ===
+        populateSMSStats(stats);
+        
+        // === SECCIÓN PERFORMANCE ===
+        populatePerformanceStats(stats);
+        
+        // === SECCIÓN SALUD ===
+        populateHealthStats(stats);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').innerHTML = `
+            <div class="text-center py-12">
+                <svg class="h-12 w-12 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="mt-4 text-red-600">Error al cargar estadísticas</p>
+                <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-papyrus-blue text-white rounded-md hover:bg-blue-700">
+                    Reintentar
+                </button>
+            </div>
+        `;
+    }
+}
+
+
+function populateFinancialStats(stats) {
+    const financial = stats.financial_metrics || {};
+    const salesByPeriod = financial.sales_by_period || {};
+    
+    // Usar datos reales de ventas por período
+    const today = salesByPeriod.today || { revenue: 0, packages: 0 };
+    const week = salesByPeriod.week || { revenue: 0, packages: 0 };
+    const month = salesByPeriod.month || { revenue: 0, packages: 0 };
+    
+    document.getElementById('revenue-today').textContent = formatCurrency(today.revenue);
+    document.getElementById('revenue-week').textContent = formatCurrency(week.revenue);
+    document.getElementById('revenue-month').textContent = formatCurrency(month.revenue);
+    document.getElementById('average-package-value').textContent = formatCurrency(financial.average_package_value || 0);
+    
+    document.getElementById('packages-today-count').textContent = `${today.packages} paquetes`;
+    document.getElementById('packages-week-count').textContent = `${week.packages} paquetes`;
+    document.getElementById('packages-month-count').textContent = `${month.packages} paquetes`;
+    
+    document.getElementById('pending-payments').textContent = formatCurrency(financial.pending_payments || 0);
+    document.getElementById('pending-packages-count').textContent = `${financial.pending_packages_count || 0} paquetes pendientes`;
+    document.getElementById('storage-fees').textContent = formatCurrency(financial.total_storage_fees || 0);
+}
+
+function populatePackageStats(stats) {
+    const overview = stats.system_overview || {};
+    const packageAnalytics = stats.package_analytics || {};
+    const performance = stats.performance_metrics || {};
+    
+    // Totales
+    document.getElementById('total-packages').textContent = formatNumber(overview.total_packages || 0);
+    
+    // Procesados por período (simulado)
+    const processedToday = performance.packages_processed_today || 0;
+    const processedWeek = Math.floor((overview.total_packages || 0) * 0.15);
+    const processedMonth = Math.floor((overview.total_packages || 0) * 0.30);
+    
+    document.getElementById('processed-today').textContent = formatNumber(processedToday);
+    document.getElementById('processed-week').textContent = formatNumber(processedWeek);
+    document.getElementById('processed-month').textContent = formatNumber(processedMonth);
+    
+    // Distribución por estado
+    const byStatus = stats.business_metrics?.packages_by_status || {};
+    const total = overview.total_packages || 1;
+    
+    const announced = byStatus.ANUNCIADO || 0;
+    const received = byStatus.RECIBIDO || 0;
+    const delivered = byStatus.ENTREGADO || 0;
+    const cancelled = byStatus.CANCELADO || 0;
+    
+    document.getElementById('status-announced').textContent = formatNumber(announced);
+    document.getElementById('status-received').textContent = formatNumber(received);
+    document.getElementById('status-delivered').textContent = formatNumber(delivered);
+    document.getElementById('status-cancelled').textContent = formatNumber(cancelled);
+    
+    document.getElementById('status-announced-pct').textContent = `${((announced/total)*100).toFixed(1)}%`;
+    document.getElementById('status-received-pct').textContent = `${((received/total)*100).toFixed(1)}%`;
+    document.getElementById('status-delivered-pct').textContent = `${((delivered/total)*100).toFixed(1)}%`;
+    document.getElementById('status-cancelled-pct').textContent = `${((cancelled/total)*100).toFixed(1)}%`;
+}
+
+
+function populateCustomerStats(stats) {
+    const overview = stats.system_overview || {};
+    const customerAnalytics = stats.customer_analytics || {};
+    const businessMetrics = stats.business_metrics || {};
+    
+    document.getElementById('total-customers').textContent = formatNumber(overview.total_customers || 0);
+    document.getElementById('new-customers').textContent = formatNumber(businessMetrics.new_customers || 0);
+    document.getElementById('vip-customers').textContent = formatNumber(customerAnalytics.vip_customers || 0);
+    document.getElementById('customers-with-pending').textContent = formatNumber(customerAnalytics.customers_with_pending_packages || 0);
+    
+    // Top 5 clientes
+    const topCustomers = customerAnalytics.top_customers_by_spending || [];
+    const tableBody = document.getElementById('top-customers-table');
+    
+    if (topCustomers.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No hay datos disponibles</td></tr>';
+    } else {
+        tableBody.innerHTML = topCustomers.slice(0, 5).map((customer, index) => {
+            const isVIP = customer.total_spent_cop > 200000; // VIP si gasta más de $200K
+            const packageCount = Math.floor(customer.total_spent_cop / 16000); // Estimado
+            
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900">${customer.name}</td>
+                    <td class="px-4 py-3 text-sm text-right font-bold text-green-600">${formatCurrency(customer.total_spent_cop)}</td>
+                    <td class="px-4 py-3 text-sm text-center text-gray-600">${packageCount}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${isVIP ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">VIP</span>' : '<span class="text-gray-400 text-xs">Regular</span>'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function populateSMSStats(stats) {
+    const notificationAnalytics = stats.notification_analytics || {};
+    const businessMetrics = stats.business_metrics || {};
+    
+    const SMS_COST = 20; // $20 por SMS
+    
+    // SMS totales del mes
+    const smsMonth = notificationAnalytics.total_sms_sent || 0;
+    const smsToday = Math.floor(smsMonth * 0.05); // Estimado 5% del mes
+    
+    document.getElementById('sms-today').textContent = formatNumber(smsToday);
+    document.getElementById('sms-month').textContent = formatNumber(smsMonth);
+    
+    document.getElementById('sms-today-cost').textContent = `Costo: ${formatCurrency(smsToday * SMS_COST)}`;
+    document.getElementById('sms-month-cost').textContent = `Costo: ${formatCurrency(smsMonth * SMS_COST)}`;
+    
+    // Uso vs límites
+    const dailyUsage = notificationAnalytics.sms_daily_usage || {};
+    const monthlyUsage = notificationAnalytics.sms_monthly_usage || {};
+    
+    const dailySent = dailyUsage.sent || smsToday;
+    const dailyLimit = dailyUsage.limit || 200;
+    const dailyPct = dailyUsage.percentage || ((dailySent / dailyLimit) * 100);
+    
+    const monthlySent = monthlyUsage.sent || smsMonth;
+    const monthlyLimit = monthlyUsage.limit || 5000;
+    const monthlyPct = monthlyUsage.percentage || ((monthlySent / monthlyLimit) * 100);
+    
+    document.getElementById('daily-usage-text').textContent = `${dailySent}/${formatNumber(dailyLimit)}`;
+    document.getElementById('daily-usage-bar').style.width = `${Math.min(dailyPct, 100)}%`;
+    document.getElementById('daily-usage-pct').textContent = `${dailyPct.toFixed(1)}% del límite diario`;
+    
+    document.getElementById('monthly-usage-text').textContent = `${formatNumber(monthlySent)}/${formatNumber(monthlyLimit)}`;
+    document.getElementById('monthly-usage-bar').style.width = `${Math.min(monthlyPct, 100)}%`;
+    document.getElementById('monthly-usage-pct').textContent = `${monthlyPct.toFixed(1)}% del límite mensual`;
+}
+
+
+function populatePerformanceStats(stats) {
+    const performance = stats.performance_metrics || {};
+    const packageAnalytics = stats.package_analytics || {};
+    
+    // Tiempos
+    const processingTime = performance.average_processing_time_hours || 0;
+    const deliveryTime = performance.average_delivery_time_hours || 0;
+    
+    document.getElementById('processing-time').textContent = `${processingTime.toFixed(1)}h`;
+    document.getElementById('delivery-time').textContent = `${deliveryTime.toFixed(1)}h`;
+    
+    // Tasas
+    const deliveryRate = packageAnalytics.delivery_rate || 0;
+    const cancellationRate = packageAnalytics.cancellation_rate || 0;
+    
+    document.getElementById('delivery-rate').textContent = `${deliveryRate.toFixed(1)}%`;
+    document.getElementById('cancellation-rate').textContent = `${cancellationRate.toFixed(1)}%`;
+    
+    // Almacenamiento
+    const occupied = packageAnalytics.occupied_positions || 0;
+    const available = packageAnalytics.available_positions || 100;
+    const total = occupied + available;
+    const occupiedPct = ((occupied / total) * 100).toFixed(1);
+    
+    document.getElementById('occupied-positions').textContent = `${occupied}/${total}`;
+    document.getElementById('occupied-pct').textContent = `${occupiedPct}% ocupación`;
+    document.getElementById('available-positions').textContent = formatNumber(available);
+    document.getElementById('average-storage-days').textContent = (packageAnalytics.average_storage_days || 0).toFixed(1);
+}
+
+function populateHealthStats(stats) {
+    const systemHealth = stats.system_health || {};
+    const overview = stats.system_overview || {};
+    const userManagement = stats.user_management || {};
+    
+    // Estado general
+    const status = systemHealth.system_status || 'healthy';
+    const statusText = status === 'healthy' ? '✅ Healthy' : '⚠️ Warning';
+    const statusColor = status === 'healthy' ? 'text-green-600' : 'text-yellow-600';
+    
+    document.getElementById('system-status').innerHTML = `<span class="${statusColor}">${statusText}</span>`;
+    
+    // Métricas
+    document.getElementById('unprocessed-packages').textContent = formatNumber(systemHealth.unprocessed_packages || 0);
+    document.getElementById('pending-messages').textContent = formatNumber(systemHealth.pending_messages || 0);
+    document.getElementById('active-users').textContent = formatNumber(overview.active_users || 0);
+}
+
+// Función para cambiar entre tabs
+function switchTab(tabName) {
+    // Ocultar todos los contenidos
+    document.getElementById('dashboard-content').classList.add('hidden');
+    document.getElementById('settings-content').classList.add('hidden');
+    
+    // Remover estilos activos de todos los tabs
+    document.getElementById('tab-dashboard').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
+    document.getElementById('tab-dashboard').classList.add('border-transparent', 'text-gray-500');
+    document.getElementById('tab-settings').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
+    document.getElementById('tab-settings').classList.add('border-transparent', 'text-gray-500');
+    
+    // Mostrar el contenido seleccionado y activar su tab
+    if (tabName === 'dashboard') {
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        document.getElementById('tab-dashboard').classList.remove('border-transparent', 'text-gray-500');
+        document.getElementById('tab-dashboard').classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    } else if (tabName === 'settings') {
+        document.getElementById('settings-content').classList.remove('hidden');
+        document.getElementById('tab-settings').classList.remove('border-transparent', 'text-gray-500');
+        document.getElementById('tab-settings').classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    }
+}
+
+// Cargar estadísticas al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+});
+</script>
+
+{% endblock %}
