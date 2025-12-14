@@ -317,7 +317,14 @@ async function loadDashboardStats() {
 async function loadUsers(page = 1) {
     currentUsersPage = page;
     try {
-        const response = await fetch(`/api/admin/users?page=${page}&limit=20`);
+        const searchTerm = document.getElementById('users-search')?.value || '';
+        const params = new URLSearchParams({
+            page: page,
+            limit: 20,
+            search: searchTerm
+        });
+        
+        const response = await fetch(`/api/admin/users?${params}`);
         if (!response.ok) throw new Error('Error loading users');
         
         const data = await response.json();
@@ -380,14 +387,186 @@ function getRoleBadgeClass(role) {
     return classes[role] || 'bg-gray-100 text-gray-800';
 }
 
-// Placeholder functions
-function loadPackages() { console.log('Loading packages...'); }
-function loadCustomers() { console.log('Loading customers...'); }
-function loadMessages() { console.log('Loading messages...'); }
-function searchUsers() { console.log('Searching users...'); }
-function searchPackages() { console.log('Searching packages...'); }
-function searchCustomers() { console.log('Searching customers...'); }
-function filterPackages() { console.log('Filtering packages...'); }
+// Load Packages
+let currentPackagesSearch = '';
+let currentPackagesStatus = '';
+async function loadPackages(page = 1) {
+    currentPackagesPage = page;
+    try {
+        const params = new URLSearchParams({
+            page: page,
+            limit: 20,
+            search: currentPackagesSearch,
+            status_filter: currentPackagesStatus
+        });
+        
+        const response = await fetch(`/api/admin/packages?${params}`);
+        if (!response.ok) throw new Error('Error loading packages');
+        
+        const data = await response.json();
+        const container = document.getElementById('packages-list');
+        
+        if (data.packages && data.packages.length > 0) {
+            container.innerHTML = data.packages.map(pkg => `
+                <div class="bg-white p-4 rounded-lg border hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="font-semibold text-gray-900">${pkg.tracking_number}</span>
+                                <span class="px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(pkg.status)}">
+                                    ${pkg.status}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">Cliente: ${pkg.customer_name}</p>
+                            <p class="text-sm text-gray-500">Teléfono: ${pkg.customer_phone}</p>
+                            <p class="text-sm text-gray-500">Guía: ${pkg.guide_number || 'N/A'}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">${formatDate(pkg.created_at)}</p>
+                            ${pkg.posicion ? `<p class="text-xs text-gray-500">Pos: ${pkg.posicion}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-center py-8 text-gray-500">No hay paquetes</p>';
+        }
+    } catch (error) {
+        console.error('Error loading packages:', error);
+        document.getElementById('packages-list').innerHTML = 
+            '<p class="text-center py-8 text-red-500">Error al cargar paquetes</p>';
+    }
+}
+
+// Load Customers
+let currentCustomersSearch = '';
+async function loadCustomers(page = 1) {
+    currentCustomersPage = page;
+    try {
+        const params = new URLSearchParams({
+            page: page,
+            limit: 20,
+            search: currentCustomersSearch
+        });
+        
+        const response = await fetch(`/api/admin/customers?${params}`);
+        if (!response.ok) throw new Error('Error loading customers');
+        
+        const data = await response.json();
+        const container = document.getElementById('customers-list');
+        
+        if (data.customers && data.customers.length > 0) {
+            container.innerHTML = data.customers.map(customer => `
+                <div class="bg-white p-4 rounded-lg border hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">${customer.full_name}</h3>
+                            <p class="text-sm text-gray-600">📱 ${customer.phone}</p>
+                            ${customer.email ? `<p class="text-sm text-gray-600">📧 ${customer.email}</p>` : ''}
+                            ${customer.address ? `<p class="text-sm text-gray-500">📍 ${customer.address}</p>` : ''}
+                        </div>
+                        <div class="text-right">
+                            <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                ${customer.package_count} paquetes
+                            </span>
+                            <p class="text-xs text-gray-500 mt-2">${formatDate(customer.created_at)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-center py-8 text-gray-500">No hay clientes</p>';
+        }
+    } catch (error) {
+        console.error('Error loading customers:', error);
+        document.getElementById('customers-list').innerHTML = 
+            '<p class="text-center py-8 text-red-500">Error al cargar clientes</p>';
+    }
+}
+
+// Load Messages
+let currentMessagesSearch = '';
+async function loadMessages(page = 1) {
+    try {
+        const params = new URLSearchParams({
+            page: page,
+            limit: 20,
+            search: currentMessagesSearch
+        });
+        
+        const response = await fetch(`/api/admin/messages?${params}`);
+        if (!response.ok) throw new Error('Error loading messages');
+        
+        const data = await response.json();
+        const container = document.getElementById('messages-list');
+        
+        if (data.messages && data.messages.length > 0) {
+            container.innerHTML = data.messages.map(msg => `
+                <div class="bg-white p-4 rounded-lg border hover:shadow-md transition">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-900">📱 ${msg.recipient_phone}</p>
+                            <p class="text-sm text-gray-600 mt-2">${msg.content}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="px-2 py-1 text-xs rounded-full ${msg.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${msg.status}
+                            </span>
+                            <p class="text-xs text-gray-500 mt-2">${formatDate(msg.created_at)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-center py-8 text-gray-500">No hay mensajes</p>';
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        document.getElementById('messages-list').innerHTML = 
+            '<p class="text-center py-8 text-gray-500">Sistema de mensajes no disponible</p>';
+    }
+}
+
+// Search functions
+function searchUsers() {
+    const searchTerm = document.getElementById('users-search').value;
+    loadUsers(1);
+}
+
+function searchPackages() {
+    currentPackagesSearch = document.getElementById('packages-search').value;
+    loadPackages(1);
+}
+
+function searchCustomers() {
+    currentCustomersSearch = document.getElementById('customers-search').value;
+    loadCustomers(1);
+}
+
+function filterPackages() {
+    currentPackagesStatus = document.getElementById('packages-status-filter').value;
+    loadPackages(1);
+}
+
+// Helper functions
+function getStatusBadgeClass(status) {
+    const classes = {
+        'ANUNCIADO': 'bg-yellow-100 text-yellow-800',
+        'RECIBIDO': 'bg-blue-100 text-blue-800',
+        'EN_TRANSITO': 'bg-purple-100 text-purple-800',
+        'ENTREGADO': 'bg-green-100 text-green-800',
+        'CANCELADO': 'bg-red-100 text-red-800'
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Modal functions (placeholders for now)
 function openCreateUserModal() { alert('Crear usuario - Modal en desarrollo'); }
 function openCreateCustomerModal() { alert('Crear cliente - Modal en desarrollo'); }
 function openSendMessageModal() { alert('Enviar mensaje - Modal en desarrollo'); }
