@@ -182,47 +182,8 @@ async def dashboard_redirect(request: Request):
     """Redirección de dashboard a administración"""
     return RedirectResponse(url="/admin", status_code=302)
 
-@router.get("/packages")
-async def packages_page(request: Request):
-    """Página de gestión de paquetes - Solo para usuarios autenticados"""
-    context = get_auth_context_required(request)
-
-    if not context["is_authenticated"]:
-        return RedirectResponse(url="/auth/login?redirect=/packages", status_code=302)
-
-    return templates.TemplateResponse("packages/list.html", context)
-
-@router.get("/packages/{package_id}")
-async def package_detail_page(package_id: str, request: Request, db: Session = Depends(get_db)):
-    """Página de detalle del paquete - Solo para usuarios autenticados"""
-    context = get_auth_context_required(request)
-
-    if not context["is_authenticated"]:
-        return RedirectResponse(url="/auth/login?redirect=/packages/" + package_id, status_code=302)
-
-    try:
-        # Obtener el paquete de la base de datos
-        package = db.query(Package).filter(Package.id == package_id).first()
-
-        if not package:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Paquete no encontrado"
-            )
-
-        context["package"] = package
-        return templates.TemplateResponse("packages/package_detail.html", context)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error al cargar paquete {package_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al cargar el paquete"
-        )
+# NOTA: Rutas /packages y /packages/{id} están en views.py
+# No duplicar aquí para evitar conflictos
 
 @router.get("/announcements/{announcement_id}")
 async def announcement_detail_page(announcement_id: str, request: Request, db: Session = Depends(get_db)):
