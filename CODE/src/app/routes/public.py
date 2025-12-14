@@ -84,9 +84,9 @@ async def test_validation(data: dict):
 
 @router.get("/customers")
 async def customers_page(request: Request):
-    """Página de anunciar paquetes - Redirige a la página principal"""
+    """Redirige a gestión de clientes"""
     from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url="/customers/manage", status_code=302)
 
 @router.get("/announce")
 async def announce_page(request: Request):
