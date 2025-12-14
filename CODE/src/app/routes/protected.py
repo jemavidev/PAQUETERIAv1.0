@@ -510,16 +510,17 @@ async def admin_users_page(
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Página de gestión de usuarios - Solo para administradores"""
-    # Verificar que el usuario sea administrador
-    if current_user.role.value != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Solo administradores pueden acceder a esta página."
-        )
-
+    """Página de gestión de usuarios - Solo para administradores y operadores"""
     context = get_auth_context_required(request)
     context["user"] = current_user
+    
+    # Verificar que el usuario sea administrador u operador
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        # Renderizar página de error en lugar de JSON
+        context["error_title"] = "Acceso Denegado"
+        context["error_message"] = "Solo administradores y operadores pueden acceder a esta página."
+        context["error_code"] = "403"
+        return templates.TemplateResponse("errors/403.html", context, status_code=403)
 
     # Validar parámetros de paginación
     page = max(1, page)
