@@ -245,7 +245,7 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
         context["error_code"] = "403"
         return templates.TemplateResponse("errors/403.html", context, status_code=403)
     
-    return templates.TemplateResponse("admin/admin_dashboard.html", context)
+    return templates.TemplateResponse("admin/dashboard_v2.html", context)
 
 
 @router.get("/dashboard")

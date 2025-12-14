@@ -1,0 +1,403 @@
+{% extends "base/base.html" %}
+{% block title %}Dashboard Administrativo - PAQUETEX{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-light text-gray-900">Panel de Administración</h1>
+                <p class="mt-2 text-gray-500">Gestiona el sistema completo desde una sola vista</p>
+            </div>
+            <button onclick="location.reload()" class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Actualizar
+            </button>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <nav class="flex space-x-4 px-6 overflow-x-auto border-b" aria-label="Tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn active">
+                    📊 Dashboard
+                </button>
+                <button onclick="switchTab('users')" id="tab-users" class="tab-btn">
+                    👥 Usuarios
+                </button>
+                <button onclick="switchTab('packages')" id="tab-packages" class="tab-btn">
+                    📦 Paquetes
+                </button>
+                <button onclick="switchTab('customers')" id="tab-customers" class="tab-btn">
+                    🏢 Clientes
+                </button>
+                <button onclick="switchTab('messages')" id="tab-messages" class="tab-btn">
+                    💬 Mensajes
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn">
+                    ⚙️ Settings
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Contents -->
+
+        <!-- TAB 1: DASHBOARD (Estadísticas) -->
+        <div id="content-dashboard" class="tab-content active">
+            <div id="loading" class="text-center py-12">
+                <svg class="animate-spin h-12 w-12 mx-auto text-papyrus-blue" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-gray-500">Cargando estadísticas...</p>
+            </div>
+            <div id="stats-content" class="hidden space-y-6">
+                <!-- Stats will be loaded here via JavaScript -->
+            </div>
+        </div>
+
+        <!-- TAB 2: USUARIOS (Gestión Completa) -->
+        <div id="content-users" class="tab-content hidden">
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Gestión de Usuarios</h2>
+                    <button onclick="openCreateUserModal()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Crear Usuario
+                    </button>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="mb-4">
+                    <input type="text" id="users-search" placeholder="Buscar usuarios..." 
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-papyrus-blue"
+                           onkeyup="searchUsers()">
+                </div>
+
+                <!-- Users Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-500">Cargando usuarios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="users-pagination" class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        Mostrando <span id="users-showing">0</span> de <span id="users-total">0</span> usuarios
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="loadUsers(currentUsersPage - 1)" id="users-prev-btn" 
+                                class="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50" disabled>
+                            Anterior
+                        </button>
+                        <button onclick="loadUsers(currentUsersPage + 1)" id="users-next-btn"
+                                class="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50" disabled>
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PAQUETES (Gestión Completa) -->
+        <div id="content-packages" class="tab-content hidden">
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Gestión de Paquetes</h2>
+                <div class="mb-4 flex space-x-4">
+                    <input type="text" id="packages-search" placeholder="Buscar paquetes..." 
+                           class="flex-1 px-4 py-2 border rounded-lg" onkeyup="searchPackages()">
+                    <select id="packages-status-filter" class="px-4 py-2 border rounded-lg" onchange="filterPackages()">
+                        <option value="">Todos los estados</option>
+                        <option value="ANUNCIADO">Anunciado</option>
+                        <option value="RECIBIDO">Recibido</option>
+                        <option value="EN_TRANSITO">En Tránsito</option>
+                        <option value="ENTREGADO">Entregado</option>
+                    </select>
+                </div>
+                <div id="packages-list" class="space-y-4">
+                    <p class="text-center py-8 text-gray-500">Cargando paquetes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CLIENTES (Gestión Completa) -->
+        <div id="content-customers" class="tab-content hidden">
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Gestión de Clientes</h2>
+                    <button onclick="openCreateCustomerModal()" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Crear Cliente
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <input type="text" id="customers-search" placeholder="Buscar clientes..." 
+                           class="w-full px-4 py-2 border rounded-lg" onkeyup="searchCustomers()">
+                </div>
+                <div id="customers-list" class="space-y-4">
+                    <p class="text-center py-8 text-gray-500">Cargando clientes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: MENSAJES (Gestión Completa) -->
+        <div id="content-messages" class="tab-content hidden">
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Sistema de Mensajes SMS</h2>
+                    <button onclick="openSendMessageModal()" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        Enviar Mensaje
+                    </button>
+                </div>
+                <div id="messages-list" class="space-y-4">
+                    <p class="text-center py-8 text-gray-500">Cargando mensajes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: SETTINGS (Configuración) -->
+        <div id="content-settings" class="tab-content hidden">
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Configuración del Sistema</h2>
+                <form id="settings-form" class="space-y-6">
+                    <div class="border-b pb-6">
+                        <h3 class="text-lg font-medium mb-4">Configuración General</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Sistema</label>
+                                <input type="text" class="w-full px-4 py-2 border rounded-lg" value="PAQUETEX">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Zona Horaria</label>
+                                <select class="w-full px-4 py-2 border rounded-lg">
+                                    <option>America/Bogota</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-b pb-6">
+                        <h3 class="text-lg font-medium mb-4">Tarifas</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tarifa Normal</label>
+                                <input type="number" class="w-full px-4 py-2 border rounded-lg" value="5000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tarifa Extra Dimensionado</label>
+                                <input type="number" class="w-full px-4 py-2 border rounded-lg" value="8000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Almacenamiento/Día</label>
+                                <input type="number" class="w-full px-4 py-2 border rounded-lg" value="1000">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="px-6 py-3 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                        Guardar Cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<style>
+.tab-btn {
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid transparent;
+    font-medium;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.tab-btn:hover {
+    color: #1e40af;
+    border-bottom-color: #93c5fd;
+}
+.tab-btn.active {
+    color: #1e40af;
+    border-bottom-color: #1e40af;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+</style>
+
+<script>
+let currentUsersPage = 1;
+let currentPackagesPage = 1;
+let currentCustomersPage = 1;
+
+// Switch between tabs
+function switchTab(tabName) {
+    // Hide all contents
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Show selected content
+    document.getElementById(`content-${tabName}`).classList.add('active');
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    
+    // Load data for the tab
+    if (tabName === 'dashboard') loadDashboardStats();
+    if (tabName === 'users') loadUsers();
+    if (tabName === 'packages') loadPackages();
+    if (tabName === 'customers') loadCustomers();
+    if (tabName === 'messages') loadMessages();
+}
+
+// Load Dashboard Statistics
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error loading stats');
+        
+        const data = await response.json();
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('stats-content').classList.remove('hidden');
+        
+        // Render stats (simplified version)
+        document.getElementById('stats-content').innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm">Total Paquetes</h3>
+                    <p class="text-3xl font-bold text-gray-900">${data.data?.packages?.total || 0}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm">Total Clientes</h3>
+                    <p class="text-3xl font-bold text-gray-900">${data.data?.customers?.total || 0}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm">Ingresos del Mes</h3>
+                    <p class="text-3xl font-bold text-gray-900">$${(data.data?.financial?.revenue_month || 0).toLocaleString()}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-gray-500 text-sm">SMS Enviados</h3>
+                    <p class="text-3xl font-bold text-gray-900">${data.data?.sms?.total_sent || 0}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+// Load Users
+async function loadUsers(page = 1) {
+    currentUsersPage = page;
+    try {
+        const response = await fetch(`/api/admin/users?page=${page}&limit=20`);
+        if (!response.ok) throw new Error('Error loading users');
+        
+        const data = await response.json();
+        const tbody = document.getElementById('users-table-body');
+        
+        if (data.users && data.users.length > 0) {
+            tbody.innerHTML = data.users.map(user => `
+                <tr>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 rounded-full bg-papyrus-blue text-white flex items-center justify-center">
+                                ${user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.full_name || 'Sin nombre'}</div>
+                                <div class="text-sm text-gray-500">@${user.username}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full ${getRoleBadgeClass(user.role)}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${user.phone || '-'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${user.email || '-'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${user.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right text-sm font-medium">
+                        <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
+                        <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update pagination
+            document.getElementById('users-showing').textContent = data.users.length;
+            document.getElementById('users-total').textContent = data.total || 0;
+            document.getElementById('users-prev-btn').disabled = page <= 1;
+            document.getElementById('users-next-btn').disabled = !data.pagination?.has_next;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No hay usuarios</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('users-table-body').innerHTML = 
+            '<tr><td colspan="6" class="text-center py-8 text-red-500">Error al cargar usuarios</td></tr>';
+    }
+}
+
+function getRoleBadgeClass(role) {
+    const classes = {
+        'ADMIN': 'bg-red-100 text-red-800',
+        'OPERADOR': 'bg-blue-100 text-blue-800',
+        'USUARIO': 'bg-gray-100 text-gray-800'
+    };
+    return classes[role] || 'bg-gray-100 text-gray-800';
+}
+
+// Placeholder functions
+function loadPackages() { console.log('Loading packages...'); }
+function loadCustomers() { console.log('Loading customers...'); }
+function loadMessages() { console.log('Loading messages...'); }
+function searchUsers() { console.log('Searching users...'); }
+function searchPackages() { console.log('Searching packages...'); }
+function searchCustomers() { console.log('Searching customers...'); }
+function filterPackages() { console.log('Filtering packages...'); }
+function openCreateUserModal() { alert('Crear usuario - Modal en desarrollo'); }
+function openCreateCustomerModal() { alert('Crear cliente - Modal en desarrollo'); }
+function openSendMessageModal() { alert('Enviar mensaje - Modal en desarrollo'); }
+function editUser(id) { alert('Editar usuario: ' + id); }
+function deleteUser(id) { if(confirm('¿Eliminar usuario?')) console.log('Delete:', id); }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+});
+</script>
+
+{% endblock %}

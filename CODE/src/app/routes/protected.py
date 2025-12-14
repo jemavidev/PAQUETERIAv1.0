@@ -520,7 +520,7 @@ async def admin_users_page(
         context["error_title"] = "Acceso Denegado"
         context["error_message"] = "Solo administradores y operadores pueden acceder a esta página."
         context["error_code"] = "403"
-        return templates.TemplateResponse("errors/403.html", con
+        return templates.TemplateResponse("errors/403.html", context, status_code=403)
 
     # Validar parámetros de paginación
     page = max(1, page)
@@ -1746,4 +1746,93 @@ async def cleanup_database(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error durante la limpieza: {str(e)}"
+        )
+
+
+# ========================================
+# API ENDPOINTS PARA DASHBOARD UNIFICADO V2
+# ========================================
+
+@router.get("/api/admin/users")
+async def get_users_api(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """API para obtener lista de usuarios con paginación"""
+    # Verificar permisos
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado"
+        )
+    
+    try:
+        # Validar parámetros
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        skip = (page - 1) * limit
+        
+        # Query base
+        query = db.query(User)
+        
+        # Aplicar búsqueda si existe
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    User.username.ilike(search_term),
+                    User.full_name.ilike(search_term),
+                    User.email.ilike(search_term),
+                    User.phone.ilike(search_term)
+                )
+            )
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener usuarios paginados
+        users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        # Formatear respuesta
+        users_data = []
+        for user in users:
+            users_data.append({
+                "id": str(user.id),
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "phone": user.phone,
+                "role": user.role.value if user.role else None,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat() if user.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "users": users_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting users: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener usuarios: {str(e)}"
         )
