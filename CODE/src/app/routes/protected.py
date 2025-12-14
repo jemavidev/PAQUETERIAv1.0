@@ -520,7 +520,7 @@ async def admin_users_page(
         context["error_title"] = "Acceso Denegado"
         context["error_message"] = "Solo administradores y operadores pueden acceder a esta página."
         context["error_code"] = "403"
-        return templates.TemplateResponse("errors/403.html", context, status_code=403)
+        return templates.TemplateResponse("errors/403.html", con
 
     # Validar parámetros de paginación
     page = max(1, page)

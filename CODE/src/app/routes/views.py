@@ -239,10 +239,11 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
     
     # Verificar que sea admin o operador
     if current_user.role.value not in ["ADMIN", "OPERADOR"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Solo administradores y operadores pueden acceder."
-        )
+        # Renderizar página de error en lugar de JSON
+        context["error_title"] = "Acceso Denegado al Dashboard"
+        context["error_message"] = "Solo administradores y operadores pueden acceder al panel de administración."
+        context["error_code"] = "403"
+        return templates.TemplateResponse("errors/403.html", context, status_code=403)
     
     return templates.TemplateResponse("admin/admin_dashboard.html", context)
 
