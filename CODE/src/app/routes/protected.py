@@ -1713,96 +1713,10 @@ async def cleanup_database(
 # ========================================
 # API ENDPOINTS PARA DASHBOARD UNIFICADO V2
 # ========================================
-
-@router.get("/api/admin/dashboard")
-async def get_dashboard_stats(
-    period_days: int = 30,
-    current_user: User = Depends(get_current_active_user_from_cookies),
-    db: Session = Depends(get_db)
-):
-    """API para obtener estadísticas del dashboard"""
-    # Verificar permisos
-    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado"
-        )
-    
-    try:
-        from datetime import timedelta
-        from sqlalchemy import func
-        from app.models.package import PackageStatus
-        
-        # Calcular fecha de inicio del período
-        now = get_colombia_now()
-        period_start = now - timedelta(days=period_days)
-        
-        # Estadísticas de paquetes
-        total_packages = db.query(Package).count()
-        packages_period = db.query(Package).filter(Package.created_at >= period_start).count()
-        packages_announced = db.query(Package).filter(Package.status == PackageStatus.ANUNCIADO).count()
-        packages_received = db.query(Package).filter(Package.status == PackageStatus.RECIBIDO).count()
-        packages_in_transit = db.query(Package).filter(Package.status == PackageStatus.EN_TRANSITO).count()
-        packages_delivered = db.query(Package).filter(Package.status == PackageStatus.ENTREGADO).count()
-        
-        # Estadísticas de clientes
-        total_customers = db.query(Customer).count()
-        customers_period = db.query(Customer).filter(Customer.created_at >= period_start).count()
-        
-        # Estadísticas de usuarios
-        total_users = db.query(User).count()
-        active_users = db.query(User).filter(User.is_active == True).count()
-        
-        # Estadísticas de mensajes (si existe la tabla)
-        try:
-            total_messages = db.query(Message).count()
-            messages_period = db.query(Message).filter(Message.created_at >= period_start).count()
-        except:
-            total_messages = 0
-            messages_period = 0
-        
-        # Ingresos estimados (basado en paquetes entregados)
-        # Asumiendo tarifa promedio de 5000 por paquete
-        revenue_month = packages_delivered * 5000
-        
-        return {
-            "success": True,
-            "data": {
-                "packages": {
-                    "total": total_packages,
-                    "period": packages_period,
-                    "announced": packages_announced,
-                    "received": packages_received,
-                    "in_transit": packages_in_transit,
-                    "delivered": packages_delivered
-                },
-                "customers": {
-                    "total": total_customers,
-                    "period": customers_period
-                },
-                "users": {
-                    "total": total_users,
-                    "active": active_users
-                },
-                "sms": {
-                    "total_sent": total_messages,
-                    "period": messages_period
-                },
-                "financial": {
-                    "revenue_month": revenue_month
-                }
-            },
-            "period_days": period_days
-        }
-        
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error getting dashboard stats: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener estadísticas: {str(e)}"
-        )
+# NOTA: Endpoint /api/admin/dashboard movido a admin.py
+# Este endpoint duplicado causaba conflictos y usaba PackageStatus.EN_TRANSITO que no existe
+# El endpoint correcto está en admin.py con el servicio AdminService completo
+# ========================================
 
 @router.get("/api/admin/users")
 async def get_users_api(

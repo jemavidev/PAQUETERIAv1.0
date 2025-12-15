@@ -183,13 +183,33 @@ Cada función ahora:
 - Solo los administradores pueden modificar usuarios del sistema
 - El sistema de permisos es consistente en frontend y backend
 
+## Problema Crítico Adicional: Endpoint Duplicado
+
+### Error Encontrado
+Después de las mejoras iniciales, el dashboard seguía mostrando error:
+```
+Error al obtener estadísticas: EN_TRANSITO
+```
+
+### Causa
+Había **dos endpoints con la misma ruta** `/api/admin/dashboard`:
+1. En `admin.py` (correcto) - Usa `AdminService` completo
+2. En `protected.py` (duplicado con bug) - Usaba `PackageStatus.EN_TRANSITO` que NO EXISTE
+
+FastAPI encontraba primero el endpoint en `protected.py` (registrado antes) que tenía el bug.
+
+### Solución
+✅ Eliminado el endpoint duplicado en `protected.py`
+✅ El endpoint correcto en `admin.py` ahora se ejecuta sin conflictos
+
 ## Archivos Modificados
 
 1. `CODE/src/templates/admin/admin_dashboard.html` - Mejoras en manejo de errores y permisos
 2. `CODE/src/app/routes/admin.py` - Logging mejorado
-3. `CODE/src/app/routes/protected.py` - Validación de permisos para gestión de usuarios
-4. `ANALISIS_ERROR_DASHBOARD_ADMIN.md` - Documentación del análisis
-5. `CORRECCION_DASHBOARD_ADMIN_COMPLETADA.md` - Este documento
+3. `CODE/src/app/routes/protected.py` - Eliminado endpoint duplicado + Validación de permisos para gestión de usuarios
+4. `ANALISIS_ERROR_DASHBOARD_ADMIN.md` - Documentación del análisis inicial
+5. `SOLUCION_ENDPOINT_DUPLICADO.md` - Documentación del problema del endpoint duplicado
+6. `CORRECCION_DASHBOARD_ADMIN_COMPLETADA.md` - Este documento
 
 ## Comandos para Desplegar
 
