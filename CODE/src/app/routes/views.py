@@ -232,10 +232,11 @@ async def policies_page(request: Request):
 
 
 @router.get("/admin")
-async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
+async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies), db: Session = Depends(get_db)):
     """Dashboard administrativo con estadísticas completas"""
     context = get_auth_context_required(request)
     context["user"] = current_user
+    context["user_role"] = current_user.role.value
     
     # Verificar que sea admin o operador
     if current_user.role.value not in ["ADMIN", "OPERADOR"]:
@@ -244,6 +245,13 @@ async def admin_page(request: Request, current_user: User = Depends(get_current_
         context["error_message"] = "Solo administradores y operadores pueden acceder al panel de administración."
         context["error_code"] = "403"
         return templates.TemplateResponse("errors/403.html", context, status_code=403)
+    
+    # Cargar usuarios si es admin (para tab de Usuarios)
+    if current_user.role == UserRole.ADMIN:
+        users = db.query(User).order_by(User.created_at.desc()).all()
+        context["users"] = users
+    else:
+        context["users"] = []
     
     return templates.TemplateResponse("admin/admin_dashboard.html", context)
 
