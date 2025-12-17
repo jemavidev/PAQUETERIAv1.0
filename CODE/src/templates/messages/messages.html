@@ -1651,13 +1651,8 @@ function openMessageDetail(messageId) {
     console.log('Abriendo detalle del mensaje:', messageId);
     currentMessageId = messageId;
     
-    const token = getAuthToken();
-    
-    if (!token) {
-        console.error('No hay token de autenticación disponible');
-        window.location.href = '/auth/login';
-        return;
-    }
+    // No verificar token aquí - el backend maneja la autenticación con cookies
+    // Si no está autenticado, el backend redirigirá automáticamente
     
     // Mostrar loading en el modal
     const detailDiv = document.getElementById('messageDetail');
