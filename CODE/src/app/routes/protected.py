@@ -169,24 +169,8 @@ async def save_settings(
         context["error"] = f"Error al guardar configuración: {str(e)}"
         return templates.TemplateResponse("users/settings.html", context)
 
-@router.get("/admin")
-async def admin_page(
-    request: Request,
-    current_user: User = Depends(get_current_active_user_from_cookies),
-    db: Session = Depends(get_db)
-):
-    """Página de administración - Solo para administradores"""
-    context = get_auth_context_required(request)
-
-    if not context["is_authenticated"]:
-        return RedirectResponse(url="/auth/login?redirect=/admin", status_code=302)
-
-    # Verificar que el usuario sea administrador u operador
-    if current_user.role not in [UserRole.ADMIN, UserRole.OPERADOR]:
-        # Usuario sin permisos - redirigir a la página principal con mensaje
-        return RedirectResponse(url="/?error=no_admin_permissions", status_code=302)
-
-    return templates.TemplateResponse("admin/admin.html", context)
+# NOTA: Ruta /admin movida a views.py (renderiza admin_dashboard.html - dashboard unificado)
+# La ruta duplicada causaba conflictos. La implementación correcta está en views.py
 
 @router.get("/test-simple")
 async def test_simple():
@@ -198,47 +182,8 @@ async def dashboard_redirect(request: Request):
     """Redirección de dashboard a administración"""
     return RedirectResponse(url="/admin", status_code=302)
 
-@router.get("/packages")
-async def packages_page(request: Request):
-    """Página de gestión de paquetes - Solo para usuarios autenticados"""
-    context = get_auth_context_required(request)
-
-    if not context["is_authenticated"]:
-        return RedirectResponse(url="/auth/login?redirect=/packages", status_code=302)
-
-    return templates.TemplateResponse("packages/list.html", context)
-
-@router.get("/packages/{package_id}")
-async def package_detail_page(package_id: str, request: Request, db: Session = Depends(get_db)):
-    """Página de detalle del paquete - Solo para usuarios autenticados"""
-    context = get_auth_context_required(request)
-
-    if not context["is_authenticated"]:
-        return RedirectResponse(url="/auth/login?redirect=/packages/" + package_id, status_code=302)
-
-    try:
-        # Obtener el paquete de la base de datos
-        package = db.query(Package).filter(Package.id == package_id).first()
-
-        if not package:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Paquete no encontrado"
-            )
-
-        context["package"] = package
-        return templates.TemplateResponse("packages/package_detail.html", context)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error al cargar paquete {package_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al cargar el paquete"
-        )
+# NOTA: Rutas /packages y /packages/{id} están en views.py
+# No duplicar aquí para evitar conflictos
 
 @router.get("/announcements/{announcement_id}")
 async def announcement_detail_page(announcement_id: str, request: Request, db: Session = Depends(get_db)):
@@ -527,15 +472,16 @@ async def admin_users_page(
     db: Session = Depends(get_db)
 ):
     """Página de gestión de usuarios - Solo para administradores"""
-    # Verificar que el usuario sea administrador
-    if current_user.role.value != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Solo administradores pueden acceder a esta página."
-        )
-
     context = get_auth_context_required(request)
     context["user"] = current_user
+    
+    # Verificar que el usuario sea administrador (NO operador)
+    if current_user.role.value != "ADMIN":
+        # Renderizar página de error en lugar de JSON
+        context["error_title"] = "Acceso Denegado"
+        context["error_message"] = "Solo administradores pueden gestionar usuarios."
+        context["error_code"] = "403"
+        return templates.TemplateResponse("errors/403.html", context, status_code=403)
 
     # Validar parámetros de paginación
     page = max(1, page)
@@ -1762,3 +1708,370 @@ async def cleanup_database(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error durante la limpieza: {str(e)}"
         )
+
+
+# ========================================
+# API ENDPOINTS PARA DASHBOARD UNIFICADO V2
+# ========================================
+# NOTA: Endpoint /api/admin/dashboard movido a admin.py
+# Este endpoint duplicado causaba conflictos y usaba PackageStatus.EN_TRANSITO que no existe
+# El endpoint correcto está en admin.py con el servicio AdminService completo
+# ========================================
+
+@router.get("/api/admin/users")
+async def get_users_api(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """API para obtener lista de usuarios con paginación"""
+    # Verificar permisos
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado"
+        )
+    
+    try:
+        # Validar parámetros
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        skip = (page - 1) * limit
+        
+        # Query base
+        query = db.query(User)
+        
+        # Aplicar búsqueda si existe
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    User.username.ilike(search_term),
+                    User.full_name.ilike(search_term),
+                    User.email.ilike(search_term),
+                    User.phone.ilike(search_term)
+                )
+            )
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener usuarios paginados
+        users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        # Formatear respuesta
+        users_data = []
+        for user in users:
+            users_data.append({
+                "id": str(user.id),
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "phone": user.phone,
+                "role": user.role.value if user.role else None,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat() if user.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "users": users_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting users: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener usuarios: {str(e)}"
+        )
+
+@router.get("/api/admin/packages")
+async def get_packages_api(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    status_filter: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """API para obtener lista de paquetes con paginación"""
+    # Verificar permisos
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado"
+        )
+    
+    try:
+        from app.models.package import PackageStatus
+        
+        # Validar parámetros
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        skip = (page - 1) * limit
+        
+        # Query base
+        query = db.query(Package)
+        
+        # Aplicar búsqueda si existe
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    Package.tracking_number.ilike(search_term),
+                    Package.guide_number.ilike(search_term),
+                    Package.customer_name.ilike(search_term),
+                    Package.customer_phone.ilike(search_term)
+                )
+            )
+        
+        # Aplicar filtro de estado si existe
+        if status_filter and status_filter.strip():
+            try:
+                status_enum = PackageStatus(status_filter)
+                query = query.filter(Package.status == status_enum)
+            except ValueError:
+                pass  # Ignorar filtro inválido
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener paquetes paginados
+        packages = query.order_by(Package.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        # Formatear respuesta
+        packages_data = []
+        for pkg in packages:
+            packages_data.append({
+                "id": str(pkg.id),
+                "tracking_number": pkg.tracking_number,
+                "guide_number": pkg.guide_number,
+                "customer_name": pkg.customer_name,
+                "customer_phone": pkg.customer_phone,
+                "status": pkg.status.value if pkg.status else None,
+                "package_type": pkg.package_type.value if pkg.package_type else None,
+                "package_condition": pkg.package_condition.value if pkg.package_condition else None,
+                "posicion": pkg.posicion,
+                "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
+                "received_at": pkg.received_at.isoformat() if pkg.received_at else None,
+                "delivered_at": pkg.delivered_at.isoformat() if pkg.delivered_at else None,
+                "created_at": pkg.created_at.isoformat() if pkg.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "packages": packages_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting packages: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener paquetes: {str(e)}"
+        )
+
+@router.get("/api/admin/customers")
+async def get_customers_api(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """API para obtener lista de clientes con paginación"""
+    # Verificar permisos
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado"
+        )
+    
+    try:
+        # Validar parámetros
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        skip = (page - 1) * limit
+        
+        # Query base
+        query = db.query(Customer)
+        
+        # Aplicar búsqueda si existe
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    Customer.full_name.ilike(search_term),
+                    Customer.phone.ilike(search_term),
+                    Customer.email.ilike(search_term)
+                )
+            )
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener clientes paginados
+        customers = query.order_by(Customer.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        # Formatear respuesta
+        customers_data = []
+        for customer in customers:
+            # Contar paquetes del cliente
+            package_count = db.query(Package).filter(Package.customer_id == customer.id).count()
+            
+            customers_data.append({
+                "id": str(customer.id),
+                "full_name": customer.full_name,
+                "phone": customer.phone,
+                "email": customer.email,
+                "address": customer.address,
+                "package_count": package_count,
+                "created_at": customer.created_at.isoformat() if customer.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "customers": customers_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting customers: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener clientes: {str(e)}"
+        )
+
+@router.get("/api/admin/messages")
+async def get_messages_api(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db)
+):
+    """API para obtener lista de mensajes SMS con paginación"""
+    # Verificar permisos
+    if current_user.role.value not in ["ADMIN", "OPERADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado"
+        )
+    
+    try:
+        # Validar parámetros
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        skip = (page - 1) * limit
+        
+        # Query base
+        query = db.query(Message)
+        
+        # Aplicar búsqueda si existe
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    Message.recipient_phone.ilike(search_term),
+                    Message.content.ilike(search_term)
+                )
+            )
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener mensajes paginados
+        messages = query.order_by(Message.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Calcular paginación
+        total_pages = (total + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        # Formatear respuesta
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                "id": str(msg.id),
+                "recipient_phone": msg.recipient_phone,
+                "content": msg.content,
+                "status": msg.status,
+                "sent_at": msg.sent_at.isoformat() if msg.sent_at else None,
+                "created_at": msg.created_at.isoformat() if msg.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "messages": messages_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting messages: {e}", exc_info=True)
+        # Si la tabla no existe, retornar vacío
+        return {
+            "success": True,
+            "messages": [],
+            "total": 0,
+            "page": page,
+            "limit": limit,
+            "pagination": {
+                "total_pages": 0,
+                "has_next": False,
+                "has_prev": False
+            }
+        }

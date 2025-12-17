@@ -22,32 +22,40 @@
 
         <!-- Navegación con Tabs -->
         <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6 sm:mb-8">
-            <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm">
+            <nav class="flex space-x-2 sm:space-x-4 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm">
                     <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
-                    Dashboard
+                    <span class="hidden sm:inline">Dashboard</span>
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                {% if user.role.value == "ADMIN" %}
+                <button onclick="switchTab('users')" id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Usuarios</span>
+                </button>
+                {% endif %}
+                <button onclick="switchTab('perfil')" id="tab-perfil" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Perfil</span>
+                </button>
+                <button onclick="switchTab('notificaciones')" id="tab-notificaciones" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Notificaciones</span>
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
                     <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    Settings
+                    <span class="hidden sm:inline">Settings</span>
                 </button>
-                <a href="/admin/users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                    </svg>
-                    Usuarios
-                </a>
-                <a href="/packages" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                    Paquetes
-                </a>
             </nav>
         </div>
 
@@ -422,6 +430,7 @@
             <div class="mb-8">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Enlaces Rápidos</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {% if user.role.value == "ADMIN" %}
                     <a href="/admin/users" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-papyrus-blue hover:shadow-md transition-all">
                         <div class="flex items-center mb-3">
                             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -433,6 +442,19 @@
                         </div>
                         <p class="text-sm text-gray-500">Crear, editar y administrar usuarios del sistema</p>
                     </a>
+                    {% else %}
+                    <div class="bg-gray-100 p-6 rounded-lg border border-gray-200 opacity-60">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-base font-medium text-gray-500">Gestión de Usuarios</div>
+                        </div>
+                        <p class="text-sm text-gray-400">Solo disponible para administradores</p>
+                    </div>
+                    {% endif %}
                     
                     <a href="/packages" class="bg-white p-6 rounded-lg border border-gray-200 hover:border-green-600 hover:shadow-md transition-all">
                         <div class="flex items-center mb-3">
@@ -565,6 +587,248 @@
             </div>
 
         </div>
+
+        <!-- TAB: USUARIOS -->
+        {% if user.role.value == "ADMIN" %}
+        <div id="users-content" class="hidden">
+            {% include 'settings/_users_table.html' %}
+        </div>
+        {% endif %}
+
+        <!-- TAB: PAQUETES -->
+        <div id="packages-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Paquetes</h2>
+                    <button onclick="window.location.href='/packages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        Ver Todos los Paquetes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de paquetes recientes. Para gestión completa, usa el botón superior.</p>
+                <div id="packages-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando paquetes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CLIENTES -->
+        <div id="customers-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Gestión de Clientes</h2>
+                    <button onclick="window.location.href='/customers/manage'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Ver Todos los Clientes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de clientes. Para gestión completa, usa el botón superior.</p>
+                <div id="customers-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando clientes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: MENSAJES -->
+        <div id="messages-content" class="hidden">
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Sistema de Mensajes</h2>
+                    <button onclick="window.location.href='/messages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                        </svg>
+                        Ver Todos los Mensajes
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-4">Vista rápida de mensajes recientes. Para gestión completa, usa el botón superior.</p>
+                <div id="messages-list" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500">Cargando mensajes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PERFIL (Nuevo) -->
+        <div id="perfil-content" class="hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">👤 Mi Perfil</h2>
+                <p class="text-gray-600">Gestiona tu información personal y seguridad</p>
+            </div>
+
+            <!-- Información Personal -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Información Personal</h3>
+                <form id="profile-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                            <input type="text" id="profile-full-name" value="{{ user.full_name }}" required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="profile-email" value="{{ user.email }}" required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                            <input type="tel" id="profile-phone" value="{{ user.phone or '' }}"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                            <input type="text" value="{{ user.username }}" disabled
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                            <input type="text" value="{{ user.role.value }}" disabled
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="loadProfileData()"
+                            class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="px-6 py-2.5 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Cambiar Contraseña -->
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Cambiar Contraseña</h3>
+                <form id="password-form" class="max-w-md space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña Actual</label>
+                        <input type="password" id="current-password" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nueva Contraseña</label>
+                        <input type="password" id="new-password" required minlength="8"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        <p class="mt-1 text-xs text-gray-500">Mínimo 8 caracteres</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña</label>
+                        <input type="password" id="confirm-password" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                    </div>
+                    <button type="submit"
+                        class="w-full px-6 py-2.5 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Cambiar Contraseña
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: NOTIFICACIONES (Nuevo) -->
+        <div id="notificaciones-content" class="hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">🔔 Preferencias de Notificaciones</h2>
+                <p class="text-gray-600">Configura cómo y cuándo quieres recibir notificaciones</p>
+            </div>
+
+            <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-6">Configuración de Notificaciones</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">SMS cuando llega paquete</p>
+                            <p class="text-xs text-gray-500 mt-1">Recibe un SMS cuando un paquete llegue al sistema</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-sms-arrival" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Email de confirmación</p>
+                            <p class="text-xs text-gray-500 mt-1">Recibe confirmación por email de tus acciones</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-email-confirmation" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Notificaciones Push</p>
+                            <p class="text-xs text-gray-500 mt-1">Recibe notificaciones push en tu dispositivo</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-push" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Paquete Recibido</p>
+                            <p class="text-xs text-gray-500 mt-1">Notificar cuando recibimos un paquete</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-package-received" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Paquete Entregado</p>
+                            <p class="text-xs text-gray-500 mt-1">Notificar cuando se entrega un paquete</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-package-delivered" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Mensajes</p>
+                            <p class="text-xs text-gray-500 mt-1">Notificar cuando recibes un mensaje nuevo</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-messages" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Notificaciones de marketing</p>
+                            <p class="text-xs text-gray-500 mt-1">Recibe ofertas y promociones especiales</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notif-marketing" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-papyrus-blue rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-papyrus-blue"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="saveNotifications()"
+                        class="px-6 py-2.5 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Guardar Preferencias
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -588,10 +852,33 @@ function formatNumber(num) {
 // Función para cargar estadísticas del dashboard
 async function loadDashboardStats() {
     try {
+        console.log('🔄 Cargando estadísticas del dashboard...');
+        
         const response = await fetch('/api/admin/dashboard?period_days=30&include_analytics=true');
-        if (!response.ok) throw new Error('Error al cargar estadísticas');
+        
+        // Verificar si hay error de autenticación
+        if (response.status === 401 || response.status === 403) {
+            console.error('❌ Error de autenticación');
+            window.location.href = '/auth/login?redirect=/admin';
+            return;
+        }
+        
+        // Verificar si la respuesta es OK
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('❌ Error en la respuesta:', response.status, errorData);
+            throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+        }
         
         const data = await response.json();
+        console.log('✅ Datos recibidos:', data);
+        
+        // Validar estructura de datos
+        if (!data.success || !data.data) {
+            console.error('❌ Estructura de datos inválida:', data);
+            throw new Error('Estructura de datos inválida');
+        }
+        
         const stats = data.data;
         
         // Ocultar loading y mostrar contenido
@@ -616,17 +903,25 @@ async function loadDashboardStats() {
         // === SECCIÓN SALUD ===
         populateHealthStats(stats);
         
+        console.log('✅ Dashboard cargado exitosamente');
+        
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error al cargar dashboard:', error);
+        
+        // Mostrar error detallado
         document.getElementById('loading').innerHTML = `
             <div class="text-center py-12">
                 <svg class="h-12 w-12 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <p class="mt-4 text-red-600">Error al cargar estadísticas</p>
-                <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-papyrus-blue text-white rounded-md hover:bg-blue-700">
-                    Reintentar
-                </button>
+                <p class="mt-4 text-red-600 font-semibold">Error al cargar estadísticas</p>
+                <p class="mt-2 text-sm text-gray-600">${error.message}</p>
+                <p class="mt-1 text-xs text-gray-500">Revisa la consola del navegador (F12) para más detalles</p>
+                <div class="mt-4 space-x-2">
+                    <button onclick="location.reload()" class="px-4 py-2 bg-papyrus-blue text-white rounded-md hover:bg-blue-700">
+                        Reintentar
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -634,210 +929,609 @@ async function loadDashboardStats() {
 
 
 function populateFinancialStats(stats) {
-    const financial = stats.financial_metrics || {};
-    const salesByPeriod = financial.sales_by_period || {};
-    
-    // Usar datos reales de ventas por período
-    const today = salesByPeriod.today || { revenue: 0, packages: 0 };
-    const week = salesByPeriod.week || { revenue: 0, packages: 0 };
-    const month = salesByPeriod.month || { revenue: 0, packages: 0 };
-    
-    document.getElementById('revenue-today').textContent = formatCurrency(today.revenue);
-    document.getElementById('revenue-week').textContent = formatCurrency(week.revenue);
-    document.getElementById('revenue-month').textContent = formatCurrency(month.revenue);
-    document.getElementById('average-package-value').textContent = formatCurrency(financial.average_package_value || 0);
-    
-    document.getElementById('packages-today-count').textContent = `${today.packages} paquetes`;
-    document.getElementById('packages-week-count').textContent = `${week.packages} paquetes`;
-    document.getElementById('packages-month-count').textContent = `${month.packages} paquetes`;
-    
-    document.getElementById('pending-payments').textContent = formatCurrency(financial.pending_payments || 0);
-    document.getElementById('pending-packages-count').textContent = `${financial.pending_packages_count || 0} paquetes pendientes`;
-    document.getElementById('storage-fees').textContent = formatCurrency(financial.total_storage_fees || 0);
+    try {
+        console.log('📊 Poblando estadísticas financieras...');
+        const financial = stats.financial_metrics || {};
+        const salesByPeriod = financial.sales_by_period || {};
+        
+        if (!financial || Object.keys(financial).length === 0) {
+            console.warn('⚠️ No hay datos financieros disponibles');
+        }
+        
+        // Usar datos reales de ventas por período
+        const today = salesByPeriod.today || { revenue: 0, packages: 0 };
+        const week = salesByPeriod.week || { revenue: 0, packages: 0 };
+        const month = salesByPeriod.month || { revenue: 0, packages: 0 };
+        
+        document.getElementById('revenue-today').textContent = formatCurrency(today.revenue);
+        document.getElementById('revenue-week').textContent = formatCurrency(week.revenue);
+        document.getElementById('revenue-month').textContent = formatCurrency(month.revenue);
+        document.getElementById('average-package-value').textContent = formatCurrency(financial.average_package_value || 0);
+        
+        document.getElementById('packages-today-count').textContent = `${today.packages} paquetes`;
+        document.getElementById('packages-week-count').textContent = `${week.packages} paquetes`;
+        document.getElementById('packages-month-count').textContent = `${month.packages} paquetes`;
+        
+        document.getElementById('pending-payments').textContent = formatCurrency(financial.pending_payments || 0);
+        document.getElementById('pending-packages-count').textContent = `${financial.pending_packages_count || 0} paquetes pendientes`;
+        document.getElementById('storage-fees').textContent = formatCurrency(financial.total_storage_fees || 0);
+        
+        console.log('✅ Estadísticas financieras pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas financieras:', error);
+    }
 }
 
 function populatePackageStats(stats) {
-    const overview = stats.system_overview || {};
-    const packageAnalytics = stats.package_analytics || {};
-    const performance = stats.performance_metrics || {};
-    
-    // Totales
-    document.getElementById('total-packages').textContent = formatNumber(overview.total_packages || 0);
-    
-    // Procesados por período (simulado)
-    const processedToday = performance.packages_processed_today || 0;
-    const processedWeek = Math.floor((overview.total_packages || 0) * 0.15);
-    const processedMonth = Math.floor((overview.total_packages || 0) * 0.30);
-    
-    document.getElementById('processed-today').textContent = formatNumber(processedToday);
-    document.getElementById('processed-week').textContent = formatNumber(processedWeek);
-    document.getElementById('processed-month').textContent = formatNumber(processedMonth);
-    
-    // Distribución por estado
-    const byStatus = stats.business_metrics?.packages_by_status || {};
-    const total = overview.total_packages || 1;
-    
-    const announced = byStatus.ANUNCIADO || 0;
-    const received = byStatus.RECIBIDO || 0;
-    const delivered = byStatus.ENTREGADO || 0;
-    const cancelled = byStatus.CANCELADO || 0;
-    
-    document.getElementById('status-announced').textContent = formatNumber(announced);
-    document.getElementById('status-received').textContent = formatNumber(received);
-    document.getElementById('status-delivered').textContent = formatNumber(delivered);
-    document.getElementById('status-cancelled').textContent = formatNumber(cancelled);
-    
-    document.getElementById('status-announced-pct').textContent = `${((announced/total)*100).toFixed(1)}%`;
-    document.getElementById('status-received-pct').textContent = `${((received/total)*100).toFixed(1)}%`;
-    document.getElementById('status-delivered-pct').textContent = `${((delivered/total)*100).toFixed(1)}%`;
-    document.getElementById('status-cancelled-pct').textContent = `${((cancelled/total)*100).toFixed(1)}%`;
+    try {
+        console.log('📦 Poblando estadísticas de paquetes...');
+        const overview = stats.system_overview || {};
+        const packageAnalytics = stats.package_analytics || {};
+        const performance = stats.performance_metrics || {};
+        
+        // Totales
+        document.getElementById('total-packages').textContent = formatNumber(overview.total_packages || 0);
+        
+        // Procesados por período (simulado)
+        const processedToday = performance.packages_processed_today || 0;
+        const processedWeek = Math.floor((overview.total_packages || 0) * 0.15);
+        const processedMonth = Math.floor((overview.total_packages || 0) * 0.30);
+        
+        document.getElementById('processed-today').textContent = formatNumber(processedToday);
+        document.getElementById('processed-week').textContent = formatNumber(processedWeek);
+        document.getElementById('processed-month').textContent = formatNumber(processedMonth);
+        
+        // Distribución por estado
+        const byStatus = stats.business_metrics?.packages_by_status || {};
+        const total = overview.total_packages || 1;
+        
+        const announced = byStatus.ANUNCIADO || 0;
+        const received = byStatus.RECIBIDO || 0;
+        const delivered = byStatus.ENTREGADO || 0;
+        const cancelled = byStatus.CANCELADO || 0;
+        
+        document.getElementById('status-announced').textContent = formatNumber(announced);
+        document.getElementById('status-received').textContent = formatNumber(received);
+        document.getElementById('status-delivered').textContent = formatNumber(delivered);
+        document.getElementById('status-cancelled').textContent = formatNumber(cancelled);
+        
+        document.getElementById('status-announced-pct').textContent = `${((announced/total)*100).toFixed(1)}%`;
+        document.getElementById('status-received-pct').textContent = `${((received/total)*100).toFixed(1)}%`;
+        document.getElementById('status-delivered-pct').textContent = `${((delivered/total)*100).toFixed(1)}%`;
+        document.getElementById('status-cancelled-pct').textContent = `${((cancelled/total)*100).toFixed(1)}%`;
+        
+        console.log('✅ Estadísticas de paquetes pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas de paquetes:', error);
+    }
 }
 
 
 function populateCustomerStats(stats) {
-    const overview = stats.system_overview || {};
-    const customerAnalytics = stats.customer_analytics || {};
-    const businessMetrics = stats.business_metrics || {};
-    
-    document.getElementById('total-customers').textContent = formatNumber(overview.total_customers || 0);
-    document.getElementById('new-customers').textContent = formatNumber(businessMetrics.new_customers || 0);
-    document.getElementById('vip-customers').textContent = formatNumber(customerAnalytics.vip_customers || 0);
-    document.getElementById('customers-with-pending').textContent = formatNumber(customerAnalytics.customers_with_pending_packages || 0);
-    
-    // Top 5 clientes
-    const topCustomers = customerAnalytics.top_customers_by_spending || [];
-    const tableBody = document.getElementById('top-customers-table');
-    
-    if (topCustomers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No hay datos disponibles</td></tr>';
-    } else {
-        tableBody.innerHTML = topCustomers.slice(0, 5).map((customer, index) => {
-            const isVIP = customer.total_spent_cop > 200000; // VIP si gasta más de $200K
-            const packageCount = Math.floor(customer.total_spent_cop / 16000); // Estimado
-            
-            return `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
-                    <td class="px-4 py-3 text-sm font-medium text-gray-900">${customer.name}</td>
-                    <td class="px-4 py-3 text-sm text-right font-bold text-green-600">${formatCurrency(customer.total_spent_cop)}</td>
-                    <td class="px-4 py-3 text-sm text-center text-gray-600">${packageCount}</td>
-                    <td class="px-4 py-3 text-center">
-                        ${isVIP ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">VIP</span>' : '<span class="text-gray-400 text-xs">Regular</span>'}
-                    </td>
-                </tr>
-            `;
-        }).join('');
+    try {
+        console.log('👥 Poblando estadísticas de clientes...');
+        const overview = stats.system_overview || {};
+        const customerAnalytics = stats.customer_analytics || {};
+        const businessMetrics = stats.business_metrics || {};
+        
+        document.getElementById('total-customers').textContent = formatNumber(overview.total_customers || 0);
+        document.getElementById('new-customers').textContent = formatNumber(businessMetrics.new_customers || 0);
+        document.getElementById('vip-customers').textContent = formatNumber(customerAnalytics.vip_customers || 0);
+        document.getElementById('customers-with-pending').textContent = formatNumber(customerAnalytics.customers_with_pending_packages || 0);
+        
+        // Top 5 clientes
+        const topCustomers = customerAnalytics.top_customers_by_spending || [];
+        const tableBody = document.getElementById('top-customers-table');
+        
+        if (topCustomers.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No hay datos disponibles</td></tr>';
+        } else {
+            tableBody.innerHTML = topCustomers.slice(0, 5).map((customer, index) => {
+                const isVIP = customer.total_spent_cop > 200000; // VIP si gasta más de $200K
+                const packageCount = Math.floor(customer.total_spent_cop / 16000); // Estimado
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${customer.name}</td>
+                        <td class="px-4 py-3 text-sm text-right font-bold text-green-600">${formatCurrency(customer.total_spent_cop)}</td>
+                        <td class="px-4 py-3 text-sm text-center text-gray-600">${packageCount}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${isVIP ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">VIP</span>' : '<span class="text-gray-400 text-xs">Regular</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        console.log('✅ Estadísticas de clientes pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas de clientes:', error);
     }
 }
 
 function populateSMSStats(stats) {
-    const notificationAnalytics = stats.notification_analytics || {};
-    const businessMetrics = stats.business_metrics || {};
-    
-    const SMS_COST = 20; // $20 por SMS
-    
-    // SMS totales del mes
-    const smsMonth = notificationAnalytics.total_sms_sent || 0;
-    const smsToday = Math.floor(smsMonth * 0.05); // Estimado 5% del mes
-    
-    document.getElementById('sms-today').textContent = formatNumber(smsToday);
-    document.getElementById('sms-month').textContent = formatNumber(smsMonth);
-    
-    document.getElementById('sms-today-cost').textContent = `Costo: ${formatCurrency(smsToday * SMS_COST)}`;
-    document.getElementById('sms-month-cost').textContent = `Costo: ${formatCurrency(smsMonth * SMS_COST)}`;
-    
-    // Uso vs límites
-    const dailyUsage = notificationAnalytics.sms_daily_usage || {};
-    const monthlyUsage = notificationAnalytics.sms_monthly_usage || {};
-    
-    const dailySent = dailyUsage.sent || smsToday;
-    const dailyLimit = dailyUsage.limit || 200;
-    const dailyPct = dailyUsage.percentage || ((dailySent / dailyLimit) * 100);
-    
-    const monthlySent = monthlyUsage.sent || smsMonth;
-    const monthlyLimit = monthlyUsage.limit || 5000;
-    const monthlyPct = monthlyUsage.percentage || ((monthlySent / monthlyLimit) * 100);
-    
-    document.getElementById('daily-usage-text').textContent = `${dailySent}/${formatNumber(dailyLimit)}`;
-    document.getElementById('daily-usage-bar').style.width = `${Math.min(dailyPct, 100)}%`;
-    document.getElementById('daily-usage-pct').textContent = `${dailyPct.toFixed(1)}% del límite diario`;
-    
-    document.getElementById('monthly-usage-text').textContent = `${formatNumber(monthlySent)}/${formatNumber(monthlyLimit)}`;
-    document.getElementById('monthly-usage-bar').style.width = `${Math.min(monthlyPct, 100)}%`;
-    document.getElementById('monthly-usage-pct').textContent = `${monthlyPct.toFixed(1)}% del límite mensual`;
+    try {
+        console.log('📱 Poblando estadísticas de SMS...');
+        const notificationAnalytics = stats.notification_analytics || {};
+        const businessMetrics = stats.business_metrics || {};
+        
+        const SMS_COST = 20; // $20 por SMS
+        
+        // SMS totales del mes
+        const smsMonth = notificationAnalytics.total_sms_sent || 0;
+        const smsToday = Math.floor(smsMonth * 0.05); // Estimado 5% del mes
+        
+        document.getElementById('sms-today').textContent = formatNumber(smsToday);
+        document.getElementById('sms-month').textContent = formatNumber(smsMonth);
+        
+        document.getElementById('sms-today-cost').textContent = `Costo: ${formatCurrency(smsToday * SMS_COST)}`;
+        document.getElementById('sms-month-cost').textContent = `Costo: ${formatCurrency(smsMonth * SMS_COST)}`;
+        
+        // Uso vs límites
+        const dailyUsage = notificationAnalytics.sms_daily_usage || {};
+        const monthlyUsage = notificationAnalytics.sms_monthly_usage || {};
+        
+        const dailySent = dailyUsage.sent || smsToday;
+        const dailyLimit = dailyUsage.limit || 200;
+        const dailyPct = dailyUsage.percentage || ((dailySent / dailyLimit) * 100);
+        
+        const monthlySent = monthlyUsage.sent || smsMonth;
+        const monthlyLimit = monthlyUsage.limit || 5000;
+        const monthlyPct = monthlyUsage.percentage || ((monthlySent / monthlyLimit) * 100);
+        
+        document.getElementById('daily-usage-text').textContent = `${dailySent}/${formatNumber(dailyLimit)}`;
+        document.getElementById('daily-usage-bar').style.width = `${Math.min(dailyPct, 100)}%`;
+        document.getElementById('daily-usage-pct').textContent = `${dailyPct.toFixed(1)}% del límite diario`;
+        
+        document.getElementById('monthly-usage-text').textContent = `${formatNumber(monthlySent)}/${formatNumber(monthlyLimit)}`;
+        document.getElementById('monthly-usage-bar').style.width = `${Math.min(monthlyPct, 100)}%`;
+        document.getElementById('monthly-usage-pct').textContent = `${monthlyPct.toFixed(1)}% del límite mensual`;
+        
+        console.log('✅ Estadísticas de SMS pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas de SMS:', error);
+    }
 }
 
 
 function populatePerformanceStats(stats) {
-    const performance = stats.performance_metrics || {};
-    const packageAnalytics = stats.package_analytics || {};
-    
-    // Tiempos
-    const processingTime = performance.average_processing_time_hours || 0;
-    const deliveryTime = performance.average_delivery_time_hours || 0;
-    
-    document.getElementById('processing-time').textContent = `${processingTime.toFixed(1)}h`;
-    document.getElementById('delivery-time').textContent = `${deliveryTime.toFixed(1)}h`;
-    
-    // Tasas
-    const deliveryRate = packageAnalytics.delivery_rate || 0;
-    const cancellationRate = packageAnalytics.cancellation_rate || 0;
-    
-    document.getElementById('delivery-rate').textContent = `${deliveryRate.toFixed(1)}%`;
-    document.getElementById('cancellation-rate').textContent = `${cancellationRate.toFixed(1)}%`;
-    
-    // Almacenamiento
-    const occupied = packageAnalytics.occupied_positions || 0;
-    const available = packageAnalytics.available_positions || 100;
-    const total = occupied + available;
-    const occupiedPct = ((occupied / total) * 100).toFixed(1);
-    
-    document.getElementById('occupied-positions').textContent = `${occupied}/${total}`;
-    document.getElementById('occupied-pct').textContent = `${occupiedPct}% ocupación`;
-    document.getElementById('available-positions').textContent = formatNumber(available);
-    document.getElementById('average-storage-days').textContent = (packageAnalytics.average_storage_days || 0).toFixed(1);
+    try {
+        console.log('⚡ Poblando estadísticas de performance...');
+        const performance = stats.performance_metrics || {};
+        const packageAnalytics = stats.package_analytics || {};
+        
+        // Tiempos
+        const processingTime = performance.average_processing_time_hours || 0;
+        const deliveryTime = performance.average_delivery_time_hours || 0;
+        
+        document.getElementById('processing-time').textContent = `${processingTime.toFixed(1)}h`;
+        document.getElementById('delivery-time').textContent = `${deliveryTime.toFixed(1)}h`;
+        
+        // Tasas
+        const deliveryRate = packageAnalytics.delivery_rate || 0;
+        const cancellationRate = packageAnalytics.cancellation_rate || 0;
+        
+        document.getElementById('delivery-rate').textContent = `${deliveryRate.toFixed(1)}%`;
+        document.getElementById('cancellation-rate').textContent = `${cancellationRate.toFixed(1)}%`;
+        
+        // Almacenamiento
+        const occupied = packageAnalytics.occupied_positions || 0;
+        const available = packageAnalytics.available_positions || 100;
+        const total = occupied + available;
+        const occupiedPct = ((occupied / total) * 100).toFixed(1);
+        
+        document.getElementById('occupied-positions').textContent = `${occupied}/${total}`;
+        document.getElementById('occupied-pct').textContent = `${occupiedPct}% ocupación`;
+        document.getElementById('available-positions').textContent = formatNumber(available);
+        document.getElementById('average-storage-days').textContent = (packageAnalytics.average_storage_days || 0).toFixed(1);
+        
+        console.log('✅ Estadísticas de performance pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas de performance:', error);
+    }
 }
 
 function populateHealthStats(stats) {
-    const systemHealth = stats.system_health || {};
-    const overview = stats.system_overview || {};
-    const userManagement = stats.user_management || {};
-    
-    // Estado general
-    const status = systemHealth.system_status || 'healthy';
-    const statusText = status === 'healthy' ? '✅ Healthy' : '⚠️ Warning';
-    const statusColor = status === 'healthy' ? 'text-green-600' : 'text-yellow-600';
-    
-    document.getElementById('system-status').innerHTML = `<span class="${statusColor}">${statusText}</span>`;
-    
-    // Métricas
-    document.getElementById('unprocessed-packages').textContent = formatNumber(systemHealth.unprocessed_packages || 0);
-    document.getElementById('pending-messages').textContent = formatNumber(systemHealth.pending_messages || 0);
-    document.getElementById('active-users').textContent = formatNumber(overview.active_users || 0);
+    try {
+        console.log('🏥 Poblando estadísticas de salud del sistema...');
+        const systemHealth = stats.system_health || {};
+        const overview = stats.system_overview || {};
+        const userManagement = stats.user_management || {};
+        
+        // Estado general
+        const status = systemHealth.system_status || 'healthy';
+        const statusText = status === 'healthy' ? '✅ Healthy' : '⚠️ Warning';
+        const statusColor = status === 'healthy' ? 'text-green-600' : 'text-yellow-600';
+        
+        document.getElementById('system-status').innerHTML = `<span class="${statusColor}">${statusText}</span>`;
+        
+        // Métricas
+        document.getElementById('unprocessed-packages').textContent = formatNumber(systemHealth.unprocessed_packages || 0);
+        document.getElementById('pending-messages').textContent = formatNumber(systemHealth.pending_messages || 0);
+        document.getElementById('active-users').textContent = formatNumber(overview.active_users || 0);
+        
+        console.log('✅ Estadísticas de salud del sistema pobladas');
+    } catch (error) {
+        console.error('❌ Error al poblar estadísticas de salud:', error);
+    }
 }
 
 // Función para cambiar entre tabs
 function switchTab(tabName) {
-    // Ocultar todos los contenidos
-    document.getElementById('dashboard-content').classList.add('hidden');
-    document.getElementById('settings-content').classList.add('hidden');
+    // Lista de todos los tabs
+    const tabs = ['dashboard', 'users', 'packages', 'customers', 'messages', 'perfil', 'notificaciones', 'settings'];
     
-    // Remover estilos activos de todos los tabs
-    document.getElementById('tab-dashboard').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
-    document.getElementById('tab-dashboard').classList.add('border-transparent', 'text-gray-500');
-    document.getElementById('tab-settings').classList.remove('border-papyrus-blue', 'text-papyrus-blue');
-    document.getElementById('tab-settings').classList.add('border-transparent', 'text-gray-500');
+    // Ocultar todos los contenidos
+    tabs.forEach(tab => {
+        const content = document.getElementById(`${tab}-content`);
+        if (content) content.classList.add('hidden');
+        
+        const tabButton = document.getElementById(`tab-${tab}`);
+        if (tabButton) {
+            tabButton.classList.remove('border-papyrus-blue', 'text-papyrus-blue');
+            tabButton.classList.add('border-transparent', 'text-gray-500');
+        }
+    });
     
     // Mostrar el contenido seleccionado y activar su tab
-    if (tabName === 'dashboard') {
-        document.getElementById('dashboard-content').classList.remove('hidden');
-        document.getElementById('tab-dashboard').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('tab-dashboard').classList.add('border-papyrus-blue', 'text-papyrus-blue');
-    } else if (tabName === 'settings') {
-        document.getElementById('settings-content').classList.remove('hidden');
-        document.getElementById('tab-settings').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('tab-settings').classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    const selectedContent = document.getElementById(`${tabName}-content`);
+    const selectedTab = document.getElementById(`tab-${tabName}`);
+    
+    if (selectedContent) {
+        selectedContent.classList.remove('hidden');
     }
+    
+    if (selectedTab) {
+        selectedTab.classList.remove('border-transparent', 'text-gray-500');
+        selectedTab.classList.add('border-papyrus-blue', 'text-papyrus-blue');
+    }
+    
+    // Cargar datos específicos del tab si es necesario
+    if (tabName === 'users') {
+        loadUsersTab();
+    } else if (tabName === 'packages') {
+        loadPackagesTab();
+    } else if (tabName === 'customers') {
+        loadCustomersTab();
+    } else if (tabName === 'messages') {
+        loadMessagesTab();
+    } else if (tabName === 'perfil') {
+        loadProfileData();
+    } else if (tabName === 'notificaciones') {
+        loadNotifications();
+    }
+}
+
+// Función para cargar el tab de usuarios
+async function loadUsersTab() {
+    const usersList = document.getElementById('users-list');
+    usersList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando usuarios...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar usuarios');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const userManagement = stats.user_management || {};
+        
+        usersList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-sm text-blue-700">Total Usuarios</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(stats.system_overview?.total_users || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Usuarios Activos</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(stats.system_overview?.active_users || 0)}</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-sm text-purple-700">Administradores</p>
+                    <p class="text-3xl font-bold text-purple-900">${formatNumber(userManagement.admin_count || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para gestión completa de usuarios, incluyendo crear, editar y eliminar</p>
+                <button onclick="window.location.href='/admin/users'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-papyrus-blue hover:bg-blue-700">
+                    Ir a Gestión de Usuarios
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        usersList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar usuarios</div>';
+    }
+}
+
+// Función para cargar el tab de paquetes
+async function loadPackagesTab() {
+    const packagesList = document.getElementById('packages-list');
+    packagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando paquetes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar paquetes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const byStatus = stats.business_metrics?.packages_by_status || {};
+        
+        packagesList.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-yellow-700">Anunciados</p>
+                    <p class="text-3xl font-bold text-yellow-900">${formatNumber(byStatus.ANUNCIADO || 0)}</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-blue-700">Recibidos</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(byStatus.RECIBIDO || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-green-700">Entregados</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(byStatus.ENTREGADO || 0)}</p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-red-700">Cancelados</p>
+                    <p class="text-3xl font-bold text-red-900">${formatNumber(byStatus.CANCELADO || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para ver detalles completos, buscar y gestionar paquetes</p>
+                <button onclick="window.location.href='/packages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    Ver Todos los Paquetes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        packagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar paquetes</div>';
+    }
+}
+
+// Función para cargar el tab de clientes
+async function loadCustomersTab() {
+    const customersList = document.getElementById('customers-list');
+    customersList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando clientes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30&include_analytics=true');
+        if (!response.ok) throw new Error('Error al cargar clientes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const customerAnalytics = stats.customer_analytics || {};
+        
+        customersList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <p class="text-sm text-purple-700">Total Clientes</p>
+                    <p class="text-3xl font-bold text-purple-900">${formatNumber(stats.system_overview?.total_customers || 0)}</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="text-sm text-blue-700">Clientes VIP</p>
+                    <p class="text-3xl font-bold text-blue-900">${formatNumber(customerAnalytics.vip_customers || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Nuevos Este Mes</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(stats.business_metrics?.new_customers || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para gestión completa de clientes y sus paquetes</p>
+                <button onclick="window.location.href='/customers/manage'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+                    Ver Todos los Clientes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        customersList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar clientes</div>';
+    }
+}
+
+// Función para cargar el tab de mensajes
+async function loadMessagesTab() {
+    const messagesList = document.getElementById('messages-list');
+    messagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando mensajes...</div>';
+    
+    try {
+        const response = await fetch('/api/admin/dashboard?period_days=30');
+        if (!response.ok) throw new Error('Error al cargar mensajes');
+        
+        const data = await response.json();
+        const stats = data.data;
+        const systemHealth = stats.system_health || {};
+        
+        messagesList.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-orange-50 p-4 rounded-lg">
+                    <p class="text-sm text-orange-700">Mensajes Pendientes</p>
+                    <p class="text-3xl font-bold text-orange-900">${formatNumber(systemHealth.pending_messages || 0)}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-green-700">Mensajes Resueltos</p>
+                    <p class="text-3xl font-bold text-green-900">${formatNumber(systemHealth.resolved_messages || 0)}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                <p class="text-gray-600 mb-4">Para ver y responder mensajes de clientes</p>
+                <button onclick="window.location.href='/messages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                    Ver Todos los Mensajes
+                </button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        messagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar mensajes</div>';
+    }
+}
+
+// ========================================
+// FUNCIONES PARA NUEVOS TABS
+// ========================================
+
+// Función para cargar datos del perfil
+function loadProfileData() {
+    // Los datos ya están cargados en el HTML desde el servidor
+    console.log('Datos del perfil cargados');
+}
+
+// Función para guardar cambios del perfil
+document.getElementById('profile-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const fullName = document.getElementById('profile-full-name').value;
+    const email = document.getElementById('profile-email').value;
+    const phone = document.getElementById('profile-phone').value;
+    
+    try {
+        const response = await fetch('/api/settings/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                full_name: fullName,
+                email: email,
+                phone: phone
+            })
+        });
+        
+        if (response.ok) {
+            showToast('success', 'Perfil actualizado correctamente');
+        } else {
+            showToast('error', 'Error al actualizar el perfil');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Error de conexión');
+    }
+});
+
+// Función para cambiar contraseña
+document.getElementById('password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (newPassword !== confirmPassword) {
+        showToast('error', 'Las contraseñas no coinciden');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/settings/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+            })
+        });
+        
+        if (response.ok) {
+            showToast('success', 'Contraseña cambiada correctamente');
+            document.getElementById('password-form').reset();
+        } else {
+            const data = await response.json();
+            showToast('error', data.detail || 'Error al cambiar la contraseña');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Error de conexión');
+    }
+});
+
+// Función para cargar preferencias de notificaciones
+async function loadNotifications() {
+    try {
+        const response = await fetch('/api/settings/notifications', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.preferences) {
+                document.getElementById('notif-sms-arrival').checked = data.preferences.sms_arrival || false;
+                document.getElementById('notif-email-confirmation').checked = data.preferences.email_confirmation || false;
+                document.getElementById('notif-push').checked = data.preferences.push_notifications || false;
+                document.getElementById('notif-package-received').checked = data.preferences.notify_package_received || false;
+                document.getElementById('notif-package-delivered').checked = data.preferences.notify_package_delivered || false;
+                document.getElementById('notif-messages').checked = data.preferences.notify_messages || false;
+                document.getElementById('notif-marketing').checked = data.preferences.marketing || false;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+// Función para guardar preferencias de notificaciones
+async function saveNotifications() {
+    const notifications = {
+        sms_arrival: document.getElementById('notif-sms-arrival').checked,
+        email_confirmation: document.getElementById('notif-email-confirmation').checked,
+        push_notifications: document.getElementById('notif-push').checked,
+        notify_package_received: document.getElementById('notif-package-received').checked,
+        notify_package_delivered: document.getElementById('notif-package-delivered').checked,
+        notify_messages: document.getElementById('notif-messages').checked,
+        marketing: document.getElementById('notif-marketing').checked
+    };
+    
+    try {
+        const response = await fetch('/api/settings/notifications', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(notifications)
+        });
+        
+        if (response.ok) {
+            showToast('success', 'Preferencias guardadas correctamente');
+        } else {
+            showToast('error', 'Error al guardar preferencias');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Error de conexión');
+    }
+}
+
+// Función para mostrar mensajes toast
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 
 // Cargar estadísticas al cargar la página
@@ -845,5 +1539,122 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardStats();
 });
 </script>
+
+<!-- Modales para Gestión de Usuarios (Solo ADMIN) -->
+{% if user.role.value == "ADMIN" %}
+
+<!-- Modal Crear Usuario -->
+<div id="createUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Crear Nuevo Usuario</h3>
+        <form id="createUserForm" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario *</label>
+                    <input type="text" name="username" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" name="email" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                <input type="text" name="full_name" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="tel" name="phone"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                    <select name="role" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        <option value="OPERADOR">Operador</option>
+                        <option value="USUARIO">Usuario</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña *</label>
+                <input type="password" name="password" required minlength="8"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeCreateUserModal()"
+                    class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">Cancelar</button>
+                <button type="submit"
+                    class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Crear</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Usuario</h3>
+        <form id="editUserForm" class="space-y-4">
+            <input type="hidden" id="edit_user_id" name="user_id">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario *</label>
+                    <input type="text" id="edit_username" name="username" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input type="email" id="edit_email" name="email" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                <input type="text" id="edit_full_name" name="full_name" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="tel" id="edit_phone" name="phone"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                    <select id="edit_role" name="role" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                        <option value="OPERADOR">Operador</option>
+                        <option value="USUARIO">Usuario</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="flex items-center">
+                    <input type="checkbox" id="edit_is_active" name="is_active"
+                        class="rounded border-gray-300 text-papyrus-blue">
+                    <span class="ml-2 text-sm text-gray-700">Usuario Activo</span>
+                </label>
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeEditUserModal()"
+                    class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">Cancelar</button>
+                <button type="submit"
+                    class="flex-1 bg-papyrus-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Script para gestión de usuarios -->
+<script src="/static/js/settings_users.js"></script>
+
+{% endif %}
 
 {% endblock %}

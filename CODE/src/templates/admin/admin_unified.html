@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dashboard Administrativo - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-light text-gray-900">Panel de Administración</h1>
+                <p class="mt-2 text-gray-500">Gestiona el sistema de paquetería</p>
+            </div>
+            <button onclick="location.reload()" class="btn-primary">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Actualizar
+            </button>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
+            <nav class="flex space-x-4 px-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-button active">
+                    📊 Dashboard
+                </button>
+                <button onclick="switchTab('users')" id="tab-users" class="tab-button">
+                    👥 Usuarios
+                </button>
+                <button onclick="switchTab('packages')" id="tab-packages" class="tab-button">
+                    📦 Paquetes
+                </button>
+                <button onclick="switchTab('customers')" id="tab-customers" class="tab-button">
+                    🏢 Clientes
+                </button>
+                <button onclick="switchTab('messages')" id="tab-messages" class="tab-button">
+                    💬 Mensajes
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="tab-button">
+                    ⚙️ Settings
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="tab-dashboard-content" class="tab-content active">
+            <!-- Dashboard stats will be loaded here -->

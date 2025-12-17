@@ -32,9 +32,16 @@ async def get_admin_dashboard(
     db: Session = Depends(get_db)
 ):
     """Dashboard administrativo con estadísticas completas y analytics opcionales"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"📊 Usuario {current_user.username} solicitando dashboard (period_days={period_days}, analytics={include_analytics})")
+        
         service = AdminService(db)
         stats = service.get_admin_dashboard_stats(period_days, include_analytics)
+        
+        logger.info(f"✅ Dashboard generado exitosamente para {current_user.username}")
 
         return {
             "success": True,
@@ -44,6 +51,7 @@ async def get_admin_dashboard(
         }
 
     except Exception as e:
+        logger.error(f"❌ Error generando dashboard para {current_user.username}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error obteniendo dashboard: {str(e)}")
 
 

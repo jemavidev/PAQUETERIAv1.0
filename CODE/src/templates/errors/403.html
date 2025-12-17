@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Acceso Denegado | PAQUETEX</title>
+    
+    {# Favicon #}
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon.png?v=3.1">
+    <link rel="shortcut icon" href="/static/images/favicon.ico?v=3.1">
+    
+    {# Tailwind CSS #}
+    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'papyrus-blue': '#1e40af',
+                        'papyrus-green': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-2xl w-full text-center fade-in">
+        {# Icono de candado #}
+        <div class="mb-8 flex justify-center">
+            <div class="shake">
+                <svg class="w-32 h-32 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+        </div>
+        
+        {# Código de error #}
+        <h1 class="text-8xl font-bold text-red-600 mb-4">403</h1>
+        
+        {# Mensaje principal #}
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4">
+            {{ error_title|default("Acceso Denegado") }}
+        </h2>
+        
+        {# Descripción #}
+        <p class="text-lg text-gray-600 mb-8">
+            {{ error_message|default("No tienes permisos para acceder a esta página.") }}
+        </p>
+        
+        {# Información adicional #}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8 text-left">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-semibold text-yellow-800 mb-1">¿Por qué veo esto?</h3>
+                    <p class="text-sm text-yellow-700">
+                        Esta página requiere permisos especiales de administrador. Si crees que deberías tener acceso, 
+                        contacta al administrador del sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        {# Botones de acción #}
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="/admin" 
+               class="inline-flex items-center px-6 py-3 bg-papyrus-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Ir al Dashboard
+            </a>
+            
+            <button onclick="history.back()" 
+                    class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Volver atrás
+            </button>
+        </div>
+        
+        {# Información de contacto #}
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500 mb-4">¿Necesitas ayuda?</p>
+            <div class="flex flex-wrap gap-4 justify-center text-sm">
+                <a href="/help" class="text-papyrus-blue hover:underline">Centro de ayuda</a>
+                <span class="text-gray-300">|</span>
+                <a href="mailto:soporte@paquetex.com" class="text-papyrus-blue hover:underline">Contactar soporte</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

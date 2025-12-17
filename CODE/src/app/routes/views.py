@@ -173,9 +173,8 @@ async def test_form_submission(request: Request):
     context = get_auth_context_from_request(request)
     return templates.TemplateResponse("test_form_submission.html", context)
 
-@router.get("/customers")
-async def customers_page(request: Request):
-    return RedirectResponse(url="/", status_code=302)
+# NOTA: Ruta /customers movida a public.py (ruta pública)
+# La ruta duplicada causaba conflictos. La implementación correcta está en public.py
 
 # NOTA: Ruta /search movida a public.py (ruta pública)
 # @router.get("/search") - ELIMINADA (duplicada)
@@ -203,24 +202,8 @@ async def auth_reset_password_page(request: Request):
     return templates.TemplateResponse("auth/reset-password.html", context)
 
 
-@router.get("/admin/users")
-async def admin_users_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies), db: Session = Depends(get_db)):
-    if current_user.role.value != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Solo administradores pueden acceder a esta página."
-        )
-    
-    context = get_auth_context_required(request)
-    context["user"] = current_user
-    
-    try:
-        users = db.query(User).order_by(User.created_at.desc()).all()
-        context["users"] = users
-    finally:
-        db.close()
-    
-    return templates.TemplateResponse("admin/users.html", context)
+# NOTA: Ruta /admin/users movida a protected.py con paginación
+# La ruta duplicada causaba conflictos y retornaba JSON en lugar de HTML
 
 @router.get("/logout")
 async def logout_page(request: Request):
@@ -249,17 +232,26 @@ async def policies_page(request: Request):
 
 
 @router.get("/admin")
-async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies)):
+async def admin_page(request: Request, current_user: User = Depends(get_current_active_user_from_cookies), db: Session = Depends(get_db)):
     """Dashboard administrativo con estadísticas completas"""
     context = get_auth_context_required(request)
     context["user"] = current_user
+    context["user_role"] = current_user.role.value
     
     # Verificar que sea admin o operador
     if current_user.role.value not in ["ADMIN", "OPERADOR"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acceso denegado. Solo administradores y operadores pueden acceder."
-        )
+        # Renderizar página de error en lugar de JSON
+        context["error_title"] = "Acceso Denegado al Dashboard"
+        context["error_message"] = "Solo administradores y operadores pueden acceder al panel de administración."
+        context["error_code"] = "403"
+        return templates.TemplateResponse("errors/403.html", context, status_code=403)
+    
+    # Cargar usuarios si es admin (para tab de Usuarios)
+    if current_user.role == UserRole.ADMIN:
+        users = db.query(User).order_by(User.created_at.desc()).all()
+        context["users"] = users
+    else:
+        context["users"] = []
     
     return templates.TemplateResponse("admin/admin_dashboard.html", context)
 

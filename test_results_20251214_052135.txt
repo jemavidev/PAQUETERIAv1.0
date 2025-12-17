@@ -1,0 +1,14 @@
+════════════════════════════════════════════════════════════════
+REPORTE DE PRUEBAS - DASHBOARD UNIFICADO
+════════════════════════════════════════════════════════════════
+
+Fecha: 2025-12-14 05:21:39
+URL: https://staging.jemavi.co/admin
+
+Total de pruebas: 33
+Pruebas exitosas: 1
+Pruebas fallidas: 32
+
+Estado: ✗ ALGUNAS PRUEBAS FALLARON
+
+════════════════════════════════════════════════════════════════
