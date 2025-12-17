@@ -29,12 +29,6 @@
                     </svg>
                     <span class="hidden sm:inline">Dashboard</span>
                 </button>
-                <button onclick="switchTab('estadisticas')" id="tab-estadisticas" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
-                    <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Estadísticas</span>
-                </button>
                 {% if user.role.value == "ADMIN" %}
                 <button onclick="switchTab('users')" id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm transition-colors">
                     <svg class="inline-block h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -658,74 +652,6 @@
             </div>
         </div>
 
-        <!-- TAB: ESTADÍSTICAS (Nuevo - Incluye Paquetes, Clientes y Mensajes) -->
-        <div id="estadisticas-content" class="hidden">
-            <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2">📊 Estadísticas del Sistema</h2>
-                <p class="text-gray-600">Vista consolidada de paquetes, clientes y mensajes</p>
-            </div>
-
-            <!-- Sub-tabs para Estadísticas -->
-            <div class="bg-white shadow-sm border border-gray-200 rounded-lg mb-6">
-                <nav class="flex space-x-4 px-6 overflow-x-auto" aria-label="Sub-tabs">
-                    <button onclick="switchStatsTab('paquetes')" id="stats-tab-paquetes" class="border-papyrus-blue text-papyrus-blue whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm">
-                        📦 Paquetes
-                    </button>
-                    <button onclick="switchStatsTab('clientes')" id="stats-tab-clientes" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm transition-colors">
-                        👥 Clientes
-                    </button>
-                    <button onclick="switchStatsTab('mensajes')" id="stats-tab-mensajes" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm transition-colors">
-                        💬 Mensajes
-                    </button>
-                </nav>
-            </div>
-
-            <!-- Sub-tab: Paquetes -->
-            <div id="stats-paquetes-content" class="stats-subtab">
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold text-gray-900">Estadísticas de Paquetes</h3>
-                        <button onclick="window.location.href='/packages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                            Ver Todos los Paquetes
-                        </button>
-                    </div>
-                    <div id="stats-packages-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-500">Cargando estadísticas de paquetes...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sub-tab: Clientes -->
-            <div id="stats-clientes-content" class="stats-subtab hidden">
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold text-gray-900">Estadísticas de Clientes</h3>
-                        <button onclick="window.location.href='/customers/manage'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
-                            Ver Todos los Clientes
-                        </button>
-                    </div>
-                    <div id="stats-customers-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-500">Cargando estadísticas de clientes...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sub-tab: Mensajes -->
-            <div id="stats-mensajes-content" class="stats-subtab hidden">
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold text-gray-900">Estadísticas de Mensajes</h3>
-                        <button onclick="window.location.href='/messages'" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-                            Ver Todos los Mensajes
-                        </button>
-                    </div>
-                    <div id="stats-messages-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-500">Cargando estadísticas de mensajes...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- TAB: PERFIL (Nuevo) -->
         <div id="perfil-content" class="hidden">
             <div class="mb-6">
@@ -1234,7 +1160,7 @@ function populateHealthStats(stats) {
 // Función para cambiar entre tabs
 function switchTab(tabName) {
     // Lista de todos los tabs
-    const tabs = ['dashboard', 'estadisticas', 'users', 'packages', 'customers', 'messages', 'perfil', 'notificaciones', 'settings'];
+    const tabs = ['dashboard', 'users', 'packages', 'customers', 'messages', 'perfil', 'notificaciones', 'settings'];
     
     // Ocultar todos los contenidos
     tabs.forEach(tab => {
@@ -1270,52 +1196,10 @@ function switchTab(tabName) {
         loadCustomersTab();
     } else if (tabName === 'messages') {
         loadMessagesTab();
-    } else if (tabName === 'estadisticas') {
-        // Cargar el primer sub-tab por defecto
-        switchStatsTab('paquetes');
     } else if (tabName === 'perfil') {
         loadProfileData();
     } else if (tabName === 'notificaciones') {
         loadNotifications();
-    }
-}
-
-// Función para cambiar entre sub-tabs de Estadísticas
-function switchStatsTab(subTabName) {
-    const subTabs = ['paquetes', 'clientes', 'mensajes'];
-    
-    // Ocultar todos los sub-tabs
-    subTabs.forEach(subTab => {
-        const content = document.getElementById(`stats-${subTab}-content`);
-        if (content) content.classList.add('hidden');
-        
-        const tabButton = document.getElementById(`stats-tab-${subTab}`);
-        if (tabButton) {
-            tabButton.classList.remove('border-papyrus-blue', 'text-papyrus-blue');
-            tabButton.classList.add('border-transparent', 'text-gray-500');
-        }
-    });
-    
-    // Mostrar el sub-tab seleccionado
-    const selectedContent = document.getElementById(`stats-${subTabName}-content`);
-    const selectedTab = document.getElementById(`stats-tab-${subTabName}`);
-    
-    if (selectedContent) {
-        selectedContent.classList.remove('hidden');
-    }
-    
-    if (selectedTab) {
-        selectedTab.classList.remove('border-transparent', 'text-gray-500');
-        selectedTab.classList.add('border-papyrus-blue', 'text-papyrus-blue');
-    }
-    
-    // Cargar datos del sub-tab
-    if (subTabName === 'paquetes') {
-        loadStatsPackages();
-    } else if (subTabName === 'clientes') {
-        loadStatsCustomers();
-    } else if (subTabName === 'mensajes') {
-        loadStatsMessages();
     }
 }
 
@@ -1498,133 +1382,6 @@ async function loadMessagesTab() {
 // ========================================
 // FUNCIONES PARA NUEVOS TABS
 // ========================================
-
-// Función para cargar estadísticas de paquetes en el tab de Estadísticas
-async function loadStatsPackages() {
-    const packagesList = document.getElementById('stats-packages-list');
-    packagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando estadísticas de paquetes...</div>';
-    
-    try {
-        const response = await fetch('/api/admin/dashboard?period_days=30');
-        if (!response.ok) throw new Error('Error al cargar paquetes');
-        
-        const data = await response.json();
-        const stats = data.data;
-        const byStatus = stats.business_metrics?.packages_by_status || {};
-        
-        packagesList.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-yellow-50 p-4 rounded-lg text-center">
-                    <p class="text-sm text-yellow-700">Anunciados</p>
-                    <p class="text-3xl font-bold text-yellow-900">${formatNumber(byStatus.ANUNCIADO || 0)}</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                    <p class="text-sm text-blue-700">Recibidos</p>
-                    <p class="text-3xl font-bold text-blue-900">${formatNumber(byStatus.RECIBIDO || 0)}</p>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg text-center">
-                    <p class="text-sm text-green-700">Entregados</p>
-                    <p class="text-3xl font-bold text-green-900">${formatNumber(byStatus.ENTREGADO || 0)}</p>
-                </div>
-                <div class="bg-red-50 p-4 rounded-lg text-center">
-                    <p class="text-sm text-red-700">Cancelados</p>
-                    <p class="text-3xl font-bold text-red-900">${formatNumber(byStatus.CANCELADO || 0)}</p>
-                </div>
-            </div>
-            <div class="bg-gray-50 p-6 rounded-lg text-center">
-                <p class="text-gray-600 mb-4">Para ver detalles completos y gestionar paquetes</p>
-                <button onclick="window.location.href='/packages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                    Ir a Gestión de Paquetes
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error:', error);
-        packagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar estadísticas de paquetes</div>';
-    }
-}
-
-// Función para cargar estadísticas de clientes en el tab de Estadísticas
-async function loadStatsCustomers() {
-    const customersList = document.getElementById('stats-customers-list');
-    customersList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando estadísticas de clientes...</div>';
-    
-    try {
-        const response = await fetch('/api/admin/dashboard?period_days=30');
-        if (!response.ok) throw new Error('Error al cargar clientes');
-        
-        const data = await response.json();
-        const stats = data.data;
-        const overview = stats.system_overview || {};
-        
-        customersList.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-purple-50 p-4 rounded-lg">
-                    <p class="text-sm text-purple-700">Total Clientes</p>
-                    <p class="text-3xl font-bold text-purple-900">${formatNumber(overview.total_customers || 0)}</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-blue-700">Clientes Activos</p>
-                    <p class="text-3xl font-bold text-blue-900">${formatNumber(overview.active_customers || 0)}</p>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg">
-                    <p class="text-sm text-green-700">Nuevos Este Mes</p>
-                    <p class="text-3xl font-bold text-green-900">${formatNumber(stats.business_metrics?.new_customers_month || 0)}</p>
-                </div>
-            </div>
-            <div class="bg-gray-50 p-6 rounded-lg text-center">
-                <p class="text-gray-600 mb-4">Para ver detalles completos y gestionar clientes</p>
-                <button onclick="window.location.href='/customers/manage'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
-                    Ir a Gestión de Clientes
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error:', error);
-        customersList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar estadísticas de clientes</div>';
-    }
-}
-
-// Función para cargar estadísticas de mensajes en el tab de Estadísticas
-async function loadStatsMessages() {
-    const messagesList = document.getElementById('stats-messages-list');
-    messagesList.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando estadísticas de mensajes...</div>';
-    
-    try {
-        const response = await fetch('/api/admin/dashboard?period_days=30');
-        if (!response.ok) throw new Error('Error al cargar mensajes');
-        
-        const data = await response.json();
-        const stats = data.data;
-        const smsStats = stats.sms_statistics || {};
-        
-        messagesList.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-orange-50 p-4 rounded-lg">
-                    <p class="text-sm text-orange-700">SMS Enviados Hoy</p>
-                    <p class="text-3xl font-bold text-orange-900">${formatNumber(smsStats.sent_today || 0)}</p>
-                </div>
-                <div class="bg-pink-50 p-4 rounded-lg">
-                    <p class="text-sm text-pink-700">SMS Este Mes</p>
-                    <p class="text-3xl font-bold text-pink-900">${formatNumber(smsStats.sent_month || 0)}</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-blue-700">Costo Total Mes</p>
-                    <p class="text-3xl font-bold text-blue-900">${formatCurrency((smsStats.sent_month || 0) * 20)}</p>
-                </div>
-            </div>
-            <div class="bg-gray-50 p-6 rounded-lg text-center">
-                <p class="text-gray-600 mb-4">Para ver detalles completos y gestionar mensajes</p>
-                <button onclick="window.location.href='/messages'" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-                    Ir a Gestión de Mensajes
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error:', error);
-        messagesList.innerHTML = '<div class="text-center py-8 text-red-500">Error al cargar estadísticas de mensajes</div>';
-    }
-}
 
 // Función para cargar datos del perfil
 function loadProfileData() {
