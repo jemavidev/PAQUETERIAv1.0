@@ -111,7 +111,7 @@ async def announce_page(request: Request):
 
 @router.get("/announce-papyrus")
 async def announce_papyrus_page(request: Request):
-    """Página de anuncio PAPYRUS - Solo teléfono"""
+    """Página de anuncio PAPYRUS - Solo teléfono (Versión con botón de edición)"""
     try:
         context = get_auth_context_from_request(request)
     except Exception as auth_error:
@@ -126,6 +126,24 @@ async def announce_papyrus_page(request: Request):
     
     context["current_path"] = str(request.url.path)
     return templates.TemplateResponse("announce/announce_quick.html", context)
+
+@router.get("/announce-papyrus-v2")
+async def announce_papyrus_v2_page(request: Request):
+    """Página de anuncio PAPYRUS V2 - Solo teléfono (Versión con doble clic)"""
+    try:
+        context = get_auth_context_from_request(request)
+    except Exception as auth_error:
+        logger.debug(f"Usuario no autenticado en /announce-papyrus-v2: {auth_error}")
+        context = {
+            "is_authenticated": False,
+            "user": None,
+            "user_name": None,
+            "user_role": None,
+            "request": request
+        }
+    
+    context["current_path"] = str(request.url.path)
+    return templates.TemplateResponse("announce/announce_quick_v2.html", context)
 
 @router.get("/search")
 async def search_page(request: Request):

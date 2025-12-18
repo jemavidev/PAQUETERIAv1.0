@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 
-{% block title %}Anuncio Rápido - PAQUETEX v4.0{% endblock %}
+{% block title %}Anuncio Rápido V2 - PAQUETEX v4.0{% endblock %}
 
 {% block extra_head %}
 <script src="/static/js/phone-utils.js"></script>
@@ -57,25 +57,16 @@
                         
                         {# Nombre del Cliente (autocompletado o editable) #}
                         <div id="customerNameContainer" class="hidden">
-                            <div class="input-with-icon relative">
+                            <div class="input-with-icon">
                                 <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
                                 <input type="text" 
                                        id="customer_name" 
                                        name="customer_name" 
-                                       class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base pr-10"
+                                       class="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-papyrus-blue focus:ring-0 bg-transparent transition-colors text-sm sm:text-base"
                                        placeholder="Nombre del cliente"
                                        oninput="this.value = this.value.toUpperCase()">
-                                {# Botón de edición (solo visible cuando el cliente existe) #}
-                                <button type="button" 
-                                        id="editNameButton" 
-                                        class="hidden absolute right-0 top-3 text-gray-400 hover:text-papyrus-blue transition-colors focus:outline-none"
-                                        title="Editar nombre del cliente">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                    </svg>
-                                </button>
                             </div>
                             <p class="text-xs mt-1 ml-1">
                                 <span id="customerStatus"></span>
@@ -174,7 +165,6 @@ async function searchCustomerByPhone(phone) {
     const customerStatus = document.getElementById('customerStatus');
     const whatsappButtonContainer = document.getElementById('whatsappButtonContainer');
     const whatsappButton = document.getElementById('whatsappButton');
-    const editNameButton = document.getElementById('editNameButton');
     
     try {
         phoneLoader.classList.remove('hidden');
@@ -188,17 +178,15 @@ async function searchCustomerByPhone(phone) {
             const data = await response.json();
             customerData = data;
             
-            // Cliente existente - mostrar nombre (solo lectura)
+            // Cliente existente - mostrar nombre (solo lectura con doble clic para editar)
             customerNameInput.value = data.full_name || data.display_name || '';
             customerNameInput.readOnly = true;
-            customerNameInput.classList.add('bg-gray-50', 'cursor-not-allowed');
-            customerNameInput.classList.remove('bg-transparent');
+            customerNameInput.classList.add('bg-gray-50', 'cursor-pointer');
+            customerNameInput.classList.remove('bg-transparent', 'cursor-not-allowed');
+            customerNameInput.title = 'Doble clic para editar';
             customerNameContainer.classList.remove('hidden');
-            customerStatus.textContent = '✓ Cliente encontrado en el sistema';
+            customerStatus.textContent = '✓ Cliente encontrado - Doble clic en el nombre para editar';
             customerStatus.className = 'text-green-600 font-medium';
-            
-            // Mostrar botón de edición
-            editNameButton.classList.remove('hidden');
             
             // Mostrar botón de WhatsApp
             setupWhatsAppButton(normalizedPhone);
@@ -208,15 +196,13 @@ async function searchCustomerByPhone(phone) {
             customerData = null;
             customerNameInput.value = '';
             customerNameInput.readOnly = false;
-            customerNameInput.classList.remove('bg-gray-50', 'cursor-not-allowed');
+            customerNameInput.classList.remove('bg-gray-50', 'cursor-pointer', 'cursor-not-allowed');
             customerNameInput.classList.add('bg-transparent');
+            customerNameInput.title = '';
             customerNameInput.required = true;
             customerNameContainer.classList.remove('hidden');
             customerStatus.textContent = '';
             customerStatus.className = 'text-blue-600 font-medium';
-            
-            // Ocultar botón de edición
-            editNameButton.classList.add('hidden');
             
             // Mostrar botón de WhatsApp también para clientes nuevos
             setupWhatsAppButton(normalizedPhone);
@@ -237,25 +223,21 @@ async function searchCustomerByPhone(phone) {
     }
 }
 
-// Habilitar edición del nombre del cliente
-function enableNameEditing() {
+// Habilitar edición del nombre con doble clic
+function enableNameEditingOnDoubleClick() {
     const customerNameInput = document.getElementById('customer_name');
-    const editNameButton = document.getElementById('editNameButton');
     const customerStatus = document.getElementById('customerStatus');
+    
+    // Solo permitir edición si el campo está en modo readonly (cliente existente)
+    if (!customerNameInput.readOnly) {
+        return;
+    }
     
     // Hacer el campo editable
     customerNameInput.readOnly = false;
-    customerNameInput.classList.remove('bg-gray-50', 'cursor-not-allowed');
+    customerNameInput.classList.remove('bg-gray-50', 'cursor-pointer');
     customerNameInput.classList.add('bg-transparent', 'border-yellow-300');
-    
-    // Cambiar el ícono a "guardando"
-    editNameButton.innerHTML = `
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-    `;
-    editNameButton.classList.add('text-green-600');
-    editNameButton.title = 'Editando - Los cambios se guardarán al anunciar';
+    customerNameInput.title = '';
     
     // Actualizar estado
     customerStatus.textContent = '✏️ Editando nombre - Los cambios se guardarán al anunciar el paquete';
@@ -337,7 +319,7 @@ async function enviarAnuncioRapido(customerPhone, customerName) {
             customer_phone: normalizedPhone
         };
         
-        // Si hay nombre, incluirlo (para clientes nuevos)
+        // Si hay nombre, incluirlo (para clientes nuevos o editados)
         if (customerName && customerName.trim()) {
             requestData.customer_name = customerName.trim().toUpperCase();
         }
@@ -393,13 +375,12 @@ async function enviarAnuncioRapido(customerPhone, customerName) {
 // Event listener del formulario
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('quickAnnouncementForm');
-    const editNameButton = document.getElementById('editNameButton');
+    const customerNameInput = document.getElementById('customer_name');
     
-    // Event listener para el botón de edición
-    if (editNameButton) {
-        editNameButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            enableNameEditing();
+    // Event listener para doble clic en el campo de nombre
+    if (customerNameInput) {
+        customerNameInput.addEventListener('dblclick', function(e) {
+            enableNameEditingOnDoubleClick();
         });
     }
     
