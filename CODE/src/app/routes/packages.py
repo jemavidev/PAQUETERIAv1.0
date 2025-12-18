@@ -437,8 +437,8 @@ async def list_packages(
             a.customer_id,
             a.announced_at as created_at,
             a.announced_at as updated_at,
-            COALESCE(c.full_name, a.customer_name, 'Sin cliente') as customer_name,
-            COALESCE(c.phone, a.customer_phone, 'Sin teléfono') as customer_phone,
+            COALESCE(a.customer_name, c.full_name, 'Sin cliente') as customer_name,
+            COALESCE(a.customer_phone, c.phone, 'Sin teléfono') as customer_phone,
             c.email as customer_email,
             a.guide_number
         FROM package_announcements_new a
