@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 PAQUETES EL CLUB v1.0 - Servicio de Clientes Expandido
-Versión: 2.0.0
+Versión: 2.0.0 (Optimizado con Cache)
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
 """
 
 from typing import Optional, List, Dict, Any, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_, func, desc
 from uuid import UUID
 import csv
@@ -22,10 +22,14 @@ from app.schemas.customer import (
 )
 from app.utils.datetime_utils import get_colombia_now
 from app.utils.exceptions import ValidationException
+from app.cache_manager import cache_manager
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
     """
-    Servicio expandido para gestión completa de clientes
+    Servicio expandido para gestión completa de clientes (Optimizado con Cache)
     """
 
     def __init__(self):
@@ -51,6 +55,11 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         db.add(db_customer)
         db.commit()
         db.refresh(db_customer)
+        
+        # Invalidar cache de estadísticas
+        cache_manager.clear_pattern("paqueteria:cache:customer_stats:*")
+        logger.debug("Cache de customer stats invalidado")
+        
         return db_customer
 
     def update_customer(self, db: Session, customer_id: UUID, customer_data: CustomerUpdate, updated_by_id: Optional[UUID] = None) -> Customer:
@@ -135,8 +144,18 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         sort_by: str = "name",  # name, packages, recent
         sort_order: str = "asc"  # asc, desc
     ) -> Tuple[List[Customer], int]:
-        """Búsqueda avanzada de clientes con ordenamiento configurable"""
-        base_query = db.query(Customer)
+        """Búsqueda avanzada de clientes con ordenamiento configurable (Optimizado con Cache)"""
+        # Crear clave de cache basada en parámetros
+        cache_key = f"customer_search_{query}_{search_by}_{is_active}_{is_vip}_{city}_{skip}_{limit}_{sort_by}_{sort_order}"
+        cached_result = cache_manager.get(f"paqueteria:cache:{cache_key}")
+        if cached_result:
+            logger.debug(f"Cache HIT: customer search")
+            return cached_result
+        
+        logger.debug(f"Cache MISS: customer search")
+        
+        # Query con eager loading para evitar N+1
+        base_query = db.query(Customer).options(joinedload(Customer.packages))
 
         # Aplicar filtros de estado
         if is_active is not None:
@@ -209,11 +228,25 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
 
         # Aplicar paginación
         customers = base_query.offset(skip).limit(limit).all()
+        
+        result = (customers, total)
+        
+        # Cachear por 2 minutos
+        cache_manager.set(f"paqueteria:cache:{cache_key}", result, ttl=120)
 
-        return customers, total
+        return result
 
     def get_customer_stats(self, db: Session) -> CustomerStatsResponse:
-        """Obtener estadísticas generales de clientes"""
+        """Obtener estadísticas generales de clientes (Optimizado con Cache)"""
+        # Intentar obtener del cache
+        cache_key = "customer_stats"
+        cached_stats = cache_manager.get(f"paqueteria:cache:{cache_key}")
+        if cached_stats:
+            logger.debug("Cache HIT: customer stats")
+            return cached_stats
+        
+        logger.debug("Cache MISS: customer stats")
+        
         # Estadísticas básicas
         total_customers = db.query(func.count(Customer.id)).scalar()
         active_customers = db.query(func.count(Customer.id)).filter(Customer.is_active == True).scalar()
@@ -256,7 +289,7 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             Customer.created_at >= last_month
         ).scalar()
 
-        return CustomerStatsResponse(
+        stats = CustomerStatsResponse(
             total_customers=total_customers,
             active_customers=active_customers,
             vip_customers=vip_customers,
@@ -264,6 +297,11 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
             top_customers_by_packages=top_customers_by_packages,
             recent_registrations=recent_registrations
         )
+        
+        # Cachear por 5 minutos
+        cache_manager.set(f"paqueteria:cache:{cache_key}", stats, ttl=300)
+        
+        return stats
 
     def merge_customers(self, db: Session, primary_id: UUID, duplicate_id: UUID, strategy: str = "keep_primary") -> Customer:
         """Fusionar clientes duplicados"""
@@ -389,8 +427,23 @@ class CustomerService(BaseService[Customer, CustomerCreate, CustomerUpdate]):
         }
 
     def get_customer_by_phone(self, db: Session, phone: str) -> Optional[Customer]:
-        """Obtener cliente por teléfono"""
-        return db.query(Customer).filter(Customer.phone == phone).first()
+        """Obtener cliente por teléfono (Optimizado con Cache)"""
+        # Intentar obtener del cache
+        cache_key = f"customer_phone_{phone}"
+        cached_customer = cache_manager.get(f"paqueteria:cache:{cache_key}")
+        if cached_customer:
+            logger.debug(f"Cache HIT: customer phone={phone}")
+            return cached_customer
+        
+        logger.debug(f"Cache MISS: customer phone={phone}")
+        
+        customer = db.query(Customer).filter(Customer.phone == phone).first()
+        
+        if customer:
+            # Cachear por 5 minutos
+            cache_manager.set(f"paqueteria:cache:{cache_key}", customer, ttl=300)
+        
+        return customer
 
     def get_customer_by_email(self, db: Session, email: str) -> Optional[Customer]:
         """Obtener cliente por email"""

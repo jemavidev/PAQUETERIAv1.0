@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 PAQUETES EL CLUB v1.0 - Servicio de Administración
-Versión: 1.0.0
+Versión: 1.0.0 (Optimizado con Cache)
 Fecha: 2025-09-21
 Autor: Equipo de Desarrollo
 """
@@ -20,12 +20,13 @@ from app.models.message import Message
 from app.models.notification import Notification
 from app.models.report import Report, ReportStatus
 from app.utils.datetime_utils import get_colombia_now
+from app.cache_manager import cache_manager
 
 logger = logging.getLogger(__name__)
 
 
 class AdminService:
-    """Servicio para funcionalidades administrativas del sistema"""
+    """Servicio para funcionalidades administrativas del sistema (Optimizado con Cache)"""
 
     def __init__(self, db: Session):
         self.db = db
@@ -33,7 +34,16 @@ class AdminService:
     # === DASHBOARD ADMINISTRATIVO ===
 
     def get_admin_dashboard_stats(self, period_days: int = 30, include_analytics: bool = True) -> Dict[str, Any]:
-        """Obtiene estadísticas completas para el dashboard administrativo"""
+        """Obtiene estadísticas completas para el dashboard administrativo (Optimizado con Cache)"""
+        # Intentar obtener del cache
+        cache_key = f"admin_dashboard_stats_{period_days}_{include_analytics}"
+        cached_stats = cache_manager.get(f"paqueteria:cache:{cache_key}")
+        if cached_stats:
+            logger.debug(f"Cache HIT: admin dashboard stats (period={period_days}, analytics={include_analytics})")
+            return cached_stats
+        
+        logger.debug(f"Cache MISS: admin dashboard stats (period={period_days}, analytics={include_analytics})")
+        
         period_end = get_colombia_now()
         period_start = period_end - timedelta(days=period_days)
 
@@ -58,6 +68,9 @@ class AdminService:
             stats["notification_analytics"] = self._get_notification_analytics(period_start, period_end)
             stats["performance_metrics"] = self._get_performance_metrics()
             stats["file_analytics"] = self._get_file_analytics()
+        
+        # Cachear por 5 minutos (300 segundos)
+        cache_manager.set(f"paqueteria:cache:{cache_key}", stats, ttl=300)
         
         return stats
 

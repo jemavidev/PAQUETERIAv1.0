@@ -1726,7 +1726,7 @@ async def get_users_api(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """API para obtener lista de usuarios con paginación"""
+    """API para obtener lista de usuarios con paginación (Optimizado con Cache)"""
     # Verificar permisos
     if current_user.role.value not in ["ADMIN", "OPERADOR"]:
         raise HTTPException(
@@ -1735,10 +1735,23 @@ async def get_users_api(
         )
     
     try:
+        from app.cache_manager import cache_manager
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Validar parámetros
         page = max(1, page)
         limit = max(1, min(100, limit))
         skip = (page - 1) * limit
+        
+        # Intentar obtener del cache
+        cache_key = f"users_list_{page}_{limit}_{search or 'all'}"
+        cached_result = cache_manager.get(f"paqueteria:cache:{cache_key}")
+        if cached_result:
+            logger.debug(f"Cache HIT: users list (page={page}, search={search})")
+            return cached_result
+        
+        logger.debug(f"Cache MISS: users list (page={page}, search={search})")
         
         # Query base
         query = db.query(User)
@@ -1780,7 +1793,7 @@ async def get_users_api(
                 "created_at": user.created_at.isoformat() if user.created_at else None
             })
         
-        return {
+        result = {
             "success": True,
             "users": users_data,
             "total": total,
@@ -1792,6 +1805,11 @@ async def get_users_api(
                 "has_prev": has_prev
             }
         }
+        
+        # Cachear por 2 minutos
+        cache_manager.set(f"paqueteria:cache:{cache_key}", result, ttl=120)
+        
+        return result
         
     except Exception as e:
         import logging
@@ -1910,7 +1928,7 @@ async def get_customers_api(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db)
 ):
-    """API para obtener lista de clientes con paginación"""
+    """API para obtener lista de clientes con paginación (Optimizado con Cache)"""
     # Verificar permisos
     if current_user.role.value not in ["ADMIN", "OPERADOR"]:
         raise HTTPException(
@@ -1919,30 +1937,25 @@ async def get_customers_api(
         )
     
     try:
+        # Usar CustomerService con cache
+        from app.services.customer_service import CustomerService
+        
+        customer_service = CustomerService()
+        
         # Validar parámetros
         page = max(1, page)
         limit = max(1, min(100, limit))
         skip = (page - 1) * limit
         
-        # Query base
-        query = db.query(Customer)
-        
-        # Aplicar búsqueda si existe
-        if search and search.strip():
-            search_term = f"%{search.strip()}%"
-            query = query.filter(
-                or_(
-                    Customer.full_name.ilike(search_term),
-                    Customer.phone.ilike(search_term),
-                    Customer.email.ilike(search_term)
-                )
-            )
-        
-        # Contar total
-        total = query.count()
-        
-        # Obtener clientes paginados
-        customers = query.order_by(Customer.created_at.desc()).offset(skip).limit(limit).all()
+        # Usar método con cache
+        customers, total = customer_service.search_customers_advanced(
+            db=db,
+            query=search or "",
+            skip=skip,
+            limit=limit,
+            sort_by="recent",
+            sort_order="desc"
+        )
         
         # Calcular paginación
         total_pages = (total + limit - 1) // limit
@@ -1952,15 +1965,23 @@ async def get_customers_api(
         # Formatear respuesta
         customers_data = []
         for customer in customers:
-            # Contar paquetes del cliente
-            package_count = db.query(Package).filter(Package.customer_id == customer.id).count()
+            # Contar paquetes del cliente (ya viene en el modelo)
+            package_count = customer.total_packages_received or 0
+            
+            # Construir dirección completa
+            address_parts = []
+            if customer.address_street:
+                address_parts.append(customer.address_street)
+            if customer.address_city:
+                address_parts.append(customer.address_city)
+            address = ", ".join(address_parts) if address_parts else None
             
             customers_data.append({
                 "id": str(customer.id),
                 "full_name": customer.full_name,
                 "phone": customer.phone,
                 "email": customer.email,
-                "address": customer.address,
+                "address": address,
                 "package_count": package_count,
                 "created_at": customer.created_at.isoformat() if customer.created_at else None
             })
