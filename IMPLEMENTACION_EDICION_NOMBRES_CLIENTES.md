@@ -1,122 +1,154 @@
-# Implementación de Edición de Nombres de Clientes
+# Implementación de Edición de Nombres Personalizados para Paquetes
 
 ## 📋 Resumen
 
-Se han implementado **dos versiones** de la funcionalidad para editar nombres de clientes existentes en la vista de anuncio rápido de PAPYRUS.
+Se ha implementado la funcionalidad para **editar el nombre del destinatario de un paquete específico** sin modificar el nombre del cliente en la base de datos. Esto permite usar nombres personalizados o alias para entregas específicas mientras se mantiene la información original del cliente.
 
-## 🔗 URLs para Pruebas
+## 🔗 URL
 
-### Versión 1 - Botón de Edición
 **URL:** https://staging.jemavi.co/announce-papyrus
 
-**Características:**
-- Cuando se encuentra un cliente existente, aparece un **ícono de lápiz** al lado derecho del campo de nombre
-- El campo de nombre está en modo **solo lectura** (fondo gris)
-- Al hacer clic en el ícono de lápiz:
-  - El campo se vuelve editable
-  - El ícono cambia a un check verde
-  - Aparece un mensaje: "✏️ Editando nombre - Los cambios se guardarán al anunciar el paquete"
-  - El borde del campo se vuelve amarillo para indicar edición
-- Los cambios se guardan al enviar el formulario
+## ✨ Características Principales
 
-### Versión 2 - Doble Clic
-**URL:** https://staging.jemavi.co/announce-papyrus-v2
+### Comportamiento del Sistema:
 
-**Características:**
-- Cuando se encuentra un cliente existente, el campo muestra el nombre con fondo gris
-- El campo tiene un cursor de puntero y un tooltip: "Doble clic para editar"
-- El mensaje indica: "✓ Cliente encontrado - Doble clic en el nombre para editar"
-- Al hacer **doble clic** en el campo de nombre:
-  - El campo se vuelve editable
-  - El fondo cambia a transparente con borde amarillo
-  - Aparece el mensaje: "✏️ Editando nombre - Los cambios se guardarán al anunciar el paquete"
-  - El texto se selecciona automáticamente
-- Los cambios se guardan al enviar el formulario
+1. **Cliente Existente:**
+   - Cuando se encuentra un cliente por teléfono, aparece un **ícono de lápiz** al lado del nombre
+   - El campo muestra el nombre del cliente en modo **solo lectura** (fondo gris)
+   - Al hacer clic en el ícono de lápiz, se puede editar el nombre
+
+2. **Edición de Nombre:**
+   - El campo se vuelve editable
+   - El ícono cambia a un check verde
+   - Aparece el mensaje: "✏️ Editando - Este nombre se usará SOLO para este paquete (el cliente mantiene su nombre original)"
+   - El borde del campo se vuelve amarillo
+
+3. **Guardado:**
+   - El nombre editado se usa **SOLO para el anuncio/paquete actual**
+   - El cliente en la base de datos **mantiene su nombre original**
+   - El próximo paquete para el mismo teléfono mostrará el nombre original del cliente
+
+## 🎯 Casos de Uso
+
+Esta funcionalidad es útil para:
+
+- **Entregas a diferentes personas:** Cliente "JUAN PÉREZ" pero el paquete es para "MARÍA PÉREZ"
+- **Ubicaciones específicas:** "JUAN PÉREZ - OFICINA" o "JUAN PÉREZ - CASA"
+- **Departamentos:** "EMPRESA XYZ - CONTABILIDAD"
+- **Alias temporales:** "JUAN PÉREZ - EDIFICIO 3 APT 201"
 
 ## 🎯 Flujo de Uso
 
-### Para Ambas Versiones:
-
-1. **Ingresar teléfono** (ej: 3001234567)
+1. **Ingresar teléfono** del cliente (ej: 3001234567)
 2. El sistema busca automáticamente al cliente
 3. Si el cliente existe:
-   - Se muestra su nombre en modo solo lectura
-   - **Versión 1:** Aparece el ícono de lápiz
-   - **Versión 2:** El campo indica "doble clic para editar"
-4. Para editar:
-   - **Versión 1:** Clic en el ícono de lápiz
-   - **Versión 2:** Doble clic en el campo de nombre
-5. Editar el nombre según sea necesario
+   - Se muestra su nombre registrado en modo solo lectura
+   - Aparece el ícono de lápiz para editar
+4. **Opcional:** Hacer clic en el ícono de lápiz para editar
+5. Modificar el nombre según sea necesario (ej: agregar ubicación, cambiar destinatario)
 6. Hacer clic en "Anunciar Paquete"
-7. El sistema guarda el nombre actualizado y crea el anuncio
+7. El sistema:
+   - Crea el anuncio con el nombre personalizado
+   - **NO modifica** el nombre del cliente en la BD
+   - El cliente mantiene su nombre original para futuros paquetes
 
-## 📝 Archivos Modificados/Creados
+## 📝 Archivos Modificados
 
-### Archivos Modificados:
-- `CODE/src/templates/announce/announce_quick.html` - Versión 1 con botón
-- `CODE/src/app/routes/public.py` - Agregada ruta para versión 2
+### Backend:
+- `CODE/src/app/routes/public.py` - Endpoint `/api/announcements/quick`
+  - Modificado para detectar si el nombre fue editado
+  - Si se edita, usa el nombre personalizado SOLO para el anuncio
+  - NO actualiza el nombre del cliente en la BD
 
-### Archivos Creados:
-- `CODE/src/templates/announce/announce_quick_v2.html` - Versión 2 con doble clic
+### Frontend:
+- `CODE/src/templates/announce/announce_quick.html`
+  - Agregado botón de edición (ícono de lápiz)
+  - Función `enableNameEditing()` para habilitar edición
+  - Mensajes claros sobre el comportamiento
 
-## 🔍 Diferencias Clave
+## 🔍 Lógica Implementada
 
-| Característica | Versión 1 (Botón) | Versión 2 (Doble Clic) |
-|----------------|-------------------|------------------------|
-| **Activación** | Clic en ícono de lápiz | Doble clic en el campo |
-| **Visibilidad** | Ícono visible siempre | Indicación en texto |
-| **Descubribilidad** | Alta (ícono obvio) | Media (requiere leer) |
-| **Espacio UI** | Requiere espacio para ícono | Sin elementos extra |
-| **UX Móvil** | Mejor (botón táctil) | Puede ser complicado |
-| **UX Desktop** | Buena | Excelente |
+### Backend (Python):
+```python
+if existing_customer:
+    customer_id = existing_customer.id
+    
+    # Si el usuario editó el nombre, usar el nombre editado SOLO para este anuncio
+    if customer_name_input and customer_name_input.upper() != existing_customer.full_name.upper():
+        customer_name = customer_name_input.upper()  # Nombre personalizado para el anuncio
+        # El cliente mantiene su nombre original en la BD
+    else:
+        customer_name = existing_customer.full_name  # Nombre original
+```
 
-## 💡 Recomendaciones
-
-### Versión 1 (Botón) es mejor si:
-- Los usuarios son principalmente móviles
-- Prefieres una interfaz más explícita
-- Quieres que la funcionalidad sea obvia
-
-### Versión 2 (Doble Clic) es mejor si:
-- Los usuarios son principalmente desktop
-- Prefieres una interfaz más limpia
-- Los usuarios están familiarizados con patrones modernos
+### Frontend (JavaScript):
+- Detecta cuando el cliente existe
+- Muestra botón de edición
+- Al editar, muestra mensaje claro sobre el comportamiento
+- Envía el nombre editado al backend
 
 ## 🧪 Cómo Probar
 
-1. **Reiniciar el servidor** (si es necesario):
-   ```bash
-   cd CODE
-   docker-compose -f ../docker-compose.staging.yml restart backend
-   ```
+### 1. Reiniciar el Backend
+```bash
+cd CODE
+docker-compose -f ../docker-compose.staging.yml restart backend
+```
 
-2. **Probar Versión 1:**
-   - Ir a: https://staging.jemavi.co/announce-papyrus
-   - Ingresar un teléfono existente (ej: 3001234567)
-   - Buscar el ícono de lápiz
-   - Hacer clic y editar
+### 2. Probar con Cliente Existente
 
-3. **Probar Versión 2:**
-   - Ir a: https://staging.jemavi.co/announce-papyrus-v2
-   - Ingresar un teléfono existente
-   - Hacer doble clic en el campo de nombre
-   - Editar
+**Paso 1:** Ir a https://staging.jemavi.co/announce-papyrus
 
-4. **Verificar que se guarda:**
-   - Completar el anuncio
-   - Verificar en el dashboard que el nombre se actualizó
+**Paso 2:** Ingresar un teléfono de cliente existente (ej: 3001234567)
 
-## 🔄 Próximos Pasos
+**Paso 3:** Observar que:
+- Aparece el nombre del cliente
+- Hay un ícono de lápiz al lado
 
-1. Probar ambas versiones en staging
-2. Decidir cuál versión usar en producción
-3. Una vez decidido, actualizar la ruta principal
-4. Eliminar la versión no seleccionada (opcional)
+**Paso 4:** Hacer clic en el ícono de lápiz
+
+**Paso 5:** Editar el nombre (ej: agregar " - OFICINA")
+
+**Paso 6:** Anunciar el paquete
+
+**Paso 7:** Verificar:
+- El anuncio se creó con el nombre editado
+- Buscar el mismo teléfono nuevamente
+- Debe mostrar el nombre ORIGINAL del cliente (sin la edición)
+
+### 3. Verificar en Dashboard
+
+**Opción A - Ver el Anuncio:**
+- Ir al dashboard de anuncios
+- Buscar el anuncio recién creado
+- Verificar que tiene el nombre personalizado
+
+**Opción B - Ver el Cliente:**
+- Ir a gestión de clientes
+- Buscar el cliente por teléfono
+- Verificar que su nombre NO cambió
+
+### 4. Ejemplo Completo
+
+```
+Cliente en BD: "JUAN PÉREZ" (Tel: 3001234567)
+
+Anuncio 1:
+- Editar a: "JUAN PÉREZ - OFICINA"
+- Resultado: Anuncio con "JUAN PÉREZ - OFICINA"
+- Cliente sigue siendo: "JUAN PÉREZ"
+
+Anuncio 2 (mismo teléfono):
+- Aparece: "JUAN PÉREZ" (nombre original)
+- Editar a: "JUAN PÉREZ - CASA"
+- Resultado: Anuncio con "JUAN PÉREZ - CASA"
+- Cliente sigue siendo: "JUAN PÉREZ"
+```
 
 ## 📌 Notas Técnicas
 
-- Ambas versiones mantienen la funcionalidad existente intacta
-- No se requieren cambios en el backend
-- El endpoint `/api/announcements/quick` ya maneja la actualización de nombres
-- Los cambios son compatibles con clientes nuevos y existentes
-- La validación de campos se mantiene igual
+- El nombre del cliente en la BD **NUNCA** se modifica
+- Cada anuncio puede tener un nombre personalizado diferente
+- La funcionalidad es compatible con clientes nuevos y existentes
+- Si no se edita el nombre, se usa el nombre original del cliente
+- Los SMS y emails usan el nombre del anuncio (personalizado si fue editado)
