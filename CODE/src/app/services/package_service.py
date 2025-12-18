@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 PAQUETES EL CLUB v1.0 - Servicio de Paquetes
-Versión: 1.0.0
+Versión: 1.0.0 (Optimizado con Cache)
 Fecha: 2025-01-24
 Autor: Equipo de Desarrollo
 """
@@ -9,7 +9,7 @@ Autor: Equipo de Desarrollo
 import secrets
 import string
 from typing import Optional, List, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, func
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -28,12 +28,16 @@ from app.schemas.package import (
 )
 from app.schemas.customer import CustomerCreate
 from .customer_service import CustomerService
+from app.cache_manager import cache_manager
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
     """
-    Servicio para gestión de paquetes
+    Servicio para gestión de paquetes (Optimizado con Cache)
     """
 
     def __init__(self):
@@ -72,6 +76,11 @@ class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
         db.add(db_package)
         db.commit()
         db.refresh(db_package)
+        
+        # Invalidar cache relacionado
+        cache_manager.invalidate_package_cache(customer_id=str(customer.id))
+        logger.debug(f"Cache invalidado para customer_id={customer.id}")
+        
         return db_package
 
     def announce_package(self, db: Session, announcement: PackageAnnouncement) -> Dict[str, Any]:
@@ -251,12 +260,35 @@ class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
             additional_data=additional_data,
             observations=observations
         )
+        
+        # Invalidar cache relacionado
+        cache_manager.invalidate_package_cache(
+            package_id=str(package_id),
+            customer_id=str(package.customer_id) if package.customer_id else None
+        )
+        logger.debug(f"Cache invalidado para package_id={package_id}, customer_id={package.customer_id}")
 
         return package
 
     def search_packages(self, db: Session, search: PackageSearch) -> List[Package]:
-        """Buscar paquetes por tracking, nombre o teléfono"""
-        query = db.query(Package).join(Customer)
+        """Buscar paquetes por tracking, nombre o teléfono (Optimizado con Cache y Eager Loading)"""
+        # Intentar obtener del cache
+        filters = {
+            'query': search.query or '',
+            'status': search.status.value if search.status else None,
+            'offset': search.offset,
+            'limit': search.limit
+        }
+        
+        cached_packages = cache_manager.get_cached_packages_list(filters)
+        if cached_packages:
+            logger.debug(f"Cache HIT: search_packages con filtros {filters}")
+            return cached_packages
+        
+        logger.debug(f"Cache MISS: search_packages con filtros {filters}")
+        
+        # Query con eager loading para evitar N+1
+        query = db.query(Package).options(joinedload(Package.customer)).join(Customer)
 
         # Aplicar filtros de búsqueda
         if search.query:
@@ -270,22 +302,87 @@ class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
         if search.status:
             query = query.filter(Package.status == search.status)
 
-        return query.offset(search.offset).limit(search.limit).all()
+        packages = query.offset(search.offset).limit(search.limit).all()
+        
+        # Cachear resultado por 60 segundos
+        cache_manager.cache_packages_list(packages, filters, ttl=60)
+        
+        return packages
 
     def get_package_by_tracking(self, db: Session, tracking_number: str) -> Optional[Package]:
-        """Obtener paquete por número de tracking"""
-        return db.query(Package).filter(Package.tracking_number == tracking_number).first()
+        """Obtener paquete por número de tracking (Optimizado con Cache y Eager Loading)"""
+        # Intentar obtener del cache
+        cache_key = f"package_tracking_{tracking_number}"
+        cached_package = cache_manager.get(cache_key)
+        if cached_package:
+            logger.debug(f"Cache HIT: package tracking={tracking_number}")
+            return cached_package
+        
+        logger.debug(f"Cache MISS: package tracking={tracking_number}")
+        
+        # Query con eager loading
+        package = db.query(Package).options(
+            joinedload(Package.customer)
+        ).filter(Package.tracking_number == tracking_number).first()
+        
+        if package:
+            # Cachear por 5 minutos
+            cache_manager.set(cache_key, package, ttl=300)
+        
+        return package
 
     def get_packages_by_status(self, db: Session, status: PackageStatus, skip: int = 0, limit: int = 100) -> List[Package]:
-        """Obtener paquetes por estado"""
-        return db.query(Package).filter(Package.status == status).offset(skip).limit(limit).all()
+        """Obtener paquetes por estado (Optimizado con Cache y Eager Loading)"""
+        # Intentar obtener del cache
+        cache_key = f"packages_status_{status.value}_{skip}_{limit}"
+        cached_packages = cache_manager.get(cache_key)
+        if cached_packages:
+            logger.debug(f"Cache HIT: packages status={status.value}")
+            return cached_packages
+        
+        logger.debug(f"Cache MISS: packages status={status.value}")
+        
+        # Query con eager loading
+        packages = db.query(Package).options(
+            joinedload(Package.customer)
+        ).filter(Package.status == status).offset(skip).limit(limit).all()
+        
+        # Cachear por 2 minutos
+        cache_manager.set(cache_key, packages, ttl=120)
+        
+        return packages
 
     def get_packages_by_customer(self, db: Session, customer_id: int, skip: int = 0, limit: int = 50) -> List[Package]:
-        """Obtener paquetes de un cliente"""
-        return db.query(Package).filter(Package.customer_id == customer_id).offset(skip).limit(limit).all()
+        """Obtener paquetes de un cliente (Optimizado con Cache)"""
+        # Intentar obtener del cache
+        cached_packages = cache_manager.get_cached_customer_packages(str(customer_id))
+        if cached_packages and skip == 0 and limit == 50:  # Solo cachear primera página
+            logger.debug(f"Cache HIT: customer packages customer_id={customer_id}")
+            return cached_packages
+        
+        logger.debug(f"Cache MISS: customer packages customer_id={customer_id}")
+        
+        # Query con eager loading
+        packages = db.query(Package).options(
+            joinedload(Package.customer)
+        ).filter(Package.customer_id == customer_id).offset(skip).limit(limit).all()
+        
+        # Cachear primera página por 2 minutos
+        if skip == 0 and limit == 50:
+            cache_manager.cache_customer_packages(str(customer_id), packages, ttl=120)
+        
+        return packages
 
     def get_package_stats(self, db: Session) -> Dict[str, Any]:
-        """Obtener estadísticas de paquetes"""
+        """Obtener estadísticas de paquetes (Optimizado con Cache)"""
+        # Intentar obtener del cache
+        cached_stats = cache_manager.get_cached_package_stats()
+        if cached_stats:
+            logger.debug("Cache HIT: package stats")
+            return cached_stats
+        
+        logger.debug("Cache MISS: package stats")
+        
         # Contar por estado
         status_counts = db.query(
             Package.status,
@@ -301,12 +398,17 @@ class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
             func.count(Package.id).label('count')
         ).group_by(Package.package_type).all()
 
-        return {
+        stats = {
             'total_packages': sum(count for _, count in status_counts),
             'status_breakdown': {status.value: count for status, count in status_counts},
             'total_revenue': total_revenue,
             'type_breakdown': {pkg_type.value: count for pkg_type, count in type_counts}
         }
+        
+        # Cachear por 5 minutos
+        cache_manager.cache_package_stats(stats, ttl=300)
+        
+        return stats
 
     def _get_or_create_customer(self, db: Session, name: str, phone: str) -> Customer:
         """Buscar cliente existente o crear uno nuevo"""
