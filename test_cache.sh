@@ -44,6 +44,15 @@ measure_time() {
 # URL base (cambiar según entorno)
 BASE_URL="${1:-http://localhost:8000}"
 
+# Detectar si es staging
+if [[ "$BASE_URL" == *"staging.jemavi.co"* ]]; then
+    IS_STAGING=true
+    SSH_HOST="staging"
+else
+    IS_STAGING=false
+    SSH_HOST=""
+fi
+
 echo "URL Base: $BASE_URL"
 echo ""
 
@@ -57,7 +66,17 @@ echo ""
 # Test 2: Verificar Redis
 echo "2️⃣  Verificar Redis"
 echo "------------------------------------------"
-if command -v docker &> /dev/null; then
+if [ "$IS_STAGING" = true ]; then
+    # Ejecutar en servidor staging remoto
+    ssh staging "docker exec paqueteria_staging_app python -c '
+from app.cache_manager import cache_manager
+import json
+print(\"Redis Status:\", \"OK\" if cache_manager.redis_client else \"ERROR\")
+stats = cache_manager.get_cache_stats()
+print(json.dumps(stats, indent=2))
+'" 2>/dev/null || echo -e "${YELLOW}⚠️  No se pudo conectar al servidor staging${NC}"
+elif command -v docker &> /dev/null; then
+    # Ejecutar localmente
     docker exec paqueteria_staging_app python -c "
 from app.cache_manager import cache_manager
 import json

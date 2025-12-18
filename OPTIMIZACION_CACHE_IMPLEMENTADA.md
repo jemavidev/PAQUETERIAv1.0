@@ -258,27 +258,30 @@ logger = logging.getLogger(__name__)
 
 ```bash
 # 1. Verificar que Redis está funcionando
-docker exec paqueteria_staging_app python -c "
+ssh staging "docker exec paqueteria_staging_app python -c '
 from app.cache_manager import cache_manager
-print('Redis Status:', cache_manager.redis_client.ping())
-"
+print(\"Redis Status:\", cache_manager.redis_client.ping())
+'"
 
 # 2. Ver estadísticas de cache
-docker exec paqueteria_staging_app python -c "
+ssh staging "docker exec paqueteria_staging_app python -c '
 from app.cache_manager import cache_manager
 import json
 print(json.dumps(cache_manager.get_cache_stats(), indent=2))
-"
+'"
 
 # 3. Probar cache de paquetes
-curl -w "\nTiempo: %{time_total}s\n" http://staging.jemavi.co/api/packages
+curl -w "\nTiempo: %{time_total}s\n" https://staging.jemavi.co/api/packages
 # Primera llamada: ~200ms (cache miss)
 # Segunda llamada: ~10ms (cache hit)
 
-# 4. Probar cache de estadísticas
-curl -w "\nTiempo: %{time_total}s\n" http://staging.jemavi.co/api/admin/dashboard
+# 4. Probar cache de estadísticas (requiere autenticación)
+curl -w "\nTiempo: %{time_total}s\n" https://staging.jemavi.co/api/admin/dashboard
 # Primera llamada: ~300ms (cache miss)
 # Segunda llamada: ~10ms (cache hit)
+
+# 5. Script de verificación automático
+./test_cache.sh https://staging.jemavi.co
 ```
 
 ### Logs Esperados
