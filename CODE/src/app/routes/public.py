@@ -111,7 +111,7 @@ async def announce_page(request: Request):
 
 @router.get("/announce-papyrus")
 async def announce_papyrus_page(request: Request):
-    """Página de anuncio PAPYRUS - Solo teléfono"""
+    """Página de anuncio PAPYRUS - Solo teléfono con edición de nombre personalizado"""
     try:
         context = get_auth_context_from_request(request)
     except Exception as auth_error:
@@ -1763,8 +1763,17 @@ async def create_quick_announcement(request: Request, db: Session = Depends(get_
         if existing_customer:
             # Cliente existente
             customer_id = existing_customer.id
-            customer_name = existing_customer.full_name
-            logger.info(f"✅ Cliente existente encontrado: {customer_id} - {customer_name}")
+            
+            # Si el usuario editó el nombre, usar el nombre editado SOLO para este anuncio
+            # El cliente en la BD mantiene su nombre original
+            if customer_name_input and customer_name_input.upper() != existing_customer.full_name.upper():
+                customer_name = customer_name_input.upper()
+                logger.info(f"✅ Cliente existente: {customer_id} - {existing_customer.full_name}")
+                logger.info(f"📝 Nombre personalizado para este anuncio: {customer_name}")
+            else:
+                # Usar el nombre del cliente de la BD
+                customer_name = existing_customer.full_name
+                logger.info(f"✅ Cliente existente encontrado: {customer_id} - {customer_name}")
         else:
             # Cliente nuevo - validar que se haya proporcionado el nombre
             if not customer_name_input:
