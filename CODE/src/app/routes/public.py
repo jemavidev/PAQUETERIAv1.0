@@ -1692,7 +1692,7 @@ async def search_customer_by_phone_public(
     phone: str,
     db: Session = Depends(get_db)
 ):
-    """Buscar cliente por teléfono - Endpoint público para anuncio rápido"""
+    """Buscar cliente por teléfono - Incluye códigos de paquetes anunciados"""
     try:
         from app.utils.phone_utils import normalize_phone
         from app.services.customer_service import CustomerService
@@ -1710,7 +1710,22 @@ async def search_customer_by_phone_public(
                 content={"detail": "Cliente no encontrado"}
             )
         
-        # Retornar datos básicos del cliente
+        # 🆕 BUSCAR PAQUETES ANUNCIADOS
+        announced_packages = db.query(PackageAnnouncementNew).filter(
+            PackageAnnouncementNew.customer_id == customer.id,
+            PackageAnnouncementNew.is_processed == False,
+            PackageAnnouncementNew.is_active == True
+        ).order_by(PackageAnnouncementNew.announced_at.desc()).all()
+        
+        # Solo devolver tracking_codes
+        announced_codes = [
+            {"tracking_code": pkg.tracking_code}
+            for pkg in announced_packages
+        ]
+        
+        logger.info(f"Cliente {customer.id} tiene {len(announced_codes)} paquetes anunciados")
+        
+        # Retornar datos del cliente + códigos de paquetes anunciados
         return {
             "id": str(customer.id),
             "full_name": customer.full_name,
@@ -1718,7 +1733,11 @@ async def search_customer_by_phone_public(
             "phone": customer.phone,
             "email": customer.email,
             "is_vip": customer.is_vip,
-            "total_packages_received": customer.total_packages_received
+            "total_packages_received": customer.total_packages_received,
+            # 🆕 CÓDIGOS DE PAQUETES ANUNCIADOS
+            "announced_codes": announced_codes,
+            "total_announced": len(announced_codes),
+            "has_announced_packages": len(announced_codes) > 0
         }
         
     except Exception as e:
