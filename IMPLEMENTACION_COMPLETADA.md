@@ -82,11 +82,9 @@ enlaces
 │ Nombre: JUAN PEREZ                      │
 │                                          │
 │ ┌─────────────────────────────────────┐ │
-│ │ ℹ️ Este cliente tiene 2 paquetes    │ │
-│ │                                      │ │
-│ │ Códigos de consulta:                │ │
-│ │ • 5SX8 🔗                           │ │
-│ │ • A1B2 🔗                      [X]  │ │
+│ │ (2) PAQUETE(S) ANUNCIADO(S) -       │ │
+│ │ CODIGO DE CONSULTA (5SX8) -         │ │
+│ │ CODIGO DE CONSULTA (A1B2)           │ │
 │ └─────────────────────────────────────┘ │
 │                                          │
 │ [Anunciar Paquete]                      │
