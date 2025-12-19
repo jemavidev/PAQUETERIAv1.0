@@ -194,8 +194,8 @@ async function searchCustomerByPhone(phone) {
             customerNameInput.classList.add('bg-gray-50', 'cursor-not-allowed');
             customerNameInput.classList.remove('bg-transparent');
             customerNameContainer.classList.remove('hidden');
-            customerStatus.textContent = '✓ Cliente encontrado en el sistema';
-            customerStatus.className = 'text-green-600 font-medium';
+            customerStatus.textContent = ''; // Oculto para interfaz más limpia
+            customerStatus.className = '';
             
             // Mostrar botón de edición
             editNameButton.classList.remove('hidden');
@@ -332,9 +332,9 @@ function enableNameEditing() {
     editNameButton.classList.add('text-green-600');
     editNameButton.title = 'Editando - Nombre personalizado solo para este paquete';
     
-    // Actualizar estado
-    customerStatus.textContent = '✏️ Editando - Este nombre se usará SOLO para este paquete (el cliente mantiene su nombre original)';
-    customerStatus.className = 'text-yellow-600 font-medium';
+    // Actualizar estado (oculto para interfaz más limpia)
+    customerStatus.textContent = '';
+    customerStatus.className = '';
     
     // Enfocar y seleccionar el texto
     customerNameInput.focus();
