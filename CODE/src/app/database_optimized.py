@@ -3,6 +3,7 @@
 # ========================================
 # Optimizado para: AWS Lightsail con recursos limitados
 # Pool de conexiones optimizado para 50 usuarios simultáneos
+# Versión: 2.0.0 - Optimizado para rendimiento CRUD
 # ========================================
 
 from sqlalchemy import create_engine, text, event
@@ -23,7 +24,7 @@ DATABASE_URL = settings.database_url
 # ========================================
 # Pool size adaptativo según entorno:
 # - STAGING (416MB RAM): pool_size=5, max_overflow=3 (8 conexiones máx)
-# - PRODUCCIÓN (más RAM): pool_size=15, max_overflow=8 (23 conexiones máx)
+# - PRODUCCIÓN (más RAM): pool_size=15, max_overflow=10 (25 conexiones máx)
 # Detecta automáticamente el entorno por ENVIRONMENT variable
 
 # Detectar entorno
@@ -36,19 +37,21 @@ if IS_STAGING:
     POOL_SIZE = 5
     MAX_OVERFLOW = 3
     POOL_TIMEOUT = 20
+    POOL_RECYCLE = 300  # 5 minutos
     logger.info("🔧 Configuración de BD: STAGING (recursos limitados)")
 else:
     # Configuración para producción con más recursos
     POOL_SIZE = 15
-    MAX_OVERFLOW = 8
+    MAX_OVERFLOW = 10
     POOL_TIMEOUT = 30
+    POOL_RECYCLE = 1800  # 30 minutos
     logger.info("🔧 Configuración de BD: PRODUCCIÓN (recursos normales)")
 
 engine = create_engine(
     DATABASE_URL,
     echo=False,  # Desactivar logging de queries en producción
     pool_pre_ping=True,  # Verificar conexión antes de usar
-    pool_recycle=300,  # Reciclar conexiones cada 5 minutos
+    pool_recycle=POOL_RECYCLE,  # Reciclar conexiones
     pool_size=POOL_SIZE,  # Adaptativo según entorno
     max_overflow=MAX_OVERFLOW,  # Adaptativo según entorno
     pool_timeout=POOL_TIMEOUT,  # Adaptativo según entorno

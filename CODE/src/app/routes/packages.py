@@ -534,8 +534,8 @@ async def list_packages(
         }
     }
     
-    # OPTIMIZACIÓN: Guardar en caché por 15 segundos (reducido para mejor refresco)
-    cache_manager.cache_packages_list(result, cache_filters, ttl=15)
+    # OPTIMIZACIÓN: Guardar en caché por 60 segundos (optimizado para rendimiento)
+    cache_manager.cache_packages_list(result, cache_filters)  # Usa TTL por defecto del cache_manager
     logger.info(f"📦 Datos guardados en caché - {len(paginated_items)} items")
     
     return result

@@ -64,9 +64,19 @@ class PackageStateService:
         new_status: PackageStatus,
         changed_by: str = "system",
         additional_data: Optional[Dict[str, Any]] = None,
-        observations: Optional[str] = None
+        observations: Optional[str] = None,
+        send_notifications: bool = True
     ) -> PackageHistory:
-        """Actualizar el estado de un paquete y registrar el cambio en el historial"""
+        """
+        Actualizar el estado de un paquete y registrar el cambio en el historial.
+        
+        OPTIMIZADO v3.0:
+        - Commit único al final de la transacción
+        - Notificaciones enviadas en background (no bloquean)
+        - Invalidación de caché optimizada
+        """
+        import logging
+        logger = logging.getLogger("package_state_service")
 
         # Verificar si la transición está permitida
         if not cls.is_transition_allowed(package.status, new_status):
@@ -91,7 +101,7 @@ class PackageStateService:
         # Crear entrada en el historial
         history_entry = PackageHistory(
             id=uuid.uuid4(),
-            package_id=package.id,  # Usar Integer directamente
+            package_id=package.id,
             previous_status=previous_status.value if previous_status else None,
             new_status=new_status.value,
             changed_at=now,
@@ -100,7 +110,7 @@ class PackageStateService:
             observations=observations
         )
 
-        # Guardar en la base de datos
+        # OPTIMIZACIÓN: Un solo commit para toda la transacción
         db.add(history_entry)
         db.commit()
         db.refresh(history_entry)
@@ -113,30 +123,22 @@ class PackageStateService:
                 package_id=str(package.id),
                 customer_id=str(package.customer_id) if package.customer_id else None
             )
-            import logging
-            logger = logging.getLogger("package_state_service")
             logger.info(f"✅ Caché invalidado para paquete {package.id} después de cambio a {new_status.value}")
         except Exception as e:
-            import logging
-            logger = logging.getLogger("package_state_service")
             logger.warning(f"⚠️ Error invalidando caché para paquete {package.id}: {str(e)}")
 
-        # Enviar notificación SMS automáticamente si hay un cliente asociado
-        try:
-            await cls._send_sms_notification(db, package, new_status, changed_by)
-        except Exception as e:
-            # Log error but don't fail the package update
-            import logging
-            logger = logging.getLogger("package_state_service")
-            logger.warning(f"Error enviando SMS para paquete {package.id}: {str(e)}")
-
-        # Enviar notificación por email automáticamente si hay un cliente con email
-        try:
-            await cls._send_email_notification(db, package, new_status, changed_by)
-        except Exception as e:
-            import logging
-            logger = logging.getLogger("package_state_service")
-            logger.warning(f"Error enviando email para paquete {package.id}: {str(e)}")
+        # OPTIMIZACIÓN: Enviar notificaciones en background (no bloquea la operación)
+        if send_notifications and package.customer_id:
+            try:
+                from app.services.background_tasks_service import BackgroundTasksService
+                BackgroundTasksService.schedule_notification(
+                    package_id=package.id,
+                    new_status=new_status,
+                    changed_by=changed_by
+                )
+                logger.debug(f"📤 Notificaciones programadas en background para paquete {package.id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Error programando notificaciones para paquete {package.id}: {str(e)}")
 
         return history_entry
 
