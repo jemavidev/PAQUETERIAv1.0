@@ -45,6 +45,7 @@ from src.app.routes.config import router as config_router  # ✨ Nuevo: Endpoint
 from src.app.routes.customer_portal import router as customer_portal_api_router  # ✨ Portal de Clientes API
 from src.app.routes.customer_portal_views import router as customer_portal_views_router  # ✨ Portal de Clientes Vistas
 from src.app.routes.debug_portal import router as debug_portal_router  # ✨ Debug Portal
+from src.app.routes.invoices import router as invoices_router  # ✨ Facturas CUFE
 from src.app.middleware.rate_limiting import limiter, rate_limit_exceeded_handler
 from src.app.middleware.error_handler import setup_error_handlers
 from src.app.middleware.auth_middleware import AuthMiddleware  # Middleware refactorizado v2
@@ -206,6 +207,7 @@ app.include_router(package_events_router, tags=["Eventos de Paquetes"])
 app.include_router(customer_portal_api_router, tags=["Portal de Clientes - API"])  # ✨ Portal de Clientes API
 app.include_router(customer_portal_views_router, tags=["Portal de Clientes - Vistas"])  # ✨ Portal de Clientes Vistas
 app.include_router(debug_portal_router, tags=["Debug Portal"])  # ✨ Debug Portal
+app.include_router(invoices_router, tags=["Facturas CUFE"])  # ✨ Facturas CUFE
 
 # Endpoint de health check
 @app.get("/health")

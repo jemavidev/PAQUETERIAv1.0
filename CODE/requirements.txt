@@ -46,3 +46,6 @@ prometheus-fastapi-instrumentator==6.1.0
 
 # Debug y utilidades del sistema
 psutil==5.9.6
+
+# Extracción de PDFs
+pdfplumber==0.10.3

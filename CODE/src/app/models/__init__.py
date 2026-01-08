@@ -20,6 +20,7 @@ from .announcement_new import PackageAnnouncementNew
 from .package_event import PackageEvent, EventType
 from .user_preferences import UserPreferences
 from .customer_preferences import CustomerPreferences
+from .invoice import Supplier, Invoice, InvoiceItem, DocumentType
 
 __all__ = [
     "BaseModel",
@@ -49,5 +50,9 @@ __all__ = [
     "ReportFormat",
     "PackageAnnouncementNew",
     "PackageEvent",
-    "EventType"
+    "EventType",
+    "Supplier",
+    "Invoice",
+    "InvoiceItem",
+    "DocumentType"
 ]
