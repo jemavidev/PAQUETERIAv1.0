@@ -95,7 +95,7 @@ class BackgroundTasksService:
             variables = {
                 "guide_number": package.tracking_number,
                 "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-                "customer_name": package.customer.full_name if package.customer else "Cliente",
+                "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                 "package_type": package.package_type.value if package.package_type else "normal",
                 "package_condition": package.package_condition.value if package.package_condition else "ok"
             }
@@ -159,7 +159,7 @@ class BackgroundTasksService:
                 return
             
             # Preparar variables
-            full_name = package.customer.full_name if package.customer else "Cliente"
+            full_name = package.display_name or (package.customer.full_name if package.customer else "Cliente")
             first_name = full_name.split(" ")[0]
             consult_code = package.tracking_number
             tracking_base = settings.tracking_base_url.rstrip("/")

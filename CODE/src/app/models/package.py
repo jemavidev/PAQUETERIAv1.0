@@ -47,6 +47,7 @@ class Package(Base):
     access_code = Column(String(20), unique=True, nullable=False)
     guide_number = Column(String(50), unique=True, nullable=True, index=True)  # Número de guía del transportador
     posicion = Column(String(2), unique=True, nullable=True)  # Posición física 00-99
+    display_name = Column(String(100), nullable=True)  # Nombre personalizado del cliente para este paquete
     
     announced_at = Column(DateTime(timezone=True), nullable=False)
     received_at = Column(DateTime(timezone=True), nullable=True)

@@ -133,7 +133,7 @@ async def get_package(
         package_dict = {
             'id': package.id,
             'tracking_number': package.tracking_number,
-            'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
+            'customer_name': package.display_name or (package.customer.full_name if package.customer else 'Sin cliente'),
             'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
             'package_type': package.package_type.value,
             'status': package.status.value,
@@ -344,7 +344,7 @@ async def list_packages(
                 'id': package.id,
                 'tracking_number': package.tracking_number,
                 'guide_number': package.guide_number,
-                'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
+                'customer_name': package.display_name or (package.customer.full_name if package.customer else 'Sin cliente'),
                 'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
                 'customer_email': package.customer.email if package.customer else None,
                 'package_type': package.package_type.value if package.package_type else 'normal',
@@ -690,7 +690,7 @@ async def update_package_status(
 
             # Determinar mensaje según el estado
             status_messages = {
-                'ENTREGADO': f'✅ Paquete entregado exitosamente a {db_package.customer.full_name if db_package.customer else "cliente"}',
+                'ENTREGADO': f'✅ Paquete entregado exitosamente a {db_package.display_name or (db_package.customer.full_name if db_package.customer else "cliente")}',
                 'RECIBIDO': f'✅ Paquete recibido exitosamente',
                 'ANUNCIADO': f'✅ Paquete anunciado exitosamente',
                 'CANCELADO': f'⚠️ Paquete cancelado'
@@ -707,7 +707,7 @@ async def update_package_status(
                 'message': success_message,
                 'id': db_package.id,
                 'tracking_number': db_package.tracking_number,
-                'customer_name': db_package.customer.full_name if db_package.customer else 'Sin cliente',
+                'customer_name': db_package.display_name or (db_package.customer.full_name if db_package.customer else 'Sin cliente'),
                 'customer_phone': db_package.customer.phone if db_package.customer else 'Sin teléfono',
                 'package_type': db_package.package_type.value if db_package.package_type else 'normal',
                 'status': db_package.status.value if db_package.status else 'announced',
@@ -1748,7 +1748,7 @@ async def send_package_email_notification(
             )
         
         # Preparar variables para la plantilla unificada de estado
-        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
+        full_name = package.display_name or (package.customer.full_name if package.customer and package.customer.full_name else "Cliente")
         first_name = full_name.split(" ")[0]
 
         consult_code = package.tracking_number

@@ -752,7 +752,7 @@ class EmailService(BaseService[Notification, Any, Any]):
                 variables.update({
                     "guide_number": package.tracking_number,
                     "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                     "received_at": package.received_at.strftime("%d/%m/%Y %H:%M") if package.received_at else "",
                     "package_type": package.package_type.value if package.package_type else "normal",
                     "tracking_url": f"{settings.tracking_base_url}?auto_search={package.tracking_number}"
@@ -764,7 +764,7 @@ class EmailService(BaseService[Notification, Any, Any]):
                 variables.update({
                     "guide_number": package.tracking_number,
                     "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                     "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if package.delivered_at else "",
                     "recipient_name": getattr(package, 'delivered_to', 'Cliente'),
                     "tracking_url": f"{settings.tracking_base_url}?auto_search={package.tracking_number}"
@@ -776,7 +776,7 @@ class EmailService(BaseService[Notification, Any, Any]):
                 variables.update({
                     "guide_number": package.tracking_number,
                     "tracking_code": getattr(package, 'tracking_code', package.tracking_number),
-                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                     "cancelled_at": get_colombia_now().strftime("%d/%m/%Y %H:%M"),
                     "tracking_url": f"{settings.tracking_base_url}?auto_search={package.tracking_number}"
                 })

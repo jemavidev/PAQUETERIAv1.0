@@ -709,7 +709,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                     "guide_number": package.guide_number or package.tracking_number,  # Número de guía real del transportador
                     "consult_code": package.tracking_number,  # Código de consulta público
                     "tracking_code": package.tracking_number,
-                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                     "received_at": package.received_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'received_at') and package.received_at else "",
                     "delivered_at": package.delivered_at.strftime("%d/%m/%Y %H:%M") if hasattr(package, 'delivered_at') and package.delivered_at else "",
                     "package_type": package.package_type.value if hasattr(package, 'package_type') and package.package_type else "normal",
@@ -723,7 +723,7 @@ class SMSService(BaseService[Notification, Any, Any]):
                 variables.update({
                     "guide_number": package.guide_number or package.tracking_number,  # Número de guía real
                     "consult_code": package.tracking_number,  # Código de consulta públicoer),
-                    "customer_name": package.customer.full_name if package.customer else "Cliente",
+                    "customer_name": package.display_name or (package.customer.full_name if package.customer else "Cliente"),
                     "amount": custom_variables.get("amount", "0"),
                     "due_date": custom_variables.get("due_date", get_colombia_now().strftime("%d/%m/%Y"))
                 })

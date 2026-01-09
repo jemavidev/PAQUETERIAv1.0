@@ -416,7 +416,7 @@ class PackageStateService:
         variables = {
             "guide_number": package.tracking_number,
             "tracking_code": getattr(package, 'tracking_code', 'N/A'),
-            "customer_name": package.customer.full_name if package.customer else "Sin cliente",
+            "customer_name": package.display_name or (package.customer.full_name if package.customer else "Sin cliente"),
             "package_type": package.package_type.value if package.package_type else "normal",
             "package_condition": package.package_condition.value if package.package_condition else "ok"
         }
@@ -494,7 +494,7 @@ class PackageStateService:
             return  # No hay evento definido para este estado
 
         # Construir variables unificadas para la plantilla de estado
-        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
+        full_name = package.display_name or (package.customer.full_name if package.customer and package.customer.full_name else "Cliente")
         first_name = full_name.split(" ")[0]
 
         # Código de consulta que se usará en la URL de búsqueda
@@ -649,6 +649,10 @@ class PackageStateService:
                 existing_package.package_type = request.package_type.value
                 existing_package.package_condition = request.package_condition.value
                 
+                # Guardar nombre personalizado del anuncio si no existe
+                if not existing_package.display_name and announcement.customer_name:
+                    existing_package.display_name = announcement.customer_name
+                
                 # Solo cambiar estado si aún no está recibido
                 new_status_value = PackageStatus.RECIBIDO.value
                 if previous_status_value != new_status_value:
@@ -757,6 +761,7 @@ class PackageStateService:
             tracking_number=announcement.tracking_code,  # Código único del paquete
             guide_number=announcement.guide_number,      # Número de guía del transportador
             customer_id=customer.id if customer else None,
+            display_name=announcement.customer_name,     # Guardar nombre personalizado del anuncio
             status=PackageStatus.RECIBIDO.value,
             package_type=request.package_type.value,
             package_condition=request.package_condition.value,

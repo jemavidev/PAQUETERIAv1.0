@@ -784,7 +784,7 @@ async def search_package_endpoint(
         for package in packages:
             try:
                 # Obtener información del cliente
-                customer_name = package.customer.full_name if package.customer else "Sin cliente"
+                customer_name = package.display_name or (package.customer.full_name if package.customer else "Sin cliente")
                 customer_phone = package.customer.phone if package.customer else "Sin teléfono"
 
                 # Determinar qué mostrar como tracking_code:
