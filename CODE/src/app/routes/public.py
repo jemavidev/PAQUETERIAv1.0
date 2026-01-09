@@ -601,70 +601,30 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
         db.commit()
         db.refresh(announcement)
 
-        # Enviar SMS de confirmación automáticamente
+        # ========================================
+        # OPTIMIZACIÓN: Notificaciones en Background
+        # ========================================
         try:
-            from app.services.sms_service import SMSService
-            from app.models.notification import NotificationEvent, NotificationPriority
-            from app.schemas.notification import SMSByEventRequest
-
-            sms_service = SMSService()
-            event_request = SMSByEventRequest(
-                event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                announcement_id=announcement.id,
-                custom_variables={
-                    "guide_number": announcement.guide_number,
-                    "tracking_code": announcement.tracking_code,
-                    "customer_name": announcement.customer_name
-                },
-                priority=NotificationPriority.ALTA,
-                is_test=False
+            from app.services.background_tasks_service import BackgroundTasksService
+            
+            # Obtener email del cliente si existe
+            customer_email = None
+            if existing_customer and hasattr(existing_customer, 'email'):
+                customer_email = existing_customer.email
+            
+            BackgroundTasksService.schedule_announcement_notification(
+                announcement_id=str(announcement.id),
+                customer_id=customer_id,
+                customer_phone=customer_phone,
+                customer_email=customer_email,
+                guide_number=guide_number,
+                tracking_code=tracking_code,
+                customer_name=customer_name
             )
-            await sms_service.send_sms_by_event(db=db, event_request=event_request)
-        except Exception as sms_error:
-            # Log error but don't fail the announcement creation
-            print(f"Error sending SMS confirmation for announcement {announcement.id}: {str(sms_error)}")
-            # Continue with success response
-
-        # Enviar EMAIL de confirmación automáticamente
-        # Solo si el anuncio está vinculado a un cliente con email registrado
-        try:
-            if announcement.customer_id:
-                customer = db.query(Customer).filter(Customer.id == announcement.customer_id).first()
-            else:
-                customer = None
-
-            if customer and getattr(customer, "email", None):
-                from app.services.email_service import EmailService
-                from app.models.notification import NotificationEvent
-
-                email_service = EmailService()
-
-                full_name = customer.full_name or announcement.customer_name
-                first_name = full_name.split(" ")[0]
-
-                consult_code = announcement.tracking_code
-                tracking_base = settings.tracking_base_url.rstrip("/")
-                tracking_url = f"{tracking_base}?auto_search={consult_code}"
-
-                await email_service.send_email_by_event(
-                    db=db,
-                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                    recipient=customer.email,
-                    variables={
-                        "first_name": first_name,
-                        "current_status": PackageStatus.ANUNCIADO.value,
-                        "guide_number": announcement.guide_number,
-                        "consult_code": consult_code,
-                        "tracking_url": tracking_url,
-                    },
-                    package_id=None,
-                    customer_id=str(customer.id),
-                    announcement_id=str(announcement.id),
-                    is_test=False,
-                )
-        except Exception as email_error:
-            # Log error but don't bloquear el flujo de anuncio
-            print(f"Error sending EMAIL confirmation for announcement {announcement.id}: {str(email_error)}")
+            logger.info(f"📤 Notificaciones programadas en background para anuncio {announcement.id}")
+            
+        except Exception as bg_error:
+            logger.warning(f"⚠️ Error programando notificaciones en background: {bg_error}")
 
         return {
             "success": True,
@@ -1894,72 +1854,34 @@ async def create_quick_announcement(request: Request, db: Session = Depends(get_
         db.commit()
         db.refresh(announcement)
 
-        # Enviar SMS de confirmación
+        # ========================================
+        # OPTIMIZACIÓN: Notificaciones en Background
+        # ========================================
+        # Las notificaciones (SMS y Email) se envían en background
+        # para no bloquear la respuesta al usuario
         try:
-            from app.schemas.notification import SMSByEventRequest
-            from app.models.notification import NotificationPriority, NotificationEvent
-            from app.services.sms_service import SMSService
+            from app.services.background_tasks_service import BackgroundTasksService
             
-            sms_service = SMSService()
+            # Obtener email del cliente si existe
+            customer_email = None
+            if existing_customer and hasattr(existing_customer, 'email'):
+                customer_email = existing_customer.email
             
-            custom_variables = {
-                "guide_number": announcement.guide_number,
-                "consult_code": announcement.tracking_code,
-                "tracking_code": announcement.tracking_code,
-                "customer_name": announcement.customer_name,
-                "tracking_url": f"{settings.tracking_base_url}?auto_search={announcement.tracking_code}"
-            }
-            
-            sms_result = await sms_service.send_sms_by_event(
-                db=db,
-                event_request=SMSByEventRequest(
-                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                    package_id=None,
-                    customer_id=None,
-                    announcement_id=announcement.id,
-                    custom_variables=custom_variables,
-                    priority=NotificationPriority.ALTA,
-                    is_test=False
-                )
+            BackgroundTasksService.schedule_announcement_notification(
+                announcement_id=str(announcement.id),
+                customer_id=customer_id,
+                customer_phone=customer_phone,
+                customer_email=customer_email,
+                guide_number=guide_number,
+                tracking_code=tracking_code,
+                customer_name=customer_name
             )
+            logger.info(f"📤 Notificaciones programadas en background para anuncio {announcement.id}")
             
-            if sms_result.status == "sent":
-                logger.info(f"✅ SMS de anuncio rápido enviado para {announcement.id}")
-            else:
-                logger.warning(f"⚠️ SMS de anuncio rápido falló: {sms_result.message}")
-                
-        except Exception as sms_error:
-            logger.error(f"❌ Error al enviar SMS: {sms_error}", exc_info=True)
-        
-        # Enviar EMAIL si el cliente tiene email
-        try:
-            if existing_customer.email:
-                from app.services.email_service import EmailService
-                
-                email_service = EmailService()
-                first_name = existing_customer.full_name.split(" ")[0] if existing_customer.full_name else "Cliente"
-                tracking_base = settings.tracking_base_url.rstrip("/")
-                tracking_url = f"{tracking_base}?auto_search={announcement.tracking_code}"
-                
-                variables = {
-                    "first_name": first_name,
-                    "current_status": "ANUNCIADO",
-                    "guide_number": announcement.guide_number,
-                    "consult_code": announcement.tracking_code,
-                    "tracking_url": tracking_url,
-                }
-                
-                await email_service.send_email_by_event(
-                    db=db,
-                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                    recipient=existing_customer.email,
-                    variables=variables
-                )
-                
-                logger.info(f"✅ Email de anuncio rápido enviado a {existing_customer.email}")
-                
-        except Exception as email_error:
-            logger.warning(f"No se pudo enviar email: {email_error}")
+        except Exception as bg_error:
+            # Si falla la programación de notificaciones, solo loguear
+            # El anuncio ya fue creado exitosamente
+            logger.warning(f"⚠️ Error programando notificaciones en background: {bg_error}")
 
         return {
             "success": True,

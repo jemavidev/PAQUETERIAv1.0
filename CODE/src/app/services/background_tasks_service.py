@@ -224,5 +224,178 @@ class BackgroundTasksService:
             logger.warning(f"⚠️ [BG] Error programando notificaciones: {str(e)}")
 
 
+    # ========================================
+    # NOTIFICACIONES PARA ANUNCIOS (PAPYRUS)
+    # ========================================
+    
+    @staticmethod
+    async def send_announcement_notifications(
+        announcement_id: str,
+        customer_id: Optional[int] = None,
+        customer_phone: Optional[str] = None,
+        customer_email: Optional[str] = None,
+        guide_number: Optional[str] = None,
+        tracking_code: Optional[str] = None,
+        customer_name: Optional[str] = None
+    ):
+        """
+        Enviar notificaciones (SMS y Email) para un nuevo anuncio.
+        Esta función se ejecuta en background y no bloquea la operación principal.
+        """
+        db = SessionLocal()
+        try:
+            logger.info(f"📤 [BG-ANNOUNCE] Iniciando notificaciones para anuncio {announcement_id}")
+            
+            # Enviar SMS
+            if customer_phone:
+                await BackgroundTasksService._send_announcement_sms(
+                    db, announcement_id, customer_phone, guide_number, tracking_code, customer_name
+                )
+            
+            # Enviar Email si hay email disponible
+            if customer_email:
+                await BackgroundTasksService._send_announcement_email(
+                    db, announcement_id, customer_id, customer_email, guide_number, tracking_code, customer_name
+                )
+            
+            logger.info(f"✅ [BG-ANNOUNCE] Notificaciones completadas para anuncio {announcement_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ [BG-ANNOUNCE] Error en notificaciones para anuncio {announcement_id}: {str(e)}")
+        finally:
+            db.close()
+    
+    @staticmethod
+    async def _send_announcement_sms(
+        db,
+        announcement_id: str,
+        customer_phone: str,
+        guide_number: str,
+        tracking_code: str,
+        customer_name: str
+    ):
+        """Enviar SMS de confirmación de anuncio"""
+        try:
+            from app.services.sms_service import SMSService
+            from app.schemas.notification import SMSByEventRequest
+            
+            sms_service = SMSService()
+            
+            custom_variables = {
+                "guide_number": guide_number,
+                "consult_code": tracking_code,
+                "tracking_code": tracking_code,
+                "customer_name": customer_name,
+                "tracking_url": f"{settings.tracking_base_url}?auto_search={tracking_code}"
+            }
+            
+            sms_result = await sms_service.send_sms_by_event(
+                db=db,
+                event_request=SMSByEventRequest(
+                    event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                    package_id=None,
+                    customer_id=None,
+                    announcement_id=announcement_id,
+                    custom_variables=custom_variables,
+                    priority=NotificationPriority.ALTA,
+                    is_test=False
+                )
+            )
+            
+            if sms_result.status == "sent":
+                logger.info(f"✅ [BG-SMS] SMS de anuncio enviado para {announcement_id}")
+            else:
+                logger.warning(f"⚠️ [BG-SMS] SMS de anuncio falló: {sms_result.message}")
+                
+        except Exception as e:
+            logger.warning(f"⚠️ [BG-SMS] Error enviando SMS de anuncio {announcement_id}: {str(e)}")
+    
+    @staticmethod
+    async def _send_announcement_email(
+        db,
+        announcement_id: str,
+        customer_id: Optional[int],
+        customer_email: str,
+        guide_number: str,
+        tracking_code: str,
+        customer_name: str
+    ):
+        """Enviar Email de confirmación de anuncio"""
+        try:
+            from app.services.email_service import EmailService
+            
+            email_service = EmailService()
+            first_name = customer_name.split(" ")[0] if customer_name else "Cliente"
+            tracking_base = settings.tracking_base_url.rstrip("/")
+            tracking_url = f"{tracking_base}?auto_search={tracking_code}"
+            
+            variables = {
+                "first_name": first_name,
+                "current_status": "ANUNCIADO",
+                "guide_number": guide_number,
+                "consult_code": tracking_code,
+                "tracking_url": tracking_url,
+            }
+            
+            await email_service.send_email_by_event(
+                db=db,
+                event_type=NotificationEvent.PACKAGE_ANNOUNCED,
+                recipient=customer_email,
+                variables=variables,
+                customer_id=str(customer_id) if customer_id else None,
+                announcement_id=str(announcement_id),
+                is_test=False
+            )
+            
+            logger.info(f"✅ [BG-EMAIL] Email de anuncio enviado a {customer_email}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ [BG-EMAIL] Error enviando email de anuncio {announcement_id}: {str(e)}")
+    
+    @staticmethod
+    def schedule_announcement_notification(
+        announcement_id: str,
+        customer_id: Optional[int] = None,
+        customer_phone: Optional[str] = None,
+        customer_email: Optional[str] = None,
+        guide_number: Optional[str] = None,
+        tracking_code: Optional[str] = None,
+        customer_name: Optional[str] = None
+    ):
+        """
+        Programar envío de notificaciones de anuncio en background.
+        Esta función retorna inmediatamente.
+        """
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.create_task(
+                    BackgroundTasksService.send_announcement_notifications(
+                        announcement_id=announcement_id,
+                        customer_id=customer_id,
+                        customer_phone=customer_phone,
+                        customer_email=customer_email,
+                        guide_number=guide_number,
+                        tracking_code=tracking_code,
+                        customer_name=customer_name
+                    )
+                )
+            else:
+                asyncio.run(
+                    BackgroundTasksService.send_announcement_notifications(
+                        announcement_id=announcement_id,
+                        customer_id=customer_id,
+                        customer_phone=customer_phone,
+                        customer_email=customer_email,
+                        guide_number=guide_number,
+                        tracking_code=tracking_code,
+                        customer_name=customer_name
+                    )
+                )
+            logger.debug(f"📤 [BG] Notificaciones de anuncio programadas para {announcement_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ [BG] Error programando notificaciones de anuncio: {str(e)}")
+
+
 # Instancia global para uso fácil
 background_tasks = BackgroundTasksService()
