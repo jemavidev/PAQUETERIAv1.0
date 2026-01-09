@@ -77,7 +77,24 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ No se pudo validar configuración SMTP: {str(e)}")
     
+    # Iniciar tareas programadas (limpieza de anuncios antiguos, etc.)
+    try:
+        from src.app.services.scheduled_tasks import start_scheduled_tasks
+        start_scheduled_tasks()
+        logger.info("✅ Tareas programadas iniciadas (limpieza de anuncios > 15 días)")
+    except Exception as e:
+        logger.warning(f"⚠️ No se pudieron iniciar tareas programadas: {str(e)}")
+    
     yield
+    
+    # Detener tareas programadas al cerrar
+    try:
+        from src.app.services.scheduled_tasks import stop_scheduled_tasks
+        stop_scheduled_tasks()
+        logger.info("✅ Tareas programadas detenidas")
+    except Exception as e:
+        logger.warning(f"⚠️ Error deteniendo tareas programadas: {str(e)}")
+    
     logger.info("Cerrando PAQUETES EL CLUB v1.0...")
 
 # Crear aplicación FastAPI

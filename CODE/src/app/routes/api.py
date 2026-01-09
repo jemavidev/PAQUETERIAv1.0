@@ -1014,36 +1014,29 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
         db.refresh(announcement)
         
         # ========================================
-        # ENVIAR SMS DE CONFIRMACIÓN AUTOMÁTICAMENTE
+        # OPTIMIZACIÓN: Notificaciones en Background
         # ========================================
         try:
-            from app.services.sms_service import SMSService
-            from app.models.notification import NotificationEvent, NotificationPriority
-            from app.schemas.notification import SMSByEventRequest
-
-            sms_service = SMSService()
-            event_request = SMSByEventRequest(
-                event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                announcement_id=announcement.id,
-                custom_variables={
-                    "guide_number": announcement.guide_number,
-                    "tracking_code": announcement.tracking_code,
-                    "customer_name": announcement.customer_name
-                },
-                priority=NotificationPriority.ALTA,
-                is_test=False
-            )
-            sms_result = await sms_service.send_sms_by_event(db=db, event_request=event_request)
+            from app.services.background_tasks_service import BackgroundTasksService
             
-            if sms_result.status == "sent":
-                print(f"✅ SMS de anuncio enviado exitosamente para anuncio {announcement.id} al {announcement.customer_phone}")
-            else:
-                print(f"⚠️ SMS de anuncio falló para anuncio {announcement.id}: {sms_result.message}")
-                
-        except Exception as sms_error:
-            print(f"❌ Error al enviar SMS para anuncio {announcement.id}: {sms_error}")
-            import traceback
-            traceback.print_exc()
+            # Obtener email del cliente si existe
+            customer_email = None
+            if existing_customer and hasattr(existing_customer, 'email'):
+                customer_email = existing_customer.email
+            
+            BackgroundTasksService.schedule_announcement_notification(
+                announcement_id=str(announcement.id),
+                customer_id=customer_id,
+                customer_phone=customer_phone,
+                customer_email=customer_email,
+                guide_number=guide_number,
+                tracking_code=tracking_code,
+                customer_name=customer_name
+            )
+            print(f"📤 Notificaciones programadas en background para anuncio {announcement.id}")
+            
+        except Exception as bg_error:
+            print(f"⚠️ Error programando notificaciones en background: {bg_error}")
         
         return {
             "success": True,
