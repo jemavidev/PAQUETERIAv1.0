@@ -297,10 +297,15 @@ class InvoiceService:
         existing = self.check_duplicate(data.cufe_cude)
         if existing:
             if replace_existing:
-                # Marcar el existente como reemplazado
-                existing.is_active = False
-                existing.import_status = 'replaced'
+                # Eliminar la factura existente y sus items (hard delete)
+                # Primero eliminar items
+                self.db.query(InvoiceItem).filter(InvoiceItem.invoice_id == existing.id).delete()
+                # Eliminar irregularidades asociadas
+                self.db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == existing.id).delete()
+                # Eliminar la factura
+                self.db.delete(existing)
                 self.db.commit()
+                logger.info(f"Factura existente #{existing.id} eliminada para reemplazo")
             else:
                 raise ValueError(f"Ya existe una factura con CUFE: {data.cufe_cude}")
         
