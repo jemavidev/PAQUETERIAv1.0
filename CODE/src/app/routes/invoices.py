@@ -87,8 +87,8 @@ async def invoices_list(
     show_inactive: bool = False,
     fecha_desde: str = None,
     fecha_hasta: str = None,
-    total_min: int = None,
-    total_max: int = None,
+    total_min: str = None,
+    total_max: str = None,
     producto: str = None,
     doc_type: str = None,
     order_by: str = "fecha_emision",
@@ -98,6 +98,19 @@ async def invoices_list(
     context = get_auth_context_from_request(request)
     context["user"] = current_user
     
+    # Convertir total_min y total_max a int si tienen valor
+    total_min_int = None
+    total_max_int = None
+    if total_min and total_min.strip():
+        try:
+            total_min_int = int(total_min)
+        except ValueError:
+            pass
+    if total_max and total_max.strip():
+        try:
+            total_max_int = int(total_max)
+        except ValueError:
+            pass
     service = InvoiceService(db)
     
     # Parsear fechas
@@ -132,8 +145,8 @@ async def invoices_list(
         is_active=None if show_inactive else True,
         fecha_desde=fecha_desde_dt,
         fecha_hasta=fecha_hasta_dt,
-        total_min=total_min,
-        total_max=total_max,
+        total_min=total_min_int,
+        total_max=total_max_int,
         producto_descripcion=producto,
         producto_codigo=producto,
         document_type=DocumentTypeEnum(doc_type) if doc_type else None,
@@ -164,8 +177,8 @@ async def invoices_list(
     if iva_filter: query_params.append(f"iva_filter={iva_filter}")
     if fecha_desde: query_params.append(f"fecha_desde={fecha_desde}")
     if fecha_hasta: query_params.append(f"fecha_hasta={fecha_hasta}")
-    if total_min: query_params.append(f"total_min={total_min}")
-    if total_max: query_params.append(f"total_max={total_max}")
+    if total_min_int: query_params.append(f"total_min={total_min_int}")
+    if total_max_int: query_params.append(f"total_max={total_max_int}")
     if producto: query_params.append(f"producto={producto}")
     if doc_type: query_params.append(f"doc_type={doc_type}")
     if show_inactive: query_params.append("show_inactive=on")
@@ -191,8 +204,8 @@ async def invoices_list(
     context["iva_filter"] = iva_filter
     context["fecha_desde"] = fecha_desde
     context["fecha_hasta"] = fecha_hasta
-    context["total_min"] = total_min
-    context["total_max"] = total_max
+    context["total_min"] = total_min_int
+    context["total_max"] = total_max_int
     context["producto"] = producto
     context["doc_type"] = doc_type
     context["order_by"] = order_by
@@ -201,7 +214,7 @@ async def invoices_list(
     context["today"] = today
     context["week_ago"] = week_ago
     context["month_ago"] = month_ago
-    context["show_advanced"] = bool(fecha_desde or fecha_hasta or total_min or total_max or producto or doc_type or iva_filter)
+    context["show_advanced"] = bool(fecha_desde or fecha_hasta or total_min_int or total_max_int or producto or doc_type or iva_filter)
     
     return templates.TemplateResponse("invoices/list.html", context)
 
@@ -431,12 +444,19 @@ async def save_invoice(
         service = InvoiceService(db)
         
         # Verificar duplicado si no se va a reemplazar
-        if not replace_existing:
+        if not replace_existing and extracted_data.cufe_cude:
             existing = service.check_duplicate(extracted_data.cufe_cude)
             if existing:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Este documento ya fue importado (ID: {existing.id}). Use la opción de reemplazar si desea actualizar."
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "success": False,
+                        "error": "duplicate",
+                        "message": f"Este documento ya fue importado (Factura #{existing.id})",
+                        "existing_id": existing.id,
+                        "existing_numero": existing.numero_documento,
+                        "can_replace": True
+                    }
                 )
         
         invoice = service.save_invoice(
@@ -455,9 +475,36 @@ async def save_invoice(
         
     except HTTPException:
         raise
+    except ValueError as e:
+        # Error de validación (ej: duplicado detectado por el servicio)
+        error_msg = str(e)
+        if "CUFE" in error_msg or "duplicado" in error_msg.lower():
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "success": False,
+                    "error": "duplicate",
+                    "message": error_msg,
+                    "can_replace": True
+                }
+            )
+        raise HTTPException(status_code=400, detail=error_msg)
     except Exception as e:
+        error_msg = str(e)
+        # Capturar error de duplicado de la base de datos
+        if "UniqueViolation" in error_msg or "duplicate key" in error_msg.lower():
+            logger.warning(f"Intento de guardar factura duplicada: {error_msg}")
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "success": False,
+                    "error": "duplicate",
+                    "message": "Este documento ya existe en el sistema. Use la opción de reemplazar si desea actualizar.",
+                    "can_replace": True
+                }
+            )
         logger.error(f"Error guardando factura: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error guardando factura: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error guardando factura: {error_msg}")
 
 
 @router.delete("/api/{invoice_id}")
