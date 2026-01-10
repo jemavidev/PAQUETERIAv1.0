@@ -1,9 +1,9 @@
 {% extends "base/base.html" %}
 
-{% block title %}Importar Factura - PAQUETEX{% endblock %}
+{% block title %}Importar Facturas - PAQUETEX{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- Header -->
     <div class="mb-6">
         <a href="/invoices" class="text-papyrus-blue hover:underline text-sm flex items-center mb-2">
@@ -12,8 +12,8 @@
             </svg>
             Volver al dashboard
         </a>
-        <h1 class="text-2xl font-bold text-gray-900">Importar Factura PDF</h1>
-        <p class="text-gray-600 mt-1">Sube un archivo PDF de factura electrónica o documento POS</p>
+        <h1 class="text-2xl font-bold text-gray-900">Importar Facturas PDF</h1>
+        <p class="text-gray-600 mt-1">Sube uno o varios archivos PDF de facturas electrónicas</p>
     </div>
 
     <!-- Upload Section -->
@@ -24,160 +24,141 @@
             <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
             </svg>
-            <p class="text-lg text-gray-700 mb-2">Arrastra tu archivo PDF aquí</p>
+            <p class="text-lg text-gray-700 mb-2">Arrastra tus archivos PDF aquí</p>
             <p class="text-sm text-gray-500 mb-4">o</p>
             <label class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
-                Seleccionar archivo
-                <input type="file" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
+                Seleccionar archivos
+                <input type="file" accept=".pdf" multiple class="hidden" onchange="handleFileSelect(event)">
             </label>
-            <p class="text-xs text-gray-400 mt-4">Solo archivos PDF (Facturas electrónicas DIAN)</p>
+            <p class="text-xs text-gray-400 mt-4">Solo archivos PDF - Puedes seleccionar múltiples archivos</p>
         </div>
     </div>
 
-    <!-- Loading Section -->
-    <div id="loadingSection" class="hidden bg-white rounded-lg shadow-sm border p-12 text-center">
-        <div class="animate-spin w-12 h-12 border-4 border-papyrus-blue border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p class="text-lg text-gray-700">Procesando archivo...</p>
-        <p class="text-sm text-gray-500 mt-2">Extrayendo datos del PDF</p>
+    <!-- Processing Section -->
+    <div id="processingSection" class="hidden bg-white rounded-lg shadow-sm border p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Procesando archivos...</h2>
+            <span id="progressText" class="text-sm text-gray-500">0 de 0</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+            <div id="progressBar" class="bg-papyrus-blue h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div id="currentFileInfo" class="text-sm text-gray-600 mb-4"></div>
+        
+        <!-- Live Results -->
+        <div id="liveResults" class="space-y-2 max-h-64 overflow-y-auto"></div>
     </div>
 
-    <!-- Review Section -->
-    <div id="reviewSection" class="hidden">
-        <!-- Warnings -->
-        <div id="warningsContainer" class="mb-6"></div>
-
-        <!-- Document Info -->
-        <div class="bg-white rounded-lg shadow-sm border mb-6">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Datos del Documento</h2>
-                <span id="docTypeBadge" class="px-3 py-1 rounded-full text-sm font-medium"></span>
-            </div>
-            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">CUFE/CUDE</label>
-                    <input type="text" id="cufe_cude" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50" readonly>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Número de Documento</label>
-                    <input type="text" id="numero_documento" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Fecha de Emisión</label>
-                    <input type="text" id="fecha_emision" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Forma de Pago</label>
-                    <input type="text" id="forma_pago" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+    <!-- Results Section -->
+    <div id="resultsSection" class="hidden">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-green-700" id="successCount">0</p>
+                        <p class="text-sm text-green-600">Importadas</p>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Supplier Info -->
-        <div class="bg-white rounded-lg shadow-sm border mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Datos del Proveedor</h2>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-yellow-700" id="pendingCount">0</p>
+                        <p class="text-sm text-yellow-600">Requieren revisión</p>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">NIT</label>
-                    <input type="text" id="supplier_nit" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Razón Social</label>
-                    <input type="text" id="supplier_razon_social" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Ciudad</label>
-                    <input type="text" id="supplier_ciudad" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Teléfono</label>
-                    <input type="text" id="supplier_telefono" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-red-700" id="errorCount">0</p>
+                        <p class="text-sm text-red-600">Con errores</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="bg-white rounded-lg shadow-sm border mb-6">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Productos (<span id="itemsCount">0</span>)</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cant.</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Precio</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">IVA %</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemsTableBody" class="divide-y divide-gray-200">
-                    </tbody>
-                </table>
+        <!-- Pending Items (need review) -->
+        <div id="pendingSection" class="hidden mb-6">
+            <div class="bg-white rounded-lg shadow-sm border">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Facturas que requieren revisión</h2>
+                    <button onclick="saveAllPending()" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                        Guardar todas
+                    </button>
+                </div>
+                <div id="pendingList" class="divide-y divide-gray-200"></div>
             </div>
         </div>
 
-        <!-- Totals -->
-        <div class="bg-white rounded-lg shadow-sm border mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Totales</h2>
-            </div>
-            <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Subtotal</label>
-                    <input type="text" id="subtotal" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right font-medium focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+        <!-- Success List -->
+        <div id="successSection" class="hidden mb-6">
+            <div class="bg-white rounded-lg shadow-sm border">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Facturas importadas exitosamente</h2>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Descuento</label>
-                    <input type="text" id="descuento" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">IVA</label>
-                    <input type="text" id="total_iva" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">Total Neto</label>
-                    <input type="text" id="total_neto" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right font-bold text-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
+                <div id="successList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto"></div>
             </div>
         </div>
 
-        <!-- Irregularities Info -->
-        <div id="irregularitiesInfo" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div class="flex items-start">
-                <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <div>
-                    <p class="font-medium text-yellow-800">Se detectaron irregularidades</p>
-                    <p class="text-sm text-yellow-700 mt-1">Puedes guardar la factura y resolver las irregularidades después.</p>
+        <!-- Error List -->
+        <div id="errorSection" class="hidden mb-6">
+            <div class="bg-white rounded-lg shadow-sm border">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Archivos con errores</h2>
                 </div>
+                <div id="errorList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto"></div>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <button onclick="resetUpload()" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                Cancelar
+        <div class="flex justify-between items-center">
+            <button onclick="resetUpload()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Importar más archivos
             </button>
-            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <!-- Opción de reemplazar (solo visible si es duplicado) -->
-                <div id="replaceOption" class="hidden">
-                    <label class="flex items-center text-sm text-gray-700 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
-                        <input type="checkbox" id="replaceExisting" class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
-                        Reemplazar factura existente
-                    </label>
-                </div>
-                <button onclick="saveInvoice()" id="saveBtn" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    Guardar Factura
+            <a href="/invoices/list" class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                Ver todas las facturas
+            </a>
+        </div>
+    </div>
+
+    <!-- Single Review Modal -->
+    <div id="reviewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+                <h2 class="text-lg font-semibold text-gray-900">Revisar factura</h2>
+                <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="reviewModalContent" class="p-6"></div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
+                <button onclick="closeReviewModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button onclick="saveCurrentReview()" id="modalSaveBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Guardar
                 </button>
             </div>
         </div>
@@ -185,7 +166,10 @@
 </div>
 
 <script>
-let extractedData = null;
+// State
+let filesToProcess = [];
+let results = { success: [], pending: [], errors: [] };
+let currentReviewIndex = -1;
 
 function handleDragOver(e) {
     e.preventDefault();
@@ -200,258 +184,372 @@ function handleDragLeave(e) {
 function handleDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === 'application/pdf') {
-        processFile(file);
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+    if (files.length > 0) {
+        startProcessing(files);
     } else {
         alert('Solo se permiten archivos PDF');
     }
 }
 
 function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) processFile(file);
+    const files = Array.from(e.target.files);
+    if (files.length > 0) startProcessing(files);
 }
 
-async function processFile(file) {
+async function startProcessing(files) {
+    filesToProcess = files;
+    results = { success: [], pending: [], errors: [] };
+    
     document.getElementById('uploadSection').classList.add('hidden');
-    document.getElementById('loadingSection').classList.remove('hidden');
-    document.getElementById('reviewSection').classList.add('hidden');
+    document.getElementById('processingSection').classList.remove('hidden');
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('liveResults').innerHTML = '';
+    
+    for (let i = 0; i < files.length; i++) {
+        updateProgress(i, files.length, files[i].name);
+        await processFile(files[i], i);
+    }
+    
+    updateProgress(files.length, files.length, 'Completado');
+    showResults();
+}
 
+function updateProgress(current, total, filename) {
+    const percent = total > 0 ? (current / total) * 100 : 0;
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressText').textContent = `${current} de ${total}`;
+    document.getElementById('currentFileInfo').textContent = current < total ? `Procesando: ${filename}` : 'Proceso completado';
+}
+
+function addLiveResult(filename, status, message) {
+    const container = document.getElementById('liveResults');
+    const statusColors = {
+        success: 'text-green-600 bg-green-50',
+        pending: 'text-yellow-600 bg-yellow-50',
+        error: 'text-red-600 bg-red-50'
+    };
+    const statusIcons = {
+        success: '✓',
+        pending: '⚠',
+        error: '✗'
+    };
+    
+    const div = document.createElement('div');
+    div.className = `flex items-center justify-between p-2 rounded ${statusColors[status]}`;
+    div.innerHTML = `
+        <span class="text-sm truncate flex-1">${filename}</span>
+        <span class="ml-2 font-medium">${statusIcons[status]} ${message}</span>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function processFile(file, index) {
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-        const response = await fetch('/invoices/api/extract', {
+        // Extract
+        const extractRes = await fetch('/invoices/api/extract', {
             method: 'POST',
             body: formData
         });
+        const extractResult = await extractRes.json();
 
-        const result = await response.json();
+        if (!extractResult.success) {
+            results.errors.push({ filename: file.name, error: extractResult.detail || 'Error extrayendo datos' });
+            addLiveResult(file.name, 'error', 'Error extracción');
+            return;
+        }
 
-        if (result.success) {
-            extractedData = result.data;
-            displayExtractedData(result.data, result.warnings, result.irregularities);
+        const data = extractResult.data;
+        
+        // Check if it's a duplicate or has critical errors
+        const hasCriticalError = extractResult.irregularities?.some(i => i.severidad === 'error');
+        const isDuplicate = data.is_duplicate && !data.can_restore;
+        
+        if (isDuplicate || hasCriticalError) {
+            results.pending.push({ 
+                filename: file.name, 
+                data: data, 
+                warnings: extractResult.warnings,
+                irregularities: extractResult.irregularities,
+                reason: isDuplicate ? 'Duplicado' : 'Errores críticos'
+            });
+            addLiveResult(file.name, 'pending', isDuplicate ? 'Duplicado' : 'Requiere revisión');
+            return;
+        }
+
+        // Try to save automatically
+        const saveRes = await fetch('/invoices/api/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const saveResult = await saveRes.json();
+
+        if (saveResult.success) {
+            results.success.push({ 
+                filename: file.name, 
+                invoice_id: saveResult.invoice_id,
+                numero: data.numero_documento,
+                proveedor: data.supplier_razon_social,
+                total: data.total_neto
+            });
+            addLiveResult(file.name, 'success', `#${data.numero_documento}`);
+        } else if (saveResult.error === 'duplicate') {
+            results.pending.push({ 
+                filename: file.name, 
+                data: data,
+                reason: 'Duplicado'
+            });
+            addLiveResult(file.name, 'pending', 'Duplicado');
         } else {
-            alert('Error: ' + (result.detail || 'Error procesando archivo'));
-            resetUpload();
+            results.errors.push({ filename: file.name, error: saveResult.message || 'Error guardando' });
+            addLiveResult(file.name, 'error', 'Error guardando');
+        }
+    } catch (e) {
+        results.errors.push({ filename: file.name, error: 'Error de conexión' });
+        addLiveResult(file.name, 'error', 'Error conexión');
+    }
+}
+
+function showResults() {
+    document.getElementById('processingSection').classList.add('hidden');
+    document.getElementById('resultsSection').classList.remove('hidden');
+    
+    // Update counts
+    document.getElementById('successCount').textContent = results.success.length;
+    document.getElementById('pendingCount').textContent = results.pending.length;
+    document.getElementById('errorCount').textContent = results.errors.length;
+    
+    // Success list
+    if (results.success.length > 0) {
+        document.getElementById('successSection').classList.remove('hidden');
+        const list = document.getElementById('successList');
+        list.innerHTML = results.success.map(s => `
+            <div class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div>
+                    <p class="font-medium text-gray-900">${s.numero} - ${s.proveedor}</p>
+                    <p class="text-sm text-gray-500">${s.filename}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-medium text-gray-900">$${parseInt(s.total).toLocaleString('es-CO')}</p>
+                    <a href="/invoices/detail/${s.invoice_id}" class="text-sm text-papyrus-blue hover:underline">Ver detalle</a>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Pending list
+    if (results.pending.length > 0) {
+        document.getElementById('pendingSection').classList.remove('hidden');
+        const list = document.getElementById('pendingList');
+        list.innerHTML = results.pending.map((p, i) => `
+            <div class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div>
+                    <p class="font-medium text-gray-900">${p.data.numero_documento || 'Sin número'} - ${p.data.supplier_razon_social || 'Sin proveedor'}</p>
+                    <p class="text-sm text-gray-500">${p.filename}</p>
+                    <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">${p.reason}</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="reviewPending(${i})" class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                        Revisar
+                    </button>
+                    <button onclick="savePendingWithReplace(${i})" class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Error list
+    if (results.errors.length > 0) {
+        document.getElementById('errorSection').classList.remove('hidden');
+        const list = document.getElementById('errorList');
+        list.innerHTML = results.errors.map(e => `
+            <div class="px-6 py-3 flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-gray-900">${e.filename}</p>
+                    <p class="text-sm text-red-600">${e.error}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function reviewPending(index) {
+    currentReviewIndex = index;
+    const item = results.pending[index];
+    const data = item.data;
+    
+    const content = document.getElementById('reviewModalContent');
+    content.innerHTML = `
+        <div class="space-y-4">
+            ${item.reason === 'Duplicado' ? `
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="font-medium text-yellow-800">Este documento ya existe en el sistema</p>
+                    <label class="flex items-center mt-2 text-sm text-yellow-700">
+                        <input type="checkbox" id="modalReplace" class="rounded border-gray-300 text-papyrus-blue mr-2">
+                        Reemplazar factura existente
+                    </label>
+                </div>
+            ` : ''}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Número</label>
+                    <p class="mt-1 font-medium">${data.numero_documento || '-'}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Fecha</label>
+                    <p class="mt-1">${data.fecha_emision || '-'}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Proveedor</label>
+                    <p class="mt-1">${data.supplier_razon_social || '-'}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">NIT</label>
+                    <p class="mt-1">${data.supplier_nit || '-'}</p>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Items: ${data.items?.length || 0}</label>
+                <div class="mt-2 max-h-48 overflow-y-auto border rounded">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2 text-left">Descripción</th>
+                                <th class="px-3 py-2 text-right">Cant</th>
+                                <th class="px-3 py-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            ${(data.items || []).map(item => `
+                                <tr>
+                                    <td class="px-3 py-2 truncate max-w-xs">${item.descripcion}</td>
+                                    <td class="px-3 py-2 text-right">${item.cantidad}</td>
+                                    <td class="px-3 py-2 text-right">$${parseInt(item.valor_total).toLocaleString('es-CO')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center pt-4 border-t">
+                <span class="text-gray-500">Total:</span>
+                <span class="text-2xl font-bold">$${parseInt(data.total_neto).toLocaleString('es-CO')}</span>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('reviewModal').classList.remove('hidden');
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').classList.add('hidden');
+    currentReviewIndex = -1;
+}
+
+async function saveCurrentReview() {
+    if (currentReviewIndex < 0) return;
+    
+    const item = results.pending[currentReviewIndex];
+    const replaceCheckbox = document.getElementById('modalReplace');
+    const replace = replaceCheckbox && replaceCheckbox.checked;
+    
+    item.data.replace_existing = replace;
+    
+    const btn = document.getElementById('modalSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    
+    try {
+        const res = await fetch('/invoices/api/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(item.data)
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            // Move from pending to success
+            results.success.push({
+                filename: item.filename,
+                invoice_id: result.invoice_id,
+                numero: item.data.numero_documento,
+                proveedor: item.data.supplier_razon_social,
+                total: item.data.total_neto
+            });
+            results.pending.splice(currentReviewIndex, 1);
+            closeReviewModal();
+            showResults();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo guardar'));
         }
     } catch (e) {
         alert('Error de conexión');
-        resetUpload();
     }
-}
-
-function displayExtractedData(data, warnings, irregularities) {
-    document.getElementById('loadingSection').classList.add('hidden');
-    document.getElementById('reviewSection').classList.remove('hidden');
-
-    // Warnings
-    const warningsContainer = document.getElementById('warningsContainer');
-    warningsContainer.innerHTML = '';
     
-    if (data.is_duplicate) {
-        // Verificar si es un duplicado inactivo que se puede restaurar
-        if (data.can_restore) {
-            warningsContainer.innerHTML = `
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span class="font-medium text-blue-800">Este documento fue importado anteriormente pero está inactivo</span>
-                    </div>
-                    <p class="text-sm text-blue-700 mt-2">Se restaurará automáticamente al guardar.</p>
-                </div>
-            `;
-            // Permitir guardar directamente (se restaurará la factura inactiva)
-            document.getElementById('saveBtn').disabled = false;
-        } else {
-            warningsContainer.innerHTML = `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <span class="font-medium text-red-800">Este documento ya fue importado anteriormente</span>
-                    </div>
-                    <p class="text-sm text-red-700 mt-2">Puedes marcar la opción "Reemplazar factura existente" para actualizar los datos.</p>
-                </div>
-            `;
-            document.getElementById('saveBtn').disabled = true;
-            document.getElementById('replaceOption').classList.remove('hidden');
-            
-            // Habilitar guardar cuando se marca reemplazar
-            document.getElementById('replaceExisting').addEventListener('change', function() {
-                document.getElementById('saveBtn').disabled = !this.checked;
-            });
-        }
-    } else if (warnings && warnings.length > 0) {
-        const errorWarnings = warnings.filter(w => w.severity === 'error');
-        const otherWarnings = warnings.filter(w => w.severity !== 'error');
-        
-        if (errorWarnings.length > 0) {
-            warningsContainer.innerHTML += `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p class="font-medium text-red-800 mb-2">Errores encontrados:</p>
-                    <ul class="list-disc list-inside text-sm text-red-700">
-                        ${errorWarnings.map(w => `<li>${w.message}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-        }
-        
-        if (otherWarnings.length > 0) {
-            warningsContainer.innerHTML += `
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                    <p class="font-medium text-yellow-800 mb-2">Advertencias:</p>
-                    <ul class="list-disc list-inside text-sm text-yellow-700">
-                        ${otherWarnings.map(w => `<li>${w.message}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-        }
-    }
-
-    // Mostrar info de irregularidades
-    if (irregularities && irregularities.length > 0) {
-        document.getElementById('irregularitiesInfo').classList.remove('hidden');
-    }
-
-    // Document type badge
-    const badge = document.getElementById('docTypeBadge');
-    if (data.document_type === 'FACTURA') {
-        badge.textContent = 'Factura Electrónica';
-        badge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
-    } else {
-        badge.textContent = 'Documento POS';
-        badge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800';
-    }
-
-    // Fill form fields
-    document.getElementById('cufe_cude').value = data.cufe_cude || '';
-    document.getElementById('numero_documento').value = data.numero_documento || '';
-    document.getElementById('fecha_emision').value = data.fecha_emision || '';
-    document.getElementById('forma_pago').value = data.forma_pago || '';
-    document.getElementById('supplier_nit').value = data.supplier_nit || '';
-    document.getElementById('supplier_razon_social').value = data.supplier_razon_social || '';
-    document.getElementById('supplier_ciudad').value = data.supplier_ciudad || '';
-    document.getElementById('supplier_telefono').value = data.supplier_telefono || '';
-
-    // Totals
-    document.getElementById('subtotal').value = formatMoney(data.subtotal);
-    document.getElementById('descuento').value = formatMoney(data.descuento);
-    document.getElementById('total_iva').value = formatMoney(data.total_iva);
-    document.getElementById('total_neto').value = formatMoney(data.total_neto);
-
-    // Items
-    const tbody = document.getElementById('itemsTableBody');
-    tbody.innerHTML = '';
-    document.getElementById('itemsCount').textContent = data.items.length;
-
-    data.items.forEach((item, idx) => {
-        const hasWarning = item.has_warning;
-        const tr = document.createElement('tr');
-        tr.className = hasWarning ? 'bg-yellow-50' : 'hover:bg-gray-50';
-        tr.innerHTML = `
-            <td class="px-4 py-3 text-sm text-gray-500">${item.numero_item}</td>
-            <td class="px-4 py-3 text-sm font-mono">${item.codigo || '-'}</td>
-            <td class="px-4 py-3 text-sm"><div class="max-w-xs truncate">${item.descripcion}</div></td>
-            <td class="px-4 py-3 text-sm text-right">${item.cantidad}</td>
-            <td class="px-4 py-3 text-sm text-right">${formatMoney(item.precio_unitario)}</td>
-            <td class="px-4 py-3 text-sm text-right">${item.iva_porcentaje}%</td>
-            <td class="px-4 py-3 text-sm text-right font-medium">${formatMoney(item.valor_total)}</td>
-            <td class="px-4 py-3 text-center">
-                ${hasWarning 
-                    ? `<span class="text-yellow-600" title="${item.warning_message || 'Advertencia'}">⚠️</span>` 
-                    : '<span class="text-green-600">✓</span>'}
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
 }
 
-function formatMoney(value) {
-    if (!value) return '$0';
-    return '$' + parseInt(value).toLocaleString('es-CO');
+async function savePendingWithReplace(index) {
+    const item = results.pending[index];
+    item.data.replace_existing = true;
+    
+    try {
+        const res = await fetch('/invoices/api/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(item.data)
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            results.success.push({
+                filename: item.filename,
+                invoice_id: result.invoice_id,
+                numero: item.data.numero_documento,
+                proveedor: item.data.supplier_razon_social,
+                total: item.data.total_neto
+            });
+            results.pending.splice(index, 1);
+            showResults();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo guardar'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+
+async function saveAllPending() {
+    for (let i = results.pending.length - 1; i >= 0; i--) {
+        await savePendingWithReplace(i);
+    }
 }
 
 function resetUpload() {
-    extractedData = null;
+    filesToProcess = [];
+    results = { success: [], pending: [], errors: [] };
+    
     document.getElementById('uploadSection').classList.remove('hidden');
-    document.getElementById('loadingSection').classList.add('hidden');
-    document.getElementById('reviewSection').classList.add('hidden');
-    document.getElementById('saveBtn').disabled = false;
-    document.getElementById('replaceOption').classList.add('hidden');
-    document.getElementById('irregularitiesInfo').classList.add('hidden');
-}
-
-async function saveInvoice() {
-    if (!extractedData) return;
-
-    // Update data from form
-    extractedData.numero_documento = document.getElementById('numero_documento').value;
-    extractedData.fecha_emision = document.getElementById('fecha_emision').value;
-    extractedData.forma_pago = document.getElementById('forma_pago').value;
-    extractedData.supplier_nit = document.getElementById('supplier_nit').value;
-    extractedData.supplier_razon_social = document.getElementById('supplier_razon_social').value;
-    extractedData.supplier_ciudad = document.getElementById('supplier_ciudad').value;
-    extractedData.supplier_telefono = document.getElementById('supplier_telefono').value;
-
-    // Check if replacing
-    const replaceCheckbox = document.getElementById('replaceExisting');
-    const replaceExisting = replaceCheckbox && replaceCheckbox.checked;
-    extractedData.replace_existing = replaceExisting;
-
-    const saveBtn = document.getElementById('saveBtn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Guardando...';
-
-    try {
-        const response = await fetch('/invoices/api/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(extractedData)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            window.location.href = '/invoices/detail/' + result.invoice_id + '?saved=1';
-        } else if (result.error === 'duplicate') {
-            // Mostrar opción de reemplazar
-            const warningsContainer = document.getElementById('warningsContainer');
-            warningsContainer.innerHTML = `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <span class="font-medium text-red-800">${result.message}</span>
-                    </div>
-                    <p class="text-sm text-red-700 mt-2">Puedes marcar la opción "Reemplazar factura existente" para actualizar los datos.</p>
-                </div>
-            `;
-            document.getElementById('replaceOption').classList.remove('hidden');
-            document.getElementById('replaceExisting').checked = false;
-            
-            // Habilitar guardar cuando se marca reemplazar
-            document.getElementById('replaceExisting').onchange = function() {
-                document.getElementById('saveBtn').disabled = !this.checked;
-            };
-            
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Guardar Factura';
-        } else {
-            alert('Error: ' + (result.message || result.detail || 'Error guardando'));
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar Factura';
-        }
-    } catch (e) {
-        alert('Error de conexión');
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Guardar Factura';
-    }
+    document.getElementById('processingSection').classList.add('hidden');
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('successSection').classList.add('hidden');
+    document.getElementById('pendingSection').classList.add('hidden');
+    document.getElementById('errorSection').classList.add('hidden');
+    
+    // Reset file input
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
 }
 </script>
 {% endblock %}
