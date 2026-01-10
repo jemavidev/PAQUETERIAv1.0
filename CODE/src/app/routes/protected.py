@@ -1484,45 +1484,14 @@ async def update_package_status_disabled(package_id: str, request: Request, db: 
             detail=f"Error al actualizar el estado del paquete: {str(e)}"
         )
 
-@router.get("/api/packages")
-async def get_packages(db: Session = Depends(get_db)):
-    """Obtener todos los paquetes de la base de datos"""
-    try:
-        from sqlalchemy.orm import joinedload
-        
-        packages = db.query(Package).options(joinedload(Package.customer)).all()
-        return {
-            "success": True,
-            "count": len(packages),
-            "packages": [
-                {
-                    "id": str(pkg.id),
-                    "tracking_number": pkg.tracking_number,
-                    "customer_name": pkg.customer.full_name if pkg.customer else "Sin cliente",
-                    "customer_phone": pkg.customer.phone if pkg.customer else "Sin teléfono",
-                    "status": pkg.status.value if pkg.status else None,
-                    "package_type": pkg.package_type.value if pkg.package_type else None,
-                    "package_condition": pkg.package_condition.value if pkg.package_condition else None,
-                    "observations": None,  # Campo no disponible en el modelo actual
-                    "baroti": pkg.posicion,
-                    "guide_number": pkg.guide_number,
-                    "access_code": pkg.access_code,
-                    "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
-                    "received_at": pkg.received_at.isoformat() if pkg.received_at else None,
-                    "delivered_at": pkg.delivered_at.isoformat() if pkg.delivered_at else None,
-                    "cancelled_at": pkg.cancelled_at.isoformat() if pkg.cancelled_at else None,
-                    "created_at": pkg.created_at.isoformat() if pkg.created_at else None
-                }
-                for pkg in packages
-            ]
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "count": 0,
-            "packages": []
-        }
+# NOTA: Endpoint /api/packages ELIMINADO - Usar /api/packages/ del router packages.py
+# Este endpoint duplicado no soportaba filtros (search, status_filter) ni paginación
+# correcta, causando que la vista /packages no cargara datos correctamente.
+# El endpoint correcto está en: CODE/src/app/routes/packages.py -> GET /
+# @router.get("/api/packages")
+# async def get_packages(db: Session = Depends(get_db)):
+#     """Obtener todos los paquetes de la base de datos"""
+#     ... (código eliminado para evitar conflictos)
 
 @router.get("/api/dashboard/packages")
 async def get_dashboard_packages(

@@ -1465,68 +1465,10 @@ async def get_package_history(tracking_number: str, db: Session = Depends(get_db
             "history": []
         }
 
-@router.get("/packages")
-async def get_packages(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """Obtener paquetes de la base de datos con paginación"""
-    try:
-        # Obtener total de paquetes
-        total_packages = db.query(Package).count()
-
-        # Obtener paquetes con paginación e incluir información del cliente
-        packages = db.query(Package).join(Package.customer, isouter=True).offset(skip).limit(limit).all()
-
-        # Calcular información de paginación
-        current_page = (skip // limit) + 1
-        total_pages = (total_packages + limit - 1) // limit  # Ceiling division
-
-        return {
-            "success": True,
-            "packages": [
-                {
-                    "id": str(pkg.id),
-                    "tracking_number": pkg.tracking_number,
-                    "customer_name": pkg.customer.full_name if pkg.customer else None,
-                    "customer_phone": pkg.customer.phone if pkg.customer else None,
-                    "status": pkg.status.value if pkg.status else None,
-                    "package_type": pkg.package_type.value if pkg.package_type else None,
-                    "package_condition": pkg.package_condition.value if pkg.package_condition else None,
-                    # "observations": pkg.observations,  # Campo eliminado del modelo Package
-                    "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
-                    "received_at": pkg.received_at.isoformat() if pkg.received_at else None,
-                    "delivered_at": pkg.delivered_at.isoformat() if pkg.delivered_at else None,
-                    "guide_number": pkg.guide_number,
-                    "baroti": pkg.posicion,
-                    "access_code": pkg.access_code
-                }
-                for pkg in packages
-            ],
-            "pagination": {
-                "total": total_packages,
-                "page": current_page,
-                "limit": limit,
-                "pages": total_pages,
-                "has_next": current_page < total_pages,
-                "has_prev": current_page > 1
-            }
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "packages": [],
-            "pagination": {
-                "total": 0,
-                "page": 1,
-                "limit": limit,
-                "pages": 0,
-                "has_next": False,
-                "has_prev": False
-            }
-        }
+# NOTA: Endpoint /packages ELIMINADO - Usar /api/packages/ del router packages.py
+# El endpoint duplicado aquí no soportaba filtros (search, status_filter) y causaba
+# que la vista /packages no cargara datos correctamente.
+# El endpoint correcto está en: CODE/src/app/routes/packages.py -> GET /
 
 @router.get("/health")
 async def api_health_check():
