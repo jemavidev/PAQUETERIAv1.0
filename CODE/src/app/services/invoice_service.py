@@ -386,15 +386,10 @@ class InvoiceService:
             import_status=import_status,
             import_warnings=[i for i in irregularities if i['severidad'] == 'warning'],
             import_errors=[i for i in irregularities if i['severidad'] == 'error'],
-            replaces_id=existing.id if existing and replace_existing else None,
         )
         
         self.db.add(invoice)
         self.db.flush()  # Para obtener el ID
-        
-        # Actualizar referencia en factura reemplazada
-        if existing and replace_existing:
-            existing.replaced_by_id = invoice.id
         
         # Crear items
         for item_data in data.items:
