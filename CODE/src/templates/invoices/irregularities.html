@@ -1,0 +1,168 @@
+{% extends "base/base.html" %}
+
+{% block title %}Irregularidades - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <a href="/invoices" class="text-papyrus-blue hover:underline text-sm flex items-center mb-2">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver al dashboard
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Irregularidades Detectadas</h1>
+            <p class="text-gray-600 mt-1">Gestiona las irregularidades encontradas en las facturas importadas</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <form method="GET" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <select name="tipo" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    <option value="">Todos los tipos</option>
+                    <option value="precio_anomalo" {% if current_tipo == 'precio_anomalo' %}selected{% endif %}>Precio Anómalo</option>
+                    <option value="iva_inconsistente" {% if current_tipo == 'iva_inconsistente' %}selected{% endif %}>IVA Inconsistente</option>
+                    <option value="cantidad_invalida" {% if current_tipo == 'cantidad_invalida' %}selected{% endif %}>Cantidad Inválida</option>
+                    <option value="codigo_faltante" {% if current_tipo == 'codigo_faltante' %}selected{% endif %}>Código Faltante</option>
+                    <option value="total_no_coincide" {% if current_tipo == 'total_no_coincide' %}selected{% endif %}>Total No Coincide</option>
+                    <option value="cufe_invalido" {% if current_tipo == 'cufe_invalido' %}selected{% endif %}>CUFE Inválido</option>
+                    <option value="nit_invalido" {% if current_tipo == 'nit_invalido' %}selected{% endif %}>NIT Inválido</option>
+                </select>
+            </div>
+            <div>
+                <label class="flex items-center">
+                    <input type="checkbox" name="only_unresolved" {% if only_unresolved %}checked{% endif %} 
+                           class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
+                    <span class="text-sm text-gray-700">Solo pendientes</span>
+                </label>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                Filtrar
+            </button>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        {% if irregularities %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Factura</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Severidad</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for irr in irregularities %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <a href="/invoices/detail/{{ irr.invoice_id }}" class="text-papyrus-blue hover:underline font-medium">
+                                {{ irr.invoice.numero_documento if irr.invoice else 'N/A' }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ irr.tipo.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            <div class="max-w-md">{{ irr.descripcion }}</div>
+                            {% if irr.valor_original %}
+                            <div class="text-xs text-gray-500 mt-1">
+                                Original: {{ irr.valor_original }}
+                                {% if irr.valor_sugerido %} → Sugerido: {{ irr.valor_sugerido }}{% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if irr.severidad == 'error' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Error</span>
+                            {% elif irr.severidad == 'warning' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Alerta</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Info</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if irr.resuelto %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Resuelto</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if not irr.resuelto %}
+                            <button onclick="resolveIrregularity({{ irr.id }})" class="text-papyrus-blue hover:text-blue-700 text-sm">
+                                Resolver
+                            </button>
+                            {% else %}
+                            <span class="text-xs text-gray-500">{{ irr.resuelto_at.strftime('%d/%m/%Y') if irr.resuelto_at else '-' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pages > 1 %}
+        <div class="px-4 py-3 border-t border-gray-200 flex justify-between items-center">
+            <p class="text-sm text-gray-500">{{ total }} irregularidades encontradas</p>
+            <div class="flex space-x-2">
+                {% if page > 1 %}
+                <a href="?page={{ page - 1 }}{% if current_tipo %}&tipo={{ current_tipo }}{% endif %}{% if only_unresolved %}&only_unresolved=on{% endif %}" 
+                   class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Anterior</a>
+                {% endif %}
+                {% if page < pages %}
+                <a href="?page={{ page + 1 }}{% if current_tipo %}&tipo={{ current_tipo }}{% endif %}{% if only_unresolved %}&only_unresolved=on{% endif %}" 
+                   class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-green-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-gray-500">No hay irregularidades pendientes</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function resolveIrregularity(id) {
+    const notas = prompt('Notas de resolución (opcional):');
+    
+    try {
+        const response = await fetch(`/invoices/api/irregularity/${id}/resolve`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notas: notas, accion: 'ignorar'})
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error resolviendo'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+</script>
+{% endblock %}

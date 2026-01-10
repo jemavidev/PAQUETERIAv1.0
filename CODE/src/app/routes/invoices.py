@@ -24,6 +24,9 @@ from app.schemas.invoice import (
     ExportableColumn,
     DEFAULT_EXPORT_COLUMNS,
     COLUMN_DISPLAY_NAMES,
+    InvoiceSearchFilters,
+    ImportStatusEnum,
+    DocumentTypeEnum,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,7 +35,7 @@ templates = Jinja2Templates(directory="/app/src/templates", auto_reload=True)
 
 
 # ========================================
-# Vistas HTML
+# VISTAS HTML
 # ========================================
 
 @router.get("", response_class=HTMLResponse)
@@ -79,19 +82,27 @@ async def invoices_list(
     page: int = 1,
     supplier: str = None,
     search: str = None,
+    status: str = None,
+    iva_filter: str = None,
+    show_inactive: bool = False,
 ):
-    """Lista de facturas importadas"""
+    """Lista de facturas importadas con filtros avanzados"""
     context = get_auth_context_from_request(request)
     context["user"] = current_user
     
     service = InvoiceService(db)
-    invoices, total = service.get_invoices(
+    
+    # Construir filtros
+    filters = InvoiceSearchFilters(
+        query=search,
+        supplier_nit=supplier,
+        import_status=ImportStatusEnum(status) if status else None,
+        is_active=None if show_inactive else True,
         page=page,
         per_page=20,
-        supplier_nit=supplier,
-        search=search,
     )
     
+    invoices, total = service.search_invoices(filters)
     suppliers = service.get_all_suppliers()
     
     context["invoices"] = invoices
@@ -101,6 +112,9 @@ async def invoices_list(
     context["suppliers"] = suppliers
     context["current_supplier"] = supplier
     context["search"] = search or ""
+    context["current_status"] = status
+    context["show_inactive"] = show_inactive
+    context["iva_filter"] = iva_filter
     
     return templates.TemplateResponse("invoices/list.html", context)
 
@@ -117,17 +131,104 @@ async def invoice_detail(
     context["user"] = current_user
     
     service = InvoiceService(db)
-    invoice = service.get_invoice(invoice_id)
+    invoice = service.get_invoice(invoice_id, include_inactive=True)
     
     if not invoice:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
+    # Obtener irregularidades
+    irregularities = service.get_invoice_irregularities(invoice_id)
+    
     context["invoice"] = invoice
+    context["irregularities"] = irregularities
+    context["unresolved_count"] = sum(1 for i in irregularities if not i.resuelto)
+    
     return templates.TemplateResponse("invoices/detail.html", context)
 
 
+@router.get("/irregularities", response_class=HTMLResponse)
+async def irregularities_list(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    page: int = 1,
+    tipo: str = None,
+    only_unresolved: bool = True,
+):
+    """Lista de irregularidades del sistema"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    
+    service = InvoiceService(db)
+    irregularities, total = service.get_all_irregularities(
+        only_unresolved=only_unresolved,
+        tipo=tipo,
+        page=page,
+        per_page=50
+    )
+    
+    context["irregularities"] = irregularities
+    context["total"] = total
+    context["page"] = page
+    context["pages"] = (total + 49) // 50
+    context["current_tipo"] = tipo
+    context["only_unresolved"] = only_unresolved
+    
+    return templates.TemplateResponse("invoices/irregularities.html", context)
+
+
+@router.get("/rejected", response_class=HTMLResponse)
+async def rejected_files_list(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    page: int = 1,
+):
+    """Lista de archivos rechazados"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    
+    service = InvoiceService(db)
+    files, total = service.get_rejected_files(page=page, per_page=20)
+    
+    context["rejected_files"] = files
+    context["total"] = total
+    context["page"] = page
+    context["pages"] = (total + 19) // 20
+    
+    return templates.TemplateResponse("invoices/rejected.html", context)
+
+
+@router.get("/products", response_class=HTMLResponse)
+async def products_search_page(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    q: str = None,
+    iva_status: str = None,
+):
+    """Página de búsqueda global de productos"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    
+    service = InvoiceService(db)
+    
+    products = []
+    if q:
+        products = service.search_products_global(q, limit=100)
+    elif iva_status:
+        iva_incluido = True if iva_status == "incluido" else (False if iva_status == "no_incluido" else None)
+        products = service.get_products_by_iva_status(iva_incluido)
+    
+    context["products"] = products
+    context["search_query"] = q or ""
+    context["iva_status"] = iva_status
+    
+    return templates.TemplateResponse("invoices/products.html", context)
+
+
 # ========================================
-# API Endpoints
+# API ENDPOINTS - CRUD
 # ========================================
 
 @router.post("/api/extract")
@@ -142,11 +243,23 @@ async def extract_pdf(
     Retorna los datos para revisión y corrección.
     """
     if not file.filename.lower().endswith('.pdf'):
+        # Guardar como archivo rechazado
+        service = InvoiceService(db)
+        content = await file.read()
+        service.save_rejected_file(
+            archivo_nombre=file.filename,
+            razon_rechazo="Formato de archivo no soportado. Solo se permiten archivos PDF.",
+            detalles_error={"tipo": "formato_invalido", "extension": file.filename.split('.')[-1]},
+            file_content=content,
+            user_id=current_user.id,
+            puede_reintentar=False
+        )
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
     
     # Guardar archivo temporal
+    content = await file.read()
+    
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-        content = await file.read()
         tmp.write(content)
         tmp_path = tmp.name
     
@@ -154,24 +267,60 @@ async def extract_pdf(
         extractor = PDFExtractorService()
         extracted, warnings = extractor.extract_from_pdf(tmp_path, file.filename)
         
-        # Verificar duplicado
+        # Calcular hash del archivo
         service = InvoiceService(db)
-        if extracted.cufe_cude and service.check_duplicate(extracted.cufe_cude):
-            extracted.is_duplicate = True
+        file_hash = service.calculate_file_hash(content)
+        extracted.file_hash = file_hash
+        
+        # Verificar duplicado por CUFE
+        if extracted.cufe_cude:
+            existing = service.check_duplicate(extracted.cufe_cude)
+            if existing:
+                extracted.is_duplicate = True
+                extracted.warnings.append({
+                    "field": "cufe_cude",
+                    "message": f"Este documento ya fue importado (Factura #{existing.id})",
+                    "severity": "error",
+                    "tipo": "duplicado"
+                })
+        
+        # Verificar duplicado por hash
+        existing_hash = service.check_file_hash(file_hash)
+        if existing_hash and not extracted.is_duplicate:
             extracted.warnings.append({
-                "field": "cufe_cude",
-                "message": "Este documento ya fue importado anteriormente",
-                "severity": "error"
+                "field": "archivo",
+                "message": f"Este archivo ya fue procesado anteriormente (Factura #{existing_hash.id})",
+                "severity": "warning",
+                "tipo": "archivo_duplicado"
             })
+        
+        # Validar datos y detectar irregularidades
+        is_valid, irregularities = service.validate_invoice_data(extracted)
+        extracted.is_valid = is_valid
+        extracted.irregularities = irregularities
         
         return JSONResponse(content={
             "success": True,
             "data": extracted.model_dump(),
-            "warnings": [w.model_dump() for w in warnings],
+            "warnings": [w.model_dump() if hasattr(w, 'model_dump') else w for w in warnings],
+            "irregularities": irregularities,
+            "is_valid": is_valid,
         })
         
     except Exception as e:
         logger.error(f"Error extrayendo PDF: {e}", exc_info=True)
+        
+        # Guardar como archivo rechazado
+        service = InvoiceService(db)
+        service.save_rejected_file(
+            archivo_nombre=file.filename,
+            razon_rechazo=f"Error procesando archivo: {str(e)}",
+            detalles_error={"tipo": "error_extraccion", "error": str(e)},
+            file_content=content,
+            user_id=current_user.id,
+            puede_reintentar=True
+        )
+        
         raise HTTPException(status_code=500, detail=f"Error procesando archivo: {str(e)}")
     
     finally:
@@ -189,20 +338,32 @@ async def save_invoice(
     """Guarda una factura después de revisión"""
     try:
         data = await request.json()
+        replace_existing = data.pop('replace_existing', False)
         extracted_data = ExtractedInvoiceData(**data)
         
         service = InvoiceService(db)
         
-        # Verificar duplicado
-        if service.check_duplicate(extracted_data.cufe_cude):
-            raise HTTPException(status_code=400, detail="Este documento ya fue importado")
+        # Verificar duplicado si no se va a reemplazar
+        if not replace_existing:
+            existing = service.check_duplicate(extracted_data.cufe_cude)
+            if existing:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Este documento ya fue importado (ID: {existing.id}). Use la opción de reemplazar si desea actualizar."
+                )
         
-        invoice = service.save_invoice(extracted_data, user_id=current_user.id)
+        invoice = service.save_invoice(
+            extracted_data, 
+            user_id=current_user.id,
+            replace_existing=replace_existing
+        )
         
         return JSONResponse(content={
             "success": True,
             "message": "Factura guardada exitosamente",
             "invoice_id": invoice.id,
+            "import_status": invoice.import_status,
+            "replaced": replace_existing,
         })
         
     except HTTPException:
@@ -215,17 +376,140 @@ async def save_invoice(
 @router.delete("/api/{invoice_id}")
 async def delete_invoice(
     invoice_id: int,
+    hard_delete: bool = False,
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
 ):
-    """Elimina una factura"""
+    """Elimina una factura (soft delete por defecto)"""
     service = InvoiceService(db)
     
-    if not service.delete_invoice(invoice_id):
+    if not service.delete_invoice(invoice_id, hard_delete=hard_delete):
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
-    return JSONResponse(content={"success": True, "message": "Factura eliminada"})
+    return JSONResponse(content={
+        "success": True, 
+        "message": "Factura eliminada permanentemente" if hard_delete else "Factura desactivada"
+    })
 
+
+@router.post("/api/{invoice_id}/restore")
+async def restore_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Restaura una factura eliminada"""
+    service = InvoiceService(db)
+    
+    if not service.restore_invoice(invoice_id):
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    return JSONResponse(content={"success": True, "message": "Factura restaurada"})
+
+
+# ========================================
+# API ENDPOINTS - IRREGULARIDADES
+# ========================================
+
+@router.post("/api/irregularity/{irregularity_id}/resolve")
+async def resolve_irregularity(
+    irregularity_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Resuelve una irregularidad"""
+    try:
+        data = await request.json()
+        service = InvoiceService(db)
+        
+        if not service.resolve_irregularity(
+            irregularity_id,
+            user_id=current_user.id,
+            notas=data.get('notas'),
+            accion=data.get('accion', 'ignorar')
+        ):
+            raise HTTPException(status_code=404, detail="Irregularidad no encontrada")
+        
+        return JSONResponse(content={"success": True, "message": "Irregularidad resuelta"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error resolviendo irregularidad: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/api/rejected/{file_id}")
+async def delete_rejected_file(
+    file_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Elimina un registro de archivo rechazado"""
+    service = InvoiceService(db)
+    
+    if not service.delete_rejected_file(file_id):
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    
+    return JSONResponse(content={"success": True, "message": "Registro eliminado"})
+
+
+# ========================================
+# API ENDPOINTS - IVA
+# ========================================
+
+@router.post("/api/item/{item_id}/iva")
+async def update_item_iva(
+    item_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el estado de IVA de un item"""
+    try:
+        data = await request.json()
+        iva_incluido = data.get('iva_incluido')  # True, False, or None
+        
+        service = InvoiceService(db)
+        if not service.update_item_iva_status(item_id, iva_incluido):
+            raise HTTPException(status_code=404, detail="Item no encontrado")
+        
+        return JSONResponse(content={"success": True, "message": "Estado de IVA actualizado"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error actualizando IVA: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/items/iva/bulk")
+async def bulk_update_iva(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el estado de IVA de múltiples items"""
+    try:
+        data = await request.json()
+        item_ids = data.get('item_ids', [])
+        iva_incluido = data.get('iva_incluido')
+        
+        service = InvoiceService(db)
+        count = service.bulk_update_iva_status(item_ids, iva_incluido)
+        
+        return JSONResponse(content={
+            "success": True, 
+            "message": f"{count} items actualizados",
+            "updated_count": count
+        })
+    except Exception as e:
+        logger.error(f"Error actualizando IVA masivo: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# API ENDPOINTS - EXPORTACIÓN
+# ========================================
 
 @router.post("/api/export")
 async def export_invoices(
@@ -250,6 +534,7 @@ async def export_invoices(
             date_from=datetime.fromisoformat(data['date_from']) if data.get('date_from') else None,
             date_to=datetime.fromisoformat(data['date_to']) if data.get('date_to') else None,
             include_headers=data.get('include_headers', True),
+            only_active=data.get('only_active', True),
         )
         
         # Retornar como archivo descargable
@@ -270,8 +555,59 @@ async def export_invoices(
 
 
 # ========================================
-# API de Análisis
+# API ENDPOINTS - ANÁLISIS Y BÚSQUEDA
 # ========================================
+
+@router.get("/api/search")
+async def search_invoices_api(
+    request: Request,
+    q: str = Query(None),
+    supplier_nit: str = Query(None),
+    fecha_desde: str = Query(None),
+    fecha_hasta: str = Query(None),
+    status: str = Query(None),
+    page: int = Query(1),
+    per_page: int = Query(20),
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """API de búsqueda avanzada de facturas"""
+    service = InvoiceService(db)
+    
+    filters = InvoiceSearchFilters(
+        query=q,
+        supplier_nit=supplier_nit,
+        fecha_desde=datetime.fromisoformat(fecha_desde) if fecha_desde else None,
+        fecha_hasta=datetime.fromisoformat(fecha_hasta) if fecha_hasta else None,
+        import_status=ImportStatusEnum(status) if status else None,
+        page=page,
+        per_page=per_page,
+    )
+    
+    invoices, total = service.search_invoices(filters)
+    
+    return JSONResponse(content={
+        "invoices": [
+            {
+                "id": inv.id,
+                "numero_documento": inv.numero_documento,
+                "document_type": inv.document_type.value,
+                "fecha_emision": inv.fecha_emision.isoformat() if inv.fecha_emision else None,
+                "supplier_razon_social": inv.supplier.razon_social,
+                "supplier_nit": inv.supplier.nit,
+                "total_neto": inv.total_neto,
+                "total_iva": inv.total_iva,
+                "items_count": len(inv.items),
+                "import_status": inv.import_status,
+                "is_active": inv.is_active,
+            }
+            for inv in invoices
+        ],
+        "total": total,
+        "page": page,
+        "pages": (total + per_page - 1) // per_page,
+    })
+
 
 @router.get("/api/product/{codigo}")
 async def get_product_info(
@@ -316,10 +652,58 @@ async def search_products(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
 ):
-    """Busca productos por código o descripción"""
+    """Busca productos por código o descripción (búsqueda global)"""
     service = InvoiceService(db)
-    results = service.search_products(q)
+    results = service.search_products_global(q)
     return JSONResponse(content={"results": results})
+
+
+@router.get("/api/search/products/invoice/{invoice_id}")
+async def search_products_in_invoice(
+    invoice_id: int,
+    q: str = Query(..., min_length=1),
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Busca productos dentro de una factura específica (búsqueda local)"""
+    service = InvoiceService(db)
+    items = service.search_products_in_invoice(invoice_id, q)
+    
+    return JSONResponse(content={
+        "results": [
+            {
+                "id": item.id,
+                "codigo": item.codigo,
+                "descripcion": item.descripcion,
+                "cantidad": item.cantidad,
+                "precio_unitario": item.precio_unitario,
+                "iva_porcentaje": item.iva_porcentaje,
+                "iva_incluido": item.iva_incluido,
+                "valor_total": item.valor_total,
+            }
+            for item in items
+        ]
+    })
+
+
+@router.get("/api/products/iva")
+async def get_products_by_iva(
+    status: str = Query(None),  # "incluido", "no_incluido", "desconocido"
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene productos filtrados por estado de IVA"""
+    service = InvoiceService(db)
+    
+    iva_incluido = None
+    if status == "incluido":
+        iva_incluido = True
+    elif status == "no_incluido":
+        iva_incluido = False
+    # None para "desconocido"
+    
+    products = service.get_products_by_iva_status(iva_incluido)
+    return JSONResponse(content={"products": products})
 
 
 @router.get("/api/columns")
@@ -334,3 +718,27 @@ async def get_export_columns(
         ],
         "defaults": [col.value for col in DEFAULT_EXPORT_COLUMNS],
     })
+
+
+@router.get("/api/stats")
+async def get_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene estadísticas del dashboard"""
+    service = InvoiceService(db)
+    stats = service.get_dashboard_stats()
+    
+    # Serializar facturas recientes
+    stats['recent_invoices'] = [
+        {
+            "id": inv.id,
+            "numero_documento": inv.numero_documento,
+            "supplier_razon_social": inv.supplier.razon_social,
+            "total_neto": inv.total_neto,
+            "fecha_emision": inv.fecha_emision.isoformat() if inv.fecha_emision else None,
+        }
+        for inv in stats['recent_invoices']
+    ]
+    
+    return JSONResponse(content=stats)

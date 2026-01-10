@@ -3,7 +3,7 @@
 # ========================================
 
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
@@ -11,6 +11,33 @@ from enum import Enum
 class DocumentTypeEnum(str, Enum):
     FACTURA = "FACTURA"
     POS = "POS"
+
+
+class ImportStatusEnum(str, Enum):
+    VALID = "valid"
+    WARNING = "warning"
+    ERROR = "error"
+    REPLACED = "replaced"
+
+
+class IrregularityTypeEnum(str, Enum):
+    PRECIO_ANOMALO = "precio_anomalo"
+    IVA_INCONSISTENTE = "iva_inconsistente"
+    CANTIDAD_INVALIDA = "cantidad_invalida"
+    CODIGO_FALTANTE = "codigo_faltante"
+    DESCRIPCION_VACIA = "descripcion_vacia"
+    TOTAL_NO_COINCIDE = "total_no_coincide"
+    FECHA_INVALIDA = "fecha_invalida"
+    NIT_INVALIDO = "nit_invalido"
+    CUFE_INVALIDO = "cufe_invalido"
+    ARCHIVO_CORRUPTO = "archivo_corrupto"
+    FORMATO_NO_SOPORTADO = "formato_no_soportado"
+
+
+class SeverityEnum(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
 
 
 # ========================================
@@ -51,13 +78,16 @@ class InvoiceItemBase(BaseModel):
     unidad_medida: Optional[str] = None
     cantidad: int = 1
     precio_unitario: int = 0
+    precio_base: int = 0
     descuento: int = 0
     recargo: int = 0
     iva_porcentaje: float = 0
     iva_valor: int = 0
+    iva_incluido: Optional[bool] = None  # True=incluido, False=no incluido, None=desconocido
     inc_porcentaje: float = 0
     inc_valor: int = 0
     valor_total: int = 0
+    notas: Optional[str] = None
 
 
 class InvoiceItemCreate(InvoiceItemBase):
@@ -66,6 +96,8 @@ class InvoiceItemCreate(InvoiceItemBase):
 
 class InvoiceItemResponse(InvoiceItemBase):
     id: int
+    tiene_irregularidad: bool = False
+    tipo_irregularidad: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -76,6 +108,44 @@ class InvoiceItemReview(InvoiceItemBase):
     has_warning: bool = False
     warning_message: Optional[str] = None
     suggested_fix: Optional[str] = None
+    irregularities: List[Dict[str, Any]] = []
+
+
+# ========================================
+# Schemas de Irregularidades
+# ========================================
+
+class IrregularityBase(BaseModel):
+    tipo: str
+    severidad: str = "warning"
+    descripcion: str
+    valor_original: Optional[str] = None
+    valor_sugerido: Optional[str] = None
+
+
+class IrregularityCreate(IrregularityBase):
+    invoice_id: Optional[int] = None
+    item_id: Optional[int] = None
+
+
+class IrregularityResponse(IrregularityBase):
+    id: int
+    invoice_id: Optional[int] = None
+    item_id: Optional[int] = None
+    resuelto: bool = False
+    resuelto_por: Optional[int] = None
+    resuelto_at: Optional[datetime] = None
+    notas_resolucion: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class IrregularityResolve(BaseModel):
+    """Schema para resolver una irregularidad"""
+    notas_resolucion: Optional[str] = None
+    accion: str = "ignorar"  # ignorar, corregir, eliminar
 
 
 # ========================================
@@ -110,6 +180,10 @@ class InvoiceResponse(InvoiceBase):
     items: List[InvoiceItemResponse] = []
     imported_at: datetime
     is_validated: bool
+    import_status: str = "valid"
+    is_active: bool = True
+    has_irregularities: bool = False
+    unresolved_irregularities_count: int = 0
 
     class Config:
         from_attributes = True
@@ -126,6 +200,7 @@ class ExtractionWarning(BaseModel):
     original_value: Optional[str] = None
     suggested_value: Optional[str] = None
     severity: str = "warning"  # warning, error, info
+    tipo: Optional[str] = None  # Tipo de irregularidad
 
 
 class ExtractedInvoiceData(BaseModel):
@@ -152,7 +227,7 @@ class ExtractedInvoiceData(BaseModel):
     supplier_ciudad: Optional[str] = None
     supplier_departamento: Optional[str] = None
     
-    # Totales (ya formateados)
+    # Totales (ya formateados en COP)
     subtotal: int = 0
     descuento: int = 0
     total_bruto: int = 0
@@ -166,15 +241,19 @@ class ExtractedInvoiceData(BaseModel):
     is_valid: bool = True
     is_duplicate: bool = False
     warnings: List[ExtractionWarning] = []
+    irregularities: List[Dict[str, Any]] = []
     
     # Archivo
     archivo_nombre: Optional[str] = None
+    file_hash: Optional[str] = None
 
 
 class InvoiceConfirmation(BaseModel):
     """Datos confirmados para guardar"""
     extracted_data: ExtractedInvoiceData
     corrections: dict = {}  # Campo -> valor corregido
+    ignore_warnings: bool = False
+    replace_existing: bool = False  # Si es True, reemplaza documento existente
 
 
 # ========================================
@@ -190,8 +269,12 @@ class InvoiceListItem(BaseModel):
     supplier_razon_social: str
     supplier_nit: str
     total_neto: int
+    total_iva: int
     items_count: int
     is_validated: bool
+    import_status: str = "valid"
+    is_active: bool = True
+    has_irregularities: bool = False
 
     class Config:
         from_attributes = True
@@ -208,6 +291,50 @@ class PaginatedInvoices(BaseModel):
 
 
 # ========================================
+# Schemas para Búsqueda Avanzada
+# ========================================
+
+class InvoiceSearchFilters(BaseModel):
+    """Filtros de búsqueda avanzada"""
+    # Búsqueda general
+    query: Optional[str] = None
+    
+    # Filtros de factura
+    numero_documento: Optional[str] = None
+    cufe_cude: Optional[str] = None
+    fecha_desde: Optional[datetime] = None
+    fecha_hasta: Optional[datetime] = None
+    total_min: Optional[int] = None
+    total_max: Optional[int] = None
+    document_type: Optional[DocumentTypeEnum] = None
+    import_status: Optional[ImportStatusEnum] = None
+    
+    # Filtros de proveedor
+    supplier_nit: Optional[str] = None
+    supplier_nombre: Optional[str] = None
+    supplier_ciudad: Optional[str] = None
+    
+    # Filtros de producto
+    producto_codigo: Optional[str] = None
+    producto_descripcion: Optional[str] = None
+    iva_porcentaje: Optional[float] = None
+    iva_incluido: Optional[bool] = None
+    
+    # Filtros de estado
+    is_active: Optional[bool] = True
+    has_irregularities: Optional[bool] = None
+    is_validated: Optional[bool] = None
+    
+    # Ordenamiento
+    order_by: str = "fecha_emision"
+    order_dir: str = "desc"
+    
+    # Paginación
+    page: int = 1
+    per_page: int = 20
+
+
+# ========================================
 # Schemas para Exportación Flexible
 # ========================================
 
@@ -219,9 +346,11 @@ class ExportableColumn(str, Enum):
     CANTIDAD = "cantidad"
     UNIDAD_MEDIDA = "unidad_medida"
     PRECIO_UNITARIO = "precio_unitario"
+    PRECIO_BASE = "precio_base"
     DESCUENTO_ITEM = "descuento_item"
     IVA_PORCENTAJE = "iva_porcentaje"
     IVA_VALOR = "iva_valor"
+    IVA_INCLUIDO = "iva_incluido"
     VALOR_TOTAL = "valor_total"
     
     # Datos del proveedor
@@ -252,6 +381,7 @@ DEFAULT_EXPORT_COLUMNS = [
     ExportableColumn.CANTIDAD,
     ExportableColumn.PRECIO_UNITARIO,
     ExportableColumn.IVA_PORCENTAJE,
+    ExportableColumn.IVA_INCLUIDO,
     ExportableColumn.VALOR_TOTAL,
     ExportableColumn.PROVEEDOR_NIT,
     ExportableColumn.PROVEEDOR_NOMBRE,
@@ -266,9 +396,11 @@ COLUMN_DISPLAY_NAMES = {
     ExportableColumn.CANTIDAD: "Cantidad",
     ExportableColumn.UNIDAD_MEDIDA: "Unidad",
     ExportableColumn.PRECIO_UNITARIO: "Precio Unitario",
+    ExportableColumn.PRECIO_BASE: "Precio Base (sin IVA)",
     ExportableColumn.DESCUENTO_ITEM: "Descuento",
     ExportableColumn.IVA_PORCENTAJE: "IVA %",
     ExportableColumn.IVA_VALOR: "IVA $",
+    ExportableColumn.IVA_INCLUIDO: "IVA Incluido",
     ExportableColumn.VALOR_TOTAL: "Valor Total",
     ExportableColumn.PROVEEDOR_NIT: "NIT Proveedor",
     ExportableColumn.PROVEEDOR_NOMBRE: "Proveedor",
@@ -296,6 +428,7 @@ class ExportRequest(BaseModel):
     date_to: Optional[datetime] = None
     format: str = "csv"  # csv, xlsx
     include_headers: bool = True
+    only_active: bool = True
     
     @validator('columns')
     def validate_columns(cls, v):
@@ -320,7 +453,7 @@ class ProductPriceHistory(BaseModel):
     """Historial de precios de un producto"""
     codigo: str
     descripcion: str
-    precios: List[dict]  # [{fecha, precio, proveedor, factura}]
+    precios: List[dict]  # [{fecha, precio, proveedor, factura, iva_incluido}]
     precio_minimo: int
     precio_maximo: int
     precio_promedio: int
@@ -333,6 +466,7 @@ class SupplierSummary(BaseModel):
     razon_social: str
     total_facturas: int
     total_compras: int
+    total_iva: int
     primera_compra: datetime
     ultima_compra: datetime
     productos_unicos: int
@@ -347,3 +481,53 @@ class ProductSummary(BaseModel):
     proveedores: List[str]  # NITs de proveedores
     ultimo_precio: int
     ultima_compra: datetime
+    iva_incluido: Optional[bool] = None
+
+
+# ========================================
+# Schemas para Archivos Rechazados
+# ========================================
+
+class RejectedFileResponse(BaseModel):
+    """Archivo rechazado"""
+    id: int
+    archivo_nombre: str
+    razon_rechazo: str
+    detalles_error: Dict[str, Any] = {}
+    uploaded_at: datetime
+    puede_reintentar: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+# ========================================
+# Schemas para Estadísticas del Dashboard
+# ========================================
+
+class InvoiceDashboardStats(BaseModel):
+    """Estadísticas del dashboard de facturas"""
+    total_invoices: int
+    total_active: int
+    total_suppliers: int
+    total_items: int
+    total_spent: int
+    total_iva: int
+    
+    # Por estado de importación
+    valid_count: int
+    warning_count: int
+    error_count: int
+    
+    # Irregularidades
+    total_irregularities: int
+    unresolved_irregularities: int
+    
+    # Productos con IVA
+    items_con_iva_incluido: int
+    items_sin_iva_incluido: int
+    items_iva_desconocido: int
+    
+    # Recientes
+    recent_invoices: List[Dict[str, Any]]
+    top_suppliers: List[Dict[str, Any]]

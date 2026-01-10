@@ -1,0 +1,131 @@
+{% extends "base/base.html" %}
+
+{% block title %}Archivos Rechazados - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <a href="/invoices" class="text-papyrus-blue hover:underline text-sm flex items-center mb-2">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver al dashboard
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Archivos Rechazados</h1>
+            <p class="text-gray-600 mt-1">Historial de archivos que no pudieron ser procesados</p>
+        </div>
+        <a href="/invoices/upload" 
+           class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Importar PDF
+        </a>
+    </div>
+
+    <!-- Results -->
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        {% if rejected_files %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón del Rechazo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Reintentar</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for file in rejected_files %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="font-medium text-gray-900">{{ file.archivo_nombre }}</span>
+                            </div>
+                            {% if file.archivo_size %}
+                            <span class="text-xs text-gray-500 ml-7">{{ (file.archivo_size / 1024) | round(1) }} KB</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            <div class="max-w-md">{{ file.razon_rechazo }}</div>
+                            {% if file.detalles_error and file.detalles_error.tipo %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">
+                                {{ file.detalles_error.tipo }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500">
+                            {{ file.uploaded_at.strftime('%d/%m/%Y %H:%M') if file.uploaded_at else '-' }}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if file.puede_reintentar %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sí</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="deleteRejected({{ file.id }})" class="text-gray-400 hover:text-red-600" title="Eliminar registro">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pages > 1 %}
+        <div class="px-4 py-3 border-t border-gray-200 flex justify-between items-center">
+            <p class="text-sm text-gray-500">{{ total }} archivos rechazados</p>
+            <div class="flex space-x-2">
+                {% if page > 1 %}
+                <a href="?page={{ page - 1 }}" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Anterior</a>
+                {% endif %}
+                {% if page < pages %}
+                <a href="?page={{ page + 1 }}" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-green-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-gray-500">No hay archivos rechazados</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function deleteRejected(id) {
+    if (!confirm('¿Eliminar este registro?')) return;
+
+    try {
+        const response = await fetch(`/invoices/api/rejected/${id}`, {method: 'DELETE'});
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error eliminando'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+</script>
+{% endblock %}

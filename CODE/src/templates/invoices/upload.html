@@ -17,7 +17,7 @@
     </div>
 
     <!-- Upload Section -->
-    <div id="uploadSection" class="bg-white rounded-lg shadow p-6">
+    <div id="uploadSection" class="bg-white rounded-lg shadow-sm border p-6">
         <div id="dropZone" 
              class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-papyrus-blue transition-colors cursor-pointer"
              ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Loading Section -->
-    <div id="loadingSection" class="hidden bg-white rounded-lg shadow p-12 text-center">
+    <div id="loadingSection" class="hidden bg-white rounded-lg shadow-sm border p-12 text-center">
         <div class="animate-spin w-12 h-12 border-4 border-papyrus-blue border-t-transparent rounded-full mx-auto mb-4"></div>
         <p class="text-lg text-gray-700">Procesando archivo...</p>
         <p class="text-sm text-gray-500 mt-2">Extrayendo datos del PDF</p>
@@ -50,7 +50,7 @@
         <div id="warningsContainer" class="mb-6"></div>
 
         <!-- Document Info -->
-        <div class="bg-white rounded-lg shadow mb-6">
+        <div class="bg-white rounded-lg shadow-sm border mb-6">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Datos del Documento</h2>
                 <span id="docTypeBadge" class="px-3 py-1 rounded-full text-sm font-medium"></span>
@@ -58,50 +58,50 @@
             <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-500">CUFE/CUDE</label>
-                    <input type="text" id="cufe_cude" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono" readonly>
+                    <input type="text" id="cufe_cude" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50" readonly>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Número de Documento</label>
-                    <input type="text" id="numero_documento" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="numero_documento" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Fecha de Emisión</label>
-                    <input type="text" id="fecha_emision" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="fecha_emision" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Forma de Pago</label>
-                    <input type="text" id="forma_pago" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="forma_pago" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
             </div>
         </div>
 
         <!-- Supplier Info -->
-        <div class="bg-white rounded-lg shadow mb-6">
+        <div class="bg-white rounded-lg shadow-sm border mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Datos del Proveedor</h2>
             </div>
             <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-500">NIT</label>
-                    <input type="text" id="supplier_nit" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="supplier_nit" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Razón Social</label>
-                    <input type="text" id="supplier_razon_social" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="supplier_razon_social" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Ciudad</label>
-                    <input type="text" id="supplier_ciudad" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="supplier_ciudad" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Teléfono</label>
-                    <input type="text" id="supplier_telefono" class="mt-1 w-full border border-gray-300 rounded px-3 py-2">
+                    <input type="text" id="supplier_telefono" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
             </div>
         </div>
 
         <!-- Items Table -->
-        <div class="bg-white rounded-lg shadow mb-6">
+        <div class="bg-white rounded-lg shadow-sm border mb-6">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Productos (<span id="itemsCount">0</span>)</h2>
             </div>
@@ -126,37 +126,57 @@
         </div>
 
         <!-- Totals -->
-        <div class="bg-white rounded-lg shadow mb-6">
+        <div class="bg-white rounded-lg shadow-sm border mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Totales</h2>
             </div>
             <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Subtotal</label>
-                    <input type="text" id="subtotal" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-right font-medium">
+                    <input type="text" id="subtotal" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right font-medium focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Descuento</label>
-                    <input type="text" id="descuento" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-right">
+                    <input type="text" id="descuento" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">IVA</label>
-                    <input type="text" id="total_iva" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-right">
+                    <input type="text" id="total_iva" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">Total Neto</label>
-                    <input type="text" id="total_neto" class="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-right font-bold text-lg">
+                    <input type="text" id="total_neto" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-right font-bold text-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Irregularities Info -->
+        <div id="irregularitiesInfo" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <p class="font-medium text-yellow-800">Se detectaron irregularidades</p>
+                    <p class="text-sm text-yellow-700 mt-1">Puedes guardar la factura y resolver las irregularidades después.</p>
                 </div>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-between items-center">
-            <button onclick="resetUpload()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <button onclick="resetUpload()" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                 Cancelar
             </button>
-            <div class="space-x-3">
-                <button onclick="saveInvoice()" id="saveBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <!-- Opción de reemplazar (solo visible si es duplicado) -->
+                <div id="replaceOption" class="hidden">
+                    <label class="flex items-center text-sm text-gray-700 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
+                        <input type="checkbox" id="replaceExisting" class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
+                        Reemplazar factura existente
+                    </label>
+                </div>
+                <button onclick="saveInvoice()" id="saveBtn" class="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     Guardar Factura
                 </button>
             </div>
@@ -211,7 +231,7 @@ async function processFile(file) {
 
         if (result.success) {
             extractedData = result.data;
-            displayExtractedData(result.data, result.warnings);
+            displayExtractedData(result.data, result.warnings, result.irregularities);
         } else {
             alert('Error: ' + (result.detail || 'Error procesando archivo'));
             resetUpload();
@@ -222,7 +242,7 @@ async function processFile(file) {
     }
 }
 
-function displayExtractedData(data, warnings) {
+function displayExtractedData(data, warnings, irregularities) {
     document.getElementById('loadingSection').classList.add('hidden');
     document.getElementById('reviewSection').classList.remove('hidden');
 
@@ -239,9 +259,16 @@ function displayExtractedData(data, warnings) {
                     </svg>
                     <span class="font-medium text-red-800">Este documento ya fue importado anteriormente</span>
                 </div>
+                <p class="text-sm text-red-700 mt-2">Puedes marcar la opción "Reemplazar factura existente" para actualizar los datos.</p>
             </div>
         `;
         document.getElementById('saveBtn').disabled = true;
+        document.getElementById('replaceOption').classList.remove('hidden');
+        
+        // Habilitar guardar cuando se marca reemplazar
+        document.getElementById('replaceExisting').addEventListener('change', function() {
+            document.getElementById('saveBtn').disabled = !this.checked;
+        });
     } else if (warnings && warnings.length > 0) {
         const errorWarnings = warnings.filter(w => w.severity === 'error');
         const otherWarnings = warnings.filter(w => w.severity !== 'error');
@@ -267,6 +294,11 @@ function displayExtractedData(data, warnings) {
                 </div>
             `;
         }
+    }
+
+    // Mostrar info de irregularidades
+    if (irregularities && irregularities.length > 0) {
+        document.getElementById('irregularitiesInfo').classList.remove('hidden');
     }
 
     // Document type badge
@@ -303,18 +335,18 @@ function displayExtractedData(data, warnings) {
     data.items.forEach((item, idx) => {
         const hasWarning = item.has_warning;
         const tr = document.createElement('tr');
-        tr.className = hasWarning ? 'bg-yellow-50' : '';
+        tr.className = hasWarning ? 'bg-yellow-50' : 'hover:bg-gray-50';
         tr.innerHTML = `
             <td class="px-4 py-3 text-sm text-gray-500">${item.numero_item}</td>
             <td class="px-4 py-3 text-sm font-mono">${item.codigo || '-'}</td>
-            <td class="px-4 py-3 text-sm">${item.descripcion}</td>
+            <td class="px-4 py-3 text-sm"><div class="max-w-xs truncate">${item.descripcion}</div></td>
             <td class="px-4 py-3 text-sm text-right">${item.cantidad}</td>
             <td class="px-4 py-3 text-sm text-right">${formatMoney(item.precio_unitario)}</td>
             <td class="px-4 py-3 text-sm text-right">${item.iva_porcentaje}%</td>
             <td class="px-4 py-3 text-sm text-right font-medium">${formatMoney(item.valor_total)}</td>
             <td class="px-4 py-3 text-center">
                 ${hasWarning 
-                    ? `<span class="text-yellow-600" title="${item.warning_message}">⚠️</span>` 
+                    ? `<span class="text-yellow-600" title="${item.warning_message || 'Advertencia'}">⚠️</span>` 
                     : '<span class="text-green-600">✓</span>'}
             </td>
         `;
@@ -333,6 +365,8 @@ function resetUpload() {
     document.getElementById('loadingSection').classList.add('hidden');
     document.getElementById('reviewSection').classList.add('hidden');
     document.getElementById('saveBtn').disabled = false;
+    document.getElementById('replaceOption').classList.add('hidden');
+    document.getElementById('irregularitiesInfo').classList.add('hidden');
 }
 
 async function saveInvoice() {
@@ -346,6 +380,11 @@ async function saveInvoice() {
     extractedData.supplier_razon_social = document.getElementById('supplier_razon_social').value;
     extractedData.supplier_ciudad = document.getElementById('supplier_ciudad').value;
     extractedData.supplier_telefono = document.getElementById('supplier_telefono').value;
+
+    // Check if replacing
+    const replaceCheckbox = document.getElementById('replaceExisting');
+    const replaceExisting = replaceCheckbox && replaceCheckbox.checked;
+    extractedData.replace_existing = replaceExisting;
 
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.disabled = true;

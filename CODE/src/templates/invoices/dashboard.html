@@ -10,93 +10,181 @@
             <h1 class="text-2xl font-bold text-gray-900">Gestión de Facturas CUFE</h1>
             <p class="text-gray-600 mt-1">Importa y analiza facturas electrónicas de proveedores</p>
         </div>
-        <a href="/invoices/upload" 
-           class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Importar PDF
-        </a>
+        <div class="flex gap-2">
+            <a href="/invoices/products" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Buscar Productos
+            </a>
+            <a href="/invoices/upload" 
+               class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Importar PDF
+            </a>
+        </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-5">
+    <!-- Stats Cards - Primera fila -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border p-4">
             <div class="flex items-center">
-                <div class="p-3 bg-blue-100 rounded-full">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-500">Facturas</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_invoices }}</p>
+                <div class="ml-3">
+                    <p class="text-xs text-gray-500">Facturas</p>
+                    <p class="text-xl font-bold text-gray-900">{{ stats.total_active }}</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5">
+        <div class="bg-white rounded-lg shadow-sm border p-4">
             <div class="flex items-center">
-                <div class="p-3 bg-green-100 rounded-full">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-500">Proveedores</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_suppliers }}</p>
+                <div class="ml-3">
+                    <p class="text-xs text-gray-500">Proveedores</p>
+                    <p class="text-xl font-bold text-gray-900">{{ stats.total_suppliers }}</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5">
+        <div class="bg-white rounded-lg shadow-sm border p-4">
             <div class="flex items-center">
-                <div class="p-3 bg-purple-100 rounded-full">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-purple-100 rounded-lg">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-500">Productos</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_items }}</p>
+                <div class="ml-3">
+                    <p class="text-xs text-gray-500">Productos</p>
+                    <p class="text-xl font-bold text-gray-900">{{ stats.total_items }}</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-5">
+        <div class="bg-white rounded-lg shadow-sm border p-4">
             <div class="flex items-center">
-                <div class="p-3 bg-yellow-100 rounded-full">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm text-gray-500">Total Compras</p>
-                    <p class="text-xl font-bold text-gray-900">${{ "{:,.0f}".format(stats.total_spent).replace(",", ".") }}</p>
+                <div class="ml-3">
+                    <p class="text-xs text-gray-500">Total Compras</p>
+                    <p class="text-lg font-bold text-gray-900">${{ "{:,.0f}".format(stats.total_spent).replace(",", ".") }}</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Stats Cards - Segunda fila: Estado de importación e IVA -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <!-- Estado de importación -->
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">Válidas</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ stats.valid_count }}
+                </span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">Con Alertas</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {{ stats.warning_count }}
+                </span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">Con Errores</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    {{ stats.error_count }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Estado de IVA -->
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">IVA Incluido</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ stats.items_con_iva_incluido }}
+                </span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">IVA No Incluido</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    {{ stats.items_sin_iva_incluido }}
+                </span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border p-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">IVA N/D</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    {{ stats.items_iva_desconocido }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerta de irregularidades pendientes -->
+    {% if stats.unresolved_irregularities > 0 %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span class="text-yellow-800 font-medium">{{ stats.unresolved_irregularities }} irregularidades pendientes de resolver</span>
+            </div>
+            <a href="/invoices/irregularities" class="text-yellow-700 hover:text-yellow-900 text-sm font-medium">
+                Ver todas →
+            </a>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Recent Invoices -->
-        <div class="lg:col-span-2 bg-white rounded-lg shadow">
-            <div class="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Últimas Facturas</h2>
                 <a href="/invoices/list" class="text-sm text-papyrus-blue hover:underline">Ver todas</a>
             </div>
-            <div class="p-5">
+            <div class="p-4">
                 {% if stats.recent_invoices %}
                 <div class="space-y-3">
                     {% for invoice in stats.recent_invoices %}
                     <a href="/invoices/detail/{{ invoice.id }}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-medium text-gray-900">{{ invoice.numero_documento }}</p>
-                                <p class="text-sm text-gray-500">{{ invoice.supplier.razon_social }}</p>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-gray-900 truncate">{{ invoice.numero_documento }}</p>
+                                    {% if invoice.import_status == 'warning' %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">⚠</span>
+                                    {% elif invoice.import_status == 'error' %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">✕</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-sm text-gray-500 truncate">{{ invoice.supplier.razon_social }}</p>
                             </div>
-                            <div class="text-right">
+                            <div class="text-right ml-4">
                                 <p class="font-medium text-gray-900">${{ "{:,.0f}".format(invoice.total_neto).replace(",", ".") }}</p>
                                 <p class="text-xs text-gray-500">{{ invoice.fecha_emision.strftime('%d/%m/%Y') if invoice.fecha_emision else '-' }}</p>
                             </div>
@@ -117,11 +205,11 @@
         </div>
 
         <!-- Top Suppliers -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-5 py-4 border-b border-gray-200">
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Top Proveedores</h2>
             </div>
-            <div class="p-5">
+            <div class="p-4">
                 {% if stats.top_suppliers %}
                 <div class="space-y-3">
                     {% for supplier in stats.top_suppliers %}
@@ -139,42 +227,81 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <a href="/invoices/upload" class="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow flex items-center">
-            <div class="p-3 bg-blue-100 rounded-full mr-4">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <a href="/invoices/upload" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center">
+            <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
             </div>
             <div>
-                <p class="font-medium text-gray-900">Importar PDF</p>
-                <p class="text-sm text-gray-500">Subir nueva factura</p>
+                <p class="font-medium text-gray-900 text-sm">Importar PDF</p>
+                <p class="text-xs text-gray-500">Subir factura</p>
             </div>
         </a>
 
-        <a href="/invoices/list" class="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow flex items-center">
-            <div class="p-3 bg-green-100 rounded-full mr-4">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="/invoices/list" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center">
+            <div class="p-2 bg-green-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
             </div>
             <div>
-                <p class="font-medium text-gray-900">Ver Facturas</p>
-                <p class="text-sm text-gray-500">Listado completo</p>
+                <p class="font-medium text-gray-900 text-sm">Ver Facturas</p>
+                <p class="text-xs text-gray-500">Listado completo</p>
             </div>
         </a>
 
-        <button onclick="openExportModal()" class="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow flex items-center text-left w-full">
-            <div class="p-3 bg-purple-100 rounded-full mr-4">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="/invoices/products" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center">
+            <div class="p-2 bg-purple-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 text-sm">Productos</p>
+                <p class="text-xs text-gray-500">Búsqueda global</p>
+            </div>
+        </a>
+
+        <button onclick="openExportModal()" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center text-left w-full">
+            <div class="p-2 bg-orange-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </div>
             <div>
-                <p class="font-medium text-gray-900">Exportar Datos</p>
-                <p class="text-sm text-gray-500">CSV personalizado</p>
+                <p class="font-medium text-gray-900 text-sm">Exportar</p>
+                <p class="text-xs text-gray-500">CSV personalizado</p>
             </div>
         </button>
+    </div>
+
+    <!-- Segunda fila de acciones -->
+    <div class="mt-4 grid grid-cols-2 gap-4">
+        <a href="/invoices/irregularities" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center">
+            <div class="p-2 bg-yellow-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 text-sm">Irregularidades</p>
+                <p class="text-xs text-gray-500">{{ stats.unresolved_irregularities }} pendientes</p>
+            </div>
+        </a>
+
+        <a href="/invoices/rejected" class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow flex items-center">
+            <div class="p-2 bg-red-100 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 text-sm">Archivos Rechazados</p>
+                <p class="text-xs text-gray-500">Ver historial</p>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -194,7 +321,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                    <select id="exportSupplier" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <select id="exportSupplier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                         <option value="">Todos los proveedores</option>
                         {% for supplier in suppliers %}
                         <option value="{{ supplier.nit }}">{{ supplier.razon_social }}</option>
@@ -203,15 +330,15 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
-                    <input type="date" id="exportDateFrom" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input type="date" id="exportDateFrom" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
-                    <input type="date" id="exportDateTo" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                    <input type="date" id="exportDateTo" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
-                <div class="flex items-end">
+                <div class="flex items-end gap-4">
                     <label class="flex items-center">
-                        <input type="checkbox" id="exportHeaders" checked class="rounded border-gray-300 text-papyrus-blue mr-2">
+                        <input type="checkbox" id="exportHeaders" checked class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
                         <span class="text-sm text-gray-700">Incluir encabezados</span>
                     </label>
                 </div>
@@ -232,7 +359,7 @@
                     <label class="flex items-center text-sm">
                         <input type="checkbox" name="exportColumn" value="{{ col.value }}" 
                                {% if col.value in default_columns %}checked{% endif %}
-                               class="rounded border-gray-300 text-papyrus-blue mr-2">
+                               class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
                         <span class="truncate">{{ col.label }}</span>
                     </label>
                     {% endfor %}
@@ -241,10 +368,10 @@
 
             <!-- Actions -->
             <div class="flex justify-end space-x-3">
-                <button onclick="closeExportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                <button onclick="closeExportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancelar
                 </button>
-                <button onclick="exportData()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                <button onclick="exportData()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                     Exportar CSV
                 </button>
             </div>
