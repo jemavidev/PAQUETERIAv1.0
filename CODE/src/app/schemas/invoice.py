@@ -319,6 +319,7 @@ class InvoiceSearchFilters(BaseModel):
     producto_descripcion: Optional[str] = None
     iva_porcentaje: Optional[float] = None
     iva_incluido: Optional[bool] = None
+    iva_desconocido: bool = False  # True = filtrar solo items con IVA desconocido
     
     # Filtros de estado
     is_active: Optional[bool] = True

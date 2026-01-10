@@ -85,6 +85,14 @@ async def invoices_list(
     status: str = None,
     iva_filter: str = None,
     show_inactive: bool = False,
+    fecha_desde: str = None,
+    fecha_hasta: str = None,
+    total_min: int = None,
+    total_max: int = None,
+    producto: str = None,
+    doc_type: str = None,
+    order_by: str = "fecha_emision",
+    order_dir: str = "desc",
 ):
     """Lista de facturas importadas con filtros avanzados"""
     context = get_auth_context_from_request(request)
@@ -92,12 +100,47 @@ async def invoices_list(
     
     service = InvoiceService(db)
     
+    # Parsear fechas
+    fecha_desde_dt = None
+    fecha_hasta_dt = None
+    if fecha_desde:
+        try:
+            fecha_desde_dt = datetime.fromisoformat(fecha_desde)
+        except:
+            pass
+    if fecha_hasta:
+        try:
+            fecha_hasta_dt = datetime.fromisoformat(fecha_hasta)
+        except:
+            pass
+    
+    # Determinar filtro de IVA
+    iva_incluido = None
+    iva_desconocido = False
+    if iva_filter == "incluido":
+        iva_incluido = True
+    elif iva_filter == "no_incluido":
+        iva_incluido = False
+    elif iva_filter == "desconocido":
+        iva_desconocido = True
+    
     # Construir filtros
     filters = InvoiceSearchFilters(
         query=search,
         supplier_nit=supplier,
         import_status=ImportStatusEnum(status) if status else None,
         is_active=None if show_inactive else True,
+        fecha_desde=fecha_desde_dt,
+        fecha_hasta=fecha_hasta_dt,
+        total_min=total_min,
+        total_max=total_max,
+        producto_descripcion=producto,
+        producto_codigo=producto,
+        document_type=DocumentTypeEnum(doc_type) if doc_type else None,
+        iva_incluido=iva_incluido,
+        iva_desconocido=iva_desconocido,
+        order_by=order_by,
+        order_dir=order_dir,
         page=page,
         per_page=20,
     )
@@ -105,16 +148,60 @@ async def invoices_list(
     invoices, total = service.search_invoices(filters)
     suppliers = service.get_all_suppliers()
     
+    # Obtener nombre del proveedor actual
+    current_supplier_name = None
+    if supplier:
+        for s in suppliers:
+            if s.nit == supplier:
+                current_supplier_name = s.razon_social
+                break
+    
+    # Construir query string para paginación (sin page)
+    query_params = []
+    if search: query_params.append(f"search={search}")
+    if supplier: query_params.append(f"supplier={supplier}")
+    if status: query_params.append(f"status={status}")
+    if iva_filter: query_params.append(f"iva_filter={iva_filter}")
+    if fecha_desde: query_params.append(f"fecha_desde={fecha_desde}")
+    if fecha_hasta: query_params.append(f"fecha_hasta={fecha_hasta}")
+    if total_min: query_params.append(f"total_min={total_min}")
+    if total_max: query_params.append(f"total_max={total_max}")
+    if producto: query_params.append(f"producto={producto}")
+    if doc_type: query_params.append(f"doc_type={doc_type}")
+    if show_inactive: query_params.append("show_inactive=on")
+    if order_by != "fecha_emision": query_params.append(f"order_by={order_by}")
+    if order_dir != "desc": query_params.append(f"order_dir={order_dir}")
+    
+    # Calcular fechas para atajos
+    from datetime import timedelta
+    today = datetime.now().strftime('%Y-%m-%d')
+    week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    month_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    
     context["invoices"] = invoices
     context["total"] = total
     context["page"] = page
     context["pages"] = (total + 19) // 20
     context["suppliers"] = suppliers
     context["current_supplier"] = supplier
+    context["current_supplier_name"] = current_supplier_name
     context["search"] = search or ""
     context["current_status"] = status
     context["show_inactive"] = show_inactive
     context["iva_filter"] = iva_filter
+    context["fecha_desde"] = fecha_desde
+    context["fecha_hasta"] = fecha_hasta
+    context["total_min"] = total_min
+    context["total_max"] = total_max
+    context["producto"] = producto
+    context["doc_type"] = doc_type
+    context["order_by"] = order_by
+    context["order_dir"] = order_dir
+    context["query_string"] = "&".join(query_params)
+    context["today"] = today
+    context["week_ago"] = week_ago
+    context["month_ago"] = month_ago
+    context["show_advanced"] = bool(fecha_desde or fecha_hasta or total_min or total_max or producto or doc_type or iva_filter)
     
     return templates.TemplateResponse("invoices/list.html", context)
 

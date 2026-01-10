@@ -571,7 +571,7 @@ class InvoiceService:
                 query = query.filter(~Invoice.id.in_(subquery))
         
         # Filtros de producto (requiere join con items)
-        if filters.producto_codigo or filters.producto_descripcion or filters.iva_porcentaje is not None or filters.iva_incluido is not None:
+        if filters.producto_codigo or filters.producto_descripcion or filters.iva_porcentaje is not None or filters.iva_incluido is not None or filters.iva_desconocido:
             query = query.join(InvoiceItem)
             
             if filters.producto_codigo:
@@ -583,7 +583,10 @@ class InvoiceService:
             if filters.iva_porcentaje is not None:
                 query = query.filter(InvoiceItem.iva_porcentaje == filters.iva_porcentaje)
             
-            if filters.iva_incluido is not None:
+            # Filtro de IVA: incluido, no incluido, o desconocido
+            if filters.iva_desconocido:
+                query = query.filter(InvoiceItem.iva_incluido.is_(None))
+            elif filters.iva_incluido is not None:
                 query = query.filter(InvoiceItem.iva_incluido == filters.iva_incluido)
             
             query = query.distinct()

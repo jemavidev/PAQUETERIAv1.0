@@ -14,6 +14,7 @@
                 Volver al dashboard
             </a>
             <h1 class="text-2xl font-bold text-gray-900">Facturas Importadas</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ total }} factura{{ 's' if total != 1 else '' }} encontrada{{ 's' if total != 1 else '' }}</p>
         </div>
         <a href="/invoices/upload" 
            class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -24,53 +25,217 @@
         </a>
     </div>
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <form method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                    <input type="text" name="search" value="{{ search }}" placeholder="Número, CUFE, proveedor..."
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                    <select name="supplier" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                        <option value="">Todos los proveedores</option>
-                        {% for s in suppliers %}
-                        <option value="{{ s.nit }}" {% if current_supplier == s.nit %}selected{% endif %}>{{ s.razon_social }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                    <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                        <option value="">Todos los estados</option>
-                        <option value="valid" {% if current_status == 'valid' %}selected{% endif %}>✓ Válidas</option>
-                        <option value="warning" {% if current_status == 'warning' %}selected{% endif %}>⚠ Con alertas</option>
-                        <option value="error" {% if current_status == 'error' %}selected{% endif %}>✕ Con errores</option>
-                    </select>
-                </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                        Filtrar
-                    </button>
-                    {% if search or current_supplier or current_status %}
-                    <a href="/invoices/list" class="px-4 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg">
-                        Limpiar
-                    </a>
-                    {% endif %}
+    <!-- Búsqueda Principal -->
+    <div class="bg-white rounded-lg shadow-sm border mb-4">
+        <form method="GET" id="searchForm">
+            <!-- Barra de búsqueda principal -->
+            <div class="p-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="mainSearch" value="{{ search }}" 
+                           placeholder="Buscar por número, CUFE, proveedor, NIT, producto, código..."
+                           class="block w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent text-base"
+                           autocomplete="off">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
+                        <button type="button" onclick="toggleAdvancedFilters()" 
+                                class="px-3 py-1.5 text-sm text-gray-600 hover:text-papyrus-blue hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            <span id="filterToggleText">Filtros</span>
+                        </button>
+                        <button type="submit" class="px-4 py-1.5 bg-papyrus-blue text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+                            Buscar
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center">
-                <label class="flex items-center text-sm text-gray-600">
-                    <input type="checkbox" name="show_inactive" {% if show_inactive %}checked{% endif %} 
-                           class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue"
-                           onchange="this.form.submit()">
-                    Mostrar facturas eliminadas/reemplazadas
-                </label>
+
+            <!-- Chips de filtros activos -->
+            {% if search or current_supplier or current_status or fecha_desde or fecha_hasta or total_min or total_max or iva_filter or producto %}
+            <div class="px-4 pb-3 flex flex-wrap gap-2 items-center">
+                <span class="text-xs text-gray-500">Filtros activos:</span>
+                {% if search %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    "{{ search }}"
+                    <button type="button" onclick="removeFilter('search')" class="ml-1 hover:text-blue-600">×</button>
+                </span>
+                {% endif %}
+                {% if current_supplier %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Proveedor: {{ current_supplier_name or current_supplier }}
+                    <button type="button" onclick="removeFilter('supplier')" class="ml-1 hover:text-green-600">×</button>
+                </span>
+                {% endif %}
+                {% if current_status %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Estado: {{ current_status }}
+                    <button type="button" onclick="removeFilter('status')" class="ml-1 hover:text-yellow-600">×</button>
+                </span>
+                {% endif %}
+                {% if fecha_desde %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Desde: {{ fecha_desde }}
+                    <button type="button" onclick="removeFilter('fecha_desde')" class="ml-1 hover:text-purple-600">×</button>
+                </span>
+                {% endif %}
+                {% if fecha_hasta %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Hasta: {{ fecha_hasta }}
+                    <button type="button" onclick="removeFilter('fecha_hasta')" class="ml-1 hover:text-purple-600">×</button>
+                </span>
+                {% endif %}
+                {% if total_min %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Min: ${{ total_min }}
+                    <button type="button" onclick="removeFilter('total_min')" class="ml-1 hover:text-orange-600">×</button>
+                </span>
+                {% endif %}
+                {% if total_max %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Max: ${{ total_max }}
+                    <button type="button" onclick="removeFilter('total_max')" class="ml-1 hover:text-orange-600">×</button>
+                </span>
+                {% endif %}
+                {% if iva_filter %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                    IVA: {{ iva_filter }}
+                    <button type="button" onclick="removeFilter('iva_filter')" class="ml-1 hover:text-cyan-600">×</button>
+                </span>
+                {% endif %}
+                {% if producto %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                    Producto: {{ producto }}
+                    <button type="button" onclick="removeFilter('producto')" class="ml-1 hover:text-pink-600">×</button>
+                </span>
+                {% endif %}
+                <a href="/invoices/list" class="text-xs text-red-600 hover:text-red-800 ml-2">Limpiar todo</a>
+            </div>
+            {% endif %}
+""
+
+            <!-- Filtros Avanzados (colapsables) -->
+            <div id="advancedFilters" class="border-t border-gray-200 bg-gray-50 p-4 {{ '' if show_advanced else 'hidden' }}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Proveedor -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Proveedor</label>
+                        <select name="supplier" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                            <option value="">Todos</option>
+                            {% for s in suppliers %}
+                            <option value="{{ s.nit }}" {% if current_supplier == s.nit %}selected{% endif %}>{{ s.razon_social }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Estado -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
+                        <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                            <option value="">Todos</option>
+                            <option value="valid" {% if current_status == 'valid' %}selected{% endif %}>✓ Válidas</option>
+                            <option value="warning" {% if current_status == 'warning' %}selected{% endif %}>⚠ Con alertas</option>
+                            <option value="error" {% if current_status == 'error' %}selected{% endif %}>✕ Con errores</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Tipo Documento -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+                        <select name="doc_type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                            <option value="">Todos</option>
+                            <option value="FACTURA" {% if doc_type == 'FACTURA' %}selected{% endif %}>Factura Electrónica</option>
+                            <option value="POS" {% if doc_type == 'POS' %}selected{% endif %}>Documento POS</option>
+                        </select>
+                    </div>
+                    
+                    <!-- IVA -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Estado IVA</label>
+                        <select name="iva_filter" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                            <option value="">Todos</option>
+                            <option value="incluido" {% if iva_filter == 'incluido' %}selected{% endif %}>IVA Incluido</option>
+                            <option value="no_incluido" {% if iva_filter == 'no_incluido' %}selected{% endif %}>IVA No Incluido</option>
+                            <option value="desconocido" {% if iva_filter == 'desconocido' %}selected{% endif %}>IVA Desconocido</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Segunda fila: Fechas y Montos -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                    <!-- Fecha Desde -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" value="{{ fecha_desde or '' }}"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    </div>
+                    
+                    <!-- Fecha Hasta -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" value="{{ fecha_hasta or '' }}"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    </div>
+                    
+                    <!-- Total Mínimo -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Total Mínimo</label>
+                        <input type="number" name="total_min" value="{{ total_min or '' }}" placeholder="$0"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    </div>
+                    
+                    <!-- Total Máximo -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Total Máximo</label>
+                        <input type="number" name="total_max" value="{{ total_max or '' }}" placeholder="Sin límite"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    </div>
+                </div>
+                
+                <!-- Tercera fila: Producto y opciones -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                    <!-- Código/Producto -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Código o Producto</label>
+                        <input type="text" name="producto" value="{{ producto or '' }}" placeholder="Buscar por código o descripción de producto"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    </div>
+                    
+                    <!-- Opciones -->
+                    <div class="lg:col-span-2 flex items-end gap-4">
+                        <label class="flex items-center text-sm text-gray-600">
+                            <input type="checkbox" name="show_inactive" {% if show_inactive %}checked{% endif %} 
+                                   class="rounded border-gray-300 text-papyrus-blue mr-2 focus:ring-papyrus-blue">
+                            Incluir inactivas
+                        </label>
+                        <div class="flex-1 flex justify-end gap-2">
+                            <a href="/invoices/list" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                Limpiar
+                            </a>
+                            <button type="submit" class="px-4 py-2 text-sm bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Aplicar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
+    </div>
+""
+
+    <!-- Atajos rápidos -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <span class="text-xs text-gray-500 py-1">Atajos:</span>
+        <a href="/invoices/list?fecha_desde={{ today }}" class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">Hoy</a>
+        <a href="/invoices/list?fecha_desde={{ week_ago }}" class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">Última semana</a>
+        <a href="/invoices/list?fecha_desde={{ month_ago }}" class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">Último mes</a>
+        <a href="/invoices/list?status=warning" class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors">⚠ Con alertas</a>
+        <a href="/invoices/list?status=error" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">✕ Con errores</a>
+        <a href="/invoices/list?iva_filter=desconocido" class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">IVA pendiente</a>
     </div>
 
     <!-- Results -->
@@ -80,12 +245,37 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?{{ query_string }}&order_by=numero_documento&order_dir={{ 'desc' if order_by == 'numero_documento' and order_dir == 'asc' else 'asc' }}" class="flex items-center gap-1 hover:text-gray-700">
+                                Documento
+                                {% if order_by == 'numero_documento' %}
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="{{ 'M5 10l5-5 5 5' if order_dir == 'asc' else 'M5 10l5 5 5-5' }}"/></svg>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?{{ query_string }}&order_by=supplier&order_dir={{ 'desc' if order_by == 'supplier' and order_dir == 'asc' else 'asc' }}" class="flex items-center gap-1 hover:text-gray-700">
+                                Proveedor
+                            </a>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?{{ query_string }}&order_by=fecha_emision&order_dir={{ 'desc' if order_by == 'fecha_emision' and order_dir == 'asc' else 'asc' }}" class="flex items-center gap-1 hover:text-gray-700">
+                                Fecha
+                                {% if order_by == 'fecha_emision' or not order_by %}
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="{{ 'M5 10l5-5 5 5' if order_dir == 'asc' else 'M5 10l5 5 5-5' }}"/></svg>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">IVA</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?{{ query_string }}&order_by=total_neto&order_dir={{ 'desc' if order_by == 'total_neto' and order_dir == 'asc' else 'asc' }}" class="flex items-center justify-end gap-1 hover:text-gray-700">
+                                Total
+                                {% if order_by == 'total_neto' %}
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="{{ 'M5 10l5-5 5 5' if order_dir == 'asc' else 'M5 10l5 5 5-5' }}"/></svg>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
                     </tr>
@@ -103,13 +293,13 @@
                         </td>
                         <td class="px-4 py-3">
                             {% if invoice.document_type.value == 'FACTURA' %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Factura</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">FE</span>
                             {% else %}
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">POS</span>
                             {% endif %}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-700">
-                            <div class="truncate max-w-[200px]" title="{{ invoice.supplier.razon_social }}">
+                            <div class="truncate max-w-[180px]" title="{{ invoice.supplier.razon_social }}">
                                 {{ invoice.supplier.razon_social }}
                             </div>
                             <div class="text-xs text-gray-500">{{ invoice.supplier.nit }}</div>
@@ -119,31 +309,31 @@
                         <td class="px-4 py-3 text-sm text-right font-medium">${{ "{:,.0f}".format(invoice.total_neto).replace(",", ".") }}</td>
                         <td class="px-4 py-3 text-center">
                             {% if invoice.import_status == 'valid' %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">✓</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" title="Válida">✓</span>
                             {% elif invoice.import_status == 'warning' %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⚠</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800" title="Con alertas">⚠</span>
                             {% elif invoice.import_status == 'error' %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">✕</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Con errores">✕</span>
                             {% else %}
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">-</span>
                             {% endif %}
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <div class="flex justify-center space-x-2">
-                                <a href="/invoices/detail/{{ invoice.id }}" class="text-gray-400 hover:text-papyrus-blue" title="Ver detalle">
+                            <div class="flex justify-center space-x-1">
+                                <a href="/invoices/detail/{{ invoice.id }}" class="p-1 text-gray-400 hover:text-papyrus-blue rounded" title="Ver detalle">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
                                 {% if invoice.is_active %}
-                                <button onclick="deleteInvoice({{ invoice.id }}, '{{ invoice.numero_documento }}')" class="text-gray-400 hover:text-red-600" title="Eliminar">
+                                <button onclick="deleteInvoice({{ invoice.id }}, '{{ invoice.numero_documento }}')" class="p-1 text-gray-400 hover:text-red-600 rounded" title="Eliminar">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
                                 </button>
                                 {% else %}
-                                <button onclick="restoreInvoice({{ invoice.id }})" class="text-gray-400 hover:text-green-600" title="Restaurar">
+                                <button onclick="restoreInvoice({{ invoice.id }})" class="p-1 text-gray-400 hover:text-green-600 rounded" title="Restaurar">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                     </svg>
@@ -159,19 +349,21 @@
 
         <!-- Pagination -->
         {% if pages > 1 %}
-        <div class="px-4 py-3 border-t border-gray-200 flex justify-between items-center">
+        <div class="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p class="text-sm text-gray-500">
-                Mostrando {{ ((page - 1) * 20) + 1 }} - {{ [page * 20, total] | min }} de {{ total }} facturas
+                Mostrando {{ ((page - 1) * 20) + 1 }} - {{ [page * 20, total] | min }} de {{ total }}
             </p>
-            <div class="flex space-x-2">
+            <div class="flex items-center space-x-1">
                 {% if page > 1 %}
-                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if show_inactive %}&show_inactive=on{% endif %}" 
-                   class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Anterior</a>
+                <a href="?page=1{{ '&' + query_string if query_string else '' }}" class="px-2 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50" title="Primera">«</a>
+                <a href="?page={{ page - 1 }}{{ '&' + query_string if query_string else '' }}" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Anterior</a>
                 {% endif %}
-                <span class="px-3 py-1 text-sm text-gray-500">Página {{ page }} de {{ pages }}</span>
+                
+                <span class="px-3 py-1 text-sm text-gray-600">{{ page }} / {{ pages }}</span>
+                
                 {% if page < pages %}
-                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if show_inactive %}&show_inactive=on{% endif %}" 
-                   class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Siguiente</a>
+                <a href="?page={{ page + 1 }}{{ '&' + query_string if query_string else '' }}" class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">Siguiente</a>
+                <a href="?page={{ pages }}{{ '&' + query_string if query_string else '' }}" class="px-2 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50" title="Última">»</a>
                 {% endif %}
             </div>
         </div>
@@ -182,21 +374,50 @@
             <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            <p class="text-gray-500 mb-4">No se encontraron facturas</p>
+            <p class="text-gray-500 mb-2">No se encontraron facturas</p>
+            {% if search or current_supplier or current_status or fecha_desde or fecha_hasta %}
+            <p class="text-sm text-gray-400 mb-4">Intenta ajustar los filtros de búsqueda</p>
+            <a href="/invoices/list" class="text-papyrus-blue hover:underline">Limpiar filtros</a>
+            {% else %}
             <a href="/invoices/upload" class="text-papyrus-blue hover:underline">Importar primera factura</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
 </div>
 
 <script>
-async function deleteInvoice(id, numero) {
-    if (!confirm(`¿Eliminar la factura ${numero}?\n\nLa factura quedará inactiva pero podrá restaurarse.`)) return;
+// Toggle filtros avanzados
+function toggleAdvancedFilters() {
+    const filters = document.getElementById('advancedFilters');
+    const text = document.getElementById('filterToggleText');
+    filters.classList.toggle('hidden');
+    text.textContent = filters.classList.contains('hidden') ? 'Filtros' : 'Ocultar';
+}
 
+// Mostrar filtros si hay alguno activo
+document.addEventListener('DOMContentLoaded', function() {
+    const hasAdvancedFilters = {{ 'true' if (fecha_desde or fecha_hasta or total_min or total_max or iva_filter or producto or doc_type) else 'false' }};
+    if (hasAdvancedFilters) {
+        document.getElementById('advancedFilters').classList.remove('hidden');
+        document.getElementById('filterToggleText').textContent = 'Ocultar';
+    }
+});
+
+// Remover filtro individual
+function removeFilter(filterName) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(filterName);
+    url.searchParams.delete('page'); // Reset página
+    window.location.href = url.toString();
+}
+
+// Eliminar factura
+async function deleteInvoice(id, numero) {
+    if (!confirm('¿Eliminar la factura ' + numero + '?\n\nLa factura quedará inactiva pero podrá restaurarse.')) return;
     try {
-        const response = await fetch(`/invoices/api/${id}`, {method: 'DELETE'});
+        const response = await fetch('/invoices/api/' + id, {method: 'DELETE'});
         const result = await response.json();
-        
         if (result.success) {
             window.location.reload();
         } else {
@@ -207,13 +428,12 @@ async function deleteInvoice(id, numero) {
     }
 }
 
+// Restaurar factura
 async function restoreInvoice(id) {
     if (!confirm('¿Restaurar esta factura?')) return;
-
     try {
-        const response = await fetch(`/invoices/api/${id}/restore`, {method: 'POST'});
+        const response = await fetch('/invoices/api/' + id + '/restore', {method: 'POST'});
         const result = await response.json();
-        
         if (result.success) {
             window.location.reload();
         } else {
@@ -223,5 +443,19 @@ async function restoreInvoice(id) {
         alert('Error de conexión');
     }
 }
+
+// Atajos de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl+F o / para enfocar búsqueda
+    if ((e.ctrlKey && e.key === 'f') || (e.key === '/' && document.activeElement.tagName !== 'INPUT')) {
+        e.preventDefault();
+        document.getElementById('mainSearch').focus();
+    }
+    // Escape para limpiar búsqueda
+    if (e.key === 'Escape' && document.activeElement.id === 'mainSearch') {
+        document.getElementById('mainSearch').value = '';
+    }
+});
 </script>
 {% endblock %}
+""
