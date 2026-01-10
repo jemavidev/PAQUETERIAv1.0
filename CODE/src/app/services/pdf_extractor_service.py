@@ -364,6 +364,8 @@ class PDFExtractorService:
         """Extrae items de las tablas de TODAS las páginas del PDF"""
         items = []
         item_number = 0
+        found_products_table = False  # Flag para saber si ya encontramos la tabla de productos
+        expected_columns = 0  # Número de columnas de la tabla de productos
         
         for page_num, page in enumerate(pdf.pages):
             try:
@@ -371,12 +373,12 @@ class PDFExtractorService:
                 logger.debug(f"Página {page_num + 1}: {len(tables)} tablas encontradas")
                 
                 for table_num, table in enumerate(tables):
-                    if not table or len(table) < 2:
+                    if not table or len(table) < 1:
                         continue
                     
                     # Buscar fila de encabezado
                     header_row = None
-                    header_keywords = ['código', 'codigo', 'descripcion', 'descripción', 'cantidad', 'cant', 'producto', 'item', 'artículo']
+                    header_keywords = ['código', 'codigo', 'descripcion', 'descripción', 'cantidad', 'cant', 'producto', 'item', 'artículo', 'nro']
                     
                     for i, row in enumerate(table):
                         if not row:
@@ -384,20 +386,44 @@ class PDFExtractorService:
                         row_text = ' '.join([str(c or '').lower() for c in row])
                         if any(kw in row_text for kw in header_keywords):
                             header_row = i
+                            expected_columns = len(row)
+                            found_products_table = True
                             logger.debug(f"Encabezado encontrado en fila {i}: {row_text[:50]}...")
                             break
+                    
+                    # Si no hay encabezado pero ya encontramos la tabla de productos antes,
+                    # verificar si esta tabla es continuación (misma estructura)
+                    if header_row is None and found_products_table:
+                        # Verificar si la primera fila parece un item de producto
+                        if len(table) > 0 and len(table[0]) >= 4:
+                            first_row = table[0]
+                            first_cell = str(first_row[0] or '').strip()
+                            # Si la primera celda es un número (número de item), es continuación
+                            if first_cell.isdigit() and int(first_cell) > 0:
+                                header_row = -1  # Indica que no hay encabezado, empezar desde fila 0
+                                logger.debug(f"Tabla de continuación detectada en página {page_num + 1}")
                     
                     if header_row is None:
                         # Intentar detectar tabla de productos por contenido
                         if len(table) > 1 and len(table[0]) >= 4:
-                            # Asumir que la primera fila es encabezado si tiene suficientes columnas
-                            header_row = 0
+                            # Verificar si parece tabla de productos
+                            first_row = table[0]
+                            first_cell = str(first_row[0] or '').strip()
+                            if first_cell.isdigit():
+                                header_row = -1  # Sin encabezado
+                                found_products_table = True
+                            else:
+                                header_row = 0  # Asumir primera fila es encabezado
+                                found_products_table = True
                     
                     if header_row is None:
                         continue
                     
+                    # Determinar desde qué fila empezar a procesar
+                    start_row = header_row + 1 if header_row >= 0 else 0
+                    
                     # Procesar filas de datos
-                    for row in table[header_row + 1:]:
+                    for row in table[start_row:]:
                         if not row or len(row) < 3:
                             continue
                         
