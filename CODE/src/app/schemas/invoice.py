@@ -240,6 +240,7 @@ class ExtractedInvoiceData(BaseModel):
     # Validación
     is_valid: bool = True
     is_duplicate: bool = False
+    can_restore: bool = False  # True si hay una factura inactiva que se puede restaurar
     warnings: List[ExtractionWarning] = []
     irregularities: List[Dict[str, Any]] = []
     

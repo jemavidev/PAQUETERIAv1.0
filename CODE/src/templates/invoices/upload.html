@@ -251,24 +251,41 @@ function displayExtractedData(data, warnings, irregularities) {
     warningsContainer.innerHTML = '';
     
     if (data.is_duplicate) {
-        warningsContainer.innerHTML = `
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    <span class="font-medium text-red-800">Este documento ya fue importado anteriormente</span>
+        // Verificar si es un duplicado inactivo que se puede restaurar
+        if (data.can_restore) {
+            warningsContainer.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium text-blue-800">Este documento fue importado anteriormente pero está inactivo</span>
+                    </div>
+                    <p class="text-sm text-blue-700 mt-2">Se restaurará automáticamente al guardar.</p>
                 </div>
-                <p class="text-sm text-red-700 mt-2">Puedes marcar la opción "Reemplazar factura existente" para actualizar los datos.</p>
-            </div>
-        `;
-        document.getElementById('saveBtn').disabled = true;
-        document.getElementById('replaceOption').classList.remove('hidden');
-        
-        // Habilitar guardar cuando se marca reemplazar
-        document.getElementById('replaceExisting').addEventListener('change', function() {
-            document.getElementById('saveBtn').disabled = !this.checked;
-        });
+            `;
+            // Permitir guardar directamente (se restaurará la factura inactiva)
+            document.getElementById('saveBtn').disabled = false;
+        } else {
+            warningsContainer.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span class="font-medium text-red-800">Este documento ya fue importado anteriormente</span>
+                    </div>
+                    <p class="text-sm text-red-700 mt-2">Puedes marcar la opción "Reemplazar factura existente" para actualizar los datos.</p>
+                </div>
+            `;
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('replaceOption').classList.remove('hidden');
+            
+            // Habilitar guardar cuando se marca reemplazar
+            document.getElementById('replaceExisting').addEventListener('change', function() {
+                document.getElementById('saveBtn').disabled = !this.checked;
+            });
+        }
     } else if (warnings && warnings.length > 0) {
         const errorWarnings = warnings.filter(w => w.severity === 'error');
         const otherWarnings = warnings.filter(w => w.severity !== 'error');

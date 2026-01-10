@@ -372,16 +372,28 @@ async def extract_pdf(
         file_hash = service.calculate_file_hash(content)
         extracted.file_hash = file_hash
         
-        # Verificar duplicado por CUFE
+        # Verificar duplicado por CUFE (activas e inactivas)
         if extracted.cufe_cude:
-            existing = service.check_duplicate(extracted.cufe_cude)
-            if existing:
+            existing_active = service.check_duplicate(extracted.cufe_cude)
+            existing_any = service.check_duplicate_any(extracted.cufe_cude)
+            
+            if existing_active:
                 extracted.is_duplicate = True
                 extracted.warnings.append({
                     "field": "cufe_cude",
-                    "message": f"Este documento ya fue importado (Factura #{existing.id})",
+                    "message": f"Este documento ya fue importado (Factura #{existing_active.id})",
                     "severity": "error",
                     "tipo": "duplicado"
+                })
+            elif existing_any:
+                # Hay una factura inactiva - se puede restaurar
+                extracted.is_duplicate = True
+                extracted.can_restore = True
+                extracted.warnings.append({
+                    "field": "cufe_cude",
+                    "message": f"Este documento fue importado anteriormente pero está inactivo (Factura #{existing_any.id}). Se restaurará automáticamente al guardar.",
+                    "severity": "warning",
+                    "tipo": "duplicado_inactivo"
                 })
         
         # Verificar duplicado por hash

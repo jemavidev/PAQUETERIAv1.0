@@ -267,12 +267,22 @@ class InvoiceService:
     # GESTIÓN DE FACTURAS - CRUD
     # ========================================
     
-    def check_duplicate(self, cufe_cude: str) -> Optional[Invoice]:
-        """Verifica si ya existe una factura con el mismo CUFE/CUDE"""
-        return self.db.query(Invoice).filter(
-            Invoice.cufe_cude == cufe_cude,
-            Invoice.is_active == True
-        ).first()
+    def check_duplicate(self, cufe_cude: str, include_inactive: bool = False) -> Optional[Invoice]:
+        """
+        Verifica si ya existe una factura con el mismo CUFE/CUDE.
+        Por defecto solo busca activas, pero puede incluir inactivas.
+        """
+        query = self.db.query(Invoice).filter(Invoice.cufe_cude == cufe_cude)
+        if not include_inactive:
+            query = query.filter(Invoice.is_active == True)
+        return query.first()
+    
+    def check_duplicate_any(self, cufe_cude: str) -> Optional[Invoice]:
+        """
+        Verifica si existe una factura con el mismo CUFE/CUDE (activa o inactiva).
+        Útil para detectar conflictos con el constraint UNIQUE de la BD.
+        """
+        return self.db.query(Invoice).filter(Invoice.cufe_cude == cufe_cude).first()
     
     def check_file_hash(self, file_hash: str) -> Optional[Invoice]:
         """Verifica si ya existe una factura con el mismo hash de archivo"""
@@ -293,21 +303,37 @@ class InvoiceService:
         # Calcular hash del archivo si se proporciona
         file_hash = self.calculate_file_hash(file_content) if file_content else None
         
-        # Verificar duplicado por CUFE
-        existing = self.check_duplicate(data.cufe_cude)
-        if existing:
+        # Verificar duplicado por CUFE (activas e inactivas para evitar conflicto con constraint UNIQUE)
+        existing_active = self.check_duplicate(data.cufe_cude)
+        existing_any = self.check_duplicate_any(data.cufe_cude)
+        
+        if existing_active:
+            # Hay una factura activa con este CUFE
             if replace_existing:
                 # Eliminar la factura existente y sus items (hard delete)
-                # Primero eliminar items
-                self.db.query(InvoiceItem).filter(InvoiceItem.invoice_id == existing.id).delete()
-                # Eliminar irregularidades asociadas
-                self.db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == existing.id).delete()
-                # Eliminar la factura
-                self.db.delete(existing)
+                self.db.query(InvoiceItem).filter(InvoiceItem.invoice_id == existing_active.id).delete()
+                self.db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == existing_active.id).delete()
+                self.db.delete(existing_active)
                 self.db.commit()
-                logger.info(f"Factura existente #{existing.id} eliminada para reemplazo")
+                logger.info(f"Factura activa #{existing_active.id} eliminada para reemplazo")
             else:
-                raise ValueError(f"Ya existe una factura con CUFE: {data.cufe_cude}")
+                raise ValueError(f"Ya existe una factura activa con CUFE: {data.cufe_cude}")
+        elif existing_any:
+            # Hay una factura inactiva con este CUFE (soft deleted)
+            if replace_existing:
+                # Eliminar la factura inactiva (hard delete) para poder crear una nueva
+                self.db.query(InvoiceItem).filter(InvoiceItem.invoice_id == existing_any.id).delete()
+                self.db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == existing_any.id).delete()
+                self.db.delete(existing_any)
+                self.db.commit()
+                logger.info(f"Factura inactiva #{existing_any.id} eliminada para reemplazo")
+            else:
+                # Restaurar la factura inactiva en lugar de crear una nueva
+                existing_any.is_active = True
+                existing_any.import_status = 'valid'
+                self.db.commit()
+                logger.info(f"Factura inactiva #{existing_any.id} restaurada")
+                return existing_any
         
         # Validar datos
         is_valid, irregularities = self.validate_invoice_data(data)
