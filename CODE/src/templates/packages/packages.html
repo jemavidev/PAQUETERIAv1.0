@@ -1068,16 +1068,24 @@ function loadPackages(page = 1) {
     })
     .then(response => {
         if (!response.ok) {
+            // Manejar errores específicos
+            if (response.status === 401) {
+                console.error('❌ Error 401: No autenticado - redirigiendo a login');
+                window.location.href = '/auth/login?redirect=/packages';
+                throw new Error('No autenticado');
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
-        log('Datos recibidos desde API:', data);
+        console.log('📦 Datos recibidos desde API:', data);
         
         // La API ahora retorna un objeto con packages y pagination
         const packages = Array.isArray(data) ? data : (data.packages || []);
         const pagination = data.pagination || null;
+        
+        console.log(`📦 Paquetes recibidos: ${packages.length}, Paginación:`, pagination);
 
         // Usar información de paginación del backend
         if (pagination) {
@@ -1115,8 +1123,8 @@ function loadPackages(page = 1) {
         displayPackagesByState(packages);
         displayPaginationControls(pagination);
     })
-    .catch(error => {
-        error('Error cargando paquetes:', error);
+    .catch(err => {
+        console.error('❌ Error cargando paquetes:', err);
         showLoadingStates(false);
         showErrorState();
     });

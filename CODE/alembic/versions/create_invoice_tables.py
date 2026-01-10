@@ -1,7 +1,7 @@
 """Create invoice tables for CUFE management
 
 Revision ID: create_invoice_tables
-Revises: 
+Revises: add_display_name_001
 Create Date: 2026-01-08
 
 """
@@ -11,95 +11,93 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'create_invoice_tables'
-down_revision = None
+down_revision = 'add_display_name_001'
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
-    # Create suppliers table
-    op.create_table(
-        'suppliers',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('nit', sa.String(20), nullable=False),
-        sa.Column('razon_social', sa.String(255), nullable=False),
-        sa.Column('nombre_comercial', sa.String(255), nullable=True),
-        sa.Column('direccion', sa.String(255), nullable=True),
-        sa.Column('telefono', sa.String(50), nullable=True),
-        sa.Column('correo', sa.String(100), nullable=True),
-        sa.Column('departamento', sa.String(100), nullable=True),
-        sa.Column('ciudad', sa.String(100), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=True),
-        sa.Column('updated_at', sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_suppliers_id'), 'suppliers', ['id'], unique=False)
-    op.create_index(op.f('ix_suppliers_nit'), 'suppliers', ['nit'], unique=True)
+    # Create suppliers table (idempotente)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS suppliers (
+            id SERIAL PRIMARY KEY,
+            nit VARCHAR(20) NOT NULL,
+            razon_social VARCHAR(255) NOT NULL,
+            nombre_comercial VARCHAR(255),
+            direccion VARCHAR(255),
+            telefono VARCHAR(50),
+            correo VARCHAR(100),
+            departamento VARCHAR(100),
+            ciudad VARCHAR(100),
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_suppliers_id ON suppliers (id)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_suppliers_nit ON suppliers (nit)")
 
-    # Create invoices table
-    op.create_table(
-        'invoices',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('cufe_cude', sa.String(100), nullable=False),
-        sa.Column('document_type', sa.Enum('FACTURA', 'POS', name='documenttype'), nullable=False),
-        sa.Column('numero_documento', sa.String(50), nullable=False),
-        sa.Column('fecha_emision', sa.DateTime(), nullable=False),
-        sa.Column('fecha_vencimiento', sa.DateTime(), nullable=True),
-        sa.Column('forma_pago', sa.String(50), nullable=True),
-        sa.Column('medio_pago', sa.String(50), nullable=True),
-        sa.Column('supplier_id', sa.Integer(), nullable=False),
-        sa.Column('subtotal', sa.Integer(), default=0),
-        sa.Column('descuento', sa.Integer(), default=0),
-        sa.Column('total_bruto', sa.Integer(), default=0),
-        sa.Column('total_iva', sa.Integer(), default=0),
-        sa.Column('total_otros_impuestos', sa.Integer(), default=0),
-        sa.Column('total_neto', sa.Integer(), default=0),
-        sa.Column('archivo_nombre', sa.String(255), nullable=True),
-        sa.Column('archivo_path', sa.String(500), nullable=True),
-        sa.Column('imported_by', sa.Integer(), nullable=True),
-        sa.Column('imported_at', sa.DateTime(), nullable=True),
-        sa.Column('is_validated', sa.Boolean(), default=False),
-        sa.Column('validation_notes', sa.Text(), nullable=True),
-        sa.ForeignKeyConstraint(['supplier_id'], ['suppliers.id'], ),
-        sa.ForeignKeyConstraint(['imported_by'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_invoices_id'), 'invoices', ['id'], unique=False)
-    op.create_index(op.f('ix_invoices_cufe_cude'), 'invoices', ['cufe_cude'], unique=True)
+    # Create invoices table (idempotente)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'documenttype') THEN
+                CREATE TYPE documenttype AS ENUM ('FACTURA', 'POS');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS invoices (
+            id SERIAL PRIMARY KEY,
+            cufe_cude VARCHAR(100) NOT NULL,
+            document_type documenttype NOT NULL,
+            numero_documento VARCHAR(50) NOT NULL,
+            fecha_emision TIMESTAMP NOT NULL,
+            fecha_vencimiento TIMESTAMP,
+            forma_pago VARCHAR(50),
+            medio_pago VARCHAR(50),
+            supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+            subtotal INTEGER DEFAULT 0,
+            descuento INTEGER DEFAULT 0,
+            total_bruto INTEGER DEFAULT 0,
+            total_iva INTEGER DEFAULT 0,
+            total_otros_impuestos INTEGER DEFAULT 0,
+            total_neto INTEGER DEFAULT 0,
+            archivo_nombre VARCHAR(255),
+            archivo_path VARCHAR(500),
+            imported_by INTEGER REFERENCES users(id),
+            imported_at TIMESTAMP,
+            is_validated BOOLEAN DEFAULT FALSE,
+            validation_notes TEXT
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_invoices_id ON invoices (id)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_invoices_cufe_cude ON invoices (cufe_cude)")
 
-    # Create invoice_items table
-    op.create_table(
-        'invoice_items',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('invoice_id', sa.Integer(), nullable=False),
-        sa.Column('numero_item', sa.Integer(), nullable=False),
-        sa.Column('codigo', sa.String(50), nullable=True),
-        sa.Column('descripcion', sa.String(500), nullable=False),
-        sa.Column('unidad_medida', sa.String(50), nullable=True),
-        sa.Column('cantidad', sa.Integer(), default=1),
-        sa.Column('precio_unitario', sa.Integer(), default=0),
-        sa.Column('descuento', sa.Integer(), default=0),
-        sa.Column('recargo', sa.Integer(), default=0),
-        sa.Column('iva_porcentaje', sa.Float(), default=0),
-        sa.Column('iva_valor', sa.Integer(), default=0),
-        sa.Column('inc_porcentaje', sa.Float(), default=0),
-        sa.Column('inc_valor', sa.Integer(), default=0),
-        sa.Column('valor_total', sa.Integer(), default=0),
-        sa.ForeignKeyConstraint(['invoice_id'], ['invoices.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_invoice_items_id'), 'invoice_items', ['id'], unique=False)
+    # Create invoice_items table (idempotente)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS invoice_items (
+            id SERIAL PRIMARY KEY,
+            invoice_id INTEGER NOT NULL REFERENCES invoices(id),
+            numero_item INTEGER NOT NULL,
+            codigo VARCHAR(50),
+            descripcion VARCHAR(500) NOT NULL,
+            unidad_medida VARCHAR(50),
+            cantidad INTEGER DEFAULT 1,
+            precio_unitario INTEGER DEFAULT 0,
+            descuento INTEGER DEFAULT 0,
+            recargo INTEGER DEFAULT 0,
+            iva_porcentaje FLOAT DEFAULT 0,
+            iva_valor INTEGER DEFAULT 0,
+            inc_porcentaje FLOAT DEFAULT 0,
+            inc_valor INTEGER DEFAULT 0,
+            valor_total INTEGER DEFAULT 0
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_invoice_items_id ON invoice_items (id)")
 
 
 def downgrade() -> None:
-    op.drop_index(op.f('ix_invoice_items_id'), table_name='invoice_items')
-    op.drop_table('invoice_items')
-    op.drop_index(op.f('ix_invoices_cufe_cude'), table_name='invoices')
-    op.drop_index(op.f('ix_invoices_id'), table_name='invoices')
-    op.drop_table('invoices')
-    op.drop_index(op.f('ix_suppliers_nit'), table_name='suppliers')
-    op.drop_index(op.f('ix_suppliers_id'), table_name='suppliers')
-    op.drop_table('suppliers')
-    
-    # Drop enum type
-    op.execute('DROP TYPE IF EXISTS documenttype')
+    op.execute("DROP TABLE IF EXISTS invoice_items CASCADE")
+    op.execute("DROP TABLE IF EXISTS invoices CASCADE")
+    op.execute("DROP TABLE IF EXISTS suppliers CASCADE")
+    op.execute("DROP TYPE IF EXISTS documenttype")

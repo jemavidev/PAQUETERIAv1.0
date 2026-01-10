@@ -45,6 +45,38 @@ router = APIRouter(
 
 
 # ========================================
+# ENDPOINT DE DEBUG
+# ========================================
+
+@router.get("/debug/status")
+async def debug_packages_status(db: Session = Depends(get_db)):
+    """Endpoint de debug para verificar que el router de packages está funcionando"""
+    try:
+        # Contar paquetes en la base de datos
+        total_packages = db.query(Package).count()
+        
+        # Contar anuncios no procesados
+        from sqlalchemy import text
+        result = db.execute(text("SELECT COUNT(*) FROM package_announcements_new WHERE is_processed = false"))
+        total_announcements = result.scalar()
+        
+        return {
+            "status": "ok",
+            "router": "packages.py",
+            "endpoint": "/api/packages/debug/status",
+            "total_packages": total_packages,
+            "total_pending_announcements": total_announcements,
+            "message": "El router de packages está funcionando correctamente"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "router": "packages.py",
+            "error": str(e)
+        }
+
+
+# ========================================
 # ENDPOINTS BÁSICOS DE CRUD
 # ========================================
 
@@ -206,6 +238,7 @@ async def list_packages(
     search: Optional[str] = Query(None, description="Buscar por número de guía, cliente o teléfono"),
     date_from: Optional[str] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
+    no_cache: bool = Query(False, description="Bypass cache for debugging"),
     # Temporarily disabled for testing: current_user: dict = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -217,7 +250,10 @@ async def list_packages(
     
     logger = logging.getLogger(__name__)
     
-    # OPTIMIZACIÓN: Verificar caché primero
+    # Log de entrada para debug
+    logger.info(f"📦 list_packages llamado: skip={skip}, limit={limit}, status_filter={status_filter}, search={search}, no_cache={no_cache}")
+    
+    # OPTIMIZACIÓN: Verificar caché primero (si no se solicita bypass)
     cache_filters = {
         "skip": skip,
         "limit": limit,
@@ -228,10 +264,13 @@ async def list_packages(
         "date_to": date_to
     }
     
-    cached_result = cache_manager.get_cached_packages_list(cache_filters)
-    if cached_result:
-        logger.info("📦 Datos obtenidos del caché")
-        return cached_result
+    if not no_cache:
+        cached_result = cache_manager.get_cached_packages_list(cache_filters)
+        if cached_result:
+            logger.info("📦 Datos obtenidos del caché")
+            return cached_result
+    else:
+        logger.info("📦 Cache bypass solicitado")
 
     # Get packages with file uploads
     # Get packages with file uploads using ORM
