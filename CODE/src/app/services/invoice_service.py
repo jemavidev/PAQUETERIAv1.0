@@ -299,16 +299,20 @@ class InvoiceService:
         # Detectar si la mayoría de items tienen IVA incluido
         items_con_iva_incluido = sum(1 for item in data.items if self._detect_iva_incluido(item) == True)
         items_sin_iva_incluido = sum(1 for item in data.items if self._detect_iva_incluido(item) == False)
+        items_indeterminados = len(data.items) - items_con_iva_incluido - items_sin_iva_incluido
         
-        # Si la mayoría tiene IVA incluido, los totales de items ya incluyen el IVA
+        # Determinar el tipo de factura
+        # Si la mayoría tiene IVA incluido, asumimos que todos lo tienen
         iva_incluido_en_items = items_con_iva_incluido > items_sin_iva_incluido
         
+        # Calcular el total esperado según el tipo de factura
         if iva_incluido_en_items:
-            # Los items ya incluyen IVA, entonces:
-            # - items_subtotal debería ser igual a total_neto
-            # - subtotal debería ser items_subtotal - IVA
+            # IVA INCLUIDO: items_subtotal ya incluye el IVA
+            # Total esperado = items_subtotal
+            expected_total = items_subtotal
             
-            diff_total = abs(items_subtotal - data.total_neto)
+            # Validar total neto
+            diff_total = abs(expected_total - data.total_neto)
             if diff_total > 100:  # Tolerancia de $100
                 irregularities.append({
                     'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
@@ -317,29 +321,17 @@ class InvoiceService:
                     'valor_original': str(data.total_neto),
                     'valor_sugerido': str(items_subtotal),
                 })
-            
-            # Verificar subtotal
-            if data.subtotal > 0:
-                expected_subtotal = items_subtotal - items_iva
-                diff_subtotal = abs(expected_subtotal - data.subtotal)
-                if diff_subtotal > 100:
-                    irregularities.append({
-                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
-                        'severidad': IrregularitySeverity.WARNING.value,
-                        'descripcion': f'Subtotal calculado ({expected_subtotal:,}) no coincide con subtotal reportado ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
-                        'valor_original': str(data.subtotal),
-                        'valor_sugerido': str(expected_subtotal),
-                    })
         else:
-            # Los items NO incluyen IVA, entonces:
-            # Fórmula: (Subtotal - Descuento) + IVA = Total Neto
-            # O también: items_subtotal + IVA = Total Neto
-            
-            # Verificar que items_subtotal + IVA = total_neto
+            # IVA NO INCLUIDO: items_subtotal + IVA = total_neto
+            # Total esperado = items_subtotal + items_iva
             expected_total = items_subtotal + items_iva
+            
+            # Validar total neto
             diff_total = abs(expected_total - data.total_neto)
             
-            if diff_total > 100:  # Tolerancia de $100
+            # Solo reportar si la diferencia es significativa Y no es exactamente el IVA
+            # (para evitar falsos positivos cuando la detección falla)
+            if diff_total > 100 and abs(diff_total - items_iva) > 100:
                 irregularities.append({
                     'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
                     'severidad': IrregularitySeverity.WARNING.value,
@@ -347,31 +339,35 @@ class InvoiceService:
                     'valor_original': str(data.total_neto),
                     'valor_sugerido': str(expected_total),
                 })
-            
-            # Verificar subtotal si hay descuento
-            # Subtotal reportado - Descuento debería ser igual a items_subtotal
-            if data.subtotal > 0 and descuento > 0:
+        
+        # Validar subtotal solo si está presente y es significativo
+        if data.subtotal > 0:
+            # Si hay descuento: subtotal - descuento = items_subtotal
+            if descuento > 0:
                 expected_items_subtotal = data.subtotal - descuento
                 diff_subtotal = abs(expected_items_subtotal - items_subtotal)
+                
                 if diff_subtotal > 100:  # Tolerancia de $100
                     irregularities.append({
                         'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
-                        'severidad': IrregularitySeverity.WARNING.value,
-                        'descripcion': f'Subtotal calculado (subtotal: {data.subtotal:,} - descuento: {descuento:,} = {expected_items_subtotal:,}) no coincide con suma de items ({items_subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                        'severidad': IrregularitySeverity.INFO.value,  # INFO en lugar de WARNING
+                        'descripcion': f'Subtotal después de descuento (subtotal: {data.subtotal:,} - descuento: {descuento:,} = {expected_items_subtotal:,}) no coincide con suma de items ({items_subtotal:,}). Diferencia: ${diff_subtotal:,}',
                         'valor_original': str(items_subtotal),
                         'valor_sugerido': str(expected_items_subtotal),
                     })
-            elif data.subtotal > 0:
-                # Sin descuento, subtotal debería ser igual a items_subtotal
-                diff_subtotal = abs(items_subtotal - data.subtotal)
-                if diff_subtotal > 100:  # Tolerancia de $100
-                    irregularities.append({
-                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
-                        'severidad': IrregularitySeverity.WARNING.value,
-                        'descripcion': f'Suma de items ({items_subtotal:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
-                        'valor_original': str(data.subtotal),
-                        'valor_sugerido': str(items_subtotal),
-                    })
+            else:
+                # Sin descuento: subtotal = items_subtotal (si IVA no incluido)
+                if not iva_incluido_en_items:
+                    diff_subtotal = abs(items_subtotal - data.subtotal)
+                    
+                    if diff_subtotal > 100:  # Tolerancia de $100
+                        irregularities.append({
+                            'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                            'severidad': IrregularitySeverity.INFO.value,  # INFO en lugar de WARNING
+                            'descripcion': f'Suma de items ({items_subtotal:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                            'valor_original': str(data.subtotal),
+                            'valor_sugerido': str(items_subtotal),
+                        })
         
         # Validar items
         for idx, item in enumerate(data.items):
@@ -632,23 +628,42 @@ class InvoiceService:
         return invoice
     
     def _detect_iva_incluido(self, item) -> Optional[bool]:
-        """Detecta si el IVA está incluido en el precio"""
+        """
+        Detecta si el IVA está incluido en el precio del item.
+        
+        Lógica:
+        - Si IVA NO incluido: valor_total + iva_valor = precio final
+        - Si IVA incluido: valor_total ya incluye el IVA, iva_valor es informativo
+        """
         if item.iva_porcentaje == 0:
             return None  # No aplica IVA
         
-        if item.iva_valor > 0 and item.precio_unitario > 0:
-            # Calcular IVA esperado si NO está incluido
-            iva_esperado = int(item.precio_unitario * item.cantidad * item.iva_porcentaje / 100)
+        if item.iva_valor > 0 and item.valor_total > 0:
+            # Método 1: Calcular IVA esperado si NO está incluido
+            # IVA = valor_total * porcentaje
+            iva_esperado_no_incluido = int(item.valor_total * item.iva_porcentaje / 100)
             
-            # Si el IVA reportado es similar al esperado, NO está incluido
-            if abs(iva_esperado - item.iva_valor) < 10:  # Tolerancia de $10
+            # Si el IVA reportado coincide con este cálculo, NO está incluido
+            diff_no_incluido = abs(iva_esperado_no_incluido - item.iva_valor)
+            if diff_no_incluido <= max(50, int(item.iva_valor * 0.05)):  # Tolerancia 5% o $50
                 return False
             
-            # Calcular IVA esperado si ESTÁ incluido
-            precio_base = int(item.precio_unitario / (1 + item.iva_porcentaje / 100))
-            iva_incluido_esperado = int(precio_base * item.cantidad * item.iva_porcentaje / 100)
+            # Método 2: Calcular IVA esperado si ESTÁ incluido
+            # Base = valor_total / (1 + porcentaje)
+            # IVA = Base * porcentaje
+            base_si_incluido = item.valor_total / (1 + item.iva_porcentaje / 100)
+            iva_esperado_incluido = int(base_si_incluido * item.iva_porcentaje / 100)
             
-            if abs(iva_incluido_esperado - item.iva_valor) < 10:
+            # Si el IVA reportado coincide con este cálculo, SÍ está incluido
+            diff_incluido = abs(iva_esperado_incluido - item.iva_valor)
+            if diff_incluido <= max(50, int(item.iva_valor * 0.05)):  # Tolerancia 5% o $50
+                return True
+            
+            # Método 3: Comparar diferencias para decidir
+            # El que tenga menor diferencia es el correcto
+            if diff_no_incluido < diff_incluido:
+                return False
+            elif diff_incluido < diff_no_incluido:
                 return True
         
         return None  # No se puede determinar
