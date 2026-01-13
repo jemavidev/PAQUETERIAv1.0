@@ -343,3 +343,105 @@
     </div>
 </div>
 
+
+<script>
+function filterItems() {
+    const filter = document.getElementById('filterItems').value.toLowerCase();
+    const rows = document.querySelectorAll('.item-row');
+    
+    rows.forEach(row => {
+        const codigo = row.dataset.codigo.toLowerCase();
+        const descripcion = row.dataset.descripcion.toLowerCase();
+        const match = codigo.includes(filter) || descripcion.includes(filter);
+        row.style.display = match ? '' : 'none';
+    });
+}
+
+async function deleteInvoice() {
+    if (!confirm('¿Eliminar esta factura?\n\nLa factura quedará inactiva pero podrá restaurarse.')) return;
+    
+    try {
+        const response = await fetch('/invoices/api/{{ invoice.id }}', {method: 'DELETE'});
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = '/invoices/list';
+        } else {
+            alert('Error: ' + (result.detail || 'Error eliminando'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+
+async function restoreInvoice() {
+    if (!confirm('¿Restaurar esta factura?')) return;
+    
+    try {
+        const response = await fetch('/invoices/api/{{ invoice.id }}/restore', {method: 'POST'});
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error restaurando'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+
+async function resolveIrregularity(id) {
+    const notas = prompt('Notas de resolución (opcional):');
+    
+    try {
+        const response = await fetch(`/invoices/api/irregularity/${id}/resolve`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notas: notas, accion: 'ignorar'})
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error resolviendo'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+
+function showProductInfo(id, codigo, descripcion, cantidad, precioUnit, descuento, recargo, ivaPct, ivaVal, ivaIncluido, incPct, incVal, total) {
+    const ivaStatus = ivaIncluido === true ? 'Incluido' : (ivaIncluido === false ? 'No incluido' : 'Desconocido');
+    
+    alert(`Producto #${id}\n\nCódigo: ${codigo}\nDescripción: ${descripcion}\n\nCantidad: ${cantidad}\nPrecio Unitario: $${precioUnit.toLocaleString('es-CO')}\nDescuento: $${descuento.toLocaleString('es-CO')}\nRecargo: $${recargo.toLocaleString('es-CO')}\n\nIVA: ${ivaPct}% ($${ivaVal.toLocaleString('es-CO')})\nIVA ${ivaStatus}\n\nINC: ${incPct}% ($${incVal.toLocaleString('es-CO')})\n\nTotal: $${total.toLocaleString('es-CO')}`);
+}
+
+async function toggleIvaStatus(itemId) {
+    const options = ['Incluido', 'No incluido', 'Desconocido'];
+    const choice = prompt('Estado de IVA:\n1. Incluido\n2. No incluido\n3. Desconocido\n\nIngrese el número:');
+    
+    if (!choice || !['1', '2', '3'].includes(choice)) return;
+    
+    const ivaIncluido = choice === '1' ? true : (choice === '2' ? false : null);
+    
+    try {
+        const response = await fetch(`/invoices/api/item/${itemId}/iva`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({iva_incluido: ivaIncluido})
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error actualizando'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+</script>
+{% endblock %}
