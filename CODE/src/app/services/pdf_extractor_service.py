@@ -643,20 +643,12 @@ class PDFExtractorService:
             if not descripcion or len(descripcion.strip()) < 2:
                 return None
             
-            # Calcular valores faltantes
-            if valor_total == 0 and precio_unitario > 0 and cantidad > 0:
-                # Calcular: (precio * cantidad) - descuento + iva
-                subtotal_item = (precio_unitario * cantidad) - descuento + recargo
-                valor_total = subtotal_item + iva_valor + inc_valor
-            
-            if precio_unitario == 0 and valor_total > 0 and cantidad > 0:
-                # Calcular precio unitario aproximado
-                precio_unitario = (valor_total - iva_valor - inc_valor + descuento - recargo) // cantidad
-            
             # Determinar si el IVA está incluido en el precio
-            # Si hay IVA pero el valor_total = (precio * cantidad) - descuento + iva, entonces NO está incluido
+            # Esto es crítico para calcular correctamente el valor_total
             iva_incluido = None  # Por defecto desconocido
-            if iva_porcentaje > 0 and precio_unitario > 0:
+            
+            # Si tenemos valor_total del PDF, usarlo para detectar
+            if iva_porcentaje > 0 and precio_unitario > 0 and valor_total > 0:
                 # Calcular lo que sería el total sin IVA
                 base_calculada = (precio_unitario * cantidad) - descuento + recargo
                 total_con_iva = base_calculada + iva_valor
@@ -667,6 +659,30 @@ class PDFExtractorService:
                 # Si el valor_total coincide con base_calculada, el IVA SÍ está incluido
                 elif abs(valor_total - base_calculada) < 10:
                     iva_incluido = True
+            
+            # Calcular valores faltantes
+            if valor_total == 0 and precio_unitario > 0 and cantidad > 0:
+                # Calcular subtotal base (precio * cantidad - descuento + recargo)
+                subtotal_item = (precio_unitario * cantidad) - descuento + recargo
+                
+                # REGLA IMPORTANTE: En facturas colombianas, cuando el IVA se lista por separado
+                # en la tabla de items, generalmente significa que NO está incluido en el precio
+                # Por lo tanto, valor_total debe ser el subtotal SIN IVA
+                if iva_valor > 0:
+                    # IVA listado por separado = NO incluido en precio
+                    iva_incluido = False
+                    valor_total = subtotal_item + inc_valor
+                else:
+                    # Sin IVA o IVA incluido en precio
+                    valor_total = subtotal_item + inc_valor
+            
+            if precio_unitario == 0 and valor_total > 0 and cantidad > 0:
+                # Calcular precio unitario aproximado
+                # Asumimos que valor_total NO incluye IVA si hay iva_valor listado
+                if iva_valor > 0:
+                    precio_unitario = (valor_total - inc_valor + descuento - recargo) // cantidad
+                else:
+                    precio_unitario = (valor_total - inc_valor + descuento - recargo) // cantidad
 
             
             # Calcular precio base (sin IVA) si es posible

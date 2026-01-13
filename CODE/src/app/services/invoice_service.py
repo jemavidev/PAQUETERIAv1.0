@@ -180,36 +180,72 @@ class InvoiceService:
             })
         
         # Validar totales
-        # La suma de items debe coincidir con el subtotal (sin IVA)
-        # O la suma de items + IVA debe coincidir con el total neto
+        # Necesitamos considerar si el IVA está incluido en los precios o no
         items_total = sum(item.valor_total for item in data.items)
         items_iva = sum(item.iva_valor for item in data.items)
         
-        # Calcular el total esperado (items + IVA)
-        expected_total = items_total + items_iva
+        # Detectar si la mayoría de items tienen IVA incluido
+        items_con_iva_incluido = sum(1 for item in data.items if self._detect_iva_incluido(item) == True)
+        items_sin_iva_incluido = sum(1 for item in data.items if self._detect_iva_incluido(item) == False)
         
-        # Verificar si la suma de items coincide con el subtotal
-        if data.subtotal > 0:
-            diff_subtotal = abs(items_total - data.subtotal)
-            if diff_subtotal > 100:  # Tolerancia de $100
+        # Si la mayoría tiene IVA incluido, los totales de items ya incluyen el IVA
+        iva_incluido_en_items = items_con_iva_incluido > items_sin_iva_incluido
+        
+        if iva_incluido_en_items:
+            # Los items ya incluyen IVA, entonces:
+            # - items_total debería ser igual a total_neto
+            # - subtotal debería ser items_total - IVA
+            
+            diff_total = abs(items_total - data.total_neto)
+            if diff_total > 100:  # Tolerancia de $100
                 irregularities.append({
                     'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
                     'severidad': IrregularitySeverity.WARNING.value,
-                    'descripcion': f'Suma de items ({items_total:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
-                    'valor_original': str(data.subtotal),
+                    'descripcion': f'Suma de items con IVA incluido ({items_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
+                    'valor_original': str(data.total_neto),
                     'valor_sugerido': str(items_total),
                 })
-        
-        # Verificar si el total calculado (items + IVA) coincide con el total neto
-        diff_total = abs(expected_total - data.total_neto)
-        if diff_total > 100:  # Tolerancia de $100
-            irregularities.append({
-                'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
-                'severidad': IrregularitySeverity.WARNING.value,
-                'descripcion': f'Total calculado ({expected_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
-                'valor_original': str(data.total_neto),
-                'valor_sugerido': str(expected_total),
-            })
+            
+            # Verificar subtotal
+            if data.subtotal > 0:
+                expected_subtotal = items_total - items_iva
+                diff_subtotal = abs(expected_subtotal - data.subtotal)
+                if diff_subtotal > 100:
+                    irregularities.append({
+                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                        'severidad': IrregularitySeverity.WARNING.value,
+                        'descripcion': f'Subtotal calculado ({expected_subtotal:,}) no coincide con subtotal reportado ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                        'valor_original': str(data.subtotal),
+                        'valor_sugerido': str(expected_subtotal),
+                    })
+        else:
+            # Los items NO incluyen IVA, entonces:
+            # - items_total debería ser igual a subtotal
+            # - items_total + IVA debería ser igual a total_neto
+            
+            # Verificar subtotal
+            if data.subtotal > 0:
+                diff_subtotal = abs(items_total - data.subtotal)
+                if diff_subtotal > 100:  # Tolerancia de $100
+                    irregularities.append({
+                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                        'severidad': IrregularitySeverity.WARNING.value,
+                        'descripcion': f'Suma de items ({items_total:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                        'valor_original': str(data.subtotal),
+                        'valor_sugerido': str(items_total),
+                    })
+            
+            # Verificar total neto
+            expected_total = items_total + items_iva
+            diff_total = abs(expected_total - data.total_neto)
+            if diff_total > 100:  # Tolerancia de $100
+                irregularities.append({
+                    'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                    'severidad': IrregularitySeverity.WARNING.value,
+                    'descripcion': f'Total calculado ({expected_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
+                    'valor_original': str(data.total_neto),
+                    'valor_sugerido': str(expected_total),
+                })
         
         # Validar items
         for idx, item in enumerate(data.items):
