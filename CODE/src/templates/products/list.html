@@ -512,20 +512,21 @@
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                     }
                     
                     const data = await response.json();
                     
                     if (data.success) {
-                        alert(`Sincronización completada:\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}`);
+                        alert(`✅ Sincronización completada:\n\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}\n\nTotal procesados: ${data.data.total}`);
                         this.loadProducts();
                     } else {
-                        alert('Error en la sincronización: ' + data.message);
+                        alert('❌ Error en la sincronización: ' + data.message);
                     }
                 } catch (error) {
                     console.error('Error syncing products:', error);
-                    alert('Error al sincronizar productos. Verifica que tengas permisos de administrador.');
+                    alert('❌ Error al sincronizar productos:\n\n' + error.message + '\n\nPor favor, verifica:\n- Conexión a DynamiaERP\n- Credenciales configuradas\n- Logs del servidor');
                 } finally {
                     this.syncing = false;
                 }

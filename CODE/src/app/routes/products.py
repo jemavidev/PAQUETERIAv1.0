@@ -39,10 +39,11 @@ async def list_products(
     linea_id: Optional[int] = Query(None, description="Filtrar por línea"),
     destacado: Optional[bool] = Query(None, description="Filtrar por destacado"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
     Listar productos con filtros y paginación
+    Accesible para cualquier usuario autenticado
     """
     try:
         # Construir query base
@@ -112,10 +113,11 @@ async def list_products(
 async def get_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
     Obtener detalle de un producto por ID
+    Accesible para cualquier usuario autenticado
     """
     try:
         product = db.query(Product).filter(Product.id == product_id).first()
@@ -147,10 +149,11 @@ async def sync_products(
     vendible: Optional[bool] = Query(None, description="Sincronizar solo productos vendibles"),
     visualizable_web: Optional[bool] = Query(None, description="Sincronizar solo productos visualizables en web"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado puede sincronizar
 ):
     """
-    Sincronizar productos desde DynamiaERP (solo administradores)
+    Sincronizar productos desde DynamiaERP
+    Accesible para cualquier usuario autenticado
     """
     try:
         # Construir filtros
@@ -185,10 +188,11 @@ async def search_products(
     q: str = Query(..., min_length=2, description="Término de búsqueda"),
     limit: int = Query(20, ge=1, le=100, description="Límite de resultados"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
     Búsqueda avanzada de productos usando índice de texto completo
+    Accesible para cualquier usuario autenticado
     """
     try:
         # Búsqueda usando índice de texto completo
@@ -244,10 +248,11 @@ async def search_products(
 async def get_sync_history(
     limit: int = Query(10, ge=1, le=50, description="Límite de registros"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
-    Obtener historial de sincronizaciones (solo administradores)
+    Obtener historial de sincronizaciones
+    Accesible para cualquier usuario autenticado
     """
     try:
         logs = db.query(ProductSyncLog).order_by(
@@ -271,10 +276,11 @@ async def get_sync_history(
 @router.get("/columns/config", response_model=dict)
 async def get_column_config(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
     Obtener configuración de columnas del usuario actual
+    Accesible para cualquier usuario autenticado
     """
     try:
         configs = db.query(ProductColumnConfig).filter(
@@ -320,10 +326,11 @@ async def get_column_config(
 async def save_column_config(
     columns: List[dict],
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
 ):
     """
     Guardar configuración de columnas del usuario actual
+    Accesible para cualquier usuario autenticado
     """
     try:
         # Eliminar configuración anterior
