@@ -2065,3 +2065,20 @@ async def get_messages_api(
                 "has_prev": False
             }
         }
+
+
+# ========================================
+# PRODUCTOS - GESTIÓN DE PRODUCTOS
+# ========================================
+
+@router.get("/products")
+async def products_page(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies)
+):
+    """Página de gestión de productos"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    context["page_title"] = "Gestión de Productos"
+    
+    return templates.TemplateResponse("products/list.html", context)

@@ -8,6 +8,10 @@ from sqlalchemy import pool
 from alembic import context
 import os
 import sys
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Agregar el directorio src al path para importar módulos
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -20,6 +24,7 @@ from app.models.message import Message
 from app.models.file_upload import FileUpload
 from app.models.notification import Notification
 from app.models.announcement_new import PackageAnnouncementNew
+from app.models.product import Product, ProductColumnConfig, ProductSyncLog
 
 # Importar Base desde el módulo database
 from app.models.base import Base
@@ -78,11 +83,14 @@ def run_migrations_online() -> None:
 
     """
     # Get configuration section
-    config_section = config.get_section(config.config_ini_section, {})
+    config_section = config.get_section(config.config_ini_section) or {}
 
-    # Override sqlalchemy.url with DATABASE_URL if available
-    if os.getenv("DATABASE_URL"):
-        config_section["sqlalchemy.url"] = os.getenv("DATABASE_URL")
+    # Always use DATABASE_URL from environment
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise ValueError("DATABASE_URL environment variable is required")
+    
+    config_section["sqlalchemy.url"] = database_url
 
     connectable = engine_from_config(
         config_section,

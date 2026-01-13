@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - PAQUETEX</title>
+    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
+    <script src="/static/vendor/js/alpine.min.js?v=3.13.3" defer></script>
+    <link rel="stylesheet" href="/static/vendor/css/font-awesome.min.css?v=6.0.0">
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="productsApp()">
+
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">PAQUETEX</h1>
+                    <span class="text-blue-200">Gestión de Productos</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <span class="text-sm">Bienvenido, {{ user.username if user else 'Usuario' }}</span>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-box mr-3 text-blue-600"></i>
+                    Gestión de Productos
+                </h1>
+                <p class="text-gray-600">Catálogo de productos sincronizado desde DynamiaERP</p>
+            </div>
+            <div class="flex space-x-3 mt-4 lg:mt-0">
+                <button @click="syncProducts()"
+                        :disabled="syncing"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-sync-alt mr-2" :class="{'fa-spin': syncing}"></i>
+                    <span x-text="syncing ? 'Sincronizando...' : 'Sincronizar'"></span>
+                </button>
+                <button @click="showColumnConfig = true"
+                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                    <i class="fas fa-columns mr-2"></i>Configurar Columnas
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Búsqueda</label>
+                    <input type="text" 
+                           x-model="filters.search"
+                           @input.debounce.500ms="loadProducts()"
+                           placeholder="Código, nombre, descripción..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                    <select x-model="filters.activo" 
+                            @change="loadProducts()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Todos</option>
+                        <option value="true">Activos</option>
+                        <option value="false">Inactivos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Vendible</label>
+                    <select x-model="filters.vendible" 
+                            @change="loadProducts()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Todos</option>
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Destacado</label>
+                    <select x-model="filters.destacado" 
+                            @change="loadProducts()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Todos</option>
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <template x-for="column in visibleColumns" :key="column.column_key">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    x-text="column.column_label"></th>
+                            </template>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-if="loading">
+                            <tr>
+                                <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
+                                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+                                    <p class="mt-2 text-gray-600">Cargando productos...</p>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-if="!loading && products.length === 0">
+                            <tr>
+                                <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
+                                    <i class="fas fa-box-open text-5xl text-gray-300 mb-4"></i>
+                                    <p class="text-gray-600">No se encontraron productos</p>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-if="!loading && products.length > 0">
+                            <template x-for="product in products" :key="product.id">
+                                <tr class="hover:bg-gray-50">
+                                    <template x-for="column in visibleColumns" :key="column.column_key">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <span x-text="formatValue(product[column.column_key], column.column_key)"></span>
+                                        </td>
+                                    </template>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button @click="viewProduct(product.id)"
+                                                class="text-blue-600 hover:text-blue-900 mr-3">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button @click="previousPage()"
+                            :disabled="pagination.page === 1"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Anterior
+                    </button>
+                    <button @click="nextPage()"
+                            :disabled="pagination.page >= pagination.total_pages"
+                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Siguiente
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando
+                            <span class="font-medium" x-text="((pagination.page - 1) * pagination.page_size) + 1"></span>
+                            a
+                            <span class="font-medium" x-text="Math.min(pagination.page * pagination.page_size, pagination.total)"></span>
+                            de
+                            <span class="font-medium" x-text="pagination.total"></span>
+                            productos
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <button @click="previousPage()"
+                                    :disabled="pagination.page === 1"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <template x-for="page in pageNumbers" :key="page">
+                                <button @click="goToPage(page)"
+                                        :class="page === pagination.page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                                        class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                        x-text="page"></button>
+                            </template>
+                            <button @click="nextPage()"
+                                    :disabled="pagination.page >= pagination.total_pages"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Configuration Modal -->
+    <div x-show="showColumnConfig"
+         x-cloak
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+         @click.self="showColumnConfig = false">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Configurar Columnas</h3>
+                <button @click="showColumnConfig = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                <template x-for="(column, index) in columns" :key="column.column_key">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" 
+                                   x-model="column.visible"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700" x-text="column.column_label"></span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button @click="moveColumn(index, -1)"
+                                    :disabled="index === 0"
+                                    class="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                                <i class="fas fa-arrow-up"></i>
+                            </button>
+                            <button @click="moveColumn(index, 1)"
+                                    :disabled="index === columns.length - 1"
+                                    class="text-gray-400 hover:text-gray-600 disabled:opacity-30">
+                                <i class="fas fa-arrow-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button @click="showColumnConfig = false"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    Cancelar
+                </button>
+                <button @click="saveColumnConfig()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function productsApp() {
+            return {
+                products: [],
+                columns: [],
+                filters: {
+                    search: '',
+                    activo: '',
+                    vendible: '',
+                    destacado: ''
+                },
+                pagination: {
+                    page: 1,
+                    page_size: 50,
+                    total: 0,
+                    total_pages: 0
+                },
+                loading: false,
+                syncing: false,
+                showColumnConfig: false,
+
+                init() {
+                    this.loadColumnConfig();
+                    this.loadProducts();
+                },
+
+                get visibleColumns() {
+                    return this.columns.filter(col => col.visible);
+                },
+
+                get pageNumbers() {
+                    const pages = [];
+                    const maxPages = 5;
+                    let start = Math.max(1, this.pagination.page - Math.floor(maxPages / 2));
+                    let end = Math.min(this.pagination.total_pages, start + maxPages - 1);
+                    
+                    if (end - start < maxPages - 1) {
+                        start = Math.max(1, end - maxPages + 1);
+                    }
+                    
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+                    return pages;
+                },
+
+                async loadColumnConfig() {
+                    try {
+                        const response = await fetch('/api/products/columns/config');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.columns = data.data;
+                        }
+                    } catch (error) {
+                        console.error('Error loading column config:', error);
+                    }
+                },
+
+                async saveColumnConfig() {
+                    try {
+                        // Actualizar order_index
+                        this.columns.forEach((col, index) => {
+                            col.order_index = index;
+                        });
+
+                        const response = await fetch('/api/products/columns/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.columns)
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            this.showColumnConfig = false;
+                            this.loadProducts();
+                        }
+                    } catch (error) {
+                        console.error('Error saving column config:', error);
+                        alert('Error al guardar la configuración');
+                    }
+                },
+
+                moveColumn(index, direction) {
+                    const newIndex = index + direction;
+                    if (newIndex >= 0 && newIndex < this.columns.length) {
+                        const temp = this.columns[index];
+                        this.columns[index] = this.columns[newIndex];
+                        this.columns[newIndex] = temp;
+                    }
+                },
+
+                async loadProducts() {
+                    this.loading = true;
+                    try {
+                        const params = new URLSearchParams({
+                            page: this.pagination.page,
+                            page_size: this.pagination.page_size
+                        });
+
+                        if (this.filters.search) params.append('search', this.filters.search);
+                        if (this.filters.activo) params.append('activo', this.filters.activo);
+                        if (this.filters.vendible) params.append('vendible', this.filters.vendible);
+                        if (this.filters.destacado) params.append('destacado', this.filters.destacado);
+
+                        const response = await fetch(`/api/products?${params}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.products = data.data;
+                            this.pagination = data.pagination;
+                        }
+                    } catch (error) {
+                        console.error('Error loading products:', error);
+                        alert('Error al cargar productos');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async syncProducts() {
+                    if (!confirm('¿Desea sincronizar los productos desde DynamiaERP? Esto puede tomar varios minutos.')) {
+                        return;
+                    }
+
+                    this.syncing = true;
+                    try {
+                        const response = await fetch('/api/products/sync', {
+                            method: 'POST'
+                        });
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            alert(`Sincronización completada:\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}`);
+                            this.loadProducts();
+                        } else {
+                            alert('Error en la sincronización: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error syncing products:', error);
+                        alert('Error al sincronizar productos');
+                    } finally {
+                        this.syncing = false;
+                    }
+                },
+
+                formatValue(value, key) {
+                    if (value === null || value === undefined) return '-';
+                    
+                    // Formatear precios
+                    if (key.includes('precio') || key.includes('costo') || key.includes('valor')) {
+                        return new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            minimumFractionDigits: 0
+                        }).format(value);
+                    }
+                    
+                    // Formatear cantidades
+                    if (key.includes('existencias') || key.includes('cantidad')) {
+                        return new Intl.NumberFormat('es-CO').format(value);
+                    }
+                    
+                    // Formatear booleanos
+                    if (typeof value === 'boolean') {
+                        return value ? 'Sí' : 'No';
+                    }
+                    
+                    return value;
+                },
+
+                viewProduct(id) {
+                    window.location.href = `/products/${id}`;
+                },
+
+                previousPage() {
+                    if (this.pagination.page > 1) {
+                        this.pagination.page--;
+                        this.loadProducts();
+                    }
+                },
+
+                nextPage() {
+                    if (this.pagination.page < this.pagination.total_pages) {
+                        this.pagination.page++;
+                        this.loadProducts();
+                    }
+                },
+
+                goToPage(page) {
+                    this.pagination.page = page;
+                    this.loadProducts();
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</body>
+</html>
