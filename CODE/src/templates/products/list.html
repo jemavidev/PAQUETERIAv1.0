@@ -1,457 +1,501 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Productos - PAQUETEX</title>
-    <script src="/static/vendor/js/tailwind.js?v=3.4.1"></script>
-    <script src="/static/vendor/js/alpine.min.js?v=3.13.3" defer></script>
-    <link rel="stylesheet" href="/static/vendor/css/font-awesome.min.css?v=6.0.0">
-</head>
-<body class="bg-gray-100 min-h-screen" x-data="productsApp()">
+{% extends "base/base.html" %}
 
-    <!-- Navigation -->
-    <nav class="bg-blue-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-bold">PAQUETEX</h1>
-                    <span class="text-blue-200">Gestión de Productos</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/admin" class="bg-blue-500 hover:bg-blue-700 px-3 py-1 rounded text-sm">
-                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
-                    </a>
-                    <span class="text-sm">Bienvenido, {{ user.username if user else 'Usuario' }}</span>
-                    <a href="/logout" class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
-                    </a>
-                </div>
-            </div>
+{% block title %}Gestión de Productos - PAQUETEX{% endblock %}
+
+{% block extra_head %}
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" x-data="productsApp()">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                <svg class="w-7 h-7 mr-3 text-papyrus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Gestión de Productos
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Catálogo de productos sincronizado desde DynamiaERP</p>
+            <p class="text-xs text-gray-400 mt-1" x-show="pagination.total > 0">
+                <span x-text="pagination.total"></span> producto<span x-text="pagination.total !== 1 ? 's' : ''"></span> encontrado<span x-text="pagination.total !== 1 ? 's' : ''"></span>
+            </p>
         </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">
-                    <i class="fas fa-box mr-3 text-blue-600"></i>
-                    Gestión de Productos
-                </h1>
-                <p class="text-gray-600">Catálogo de productos sincronizado desde DynamiaERP</p>
-            </div>
-            <div class="flex space-x-3 mt-4 lg:mt-0">
-                <button @click="syncProducts()"
-                        :disabled="syncing"
-                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-sync-alt mr-2" :class="{'fa-spin': syncing}"></i>
-                    <span x-text="syncing ? 'Sincronizando...' : 'Sincronizar'"></span>
-                </button>
-                <button @click="showColumnConfig = true"
-                        class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
-                    <i class="fas fa-columns mr-2"></i>Configurar Columnas
-                </button>
-            </div>
+        <div class="flex flex-wrap gap-3">
+            <button @click="syncProducts()"
+                    :disabled="syncing"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                <svg class="w-5 h-5 mr-2" :class="{'animate-spin': syncing}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span x-text="syncing ? 'Sincronizando...' : 'Sincronizar'"></span>
+            </button>
+            <button @click="showColumnConfig = true"
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                </svg>
+                Configurar Columnas
+            </button>
         </div>
+    </div>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm border mb-6">
+        <div class="p-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Búsqueda -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Búsqueda</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Búsqueda
+                    </label>
                     <input type="text" 
                            x-model="filters.search"
                            @input.debounce.500ms="loadProducts()"
                            placeholder="Código, nombre, descripción..."
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                 </div>
+
+                <!-- Estado -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Estado
+                    </label>
                     <select x-model="filters.activo" 
                             @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                         <option value="">Todos</option>
                         <option value="true">Activos</option>
                         <option value="false">Inactivos</option>
                     </select>
                 </div>
+
+                <!-- Vendible -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Vendible</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Vendible
+                    </label>
                     <select x-model="filters.vendible" 
                             @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                         <option value="">Todos</option>
                         <option value="true">Sí</option>
                         <option value="false">No</option>
                     </select>
                 </div>
+
+                <!-- Destacado -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Destacado</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                        Destacado
+                    </label>
                     <select x-model="filters.destacado" 
                             @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
                         <option value="">Todos</option>
                         <option value="true">Sí</option>
                         <option value="false">No</option>
                     </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Products Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <template x-for="column in visibleColumns" :key="column.column_key">
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    x-text="column.column_label"></th>
-                            </template>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Acciones
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-if="loading">
-                            <tr>
-                                <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
-                                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
-                                    <p class="mt-2 text-gray-600">Cargando productos...</p>
-                                </td>
-                            </tr>
-                        </template>
-                        <template x-if="!loading && products.length === 0">
-                            <tr>
-                                <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
-                                    <i class="fas fa-box-open text-5xl text-gray-300 mb-4"></i>
-                                    <p class="text-gray-600">No se encontraron productos</p>
-                                </td>
-                            </tr>
-                        </template>
-                        <template x-if="!loading && products.length > 0">
-                            <template x-for="product in products" :key="product.id">
-                                <tr class="hover:bg-gray-50">
-                                    <template x-for="column in visibleColumns" :key="column.column_key">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <span x-text="formatValue(product[column.column_key], column.column_key)"></span>
-                                        </td>
-                                    </template>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button @click="viewProduct(product.id)"
-                                                class="text-blue-600 hover:text-blue-900 mr-3">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                <div class="flex-1 flex justify-between sm:hidden">
-                    <button @click="previousPage()"
-                            :disabled="pagination.page === 1"
-                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Anterior
-                    </button>
-                    <button @click="nextPage()"
-                            :disabled="pagination.page >= pagination.total_pages"
-                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Siguiente
-                    </button>
-                </div>
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Mostrando
-                            <span class="font-medium" x-text="((pagination.page - 1) * pagination.page_size) + 1"></span>
-                            a
-                            <span class="font-medium" x-text="Math.min(pagination.page * pagination.page_size, pagination.total)"></span>
-                            de
-                            <span class="font-medium" x-text="pagination.total"></span>
-                            productos
-                        </p>
-                    </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                            <button @click="previousPage()"
-                                    :disabled="pagination.page === 1"
-                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <template x-for="page in pageNumbers" :key="page">
-                                <button @click="goToPage(page)"
-                                        :class="page === pagination.page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
-                                        class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                                        x-text="page"></button>
-                            </template>
-                            <button @click="nextPage()"
-                                    :disabled="pagination.page >= pagination.total_pages"
-                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </nav>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Column Configuration Modal -->
+    <!-- Tabla de Productos -->
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <template x-for="column in visibleColumns" :key="column.column_key">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                x-text="column.column_label"></th>
+                        </template>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- Loading State -->
+                    <template x-if="loading">
+                        <tr>
+                            <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="animate-spin h-10 w-10 text-papyrus-blue mb-3" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <p class="text-gray-600">Cargando productos...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Empty State -->
+                    <template x-if="!loading && products.length === 0">
+                        <tr>
+                            <td :colspan="visibleColumns.length + 1" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                    <p class="text-gray-600 text-lg font-medium">No se encontraron productos</p>
+                                    <p class="text-gray-400 text-sm mt-1">Intenta ajustar los filtros o sincroniza desde DynamiaERP</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Products List -->
+                    <template x-if="!loading && products.length > 0">
+                        <template x-for="product in products" :key="product.id">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <template x-for="column in visibleColumns" :key="column.column_key">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <span x-text="formatValue(product[column.column_key], column.column_key)"></span>
+                                    </td>
+                                </template>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button @click="viewProduct(product.id)"
+                                            class="text-papyrus-blue hover:text-blue-700 transition-colors"
+                                            title="Ver detalles">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button @click="previousPage()"
+                        :disabled="pagination.page === 1"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Anterior
+                </button>
+                <button @click="nextPage()"
+                        :disabled="pagination.page >= pagination.total_pages"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Siguiente
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando
+                        <span class="font-medium" x-text="((pagination.page - 1) * pagination.page_size) + 1"></span>
+                        a
+                        <span class="font-medium" x-text="Math.min(pagination.page * pagination.page_size, pagination.total)"></span>
+                        de
+                        <span class="font-medium" x-text="pagination.total"></span>
+                        productos
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <button @click="previousPage()"
+                                :disabled="pagination.page === 1"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <template x-for="page in pageNumbers" :key="page">
+                            <button @click="goToPage(page)"
+                                    :class="page === pagination.page ? 'bg-papyrus-blue border-papyrus-blue text-white' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                                    class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                    x-text="page"></button>
+                        </template>
+                        <button @click="nextPage()"
+                                :disabled="pagination.page >= pagination.total_pages"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Columnas -->
     <div x-show="showColumnConfig"
          x-cloak
          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
          @click.self="showColumnConfig = false">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Configurar Columnas</h3>
-                <button @click="showColumnConfig = false" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Configurar Columnas</h3>
+                <button @click="showColumnConfig = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
             </div>
             <div class="space-y-2 max-h-96 overflow-y-auto">
                 <template x-for="(column, index) in columns" :key="column.column_key">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div class="flex items-center space-x-3">
                             <input type="checkbox" 
                                    x-model="column.visible"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                   class="h-4 w-4 text-papyrus-blue focus:ring-papyrus-blue border-gray-300 rounded">
                             <span class="text-sm font-medium text-gray-700" x-text="column.column_label"></span>
                         </div>
                         <div class="flex space-x-2">
                             <button @click="moveColumn(index, -1)"
                                     :disabled="index === 0"
-                                    class="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                                <i class="fas fa-arrow-up"></i>
+                                    class="text-gray-400 hover:text-papyrus-blue disabled:opacity-30 transition-colors p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                </svg>
                             </button>
                             <button @click="moveColumn(index, 1)"
                                     :disabled="index === columns.length - 1"
-                                    class="text-gray-400 hover:text-gray-600 disabled:opacity-30">
-                                <i class="fas fa-arrow-down"></i>
+                                    class="text-gray-400 hover:text-papyrus-blue disabled:opacity-30 transition-colors p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
                             </button>
                         </div>
                     </div>
                 </template>
             </div>
-            <div class="mt-6 flex justify-end space-x-3">
+            <div class="mt-6 flex justify-end space-x-3 pt-3 border-t">
                 <button @click="showColumnConfig = false"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
                     Cancelar
                 </button>
                 <button @click="saveColumnConfig()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Guardar
+                        class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Guardar Configuración
                 </button>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        function productsApp() {
-            return {
-                products: [],
-                columns: [],
-                filters: {
-                    search: '',
-                    activo: '',
-                    vendible: '',
-                    destacado: ''
-                },
-                pagination: {
-                    page: 1,
-                    page_size: 50,
-                    total: 0,
-                    total_pages: 0
-                },
-                loading: false,
-                syncing: false,
-                showColumnConfig: false,
+{% block extra_scripts %}
+<script>
+    function productsApp() {
+        return {
+            products: [],
+            columns: [],
+            filters: {
+                search: '',
+                activo: '',
+                vendible: '',
+                destacado: ''
+            },
+            pagination: {
+                page: 1,
+                page_size: 50,
+                total: 0,
+                total_pages: 0
+            },
+            loading: false,
+            syncing: false,
+            showColumnConfig: false,
 
-                init() {
-                    this.loadColumnConfig();
-                    this.loadProducts();
-                },
+            init() {
+                this.loadColumnConfig();
+                this.loadProducts();
+            },
 
-                get visibleColumns() {
-                    return this.columns.filter(col => col.visible);
-                },
+            get visibleColumns() {
+                return this.columns.filter(col => col.visible);
+            },
 
-                get pageNumbers() {
-                    const pages = [];
-                    const maxPages = 5;
-                    let start = Math.max(1, this.pagination.page - Math.floor(maxPages / 2));
-                    let end = Math.min(this.pagination.total_pages, start + maxPages - 1);
+            get pageNumbers() {
+                const pages = [];
+                const maxPages = 5;
+                let start = Math.max(1, this.pagination.page - Math.floor(maxPages / 2));
+                let end = Math.min(this.pagination.total_pages, start + maxPages - 1);
+                
+                if (end - start < maxPages - 1) {
+                    start = Math.max(1, end - maxPages + 1);
+                }
+                
+                for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+                return pages;
+            },
+
+            async loadColumnConfig() {
+                try {
+                    const response = await fetch('/api/products/columns/config');
+                    const data = await response.json();
+                    if (data.success) {
+                        this.columns = data.data;
+                    }
+                } catch (error) {
+                    console.error('Error loading column config:', error);
+                }
+            },
+
+            async saveColumnConfig() {
+                try {
+                    // Actualizar order_index
+                    this.columns.forEach((col, index) => {
+                        col.order_index = index;
+                    });
+
+                    const response = await fetch('/api/products/columns/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(this.columns)
+                    });
                     
-                    if (end - start < maxPages - 1) {
-                        start = Math.max(1, end - maxPages + 1);
-                    }
-                    
-                    for (let i = start; i <= end; i++) {
-                        pages.push(i);
-                    }
-                    return pages;
-                },
-
-                async loadColumnConfig() {
-                    try {
-                        const response = await fetch('/api/products/columns/config');
-                        const data = await response.json();
-                        if (data.success) {
-                            this.columns = data.data;
-                        }
-                    } catch (error) {
-                        console.error('Error loading column config:', error);
-                    }
-                },
-
-                async saveColumnConfig() {
-                    try {
-                        // Actualizar order_index
-                        this.columns.forEach((col, index) => {
-                            col.order_index = index;
-                        });
-
-                        const response = await fetch('/api/products/columns/config', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(this.columns)
-                        });
-                        
-                        const data = await response.json();
-                        if (data.success) {
-                            this.showColumnConfig = false;
-                            this.loadProducts();
-                        }
-                    } catch (error) {
-                        console.error('Error saving column config:', error);
-                        alert('Error al guardar la configuración');
-                    }
-                },
-
-                moveColumn(index, direction) {
-                    const newIndex = index + direction;
-                    if (newIndex >= 0 && newIndex < this.columns.length) {
-                        const temp = this.columns[index];
-                        this.columns[index] = this.columns[newIndex];
-                        this.columns[newIndex] = temp;
-                    }
-                },
-
-                async loadProducts() {
-                    this.loading = true;
-                    try {
-                        const params = new URLSearchParams({
-                            page: this.pagination.page,
-                            page_size: this.pagination.page_size
-                        });
-
-                        if (this.filters.search) params.append('search', this.filters.search);
-                        if (this.filters.activo) params.append('activo', this.filters.activo);
-                        if (this.filters.vendible) params.append('vendible', this.filters.vendible);
-                        if (this.filters.destacado) params.append('destacado', this.filters.destacado);
-
-                        const response = await fetch(`/api/products?${params}`);
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            this.products = data.data;
-                            this.pagination = data.pagination;
-                        }
-                    } catch (error) {
-                        console.error('Error loading products:', error);
-                        alert('Error al cargar productos');
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async syncProducts() {
-                    if (!confirm('¿Desea sincronizar los productos desde DynamiaERP? Esto puede tomar varios minutos.')) {
-                        return;
-                    }
-
-                    this.syncing = true;
-                    try {
-                        const response = await fetch('/api/products/sync', {
-                            method: 'POST'
-                        });
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            alert(`Sincronización completada:\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}`);
-                            this.loadProducts();
-                        } else {
-                            alert('Error en la sincronización: ' + data.message);
-                        }
-                    } catch (error) {
-                        console.error('Error syncing products:', error);
-                        alert('Error al sincronizar productos');
-                    } finally {
-                        this.syncing = false;
-                    }
-                },
-
-                formatValue(value, key) {
-                    if (value === null || value === undefined) return '-';
-                    
-                    // Formatear precios
-                    if (key.includes('precio') || key.includes('costo') || key.includes('valor')) {
-                        return new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            minimumFractionDigits: 0
-                        }).format(value);
-                    }
-                    
-                    // Formatear cantidades
-                    if (key.includes('existencias') || key.includes('cantidad')) {
-                        return new Intl.NumberFormat('es-CO').format(value);
-                    }
-                    
-                    // Formatear booleanos
-                    if (typeof value === 'boolean') {
-                        return value ? 'Sí' : 'No';
-                    }
-                    
-                    return value;
-                },
-
-                viewProduct(id) {
-                    window.location.href = `/products/${id}`;
-                },
-
-                previousPage() {
-                    if (this.pagination.page > 1) {
-                        this.pagination.page--;
+                    const data = await response.json();
+                    if (data.success) {
+                        this.showColumnConfig = false;
                         this.loadProducts();
                     }
-                },
+                } catch (error) {
+                    console.error('Error saving column config:', error);
+                    alert('Error al guardar la configuración');
+                }
+            },
 
-                nextPage() {
-                    if (this.pagination.page < this.pagination.total_pages) {
-                        this.pagination.page++;
-                        this.loadProducts();
+            moveColumn(index, direction) {
+                const newIndex = index + direction;
+                if (newIndex >= 0 && newIndex < this.columns.length) {
+                    const temp = this.columns[index];
+                    this.columns[index] = this.columns[newIndex];
+                    this.columns[newIndex] = temp;
+                }
+            },
+
+            async loadProducts() {
+                this.loading = true;
+                try {
+                    const params = new URLSearchParams({
+                        page: this.pagination.page,
+                        page_size: this.pagination.page_size
+                    });
+
+                    if (this.filters.search) params.append('search', this.filters.search);
+                    if (this.filters.activo) params.append('activo', this.filters.activo);
+                    if (this.filters.vendible) params.append('vendible', this.filters.vendible);
+                    if (this.filters.destacado) params.append('destacado', this.filters.destacado);
+
+                    const response = await fetch(`/api/products?${params}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.products = data.data;
+                        this.pagination = data.pagination;
                     }
-                },
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                    alert('Error al cargar productos');
+                } finally {
+                    this.loading = false;
+                }
+            },
 
-                goToPage(page) {
-                    this.pagination.page = page;
+            async syncProducts() {
+                if (!confirm('¿Desea sincronizar los productos desde DynamiaERP? Esto puede tomar varios minutos.')) {
+                    return;
+                }
+
+                this.syncing = true;
+                try {
+                    const response = await fetch('/api/products/sync', {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`Sincronización completada:\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}`);
+                        this.loadProducts();
+                    } else {
+                        alert('Error en la sincronización: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error syncing products:', error);
+                    alert('Error al sincronizar productos');
+                } finally {
+                    this.syncing = false;
+                }
+            },
+
+            formatValue(value, key) {
+                if (value === null || value === undefined) return '-';
+                
+                // Formatear precios
+                if (key.includes('precio') || key.includes('costo') || key.includes('valor')) {
+                    return new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                    }).format(value);
+                }
+                
+                // Formatear cantidades
+                if (key.includes('existencias') || key.includes('cantidad')) {
+                    return new Intl.NumberFormat('es-CO').format(value);
+                }
+                
+                // Formatear booleanos
+                if (typeof value === 'boolean') {
+                    return value ? 'Sí' : 'No';
+                }
+                
+                return value;
+            },
+
+            viewProduct(id) {
+                window.location.href = `/products/${id}`;
+            },
+
+            previousPage() {
+                if (this.pagination.page > 1) {
+                    this.pagination.page--;
                     this.loadProducts();
                 }
+            },
+
+            nextPage() {
+                if (this.pagination.page < this.pagination.total_pages) {
+                    this.pagination.page++;
+                    this.loadProducts();
+                }
+            },
+
+            goToPage(page) {
+                this.pagination.page = page;
+                this.loadProducts();
             }
         }
-    </script>
-
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
-</body>
-</html>
+    }
+</script>
+{% endblock %}
