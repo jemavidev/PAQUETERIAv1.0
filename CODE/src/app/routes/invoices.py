@@ -253,19 +253,60 @@ async def irregularities_list(
     db: Session = Depends(get_db),
     page: int = 1,
     tipo: str = None,
+    categoria: str = None,
     only_unresolved: bool = True,
 ):
-    """Lista de irregularidades del sistema"""
+    """Lista de irregularidades del sistema con categorías"""
     context = get_auth_context_from_request(request)
     context["user"] = current_user
     
+    # Mapear categorías a tipos
+    categoria_map = {
+        'criticas': ['cufe_invalido', 'nit_invalido', 'fecha_invalida'],
+        'validacion': ['total_no_coincide', 'iva_inconsistente', 'cantidad_invalida'],
+        'informacion': ['codigo_faltante', 'descripcion_vacia', 'precio_anomalo']
+    }
+    
+    # Si se especifica categoría, filtrar por esos tipos
+    if categoria and categoria in categoria_map:
+        tipos_filtro = categoria_map[categoria]
+        # Si también hay un tipo específico, usarlo
+        if tipo and tipo in tipos_filtro:
+            tipo_final = tipo
+        else:
+            tipo_final = None  # Se filtrará en el servicio
+    else:
+        tipo_final = tipo
+        tipos_filtro = None
+    
     service = InvoiceService(db)
-    irregularities, total = service.get_all_irregularities(
-        only_unresolved=only_unresolved,
-        tipo=tipo,
-        page=page,
-        per_page=50
-    )
+    
+    # Si hay categoría, obtener irregularidades de esos tipos
+    if tipos_filtro:
+        all_irregularities = []
+        total_count = 0
+        for t in tipos_filtro:
+            irrs, count = service.get_all_irregularities(
+                only_unresolved=only_unresolved,
+                tipo=t,
+                page=1,
+                per_page=1000  # Obtener todas para luego paginar
+            )
+            all_irregularities.extend(irrs)
+            total_count += count
+        
+        # Paginar manualmente
+        start = (page - 1) * 50
+        end = start + 50
+        irregularities = all_irregularities[start:end]
+        total = total_count
+    else:
+        irregularities, total = service.get_all_irregularities(
+            only_unresolved=only_unresolved,
+            tipo=tipo_final,
+            page=page,
+            per_page=50
+        )
     
     context["irregularities"] = irregularities
     context["total"] = total
