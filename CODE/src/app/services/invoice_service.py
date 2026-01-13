@@ -180,14 +180,35 @@ class InvoiceService:
             })
         
         # Validar totales
+        # La suma de items debe coincidir con el subtotal (sin IVA)
+        # O la suma de items + IVA debe coincidir con el total neto
         items_total = sum(item.valor_total for item in data.items)
-        if abs(items_total - data.total_neto) > 100:  # Tolerancia de $100
+        items_iva = sum(item.iva_valor for item in data.items)
+        
+        # Calcular el total esperado (items + IVA)
+        expected_total = items_total + items_iva
+        
+        # Verificar si la suma de items coincide con el subtotal
+        if data.subtotal > 0:
+            diff_subtotal = abs(items_total - data.subtotal)
+            if diff_subtotal > 100:  # Tolerancia de $100
+                irregularities.append({
+                    'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                    'severidad': IrregularitySeverity.WARNING.value,
+                    'descripcion': f'Suma de items ({items_total:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                    'valor_original': str(data.subtotal),
+                    'valor_sugerido': str(items_total),
+                })
+        
+        # Verificar si el total calculado (items + IVA) coincide con el total neto
+        diff_total = abs(expected_total - data.total_neto)
+        if diff_total > 100:  # Tolerancia de $100
             irregularities.append({
                 'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
                 'severidad': IrregularitySeverity.WARNING.value,
-                'descripcion': f'Suma de items ({items_total}) no coincide con total ({data.total_neto})',
+                'descripcion': f'Total calculado ({expected_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
                 'valor_original': str(data.total_neto),
-                'valor_sugerido': str(items_total),
+                'valor_sugerido': str(expected_total),
             })
         
         # Validar items
