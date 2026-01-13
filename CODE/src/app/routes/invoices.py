@@ -341,6 +341,7 @@ async def extract_pdf(
     """
     Extrae datos de un PDF sin guardar.
     Retorna los datos para revisión y corrección.
+    Guarda el PDF en el servidor para poder re-procesarlo después.
     """
     if not file.filename.lower().endswith('.pdf'):
         # Guardar como archivo rechazado
@@ -371,6 +372,17 @@ async def extract_pdf(
         service = InvoiceService(db)
         file_hash = service.calculate_file_hash(content)
         extracted.file_hash = file_hash
+        
+        # Guardar PDF permanentemente en el servidor
+        pdf_directory = "/app/src/uploads/invoices"
+        os.makedirs(pdf_directory, exist_ok=True)
+        pdf_path = f"{pdf_directory}/{file_hash}.pdf"
+        
+        # Solo guardar si no existe ya
+        if not os.path.exists(pdf_path):
+            with open(pdf_path, 'wb') as f:
+                f.write(content)
+            logger.info(f"PDF guardado: {pdf_path}")
         
         # Verificar duplicado por CUFE (activas e inactivas)
         if extracted.cufe_cude:
@@ -888,3 +900,84 @@ async def get_stats(
     ]
     
     return JSONResponse(content=stats)
+
+
+# ========================================
+# API ENDPOINTS - RE-PROCESAMIENTO
+# ========================================
+
+@router.post("/api/{invoice_id}/reprocess")
+async def reprocess_invoice(
+    invoice_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-procesa una factura desde su archivo PDF original.
+    Útil para corregir errores de extracción.
+    """
+    try:
+        service = InvoiceService(db)
+        invoice = service.get_invoice(invoice_id, include_inactive=True)
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Factura no encontrada")
+        
+        if not invoice.file_hash:
+            raise HTTPException(status_code=400, detail="Esta factura no tiene archivo asociado")
+        
+        # Buscar el PDF en el directorio de uploads
+        pdf_directory = "/app/src/uploads/invoices"
+        pdf_path = f"{pdf_directory}/{invoice.file_hash}.pdf"
+        
+        if not os.path.exists(pdf_path):
+            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado en el servidor")
+        
+        success = service.reprocess_invoice_from_file(invoice_id, pdf_path)
+        
+        if success:
+            return JSONResponse(content={
+                "success": True,
+                "message": "Factura re-procesada exitosamente",
+                "invoice_id": invoice_id
+            })
+        else:
+            raise HTTPException(status_code=500, detail="Error re-procesando la factura")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error en reprocess_invoice: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/reprocess-all-errors")
+async def reprocess_all_with_errors(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-procesa todas las facturas que tienen irregularidades de totales.
+    Solo para administradores.
+    """
+    try:
+        # Verificar que el usuario sea admin (puedes agregar esta validación)
+        # if not current_user.is_admin:
+        #     raise HTTPException(status_code=403, detail="Solo administradores")
+        
+        service = InvoiceService(db)
+        pdf_directory = "/app/src/uploads/invoices"
+        
+        results = service.reprocess_all_invoices_with_errors(pdf_directory)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": f"Re-procesamiento completado",
+            "results": results
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en reprocess_all_with_errors: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

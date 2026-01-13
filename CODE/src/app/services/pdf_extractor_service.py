@@ -158,13 +158,23 @@ class PDFExtractorService:
         """
         Convierte un valor monetario a entero (pesos colombianos sin decimales).
         Maneja formatos: $1.234,56 | $ 1.234,56 | 1234.56 | 1,234.56 | 1234
+        También maneja texto como "IVA 222.632,00" extrayendo solo el número.
+        Si hay múltiples números (ej: "IVA 222.632,00\nINC 0,00"), toma el primero.
         """
         if not value:
             return 0
         
-        # Limpiar símbolos de moneda y espacios
-        cleaned = re.sub(r'[$\s]', '', str(value))
-        if not cleaned:
+        # Convertir a string
+        value_str = str(value)
+        
+        # Si hay saltos de línea, tomar solo la primera línea
+        if '\n' in value_str:
+            value_str = value_str.split('\n')[0]
+        
+        # Extraer solo números, puntos, comas y signo negativo
+        cleaned = re.sub(r'[^\d.,\-]', '', value_str)
+        
+        if not cleaned or cleaned in ['.', ',', '-']:
             return 0
         
         try:
@@ -172,13 +182,14 @@ class PDFExtractorService:
             if ',' in cleaned and '.' in cleaned:
                 # Si la coma está después del punto, es formato colombiano
                 if cleaned.rfind(',') > cleaned.rfind('.'):
+                    # Formato colombiano: 1.234.567,89 -> 1234567.89
                     cleaned = cleaned.replace('.', '').replace(',', '.')
                 else:
-                    # Formato americano
+                    # Formato americano: 1,234,567.89 -> 1234567.89
                     cleaned = cleaned.replace(',', '')
             elif ',' in cleaned:
                 parts = cleaned.split(',')
-                # Si hay 2 decimales después de la coma, es separador decimal
+                # Si hay 2 o menos dígitos después de la coma, es separador decimal
                 if len(parts[-1]) <= 2:
                     cleaned = cleaned.replace(',', '.')
                 else:
@@ -188,6 +199,9 @@ class PDFExtractorService:
                 parts = cleaned.split('.')
                 # Si hay exactamente 3 dígitos después del punto, es separador de miles
                 if len(parts[-1]) == 3 and len(parts) > 1:
+                    cleaned = cleaned.replace('.', '')
+                # Si hay más de 3 dígitos o múltiples puntos, asumir separador de miles
+                elif len(parts) > 2:
                     cleaned = cleaned.replace('.', '')
             
             decimal_value = Decimal(cleaned)

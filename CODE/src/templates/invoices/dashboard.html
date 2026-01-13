@@ -150,11 +150,19 @@
                 <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
-                <span class="text-yellow-800 font-medium">{{ stats.unresolved_irregularities }} irregularidades pendientes de resolver</span>
+                <div>
+                    <span class="text-yellow-800 font-medium">{{ stats.unresolved_irregularities }} irregularidades pendientes de resolver</span>
+                    <p class="text-xs text-yellow-700 mt-1">Algunas facturas pueden tener errores de extracción de datos del PDF</p>
+                </div>
             </div>
-            <a href="/invoices/irregularities" class="text-yellow-700 hover:text-yellow-900 text-sm font-medium">
-                Ver todas →
-            </a>
+            <div class="flex gap-2">
+                <button onclick="reprocessAllErrors()" class="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors">
+                    Re-procesar todas
+                </button>
+                <a href="/invoices/irregularities" class="px-3 py-1.5 border border-yellow-600 text-yellow-700 text-sm rounded hover:bg-yellow-100 transition-colors">
+                    Ver todas
+                </a>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -451,5 +459,40 @@ async function exportData() {
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeExportModal();
 });
+
+// Re-procesar todas las facturas con errores
+async function reprocessAllErrors() {
+    if (!confirm('¿Re-procesar todas las facturas con irregularidades?\n\nEsto puede tomar varios minutos dependiendo de la cantidad de facturas.\n\n⚠️ Se volverán a extraer los datos de los PDFs originales.')) return;
+    
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+    
+    try {
+        const response = await fetch('/invoices/api/reprocess-all-errors', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const msg = `✅ Re-procesamiento completado\n\n` +
+                       `✓ Exitosas: ${result.results.success}\n` +
+                       `✗ Fallidas: ${result.results.failed}\n` +
+                       `⚠ No encontradas: ${result.results.not_found}`;
+            alert(msg);
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error re-procesando'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (e) {
+        alert('Error de conexión');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
 </script>
 {% endblock %}

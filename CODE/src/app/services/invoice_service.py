@@ -1162,3 +1162,136 @@ class InvoiceService:
             if self.update_item_iva_status(item_id, iva_incluido):
                 count += 1
         return count
+
+    # ========================================
+    # RE-PROCESAMIENTO DE FACTURAS
+    # ========================================
+    
+    def reprocess_invoice_from_file(self, invoice_id: int, pdf_path: str) -> bool:
+        """
+        Re-procesa una factura desde su archivo PDF original.
+        Útil para corregir errores de extracción sin eliminar la factura.
+        """
+        invoice = self.get_invoice(invoice_id, include_inactive=True)
+        if not invoice:
+            logger.error(f"Factura #{invoice_id} no encontrada")
+            return False
+        
+        try:
+            # Extraer datos del PDF
+            extracted, warnings = self.extractor.extract_from_pdf(pdf_path, invoice.archivo_nombre)
+            
+            # Validar datos
+            is_valid, irregularities = self.validate_invoice_data(extracted)
+            
+            # Actualizar totales de la factura
+            invoice.subtotal = self.normalize_price(extracted.subtotal)
+            invoice.descuento = self.normalize_price(extracted.descuento)
+            invoice.total_bruto = self.normalize_price(extracted.total_bruto)
+            invoice.total_iva = self.normalize_price(extracted.total_iva)
+            invoice.total_neto = self.normalize_price(extracted.total_neto)
+            
+            # Actualizar estado de importación
+            error_count = sum(1 for i in irregularities if i['severidad'] == 'error')
+            warning_count = sum(1 for i in irregularities if i['severidad'] == 'warning')
+            
+            if error_count > 0:
+                invoice.import_status = 'error'
+            elif warning_count > 0:
+                invoice.import_status = 'warning'
+            else:
+                invoice.import_status = 'valid'
+            
+            invoice.is_validated = is_valid
+            invoice.import_warnings = [i for i in irregularities if i['severidad'] == 'warning']
+            invoice.import_errors = [i for i in irregularities if i['severidad'] == 'error']
+            
+            # Eliminar items e irregularidades antiguas
+            self.db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice_id).delete()
+            self.db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == invoice_id).delete()
+            
+            # Crear nuevos items
+            for item_data in extracted.items:
+                iva_incluido = self._detect_iva_incluido(item_data)
+                precio_base = self._calculate_precio_base(
+                    item_data.precio_unitario, 
+                    item_data.iva_porcentaje, 
+                    iva_incluido
+                )
+                
+                item = InvoiceItem(
+                    invoice_id=invoice.id,
+                    numero_item=item_data.numero_item,
+                    codigo=item_data.codigo,
+                    descripcion=item_data.descripcion,
+                    unidad_medida=item_data.unidad_medida,
+                    cantidad=item_data.cantidad or 1,
+                    precio_unitario=self.normalize_price(item_data.precio_unitario),
+                    precio_base=precio_base,
+                    descuento=self.normalize_price(item_data.descuento),
+                    recargo=self.normalize_price(item_data.recargo),
+                    iva_porcentaje=item_data.iva_porcentaje,
+                    iva_valor=self.normalize_price(item_data.iva_valor),
+                    iva_incluido=iva_incluido,
+                    inc_porcentaje=item_data.inc_porcentaje,
+                    inc_valor=self.normalize_price(item_data.inc_valor),
+                    valor_total=self.normalize_price(item_data.valor_total),
+                )
+                self.db.add(item)
+            
+            # Crear nuevas irregularidades
+            for irr in irregularities:
+                irregularity = InvoiceIrregularity(
+                    invoice_id=invoice.id,
+                    tipo=irr['tipo'],
+                    severidad=irr['severidad'],
+                    descripcion=irr['descripcion'],
+                    valor_original=irr.get('valor_original'),
+                    valor_sugerido=irr.get('valor_sugerido'),
+                )
+                self.db.add(irregularity)
+            
+            self.db.commit()
+            logger.info(f"Factura #{invoice_id} re-procesada exitosamente")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error re-procesando factura #{invoice_id}: {e}", exc_info=True)
+            self.db.rollback()
+            return False
+    
+    def reprocess_all_invoices_with_errors(self, pdf_directory: str) -> Dict[str, int]:
+        """
+        Re-procesa todas las facturas que tienen irregularidades de totales.
+        Busca los PDFs en el directorio especificado usando el file_hash.
+        """
+        results = {'success': 0, 'failed': 0, 'not_found': 0}
+        
+        # Buscar facturas con irregularidad de total_no_coincide
+        invoices = self.db.query(Invoice).join(InvoiceIrregularity).filter(
+            Invoice.is_active == True,
+            InvoiceIrregularity.tipo == IrregularityType.TOTAL_NO_COINCIDE.value,
+            InvoiceIrregularity.resuelto == False
+        ).distinct().all()
+        
+        logger.info(f"Encontradas {len(invoices)} facturas con irregularidades de totales")
+        
+        for invoice in invoices:
+            # Buscar el archivo PDF por hash
+            if invoice.file_hash:
+                pdf_path = f"{pdf_directory}/{invoice.file_hash}.pdf"
+                
+                if not os.path.exists(pdf_path):
+                    logger.warning(f"PDF no encontrado para factura #{invoice.id}: {pdf_path}")
+                    results['not_found'] += 1
+                    continue
+                
+                if self.reprocess_invoice_from_file(invoice.id, pdf_path):
+                    results['success'] += 1
+                else:
+                    results['failed'] += 1
+            else:
+                logger.warning(f"Factura #{invoice.id} no tiene file_hash")
+                results['not_found'] += 1
+        
+        return results

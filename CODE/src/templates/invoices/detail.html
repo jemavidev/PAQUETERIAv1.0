@@ -33,6 +33,14 @@
             </div>
         </div>
         <div class="flex gap-2">
+            {% if unresolved_count > 0 %}
+            <button onclick="reprocessInvoice()" class="px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Re-procesar
+            </button>
+            {% endif %}
             {% if invoice.is_active %}
             <button onclick="deleteInvoice()" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
                 Eliminar
@@ -371,6 +379,34 @@ async function deleteInvoice() {
         }
     } catch (e) {
         alert('Error de conexión');
+    }
+}
+
+async function reprocessInvoice() {
+    if (!confirm('¿Re-procesar esta factura?\n\nSe volverán a extraer los datos del PDF original para corregir posibles errores de lectura.')) return;
+    
+    // Mostrar indicador de carga
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+    
+    try {
+        const response = await fetch('/invoices/api/{{ invoice.id }}/reprocess', {method: 'POST'});
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Factura re-procesada exitosamente\n\nLos datos se han actualizado.');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.detail || 'Error re-procesando'));
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (e) {
+        alert('Error de conexión');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
