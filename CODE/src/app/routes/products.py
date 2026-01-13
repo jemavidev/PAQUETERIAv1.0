@@ -6,7 +6,7 @@ Fecha: 2026-01-13
 Autor: Equipo de Desarrollo
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
 from typing import Optional, List
@@ -16,7 +16,7 @@ import logging
 from app.database import get_db
 from app.models.product import Product, ProductColumnConfig, ProductSyncLog
 from app.services.product_sync_service import ProductSyncService
-from app.dependencies import get_current_active_user, get_current_admin_user
+from app.dependencies import get_current_active_user_from_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ router = APIRouter(
 
 @router.get("/", response_model=dict)
 async def list_products(
+    request: Request,
     page: int = Query(1, ge=1, description="Número de página"),
     page_size: int = Query(50, ge=1, le=100, description="Tamaño de página"),
     search: Optional[str] = Query(None, description="Búsqueda por código, nombre o descripción"),
@@ -39,7 +40,7 @@ async def list_products(
     linea_id: Optional[int] = Query(None, description="Filtrar por línea"),
     destacado: Optional[bool] = Query(None, description="Filtrar por destacado"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Listar productos con filtros y paginación
@@ -112,8 +113,9 @@ async def list_products(
 @router.get("/{product_id}", response_model=dict)
 async def get_product(
     product_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Obtener detalle de un producto por ID
@@ -145,11 +147,12 @@ async def get_product(
 
 @router.post("/sync", response_model=dict)
 async def sync_products(
+    request: Request,
     activo: Optional[bool] = Query(None, description="Sincronizar solo productos activos"),
     vendible: Optional[bool] = Query(None, description="Sincronizar solo productos vendibles"),
     visualizable_web: Optional[bool] = Query(None, description="Sincronizar solo productos visualizables en web"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado puede sincronizar
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Sincronizar productos desde DynamiaERP
@@ -185,10 +188,11 @@ async def sync_products(
 
 @router.get("/search/advanced", response_model=dict)
 async def search_products(
+    request: Request,
     q: str = Query(..., min_length=2, description="Término de búsqueda"),
     limit: int = Query(20, ge=1, le=100, description="Límite de resultados"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Búsqueda avanzada de productos usando índice de texto completo
@@ -246,9 +250,10 @@ async def search_products(
 
 @router.get("/sync/history", response_model=dict)
 async def get_sync_history(
+    request: Request,
     limit: int = Query(10, ge=1, le=50, description="Límite de registros"),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Obtener historial de sincronizaciones
@@ -275,8 +280,9 @@ async def get_sync_history(
 
 @router.get("/columns/config", response_model=dict)
 async def get_column_config(
+    request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Obtener configuración de columnas del usuario actual
@@ -325,8 +331,9 @@ async def get_column_config(
 @router.post("/columns/config", response_model=dict)
 async def save_column_config(
     columns: List[dict],
+    request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)  # ✅ Cualquier usuario autenticado
+    current_user = Depends(get_current_active_user_from_cookies)
 ):
     """
     Guardar configuración de columnas del usuario actual
