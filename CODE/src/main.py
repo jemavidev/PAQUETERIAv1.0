@@ -109,6 +109,30 @@ app = FastAPI(
 # Configurar métricas de Prometheus
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
+# Middleware para manejar proxy headers (IMPORTANTE para HTTPS detrás de proxy)
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+# Confiar en los headers del proxy (X-Forwarded-Proto, X-Forwarded-For, etc.)
+@app.middleware("http")
+async def proxy_headers_middleware(request: Request, call_next):
+    """
+    Middleware para manejar correctamente los headers de proxy.
+    Esto asegura que FastAPI sepa que está detrás de un proxy HTTPS.
+    """
+    # Obtener el protocolo del header X-Forwarded-Proto
+    forwarded_proto = request.headers.get("X-Forwarded-Proto")
+    if forwarded_proto:
+        request.scope["scheme"] = forwarded_proto
+    
+    # Obtener el host del header X-Forwarded-Host
+    forwarded_host = request.headers.get("X-Forwarded-Host")
+    if forwarded_host:
+        request.scope["server"] = (forwarded_host, None)
+    
+    response = await call_next(request)
+    return response
+
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
