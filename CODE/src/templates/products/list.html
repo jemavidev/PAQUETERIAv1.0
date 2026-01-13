@@ -21,8 +21,9 @@
                 Gestión de Productos
             </h1>
             <p class="text-sm text-gray-500 mt-1">Catálogo de productos sincronizado desde DynamiaERP</p>
-            <p class="text-xs text-gray-400 mt-1" x-show="pagination.total > 0">
-                <span x-text="pagination.total"></span> producto<span x-text="pagination.total !== 1 ? 's' : ''"></span> encontrado<span x-text="pagination.total !== 1 ? 's' : ''"></span>
+            <p class="text-xs text-gray-400 mt-1" x-show="pagination.total > 0" x-cloak>
+                <span x-text="pagination.total"></span> 
+                <span x-text="pagination.total !== 1 ? 'productos encontrados' : 'producto encontrado'"></span>
             </p>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -302,6 +303,20 @@
 
 {% block extra_scripts %}
 <script>
+    // Forzar HTTPS en todas las peticiones fetch
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        // Si la URL es relativa, asegurarse de que use el protocolo correcto
+        if (typeof url === 'string' && url.startsWith('/')) {
+            // URL relativa, usar el protocolo actual
+            url = window.location.protocol + '//' + window.location.host + url;
+        } else if (typeof url === 'string' && url.startsWith('http://') && window.location.protocol === 'https:') {
+            // Convertir http a https si estamos en https
+            url = url.replace('http://', 'https://');
+        }
+        return originalFetch(url, options);
+    };
+
     function productsApp() {
         return {
             products: [],
