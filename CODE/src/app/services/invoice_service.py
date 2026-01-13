@@ -36,6 +36,7 @@ from app.schemas.invoice import (
     InvoiceDashboardStats,
 )
 from app.services.pdf_extractor_service import PDFExtractorService
+from app.services.s3_storage_service import S3StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class InvoiceService:
     def __init__(self, db: Session):
         self.db = db
         self.extractor = PDFExtractorService()
+        self.s3_service = S3StorageService()
     
     # ========================================
     # UTILIDADES DE NORMALIZACIÓN
@@ -86,6 +88,115 @@ class InvoiceService:
     def calculate_file_hash(content: bytes) -> str:
         """Calcula el hash SHA256 de un archivo"""
         return hashlib.sha256(content).hexdigest()
+    
+    def save_pdf(self, content: bytes, file_hash: str, metadata: dict = None) -> bool:
+        """
+        Guarda un PDF en S3 o localmente según configuración
+        
+        Args:
+            content: Contenido del PDF en bytes
+            file_hash: Hash del archivo
+            metadata: Metadata adicional
+        
+        Returns:
+            True si se guardó exitosamente
+        """
+        import os
+        
+        # Intentar guardar en S3 si está habilitado
+        if self.s3_service.is_enabled():
+            success = self.s3_service.upload_pdf(content, file_hash, metadata)
+            if success:
+                logger.info(f"PDF guardado en S3: {file_hash}")
+                return True
+            else:
+                logger.warning(f"Fallo al guardar en S3, guardando localmente: {file_hash}")
+        
+        # Fallback: guardar localmente
+        pdf_directory = "/app/src/uploads/invoices"
+        os.makedirs(pdf_directory, exist_ok=True)
+        pdf_path = f"{pdf_directory}/{file_hash}.pdf"
+        
+        try:
+            with open(pdf_path, 'wb') as f:
+                f.write(content)
+            logger.info(f"PDF guardado localmente: {pdf_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error guardando PDF localmente: {e}")
+            return False
+    
+    def get_pdf(self, file_hash: str) -> Optional[bytes]:
+        """
+        Obtiene un PDF desde S3 o localmente
+        
+        Args:
+            file_hash: Hash del archivo
+        
+        Returns:
+            Contenido del PDF en bytes, o None si no existe
+        """
+        import os
+        
+        # Intentar obtener desde S3 si está habilitado
+        if self.s3_service.is_enabled():
+            content = self.s3_service.download_pdf(file_hash)
+            if content:
+                logger.info(f"PDF obtenido desde S3: {file_hash}")
+                return content
+            else:
+                logger.warning(f"PDF no encontrado en S3, buscando localmente: {file_hash}")
+        
+        # Fallback: buscar localmente
+        pdf_directory = "/app/src/uploads/invoices"
+        pdf_path = f"{pdf_directory}/{file_hash}.pdf"
+        
+        if os.path.exists(pdf_path):
+            try:
+                with open(pdf_path, 'rb') as f:
+                    content = f.read()
+                logger.info(f"PDF obtenido localmente: {pdf_path}")
+                return content
+            except Exception as e:
+                logger.error(f"Error leyendo PDF local: {e}")
+                return None
+        
+        logger.error(f"PDF no encontrado: {file_hash}")
+        return None
+    
+    def delete_pdf(self, file_hash: str) -> bool:
+        """
+        Elimina un PDF de S3 y/o localmente
+        
+        Args:
+            file_hash: Hash del archivo
+        
+        Returns:
+            True si se eliminó exitosamente
+        """
+        import os
+        
+        success = False
+        
+        # Eliminar de S3 si está habilitado
+        if self.s3_service.is_enabled():
+            if self.s3_service.delete_pdf(file_hash):
+                logger.info(f"PDF eliminado de S3: {file_hash}")
+                success = True
+        
+        # Eliminar localmente si existe
+        pdf_directory = "/app/src/uploads/invoices"
+        pdf_path = f"{pdf_directory}/{file_hash}.pdf"
+        
+        if os.path.exists(pdf_path):
+            try:
+                os.remove(pdf_path)
+                logger.info(f"PDF eliminado localmente: {pdf_path}")
+                success = True
+            except Exception as e:
+                logger.error(f"Error eliminando PDF local: {e}")
+        
+        return success
     
     # ========================================
     # GESTIÓN DE PROVEEDORES

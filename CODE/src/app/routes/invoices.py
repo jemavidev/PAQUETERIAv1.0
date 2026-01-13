@@ -373,16 +373,13 @@ async def extract_pdf(
         file_hash = service.calculate_file_hash(content)
         extracted.file_hash = file_hash
         
-        # Guardar PDF permanentemente en el servidor
-        pdf_directory = "/app/src/uploads/invoices"
-        os.makedirs(pdf_directory, exist_ok=True)
-        pdf_path = f"{pdf_directory}/{file_hash}.pdf"
-        
-        # Solo guardar si no existe ya
-        if not os.path.exists(pdf_path):
-            with open(pdf_path, 'wb') as f:
-                f.write(content)
-            logger.info(f"PDF guardado: {pdf_path}")
+        # Guardar PDF (S3 o localmente según configuración)
+        metadata = {
+            'filename': file.filename,
+            'cufe_cude': extracted.cufe_cude if extracted.cufe_cude else 'unknown',
+            'document_type': extracted.document_type if extracted.document_type else 'unknown'
+        }
+        service.save_pdf(content, file_hash, metadata)
         
         # Verificar duplicado por CUFE (activas e inactivas)
         if extracted.cufe_cude:
@@ -927,23 +924,32 @@ async def reprocess_invoice(
         if not invoice.file_hash:
             raise HTTPException(status_code=400, detail="Esta factura no tiene archivo asociado")
         
-        # Buscar el PDF en el directorio de uploads
-        pdf_directory = "/app/src/uploads/invoices"
-        pdf_path = f"{pdf_directory}/{invoice.file_hash}.pdf"
+        # Obtener PDF desde S3 o localmente
+        pdf_content = service.get_pdf(invoice.file_hash)
         
-        if not os.path.exists(pdf_path):
-            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado en el servidor")
+        if not pdf_content:
+            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado")
         
-        success = service.reprocess_invoice_from_file(invoice_id, pdf_path)
+        # Guardar temporalmente para re-procesar
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            tmp.write(pdf_content)
+            tmp_path = tmp.name
         
-        if success:
-            return JSONResponse(content={
-                "success": True,
-                "message": "Factura re-procesada exitosamente",
-                "invoice_id": invoice_id
-            })
-        else:
-            raise HTTPException(status_code=500, detail="Error re-procesando la factura")
+        try:
+            success = service.reprocess_invoice_from_file(invoice_id, tmp_path)
+            
+            if success:
+                return JSONResponse(content={
+                    "success": True,
+                    "message": "Factura re-procesada exitosamente",
+                    "invoice_id": invoice_id
+                })
+            else:
+                raise HTTPException(status_code=500, detail="Error re-procesando la factura")
+        finally:
+            # Limpiar archivo temporal
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
             
     except HTTPException:
         raise
@@ -980,4 +986,93 @@ async def reprocess_all_with_errors(
         
     except Exception as e:
         logger.error(f"Error en reprocess_all_with_errors: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# API ENDPOINTS - DESCARGA DE PDFs
+# ========================================
+
+@router.get("/api/{invoice_id}/download-pdf")
+async def download_invoice_pdf(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Descarga el PDF original de una factura"""
+    try:
+        service = InvoiceService(db)
+        invoice = service.get_invoice(invoice_id, include_inactive=True)
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Factura no encontrada")
+        
+        if not invoice.file_hash:
+            raise HTTPException(status_code=400, detail="Esta factura no tiene archivo asociado")
+        
+        # Obtener PDF desde S3 o localmente
+        pdf_content = service.get_pdf(invoice.file_hash)
+        
+        if not pdf_content:
+            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado")
+        
+        # Retornar como descarga
+        filename = invoice.archivo_nombre or f"factura_{invoice.numero_documento}.pdf"
+        
+        return StreamingResponse(
+            iter([pdf_content]),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error descargando PDF: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/{invoice_id}/view-pdf")
+async def view_invoice_pdf(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Visualiza el PDF de una factura en el navegador"""
+    try:
+        service = InvoiceService(db)
+        invoice = service.get_invoice(invoice_id, include_inactive=True)
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Factura no encontrada")
+        
+        if not invoice.file_hash:
+            raise HTTPException(status_code=400, detail="Esta factura no tiene archivo asociado")
+        
+        # Si S3 está habilitado, generar URL firmada
+        if service.s3_service.is_enabled():
+            url = service.s3_service.generate_presigned_url(invoice.file_hash, expiration=3600)
+            if url:
+                return JSONResponse(content={"url": url, "type": "presigned"})
+        
+        # Fallback: obtener PDF y retornarlo
+        pdf_content = service.get_pdf(invoice.file_hash)
+        
+        if not pdf_content:
+            raise HTTPException(status_code=404, detail="Archivo PDF no encontrado")
+        
+        return StreamingResponse(
+            iter([pdf_content]),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "inline"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error visualizando PDF: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
