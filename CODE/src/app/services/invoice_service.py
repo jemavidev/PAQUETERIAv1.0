@@ -291,9 +291,10 @@ class InvoiceService:
             })
         
         # Validar totales
-        # Necesitamos considerar si el IVA está incluido en los precios o no
-        items_total = sum(item.valor_total for item in data.items)
-        items_iva = sum(item.iva_valor for item in data.items)
+        # Calcular totales desde los items
+        items_subtotal = sum(item.valor_total for item in data.items)  # Suma de valores totales de items
+        items_iva = sum(item.iva_valor for item in data.items)  # Suma de IVA de items
+        descuento = self.normalize_price(data.descuento) if data.descuento else 0
         
         # Detectar si la mayoría de items tienen IVA incluido
         items_con_iva_incluido = sum(1 for item in data.items if self._detect_iva_incluido(item) == True)
@@ -304,22 +305,22 @@ class InvoiceService:
         
         if iva_incluido_en_items:
             # Los items ya incluyen IVA, entonces:
-            # - items_total debería ser igual a total_neto
-            # - subtotal debería ser items_total - IVA
+            # - items_subtotal debería ser igual a total_neto
+            # - subtotal debería ser items_subtotal - IVA
             
-            diff_total = abs(items_total - data.total_neto)
+            diff_total = abs(items_subtotal - data.total_neto)
             if diff_total > 100:  # Tolerancia de $100
                 irregularities.append({
                     'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
                     'severidad': IrregularitySeverity.WARNING.value,
-                    'descripcion': f'Suma de items con IVA incluido ({items_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
+                    'descripcion': f'Suma de items con IVA incluido ({items_subtotal:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
                     'valor_original': str(data.total_neto),
-                    'valor_sugerido': str(items_total),
+                    'valor_sugerido': str(items_subtotal),
                 })
             
             # Verificar subtotal
             if data.subtotal > 0:
-                expected_subtotal = items_total - items_iva
+                expected_subtotal = items_subtotal - items_iva
                 diff_subtotal = abs(expected_subtotal - data.subtotal)
                 if diff_subtotal > 100:
                     irregularities.append({
@@ -331,32 +332,46 @@ class InvoiceService:
                     })
         else:
             # Los items NO incluyen IVA, entonces:
-            # - items_total debería ser igual a subtotal
-            # - items_total + IVA debería ser igual a total_neto
+            # Fórmula: (Subtotal - Descuento) + IVA = Total Neto
+            # O también: items_subtotal + IVA = Total Neto
             
-            # Verificar subtotal
-            if data.subtotal > 0:
-                diff_subtotal = abs(items_total - data.subtotal)
-                if diff_subtotal > 100:  # Tolerancia de $100
-                    irregularities.append({
-                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
-                        'severidad': IrregularitySeverity.WARNING.value,
-                        'descripcion': f'Suma de items ({items_total:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
-                        'valor_original': str(data.subtotal),
-                        'valor_sugerido': str(items_total),
-                    })
-            
-            # Verificar total neto
-            expected_total = items_total + items_iva
+            # Verificar que items_subtotal + IVA = total_neto
+            expected_total = items_subtotal + items_iva
             diff_total = abs(expected_total - data.total_neto)
+            
             if diff_total > 100:  # Tolerancia de $100
                 irregularities.append({
                     'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
                     'severidad': IrregularitySeverity.WARNING.value,
-                    'descripcion': f'Total calculado ({expected_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
+                    'descripcion': f'Total calculado (items: {items_subtotal:,} + IVA: {items_iva:,} = {expected_total:,}) no coincide con total neto ({data.total_neto:,}). Diferencia: ${diff_total:,}',
                     'valor_original': str(data.total_neto),
                     'valor_sugerido': str(expected_total),
                 })
+            
+            # Verificar subtotal si hay descuento
+            # Subtotal reportado - Descuento debería ser igual a items_subtotal
+            if data.subtotal > 0 and descuento > 0:
+                expected_items_subtotal = data.subtotal - descuento
+                diff_subtotal = abs(expected_items_subtotal - items_subtotal)
+                if diff_subtotal > 100:  # Tolerancia de $100
+                    irregularities.append({
+                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                        'severidad': IrregularitySeverity.WARNING.value,
+                        'descripcion': f'Subtotal calculado (subtotal: {data.subtotal:,} - descuento: {descuento:,} = {expected_items_subtotal:,}) no coincide con suma de items ({items_subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                        'valor_original': str(items_subtotal),
+                        'valor_sugerido': str(expected_items_subtotal),
+                    })
+            elif data.subtotal > 0:
+                # Sin descuento, subtotal debería ser igual a items_subtotal
+                diff_subtotal = abs(items_subtotal - data.subtotal)
+                if diff_subtotal > 100:  # Tolerancia de $100
+                    irregularities.append({
+                        'tipo': IrregularityType.TOTAL_NO_COINCIDE.value,
+                        'severidad': IrregularitySeverity.WARNING.value,
+                        'descripcion': f'Suma de items ({items_subtotal:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
+                        'valor_original': str(data.subtotal),
+                        'valor_sugerido': str(items_subtotal),
+                    })
         
         # Validar items
         for idx, item in enumerate(data.items):
