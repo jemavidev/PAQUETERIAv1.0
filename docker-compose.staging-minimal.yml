@@ -33,11 +33,13 @@ services:
     mem_reservation: 200m
     cpus: 1.5
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8001/health"]
       interval: 120s
       timeout: 10s
       retries: 2
       start_period: 60s
+    ports:
+      - "0.0.0.0:8001:8001"
     volumes:
       # Archivos estáticos editables sin rebuild (CSS, JS, imágenes, PDFs)
       - ./CODE/src/static:/app/src/static
@@ -50,7 +52,7 @@ services:
       sh -c "mkdir -p /app/uploads && 
              cd /app && 
              python -m uvicorn src.main:app 
-             --host 127.0.0.1 
+             --host 0.0.0.0 
              --port 8001 
              --workers 1
              --limit-concurrency 50
