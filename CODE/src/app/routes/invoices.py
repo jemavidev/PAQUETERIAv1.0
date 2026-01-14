@@ -1118,3 +1118,133 @@ async def view_invoice_pdf(
     except Exception as e:
         logger.error(f"Error visualizando PDF: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# CUFE IMPORT - Importación desde DIAN
+# ========================================
+
+from app.services.dian_cufe_service import get_cufe_service, CufeStatus
+
+
+@router.get("/cufe-import", response_class=HTMLResponse)
+async def cufe_import_page(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+):
+    """Página de importación de facturas desde DIAN por CUFE"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    return templates.TemplateResponse("invoices/cufe_import.html", context)
+
+
+@router.post("/api/cufe/init")
+async def init_cufe_import(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+):
+    """Inicializa una sesión de importación de CUFEs"""
+    try:
+        data = await request.json()
+        cufes = data.get('cufes', [])
+        
+        if not cufes:
+            return JSONResponse(content={"success": False, "message": "No se proporcionaron CUFEs"})
+        
+        service = get_cufe_service()
+        service.clear_tasks()  # Limpiar tareas anteriores
+        
+        created = []
+        for cufe in cufes:
+            task = service.create_task(cufe)
+            created.append(task.to_dict())
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": f"{len(created)} CUFEs inicializados",
+            "tasks": created,
+            "stats": service.get_stats()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error inicializando CUFEs: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e)})
+
+
+@router.post("/api/cufe/update")
+async def update_cufe_status(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+):
+    """Actualiza el estado de un CUFE"""
+    try:
+        data = await request.json()
+        cufe = data.get('cufe')
+        status = data.get('status')
+        
+        if not cufe or not status:
+            return JSONResponse(content={"success": False, "message": "Faltan parámetros"})
+        
+        service = get_cufe_service()
+        
+        try:
+            cufe_status = CufeStatus(status)
+        except ValueError:
+            return JSONResponse(content={"success": False, "message": f"Estado inválido: {status}"})
+        
+        task = service.update_task_status(
+            cufe=cufe,
+            status=cufe_status,
+            error_message=data.get('error_message'),
+            invoice_id=data.get('invoice_id'),
+            invoice_number=data.get('invoice_number'),
+            supplier_name=data.get('supplier_name'),
+            total=data.get('total')
+        )
+        
+        if not task:
+            return JSONResponse(content={"success": False, "message": "CUFE no encontrado"})
+        
+        return JSONResponse(content={
+            "success": True,
+            "task": task.to_dict(),
+            "stats": service.get_stats()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error actualizando CUFE: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e)})
+
+
+@router.get("/api/cufe/status")
+async def get_cufe_import_status(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+):
+    """Obtiene el estado actual de la importación de CUFEs"""
+    service = get_cufe_service()
+    
+    return JSONResponse(content={
+        "tasks": [t.to_dict() for t in service.get_all_tasks()],
+        "stats": service.get_stats()
+    })
+
+
+@router.get("/api/cufe/dian-url/{cufe}")
+async def get_dian_url(
+    cufe: str,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+):
+    """Genera la URL de búsqueda en la DIAN para un CUFE"""
+    service = get_cufe_service()
+    
+    is_valid, result = service.validate_cufe(cufe)
+    if not is_valid:
+        return JSONResponse(content={"success": False, "message": result})
+    
+    url = service.get_dian_search_url(result)
+    
+    return JSONResponse(content={
+        "success": True,
+        "url": url,
+        "cufe": result
+    })
