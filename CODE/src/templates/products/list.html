@@ -29,11 +29,11 @@
         </div>
         <div class="flex flex-wrap gap-3 items-center">
             <!-- Fecha de última sincronización -->
-            <span x-show="lastSyncDate" x-cloak class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                 <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Última sync: <span x-text="lastSyncDate"></span>
+                Última sync: <span x-text="lastSyncDate || 'Sin sincronizar'"></span>
             </span>
             <button @click="syncProducts()"
                     :disabled="syncing"
@@ -56,9 +56,9 @@
     <!-- Filtros y Paginación Superior -->
     <div class="bg-white rounded-lg shadow-sm border mb-4">
         <div class="p-4">
-            <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
+            <div class="flex flex-col lg:flex-row gap-4 items-center">
                 <!-- Búsqueda con botón limpiar -->
-                <div class="flex-1">
+                <div class="flex-1 w-full lg:w-auto">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -84,7 +84,7 @@
                 </div>
                 
                 <!-- Paginación al lado de búsqueda -->
-                <div class="flex items-center gap-4 flex-shrink-0" x-show="pagination.total > 0">
+                <div class="flex items-center gap-4 flex-shrink-0 mt-2 lg:mt-5" x-show="pagination.total > 0">
                     <!-- Ir a página específica -->
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-600">Ir a:</span>
