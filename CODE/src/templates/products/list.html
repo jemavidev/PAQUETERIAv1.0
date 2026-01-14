@@ -247,8 +247,10 @@
     <!-- Modal de Configuración de Columnas -->
     <div x-show="showColumnConfig"
          x-cloak
+         x-transition.opacity.duration.300ms
          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-         @click.self="showColumnConfig = false">
+         @click.self="showColumnConfig = false"
+         style="display: none;">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
             <div class="flex justify-between items-center mb-4 pb-3 border-b">
                 <h3 class="text-lg font-semibold text-gray-900">Configurar Columnas</h3>
@@ -303,6 +305,11 @@
 
 {% block extra_scripts %}
 <script>
+    // Esperar a que Alpine.js esté completamente inicializado
+    document.addEventListener('alpine:init', () => {
+        console.log('🎯 Alpine.js inicializado para productos');
+    });
+
     // Forzar HTTPS en todas las peticiones fetch
     const originalFetch = window.fetch;
     window.fetch = function(url, options) {
@@ -338,8 +345,12 @@
             showColumnConfig: false,
 
             init() {
-                this.loadColumnConfig();
-                this.loadProducts();
+                console.log('🚀 Inicializando app de productos');
+                // Usar setTimeout para asegurar que Alpine esté completamente inicializado
+                setTimeout(() => {
+                    this.loadColumnConfig();
+                    this.loadProducts();
+                }, 0);
             },
 
             get visibleColumns() {
