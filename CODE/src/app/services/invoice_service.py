@@ -366,12 +366,8 @@ class InvoiceService:
                             'severidad': IrregularitySeverity.INFO.value,  # INFO en lugar de WARNING
                             'descripcion': f'Suma de items ({items_subtotal:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
                             'valor_original': str(data.subtotal),
-                            'valor_sugerrityType.TOTAL_NO_COINCIDE.value,
-                        'severidad': IrregularitySeverity.WARNING.value,
-                        'descripcion': f'Suma de items ({items_subtotal:,}) no coincide con subtotal ({data.subtotal:,}). Diferencia: ${diff_subtotal:,}',
-                        'valor_original': str(data.subtotal),
-                        'valor_sugerido': str(items_subtotal),
-                    })
+                            'valor_sugerido': str(items_subtotal),
+                        })
         
         # Validar items
         for idx, item in enumerate(data.items):
