@@ -15,8 +15,8 @@ alpine.min.js?v=3.13.3:5 Uncaught (in promise) {isFromCancelledTransition: true}
 ```
 
 ### Causa Raíz
-1. **Problema de timing**: Alpine.js se carga con `defer` pero el código intenta ejecutarse antes de que esté completamente inicializado
-2. **Transiciones implícitas**: El modal usa `x-show` sin transiciones explícitas, causando errores en Alpine.js 3.13.3
+1. **Templates anidados**: `<template x-if>` dentro de `<template x-for>` causa errores en Alpine.js 3.13.3
+2. **Transiciones implícitas**: `x-show` sin transiciones explícitas puede causar errores
 3. **Inicialización prematura**: La función `init()` se ejecuta antes de que Alpine esté listo
 
 ### Ubicación del Error
@@ -28,7 +28,53 @@ alpine.min.js?v=3.13.3:5 Uncaught (in promise) {isFromCancelledTransition: true}
 
 ## ✅ Soluciones Aplicadas
 
-### 1. Agregar Transición Explícita al Modal
+### 1. Eliminar Templates x-if Anidados (CRÍTICO)
+
+**Problema:** Alpine.js 3.13.3 tiene problemas con `<template x-if>` anidados dentro de `<template x-for>`
+
+**Antes:**
+```html
+<template x-if="!loading && products.length > 0">
+    <template x-for="product in products" :key="product.id">
+        <tr>...</tr>
+    </template>
+</template>
+```
+
+**Después:**
+```html
+<template x-for="product in products" :key="product.id">
+    <tr x-show="!loading && products.length > 0">...</tr>
+</template>
+```
+
+**Cambios:**
+- ✅ Eliminados todos los `<template x-if>` anidados
+- ✅ Reemplazados con `x-show` en elementos reales
+- ✅ Simplificada la estructura de templates
+
+### 2. Reemplazar x-show con :class en Contador
+
+**Antes:**
+```html
+<p x-show="pagination.total > 0" x-cloak>
+    <span x-text="pagination.total"></span> productos
+</p>
+```
+
+**Después:**
+```html
+<p :class="pagination.total > 0 ? '' : 'hidden'">
+    <span x-text="pagination.total"></span> productos
+</p>
+```
+
+**Cambios:**
+- ✅ Eliminado `x-show` que causaba transiciones
+- ✅ Usado `:class` con clase `hidden` de Tailwind
+- ✅ Más performante y sin transiciones
+
+### 3. Agregar Transición Explícita al Modal
 
 **Antes:**
 ```html
