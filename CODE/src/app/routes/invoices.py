@@ -313,6 +313,7 @@ async def irregularities_list(
     context["page"] = page
     context["pages"] = (total + 49) // 50
     context["current_tipo"] = tipo
+    context["current_categoria"] = categoria
     context["only_unresolved"] = only_unresolved
     
     return templates.TemplateResponse("invoices/irregularities.html", context)
