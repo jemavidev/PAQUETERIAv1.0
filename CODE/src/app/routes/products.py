@@ -148,6 +148,7 @@ async def get_product(
 @router.post("/sync", response_model=dict)
 async def sync_products(
     request: Request,
+    force_full: bool = Query(False, description="Forzar sincronización completa (por defecto usa incremental)"),
     activo: Optional[bool] = Query(None, description="Sincronizar solo productos activos"),
     vendible: Optional[bool] = Query(None, description="Sincronizar solo productos vendibles"),
     visualizable_web: Optional[bool] = Query(None, description="Sincronizar solo productos visualizables en web"),
@@ -156,6 +157,11 @@ async def sync_products(
 ):
     """
     Sincronizar productos desde DynamiaERP
+    
+    Soporta dos modos:
+    - INCREMENTAL (por defecto): Solo productos modificados desde última sincronización
+    - FULL (force_full=true): Todos los productos
+    
     Accesible para cualquier usuario autenticado
     """
     try:
@@ -170,11 +176,24 @@ async def sync_products(
         
         # Ejecutar sincronización
         sync_service = ProductSyncService(db)
-        result = sync_service.sync_products(filters=filters if filters else None)
+        result = sync_service.sync_products(
+            filters=filters if filters else None,
+            force_full=force_full
+        )
+        
+        # Mensaje personalizado según tipo de sincronización
+        if result['success']:
+            sync_type = result.get('sync_type', 'UNKNOWN')
+            if sync_type == 'INCREMENTAL':
+                message = f"Sincronización incremental completada - {result.get('efficiency_gain', '0%')} más eficiente"
+            else:
+                message = "Sincronización completa completada"
+        else:
+            message = "Sincronización con errores"
         
         return {
             "success": result['success'],
-            "message": "Sincronización completada" if result['success'] else "Sincronización con errores",
+            "message": message,
             "data": result
         }
         

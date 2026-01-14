@@ -196,6 +196,8 @@ class ProductSyncLog(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     sync_date = Column(DateTime, nullable=False, index=True)
+    sync_type = Column(String(50), default='FULL', nullable=False)  # 'FULL' o 'INCREMENTAL'
+    last_product_date = Column(DateTime)  # Fecha del producto más reciente sincronizado
     total_products = Column(Integer, default=0)
     new_products = Column(Integer, default=0)
     updated_products = Column(Integer, default=0)
@@ -210,6 +212,8 @@ class ProductSyncLog(Base):
         return {
             'id': self.id,
             'sync_date': self.sync_date.isoformat() if self.sync_date else None,
+            'sync_type': self.sync_type,
+            'last_product_date': self.last_product_date.isoformat() if self.last_product_date else None,
             'total_products': self.total_products,
             'new_products': self.new_products,
             'updated_products': self.updated_products,
