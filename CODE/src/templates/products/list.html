@@ -29,12 +29,13 @@
         </div>
         <div class="flex flex-wrap gap-3 items-center">
             <!-- Fecha de última sincronización -->
-            <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-2 text-xs bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200">
+                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Última sync: <span x-text="lastSyncDate || 'Sin sincronizar'"></span>
-            </span>
+                <span class="text-gray-500">Última sync:</span>
+                <span class="font-medium text-gray-700" x-text="lastSyncDate || 'Sin sincronizar'"></span>
+            </div>
             <button @click="syncProducts()"
                     :disabled="syncing"
                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
@@ -79,7 +80,7 @@
                 </div>
                 
                 <!-- Paginación al lado de búsqueda -->
-                <div class="flex items-center gap-4 flex-shrink-0 mt-2 lg:mt-5" x-show="pagination.total > 0">
+                <div class="flex items-center gap-4 flex-shrink-0" x-show="pagination.total > 0">
                     <!-- Ir a página específica -->
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-600">Ir a:</span>
@@ -539,12 +540,13 @@
                     if (data.success) {
                         const now = new Date();
                         this.lastSyncDate = now.toLocaleString('es-CO', {
-                            day: '2-digit',
-                            month: '2-digit',
+                            day: 'numeric',
+                            month: 'short',
                             year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
-                        });
+                            minute: '2-digit',
+                            hour12: true
+                        }).replace(',', ' •');
                         localStorage.setItem('lastProductSync', this.lastSyncDate);
                         alert(`✅ Sincronización completada:\n\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}\n\nTotal procesados: ${data.data.total}`);
                         this.loadProducts();
