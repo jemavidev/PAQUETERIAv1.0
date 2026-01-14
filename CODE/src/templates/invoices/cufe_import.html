@@ -13,199 +13,133 @@
             Volver al dashboard
         </a>
         <h1 class="text-2xl font-bold text-gray-900">Importar Facturas desde DIAN</h1>
-        <p class="text-gray-600 mt-1">Ingresa los códigos CUFE para descargar e importar facturas electrónicas</p>
+        <p class="text-gray-600 mt-1">Genera links de consulta DIAN y luego importa los PDFs descargados</p>
     </div>
 
-    <!-- Info Banner -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div class="flex">
-            <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <div class="text-sm text-blue-800">
-                <p class="font-medium mb-1">¿Cómo funciona?</p>
-                <ol class="list-decimal list-inside space-y-1 text-blue-700">
-                    <li>Pega los códigos CUFE (uno por línea o separados por comas)</li>
-                    <li>Se abrirá una ventana del portal DIAN para cada CUFE</li>
-                    <li>Resuelve el captcha y haz clic en "Buscar"</li>
-                    <li>El sistema descargará el PDF automáticamente</li>
-                </ol>
-            </div>
+    <!-- Steps indicator -->
+    <div class="flex items-center justify-center mb-8">
+        <div class="flex items-center">
+            <div id="step1Indicator" class="w-10 h-10 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold">1</div>
+            <span class="ml-2 text-sm font-medium text-gray-700">Ingresar CUFEs</span>
+        </div>
+        <div class="w-16 h-1 bg-gray-300 mx-4" id="connector1"></div>
+        <div class="flex items-center">
+            <div id="step2Indicator" class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">2</div>
+            <span class="ml-2 text-sm text-gray-500">Descargar de DIAN</span>
+        </div>
+        <div class="w-16 h-1 bg-gray-300 mx-4" id="connector2"></div>
+        <div class="flex items-center">
+            <div id="step3Indicator" class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">3</div>
+            <span class="ml-2 text-sm text-gray-500">Importar PDFs</span>
         </div>
     </div>
 
-    <!-- Input Section -->
-    <div id="inputSection" class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+    <!-- STEP 1: Input CUFEs -->
+    <div id="step1" class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Paso 1: Ingresa los códigos CUFE</h2>
         <div class="mb-4">
-            <label for="cufeList" class="block text-sm font-medium text-gray-700 mb-2">
-                Lista de CUFEs
-            </label>
             <textarea 
                 id="cufeList" 
-                rows="6" 
+                rows="8" 
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent font-mono text-sm"
-                placeholder="Pega aquí los códigos CUFE, uno por línea o separados por comas...
+                placeholder="Pega aquí los códigos CUFE, uno por línea...
 
 Ejemplo:
 b51fb12c48fcc258d70c79edb1b352710c920b11403eab7758396fa4306707c97d5d4ab72f43aa3cb75b6e65f507ef30
-a23cd45e67fgh890ij12k34l56m78n90op12q34r56s78t90uv12w34x56y78z90ab12cd34ef56gh78"></textarea>
+c72ea23f59abc147e81d90fgh2i463820d031c22514fab8869507gb5417818d08e6e5bc83g54bb4dc86c7f76g618fg41"></textarea>
         </div>
         
         <div class="flex items-center justify-between">
             <div class="text-sm text-gray-500">
-                <span id="cufeCount">0</span> CUFEs detectados
+                <span id="cufeCount" class="font-medium text-papyrus-blue">0</span> CUFEs válidos detectados
             </div>
-            <button 
-                onclick="validateAndStart()" 
-                class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                id="startBtn">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Iniciar Importación
+            <button onclick="generateLinks()" id="generateBtn"
+                    class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                Generar Links DIAN →
             </button>
         </div>
     </div>
 
-    <!-- Processing Section -->
-    <div id="processingSection" class="hidden">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div class="bg-gray-50 border rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-gray-700" id="statTotal">0</p>
-                <p class="text-sm text-gray-500">Total</p>
-            </div>
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-yellow-600" id="statPending">0</p>
-                <p class="text-sm text-yellow-600">Pendientes</p>
-            </div>
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-green-600" id="statImported">0</p>
-                <p class="text-sm text-green-600">Importados</p>
-            </div>
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-red-600" id="statError">0</p>
-                <p class="text-sm text-red-600">Errores</p>
-            </div>
+    <!-- STEP 2: DIAN Links -->
+    <div id="step2" class="hidden bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Paso 2: Descarga los PDFs desde la DIAN</h2>
+            <button onclick="openAllLinks()" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                Abrir todos los links
+            </button>
+        </div>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <p class="text-sm text-yellow-800">
+                <strong>Instrucciones:</strong> Abre cada link, resuelve el captcha de seguridad, 
+                busca el documento y descarga el PDF. Guarda todos los PDFs en una carpeta.
+            </p>
         </div>
 
-        <!-- Task List -->
-        <div class="bg-white rounded-lg shadow-sm border">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Estado de Importación</h2>
-                <div class="flex gap-2">
-                    <button onclick="processNextPending()" id="processNextBtn" 
-                            class="px-4 py-2 bg-papyrus-blue text-white text-sm rounded-lg hover:bg-blue-700">
-                        Procesar Siguiente
-                    </button>
-                    <button onclick="resetImport()" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50">
-                        Nueva Importación
-                    </button>
-                </div>
-            </div>
-            <div id="taskList" class="divide-y divide-gray-200 max-h-[500px] overflow-y-auto"></div>
+        <div id="linksList" class="space-y-2 max-h-80 overflow-y-auto mb-4"></div>
+        
+        <div class="flex justify-between items-center pt-4 border-t">
+            <button onclick="goToStep(1)" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                ← Volver
+            </button>
+            <button onclick="goToStep(3)" class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                Ya descargué los PDFs →
+            </button>
         </div>
     </div>
 
-    <!-- DIAN Popup Instructions Modal -->
-    <div id="instructionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Instrucciones</h2>
-            </div>
-            <div class="p-6">
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold mr-3 flex-shrink-0">1</div>
-                        <p class="text-gray-700">Se abrirá una ventana con el portal de la DIAN</p>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold mr-3 flex-shrink-0">2</div>
-                        <p class="text-gray-700">El CUFE ya estará ingresado automáticamente</p>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold mr-3 flex-shrink-0">3</div>
-                        <p class="text-gray-700">Resuelve el captcha (verificación de seguridad)</p>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold mr-3 flex-shrink-0">4</div>
-                        <p class="text-gray-700">Haz clic en el botón <strong>"Buscar"</strong></p>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 bg-papyrus-blue text-white rounded-full flex items-center justify-center font-bold mr-3 flex-shrink-0">5</div>
-                        <p class="text-gray-700">Descarga el PDF y súbelo aquí usando el botón de la tarea</p>
-                    </div>
-                </div>
-                
-                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p class="text-sm text-yellow-800">
-                        <strong>Nota:</strong> Por seguridad, la DIAN requiere resolver un captcha manualmente. 
-                        Este proceso es necesario para cada factura.
-                    </p>
-                </div>
-            </div>
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                <button onclick="closeInstructionsModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    Cancelar
-                </button>
-                <button onclick="openDianAndContinue()" class="px-6 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
-                    Abrir Portal DIAN
-                </button>
-            </div>
+    <!-- STEP 3: Upload PDFs -->
+    <div id="step3" class="hidden bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Paso 3: Sube los PDFs descargados</h2>
+        
+        <div id="uploadDropZone" 
+             class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-papyrus-blue transition-colors cursor-pointer mb-4"
+             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <p class="text-lg text-gray-700 mb-2">Arrastra los PDFs descargados aquí</p>
+            <p class="text-sm text-gray-500 mb-4">o</p>
+            <label class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+                Seleccionar archivos
+                <input type="file" accept=".pdf" multiple class="hidden" onchange="handleFileSelect(event)" id="fileInput">
+            </label>
+            <p class="text-xs text-gray-400 mt-4">Puedes seleccionar múltiples archivos PDF</p>
         </div>
-    </div>
 
-    <!-- Upload PDF Modal -->
-    <div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Subir PDF descargado</h2>
+        <!-- Processing progress -->
+        <div id="processingArea" class="hidden">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Procesando archivos...</span>
+                <span id="processProgress" class="text-sm text-gray-500">0 de 0</span>
             </div>
-            <div class="p-6">
-                <p class="text-sm text-gray-600 mb-4">CUFE: <code id="uploadCufeDisplay" class="text-xs bg-gray-100 px-2 py-1 rounded"></code></p>
-                
-                <div id="uploadDropZone" 
-                     class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-papyrus-blue transition-colors cursor-pointer"
-                     ondrop="handlePdfDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                    </svg>
-                    <p class="text-gray-600 mb-2">Arrastra el PDF aquí</p>
-                    <label class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer">
-                        Seleccionar archivo
-                        <input type="file" accept=".pdf" class="hidden" onchange="handlePdfSelect(event)" id="pdfFileInput">
-                    </label>
-                </div>
-                
-                <div id="uploadProgress" class="hidden mt-4">
-                    <div class="flex items-center">
-                        <svg class="animate-spin h-5 w-5 text-papyrus-blue mr-3" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span class="text-gray-600">Procesando e importando...</span>
-                    </div>
-                </div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div id="progressBar" class="bg-papyrus-blue h-2 rounded-full transition-all" style="width: 0%"></div>
             </div>
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button onclick="closeUploadModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    Cancelar
-                </button>
-            </div>
+            <div id="processResults" class="space-y-2 max-h-60 overflow-y-auto"></div>
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t mt-4">
+            <button onclick="goToStep(2)" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                ← Volver a links
+            </button>
+            <a href="/invoices/list" id="viewAllBtn" class="hidden px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Ver facturas importadas
+            </a>
         </div>
     </div>
 </div>
 
 <script>
 // State
-let tasks = [];
-let currentCufe = null;
+let cufes = [];
+let currentStep = 1;
 
 // CUFE validation
 function validateCufe(cufe) {
     const clean = cufe.replace(/[^a-fA-F0-9]/g, '').toLowerCase();
-    if (clean.length !== 96) {
-        return { valid: false, error: `Debe tener 96 caracteres (tiene ${clean.length})` };
+    if (clean.length < 90 || clean.length > 100) {
+        return { valid: false, error: `Longitud inválida (${clean.length} caracteres)` };
     }
     return { valid: true, cufe: clean };
 }
@@ -213,204 +147,120 @@ function validateCufe(cufe) {
 // Parse CUFE list
 function parseCufeList(text) {
     const results = [];
-    const parts = text.trim().split(/[\n,\s]+/);
+    const lines = text.trim().split(/[\n]+/);
     
-    for (const part of parts) {
-        const cufe = part.trim();
+    for (const line of lines) {
+        const cufe = line.trim();
         if (!cufe) continue;
         
         const validation = validateCufe(cufe);
-        results.push({
-            original: cufe,
-            ...validation
-        });
+        if (validation.valid) {
+            results.push(validation.cufe);
+        }
     }
-    return results;
+    return [...new Set(results)]; // Remove duplicates
 }
 
 // Update CUFE count on input
 document.getElementById('cufeList').addEventListener('input', function() {
     const parsed = parseCufeList(this.value);
-    const validCount = parsed.filter(p => p.valid).length;
-    document.getElementById('cufeCount').textContent = validCount;
+    document.getElementById('cufeCount').textContent = parsed.length;
 });
 
-// Validate and start import
-async function validateAndStart() {
+// Generate DIAN links
+function generateLinks() {
     const text = document.getElementById('cufeList').value;
-    const parsed = parseCufeList(text);
+    cufes = parseCufeList(text);
     
-    if (parsed.length === 0) {
-        alert('Por favor ingresa al menos un CUFE');
+    if (cufes.length === 0) {
+        alert('Por favor ingresa al menos un CUFE válido');
         return;
     }
     
-    // Initialize tasks
-    tasks = parsed.map(p => ({
-        cufe: p.valid ? p.cufe : p.original,
-        status: p.valid ? 'pending' : 'error',
-        error: p.valid ? null : p.error,
-        invoice_id: null,
-        invoice_number: null,
-        supplier_name: null,
-        total: null
-    }));
-    
-    // Send to server to initialize
-    try {
-        const response = await fetch('/invoices/api/cufe/init', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cufes: tasks.filter(t => t.status === 'pending').map(t => t.cufe) })
-        });
-        const result = await response.json();
+    // Generate links list
+    const linksList = document.getElementById('linksList');
+    linksList.innerHTML = cufes.map((cufe, index) => {
+        const shortCufe = cufe.substring(0, 20) + '...' + cufe.substring(cufe.length - 10);
+        const dianUrl = `https://catalogo-vpfe.dian.gov.co/User/SearchDocument?DocumentKey=${cufe}`;
         
-        if (!result.success) {
-            alert('Error inicializando: ' + result.message);
-            return;
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <div class="flex-1 min-w-0">
+                    <span class="text-sm font-medium text-gray-700">#${index + 1}</span>
+                    <code class="ml-2 text-xs text-gray-500 font-mono">${shortCufe}</code>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <button onclick="copyToClipboard('${cufe}')" class="p-2 text-gray-500 hover:text-gray-700" title="Copiar CUFE">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                    <a href="${dianUrl}" target="_blank" 
+                       class="px-3 py-1 text-sm bg-papyrus-blue text-white rounded hover:bg-blue-700">
+                        Abrir en DIAN
+                    </a>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    goToStep(2);
+}
+
+// Copy to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show brief feedback
+        const btn = event.currentTarget;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        setTimeout(() => btn.innerHTML = originalHTML, 1000);
+    });
+}
+
+// Open all links
+function openAllLinks() {
+    if (!confirm(`¿Abrir ${cufes.length} ventanas del portal DIAN?\n\nNota: Tu navegador puede bloquear ventanas emergentes. Si es así, permite las ventanas emergentes para este sitio.`)) {
+        return;
+    }
+    
+    cufes.forEach((cufe, index) => {
+        setTimeout(() => {
+            window.open(`https://catalogo-vpfe.dian.gov.co/User/SearchDocument?DocumentKey=${cufe}`, '_blank');
+        }, index * 500); // Delay between each to avoid browser blocking
+    });
+}
+
+// Navigate between steps
+function goToStep(step) {
+    currentStep = step;
+    
+    // Hide all steps
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+    
+    // Show current step
+    document.getElementById(`step${step}`).classList.remove('hidden');
+    
+    // Update indicators
+    for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`step${i}Indicator`);
+        if (i <= step) {
+            indicator.classList.remove('bg-gray-300', 'text-gray-600');
+            indicator.classList.add('bg-papyrus-blue', 'text-white');
+        } else {
+            indicator.classList.remove('bg-papyrus-blue', 'text-white');
+            indicator.classList.add('bg-gray-300', 'text-gray-600');
         }
-    } catch (e) {
-        console.error('Error:', e);
     }
     
-    // Show processing section
-    document.getElementById('inputSection').classList.add('hidden');
-    document.getElementById('processingSection').classList.remove('hidden');
-    
-    updateUI();
+    // Update connectors
+    document.getElementById('connector1').classList.toggle('bg-papyrus-blue', step >= 2);
+    document.getElementById('connector2').classList.toggle('bg-papyrus-blue', step >= 3);
 }
 
-// Update UI
-function updateUI() {
-    // Update stats
-    const total = tasks.length;
-    const pending = tasks.filter(t => t.status === 'pending' || t.status === 'waiting_captcha').length;
-    const imported = tasks.filter(t => t.status === 'imported').length;
-    const errors = tasks.filter(t => t.status === 'error' || t.status === 'not_found').length;
-    
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statPending').textContent = pending;
-    document.getElementById('statImported').textContent = imported;
-    document.getElementById('statError').textContent = errors;
-    
-    // Update task list
-    const taskList = document.getElementById('taskList');
-    taskList.innerHTML = tasks.map((task, index) => renderTask(task, index)).join('');
-    
-    // Update process button
-    const hasMorePending = tasks.some(t => t.status === 'pending');
-    document.getElementById('processNextBtn').disabled = !hasMorePending;
-}
-
-// Render single task
-function renderTask(task, index) {
-    const statusConfig = {
-        pending: { bg: 'bg-gray-50', text: 'text-gray-600', icon: '⏳', label: 'Pendiente' },
-        waiting_captcha: { bg: 'bg-yellow-50', text: 'text-yellow-600', icon: '🔐', label: 'Esperando captcha' },
-        downloading: { bg: 'bg-blue-50', text: 'text-blue-600', icon: '⬇️', label: 'Descargando' },
-        importing: { bg: 'bg-blue-50', text: 'text-blue-600', icon: '📥', label: 'Importando' },
-        imported: { bg: 'bg-green-50', text: 'text-green-600', icon: '✅', label: 'Importado' },
-        error: { bg: 'bg-red-50', text: 'text-red-600', icon: '❌', label: 'Error' },
-        not_found: { bg: 'bg-orange-50', text: 'text-orange-600', icon: '🔍', label: 'No encontrado' }
-    };
-    
-    const config = statusConfig[task.status] || statusConfig.pending;
-    const cufeShort = task.cufe.substring(0, 20) + '...' + task.cufe.substring(task.cufe.length - 10);
-    
-    let actions = '';
-    if (task.status === 'pending') {
-        actions = `
-            <button onclick="processCufe(${index})" class="px-3 py-1 text-sm bg-papyrus-blue text-white rounded hover:bg-blue-700">
-                Procesar
-            </button>
-        `;
-    } else if (task.status === 'waiting_captcha') {
-        actions = `
-            <button onclick="openUploadModal(${index})" class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                Subir PDF
-            </button>
-            <button onclick="markNotFound(${index})" class="px-3 py-1 text-sm border border-gray-300 text-gray-600 rounded hover:bg-gray-50">
-                No encontrado
-            </button>
-        `;
-    } else if (task.status === 'imported' && task.invoice_id) {
-        actions = `
-            <a href="/invoices/detail/${task.invoice_id}" class="px-3 py-1 text-sm text-papyrus-blue hover:underline">
-                Ver factura
-            </a>
-        `;
-    }
-    
-    return `
-        <div class="px-6 py-4 ${config.bg} flex items-center justify-between">
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center">
-                    <span class="mr-2">${config.icon}</span>
-                    <code class="text-xs font-mono truncate">${cufeShort}</code>
-                </div>
-                <div class="mt-1 flex items-center gap-4">
-                    <span class="text-sm ${config.text}">${config.label}</span>
-                    ${task.invoice_number ? `<span class="text-sm text-gray-600">Factura: ${task.invoice_number}</span>` : ''}
-                    ${task.supplier_name ? `<span class="text-sm text-gray-600">${task.supplier_name}</span>` : ''}
-                    ${task.total ? `<span class="text-sm font-medium">$${task.total.toLocaleString('es-CO')}</span>` : ''}
-                    ${task.error ? `<span class="text-sm text-red-600">${task.error}</span>` : ''}
-                </div>
-            </div>
-            <div class="flex items-center gap-2 ml-4">
-                ${actions}
-            </div>
-        </div>
-    `;
-}
-
-// Process next pending CUFE
-function processNextPending() {
-    const index = tasks.findIndex(t => t.status === 'pending');
-    if (index >= 0) {
-        processCufe(index);
-    }
-}
-
-// Process specific CUFE
-function processCufe(index) {
-    currentCufe = tasks[index].cufe;
-    tasks[index].status = 'waiting_captcha';
-    updateUI();
-    
-    // Show instructions modal
-    document.getElementById('instructionsModal').classList.remove('hidden');
-}
-
-// Close instructions modal
-function closeInstructionsModal() {
-    document.getElementById('instructionsModal').classList.add('hidden');
-}
-
-// Open DIAN portal and continue
-function openDianAndContinue() {
-    closeInstructionsModal();
-    
-    // Open DIAN in new window with CUFE pre-filled
-    const dianUrl = `https://catalogo-vpfe.dian.gov.co/User/SearchDocument?DocumentKey=${currentCufe}`;
-    window.open(dianUrl, '_blank', 'width=1000,height=700');
-}
-
-// Open upload modal
-function openUploadModal(index) {
-    currentCufe = tasks[index].cufe;
-    document.getElementById('uploadCufeDisplay').textContent = currentCufe.substring(0, 30) + '...';
-    document.getElementById('uploadModal').classList.remove('hidden');
-    document.getElementById('uploadProgress').classList.add('hidden');
-}
-
-// Close upload modal
-function closeUploadModal() {
-    document.getElementById('uploadModal').classList.add('hidden');
-    document.getElementById('pdfFileInput').value = '';
-    currentCufe = null;
-}
-
-// Handle drag events
+// File handling
 function handleDragOver(e) {
     e.preventDefault();
     e.currentTarget.classList.add('border-papyrus-blue', 'bg-blue-50');
@@ -421,114 +271,95 @@ function handleDragLeave(e) {
     e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
 }
 
-// Handle PDF drop
-function handlePdfDrop(e) {
+function handleDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
-    
     const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
     if (files.length > 0) {
-        uploadAndImportPdf(files[0]);
+        processFiles(files);
     }
 }
 
-// Handle PDF select
-function handlePdfSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        uploadAndImportPdf(file);
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+        processFiles(files);
     }
 }
 
-// Upload and import PDF
-async function uploadAndImportPdf(file) {
-    if (!currentCufe) return;
+// Process uploaded files
+async function processFiles(files) {
+    document.getElementById('uploadDropZone').classList.add('hidden');
+    document.getElementById('processingArea').classList.remove('hidden');
     
-    document.getElementById('uploadProgress').classList.remove('hidden');
+    const results = { success: 0, errors: 0 };
+    const resultsDiv = document.getElementById('processResults');
+    resultsDiv.innerHTML = '';
     
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('cufe', currentCufe);
-    
-    try {
-        // First extract
-        const extractRes = await fetch('/invoices/api/extract', {
-            method: 'POST',
-            body: formData
-        });
-        const extractResult = await extractRes.json();
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        document.getElementById('processProgress').textContent = `${i + 1} de ${files.length}`;
+        document.getElementById('progressBar').style.width = `${((i + 1) / files.length) * 100}%`;
         
-        if (!extractResult.success) {
-            throw new Error(extractResult.detail || 'Error extrayendo datos');
+        try {
+            // Extract
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const extractRes = await fetch('/invoices/api/extract', {
+                method: 'POST',
+                body: formData
+            });
+            const extractResult = await extractRes.json();
+            
+            if (!extractResult.success) {
+                throw new Error(extractResult.detail || 'Error extrayendo datos');
+            }
+            
+            // Save
+            const saveRes = await fetch('/invoices/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...extractResult.data, replace_existing: true })
+            });
+            const saveResult = await saveRes.json();
+            
+            if (saveResult.success) {
+                results.success++;
+                resultsDiv.innerHTML += `
+                    <div class="flex items-center p-2 bg-green-50 rounded text-sm">
+                        <span class="text-green-600 mr-2">✓</span>
+                        <span class="flex-1 truncate">${file.name}</span>
+                        <a href="/invoices/detail/${saveResult.invoice_id}" class="text-papyrus-blue hover:underline ml-2">Ver</a>
+                    </div>
+                `;
+            } else {
+                throw new Error(saveResult.message || 'Error guardando');
+            }
+        } catch (e) {
+            results.errors++;
+            resultsDiv.innerHTML += `
+                <div class="flex items-center p-2 bg-red-50 rounded text-sm">
+                    <span class="text-red-600 mr-2">✗</span>
+                    <span class="flex-1 truncate">${file.name}</span>
+                    <span class="text-red-600 text-xs ml-2">${e.message}</span>
+                </div>
+            `;
         }
-        
-        // Then save
-        const saveRes = await fetch('/invoices/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...extractResult.data, replace_existing: true })
-        });
-        const saveResult = await saveRes.json();
-        
-        if (!saveResult.success) {
-            throw new Error(saveResult.message || 'Error guardando');
-        }
-        
-        // Update task
-        const taskIndex = tasks.findIndex(t => t.cufe === currentCufe);
-        if (taskIndex >= 0) {
-            tasks[taskIndex].status = 'imported';
-            tasks[taskIndex].invoice_id = saveResult.invoice_id;
-            tasks[taskIndex].invoice_number = extractResult.data.numero_documento;
-            tasks[taskIndex].supplier_name = extractResult.data.supplier_razon_social;
-            tasks[taskIndex].total = extractResult.data.total_neto;
-        }
-        
-        // Notify server
-        await fetch('/invoices/api/cufe/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                cufe: currentCufe,
-                status: 'imported',
-                invoice_id: saveResult.invoice_id
-            })
-        });
-        
-        closeUploadModal();
-        updateUI();
-        
-    } catch (e) {
-        alert('Error: ' + e.message);
-        document.getElementById('uploadProgress').classList.add('hidden');
     }
-}
-
-// Mark as not found
-async function markNotFound(index) {
-    tasks[index].status = 'not_found';
-    tasks[index].error = 'No encontrado en DIAN';
     
-    await fetch('/invoices/api/cufe/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            cufe: tasks[index].cufe,
-            status: 'not_found'
-        })
-    });
+    // Show summary
+    resultsDiv.innerHTML = `
+        <div class="p-3 bg-gray-100 rounded-lg mb-2">
+            <span class="font-medium">Resumen:</span>
+            <span class="text-green-600 ml-2">${results.success} importadas</span>
+            ${results.errors > 0 ? `<span class="text-red-600 ml-2">${results.errors} errores</span>` : ''}
+        </div>
+    ` + resultsDiv.innerHTML;
     
-    updateUI();
-}
-
-// Reset import
-function resetImport() {
-    tasks = [];
-    currentCufe = null;
-    document.getElementById('cufeList').value = '';
-    document.getElementById('cufeCount').textContent = '0';
-    document.getElementById('inputSection').classList.remove('hidden');
-    document.getElementById('processingSection').classList.add('hidden');
+    if (results.success > 0) {
+        document.getElementById('viewAllBtn').classList.remove('hidden');
+    }
 }
 </script>
 {% endblock %}
