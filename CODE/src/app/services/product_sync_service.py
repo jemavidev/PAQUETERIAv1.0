@@ -8,7 +8,7 @@ Soporta dos modos de sincronización:
 import requests
 import logging
 from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -16,6 +16,27 @@ from app.models.product import Product, ProductSyncLog
 import os
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_datetime(dt: Optional[datetime]) -> Optional[datetime]:
+    """
+    Normalizar datetime para comparaciones seguras.
+    Convierte a UTC naive (sin timezone) para evitar errores de comparación.
+    
+    Args:
+        dt: Datetime con o sin timezone
+        
+    Returns:
+        Datetime naive en UTC o None
+    """
+    if dt is None:
+        return None
+    
+    # Si tiene timezone, convertir a UTC y remover timezone
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    
+    return dt
 
 
 class ProductSyncService:
@@ -190,18 +211,25 @@ class ProductSyncService:
         filtered = []
         discarded = 0
         
+        # Normalizar since_date para comparaciones seguras
+        since_date_normalized = normalize_datetime(since_date)
+        
         for product in products:
             product_date = self._extract_product_date(product)
             
             if product_date is None:
                 # Si no tiene fecha, incluirlo por seguridad
                 filtered.append(product)
-            elif product_date >= since_date:
-                # Producto modificado después de la fecha
-                filtered.append(product)
             else:
-                # Producto sin cambios
-                discarded += 1
+                # Normalizar product_date para comparación segura
+                product_date_normalized = normalize_datetime(product_date)
+                
+                if product_date_normalized >= since_date_normalized:
+                    # Producto modificado después de la fecha
+                    filtered.append(product)
+                else:
+                    # Producto sin cambios
+                    discarded += 1
         
         logger.info(
             f"Filtrado por fecha: {len(filtered)} productos modificados, "
