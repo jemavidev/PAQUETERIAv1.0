@@ -267,6 +267,48 @@ async def search_products(
             )
 
 
+@router.get("/sync/last", response_model=dict)
+async def get_last_sync(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_active_user_from_cookies)
+):
+    """
+    Obtener la última sincronización exitosa
+    Accesible para cualquier usuario autenticado
+    """
+    try:
+        last_sync = db.query(ProductSyncLog).filter(
+            ProductSyncLog.status.in_(['SUCCESS', 'PARTIAL_SUCCESS'])
+        ).order_by(
+            ProductSyncLog.sync_date.desc()
+        ).first()
+        
+        if last_sync:
+            return {
+                "success": True,
+                "data": {
+                    "sync_date": last_sync.sync_date.isoformat() if last_sync.sync_date else None,
+                    "sync_type": last_sync.sync_type,
+                    "total_products": last_sync.total_products,
+                    "new_products": last_sync.new_products,
+                    "updated_products": last_sync.updated_products
+                }
+            }
+        else:
+            return {
+                "success": True,
+                "data": None
+            }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo última sincronización: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo última sincronización: {str(e)}"
+        )
+
+
 @router.get("/sync/history", response_model=dict)
 async def get_sync_history(
     request: Request,
