@@ -26,8 +26,11 @@ engine = create_engine(
     echo=settings.debug,  # Solo mostrar queries en desarrollo
     pool_pre_ping=True,   # Verificar conexión antes de usar
     pool_recycle=300,     # Reciclar conexiones cada 5 minutos
+    pool_size=10,         # Tamaño del pool de conexiones
+    max_overflow=20,      # Conexiones adicionales permitidas
+    pool_timeout=30,      # Timeout para obtener conexión del pool
     connect_args={
-        "options": "-c timezone=America/Bogota"
+        "options": "-c timezone=America/Bogota -c statement_timeout=30000"  # Timeout de 30s para queries
     } if "postgresql" in DATABASE_URL else {}
 )
 

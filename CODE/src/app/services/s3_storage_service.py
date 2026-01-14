@@ -8,6 +8,7 @@ from typing import Optional, BinaryIO
 from datetime import datetime, timedelta
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +22,22 @@ class S3StorageService:
         self.region = os.getenv('AWS_REGION', 'us-east-1')
         self.prefix = os.getenv('AWS_S3_PREFIX', 'invoices/')  # Carpeta dentro del bucket
         
+        # Configuración con timeouts para evitar bloqueos
+        boto_config = Config(
+            region_name=self.region,
+            connect_timeout=5,  # Timeout de conexión: 5 segundos
+            read_timeout=30,    # Timeout de lectura: 30 segundos
+            retries={
+                'max_attempts': 3,
+                'mode': 'adaptive'  # Reintentos adaptativos
+            }
+        )
+        
         # Inicializar cliente S3
         try:
             self.s3_client = boto3.client(
                 's3',
-                region_name=self.region,
+                config=boto_config,
                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
             )

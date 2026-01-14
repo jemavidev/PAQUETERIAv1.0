@@ -142,6 +142,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Middleware de timeout para prevenir requests colgadas
+from src.app.middleware.timeout_middleware import TimeoutMiddleware
+app.add_middleware(TimeoutMiddleware, timeout=60)  # 60 segundos de timeout
+
 # Middleware de autenticación (refactorizado v2)
 app.add_middleware(AuthMiddleware, login_url="/auth/login")
 
