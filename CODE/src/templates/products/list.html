@@ -163,7 +163,7 @@
 
                     <!-- Products List -->
                     <template x-for="product in products" :key="product.id">
-                        <tr class="hover:bg-gray-50 transition-colors" x-show="!loading && products.length > 0">
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <template x-for="column in visibleColumns" :key="column.column_key">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span x-text="formatValue(product[column.column_key], column.column_key)"></span>
