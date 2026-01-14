@@ -27,7 +27,14 @@
                 <span x-text="pagination.total !== 1 ? 'productos encontrados' : 'producto encontrado'"></span>
             </p>
         </div>
-        <div class="flex flex-wrap gap-3">
+        <div class="flex flex-wrap gap-3 items-center">
+            <!-- Fecha de última sincronización -->
+            <span x-show="lastSyncDate" x-cloak class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Última sync: <span x-text="lastSyncDate"></span>
+            </span>
             <button @click="syncProducts()"
                     :disabled="syncing"
                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
@@ -50,70 +57,30 @@
     <div class="bg-white rounded-lg shadow-sm border mb-6">
         <div class="p-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Búsqueda -->
-                <div>
+                <!-- Búsqueda con botón limpiar -->
+                <div class="lg:col-span-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         Búsqueda
                     </label>
-                    <input type="text" 
-                           x-model="filters.search"
-                           @input.debounce.500ms="loadProducts()"
-                           placeholder="Código, nombre, descripción..."
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                </div>
-
-                <!-- Estado -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Estado
-                    </label>
-                    <select x-model="filters.activo" 
-                            @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                        <option value="">Todos</option>
-                        <option value="true">Activos</option>
-                        <option value="false">Inactivos</option>
-                    </select>
-                </div>
-
-                <!-- Vendible -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        Vendible
-                    </label>
-                    <select x-model="filters.vendible" 
-                            @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                        <option value="">Todos</option>
-                        <option value="true">Sí</option>
-                        <option value="false">No</option>
-                    </select>
-                </div>
-
-                <!-- Destacado -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                        </svg>
-                        Destacado
-                    </label>
-                    <select x-model="filters.destacado" 
-                            @change="loadProducts()"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
-                        <option value="">Todos</option>
-                        <option value="true">Sí</option>
-                        <option value="false">No</option>
-                    </select>
+                    <div class="relative flex gap-2">
+                        <input type="text" 
+                               x-model="filters.search"
+                               @input.debounce.500ms="loadProducts()"
+                               @keydown.escape="clearSearch()"
+                               placeholder="Código, nombre, descripción..."
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                        <button x-show="filters.search.length > 0"
+                                @click="clearSearch()"
+                                class="px-3 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+                                title="Limpiar búsqueda">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,7 +88,59 @@
 
     <!-- Tabla de Productos -->
     <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div class="overflow-x-auto">
+        <!-- Paginación Superior -->
+        <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-b border-gray-200" x-show="pagination.total > 0">
+            <div class="flex-1 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando
+                        <span class="font-medium" x-text="((pagination.page - 1) * pagination.page_size) + 1"></span>
+                        a
+                        <span class="font-medium" x-text="Math.min(pagination.page * pagination.page_size, pagination.total)"></span>
+                        de
+                        <span class="font-medium" x-text="pagination.total"></span>
+                        productos
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Ir a página específica -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600">Ir a:</span>
+                        <input type="number" 
+                               x-model.number="goToPageInput"
+                               @keydown.enter="goToPageDirect()"
+                               min="1"
+                               :max="pagination.total_pages"
+                               class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                        <button @click="goToPageDirect()"
+                                class="px-2 py-1 text-sm bg-papyrus-blue text-white rounded hover:bg-blue-700 transition-colors">
+                            Ir
+                        </button>
+                    </div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <button @click="previousPage()"
+                                :disabled="pagination.page === 1"
+                                class="relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <span class="relative inline-flex items-center px-3 py-1 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            <span x-text="pagination.page"></span> / <span x-text="pagination.total_pages"></span>
+                        </span>
+                        <button @click="nextPage()"
+                                :disabled="pagination.page >= pagination.total_pages"
+                                class="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto max-h-[65vh] overflow-y-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -337,6 +356,8 @@
             loading: false,
             syncing: false,
             showColumnConfig: false,
+            lastSyncDate: localStorage.getItem('lastProductSync') || '',
+            goToPageInput: 1,
 
             init() {
                 console.log('🚀 Inicializando app de productos');
@@ -524,6 +545,15 @@
                     const data = await response.json();
                     
                     if (data.success) {
+                        const now = new Date();
+                        this.lastSyncDate = now.toLocaleString('es-CO', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        localStorage.setItem('lastProductSync', this.lastSyncDate);
                         alert(`✅ Sincronización completada:\n\n- Nuevos: ${data.data.new}\n- Actualizados: ${data.data.updated}\n- Errores: ${data.data.errors}\n\nTotal procesados: ${data.data.total}`);
                         this.loadProducts();
                     } else {
@@ -582,6 +612,22 @@
 
             goToPage(page) {
                 this.pagination.page = page;
+                this.goToPageInput = page;
+                this.loadProducts();
+            },
+
+            goToPageDirect() {
+                const page = parseInt(this.goToPageInput);
+                if (page >= 1 && page <= this.pagination.total_pages) {
+                    this.pagination.page = page;
+                    this.loadProducts();
+                } else {
+                    this.goToPageInput = this.pagination.page;
+                }
+            },
+
+            clearSearch() {
+                this.filters.search = '';
                 this.loadProducts();
             }
         }
