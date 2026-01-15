@@ -19,7 +19,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
-from app.models.invoice import SupplierInvoice, SupplierInvoiceStatus
+from app.models.invoice import SupplierInvoice, SupplierInvoiceStatus, Invoice
 from app.services.pdf_extractor_service import PDFExtractorService
 
 logger = logging.getLogger(__name__)
@@ -320,6 +320,9 @@ class SupplierInvoiceService:
     
     def get_stats(self) -> Dict[str, int]:
         """Obtiene estadísticas de facturas de proveedores"""
+        # Primero sincronizar estados con facturas ya procesadas
+        self.sync_processed_status()
+        
         stats = {
             'total': 0,
             'pending': 0,
@@ -342,6 +345,41 @@ class SupplierInvoiceService:
                 stats[status.value] = count
         
         return stats
+    
+    def sync_processed_status(self) -> int:
+        """
+        Sincroniza el estado de supplier_invoices con facturas ya procesadas.
+        Busca CUFEs que existen en la tabla invoices y actualiza el estado.
+        """
+        # Obtener supplier_invoices con CUFE que no están marcadas como procesadas
+        pending = self.db.query(SupplierInvoice).filter(
+            SupplierInvoice.cufe.isnot(None),
+            SupplierInvoice.status.notin_([
+                SupplierInvoiceStatus.PROCESSED,
+                SupplierInvoiceStatus.ERROR
+            ])
+        ).all()
+        
+        updated = 0
+        for si in pending:
+            # Buscar si el CUFE existe en invoices
+            invoice = self.db.query(Invoice).filter(
+                Invoice.cufe_cude == si.cufe,
+                Invoice.is_active == True
+            ).first()
+            
+            if invoice:
+                si.status = SupplierInvoiceStatus.PROCESSED
+                si.processed_invoice_id = invoice.id
+                if not si.processed_at:
+                    si.processed_at = datetime.now()
+                updated += 1
+        
+        if updated > 0:
+            self.db.commit()
+            logger.info(f"Sincronizadas {updated} facturas de proveedor con estado procesado")
+        
+        return updated
 
     def update_status(
         self, 
