@@ -328,6 +328,7 @@ class SupplierInvoiceService:
             'dian_downloaded': 0,
             'processed': 0,
             'error': 0,
+            'duplicate': 0,
         }
         
         results = self.db.query(
@@ -337,7 +338,8 @@ class SupplierInvoiceService:
         
         for status, count in results:
             stats['total'] += count
-            stats[status.value] = count
+            if status and hasattr(status, 'value'):
+                stats[status.value] = count
         
         return stats
 

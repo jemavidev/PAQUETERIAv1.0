@@ -1,7 +1,7 @@
 """Add supplier_invoices table
 
 Revision ID: add_supplier_invoices
-Revises: enhance_invoice_system
+Revises: 32325c92a96f
 Create Date: 2026-01-14
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_supplier_invoices'
-down_revision = 'enhance_invoice_system'
+down_revision = '32325c92a96f'
 branch_labels = None
 depends_on = None
 

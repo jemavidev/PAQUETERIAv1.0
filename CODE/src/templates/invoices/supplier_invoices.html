@@ -78,101 +78,91 @@
         </div>
     </div>
 
-    <!-- Table -->
+    <!-- Table - Compacta -->
     <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">CUFE</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">CUFE</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for invoice in invoices %}
                     <tr class="hover:bg-gray-50" id="row-{{ invoice.id }}">
-                        <td class="px-4 py-3">
-                            <div class="text-sm font-medium text-gray-900 truncate max-w-xs" title="{{ invoice.original_filename }}">
-                                {{ invoice.original_filename[:40] }}{% if invoice.original_filename|length > 40 %}...{% endif %}
+                        <!-- Archivo -->
+                        <td class="px-3 py-2 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-900 truncate max-w-[180px]" title="{{ invoice.original_filename }}">{{ invoice.original_filename[:30] }}{% if invoice.original_filename|length > 30 %}...{% endif %}</span>
+                                <span class="text-xs text-gray-400">{{ invoice.uploaded_at.strftime('%d/%m/%y') }}</span>
                             </div>
-                            <div class="text-xs text-gray-500">{{ invoice.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</div>
                         </td>
-                        <td class="px-4 py-3">
-                            <div class="text-sm text-gray-900">{{ invoice.supplier_name or '-' }}</div>
-                            <div class="text-xs text-gray-500">{{ invoice.supplier_nit or '' }}</div>
+                        <!-- Proveedor -->
+                        <td class="px-3 py-2 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">{{ (invoice.supplier_name or '-')[:25] }}{% if invoice.supplier_name and invoice.supplier_name|length > 25 %}...{% endif %}</span>
+                            {% if invoice.supplier_nit %}<span class="text-xs text-gray-400 ml-1">({{ invoice.supplier_nit }})</span>{% endif %}
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-900">
+                        <!-- Fecha -->
+                        <td class="px-3 py-2 text-center whitespace-nowrap text-sm text-gray-700">
                             {{ invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else '-' }}
                         </td>
-                        <td class="px-4 py-3">
+                        <!-- CUFE -->
+                        <td class="px-3 py-2 whitespace-nowrap">
                             {% if invoice.cufe %}
                             <div class="flex items-center gap-1">
-                                <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">{{ invoice.cufe_short }}</code>
-                                <button onclick="copyToClipboard('{{ invoice.cufe }}')" class="text-gray-400 hover:text-gray-600" title="Copiar CUFE">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                    </svg>
+                                <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-600">{{ invoice.cufe_short }}</code>
+                                <button onclick="copyToClipboard('{{ invoice.cufe }}')" class="text-gray-400 hover:text-blue-600" title="Copiar CUFE">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 </button>
+                                <span class="text-xs text-gray-400">({{ invoice.cufe_source }})</span>
                             </div>
-                            <div class="text-xs text-gray-400">{{ invoice.cufe_source }}</div>
                             {% else %}
-                            <span class="text-yellow-600 text-sm">Sin CUFE</span>
+                            <span class="text-xs text-yellow-600">—</span>
                             {% endif %}
                         </td>
-                        <td class="px-4 py-3">
+                        <!-- Estado -->
+                        <td class="px-3 py-2 text-center whitespace-nowrap">
                             {% set status_config = {
-                                'pending': {'bg': 'bg-gray-100', 'text': 'text-gray-700', 'label': 'Pendiente'},
+                                'pending': {'bg': 'bg-gray-100', 'text': 'text-gray-600', 'label': 'Pendiente'},
                                 'no_cufe': {'bg': 'bg-yellow-100', 'text': 'text-yellow-700', 'label': 'Sin CUFE'},
-                                'cufe_extracted': {'bg': 'bg-blue-100', 'text': 'text-blue-700', 'label': 'CUFE Extraído'},
-                                'dian_downloaded': {'bg': 'bg-purple-100', 'text': 'text-purple-700', 'label': 'DIAN Descargado'},
+                                'cufe_extracted': {'bg': 'bg-blue-100', 'text': 'text-blue-700', 'label': 'CUFE OK'},
+                                'dian_downloaded': {'bg': 'bg-purple-100', 'text': 'text-purple-700', 'label': 'DIAN ✓'},
                                 'processed': {'bg': 'bg-green-100', 'text': 'text-green-700', 'label': 'Procesada'},
                                 'error': {'bg': 'bg-red-100', 'text': 'text-red-700', 'label': 'Error'},
                                 'duplicate': {'bg': 'bg-orange-100', 'text': 'text-orange-700', 'label': 'Duplicada'}
                             } %}
                             {% set cfg = status_config.get(invoice.status.value, status_config.pending) %}
-                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ cfg.bg }} {{ cfg.text }}">
-                                {{ cfg.label }}
-                            </span>
+                            <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded {{ cfg.bg }} {{ cfg.text }}">{{ cfg.label }}</span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-2">
+                        <!-- Acciones -->
+                        <td class="px-3 py-2 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1">
                                 {% if invoice.status.value == 'no_cufe' %}
-                                <button onclick="openCufeModal({{ invoice.id }})" class="text-blue-600 hover:text-blue-800 text-sm">
-                                    Agregar CUFE
-                                </button>
+                                <button onclick="openCufeModal({{ invoice.id }})" class="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100">+CUFE</button>
                                 {% elif invoice.status.value == 'cufe_extracted' %}
-                                <a href="{{ invoice.dian_url }}" target="_blank" class="text-green-600 hover:text-green-800 text-sm">
-                                    Abrir DIAN
-                                </a>
+                                <a href="{{ invoice.dian_url }}" target="_blank" class="px-2 py-1 text-xs bg-green-50 text-green-600 rounded hover:bg-green-100">DIAN</a>
+                                <button onclick="markDownloadedSingle({{ invoice.id }})" class="px-1 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded" title="Marcar descargado">✓</button>
                                 {% elif invoice.status.value == 'dian_downloaded' %}
-                                <button onclick="openImportModal({{ invoice.id }})" class="text-purple-600 hover:text-purple-800 text-sm">
-                                    Importar
-                                </button>
+                                <button onclick="openImportModal({{ invoice.id }})" class="px-2 py-1 text-xs bg-purple-50 text-purple-600 rounded hover:bg-purple-100">Importar</button>
                                 {% elif invoice.status.value == 'processed' and invoice.processed_invoice_id %}
-                                <a href="/invoices/detail/{{ invoice.processed_invoice_id }}" class="text-papyrus-blue hover:underline text-sm">
-                                    Ver factura
-                                </a>
+                                <a href="/invoices/detail/{{ invoice.processed_invoice_id }}" class="px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100">Ver</a>
                                 {% endif %}
-                                <button onclick="deleteInvoice({{ invoice.id }})" class="text-red-500 hover:text-red-700">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
+                                <button onclick="deleteInvoice({{ invoice.id }})" class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Eliminar">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">
-                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <p>No hay facturas de proveedores</p>
-                            <button onclick="openUploadModal()" class="mt-2 text-papyrus-blue hover:underline">Subir primera factura</button>
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <p class="text-sm">No hay facturas de proveedores</p>
+                            <button onclick="openUploadModal()" class="mt-2 text-papyrus-blue hover:underline text-sm">Subir primera factura</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -560,6 +550,24 @@ async function markDownloaded(invoiceId) {
         }
     } catch (e) {
         alert('Error actualizando estado');
+    }
+}
+
+// Marcar como descargado desde la tabla
+async function markDownloadedSingle(invoiceId) {
+    try {
+        const res = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/mark-downloaded`, {
+            method: 'POST'
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo actualizar'));
+        }
+    } catch (e) {
+        alert('Error de conexión');
     }
 }
 
