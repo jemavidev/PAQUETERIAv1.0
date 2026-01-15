@@ -1248,3 +1248,191 @@ async def get_dian_url(
         "url": url,
         "cufe": result
     })
+
+
+
+# ========================================
+# SUPPLIER INVOICES - Facturas de Proveedores
+# ========================================
+
+from app.services.supplier_invoice_service import SupplierInvoiceService
+from app.models.invoice import SupplierInvoiceStatus
+
+
+@router.get("/supplier-invoices", response_class=HTMLResponse)
+async def supplier_invoices_page(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    page: int = 1,
+    status: str = None,
+):
+    """Página de gestión de facturas de proveedores"""
+    context = get_auth_context_from_request(request)
+    context["user"] = current_user
+    
+    service = SupplierInvoiceService(db)
+    
+    # Convertir status string a enum
+    status_enum = None
+    if status:
+        try:
+            status_enum = SupplierInvoiceStatus(status)
+        except ValueError:
+            pass
+    
+    invoices, total = service.get_all(status=status_enum, page=page, per_page=50)
+    stats = service.get_stats()
+    
+    context["invoices"] = invoices
+    context["total"] = total
+    context["page"] = page
+    context["pages"] = (total + 49) // 50
+    context["stats"] = stats
+    context["current_status"] = status
+    
+    return templates.TemplateResponse("invoices/supplier_invoices.html", context)
+
+
+@router.post("/api/supplier-invoices/upload")
+async def upload_supplier_invoice(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Sube una factura de proveedor y extrae el CUFE"""
+    if not file.filename.lower().endswith('.pdf'):
+        return JSONResponse(content={
+            "success": False,
+            "message": "Solo se permiten archivos PDF"
+        })
+    
+    content = await file.read()
+    
+    # Guardar temporalmente para procesar
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+    
+    try:
+        service = SupplierInvoiceService(db)
+        invoice, info = service.process_uploaded_file(
+            filename=file.filename,
+            content=content,
+            pdf_path=tmp_path,
+            user_id=current_user.id
+        )
+        
+        return JSONResponse(content={
+            "success": True,
+            "invoice_id": invoice.id,
+            "cufe_found": info['cufe_found'],
+            "cufe_source": info['cufe_source'],
+            "is_duplicate": info['is_duplicate'],
+            "warnings": info['warnings'],
+        })
+        
+    except Exception as e:
+        logger.error(f"Error procesando factura de proveedor: {e}", exc_info=True)
+        return JSONResponse(content={
+            "success": False,
+            "message": str(e)
+        })
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+@router.post("/api/supplier-invoices/{invoice_id}/cufe")
+async def update_supplier_invoice_cufe(
+    invoice_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Actualiza el CUFE de una factura de proveedor manualmente"""
+    try:
+        data = await request.json()
+        cufe = data.get('cufe', '').strip()
+        
+        service = SupplierInvoiceService(db)
+        success, message = service.update_cufe(invoice_id, cufe, source='manual')
+        
+        return JSONResponse(content={
+            "success": success,
+            "message": message
+        })
+    except Exception as e:
+        logger.error(f"Error actualizando CUFE: {e}", exc_info=True)
+        return JSONResponse(content={
+            "success": False,
+            "message": str(e)
+        })
+
+
+@router.get("/api/supplier-invoices/pending-cufes")
+async def get_pending_cufes(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene lista de CUFEs pendientes para procesar en DIAN"""
+    service = SupplierInvoiceService(db)
+    cufes = service.get_cufes_for_dian()
+    
+    return JSONResponse(content={"cufes": cufes})
+
+
+@router.post("/api/supplier-invoices/{invoice_id}/mark-downloaded")
+async def mark_dian_downloaded(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Marca una factura como descargada de DIAN"""
+    service = SupplierInvoiceService(db)
+    invoice = service.mark_dian_downloaded(invoice_id)
+    
+    if not invoice:
+        return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+    
+    return JSONResponse(content={"success": True})
+
+
+@router.post("/api/supplier-invoices/{invoice_id}/mark-processed")
+async def mark_processed(
+    invoice_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Marca una factura como procesada"""
+    try:
+        data = await request.json()
+        processed_invoice_id = data.get('processed_invoice_id')
+        
+        service = SupplierInvoiceService(db)
+        invoice = service.mark_processed(invoice_id, processed_invoice_id)
+        
+        if not invoice:
+            return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+        
+        return JSONResponse(content={"success": True})
+    except Exception as e:
+        logger.error(f"Error marcando como procesada: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e)})
+
+
+@router.delete("/api/supplier-invoices/{invoice_id}")
+async def delete_supplier_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Elimina una factura de proveedor"""
+    service = SupplierInvoiceService(db)
+    
+    if not service.delete(invoice_id):
+        return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+    
+    return JSONResponse(content={"success": True})

@@ -1,0 +1,660 @@
+{% extends "base/base.html" %}
+
+{% block title %}Facturas de Proveedores - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <a href="/invoices" class="text-papyrus-blue hover:underline text-sm flex items-center mb-2">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver al dashboard
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Facturas de Proveedores</h1>
+            <p class="text-gray-600 mt-1">Gestiona el proceso de importación de facturas</p>
+        </div>
+        <button onclick="openUploadModal()" 
+                class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Subir Facturas
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border p-4 text-center">
+            <p class="text-2xl font-bold text-gray-700">{{ stats.total }}</p>
+            <p class="text-xs text-gray-500">Total</p>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center cursor-pointer hover:bg-yellow-100" onclick="filterByStatus('no_cufe')">
+            <p class="text-2xl font-bold text-yellow-600">{{ stats.no_cufe }}</p>
+            <p class="text-xs text-yellow-600">Sin CUFE</p>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center cursor-pointer hover:bg-blue-100" onclick="filterByStatus('cufe_extracted')">
+            <p class="text-2xl font-bold text-blue-600">{{ stats.cufe_extracted }}</p>
+            <p class="text-xs text-blue-600">CUFE Extraído</p>
+        </div>
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center cursor-pointer hover:bg-purple-100" onclick="filterByStatus('dian_downloaded')">
+            <p class="text-2xl font-bold text-purple-600">{{ stats.dian_downloaded }}</p>
+            <p class="text-xs text-purple-600">DIAN Descargado</p>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center cursor-pointer hover:bg-green-100" onclick="filterByStatus('processed')">
+            <p class="text-2xl font-bold text-green-600">{{ stats.processed }}</p>
+            <p class="text-xs text-green-600">Procesadas</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center cursor-pointer hover:bg-red-100" onclick="filterByStatus('error')">
+            <p class="text-2xl font-bold text-red-600">{{ stats.error }}</p>
+            <p class="text-xs text-red-600">Errores</p>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <select id="statusFilter" onchange="applyFilters()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Todos los estados</option>
+                    <option value="no_cufe" {% if current_status == 'no_cufe' %}selected{% endif %}>Sin CUFE</option>
+                    <option value="cufe_extracted" {% if current_status == 'cufe_extracted' %}selected{% endif %}>CUFE Extraído</option>
+                    <option value="dian_downloaded" {% if current_status == 'dian_downloaded' %}selected{% endif %}>DIAN Descargado</option>
+                    <option value="processed" {% if current_status == 'processed' %}selected{% endif %}>Procesadas</option>
+                    <option value="error" {% if current_status == 'error' %}selected{% endif %}>Errores</option>
+                </select>
+            </div>
+            
+            {% if stats.cufe_extracted > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">{{ stats.cufe_extracted }} pendientes de DIAN</span>
+                <button onclick="openDianModal()" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                    Procesar en DIAN
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">CUFE</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for invoice in invoices %}
+                    <tr class="hover:bg-gray-50" id="row-{{ invoice.id }}">
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900 truncate max-w-xs" title="{{ invoice.original_filename }}">
+                                {{ invoice.original_filename[:40] }}{% if invoice.original_filename|length > 40 %}...{% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">{{ invoice.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="text-sm text-gray-900">{{ invoice.supplier_name or '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ invoice.supplier_nit or '' }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else '-' }}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if invoice.cufe %}
+                            <div class="flex items-center gap-1">
+                                <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">{{ invoice.cufe_short }}</code>
+                                <button onclick="copyToClipboard('{{ invoice.cufe }}')" class="text-gray-400 hover:text-gray-600" title="Copiar CUFE">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="text-xs text-gray-400">{{ invoice.cufe_source }}</div>
+                            {% else %}
+                            <span class="text-yellow-600 text-sm">Sin CUFE</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% set status_config = {
+                                'pending': {'bg': 'bg-gray-100', 'text': 'text-gray-700', 'label': 'Pendiente'},
+                                'no_cufe': {'bg': 'bg-yellow-100', 'text': 'text-yellow-700', 'label': 'Sin CUFE'},
+                                'cufe_extracted': {'bg': 'bg-blue-100', 'text': 'text-blue-700', 'label': 'CUFE Extraído'},
+                                'dian_downloaded': {'bg': 'bg-purple-100', 'text': 'text-purple-700', 'label': 'DIAN Descargado'},
+                                'processed': {'bg': 'bg-green-100', 'text': 'text-green-700', 'label': 'Procesada'},
+                                'error': {'bg': 'bg-red-100', 'text': 'text-red-700', 'label': 'Error'},
+                                'duplicate': {'bg': 'bg-orange-100', 'text': 'text-orange-700', 'label': 'Duplicada'}
+                            } %}
+                            {% set cfg = status_config.get(invoice.status.value, status_config.pending) %}
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ cfg.bg }} {{ cfg.text }}">
+                                {{ cfg.label }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if invoice.status.value == 'no_cufe' %}
+                                <button onclick="openCufeModal({{ invoice.id }})" class="text-blue-600 hover:text-blue-800 text-sm">
+                                    Agregar CUFE
+                                </button>
+                                {% elif invoice.status.value == 'cufe_extracted' %}
+                                <a href="{{ invoice.dian_url }}" target="_blank" class="text-green-600 hover:text-green-800 text-sm">
+                                    Abrir DIAN
+                                </a>
+                                {% elif invoice.status.value == 'dian_downloaded' %}
+                                <button onclick="openImportModal({{ invoice.id }})" class="text-purple-600 hover:text-purple-800 text-sm">
+                                    Importar
+                                </button>
+                                {% elif invoice.status.value == 'processed' and invoice.processed_invoice_id %}
+                                <a href="/invoices/detail/{{ invoice.processed_invoice_id }}" class="text-papyrus-blue hover:underline text-sm">
+                                    Ver factura
+                                </a>
+                                {% endif %}
+                                <button onclick="deleteInvoice({{ invoice.id }})" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p>No hay facturas de proveedores</p>
+                            <button onclick="openUploadModal()" class="mt-2 text-papyrus-blue hover:underline">Subir primera factura</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if pages > 1 %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                Mostrando {{ invoices|length }} de {{ total }}
+            </div>
+            <div class="flex gap-1">
+                {% for p in range(1, pages + 1) %}
+                <a href="?page={{ p }}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                   class="px-3 py-1 rounded {% if p == page %}bg-papyrus-blue text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    {{ p }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Subir Facturas de Proveedores</h2>
+            <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <div id="uploadDropZone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-papyrus-blue transition-colors cursor-pointer"
+                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <p class="text-lg text-gray-700 mb-2">Arrastra los PDFs aquí</p>
+                <label class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+                    Seleccionar archivos
+                    <input type="file" accept=".pdf" multiple class="hidden" onchange="handleFileSelect(event)" id="fileInput">
+                </label>
+            </div>
+            
+            <div id="uploadProgress" class="hidden mt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-600">Procesando...</span>
+                    <span id="uploadProgressText" class="text-sm text-gray-500">0 de 0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="uploadProgressBar" class="bg-papyrus-blue h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
+                <div id="uploadResults" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CUFE Manual Modal -->
+<div id="cufeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Agregar CUFE Manualmente</h2>
+        </div>
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">Ingresa el código CUFE de 96 caracteres:</p>
+            <textarea id="manualCufe" rows="3" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                      placeholder="Pega el CUFE aquí..."></textarea>
+            <p id="cufeError" class="text-red-600 text-sm mt-2 hidden"></p>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <button onclick="closeCufeModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button onclick="saveCufe()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- DIAN Process Modal -->
+<div id="dianModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Procesar CUFEs en DIAN</h2>
+            <button onclick="closeDianModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-blue-800">
+                    <strong>Instrucciones:</strong> Abre cada link, resuelve el captcha, descarga el PDF y luego márcalo como descargado.
+                </p>
+            </div>
+            <div id="dianList" class="space-y-3"></div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
+            <button onclick="openAllDianLinks()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Abrir todos los links
+            </button>
+            <button onclick="closeDianModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Import PDF Modal -->
+<div id="importModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Importar PDF de DIAN</h2>
+        </div>
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">Sube el PDF descargado de la DIAN para procesarlo:</p>
+            <div id="importDropZone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-papyrus-blue transition-colors cursor-pointer"
+                 ondrop="handleImportDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <label class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer">
+                    Seleccionar PDF
+                    <input type="file" accept=".pdf" class="hidden" onchange="handleImportSelect(event)" id="importFileInput">
+                </label>
+            </div>
+            <div id="importProgress" class="hidden mt-4 text-center">
+                <svg class="animate-spin h-8 w-8 mx-auto text-papyrus-blue" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-gray-600 mt-2">Procesando e importando...</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <button onclick="closeImportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// State
+let currentInvoiceId = null;
+let pendingCufes = [];
+
+// Filters
+function filterByStatus(status) {
+    document.getElementById('statusFilter').value = status;
+    applyFilters();
+}
+
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    let url = '/invoices/supplier-invoices?page=1';
+    if (status) url += `&status=${status}`;
+    window.location.href = url;
+}
+
+// Copy to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Brief visual feedback could be added here
+    });
+}
+
+// Upload Modal
+function openUploadModal() {
+    document.getElementById('uploadModal').classList.remove('hidden');
+    document.getElementById('uploadProgress').classList.add('hidden');
+    document.getElementById('uploadDropZone').classList.remove('hidden');
+    document.getElementById('uploadResults').innerHTML = '';
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').classList.add('hidden');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-papyrus-blue', 'bg-blue-50');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+    if (files.length > 0) processUploadFiles(files);
+}
+
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) processUploadFiles(files);
+}
+
+async function processUploadFiles(files) {
+    document.getElementById('uploadDropZone').classList.add('hidden');
+    document.getElementById('uploadProgress').classList.remove('hidden');
+    
+    const results = document.getElementById('uploadResults');
+    results.innerHTML = '';
+    
+    for (let i = 0; i < files.length; i++) {
+        document.getElementById('uploadProgressText').textContent = `${i + 1} de ${files.length}`;
+        document.getElementById('uploadProgressBar').style.width = `${((i + 1) / files.length) * 100}%`;
+        
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/invoices/api/supplier-invoices/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                const statusText = result.cufe_found ? 
+                    `<span class="text-green-600">CUFE encontrado (${result.cufe_source})</span>` : 
+                    `<span class="text-yellow-600">Sin CUFE</span>`;
+                results.innerHTML += `
+                    <div class="flex items-center p-2 bg-green-50 rounded text-sm">
+                        <span class="text-green-600 mr-2">✓</span>
+                        <span class="flex-1 truncate">${file.name}</span>
+                        ${statusText}
+                    </div>
+                `;
+            } else {
+                results.innerHTML += `
+                    <div class="flex items-center p-2 bg-red-50 rounded text-sm">
+                        <span class="text-red-600 mr-2">✗</span>
+                        <span class="flex-1 truncate">${file.name}</span>
+                        <span class="text-red-600 text-xs">${result.message}</span>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            results.innerHTML += `
+                <div class="flex items-center p-2 bg-red-50 rounded text-sm">
+                    <span class="text-red-600 mr-2">✗</span>
+                    <span class="flex-1 truncate">${file.name}</span>
+                    <span class="text-red-600 text-xs">Error de conexión</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Add reload button
+    results.innerHTML += `
+        <div class="mt-4 text-center">
+            <button onclick="window.location.reload()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
+                Actualizar lista
+            </button>
+        </div>
+    `;
+}
+
+// CUFE Modal
+function openCufeModal(invoiceId) {
+    currentInvoiceId = invoiceId;
+    document.getElementById('manualCufe').value = '';
+    document.getElementById('cufeError').classList.add('hidden');
+    document.getElementById('cufeModal').classList.remove('hidden');
+}
+
+function closeCufeModal() {
+    document.getElementById('cufeModal').classList.add('hidden');
+    currentInvoiceId = null;
+}
+
+async function saveCufe() {
+    const cufe = document.getElementById('manualCufe').value.trim();
+    const errorEl = document.getElementById('cufeError');
+    
+    if (!cufe) {
+        errorEl.textContent = 'Ingresa un CUFE';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/invoices/api/supplier-invoices/${currentInvoiceId}/cufe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cufe })
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            closeCufeModal();
+            window.location.reload();
+        } else {
+            errorEl.textContent = result.message;
+            errorEl.classList.remove('hidden');
+        }
+    } catch (e) {
+        errorEl.textContent = 'Error de conexión';
+        errorEl.classList.remove('hidden');
+    }
+}
+
+// DIAN Modal
+async function openDianModal() {
+    document.getElementById('dianModal').classList.remove('hidden');
+    
+    // Load pending CUFEs
+    try {
+        const res = await fetch('/invoices/api/supplier-invoices/pending-cufes');
+        const result = await res.json();
+        pendingCufes = result.cufes || [];
+        
+        const list = document.getElementById('dianList');
+        list.innerHTML = pendingCufes.map(inv => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg" id="dian-item-${inv.id}">
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-gray-900">${inv.supplier_name || 'Sin proveedor'}</div>
+                    <code class="text-xs text-gray-500 font-mono">${inv.cufe_short}</code>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <a href="${inv.dian_url}" target="_blank" class="px-3 py-1 text-sm bg-papyrus-blue text-white rounded hover:bg-blue-700">
+                        Abrir DIAN
+                    </a>
+                    <button onclick="markDownloaded(${inv.id})" class="px-3 py-1 text-sm border border-green-600 text-green-600 rounded hover:bg-green-50">
+                        ✓ Descargado
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        if (pendingCufes.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-500 py-8">No hay CUFEs pendientes</p>';
+        }
+    } catch (e) {
+        console.error('Error loading CUFEs:', e);
+    }
+}
+
+function closeDianModal() {
+    document.getElementById('dianModal').classList.add('hidden');
+}
+
+function openAllDianLinks() {
+    if (!confirm(`¿Abrir ${pendingCufes.length} ventanas del portal DIAN?`)) return;
+    
+    pendingCufes.forEach((inv, index) => {
+        setTimeout(() => {
+            window.open(inv.dian_url, '_blank');
+        }, index * 500);
+    });
+}
+
+async function markDownloaded(invoiceId) {
+    try {
+        const res = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/mark-downloaded`, {
+            method: 'POST'
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            document.getElementById(`dian-item-${invoiceId}`).remove();
+            pendingCufes = pendingCufes.filter(c => c.id !== invoiceId);
+            
+            if (pendingCufes.length === 0) {
+                document.getElementById('dianList').innerHTML = '<p class="text-center text-gray-500 py-8">¡Todos los CUFEs procesados!</p>';
+            }
+        }
+    } catch (e) {
+        alert('Error actualizando estado');
+    }
+}
+
+// Import Modal
+function openImportModal(invoiceId) {
+    currentInvoiceId = invoiceId;
+    document.getElementById('importModal').classList.remove('hidden');
+    document.getElementById('importProgress').classList.add('hidden');
+    document.getElementById('importDropZone').classList.remove('hidden');
+}
+
+function closeImportModal() {
+    document.getElementById('importModal').classList.add('hidden');
+    currentInvoiceId = null;
+}
+
+function handleImportDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+    if (files.length > 0) processImportFile(files[0]);
+}
+
+function handleImportSelect(e) {
+    const file = e.target.files[0];
+    if (file) processImportFile(file);
+}
+
+async function processImportFile(file) {
+    document.getElementById('importDropZone').classList.add('hidden');
+    document.getElementById('importProgress').classList.remove('hidden');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('supplier_invoice_id', currentInvoiceId);
+    
+    try {
+        // Extract
+        const extractRes = await fetch('/invoices/api/extract', {
+            method: 'POST',
+            body: formData
+        });
+        const extractResult = await extractRes.json();
+        
+        if (!extractResult.success) {
+            throw new Error(extractResult.detail || 'Error extrayendo datos');
+        }
+        
+        // Save
+        const saveRes = await fetch('/invoices/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...extractResult.data, replace_existing: true })
+        });
+        const saveResult = await saveRes.json();
+        
+        if (!saveResult.success) {
+            throw new Error(saveResult.message || 'Error guardando');
+        }
+        
+        // Mark as processed
+        await fetch(`/invoices/api/supplier-invoices/${currentInvoiceId}/mark-processed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ processed_invoice_id: saveResult.invoice_id })
+        });
+        
+        closeImportModal();
+        window.location.reload();
+        
+    } catch (e) {
+        alert('Error: ' + e.message);
+        document.getElementById('importProgress').classList.add('hidden');
+        document.getElementById('importDropZone').classList.remove('hidden');
+    }
+}
+
+// Delete
+async function deleteInvoice(invoiceId) {
+    if (!confirm('¿Eliminar esta factura de proveedor?')) return;
+    
+    try {
+        const res = await fetch(`/invoices/api/supplier-invoices/${invoiceId}`, {
+            method: 'DELETE'
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            document.getElementById(`row-${invoiceId}`).remove();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (e) {
+        alert('Error de conexión');
+    }
+}
+</script>
+{% endblock %}

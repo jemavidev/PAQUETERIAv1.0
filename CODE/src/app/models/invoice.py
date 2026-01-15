@@ -250,3 +250,81 @@ class InvoiceRejectedFile(Base):
 
     def __repr__(self):
         return f"<RejectedFile {self.archivo_nombre}>"
+
+
+# ========================================
+# FACTURAS DE PROVEEDORES PENDIENTES
+# ========================================
+
+class SupplierInvoiceStatus(enum.Enum):
+    """Estado de procesamiento de factura de proveedor"""
+    PENDING = "pending"              # Subida, pendiente de procesar CUFE
+    NO_CUFE = "no_cufe"              # Sin CUFE detectado
+    CUFE_EXTRACTED = "cufe_extracted"  # CUFE extraído, pendiente descarga DIAN
+    DIAN_DOWNLOADED = "dian_downloaded"  # PDF de DIAN descargado
+    PROCESSED = "processed"          # Procesada e importada al sistema
+    ERROR = "error"                  # Error en el proceso
+    DUPLICATE = "duplicate"          # CUFE duplicado
+
+
+class SupplierInvoice(Base):
+    """
+    Modelo para facturas de proveedores subidas.
+    Gestiona el flujo: Subir PDF → Extraer CUFE → Descargar DIAN → Importar
+    """
+    __tablename__ = "supplier_invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Archivo original subido
+    original_filename = Column(String(255), nullable=False)
+    original_file_hash = Column(String(64), unique=True, index=True)
+    original_file_path = Column(String(500), nullable=True)
+    
+    # Datos extraídos del PDF original
+    supplier_name = Column(String(255), nullable=True, index=True)
+    supplier_nit = Column(String(20), nullable=True, index=True)
+    invoice_number = Column(String(50), nullable=True)
+    invoice_date = Column(DateTime, nullable=True, index=True)
+    total_amount = Column(Integer, nullable=True)
+    
+    # CUFE extraído
+    cufe = Column(String(100), nullable=True, index=True)
+    cufe_source = Column(String(20), nullable=True)  # 'filename', 'content', 'manual'
+    
+    # Estado del proceso
+    status = Column(SQLEnum(SupplierInvoiceStatus), default=SupplierInvoiceStatus.PENDING, index=True)
+    status_message = Column(Text, nullable=True)
+    
+    # PDF de DIAN descargado
+    dian_file_hash = Column(String(64), nullable=True)
+    dian_downloaded_at = Column(DateTime, nullable=True)
+    
+    # Vinculación con factura procesada
+    processed_invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
+    processed_at = Column(DateTime, nullable=True)
+    
+    # Metadata
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    uploaded_at = Column(DateTime, default=get_colombia_now, index=True)
+    updated_at = Column(DateTime, default=get_colombia_now, onupdate=get_colombia_now)
+    
+    # Notas del usuario
+    notes = Column(Text, nullable=True)
+
+    def __repr__(self):
+        return f"<SupplierInvoice {self.original_filename} - {self.status.value}>"
+    
+    @property
+    def cufe_short(self) -> str:
+        """Retorna CUFE abreviado para mostrar"""
+        if not self.cufe:
+            return "-"
+        return f"{self.cufe[:12]}...{self.cufe[-8:]}"
+    
+    @property
+    def dian_url(self) -> str:
+        """Genera URL de consulta DIAN"""
+        if not self.cufe:
+            return None
+        return f"https://catalogo-vpfe.dian.gov.co/User/SearchDocument?DocumentKey={self.cufe}"
