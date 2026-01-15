@@ -1302,6 +1302,8 @@ async def upload_supplier_invoice(
     db: Session = Depends(get_db),
 ):
     """Sube una factura de proveedor y extrae el CUFE"""
+    from app.services.s3_storage_service import S3StorageService
+    
     if not file.filename.lower().endswith('.pdf'):
         return JSONResponse(content={
             "success": False,
@@ -1324,6 +1326,22 @@ async def upload_supplier_invoice(
             user_id=current_user.id
         )
         
+        # Guardar PDF en S3
+        s3_service = S3StorageService()
+        if s3_service.is_enabled() and invoice.original_file_hash:
+            metadata = {
+                'type': 'supplier_invoice',
+                'filename': file.filename,
+                'supplier_invoice_id': str(invoice.id),
+                'cufe': invoice.cufe or '',
+            }
+            s3_key = f"supplier-invoices/{invoice.original_file_hash}.pdf"
+            if s3_service.upload_pdf(content, f"supplier-invoices/{invoice.original_file_hash}", metadata):
+                # Guardar la ruta en el modelo
+                invoice.original_file_path = s3_key
+                db.commit()
+                logger.info(f"PDF de proveedor guardado en S3: {s3_key}")
+        
         return JSONResponse(content={
             "success": True,
             "invoice_id": invoice.id,
@@ -1342,6 +1360,47 @@ async def upload_supplier_invoice(
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+@router.get("/api/supplier-invoices/{invoice_id}/pdf")
+async def get_supplier_invoice_pdf(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene el PDF original de una factura de proveedor"""
+    from app.services.s3_storage_service import S3StorageService
+    
+    service = SupplierInvoiceService(db)
+    invoice = service.get_by_id(invoice_id)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    if not invoice.original_file_hash:
+        raise HTTPException(status_code=404, detail="PDF no disponible")
+    
+    s3_service = S3StorageService()
+    
+    # Intentar obtener URL firmada de S3
+    if s3_service.is_enabled():
+        url = s3_service.generate_presigned_url(f"supplier-invoices/{invoice.original_file_hash}", expiration=3600)
+        if url:
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=url)
+    
+    # Fallback: buscar localmente
+    local_path = f"/app/src/uploads/invoices/{invoice.original_file_hash}.pdf"
+    if os.path.exists(local_path):
+        with open(local_path, 'rb') as f:
+            content = f.read()
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename={invoice.original_filename}"}
+        )
+    
+    raise HTTPException(status_code=404, detail="PDF no encontrado en S3 ni localmente")
 
 
 @router.post("/api/supplier-invoices/{invoice_id}/cufe")
