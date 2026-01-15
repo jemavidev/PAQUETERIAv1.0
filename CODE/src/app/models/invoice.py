@@ -6,9 +6,13 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Tex
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
+from typing import TYPE_CHECKING
 
 from app.models.base import Base
 from app.utils.datetime_utils import get_colombia_now
+
+if TYPE_CHECKING:
+    from app.models.product import Product
 
 
 class DocumentType(enum.Enum):
@@ -38,6 +42,10 @@ class IrregularityType(enum.Enum):
     CUFE_INVALIDO = "cufe_invalido"
     ARCHIVO_CORRUPTO = "archivo_corrupto"
     FORMATO_NO_SOPORTADO = "formato_no_soportado"
+    # NUEVO: Irregularidades de integración
+    COMPRADOR_NO_ES_PAPYRUS = "comprador_no_es_papyrus"
+    PRODUCTO_NO_EN_CATALOGO = "producto_no_en_catalogo"
+    PRECIO_COMPRA_MAYOR_VENTA = "precio_compra_mayor_venta"
 
 
 class IrregularitySeverity(enum.Enum):
@@ -91,9 +99,19 @@ class Invoice(Base):
     forma_pago = Column(String(50), nullable=True)
     medio_pago = Column(String(50), nullable=True)
     
-    # Proveedor
+    # Proveedor (vendedor)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False, index=True)
     supplier = relationship("Supplier", back_populates="invoices")
+    
+    # NUEVO: Comprador (Papyrus)
+    buyer_nit = Column(String(20), nullable=True, index=True)
+    buyer_razon_social = Column(String(255), nullable=True)
+    buyer_direccion = Column(String(255), nullable=True)
+    is_papyrus_buyer = Column(Boolean, default=False, index=True)
+    
+    # NUEVO: Relación con supplier_invoice (PDF original)
+    supplier_invoice_id = Column(Integer, ForeignKey("supplier_invoices.id", ondelete="SET NULL"), nullable=True, index=True)
+    supplier_invoice = relationship("SupplierInvoice", back_populates="processed_invoice", foreign_keys=[supplier_invoice_id])
     
     # Totales (en pesos colombianos, sin decimales)
     subtotal = Column(Integer, default=0)
@@ -173,6 +191,14 @@ class InvoiceItem(Base):
     
     # Total del item
     valor_total = Column(Integer, default=0)
+    
+    # NUEVO: Relación con producto del catálogo
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True, index=True)
+    # Nota: La relación 'product' se carga dinámicamente cuando se necesita
+    # para evitar problemas de importación circular
+    matched_with_catalog = Column(Boolean, default=False, index=True)
+    match_confidence = Column(Float, default=0.0)  # 0.0 a 1.0
+    match_method = Column(String(50), nullable=True)  # 'codigo', 'codigo_barra', 'nombre', 'manual'
     
     # Irregularidades y notas
     tiene_irregularidad = Column(Boolean, default=False)
@@ -300,8 +326,9 @@ class SupplierInvoice(Base):
     dian_file_hash = Column(String(64), nullable=True)
     dian_downloaded_at = Column(DateTime, nullable=True)
     
-    # Vinculación con factura procesada
+    # MODIFICADO: Vinculación con factura procesada (relación bidireccional)
     processed_invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
+    processed_invoice = relationship("Invoice", back_populates="supplier_invoice", foreign_keys="Invoice.supplier_invoice_id")
     processed_at = Column(DateTime, nullable=True)
     
     # Metadata

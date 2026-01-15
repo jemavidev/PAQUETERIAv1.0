@@ -21,6 +21,7 @@ from .package_event import PackageEvent, EventType
 from .user_preferences import UserPreferences
 from .customer_preferences import CustomerPreferences
 from .invoice import Supplier, Invoice, InvoiceItem, DocumentType
+from .product import Product, ProductColumnConfig, ProductSyncLog
 
 __all__ = [
     "BaseModel",
@@ -54,5 +55,8 @@ __all__ = [
     "Supplier",
     "Invoice",
     "InvoiceItem",
-    "DocumentType"
+    "DocumentType",
+    "Product",
+    "ProductColumnConfig",
+    "ProductSyncLog"
 ]

@@ -102,12 +102,13 @@ class S3StorageService:
             logger.error(f"Error subiendo PDF a S3: {e}")
             return False
     
-    def download_pdf(self, file_hash: str) -> Optional[bytes]:
+    def download_pdf(self, file_hash: str, prefix: Optional[str] = None) -> Optional[bytes]:
         """
         Descarga un PDF desde S3
         
         Args:
             file_hash: Hash del archivo
+            prefix: Prefijo personalizado (ej: 'supplier-invoices'). Si es None, usa self.prefix
         
         Returns:
             Contenido del archivo en bytes, o None si no existe
@@ -116,7 +117,12 @@ class S3StorageService:
             return None
         
         try:
-            key = f"{self.prefix}{file_hash}.pdf"
+            # Usar prefijo personalizado o el por defecto
+            if prefix:
+                key = f"{prefix}/{file_hash}.pdf"
+            else:
+                key = f"{self.prefix}{file_hash}.pdf"
+            
             response = self.s3_client.get_object(
                 Bucket=self.bucket_name,
                 Key=key
@@ -127,7 +133,7 @@ class S3StorageService:
             
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
-                logger.warning(f"PDF no encontrado en S3: {file_hash}")
+                logger.warning(f"PDF no encontrado en S3: {file_hash} (prefix: {prefix or self.prefix})")
             else:
                 logger.error(f"Error descargando PDF desde S3: {e}")
             return None
@@ -183,15 +189,17 @@ class S3StorageService:
     
     def generate_presigned_url(
         self, 
-        file_hash: str, 
-        expiration: int = 3600
+        file_hash_or_key: str, 
+        expiration: int = 3600,
+        is_full_key: bool = False
     ) -> Optional[str]:
         """
         Genera una URL firmada temporal para descargar un PDF
         
         Args:
-            file_hash: Hash del archivo
+            file_hash_or_key: Hash del archivo o key completa de S3
             expiration: Tiempo de expiración en segundos (default: 1 hora)
+            is_full_key: Si True, file_hash_or_key es la key completa. Si False, se construye con prefix
         
         Returns:
             URL firmada, o None si hay error
@@ -200,7 +208,16 @@ class S3StorageService:
             return None
         
         try:
-            key = f"{self.prefix}{file_hash}.pdf"
+            # Si es una key completa, usarla directamente
+            if is_full_key:
+                key = file_hash_or_key
+            else:
+                # Si no tiene extensión, agregarla
+                if not file_hash_or_key.endswith('.pdf'):
+                    key = f"{self.prefix}{file_hash_or_key}.pdf"
+                else:
+                    key = file_hash_or_key
+            
             url = self.s3_client.generate_presigned_url(
                 'get_object',
                 Params={

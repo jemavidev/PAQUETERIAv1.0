@@ -1382,16 +1382,35 @@ async def get_supplier_invoice_pdf(
     
     s3_service = S3StorageService()
     
-    # Intentar obtener URL firmada de S3
+    # Intentar obtener desde S3
     if s3_service.is_enabled():
-        url = s3_service.generate_presigned_url(f"supplier-invoices/{invoice.original_file_hash}", expiration=3600)
+        # Opción 1: Usar la ruta guardada en original_file_path si existe
+        if invoice.original_file_path:
+            url = s3_service.generate_presigned_url(invoice.original_file_path, expiration=3600, is_full_key=True)
+            if url:
+                from fastapi.responses import RedirectResponse
+                return RedirectResponse(url=url)
+        
+        # Opción 2: Construir la ruta con el prefijo supplier-invoices
+        url = s3_service.generate_presigned_url(f"supplier-invoices/{invoice.original_file_hash}.pdf", expiration=3600, is_full_key=True)
         if url:
             from fastapi.responses import RedirectResponse
             return RedirectResponse(url=url)
+        
+        # Opción 3: Intentar descarga directa desde S3
+        logger.info(f"No se pudo generar URL firmada, intentando descarga directa para invoice {invoice_id}")
+        pdf_content = s3_service.download_pdf(invoice.original_file_hash, prefix="supplier-invoices")
+        if pdf_content:
+            return StreamingResponse(
+                iter([pdf_content]),
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"inline; filename={invoice.original_filename}"}
+            )
     
-    # Fallback: buscar localmente
-    local_path = f"/app/src/uploads/invoices/{invoice.original_file_hash}.pdf"
+    # Fallback: buscar localmente en carpeta supplier-invoices
+    local_path = f"/app/src/uploads/supplier-invoices/{invoice.original_file_hash}.pdf"
     if os.path.exists(local_path):
+        logger.info(f"PDF encontrado localmente: {local_path}")
         with open(local_path, 'rb') as f:
             content = f.read()
         return StreamingResponse(
@@ -1400,6 +1419,19 @@ async def get_supplier_invoice_pdf(
             headers={"Content-Disposition": f"inline; filename={invoice.original_filename}"}
         )
     
+    # Fallback 2: buscar en carpeta invoices (por compatibilidad)
+    local_path_alt = f"/app/src/uploads/invoices/{invoice.original_file_hash}.pdf"
+    if os.path.exists(local_path_alt):
+        logger.info(f"PDF encontrado en carpeta alternativa: {local_path_alt}")
+        with open(local_path_alt, 'rb') as f:
+            content = f.read()
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename={invoice.original_filename}"}
+        )
+    
+    logger.error(f"PDF no encontrado para supplier_invoice {invoice_id} (hash: {invoice.original_file_hash})")
     raise HTTPException(status_code=404, detail="PDF no encontrado en S3 ni localmente")
 
 
