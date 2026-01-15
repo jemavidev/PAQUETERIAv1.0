@@ -114,12 +114,9 @@
                         <!-- CUFE -->
                         <td class="px-3 py-2 whitespace-nowrap">
                             {% if invoice.cufe %}
-                            <div class="flex items-center gap-1">
-                                <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-600">{{ invoice.cufe_short }}</code>
-                                <button onclick="copyToClipboard('{{ invoice.cufe }}')" class="text-gray-400 hover:text-blue-600" title="Copiar CUFE">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                </button>
-                                <span class="text-xs text-gray-400">({{ invoice.cufe_source }})</span>
+                            <div class="flex items-center gap-1 group cursor-pointer" onclick="copyToClipboard('{{ invoice.cufe }}')" title="Clic para copiar CUFE completo">
+                                <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">{{ invoice.cufe_short }}</code>
+                                <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             </div>
                             {% else %}
                             <span class="text-xs text-yellow-600">—</span>
@@ -145,8 +142,7 @@
                                 {% if invoice.status.value == 'no_cufe' %}
                                 <button onclick="openCufeModal({{ invoice.id }})" class="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100">+CUFE</button>
                                 {% elif invoice.status.value == 'cufe_extracted' %}
-                                <a href="{{ invoice.dian_url }}" target="_blank" class="px-2 py-1 text-xs bg-green-50 text-green-600 rounded hover:bg-green-100">DIAN</a>
-                                <button onclick="markDownloadedSingle({{ invoice.id }})" class="px-1 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded" title="Marcar descargado">✓</button>
+                                <a href="{{ invoice.dian_url }}" target="_blank" class="px-2 py-1 text-xs bg-green-50 text-green-600 rounded hover:bg-green-100" title="Abrir portal DIAN para descargar PDF">DIAN</a>
                                 {% elif invoice.status.value == 'dian_downloaded' %}
                                 <button onclick="openImportModal({{ invoice.id }})" class="px-2 py-1 text-xs bg-purple-50 text-purple-600 rounded hover:bg-purple-100">Importar</button>
                                 {% elif invoice.status.value == 'processed' and invoice.processed_invoice_id %}
@@ -335,10 +331,17 @@ function applyFilters() {
     window.location.href = url;
 }
 
-// Copy to clipboard
+// Copy to clipboard con feedback visual
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        // Brief visual feedback could be added here
+        // Mostrar toast de confirmación
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50 animate-fade-in';
+        toast.innerHTML = '✓ CUFE copiado al portapapeles';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }).catch(() => {
+        alert('Error al copiar. CUFE: ' + text);
     });
 }
 
