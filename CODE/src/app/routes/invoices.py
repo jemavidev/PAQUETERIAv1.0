@@ -1335,12 +1335,33 @@ async def upload_supplier_invoice(
                 'supplier_invoice_id': str(invoice.id),
                 'cufe': invoice.cufe or '',
             }
+            
+            # Construir la key completa para S3
             s3_key = f"supplier-invoices/{invoice.original_file_hash}.pdf"
-            if s3_service.upload_pdf(content, f"supplier-invoices/{invoice.original_file_hash}", metadata):
+            
+            # Subir directamente con put_object para tener control total de la key
+            try:
+                s3_service.s3_client.put_object(
+                    Bucket=s3_service.bucket_name,
+                    Key=s3_key,
+                    Body=content,
+                    ContentType='application/pdf',
+                    Metadata=metadata,
+                    ServerSideEncryption='AES256',
+                )
                 # Guardar la ruta en el modelo
                 invoice.original_file_path = s3_key
                 db.commit()
                 logger.info(f"PDF de proveedor guardado en S3: {s3_key}")
+            except Exception as e:
+                logger.error(f"Error guardando PDF en S3: {e}")
+                # Intentar guardar localmente como fallback
+                local_dir = "/app/src/uploads/supplier-invoices"
+                os.makedirs(local_dir, exist_ok=True)
+                local_path = f"{local_dir}/{invoice.original_file_hash}.pdf"
+                with open(local_path, 'wb') as f:
+                    f.write(content)
+                logger.info(f"PDF guardado localmente: {local_path}")
         
         return JSONResponse(content={
             "success": True,
