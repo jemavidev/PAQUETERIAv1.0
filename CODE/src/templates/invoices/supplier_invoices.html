@@ -99,9 +99,9 @@
                         <td class="px-3 py-2 whitespace-nowrap">
                             <div class="flex items-center gap-1">
                                 {% if invoice.original_file_hash %}
-                                <a href="/invoices/api/supplier-invoices/{{ invoice.id }}/pdf" target="_blank" class="text-red-500 hover:text-red-700" title="Ver PDF original">
+                                <button onclick="viewPDF({{ invoice.id }})" class="text-red-500 hover:text-red-700" title="Ver PDF original">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10.92,12.31C10.68,11.54 10.15,9.08 11.55,9.04C12.95,9 12.03,12.16 12.03,12.16C12.42,13.65 14.05,14.72 14.05,14.72C14.55,14.57 17.4,14.24 17,15.72C16.57,17.2 13.5,15.81 13.5,15.81C11.55,15.95 10.09,16.47 10.09,16.47C8.96,18.58 7.64,19.5 7.1,18.61C6.43,17.5 9.23,16.07 9.23,16.07C10.68,13.72 10.9,12.35 10.92,12.31Z"/></svg>
-                                </a>
+                                </button>
                                 {% endif %}
                                 <span class="text-sm text-gray-900 truncate max-w-[160px]" title="{{ invoice.original_filename }}">{{ invoice.original_filename[:25] }}{% if invoice.original_filename|length > 25 %}...{% endif %}</span>
                                 <span class="text-xs text-gray-400">{{ invoice.uploaded_at.strftime('%d/%m/%y') }}</span>
@@ -670,6 +670,40 @@ async function deleteInvoice(invoiceId) {
         }
     } catch (e) {
         alert('Error de conexión');
+    }
+}
+
+// View PDF
+async function viewPDF(invoiceId) {
+    try {
+        const res = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/pdf`, {
+            method: 'GET',
+            credentials: 'include' // Importante: incluir cookies
+        });
+        
+        if (!res.ok) {
+            if (res.status === 404) {
+                alert('PDF no encontrado. El archivo no fue guardado correctamente al subir la factura.');
+                return;
+            }
+            throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        // Obtener el blob del PDF
+        const blob = await res.blob();
+        
+        // Crear URL temporal
+        const url = window.URL.createObjectURL(blob);
+        
+        // Abrir en nueva pestaña
+        window.open(url, '_blank');
+        
+        // Liberar URL después de un tiempo
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+        
+    } catch (e) {
+        console.error('Error viewing PDF:', e);
+        alert('Error al abrir el PDF: ' + e.message);
     }
 }
 </script>
