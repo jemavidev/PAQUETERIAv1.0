@@ -20,7 +20,7 @@ from .announcement_new import PackageAnnouncementNew
 from .package_event import PackageEvent, EventType
 from .user_preferences import UserPreferences
 from .customer_preferences import CustomerPreferences
-from .invoice import Supplier, Invoice, InvoiceItem, DocumentType
+from .invoice import Supplier, Invoice, InvoiceItem, InvoiceIrregularity, SupplierInvoice, DocumentType
 from .product import Product, ProductColumnConfig, ProductSyncLog
 
 __all__ = [
@@ -55,6 +55,8 @@ __all__ = [
     "Supplier",
     "Invoice",
     "InvoiceItem",
+    "InvoiceIrregularity",
+    "SupplierInvoice",
     "DocumentType",
     "Product",
     "ProductColumnConfig",

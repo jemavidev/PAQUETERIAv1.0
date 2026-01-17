@@ -1403,30 +1403,26 @@ async def get_supplier_invoice_pdf(
     
     s3_service = S3StorageService()
     
-    # Intentar obtener desde S3
+    # Intentar obtener desde S3 - Descargar y servir directamente (evita problemas de CORS)
     if s3_service.is_enabled():
         # Opción 1: Usar la ruta guardada en original_file_path si existe
-        if invoice.original_file_path:
-            url = s3_service.generate_presigned_url(invoice.original_file_path, expiration=3600, is_full_key=True)
-            if url:
-                from fastapi.responses import RedirectResponse
-                return RedirectResponse(url=url)
+        s3_key = invoice.original_file_path or f"supplier-invoices/{invoice.original_file_hash}.pdf"
         
-        # Opción 2: Construir la ruta con el prefijo supplier-invoices
-        url = s3_service.generate_presigned_url(f"supplier-invoices/{invoice.original_file_hash}.pdf", expiration=3600, is_full_key=True)
-        if url:
-            from fastapi.responses import RedirectResponse
-            return RedirectResponse(url=url)
-        
-        # Opción 3: Intentar descarga directa desde S3
-        logger.info(f"No se pudo generar URL firmada, intentando descarga directa para invoice {invoice_id}")
-        pdf_content = s3_service.download_pdf(invoice.original_file_hash, prefix="supplier-invoices")
-        if pdf_content:
-            return StreamingResponse(
-                iter([pdf_content]),
-                media_type="application/pdf",
-                headers={"Content-Disposition": f"inline; filename={invoice.original_filename}"}
-            )
+        try:
+            # Descargar desde S3
+            pdf_content = s3_service.download_pdf(invoice.original_file_hash, prefix="supplier-invoices")
+            if pdf_content:
+                logger.info(f"PDF descargado desde S3: {s3_key}")
+                return StreamingResponse(
+                    iter([pdf_content]),
+                    media_type="application/pdf",
+                    headers={
+                        "Content-Disposition": f"inline; filename={invoice.original_filename}",
+                        "Cache-Control": "public, max-age=3600"
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Error descargando PDF desde S3: {e}")
     
     # Fallback: buscar localmente en carpeta supplier-invoices
     local_path = f"/app/src/uploads/supplier-invoices/{invoice.original_file_hash}.pdf"
