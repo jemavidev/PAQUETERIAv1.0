@@ -1445,10 +1445,14 @@
             showAlert(title, message, 'success', options);
         }
 
-        // Reemplazar alert() nativo
-        window.alert = function (message) {
-            showError('Atención', message, { autoClose: true, closeDelay: 3000 });
-        };
+        // Reemplazar alert() nativo - DESHABILITADO TEMPORALMENTE
+        // NOTA: Causaba errores con Alpine.js cuando el mensaje contenía caracteres especiales
+        // window.alert = function (message) {
+        //     showError('Atención', message, { autoClose: true, closeDelay: 3000 });
+        // };
+        
+        // Usar alert nativo por ahora (más confiable)
+        // TODO: Arreglar sistema de alertas personalizado
 
         // Función para mostrar errores de validación
         function showValidationErrors(errors) {
