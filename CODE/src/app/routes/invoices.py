@@ -1666,6 +1666,7 @@ async def get_supplier_invoices_list(
                     "cufe_source": inv.cufe_source,
                     "status": inv.status.value,
                     "total": total,
+                    "extraction_quality": inv.extraction_quality or 0.0,
                     "uploaded_at": inv.uploaded_at.isoformat() if inv.uploaded_at else None,
                     "processed_invoice_id": inv.processed_invoice_id,
                 })
@@ -1682,6 +1683,7 @@ async def get_supplier_invoices_list(
                     "cufe_source": inv.cufe_source,
                     "status": inv.status.value if hasattr(inv, 'status') else "error",
                     "total": 0,
+                    "extraction_quality": 0.0,
                     "uploaded_at": None,
                     "processed_invoice_id": None,
                 })
@@ -1779,3 +1781,229 @@ async def get_products_list(
         })
     
     return JSONResponse(content={"products": result})
+
+
+# ========================================
+# API ENDPOINTS - SUPPLIER INVOICES MEJORADOS
+# ========================================
+
+@router.get("/api/supplier-invoices/{invoice_id}/detail")
+async def get_supplier_invoice_detail(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene detalle completo de una factura de proveedor con calidad de extracción"""
+    service = SupplierInvoiceService(db)
+    invoice = service.get_by_id(invoice_id)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Calcular badge de calidad
+    quality = invoice.extraction_quality or 0.0
+    if quality >= 0.80:
+        quality_badge = {"label": "Alta", "color": "green", "value": quality}
+    elif quality >= 0.50:
+        quality_badge = {"label": "Media", "color": "yellow", "value": quality}
+    else:
+        quality_badge = {"label": "Baja", "color": "red", "value": quality}
+    
+    # Verificar si está vinculada a una factura procesada
+    processed_invoice = None
+    if invoice.processed_invoice_id:
+        processed_invoice = db.query(Invoice).filter(
+            Invoice.id == invoice.processed_invoice_id
+        ).first()
+    
+    return JSONResponse(content={
+        "id": invoice.id,
+        "original_filename": invoice.original_filename,
+        "supplier_name": invoice.supplier_name,
+        "supplier_nit": invoice.supplier_nit,
+        "invoice_number": invoice.invoice_number,
+        "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+        "total_amount": invoice.total_amount,
+        "cufe": invoice.cufe,
+        "cufe_short": invoice.cufe_short,
+        "cufe_source": invoice.cufe_source,
+        "status": invoice.status.value,
+        "status_message": invoice.status_message,
+        "extraction_quality": quality,
+        "quality_badge": quality_badge,
+        "uploaded_at": invoice.uploaded_at.isoformat() if invoice.uploaded_at else None,
+        "notes": invoice.notes,
+        "dian_url": invoice.dian_url,
+        "processed_invoice": {
+            "id": processed_invoice.id,
+            "numero_documento": processed_invoice.numero_documento,
+            "total_neto": processed_invoice.total_neto,
+        } if processed_invoice else None,
+    })
+
+
+@router.put("/api/supplier-invoices/{invoice_id}")
+async def update_supplier_invoice(
+    invoice_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Actualiza datos de una factura de proveedor manualmente"""
+    try:
+        data = await request.json()
+        
+        service = SupplierInvoiceService(db)
+        invoice = service.get_by_id(invoice_id)
+        
+        if not invoice:
+            return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+        
+        # Actualizar campos permitidos
+        if 'supplier_name' in data:
+            invoice.supplier_name = data['supplier_name']
+        if 'supplier_nit' in data:
+            invoice.supplier_nit = data['supplier_nit']
+        if 'invoice_number' in data:
+            invoice.invoice_number = data['invoice_number']
+        if 'invoice_date' in data and data['invoice_date']:
+            try:
+                invoice.invoice_date = datetime.fromisoformat(data['invoice_date'].replace('Z', '+00:00'))
+            except:
+                pass
+        if 'total_amount' in data:
+            invoice.total_amount = data['total_amount']
+        if 'notes' in data:
+            invoice.notes = data['notes']
+        
+        db.commit()
+        db.refresh(invoice)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "Factura actualizada correctamente",
+            "invoice": {
+                "id": invoice.id,
+                "supplier_name": invoice.supplier_name,
+                "supplier_nit": invoice.supplier_nit,
+                "invoice_number": invoice.invoice_number,
+                "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+                "total_amount": invoice.total_amount,
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error actualizando factura: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e)})
+
+
+@router.post("/api/supplier-invoices/{invoice_id}/reextract")
+async def reextract_supplier_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Re-extrae datos de una factura de proveedor usando el extractor mejorado"""
+    from app.services.s3_storage_service import S3StorageService
+    
+    try:
+        service = SupplierInvoiceService(db)
+        invoice = service.get_by_id(invoice_id)
+        
+        if not invoice:
+            return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+        
+        # Obtener PDF
+        s3_service = S3StorageService()
+        pdf_content = None
+        
+        if s3_service.is_enabled() and invoice.original_file_path:
+            try:
+                pdf_content = s3_service.download_pdf(invoice.original_file_hash, prefix="supplier-invoices")
+            except Exception as e:
+                logger.error(f"Error descargando PDF desde S3: {e}")
+        
+        # Fallback a local
+        if not pdf_content:
+            local_path = f"/app/src/uploads/supplier-invoices/{invoice.original_file_hash}.pdf"
+            if os.path.exists(local_path):
+                with open(local_path, 'rb') as f:
+                    pdf_content = f.read()
+        
+        if not pdf_content:
+            return JSONResponse(content={"success": False, "message": "PDF no encontrado"})
+        
+        # Guardar temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            tmp.write(pdf_content)
+            tmp_path = tmp.name
+        
+        try:
+            # Re-extraer con extractor mejorado
+            enhanced_data = service.enhanced_extractor.extract_from_pdf(tmp_path)
+            
+            # Actualizar datos
+            if enhanced_data.supplier_name.value:
+                invoice.supplier_name = enhanced_data.supplier_name.value
+            if enhanced_data.supplier_nit.value:
+                invoice.supplier_nit = enhanced_data.supplier_nit.value
+            if enhanced_data.invoice_number.value:
+                invoice.invoice_number = enhanced_data.invoice_number.value
+            if enhanced_data.invoice_date.value:
+                invoice.invoice_date = enhanced_data.invoice_date.value
+            if enhanced_data.total_amount.value:
+                invoice.total_amount = enhanced_data.total_amount.value
+            if enhanced_data.cufe.value and not invoice.cufe:
+                invoice.cufe = enhanced_data.cufe.value
+                invoice.cufe_source = 'reextraction'
+                invoice.status = SupplierInvoiceStatus.CUFE_EXTRACTED
+            
+            invoice.extraction_quality = enhanced_data.overall_quality
+            
+            db.commit()
+            db.refresh(invoice)
+            
+            return JSONResponse(content={
+                "success": True,
+                "message": "Datos re-extraídos correctamente",
+                "extraction_quality": enhanced_data.overall_quality,
+                "field_confidences": {
+                    "supplier_name": enhanced_data.supplier_name.confidence,
+                    "supplier_nit": enhanced_data.supplier_nit.confidence,
+                    "invoice_number": enhanced_data.invoice_number.confidence,
+                    "invoice_date": enhanced_data.invoice_date.confidence,
+                    "total_amount": enhanced_data.total_amount.confidence,
+                    "cufe": enhanced_data.cufe.confidence,
+                },
+                "invoice": {
+                    "id": invoice.id,
+                    "supplier_name": invoice.supplier_name,
+                    "supplier_nit": invoice.supplier_nit,
+                    "invoice_number": invoice.invoice_number,
+                    "invoice_date": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+                    "total_amount": invoice.total_amount,
+                    "cufe": invoice.cufe,
+                }
+            })
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+    
+    except Exception as e:
+        logger.error(f"Error re-extrayendo datos: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e)})
+
+
+@router.delete("/api/supplier-invoices/{invoice_id}")
+async def delete_supplier_invoice(
+    invoice_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Elimina una factura de proveedor"""
+    service = SupplierInvoiceService(db)
+    success = service.delete(invoice_id)
+    
+    if not success:
+        return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
+    
+    return JSONResponse(content={"success": True, "message": "Factura eliminada correctamente"})

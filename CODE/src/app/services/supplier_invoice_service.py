@@ -21,6 +21,7 @@ from sqlalchemy import func, desc
 
 from app.models.invoice import SupplierInvoice, SupplierInvoiceStatus, Invoice
 from app.services.pdf_extractor_service import PDFExtractorService
+from app.services.enhanced_pdf_extractor import EnhancedPDFExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class SupplierInvoiceService:
     def __init__(self, db: Session):
         self.db = db
         self.extractor = PDFExtractorService()
+        self.enhanced_extractor = EnhancedPDFExtractor()
     
     @staticmethod
     def calculate_file_hash(content: bytes) -> str:
@@ -273,10 +275,18 @@ class SupplierInvoiceService:
         filename: str, 
         content: bytes, 
         pdf_path: str,
-        user_id: int = None
+        user_id: int = None,
+        use_enhanced: bool = True
     ) -> Tuple[SupplierInvoice, Dict[str, Any]]:
         """
-        Procesa un archivo PDF subido.
+        Procesa un archivo PDF subido con extracción mejorada.
+        
+        Args:
+            filename: Nombre del archivo
+            content: Contenido binario del PDF
+            pdf_path: Ruta temporal del PDF
+            user_id: ID del usuario que sube
+            use_enhanced: Si True, usa extractor mejorado con confianza
         
         Returns:
             Tuple de (SupplierInvoice, info_dict)
@@ -287,6 +297,8 @@ class SupplierInvoiceService:
             'is_duplicate': False,
             'duplicate_id': None,
             'warnings': [],
+            'extraction_quality': 0.0,
+            'field_confidences': {},
         }
         
         # Calcular hash
@@ -320,8 +332,64 @@ class SupplierInvoiceService:
         result_info['cufe_found'] = cufe is not None
         result_info['cufe_source'] = cufe_source
         
-        # Extraer información básica del PDF
-        basic_info = self.extract_basic_info_from_pdf(pdf_path)
+        # Extraer información con extractor mejorado
+        if use_enhanced:
+            try:
+                enhanced_data = self.enhanced_extractor.extract_from_pdf(pdf_path)
+                
+                # Usar datos extraídos con confianza
+                supplier_name = enhanced_data.supplier_name.value
+                supplier_nit = enhanced_data.supplier_nit.value
+                invoice_number = enhanced_data.invoice_number.value
+                invoice_date = enhanced_data.invoice_date.value
+                total_amount = enhanced_data.total_amount.value
+                
+                # Si no se extrajo CUFE antes, usar el del extractor mejorado
+                if not cufe and enhanced_data.cufe.value:
+                    cufe = enhanced_data.cufe.value
+                    cufe_source = 'enhanced_extractor'
+                    result_info['cufe_found'] = True
+                    result_info['cufe_source'] = cufe_source
+                
+                # Guardar calidad de extracción
+                extraction_quality = enhanced_data.overall_quality
+                result_info['extraction_quality'] = extraction_quality
+                result_info['field_confidences'] = {
+                    'supplier_name': enhanced_data.supplier_name.confidence,
+                    'supplier_nit': enhanced_data.supplier_nit.confidence,
+                    'invoice_number': enhanced_data.invoice_number.confidence,
+                    'invoice_date': enhanced_data.invoice_date.confidence,
+                    'total_amount': enhanced_data.total_amount.confidence,
+                    'cufe': enhanced_data.cufe.confidence,
+                }
+                
+                # Agregar warnings para campos con baja confianza
+                if enhanced_data.supplier_name.confidence < 0.5:
+                    result_info['warnings'].append("Proveedor: Baja confianza en extracción")
+                if enhanced_data.invoice_date.confidence < 0.5:
+                    result_info['warnings'].append("Fecha: Baja confianza en extracción")
+                if enhanced_data.invoice_number.confidence < 0.5:
+                    result_info['warnings'].append("Número: Baja confianza en extracción")
+                
+            except Exception as e:
+                logger.error(f"Error en extractor mejorado, usando básico: {e}")
+                # Fallback a extractor básico
+                basic_info = self.extract_basic_info_from_pdf(pdf_path)
+                supplier_name = basic_info.get('supplier_name')
+                supplier_nit = basic_info.get('supplier_nit')
+                invoice_number = basic_info.get('invoice_number')
+                invoice_date = basic_info.get('invoice_date')
+                total_amount = basic_info.get('total_amount')
+                extraction_quality = 0.5  # Calidad media para extractor básico
+        else:
+            # Usar extractor básico
+            basic_info = self.extract_basic_info_from_pdf(pdf_path)
+            supplier_name = basic_info.get('supplier_name')
+            supplier_nit = basic_info.get('supplier_nit')
+            invoice_number = basic_info.get('invoice_number')
+            invoice_date = basic_info.get('invoice_date')
+            total_amount = basic_info.get('total_amount')
+            extraction_quality = 0.5
         
         # Determinar estado inicial
         if cufe:
@@ -333,14 +401,15 @@ class SupplierInvoiceService:
         supplier_invoice = SupplierInvoice(
             original_filename=filename,
             original_file_hash=file_hash,
-            supplier_name=basic_info.get('supplier_name'),
-            supplier_nit=basic_info.get('supplier_nit'),
-            invoice_number=basic_info.get('invoice_number'),
-            invoice_date=basic_info.get('invoice_date'),
-            total_amount=basic_info.get('total_amount'),
+            supplier_name=supplier_name,
+            supplier_nit=supplier_nit,
+            invoice_number=invoice_number,
+            invoice_date=invoice_date,
+            total_amount=total_amount,
             cufe=cufe,
             cufe_source=cufe_source,
             status=status,
+            extraction_quality=extraction_quality,
             uploaded_by=user_id,
         )
         

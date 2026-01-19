@@ -316,6 +316,9 @@ class SupplierInvoice(Base):
     invoice_date = Column(DateTime, nullable=True, index=True)
     total_amount = Column(Integer, nullable=True)
     
+    # Calidad de extracción (0.0 - 1.0)
+    extraction_quality = Column(Float, default=0.0)
+    
     # CUFE extraído
     cufe = Column(String(100), nullable=True, index=True)
     cufe_source = Column(String(20), nullable=True)  # 'filename', 'content', 'manual'

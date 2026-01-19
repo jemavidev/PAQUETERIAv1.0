@@ -89,6 +89,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calidad</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
@@ -270,5 +271,273 @@ async function uploadFiles() {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Subir Archivos';
     }
+}
+</script>
+
+
+<script>
+// Funciones mejoradas para el tab de facturas
+
+function getQualityBadge(quality) {
+    if (!quality && quality !== 0) {
+        return '<span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">N/A</span>';
+    }
+    
+    const percentage = Math.round(quality * 100);
+    
+    if (quality >= 0.80) {
+        return `<span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium" title="Alta confianza">🟢 ${percentage}%</span>`;
+    } else if (quality >= 0.50) {
+        return `<span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded font-medium" title="Media confianza">🟡 ${percentage}%</span>`;
+    } else {
+        return `<span class="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded font-medium" title="Baja confianza">🔴 ${percentage}%</span>`;
+    }
+}
+
+async function viewInvoiceDetail(invoiceId) {
+    try {
+        const response = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/detail`);
+        if (!response.ok) throw new Error('Error cargando detalle');
+        
+        const data = await response.json();
+        showDetailModal(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cargar el detalle de la factura');
+    }
+}
+
+function showDetailModal(invoice) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.id = 'detail-modal';
+    
+    const qualityBadge = invoice.quality_badge;
+    const qualityColor = qualityBadge.color === 'green' ? 'green' : qualityBadge.color === 'yellow' ? 'yellow' : 'red';
+    
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Detalle de Factura</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                    <input type="text" id="edit-supplier-name" value="${invoice.supplier_name || ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">NIT</label>
+                    <input type="text" id="edit-supplier-nit" value="${invoice.supplier_nit || ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número de Factura</label>
+                    <input type="text" id="edit-invoice-number" value="${invoice.invoice_number || ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                    <input type="date" id="edit-invoice-date" value="${invoice.invoice_date ? invoice.invoice_date.split('T')[0] : ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                    <input type="number" id="edit-total-amount" value="${invoice.total_amount || ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Calidad de Extracción</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs px-3 py-1.5 bg-${qualityColor}-100 text-${qualityColor}-700 rounded-lg font-medium">
+                            ${qualityBadge.label} - ${Math.round(qualityBadge.value * 100)}%
+                        </span>
+                        <button onclick="reextractInvoice(${invoice.id})" 
+                                class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                            🔄 Re-extraer
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">CUFE</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="edit-cufe" value="${invoice.cufe || ''}" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue font-mono text-xs"
+                           placeholder="96 caracteres hexadecimales">
+                    ${invoice.cufe ? `
+                        <button onclick="copyCufe('${invoice.cufe}')" 
+                                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            Copiar
+                        </button>
+                        <a href="${invoice.dian_url}" target="_blank"
+                           class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                            Ver en DIAN
+                        </a>
+                    ` : ''}
+                </div>
+                ${invoice.cufe_source ? `<p class="text-xs text-gray-500 mt-1">Fuente: ${invoice.cufe_source}</p>` : ''}
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+                <textarea id="edit-notes" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">${invoice.notes || ''}</textarea>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <div class="flex gap-2">
+                    <button onclick="viewPdf(${invoice.id})" 
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        📄 Ver PDF
+                    </button>
+                    ${invoice.processed_invoice ? `
+                        <a href="/invoices/detail/${invoice.processed_invoice.id}" 
+                           class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
+                            ✅ Ver Factura Procesada
+                        </a>
+                    ` : ''}
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeDetailModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button onclick="saveInvoiceChanges(${invoice.id})" 
+                            class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detail-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function saveInvoiceChanges(invoiceId) {
+    const data = {
+        supplier_name: document.getElementById('edit-supplier-name').value,
+        supplier_nit: document.getElementById('edit-supplier-nit').value,
+        invoice_number: document.getElementById('edit-invoice-number').value,
+        invoice_date: document.getElementById('edit-invoice-date').value,
+        total_amount: parseInt(document.getElementById('edit-total-amount').value) || null,
+        notes: document.getElementById('edit-notes').value,
+    };
+    
+    // Actualizar CUFE si cambió
+    const newCufe = document.getElementById('edit-cufe').value.trim();
+    
+    try {
+        // Guardar cambios básicos
+        const response = await fetch(`/invoices/api/supplier-invoices/${invoiceId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error('Error guardando cambios');
+        
+        // Si hay CUFE nuevo, actualizarlo
+        if (newCufe && newCufe.length === 96) {
+            const cufeResponse = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/cufe`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({cufe: newCufe})
+            });
+            
+            if (!cufeResponse.ok) {
+                const result = await cufeResponse.json();
+                alert('Cambios guardados pero error con CUFE: ' + result.message);
+            }
+        }
+        
+        alert('✅ Cambios guardados correctamente');
+        closeDetailModal();
+        loadFacturasTab();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar cambios');
+    }
+}
+
+async function reextractInvoice(invoiceId) {
+    if (!confirm('¿Re-extraer datos del PDF? Esto sobrescribirá los datos actuales.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/reextract`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) throw new Error('Error re-extrayendo datos');
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Datos re-extraídos correctamente\nCalidad: ${Math.round(result.extraction_quality * 100)}%`);
+            closeDetailModal();
+            loadFacturasTab();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al re-extraer datos');
+    }
+}
+
+function viewPdf(invoiceId) {
+    window.open(`/invoices/api/supplier-invoices/${invoiceId}/pdf`, '_blank');
+}
+
+async function deleteInvoice(invoiceId) {
+    if (!confirm('¿Estás seguro de eliminar esta factura?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/invoices/api/supplier-invoices/${invoiceId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error('Error eliminando factura');
+        
+        alert('✅ Factura eliminada correctamente');
+        loadFacturasTab();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar factura');
+    }
+}
+
+function copyCufe(cufe) {
+    navigator.clipboard.writeText(cufe).then(() => {
+        // Mostrar feedback visual
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 1500);
+    }).catch(err => {
+        console.error('Error copiando CUFE:', err);
+        alert('Error al copiar CUFE');
+    });
 }
 </script>
