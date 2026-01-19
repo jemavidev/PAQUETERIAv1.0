@@ -30,7 +30,7 @@ from app.schemas.invoice import (
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/invoices", tags=["invoices"])
+router = APIRouter()
 templates = Jinja2Templates(directory="/app/src/templates", auto_reload=True)
 
 
