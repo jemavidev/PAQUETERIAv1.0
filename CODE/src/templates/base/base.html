@@ -1310,12 +1310,16 @@
                 return;
             }
 
+            // Escapar comillas y saltos de línea en el mensaje
+            const escapedTitle = title.replace(/'/g, "\\'").replace(/\n/g, ' ');
+            const escapedMessage = message.replace(/'/g, "\\'").replace(/\n/g, ' ');
+
             const alertId = 'alert-' + Date.now();
             const alertHtml = `
                 <div id="${alertId}" 
                      x-data="errorAlert({
-                         title: '${title}',
-                         message: '${message}',
+                         title: '${escapedTitle}',
+                         message: '${escapedMessage}',
                          type: '${type}',
                          show: true,
                          autoClose: ${options.autoClose || false},

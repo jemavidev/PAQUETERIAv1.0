@@ -238,7 +238,7 @@ async function uploadFiles() {
     uploadBtn.textContent = 'Subiendo...';
     
     try {
-        const response = await fetch('/api/supplier-invoices/upload', {
+        const response = await fetch('/invoices/api/supplier-invoices/upload', {
             method: 'POST',
             body: formData
         });
@@ -246,7 +246,8 @@ async function uploadFiles() {
         const result = await response.json();
         
         if (response.ok && result.success) {
-            alert(`✅ Archivos subidos exitosamente\n\nTotal: ${result.total}\nSubidos: ${result.uploaded}\nFallidos: ${result.failed}`);
+            // Usar alert nativo para evitar problemas con Alpine
+            window.alert(`✅ Archivos subidos exitosamente\n\nTotal: ${result.total}\nSubidos: ${result.uploaded}\nFallidos: ${result.failed}`);
             closeUploadModal();
             loadFacturasTab();
         } else {
@@ -257,11 +258,11 @@ async function uploadFiles() {
                     errorMsg += '\n\nErrores:\n' + errors.map(e => `- ${e.filename}: ${e.message}`).join('\n');
                 }
             }
-            alert(errorMsg);
+            window.alert(errorMsg);
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al subir archivos. Verifica tu conexión.');
+        window.alert('Error al subir archivos. Verifica tu conexión.');
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Subir Archivos';
