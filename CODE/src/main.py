@@ -253,7 +253,7 @@ app.include_router(package_events_router, tags=["Eventos de Paquetes"])
 app.include_router(customer_portal_api_router, tags=["Portal de Clientes - API"])  # ✨ Portal de Clientes API
 app.include_router(customer_portal_views_router, tags=["Portal de Clientes - Vistas"])  # ✨ Portal de Clientes Vistas
 app.include_router(debug_portal_router, tags=["Debug Portal"])  # ✨ Debug Portal
-app.include_router(invoices_router, tags=["Facturas CUFE"])  # ✨ Facturas CUFE
+app.include_router(invoices_router, prefix="/invoices", tags=["Facturas CUFE"])  # ✨ Facturas CUFE
 app.include_router(products_router, tags=["Productos"])  # ✨ Productos
 
 # Endpoint de health check
