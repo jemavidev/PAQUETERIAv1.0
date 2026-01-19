@@ -110,19 +110,47 @@ async function loadFacturasTab() {
             if (data.invoices && data.invoices.length > 0) {
                 tbody.innerHTML = data.invoices.map(inv => {
                     // Formatear fecha
-                    const fecha = inv.fecha_emision ? new Date(inv.fecha_emision).toLocaleDateString('es-CO') : 'N/A';
+                    let fecha = 'N/A';
+                    if (inv.fecha_emision) {
+                        try {
+                            fecha = new Date(inv.fecha_emision).toLocaleDateString('es-CO', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            });
+                        } catch (e) {
+                            fecha = inv.fecha_emision.split('T')[0];
+                        }
+                    }
+                    
+                    // Proveedor - limpiar y formatear
+                    let proveedor = inv.proveedor || 'Sin información';
+                    if (proveedor === 'N/A' || proveedor === 'null' || !proveedor.trim()) {
+                        proveedor = '<span class="text-gray-400 italic">Sin proveedor</span>';
+                    } else {
+                        // Truncar si es muy largo
+                        if (proveedor.length > 40) {
+                            proveedor = `<span title="${proveedor}">${proveedor.substring(0, 40)}...</span>`;
+                        }
+                    }
+                    
+                    // Número de documento
+                    let numeroDoc = inv.numero_documento || 'N/A';
+                    if (numeroDoc === 'N/A' || numeroDoc === 'null' || !numeroDoc.trim()) {
+                        numeroDoc = '<span class="text-gray-400 italic">Sin número</span>';
+                    }
                     
                     // CUFE con botón de copiar
                     const cufeDisplay = inv.cufe ? `
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-600 truncate max-w-[150px]" title="${inv.cufe}">${inv.cufe.substring(0, 20)}...</span>
-                            <button onclick="copyCufe('${inv.cufe}')" class="p-1 text-gray-400 hover:text-papyrus-blue" title="Copiar CUFE">
+                            <span class="text-xs text-gray-600 font-mono truncate max-w-[120px]" title="${inv.cufe}">${inv.cufe.substring(0, 16)}...</span>
+                            <button onclick="copyCufe('${inv.cufe}')" class="p-1 text-gray-400 hover:text-papyrus-blue transition-colors" title="Copiar CUFE completo">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                 </svg>
                             </button>
                         </div>
-                    ` : '<span class="text-xs text-gray-400">Sin CUFE</span>';
+                    ` : '<span class="text-xs px-2 py-1 bg-red-50 text-red-600 rounded">Sin CUFE</span>';
                     
                     // Estado con badge
                     const statusBadge = getStatusBadge(inv.status);
@@ -131,15 +159,15 @@ async function loadFacturasTab() {
                     const actions = `
                         <div class="flex items-center gap-2">
                             <a href="/invoices/supplier-invoices?highlight=${inv.id}" 
-                               class="text-papyrus-blue hover:text-blue-700 text-sm font-medium"
-                               title="Ver detalles">
-                                Ver
+                               class="text-papyrus-blue hover:text-blue-700 text-sm font-medium transition-colors"
+                               title="Ver detalles completos">
+                                Ver detalles
                             </a>
                             ${inv.cufe ? `
                                 <button onclick="viewPdf(${inv.id})" 
-                                        class="text-gray-600 hover:text-gray-800 text-sm"
-                                        title="Ver PDF">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        class="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                        title="Ver PDF original">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
                                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
                                     </svg>
@@ -149,15 +177,15 @@ async function loadFacturasTab() {
                     `;
                     
                     return `
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-4 py-3 text-sm text-gray-900">
-                                ${inv.proveedor || '<span class="text-gray-400">N/A</span>'}
+                                ${proveedor}
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
                                 ${fecha}
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-900">
-                                ${inv.numero_documento || '<span class="text-gray-400">N/A</span>'}
+                                ${numeroDoc}
                             </td>
                             <td class="px-4 py-3">
                                 ${cufeDisplay}
@@ -175,8 +203,12 @@ async function loadFacturasTab() {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                            <p>No hay facturas cargadas aún</p>
-                            <button onclick="openUploadModal()" class="mt-4 text-papyrus-blue hover:underline">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="text-lg font-medium mb-2">No hay facturas cargadas</p>
+                            <p class="text-sm text-gray-400 mb-4">Comienza subiendo tu primera factura de proveedor</p>
+                            <button onclick="openUploadModal()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Subir primera factura
                             </button>
                         </td>
@@ -189,7 +221,11 @@ async function loadFacturasTab() {
         document.getElementById('facturas-table-body').innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-12 text-center text-red-500">
-                    Error al cargar facturas. Por favor recarga la página.
+                    <svg class="mx-auto h-12 w-12 text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="font-medium mb-2">Error al cargar facturas</p>
+                    <p class="text-sm">Por favor recarga la página o contacta soporte</p>
                 </td>
             </tr>
         `;

@@ -1616,7 +1616,7 @@ async def get_supplier_invoices_stats(
 async def get_supplier_invoices_list(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
-    limit: int = 10,
+    limit: int = 50,
 ):
     """Obtiene lista de facturas de proveedores para el dashboard"""
     try:
@@ -1629,29 +1629,62 @@ async def get_supplier_invoices_list(
         result = []
         for inv in invoices:
             try:
-                # Obtener datos de la factura procesada si existe
-                processed_data = {}
+                # Inicializar datos con los de SupplierInvoice
+                proveedor = inv.supplier_name or "N/A"
+                fecha_emision = inv.invoice_date.isoformat() if inv.invoice_date else None
+                numero_documento = inv.invoice_number or "N/A"
+                total = inv.total_amount or 0
+                
+                # Si tiene factura procesada, usar esos datos (son más completos)
                 if inv.processed_invoice_id:
                     processed_inv = db.query(Invoice).filter(Invoice.id == inv.processed_invoice_id).first()
                     if processed_inv:
-                        processed_data = {
-                            "fecha_emision": processed_inv.fecha_emision.isoformat() if processed_inv.fecha_emision else None,
-                            "proveedor": processed_inv.supplier.razon_social if processed_inv.supplier else None,
-                            "numero_documento": processed_inv.numero_documento,
-                            "total": int(processed_inv.total_neto) if processed_inv.total_neto else 0,
-                        }
+                        if processed_inv.supplier:
+                            proveedor = processed_inv.supplier.razon_social
+                        if processed_inv.fecha_emision:
+                            fecha_emision = processed_inv.fecha_emision.isoformat()
+                        if processed_inv.numero_documento:
+                            numero_documento = processed_inv.numero_documento
+                        if processed_inv.total_neto:
+                            total = int(processed_inv.total_neto)
+                
+                # Limpiar proveedor si es muy largo o tiene datos extraños
+                if proveedor and len(proveedor) > 100:
+                    # Extraer solo el nombre principal si tiene mucho texto
+                    proveedor = proveedor.split('FECHA')[0].strip()
+                    proveedor = proveedor.split('NIT')[0].strip()
+                    if len(proveedor) > 50:
+                        proveedor = proveedor[:50] + "..."
                 
                 result.append({
                     "id": inv.id,
-                    "fecha_emision": processed_data.get("fecha_emision") or (inv.invoice_date.isoformat() if inv.invoice_date else None),
-                    "proveedor": processed_data.get("proveedor") or inv.supplier_name,
-                    "numero_documento": processed_data.get("numero_documento") or inv.invoice_number,
+                    "original_filename": inv.original_filename,
+                    "fecha_emision": fecha_emision,
+                    "proveedor": proveedor,
+                    "numero_documento": numero_documento,
                     "cufe": inv.cufe,
+                    "cufe_source": inv.cufe_source,
                     "status": inv.status.value,
-                    "total": processed_data.get("total", 0) or (inv.total_amount or 0),
+                    "total": total,
+                    "uploaded_at": inv.uploaded_at.isoformat() if inv.uploaded_at else None,
+                    "processed_invoice_id": inv.processed_invoice_id,
                 })
             except Exception as e:
-                logger.error(f"Error procesando invoice {inv.id}: {e}")
+                logger.error(f"Error procesando invoice {inv.id}: {e}", exc_info=True)
+                # Agregar con datos mínimos para no perder la factura
+                result.append({
+                    "id": inv.id,
+                    "original_filename": inv.original_filename,
+                    "fecha_emision": None,
+                    "proveedor": "Error al cargar",
+                    "numero_documento": "N/A",
+                    "cufe": inv.cufe,
+                    "cufe_source": inv.cufe_source,
+                    "status": inv.status.value if hasattr(inv, 'status') else "error",
+                    "total": 0,
+                    "uploaded_at": None,
+                    "processed_invoice_id": None,
+                })
                 continue
         
         return JSONResponse(content={"invoices": result})
