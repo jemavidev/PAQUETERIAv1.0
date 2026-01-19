@@ -299,7 +299,13 @@ class SupplierInvoiceService:
         
         total = query.count()
         
-        invoices = query.order_by(desc(SupplierInvoice.uploaded_at))\
+        # Ordenar por fecha de factura (descendente), luego por fecha de subida
+        # Las facturas sin fecha van al final
+        invoices = query.order_by(
+            desc(SupplierInvoice.invoice_date.is_(None)),
+            desc(SupplierInvoice.invoice_date),
+            desc(SupplierInvoice.uploaded_at)
+        )\
             .offset((page - 1) * per_page)\
             .limit(per_page)\
             .all()
