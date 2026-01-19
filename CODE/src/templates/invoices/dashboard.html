@@ -102,45 +102,79 @@ async function loadFacturasTab() {
         }
         
         // Cargar lista de facturas
-        const listResponse = await fetch('/invoices/api/supplier-invoices/list?limit=10');
+        const listResponse = await fetch('/invoices/api/supplier-invoices/list?limit=50');
         if (listResponse.ok) {
             const data = await listResponse.json();
             const tbody = document.getElementById('facturas-table-body');
             
             if (data.invoices && data.invoices.length > 0) {
-                tbody.innerHTML = data.invoices.map(inv => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${inv.fecha_emision || 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-900">
-                            ${inv.proveedor || 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${inv.numero_documento || 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">
-                            ${inv.cufe ? inv.cufe.substring(0, 20) + '...' : 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(inv.status)}">
-                                ${getStatusText(inv.status)}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            $${(inv.total || 0).toLocaleString('es-CO')}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <a href="/invoices/supplier-invoices?page=1" class="text-papyrus-blue hover:underline">
-                                Ver todas
+                tbody.innerHTML = data.invoices.map(inv => {
+                    // Formatear fecha
+                    const fecha = inv.fecha_emision ? new Date(inv.fecha_emision).toLocaleDateString('es-CO') : 'N/A';
+                    
+                    // CUFE con botón de copiar
+                    const cufeDisplay = inv.cufe ? `
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-600 truncate max-w-[150px]" title="${inv.cufe}">${inv.cufe.substring(0, 20)}...</span>
+                            <button onclick="copyCufe('${inv.cufe}')" class="p-1 text-gray-400 hover:text-papyrus-blue" title="Copiar CUFE">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    ` : '<span class="text-xs text-gray-400">Sin CUFE</span>';
+                    
+                    // Estado con badge
+                    const statusBadge = getStatusBadge(inv.status);
+                    
+                    // Botones de acción
+                    const actions = `
+                        <div class="flex items-center gap-2">
+                            <a href="/invoices/supplier-invoices?highlight=${inv.id}" 
+                               class="text-papyrus-blue hover:text-blue-700 text-sm font-medium"
+                               title="Ver detalles">
+                                Ver
                             </a>
-                        </td>
-                    </tr>
-                `).join('');
+                            ${inv.cufe ? `
+                                <button onclick="viewPdf(${inv.id})" 
+                                        class="text-gray-600 hover:text-gray-800 text-sm"
+                                        title="Ver PDF">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm text-gray-900">
+                                ${inv.proveedor || '<span class="text-gray-400">N/A</span>'}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                                ${fecha}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-900">
+                                ${inv.numero_documento || '<span class="text-gray-400">N/A</span>'}
+                            </td>
+                            <td class="px-4 py-3">
+                                ${cufeDisplay}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                ${statusBadge}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                ${actions}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                             <p>No hay facturas cargadas aún</p>
                             <button onclick="openUploadModal()" class="mt-4 text-papyrus-blue hover:underline">
                                 Subir primera factura
@@ -154,12 +188,46 @@ async function loadFacturasTab() {
         console.error('Error cargando facturas:', error);
         document.getElementById('facturas-table-body').innerHTML = `
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-red-500">
+                <td colspan="6" class="px-6 py-12 text-center text-red-500">
                     Error al cargar facturas. Por favor recarga la página.
                 </td>
             </tr>
         `;
     }
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'pending': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>',
+        'no_cufe': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Sin CUFE</span>',
+        'cufe_extracted': '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">CUFE Extraído</span>',
+        'dian_downloaded': '<span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">DIAN Descargado</span>',
+        'processed': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Procesada</span>',
+        'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Error</span>',
+        'duplicate': '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Duplicada</span>'
+    };
+    return badges[status] || `<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">${status}</span>`;
+}
+
+function copyCufe(cufe) {
+    navigator.clipboard.writeText(cufe).then(() => {
+        // Mostrar notificación de éxito
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        notification.textContent = '✓ CUFE copiado al portapapeles';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    }).catch(err => {
+        console.error('Error copiando CUFE:', err);
+        alert('Error al copiar CUFE');
+    });
+}
+
+function viewPdf(invoiceId) {
+    window.open(`/invoices/api/supplier-invoices/${invoiceId}/pdf`, '_blank');
 }
 
 async function loadCufeTab() {
@@ -301,28 +369,6 @@ async function loadProductosTab() {
             </tr>
         `;
     }
-}
-
-function getStatusClass(status) {
-    const classes = {
-        'uploaded': 'bg-blue-100 text-blue-800',
-        'pending': 'bg-yellow-100 text-yellow-800',
-        'processed': 'bg-green-100 text-green-800',
-        'error': 'bg-red-100 text-red-800',
-        'rejected': 'bg-gray-100 text-gray-800'
-    };
-    return classes[status] || 'bg-gray-100 text-gray-800';
-}
-
-function getStatusText(status) {
-    const texts = {
-        'uploaded': 'Subido',
-        'pending': 'Pendiente',
-        'processed': 'Procesado',
-        'error': 'Error',
-        'rejected': 'Rechazado'
-    };
-    return texts[status] || status;
 }
 
 // Cargar tab inicial
