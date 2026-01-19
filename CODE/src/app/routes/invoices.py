@@ -1573,33 +1573,43 @@ async def get_supplier_invoices_stats(
     db: Session = Depends(get_db),
 ):
     """Obtiene estadísticas de facturas de proveedores para el dashboard"""
-    from app.models.supplier_invoice import SupplierInvoice, ImportStatusEnum
-    from sqlalchemy import func
-    
-    total = db.query(func.count(SupplierInvoice.id)).scalar() or 0
-    processed = db.query(func.count(SupplierInvoice.id)).filter(
-        SupplierInvoice.status == ImportStatusEnum.PROCESSED
-    ).scalar() or 0
-    pending = db.query(func.count(SupplierInvoice.id)).filter(
-        SupplierInvoice.status.in_([ImportStatusEnum.UPLOADED, ImportStatusEnum.PENDING])
-    ).scalar() or 0
-    
-    # Calcular valor total (de las procesadas que tienen processed_invoice_id)
-    from app.models.invoice import Invoice
-    total_value = db.query(func.sum(Invoice.total_neto)).filter(
-        Invoice.id.in_(
-            db.query(SupplierInvoice.processed_invoice_id).filter(
-                SupplierInvoice.processed_invoice_id.isnot(None)
+    try:
+        from app.models.invoice import SupplierInvoice, SupplierInvoiceStatus, Invoice
+        from sqlalchemy import func
+        
+        total = db.query(func.count(SupplierInvoice.id)).scalar() or 0
+        processed = db.query(func.count(SupplierInvoice.id)).filter(
+            SupplierInvoice.status == SupplierInvoiceStatus.PROCESSED
+        ).scalar() or 0
+        pending = db.query(func.count(SupplierInvoice.id)).filter(
+            SupplierInvoice.status.in_([SupplierInvoiceStatus.PENDING, SupplierInvoiceStatus.CUFE_EXTRACTED])
+        ).scalar() or 0
+        
+        # Calcular valor total (de las procesadas que tienen processed_invoice_id)
+        total_value_raw = db.query(func.sum(Invoice.total_neto)).filter(
+            Invoice.id.in_(
+                db.query(SupplierInvoice.processed_invoice_id).filter(
+                    SupplierInvoice.processed_invoice_id.isnot(None)
+                )
             )
-        )
-    ).scalar() or 0
-    
-    return JSONResponse(content={
-        "total": total,
-        "processed": processed,
-        "pending": pending,
-        "total_value": int(total_value)
-    })
+        ).scalar()
+        
+        total_value = int(total_value_raw) if total_value_raw else 0
+        
+        return JSONResponse(content={
+            "total": total,
+            "processed": processed,
+            "pending": pending,
+            "total_value": total_value
+        })
+    except Exception as e:
+        logger.error(f"Error obteniendo stats de supplier invoices: {e}", exc_info=True)
+        return JSONResponse(content={
+            "total": 0,
+            "processed": 0,
+            "pending": 0,
+            "total_value": 0
+        })
 
 
 @router.get("/api/supplier-invoices/list")
@@ -1609,38 +1619,45 @@ async def get_supplier_invoices_list(
     limit: int = 10,
 ):
     """Obtiene lista de facturas de proveedores para el dashboard"""
-    from app.models.supplier_invoice import SupplierInvoice
-    from app.models.invoice import Invoice
-    
-    invoices = db.query(SupplierInvoice).order_by(
-        SupplierInvoice.created_at.desc()
-    ).limit(limit).all()
-    
-    result = []
-    for inv in invoices:
-        # Obtener datos de la factura procesada si existe
-        processed_data = {}
-        if inv.processed_invoice_id:
-            processed_inv = db.query(Invoice).filter(Invoice.id == inv.processed_invoice_id).first()
-            if processed_inv:
-                processed_data = {
-                    "fecha_emision": processed_inv.fecha_emision.isoformat() if processed_inv.fecha_emision else None,
-                    "proveedor": processed_inv.supplier.razon_social if processed_inv.supplier else None,
-                    "numero_documento": processed_inv.numero_documento,
-                    "total": int(processed_inv.total_neto) if processed_inv.total_neto else 0,
-                }
+    try:
+        from app.models.invoice import SupplierInvoice, Invoice
         
-        result.append({
-            "id": inv.id,
-            "fecha_emision": processed_data.get("fecha_emision"),
-            "proveedor": processed_data.get("proveedor"),
-            "numero_documento": processed_data.get("numero_documento"),
-            "cufe": inv.cufe,
-            "status": inv.status.value,
-            "total": processed_data.get("total", 0),
-        })
-    
-    return JSONResponse(content={"invoices": result})
+        invoices = db.query(SupplierInvoice).order_by(
+            SupplierInvoice.uploaded_at.desc()
+        ).limit(limit).all()
+        
+        result = []
+        for inv in invoices:
+            try:
+                # Obtener datos de la factura procesada si existe
+                processed_data = {}
+                if inv.processed_invoice_id:
+                    processed_inv = db.query(Invoice).filter(Invoice.id == inv.processed_invoice_id).first()
+                    if processed_inv:
+                        processed_data = {
+                            "fecha_emision": processed_inv.fecha_emision.isoformat() if processed_inv.fecha_emision else None,
+                            "proveedor": processed_inv.supplier.razon_social if processed_inv.supplier else None,
+                            "numero_documento": processed_inv.numero_documento,
+                            "total": int(processed_inv.total_neto) if processed_inv.total_neto else 0,
+                        }
+                
+                result.append({
+                    "id": inv.id,
+                    "fecha_emision": processed_data.get("fecha_emision") or (inv.invoice_date.isoformat() if inv.invoice_date else None),
+                    "proveedor": processed_data.get("proveedor") or inv.supplier_name,
+                    "numero_documento": processed_data.get("numero_documento") or inv.invoice_number,
+                    "cufe": inv.cufe,
+                    "status": inv.status.value,
+                    "total": processed_data.get("total", 0) or (inv.total_amount or 0),
+                })
+            except Exception as e:
+                logger.error(f"Error procesando invoice {inv.id}: {e}")
+                continue
+        
+        return JSONResponse(content={"invoices": result})
+    except Exception as e:
+        logger.error(f"Error obteniendo lista de supplier invoices: {e}", exc_info=True)
+        return JSONResponse(content={"invoices": []})
 
 
 @router.get("/api/cufe/stats")
