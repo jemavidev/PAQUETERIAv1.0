@@ -1297,90 +1297,107 @@ async def supplier_invoices_page(
 @router.post("/api/supplier-invoices/upload")
 async def upload_supplier_invoice(
     request: Request,
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
 ):
-    """Sube una factura de proveedor y extrae el CUFE"""
+    """Sube una o múltiples facturas de proveedor y extrae el CUFE"""
     from app.services.s3_storage_service import S3StorageService
     
-    if not file.filename.lower().endswith('.pdf'):
-        return JSONResponse(content={
-            "success": False,
-            "message": "Solo se permiten archivos PDF"
-        })
+    results = []
     
-    content = await file.read()
-    
-    # Guardar temporalmente para procesar
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
-    
-    try:
-        service = SupplierInvoiceService(db)
-        invoice, info = service.process_uploaded_file(
-            filename=file.filename,
-            content=content,
-            pdf_path=tmp_path,
-            user_id=current_user.id
-        )
+    for file in files:
+        if not file.filename.lower().endswith('.pdf'):
+            results.append({
+                "filename": file.filename,
+                "success": False,
+                "message": "Solo se permiten archivos PDF"
+            })
+            continue
         
-        # Guardar PDF en S3
-        s3_service = S3StorageService()
-        if s3_service.is_enabled() and invoice.original_file_hash:
-            metadata = {
-                'type': 'supplier_invoice',
-                'filename': file.filename,
-                'supplier_invoice_id': str(invoice.id),
-                'cufe': invoice.cufe or '',
-            }
+        content = await file.read()
+        
+        # Guardar temporalmente para procesar
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        try:
+            service = SupplierInvoiceService(db)
+            invoice, info = service.process_uploaded_file(
+                filename=file.filename,
+                content=content,
+                pdf_path=tmp_path,
+                user_id=current_user.id
+            )
             
-            # Construir la key completa para S3
-            s3_key = f"supplier-invoices/{invoice.original_file_hash}.pdf"
+            # Guardar PDF en S3
+            s3_service = S3StorageService()
+            if s3_service.is_enabled() and invoice.original_file_hash:
+                metadata = {
+                    'type': 'supplier_invoice',
+                    'filename': file.filename,
+                    'supplier_invoice_id': str(invoice.id),
+                    'cufe': invoice.cufe or '',
+                }
+                
+                # Construir la key completa para S3
+                s3_key = f"supplier-invoices/{invoice.original_file_hash}.pdf"
+                
+                # Subir directamente con put_object para tener control total de la key
+                try:
+                    s3_service.s3_client.put_object(
+                        Bucket=s3_service.bucket_name,
+                        Key=s3_key,
+                        Body=content,
+                        ContentType='application/pdf',
+                        Metadata=metadata,
+                        ServerSideEncryption='AES256',
+                    )
+                    # Guardar la ruta en el modelo
+                    invoice.original_file_path = s3_key
+                    db.commit()
+                    logger.info(f"PDF de proveedor guardado en S3: {s3_key}")
+                except Exception as e:
+                    logger.error(f"Error guardando PDF en S3: {e}")
+                    # Intentar guardar localmente como fallback
+                    local_dir = "/app/src/uploads/supplier-invoices"
+                    os.makedirs(local_dir, exist_ok=True)
+                    local_path = f"{local_dir}/{invoice.original_file_hash}.pdf"
+                    with open(local_path, 'wb') as f:
+                        f.write(content)
+                    logger.info(f"PDF guardado localmente: {local_path}")
             
-            # Subir directamente con put_object para tener control total de la key
-            try:
-                s3_service.s3_client.put_object(
-                    Bucket=s3_service.bucket_name,
-                    Key=s3_key,
-                    Body=content,
-                    ContentType='application/pdf',
-                    Metadata=metadata,
-                    ServerSideEncryption='AES256',
-                )
-                # Guardar la ruta en el modelo
-                invoice.original_file_path = s3_key
-                db.commit()
-                logger.info(f"PDF de proveedor guardado en S3: {s3_key}")
-            except Exception as e:
-                logger.error(f"Error guardando PDF en S3: {e}")
-                # Intentar guardar localmente como fallback
-                local_dir = "/app/src/uploads/supplier-invoices"
-                os.makedirs(local_dir, exist_ok=True)
-                local_path = f"{local_dir}/{invoice.original_file_hash}.pdf"
-                with open(local_path, 'wb') as f:
-                    f.write(content)
-                logger.info(f"PDF guardado localmente: {local_path}")
-        
-        return JSONResponse(content={
-            "success": True,
-            "invoice_id": invoice.id,
-            "cufe_found": info['cufe_found'],
-            "cufe_source": info['cufe_source'],
-            "is_duplicate": info['is_duplicate'],
-            "warnings": info['warnings'],
-        })
-        
-    except Exception as e:
-        logger.error(f"Error procesando factura de proveedor: {e}", exc_info=True)
-        return JSONResponse(content={
-            "success": False,
-            "message": str(e)
-        })
-    finally:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+            results.append({
+                "filename": file.filename,
+                "success": True,
+                "invoice_id": invoice.id,
+                "cufe_found": info['cufe_found'],
+                "cufe_source": info['cufe_source'],
+                "is_duplicate": info['is_duplicate'],
+                "warnings": info['warnings'],
+            })
+            
+        except Exception as e:
+            logger.error(f"Error procesando {file.filename}: {e}", exc_info=True)
+            results.append({
+                "filename": file.filename,
+                "success": False,
+                "message": str(e)
+            })
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+    
+    # Retornar resumen
+    success_count = sum(1 for r in results if r['success'])
+    return JSONResponse(content={
+        "success": success_count > 0,
+        "total": len(files),
+        "uploaded": success_count,
+        "failed": len(files) - success_count,
+        "results": results
+    })
 
 
 @router.get("/api/supplier-invoices/{invoice_id}/pdf")
