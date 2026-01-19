@@ -245,9 +245,13 @@ async function uploadFiles() {
         
         const result = await response.json();
         
+        console.log('📤 Upload response:', { ok: response.ok, result });
+        
         if (response.ok && result.success) {
+            console.log('✅ Upload exitoso, mostrando alert...');
             // Usar alert nativo para evitar problemas con Alpine
-            window.alert(`✅ Archivos subidos exitosamente\n\nTotal: ${result.total}\nSubidos: ${result.uploaded}\nFallidos: ${result.failed}`);
+            alert(`✅ Archivos subidos exitosamente\n\nTotal: ${result.total}\nSubidos: ${result.uploaded}\nFallidos: ${result.failed}`);
+            console.log('✅ Alert mostrado, cerrando modal...');
             closeUploadModal();
             loadFacturasTab();
         } else {

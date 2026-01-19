@@ -1561,3 +1561,171 @@ async def delete_supplier_invoice(
         return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
     
     return JSONResponse(content={"success": True})
+
+
+# ========================================
+# API ENDPOINTS - DASHBOARD TABS
+# ========================================
+
+@router.get("/api/supplier-invoices/stats")
+async def get_supplier_invoices_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene estadísticas de facturas de proveedores para el dashboard"""
+    from app.models.supplier_invoice import SupplierInvoice, ImportStatusEnum
+    from sqlalchemy import func
+    
+    total = db.query(func.count(SupplierInvoice.id)).scalar() or 0
+    processed = db.query(func.count(SupplierInvoice.id)).filter(
+        SupplierInvoice.status == ImportStatusEnum.PROCESSED
+    ).scalar() or 0
+    pending = db.query(func.count(SupplierInvoice.id)).filter(
+        SupplierInvoice.status.in_([ImportStatusEnum.UPLOADED, ImportStatusEnum.PENDING])
+    ).scalar() or 0
+    
+    # Calcular valor total (de las procesadas que tienen processed_invoice_id)
+    from app.models.invoice import Invoice
+    total_value = db.query(func.sum(Invoice.total_neto)).filter(
+        Invoice.id.in_(
+            db.query(SupplierInvoice.processed_invoice_id).filter(
+                SupplierInvoice.processed_invoice_id.isnot(None)
+            )
+        )
+    ).scalar() or 0
+    
+    return JSONResponse(content={
+        "total": total,
+        "processed": processed,
+        "pending": pending,
+        "total_value": int(total_value)
+    })
+
+
+@router.get("/api/supplier-invoices/list")
+async def get_supplier_invoices_list(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    limit: int = 10,
+):
+    """Obtiene lista de facturas de proveedores para el dashboard"""
+    from app.models.supplier_invoice import SupplierInvoice
+    from app.models.invoice import Invoice
+    
+    invoices = db.query(SupplierInvoice).order_by(
+        SupplierInvoice.created_at.desc()
+    ).limit(limit).all()
+    
+    result = []
+    for inv in invoices:
+        # Obtener datos de la factura procesada si existe
+        processed_data = {}
+        if inv.processed_invoice_id:
+            processed_inv = db.query(Invoice).filter(Invoice.id == inv.processed_invoice_id).first()
+            if processed_inv:
+                processed_data = {
+                    "fecha_emision": processed_inv.fecha_emision.isoformat() if processed_inv.fecha_emision else None,
+                    "proveedor": processed_inv.supplier.razon_social if processed_inv.supplier else None,
+                    "numero_documento": processed_inv.numero_documento,
+                    "total": int(processed_inv.total_neto) if processed_inv.total_neto else 0,
+                }
+        
+        result.append({
+            "id": inv.id,
+            "fecha_emision": processed_data.get("fecha_emision"),
+            "proveedor": processed_data.get("proveedor"),
+            "numero_documento": processed_data.get("numero_documento"),
+            "cufe": inv.cufe,
+            "status": inv.status.value,
+            "total": processed_data.get("total", 0),
+        })
+    
+    return JSONResponse(content={"invoices": result})
+
+
+@router.get("/api/cufe/stats")
+async def get_cufe_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene estadísticas de CUFEs para el dashboard"""
+    # Por ahora retornar datos de ejemplo ya que CUFE está en desarrollo
+    return JSONResponse(content={
+        "total": 0,
+        "downloaded": 0,
+        "associated": 0,
+        "pending": 0
+    })
+
+
+@router.get("/api/cufe/list")
+async def get_cufe_list(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    limit: int = 10,
+):
+    """Obtiene lista de CUFEs para el dashboard"""
+    # Por ahora retornar lista vacía ya que CUFE está en desarrollo
+    return JSONResponse(content={"cufes": []})
+
+
+@router.get("/api/products/stats")
+async def get_products_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene estadísticas de productos para el dashboard"""
+    from app.models.invoice_item import InvoiceItem
+    from sqlalchemy import func, case
+    
+    # Total de productos únicos (por código)
+    total = db.query(func.count(func.distinct(InvoiceItem.codigo))).scalar() or 0
+    
+    # Productos con match (tienen product_id)
+    matched = db.query(func.count(func.distinct(InvoiceItem.codigo))).filter(
+        InvoiceItem.product_id.isnot(None)
+    ).scalar() or 0
+    
+    unmatched = total - matched
+    
+    # Calcular margen promedio (simplificado)
+    avg_margin = 0.0
+    
+    return JSONResponse(content={
+        "total": total,
+        "matched": matched,
+        "unmatched": unmatched,
+        "avg_margin": avg_margin
+    })
+
+
+@router.get("/api/products/list")
+async def get_products_list(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    limit: int = 10,
+):
+    """Obtiene lista de productos para el dashboard"""
+    from app.models.invoice_item import InvoiceItem
+    from sqlalchemy import func
+    
+    # Obtener productos únicos con sus datos agregados
+    products_query = db.query(
+        InvoiceItem.codigo,
+        func.max(InvoiceItem.descripcion).label('descripcion'),
+        func.avg(InvoiceItem.precio_unitario).label('precio_compra'),
+        func.max(InvoiceItem.product_id).label('product_id'),
+    ).group_by(InvoiceItem.codigo).limit(limit).all()
+    
+    result = []
+    for prod in products_query:
+        result.append({
+            "codigo": prod.codigo,
+            "descripcion": prod.descripcion,
+            "precio_compra": int(prod.precio_compra) if prod.precio_compra else 0,
+            "precio_venta": 0,  # Por ahora no tenemos precio de venta
+            "margen": 0.0,
+            "matched": prod.product_id is not None,
+        })
+    
+    return JSONResponse(content={"products": result})

@@ -87,19 +87,242 @@ function switchTab(tabName) {
     }
 }
 
-function loadFacturasTab() {
-    // Cargar datos de facturas de proveedores
+async function loadFacturasTab() {
     console.log('Cargando tab de facturas...');
+    
+    try {
+        // Cargar estadísticas
+        const statsResponse = await fetch('/invoices/api/supplier-invoices/stats');
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            document.getElementById('total-facturas').textContent = stats.total || 0;
+            document.getElementById('facturas-procesadas').textContent = stats.processed || 0;
+            document.getElementById('facturas-pendientes').textContent = stats.pending || 0;
+            document.getElementById('total-valor').textContent = '$' + (stats.total_value || 0).toLocaleString('es-CO');
+        }
+        
+        // Cargar lista de facturas
+        const listResponse = await fetch('/invoices/api/supplier-invoices/list?limit=10');
+        if (listResponse.ok) {
+            const data = await listResponse.json();
+            const tbody = document.getElementById('facturas-table-body');
+            
+            if (data.invoices && data.invoices.length > 0) {
+                tbody.innerHTML = data.invoices.map(inv => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${inv.fecha_emision || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            ${inv.proveedor || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${inv.numero_documento || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">
+                            ${inv.cufe ? inv.cufe.substring(0, 20) + '...' : 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full ${getStatusClass(inv.status)}">
+                                ${getStatusText(inv.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${(inv.total || 0).toLocaleString('es-CO')}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="/invoices/supplier-invoices?page=1" class="text-papyrus-blue hover:underline">
+                                Ver todas
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <p>No hay facturas cargadas aún</p>
+                            <button onclick="openUploadModal()" class="mt-4 text-papyrus-blue hover:underline">
+                                Subir primera factura
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando facturas:', error);
+        document.getElementById('facturas-table-body').innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-red-500">
+                    Error al cargar facturas. Por favor recarga la página.
+                </td>
+            </tr>
+        `;
+    }
 }
 
-function loadCufeTab() {
-    // Cargar datos de CUFE
+async function loadCufeTab() {
     console.log('Cargando tab de CUFE...');
+    
+    try {
+        // Cargar estadísticas de CUFE
+        const statsResponse = await fetch('/invoices/api/cufe/stats');
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            document.getElementById('total-cufe').textContent = stats.total || 0;
+            document.getElementById('cufe-descargados').textContent = stats.downloaded || 0;
+            document.getElementById('cufe-asociados').textContent = stats.associated || 0;
+            document.getElementById('cufe-pendientes').textContent = stats.pending || 0;
+        }
+        
+        // Cargar lista de CUFEs
+        const listResponse = await fetch('/invoices/api/cufe/list?limit=10');
+        if (listResponse.ok) {
+            const data = await listResponse.json();
+            const tbody = document.getElementById('cufe-table-body');
+            
+            if (data.cufes && data.cufes.length > 0) {
+                tbody.innerHTML = data.cufes.map(cufe => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${cufe.fecha || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">
+                            ${cufe.codigo.substring(0, 30)}...
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            ${cufe.proveedor || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full ${cufe.dian_status === 'valid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${cufe.dian_status || 'Pendiente'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            ${cufe.invoice_id ? `<a href="/invoices/detail/${cufe.invoice_id}" class="text-papyrus-blue hover:underline">Ver factura</a>` : 'Sin asociar'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <button class="text-papyrus-blue hover:underline">Ver</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <p>No hay códigos CUFE registrados</p>
+                            <button onclick="openCufeModal()" class="mt-4 text-papyrus-blue hover:underline">
+                                Agregar primer CUFE
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando CUFE:', error);
+        document.getElementById('cufe-table-body').innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    Funcionalidad CUFE en desarrollo
+                </td>
+            </tr>
+        `;
+    }
 }
 
-function loadProductosTab() {
-    // Cargar datos de productos
+async function loadProductosTab() {
     console.log('Cargando tab de productos...');
+    
+    try {
+        // Cargar estadísticas de productos
+        const statsResponse = await fetch('/invoices/api/products/stats');
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            document.getElementById('total-productos').textContent = stats.total || 0;
+            document.getElementById('productos-catalogo').textContent = stats.matched || 0;
+            document.getElementById('productos-sin-match').textContent = stats.unmatched || 0;
+            document.getElementById('margen-promedio').textContent = (stats.avg_margin || 0).toFixed(1) + '%';
+        }
+        
+        // Cargar lista de productos
+        const listResponse = await fetch('/invoices/api/products/list?limit=10');
+        if (listResponse.ok) {
+            const data = await listResponse.json();
+            const tbody = document.getElementById('productos-table-body');
+            
+            if (data.products && data.products.length > 0) {
+                tbody.innerHTML = data.products.map(prod => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${prod.codigo || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            ${prod.descripcion || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${(prod.precio_compra || 0).toLocaleString('es-CO')}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${(prod.precio_venta || 0).toLocaleString('es-CO')}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="${prod.margen >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                ${(prod.margen || 0).toFixed(1)}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${prod.matched ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Vinculado</span>' : '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Sin vincular</span>'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            ${!prod.matched ? '<button class="text-papyrus-blue hover:underline">Vincular</button>' : '<button class="text-gray-400">Ver</button>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <p>No hay productos extraídos de facturas</p>
+                            <p class="mt-2 text-sm">Los productos aparecerán automáticamente al procesar facturas</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        document.getElementById('productos-table-body').innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                    Funcionalidad de productos en desarrollo
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function getStatusClass(status) {
+    const classes = {
+        'uploaded': 'bg-blue-100 text-blue-800',
+        'pending': 'bg-yellow-100 text-yellow-800',
+        'processed': 'bg-green-100 text-green-800',
+        'error': 'bg-red-100 text-red-800',
+        'rejected': 'bg-gray-100 text-gray-800'
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'uploaded': 'Subido',
+        'pending': 'Pendiente',
+        'processed': 'Procesado',
+        'error': 'Error',
+        'rejected': 'Rechazado'
+    };
+    return texts[status] || status;
 }
 
 // Cargar tab inicial
