@@ -102,6 +102,7 @@ class SupplierInvoiceService:
     def extract_basic_info_from_pdf(self, pdf_path: str) -> Dict[str, Any]:
         """
         Extrae información básica del PDF: proveedor, fecha, NIT
+        MEJORADO: Extracción más robusta y precisa
         """
         try:
             import pdfplumber
@@ -122,24 +123,71 @@ class SupplierInvoiceService:
                 'total_amount': None,
             }
             
-            # Buscar NIT (formato: NIT: 900.123.456-7 o similar)
+            # ===== EXTRAER NOMBRE DEL PROVEEDOR =====
+            # Buscar en las primeras líneas (generalmente el proveedor está arriba)
+            lines = text.split('\n')
+            
+            # Patrones para identificar el nombre del proveedor
+            supplier_patterns = [
+                r'(?:Razón\s*Social|Nombre\s*Comercial|Empresa)[:\s]*([^\n]+)',
+                r'(?:Proveedor|Vendedor|Emisor)[:\s]*([^\n]+)',
+            ]
+            
+            for pattern in supplier_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    name = match.group(1).strip()
+                    # Limpiar el nombre
+                    name = re.sub(r'\s+', ' ', name)  # Normalizar espacios
+                    name = name.split('NIT')[0].strip()  # Quitar NIT si está junto
+                    name = name.split('FECHA')[0].strip()  # Quitar FECHA si está junto
+                    if len(name) > 3 and len(name) < 200:
+                        info['supplier_name'] = name.upper()
+                        break
+            
+            # Si no se encontró con patrones, buscar en las primeras 10 líneas
+            # El proveedor suele estar en las primeras líneas, antes del NIT
+            if not info['supplier_name']:
+                for i, line in enumerate(lines[:15]):
+                    line = line.strip()
+                    # Saltar líneas vacías, muy cortas o que parecen títulos
+                    if not line or len(line) < 5:
+                        continue
+                    if any(keyword in line.upper() for keyword in ['FACTURA', 'INVOICE', 'FECHA', 'DATE', 'NIT', 'CUFE', 'TOTAL']):
+                        continue
+                    # Si la línea tiene entre 5 y 100 caracteres y parece un nombre de empresa
+                    if 5 < len(line) < 100:
+                        # Verificar que no sea un número o código
+                        if not re.match(r'^[\d\s\-\.]+$', line):
+                            # Limpiar
+                            name = re.sub(r'\s+', ' ', line)
+                            name = name.split('NIT')[0].strip()
+                            name = name.split('FECHA')[0].strip()
+                            if len(name) > 3:
+                                info['supplier_name'] = name.upper()
+                                break
+            
+            # ===== EXTRAER NIT =====
             nit_patterns = [
                 r'NIT[:\s]*(\d{3}\.?\d{3}\.?\d{3}[-\s]?\d)',
                 r'N\.?I\.?T\.?[:\s]*(\d{9,12}[-\s]?\d?)',
+                r'(?:^|\s)(\d{9,10})(?:\s|$)',  # NIT sin prefijo
             ]
             for pattern in nit_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
+                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
                 if match:
                     nit = re.sub(r'[^\d]', '', match.group(1))
-                    if len(nit) >= 9:
+                    if 9 <= len(nit) <= 12:
                         info['supplier_nit'] = nit[:10]  # Max 10 dígitos
                         break
             
-            # Buscar fecha (formatos comunes colombianos)
+            # ===== EXTRAER FECHA =====
             date_patterns = [
-                r'Fecha[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
+                r'Fecha\s*(?:de\s*)?(?:Emisión|Expedición)?[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
+                r'Fecha[:\s]*(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
                 r'(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
                 r'(\d{4}[/-]\d{1,2}[/-]\d{1,2})',
+                r'Fecha[:\s]*(\d{1,2}\s+de\s+\w+\s+de\s+\d{4})',
             ]
             for pattern in date_patterns:
                 match = re.search(pattern, text, re.IGNORECASE)
@@ -147,10 +195,18 @@ class SupplierInvoiceService:
                     try:
                         date_str = match.group(1)
                         # Intentar parsear diferentes formatos
-                        for fmt in ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%Y/%m/%d', '%d/%m/%y']:
+                        formats = [
+                            '%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', '%Y/%m/%d', 
+                            '%d/%m/%y', '%d-%m-%y',
+                            '%d de %B de %Y', '%d de %b de %Y'
+                        ]
+                        for fmt in formats:
                             try:
-                                info['invoice_date'] = datetime.strptime(date_str, fmt)
-                                break
+                                parsed_date = datetime.strptime(date_str, fmt)
+                                # Validar que la fecha sea razonable (no muy antigua ni futura)
+                                if 2020 <= parsed_date.year <= 2030:
+                                    info['invoice_date'] = parsed_date
+                                    break
                             except:
                                 continue
                         if info['invoice_date']:
@@ -158,37 +214,46 @@ class SupplierInvoiceService:
                     except:
                         continue
             
-            # Buscar número de factura
+            # ===== EXTRAER NÚMERO DE FACTURA =====
             invoice_patterns = [
-                r'Factura\s*(?:No\.?|Nro\.?|#|N°)?\s*[:\s]*([A-Z0-9-]+)',
-                r'(?:FV|FE|FA)[:\s-]*(\d+)',
-                r'Número[:\s]*([A-Z0-9-]+)',
+                r'Factura\s*(?:No\.?|Nro\.?|#|N°|Número)?\s*[:\s]*([A-Z0-9-]+)',
+                r'(?:FV|FE|FA|FC)[:\s-]*(\d+)',
+                r'(?:^|\s)(?:No\.?|Nro\.?|#)\s*([A-Z0-9-]+)',
+                r'Número\s*(?:de\s*)?Factura[:\s]*([A-Z0-9-]+)',
+                r'Invoice\s*(?:No\.?|Number)?[:\s]*([A-Z0-9-]+)',
             ]
             for pattern in invoice_patterns:
                 match = re.search(pattern, text, re.IGNORECASE)
                 if match:
-                    info['invoice_number'] = match.group(1).strip()[:50]
-                    break
+                    number = match.group(1).strip()
+                    # Validar que no sea muy largo ni muy corto
+                    if 2 <= len(number) <= 50:
+                        info['invoice_number'] = number.upper()
+                        break
             
-            # Buscar nombre del proveedor (líneas cerca del NIT)
-            if info['supplier_nit']:
-                # Buscar razón social cerca del NIT
-                razon_patterns = [
-                    r'Razón\s*Social[:\s]*([^\n]+)',
-                    r'Nombre[:\s]*([^\n]+)',
-                ]
-                for pattern in razon_patterns:
-                    match = re.search(pattern, text, re.IGNORECASE)
-                    if match:
-                        name = match.group(1).strip()[:255]
-                        if len(name) > 3:
-                            info['supplier_name'] = name.upper()
+            # ===== EXTRAER TOTAL =====
+            total_patterns = [
+                r'Total\s*(?:a\s*Pagar|Factura)?[:\s]*\$?\s*([\d,\.]+)',
+                r'Valor\s*Total[:\s]*\$?\s*([\d,\.]+)',
+                r'Total[:\s]*\$?\s*([\d,\.]+)',
+            ]
+            for pattern in total_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    try:
+                        total_str = match.group(1).replace(',', '').replace('.', '')
+                        total = int(total_str)
+                        if 100 <= total <= 999999999:  # Validar rango razonable
+                            info['total_amount'] = total
                             break
+                    except:
+                        continue
             
+            logger.info(f"Información extraída: Proveedor={info['supplier_name']}, Fecha={info['invoice_date']}, Número={info['invoice_number']}")
             return info
             
         except Exception as e:
-            logger.error(f"Error extrayendo info básica: {e}")
+            logger.error(f"Error extrayendo info básica: {e}", exc_info=True)
             return {}
     
     def check_duplicate_cufe(self, cufe: str) -> Optional[SupplierInvoice]:
