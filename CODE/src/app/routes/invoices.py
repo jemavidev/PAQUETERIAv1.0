@@ -2370,7 +2370,7 @@ async def delete_cufe(
     current_user: User = Depends(get_current_active_user_from_cookies),
     db: Session = Depends(get_db),
 ):
-    """Elimina un registro de CUFE"""
+    """Elimina un registro de CUFE y opcionalmente su factura asociada"""
     try:
         cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
         
@@ -2380,12 +2380,26 @@ async def delete_cufe(
                 content={"success": False, "message": "CUFE no encontrado"}
             )
         
+        # Si tiene factura asociada, eliminarla también
+        if cufe_record.invoice_id:
+            invoice = db.query(Invoice).filter(Invoice.id == cufe_record.invoice_id).first()
+            if invoice:
+                # Eliminar items de factura
+                from app.models.invoice import InvoiceItem, InvoiceIrregularity
+                db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice.id).delete()
+                db.query(InvoiceIrregularity).filter(InvoiceIrregularity.invoice_id == invoice.id).delete()
+                
+                # Eliminar factura
+                db.delete(invoice)
+                logger.info(f"Factura #{invoice.id} eliminada junto con CUFE #{cufe_id}")
+        
+        # Eliminar registro CUFE
         db.delete(cufe_record)
         db.commit()
         
         return JSONResponse(content={
             "success": True,
-            "message": "CUFE eliminado correctamente"
+            "message": "CUFE y factura asociada eliminados correctamente"
         })
         
     except Exception as e:
