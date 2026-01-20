@@ -2223,17 +2223,27 @@ async def process_dian_pdf(
             cufe_record.invoice_number = extracted.numero_documento
             db.commit()
         else:
-            # No existe registro de CUFE, crear uno nuevo
-            new_cufe_record = CufeRecord(
-                cufe=extracted.cufe_cude,
-                status=CufeStatus.PROCESSED,
-                supplier_name=extracted.supplier_razon_social,
-                invoice_number=extracted.numero_documento,
-                invoice_id=invoice.id,
-                created_by=current_user.id
-            )
-            db.add(new_cufe_record)
-            db.commit()
+            # Verificar si ya existe un registro con este CUFE
+            existing_cufe = db.query(CufeRecord).filter(CufeRecord.cufe == extracted.cufe_cude).first()
+            if existing_cufe:
+                # Ya existe, actualizar en lugar de crear
+                existing_cufe.status = CufeStatus.PROCESSED
+                existing_cufe.invoice_id = invoice.id
+                existing_cufe.supplier_name = extracted.supplier_razon_social
+                existing_cufe.invoice_number = extracted.numero_documento
+                db.commit()
+            else:
+                # No existe registro de CUFE, crear uno nuevo
+                new_cufe_record = CufeRecord(
+                    cufe=extracted.cufe_cude,
+                    status=CufeStatus.PROCESSED,
+                    supplier_name=extracted.supplier_razon_social,
+                    invoice_number=extracted.numero_documento,
+                    invoice_id=invoice.id,
+                    created_by=current_user.id
+                )
+                db.add(new_cufe_record)
+                db.commit()
         
         return JSONResponse(content={
             "success": True,
@@ -2241,6 +2251,34 @@ async def process_dian_pdf(
             "invoice_id": invoice.id,
             "invoice_number": invoice.numero_documento
         })
+        
+    except ValueError as e:
+        # Errores de validación (duplicados, etc.)
+        error_msg = str(e)
+        logger.warning(f"Error de validación procesando PDF: {error_msg}")
+        
+        # Marcar CUFE como error si existe
+        if cufe_id:
+            try:
+                cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
+                if cufe_record:
+                    cufe_record.status = CufeStatus.ERROR
+                    cufe_record.error_message = error_msg
+                    db.commit()
+            except:
+                pass
+        
+        # Mensajes más amigables para duplicados
+        if "Ya existe una factura" in error_msg:
+            return JSONResponse(
+                status_code=409,
+                content={"success": False, "message": "Este CUFE ya fue procesado anteriormente"}
+            )
+        
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": error_msg}
+        )
         
     except Exception as e:
         logger.error(f"Error procesando PDF de DIAN: {e}", exc_info=True)
