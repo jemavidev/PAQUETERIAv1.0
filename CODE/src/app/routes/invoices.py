@@ -2080,6 +2080,94 @@ async def get_cufe_list(
         return JSONResponse(content={"success": False, "message": str(e), "cufes": []})
 
 
+@router.get("/api/cufe/invoices-with-dian-status")
+async def get_invoices_with_dian_status(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    limit: int = Query(100, ge=1, le=500),
+    has_dian_pdf: Optional[str] = Query(None),  # 'yes', 'no', or None for all
+):
+    """
+    Lista TODAS las facturas del sistema mostrando si tienen o no PDF de DIAN.
+    Esto permite gestionar qué facturas necesitan obtener el PDF oficial de DIAN.
+    """
+    try:
+        from app.models.invoice import SupplierInvoice
+        
+        # Query base: todas las facturas activas
+        query = db.query(Invoice).filter(Invoice.is_active == True)
+        
+        # Aplicar filtro si se especifica
+        if has_dian_pdf == 'yes':
+            # Solo facturas que tienen supplier_invoice_id (tienen PDF)
+            query = query.filter(Invoice.supplier_invoice_id.isnot(None))
+        elif has_dian_pdf == 'no':
+            # Solo facturas que NO tienen supplier_invoice_id (no tienen PDF)
+            query = query.filter(Invoice.supplier_invoice_id.is_(None))
+        
+        # Ordenar por fecha de emisión descendente
+        invoices = query.order_by(Invoice.fecha_emision.desc()).limit(limit).all()
+        
+        # Construir respuesta con información de PDF DIAN
+        result = []
+        for invoice in invoices:
+            # Verificar si tiene PDF de DIAN
+            has_pdf = invoice.supplier_invoice_id is not None
+            
+            # Si tiene PDF, obtener información adicional
+            dian_pdf_info = None
+            if has_pdf:
+                supplier_invoice = db.query(SupplierInvoice).filter(
+                    SupplierInvoice.id == invoice.supplier_invoice_id
+                ).first()
+                if supplier_invoice:
+                    dian_pdf_info = {
+                        "filename": supplier_invoice.original_filename,
+                        "uploaded_at": supplier_invoice.uploaded_at.isoformat() if supplier_invoice.uploaded_at else None,
+                        "status": supplier_invoice.status.value if supplier_invoice.status else None
+                    }
+            
+            result.append({
+                "id": invoice.id,
+                "cufe_cude": invoice.cufe_cude,
+                "numero_documento": invoice.numero_documento,
+                "fecha_emision": invoice.fecha_emision.isoformat() if invoice.fecha_emision else None,
+                "supplier_name": invoice.supplier.razon_social if invoice.supplier else None,
+                "supplier_nit": invoice.supplier.nit if invoice.supplier else None,
+                "total_neto": invoice.total_neto,
+                "has_dian_pdf": has_pdf,
+                "dian_pdf_info": dian_pdf_info,
+                "document_type": invoice.document_type.value if invoice.document_type else None
+            })
+        
+        # Estadísticas
+        total_invoices = db.query(func.count(Invoice.id)).filter(Invoice.is_active == True).scalar() or 0
+        with_pdf = db.query(func.count(Invoice.id)).filter(
+            Invoice.is_active == True,
+            Invoice.supplier_invoice_id.isnot(None)
+        ).scalar() or 0
+        without_pdf = total_invoices - with_pdf
+        
+        return JSONResponse(content={
+            "success": True,
+            "invoices": result,
+            "stats": {
+                "total": total_invoices,
+                "with_dian_pdf": with_pdf,
+                "without_dian_pdf": without_pdf
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error listando facturas con estado DIAN: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e), "invoices": []}
+        )
+
+
+
+
 @router.post("/api/cufe/register")
 async def register_cufe(
     request: Request,
