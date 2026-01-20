@@ -508,11 +508,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Activar búsqueda en tiempo real
     const searchInput = document.getElementById('search-facturas');
+    const clearBtn = document.getElementById('clear-search-btn');
+    
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase().trim();
             const tbody = document.getElementById('facturas-table-body');
             const rows = tbody.getElementsByTagName('tr');
+            
+            // Mostrar/ocultar botón de limpiar
+            if (clearBtn) {
+                if (searchTerm !== '') {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
             
             let visibleCount = 0;
             
@@ -563,5 +574,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function clearSearch() {
+    const searchInput = document.getElementById('search-facturas');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const tbody = document.getElementById('facturas-table-body');
+    
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    
+    if (clearBtn) {
+        clearBtn.classList.add('hidden');
+    }
+    
+    // Mostrar todas las filas
+    if (tbody) {
+        const rows = tbody.getElementsByTagName('tr');
+        for (let row of rows) {
+            if (!row.classList.contains('no-results-message')) {
+                row.style.display = '';
+            }
+        }
+        
+        // Remover mensaje de no resultados si existe
+        const existingMsg = tbody.querySelector('.no-results-message');
+        if (existingMsg) {
+            existingMsg.remove();
+        }
+    }
+}
 </script>
 {% endblock %}
