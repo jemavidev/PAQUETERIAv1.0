@@ -2013,7 +2013,7 @@ async def delete_supplier_invoice(
 # CUFE MANAGEMENT - Gestión de CUFEs
 # ========================================
 
-from app.models.cufe import CufeRecord, CufeStatus as CufeStatusEnum
+from app.models.cufe import CufeRecord, CufeStatus
 from sqlalchemy import func
 
 @router.get("/api/cufe/stats")
@@ -2025,13 +2025,13 @@ async def get_cufe_stats(
     try:
         total = db.query(func.count(CufeRecord.id)).scalar() or 0
         pending = db.query(func.count(CufeRecord.id)).filter(
-            CufeRecord.status == CufeStatusEnum.PENDING
+            CufeRecord.status == CufeStatus.PENDING
         ).scalar() or 0
         downloaded = db.query(func.count(CufeRecord.id)).filter(
-            CufeRecord.status == CufeStatusEnum.DOWNLOADED
+            CufeRecord.status == CufeStatus.DOWNLOADED
         ).scalar() or 0
         processed = db.query(func.count(CufeRecord.id)).filter(
-            CufeRecord.status == CufeStatusEnum.PROCESSED
+            CufeRecord.status == CufeStatus.PROCESSED
         ).scalar() or 0
         
         return JSONResponse(content={
@@ -2063,7 +2063,7 @@ async def get_cufe_list(
         
         if status:
             try:
-                status_enum = CufeStatusEnum(status)
+                status_enum = CufeStatus(status)
                 query = query.filter(CufeRecord.status == status_enum)
             except ValueError:
                 pass
@@ -2129,7 +2129,7 @@ async def register_cufe(
         # Crear registro
         cufe_record = CufeRecord(
             cufe=cufe,
-            status=CufeStatusEnum.PENDING,
+            status=CufeStatus.PENDING,
             created_by=current_user.id
         )
         db.add(cufe_record)
@@ -2189,7 +2189,7 @@ async def process_dian_pdf(
         if cufe_id:
             cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
             if cufe_record:
-                cufe_record.status = CufeStatusEnum.PROCESSING
+                cufe_record.status = CufeStatus.PROCESSING
                 cufe_record.supplier_name = extracted.proveedor
                 cufe_record.invoice_number = extracted.numero_documento
                 db.commit()
@@ -2212,7 +2212,7 @@ async def process_dian_pdf(
         
         # Actualizar CUFE como procesado
         if cufe_id and cufe_record:
-            cufe_record.status = CufeStatusEnum.PROCESSED
+            cufe_record.status = CufeStatus.PROCESSED
             cufe_record.invoice_id = invoice.id
             db.commit()
         
@@ -2231,7 +2231,7 @@ async def process_dian_pdf(
             try:
                 cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
                 if cufe_record:
-                    cufe_record.status = CufeStatusEnum.ERROR
+                    cufe_record.status = CufeStatus.ERROR
                     cufe_record.error_message = str(e)
                     db.commit()
             except:
