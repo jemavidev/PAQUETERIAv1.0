@@ -2225,10 +2225,25 @@ async def process_dian_pdf(
             replace_existing=False
         )
         
-        # Actualizar CUFE como procesado
+        # Crear o actualizar registro de CUFE
         if cufe_id and cufe_record:
+            # Ya existe un registro de CUFE, actualizarlo
             cufe_record.status = CufeStatus.PROCESSED
             cufe_record.invoice_id = invoice.id
+            cufe_record.supplier_name = extracted.supplier_razon_social
+            cufe_record.invoice_number = extracted.numero_documento
+            db.commit()
+        else:
+            # No existe registro de CUFE, crear uno nuevo
+            new_cufe_record = CufeRecord(
+                cufe=extracted.cufe_cude,
+                status=CufeStatus.PROCESSED,
+                supplier_name=extracted.supplier_razon_social,
+                invoice_number=extracted.numero_documento,
+                invoice_id=invoice.id,
+                created_by=current_user.id
+            )
+            db.add(new_cufe_record)
             db.commit()
         
         return JSONResponse(content={

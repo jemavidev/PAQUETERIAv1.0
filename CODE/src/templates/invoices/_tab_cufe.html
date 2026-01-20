@@ -592,29 +592,19 @@ function viewCufeInvoice(invoiceId) {
                  ondrop="handleDirectDianPdfDrop(event)" 
                  ondragover="handleDragOver(event)" 
                  ondragleave="handleDragLeave(event)">
-                <input type="file" id="direct-dian-pdf-input-direct" accept=".pdf" class="hidden" onchange="handleDirectDianPdfSelect(event)">
+                <input type="file" id="direct-dian-pdf-input-direct" accept=".pdf" multiple class="hidden" onchange="handleDirectDianPdfSelect(event)">
                 <label for="direct-dian-pdf-input-direct" class="cursor-pointer">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
-                    <p class="mt-2 text-sm text-gray-600">Arrastra el PDF aquí o haz clic para seleccionar</p>
-                    <p class="mt-1 text-xs text-gray-500">Solo archivos PDF de la DIAN</p>
+                    <p class="mt-2 text-sm text-gray-600">Arrastra uno o varios PDFs aquí o haz clic para seleccionar</p>
+                    <p class="mt-1 text-xs text-gray-500">Puedes subir múltiples archivos PDF a la vez</p>
                 </label>
             </div>
             
             <div id="direct-dian-pdf-selected" class="hidden">
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-sm font-medium" id="direct-dian-pdf-filename">-</span>
-                    </div>
-                    <button onclick="clearDirectDianPdfSelection()" class="text-red-500 hover:text-red-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                <div class="space-y-2" id="direct-dian-pdf-files-list">
+                    <!-- Lista de archivos seleccionados -->
                 </div>
             </div>
             
@@ -657,16 +647,15 @@ function closeUploadDianPdfDirectModal() {
 }
 
 let selectedDirectDianPdf = null;
+let selectedDirectDianPdfs = []; // Array para múltiples archivos
 
 function handleDirectDianPdfSelect(event) {
-    const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-        selectedDirectDianPdf = file;
-        document.getElementById('direct-dian-pdf-filename').textContent = file.name;
-        document.getElementById('direct-dian-pdf-drop-zone').classList.add('hidden');
-        document.getElementById('direct-dian-pdf-selected').classList.remove('hidden');
+    const files = Array.from(event.target.files).filter(f => f.type === 'application/pdf');
+    if (files.length > 0) {
+        selectedDirectDianPdfs = files;
+        displaySelectedFiles();
     } else {
-        alert('Por favor selecciona un archivo PDF válido');
+        alert('Por favor selecciona archivos PDF válidos');
     }
 }
 
@@ -674,27 +663,56 @@ function handleDirectDianPdfDrop(event) {
     event.preventDefault();
     event.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
     
-    const file = event.dataTransfer.files[0];
-    if (file && file.type === 'application/pdf') {
-        selectedDirectDianPdf = file;
-        document.getElementById('direct-dian-pdf-filename').textContent = file.name;
-        document.getElementById('direct-dian-pdf-drop-zone').classList.add('hidden');
-        document.getElementById('direct-dian-pdf-selected').classList.remove('hidden');
+    const files = Array.from(event.dataTransfer.files).filter(f => f.type === 'application/pdf');
+    if (files.length > 0) {
+        selectedDirectDianPdfs = files;
+        displaySelectedFiles();
     } else {
-        alert('Por favor selecciona un archivo PDF válido');
+        alert('Por favor selecciona archivos PDF válidos');
+    }
+}
+
+function displaySelectedFiles() {
+    const listContainer = document.getElementById('direct-dian-pdf-files-list');
+    listContainer.innerHTML = selectedDirectDianPdfs.map((file, index) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium">${file.name}</span>
+            </div>
+            <button onclick="removeDirectDianPdfFile(${index})" class="text-red-500 hover:text-red-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+    
+    document.getElementById('direct-dian-pdf-drop-zone').classList.add('hidden');
+    document.getElementById('direct-dian-pdf-selected').classList.remove('hidden');
+}
+
+function removeDirectDianPdfFile(index) {
+    selectedDirectDianPdfs.splice(index, 1);
+    if (selectedDirectDianPdfs.length === 0) {
+        clearDirectDianPdfSelection();
+    } else {
+        displaySelectedFiles();
     }
 }
 
 function clearDirectDianPdfSelection() {
-    selectedDirectDianPdf = null;
+    selectedDirectDianPdfs = [];
     document.getElementById('direct-dian-pdf-drop-zone').classList.remove('hidden');
     document.getElementById('direct-dian-pdf-selected').classList.add('hidden');
     document.getElementById('direct-dian-pdf-input-direct').value = '';
 }
 
 async function uploadDirectDianPdf() {
-    if (!selectedDirectDianPdf) {
-        alert('Por favor selecciona un archivo PDF');
+    if (selectedDirectDianPdfs.length === 0) {
+        alert('Por favor selecciona al menos un archivo PDF');
         return;
     }
     
@@ -705,26 +723,55 @@ async function uploadDirectDianPdf() {
         progressDiv.classList.remove('hidden');
         submitBtn.disabled = true;
         
-        const formData = new FormData();
-        formData.append('file', selectedDirectDianPdf);
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
         
-        const response = await fetch('/invoices/api/cufe/process-dian-pdf', {
-            method: 'POST',
-            body: formData
-        });
+        // Procesar archivos uno por uno
+        for (let i = 0; i < selectedDirectDianPdfs.length; i++) {
+            const file = selectedDirectDianPdfs[i];
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/invoices/api/cufe/process-dian-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    successCount++;
+                } else {
+                    errorCount++;
+                    errors.push(`${file.name}: ${result.message}`);
+                }
+            } catch (error) {
+                errorCount++;
+                errors.push(`${file.name}: Error de conexión`);
+            }
+        }
         
-        const result = await response.json();
+        // Mostrar resumen
+        let message = `✅ Procesados: ${successCount}`;
+        if (errorCount > 0) {
+            message += `\n❌ Errores: ${errorCount}`;
+            if (errors.length > 0) {
+                message += '\n\nDetalles:\n' + errors.join('\n');
+            }
+        }
         
-        if (result.success) {
-            alert('✅ PDF procesado exitosamente\nFactura: ' + result.invoice_number);
+        alert(message);
+        
+        if (successCount > 0) {
             closeUploadDianPdfDirectModal();
             loadCufeTab();
-        } else {
-            alert('Error: ' + (result.message || 'No se pudo procesar el PDF'));
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al procesar el PDF');
+        alert('Error al procesar los PDFs');
     } finally {
         progressDiv.classList.add('hidden');
         submitBtn.disabled = false;
