@@ -2184,7 +2184,7 @@ async def process_dian_pdf(
         extractor = PDFExtractorService()
         extracted, warnings = extractor.extract_from_pdf(temp_path, file.filename)
         
-        if not extracted or not extracted.proveedor:
+        if not extracted or not extracted.supplier_razon_social:
             return JSONResponse(
                 status_code=400,
                 content={
@@ -2200,7 +2200,7 @@ async def process_dian_pdf(
             cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
             if cufe_record:
                 cufe_record.status = CufeStatus.PROCESSING
-                cufe_record.supplier_name = extracted.proveedor
+                cufe_record.supplier_name = extracted.supplier_razon_social
                 cufe_record.invoice_number = extracted.numero_documento
                 db.commit()
         
