@@ -1,7 +1,7 @@
 """add_cufe_dian_status_fields
 
 Revision ID: add_cufe_dian_status
-Revises: create_cufe_records_table
+Revises: 20260119_170057, create_cufe_records
 Create Date: 2026-01-20 14:00:00.000000
 
 Agrega campos para rastrear el estado del CUFE y el archivo DIAN
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_cufe_dian_status'
-down_revision = 'create_cufe_records_table'
+down_revision = ('20260119_170057', 'create_cufe_records')
 branch_labels = None
 depends_on = None
 
