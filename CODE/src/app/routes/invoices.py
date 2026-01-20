@@ -1256,7 +1256,7 @@ async def get_dian_url(
 # ========================================
 
 from app.services.supplier_invoice_service import SupplierInvoiceService
-from app.models.invoice import SupplierInvoiceStatus
+from app.models.invoice import SupplierInvoiceStatus, Invoice
 
 
 @router.get("/supplier-invoices", response_class=HTMLResponse)
@@ -2257,7 +2257,63 @@ async def process_dian_pdf(
         error_msg = str(e)
         logger.warning(f"Error de validación procesando PDF: {error_msg}")
         
-        # Marcar CUFE como error si existe
+        # Si es un duplicado, actualizar el CufeRecord con la factura existente
+        if "Ya existe una factura" in error_msg and extracted and extracted.cufe_cude:
+            try:
+                # Buscar la factura existente por CUFE
+                existing_invoice = db.query(Invoice).filter(
+                    Invoice.cufe_cude == extracted.cufe_cude,
+                    Invoice.is_active == True
+                ).first()
+                
+                if existing_invoice:
+                    # Actualizar o crear registro de CUFE con la factura existente
+                    if cufe_id:
+                        cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
+                        if cufe_record:
+                            cufe_record.status = CufeStatus.PROCESSED
+                            cufe_record.invoice_id = existing_invoice.id
+                            cufe_record.supplier_name = extracted.supplier_razon_social
+                            cufe_record.invoice_number = extracted.numero_documento
+                            cufe_record.error_message = None
+                            db.commit()
+                    else:
+                        # Verificar si ya existe un registro con este CUFE
+                        existing_cufe = db.query(CufeRecord).filter(CufeRecord.cufe == extracted.cufe_cude).first()
+                        if existing_cufe:
+                            # Actualizar el registro existente
+                            existing_cufe.status = CufeStatus.PROCESSED
+                            existing_cufe.invoice_id = existing_invoice.id
+                            existing_cufe.supplier_name = extracted.supplier_razon_social
+                            existing_cufe.invoice_number = extracted.numero_documento
+                            existing_cufe.error_message = None
+                            db.commit()
+                        else:
+                            # Crear nuevo registro de CUFE vinculado a la factura existente
+                            new_cufe_record = CufeRecord(
+                                cufe=extracted.cufe_cude,
+                                status=CufeStatus.PROCESSED,
+                                supplier_name=extracted.supplier_razon_social,
+                                invoice_number=extracted.numero_documento,
+                                invoice_id=existing_invoice.id,
+                                created_by=current_user.id
+                            )
+                            db.add(new_cufe_record)
+                            db.commit()
+                    
+                    # Retornar éxito indicando que ya existía
+                    return JSONResponse(content={
+                        "success": True,
+                        "message": "Esta factura ya fue procesada anteriormente. Registro actualizado.",
+                        "invoice_id": existing_invoice.id,
+                        "invoice_number": existing_invoice.numero_documento,
+                        "already_existed": True
+                    })
+            except Exception as update_error:
+                logger.error(f"Error actualizando CufeRecord para duplicado: {update_error}")
+                # Continuar con el flujo normal de error
+        
+        # Marcar CUFE como error si existe y no se pudo manejar como duplicado
         if cufe_id:
             try:
                 cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
