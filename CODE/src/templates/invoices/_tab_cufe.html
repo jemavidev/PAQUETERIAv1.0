@@ -1,4 +1,4 @@
-<!-- Tab: CUFE -->
+<!-- Tab: CUFE - Gestión de Códigos CUFE -->
 <div class="space-y-6">
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -16,7 +16,21 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="bg-white rounded-lg shadow-sm border p-4 cursor-pointer hover:bg-yellow-50" onclick="filterCufeByStatus('pending')">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-xs text-gray-500">Pendientes</p>
+                    <p class="text-xl font-bold text-gray-900" id="cufe-pendientes">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border p-4 cursor-pointer hover:bg-green-50" onclick="filterCufeByStatus('downloaded')">
             <div class="flex items-center">
                 <div class="p-2 bg-green-100 rounded-lg">
                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,30 +44,16 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="bg-white rounded-lg shadow-sm border p-4 cursor-pointer hover:bg-blue-50" onclick="filterCufeByStatus('processed')">
             <div class="flex items-center">
                 <div class="p-2 bg-blue-100 rounded-lg">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <p class="text-xs text-gray-500">Asociados</p>
-                    <p class="text-xl font-bold text-gray-900" id="cufe-asociados">0</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border p-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-yellow-100 rounded-lg">
-                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-xs text-gray-500">Pendientes</p>
-                    <p class="text-xl font-bold text-gray-900" id="cufe-pendientes">0</p>
+                    <p class="text-xs text-gray-500">Procesados</p>
+                    <p class="text-xl font-bold text-gray-900" id="cufe-procesados">0</p>
                 </div>
             </div>
         </div>
@@ -62,11 +62,30 @@
     <!-- Actions Bar -->
     <div class="bg-white rounded-lg shadow-sm border p-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div class="flex-1 w-full sm:w-auto">
-                <input type="text" 
-                       id="search-cufe" 
-                       placeholder="Buscar por código CUFE..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+            <div class="flex-1 w-full sm:w-auto flex gap-2">
+                <div class="relative flex-1">
+                    <input type="text" 
+                           id="search-cufe" 
+                           placeholder="Buscar por CUFE, proveedor, número..." 
+                           class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent">
+                    <button id="clear-search-cufe-btn" 
+                            onclick="clearCufeSearch()" 
+                            class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors hidden"
+                            title="Limpiar búsqueda">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <select id="status-filter-cufe" onchange="applyCufeFilters()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Todos los estados</option>
+                    <option value="pending">Pendientes</option>
+                    <option value="downloading">Descargando</option>
+                    <option value="downloaded">Descargados</option>
+                    <option value="processing">Procesando</option>
+                    <option value="processed">Procesados</option>
+                    <option value="error">Con errores</option>
+                </select>
             </div>
             <button onclick="openCufeModal()" 
                     class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -84,12 +103,12 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado DIAN</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factura</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="cufe-table-body" class="bg-white divide-y divide-gray-200">
@@ -107,7 +126,7 @@
     </div>
 </div>
 
-<!-- Modal CUFE -->
+<!-- Modal: Agregar CUFE -->
 <div id="cufe-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-lg bg-white">
         <div class="flex justify-between items-center mb-4">
@@ -120,13 +139,26 @@
         </div>
         
         <div class="space-y-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-800">
+                    <strong>Proceso semi-automático:</strong>
+                </p>
+                <ol class="text-sm text-blue-700 mt-2 ml-4 list-decimal space-y-1">
+                    <li>Ingresa el código CUFE (96 caracteres)</li>
+                    <li>Se abrirá la página de la DIAN en una nueva pestaña</li>
+                    <li>Resuelve el captcha manualmente</li>
+                    <li>Descarga el PDF desde la DIAN</li>
+                    <li>Sube el PDF descargado para procesarlo</li>
+                </ol>
+            </div>
+            
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Código CUFE</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Código CUFE (96 caracteres)</label>
                 <textarea id="cufe-input" 
                           rows="3" 
-                          placeholder="Pega aquí el código CUFE completo..."
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent"></textarea>
-                <p class="mt-1 text-xs text-gray-500">El sistema descargará automáticamente el PDF desde DIAN</p>
+                          placeholder="Pega aquí el código CUFE completo (96 caracteres hexadecimales)..."
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue focus:border-transparent font-mono text-sm"></textarea>
+                <p class="mt-1 text-xs text-gray-500" id="cufe-char-count">0 / 96 caracteres</p>
             </div>
         </div>
         
@@ -134,49 +166,391 @@
             <button onclick="closeCufeModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                 Cancelar
             </button>
-            <button onclick="submitCufe()" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700">
-                Descargar desde DIAN
+            <button onclick="submitCufe()" id="submit-cufe-btn" class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Abrir en DIAN
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Subir PDF de DIAN -->
+<div id="upload-dian-pdf-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold">Subir PDF de DIAN</h3>
+            <button onclick="closeUploadDianPdfModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-800">
+                    <strong>CUFE:</strong> <code class="font-mono text-xs" id="current-cufe-display">-</code>
+                </p>
+                <p class="text-sm text-green-700 mt-2">
+                    Sube el PDF que descargaste desde la página de la DIAN
+                </p>
+            </div>
+            
+            <div id="dian-pdf-drop-zone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors hover:border-papyrus-blue cursor-pointer"
+                 ondrop="handleDianPdfDrop(event)" 
+                 ondragover="handleDragOver(event)" 
+                 ondragleave="handleDragLeave(event)">
+                <input type="file" id="dian-pdf-input" accept=".pdf" class="hidden" onchange="handleDianPdfSelect(event)">
+                <label for="dian-pdf-input" class="cursor-pointer">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">Arrastra el PDF aquí o haz clic para seleccionar</p>
+                    <p class="mt-1 text-xs text-gray-500">Solo archivos PDF</p>
+                </label>
+            </div>
+            
+            <div id="dian-pdf-selected" class="hidden">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm font-medium" id="dian-pdf-filename">-</span>
+                    </div>
+                    <button onclick="clearDianPdfSelection()" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="dian-pdf-progress" class="hidden">
+                <div class="flex items-center justify-center gap-2 text-papyrus-blue">
+                    <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm">Procesando PDF...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end gap-2">
+            <button onclick="closeUploadDianPdfModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button onclick="processDianPdf()" id="process-dian-pdf-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Procesar PDF
             </button>
         </div>
     </div>
 </div>
 
 <script>
+// Variables globales para el tab CUFE
+let currentCufeId = null;
+let selectedDianPdf = null;
+let cufeSearchTimeout = null;
+
+// Contador de caracteres para CUFE
+document.addEventListener('DOMContentLoaded', function() {
+    const cufeInput = document.getElementById('cufe-input');
+    if (cufeInput) {
+        cufeInput.addEventListener('input', function() {
+            const count = this.value.trim().length;
+            const counter = document.getElementById('cufe-char-count');
+            const submitBtn = document.getElementById('submit-cufe-btn');
+            
+            if (counter) {
+                counter.textContent = `${count} / 96 caracteres`;
+                counter.className = count === 96 ? 'mt-1 text-xs text-green-600 font-medium' : 'mt-1 text-xs text-gray-500';
+            }
+            
+            if (submitBtn) {
+                submitBtn.disabled = count !== 96;
+            }
+        });
+    }
+    
+    // Búsqueda en tiempo real
+    const searchInput = document.getElementById('search-cufe');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.trim();
+            const clearBtn = document.getElementById('clear-search-cufe-btn');
+            
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', searchTerm === '');
+            }
+            
+            // Debounce search
+            clearTimeout(cufeSearchTimeout);
+            cufeSearchTimeout = setTimeout(() => {
+                filterCufeTable(searchTerm);
+            }, 300);
+        });
+    }
+});
+
+// Abrir modal de agregar CUFE
 function openCufeModal() {
     document.getElementById('cufe-modal').classList.remove('hidden');
+    document.getElementById('cufe-input').value = '';
+    document.getElementById('cufe-char-count').textContent = '0 / 96 caracteres';
+    document.getElementById('submit-cufe-btn').disabled = true;
 }
 
+// Cerrar modal de agregar CUFE
 function closeCufeModal() {
     document.getElementById('cufe-modal').classList.add('hidden');
-    document.getElementById('cufe-input').value = '';
 }
 
+// Enviar CUFE y abrir en DIAN
 async function submitCufe() {
     const cufe = document.getElementById('cufe-input').value.trim();
     
-    if (!cufe) {
-        alert('Por favor ingresa un código CUFE');
+    if (cufe.length !== 96) {
+        alert('El código CUFE debe tener exactamente 96 caracteres');
         return;
     }
     
+    const submitBtn = document.getElementById('submit-cufe-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+    
     try {
-        const response = await fetch('/api/invoices/import-cufe', {
+        // Registrar CUFE en el sistema
+        const response = await fetch('/invoices/api/cufe/register', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({cufe: cufe})
         });
         
-        if (response.ok) {
-            alert('CUFE agregado exitosamente. Descargando desde DIAN...');
+        const result = await response.json();
+        
+        if (result.success) {
+            currentCufeId = result.cufe_id;
+            
+            // Abrir página de DIAN en nueva pestaña
+            const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`;
+            window.open(dianUrl, '_blank');
+            
+            // Cerrar modal de agregar y abrir modal de subir PDF
             closeCufeModal();
+            
+            // Mostrar instrucciones
+            setTimeout(() => {
+                openUploadDianPdfModal(cufe);
+            }, 500);
+            
+            // Recargar tabla
             loadCufeTab();
         } else {
-            const error = await response.json();
-            alert('Error: ' + (error.detail || 'No se pudo procesar el CUFE'));
+            alert('Error: ' + (result.message || 'No se pudo registrar el CUFE'));
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al procesar el CUFE');
+        alert('Error al registrar el CUFE');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Abrir en DIAN';
     }
+}
+
+// Abrir modal de subir PDF de DIAN
+function openUploadDianPdfModal(cufe) {
+    document.getElementById('upload-dian-pdf-modal').classList.remove('hidden');
+    document.getElementById('current-cufe-display').textContent = cufe.substring(0, 20) + '...';
+    clearDianPdfSelection();
+}
+
+// Cerrar modal de subir PDF
+function closeUploadDianPdfModal() {
+    document.getElementById('upload-dian-pdf-modal').classList.add('hidden');
+    clearDianPdfSelection();
+}
+
+// Manejar selección de archivo
+function handleDianPdfSelect(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        selectedDianPdf = file;
+        showDianPdfSelected(file.name);
+    } else {
+        alert('Por favor selecciona un archivo PDF válido');
+    }
+}
+
+// Manejar drop de archivo
+function handleDianPdfDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+    
+    const file = event.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+        selectedDianPdf = file;
+        showDianPdfSelected(file.name);
+    } else {
+        alert('Por favor arrastra un archivo PDF válido');
+    }
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('border-papyrus-blue', 'bg-blue-50');
+}
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+}
+
+// Mostrar archivo seleccionado
+function showDianPdfSelected(filename) {
+    document.getElementById('dian-pdf-drop-zone').classList.add('hidden');
+    document.getElementById('dian-pdf-selected').classList.remove('hidden');
+    document.getElementById('dian-pdf-filename').textContent = filename;
+    document.getElementById('process-dian-pdf-btn').disabled = false;
+}
+
+// Limpiar selección
+function clearDianPdfSelection() {
+    selectedDianPdf = null;
+    document.getElementById('dian-pdf-input').value = '';
+    document.getElementById('dian-pdf-drop-zone').classList.remove('hidden');
+    document.getElementById('dian-pdf-selected').classList.add('hidden');
+    document.getElementById('process-dian-pdf-btn').disabled = true;
+}
+
+// Procesar PDF de DIAN
+async function processDianPdf() {
+    if (!selectedDianPdf) {
+        alert('Por favor selecciona un archivo PDF');
+        return;
+    }
+    
+    const processBtn = document.getElementById('process-dian-pdf-btn');
+    processBtn.disabled = true;
+    
+    document.getElementById('dian-pdf-selected').classList.add('hidden');
+    document.getElementById('dian-pdf-progress').classList.remove('hidden');
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', selectedDianPdf);
+        if (currentCufeId) {
+            formData.append('cufe_id', currentCufeId);
+        }
+        
+        // Subir y procesar PDF
+        const response = await fetch('/invoices/api/cufe/process-dian-pdf', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ PDF procesado exitosamente\n\nFactura importada correctamente');
+            closeUploadDianPdfModal();
+            loadCufeTab();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo procesar el PDF'));
+            document.getElementById('dian-pdf-progress').classList.add('hidden');
+            document.getElementById('dian-pdf-selected').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al procesar el PDF');
+        document.getElementById('dian-pdf-progress').classList.add('hidden');
+        document.getElementById('dian-pdf-selected').classList.remove('hidden');
+    } finally {
+        processBtn.disabled = false;
+    }
+}
+
+// Filtrar por estado
+function filterCufeByStatus(status) {
+    document.getElementById('status-filter-cufe').value = status;
+    applyCufeFilters();
+}
+
+// Aplicar filtros
+function applyCufeFilters() {
+    loadCufeTab();
+}
+
+// Limpiar búsqueda
+function clearCufeSearch() {
+    document.getElementById('search-cufe').value = '';
+    document.getElementById('clear-search-cufe-btn').classList.add('hidden');
+    filterCufeTable('');
+}
+
+// Filtrar tabla localmente
+function filterCufeTable(searchTerm) {
+    const tbody = document.getElementById('cufe-table-body');
+    const rows = tbody.getElementsByTagName('tr');
+    let visibleCount = 0;
+    
+    for (let row of rows) {
+        if (row.cells.length < 6) continue;
+        
+        const cufe = row.cells[1].textContent.toLowerCase();
+        const proveedor = row.cells[2].textContent.toLowerCase();
+        const numero = row.cells[3].textContent.toLowerCase();
+        
+        if (cufe.includes(searchTerm.toLowerCase()) || 
+            proveedor.includes(searchTerm.toLowerCase()) || 
+            numero.includes(searchTerm.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+// Abrir DIAN para un CUFE existente
+function openDianForCufe(cufe, cufeId) {
+    currentCufeId = cufeId;
+    const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`;
+    window.open(dianUrl, '_blank');
+    
+    setTimeout(() => {
+        openUploadDianPdfModal(cufe);
+    }, 500);
+}
+
+// Eliminar CUFE
+async function deleteCufe(cufeId) {
+    if (!confirm('¿Estás seguro de eliminar este CUFE?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/invoices/api/cufe/${cufeId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ CUFE eliminado correctamente');
+            loadCufeTab();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo eliminar'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el CUFE');
+    }
+}
+
+// Ver detalle de factura procesada
+function viewCufeInvoice(invoiceId) {
+    window.location.href = `/invoices/detail/${invoiceId}`;
 }
 </script>

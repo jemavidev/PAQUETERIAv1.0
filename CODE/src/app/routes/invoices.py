@@ -2007,3 +2007,270 @@ async def delete_supplier_invoice(
         return JSONResponse(content={"success": False, "message": "Factura no encontrada"})
     
     return JSONResponse(content={"success": True, "message": "Factura eliminada correctamente"})
+
+
+# ========================================
+# CUFE MANAGEMENT - Gestión de CUFEs
+# ========================================
+
+from app.models.cufe import CufeRecord, CufeStatus as CufeStatusEnum
+from sqlalchemy import func
+
+@router.get("/api/cufe/stats")
+async def get_cufe_stats(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Obtiene estadísticas de CUFEs"""
+    try:
+        total = db.query(func.count(CufeRecord.id)).scalar() or 0
+        pending = db.query(func.count(CufeRecord.id)).filter(
+            CufeRecord.status == CufeStatusEnum.PENDING
+        ).scalar() or 0
+        downloaded = db.query(func.count(CufeRecord.id)).filter(
+            CufeRecord.status == CufeStatusEnum.DOWNLOADED
+        ).scalar() or 0
+        processed = db.query(func.count(CufeRecord.id)).filter(
+            CufeRecord.status == CufeStatusEnum.PROCESSED
+        ).scalar() or 0
+        
+        return JSONResponse(content={
+            "total": total,
+            "pending": pending,
+            "downloaded": downloaded,
+            "processed": processed
+        })
+    except Exception as e:
+        logger.error(f"Error obteniendo estadísticas de CUFE: {e}", exc_info=True)
+        return JSONResponse(content={
+            "total": 0,
+            "pending": 0,
+            "downloaded": 0,
+            "processed": 0
+        })
+
+
+@router.get("/api/cufe/list")
+async def get_cufe_list(
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+    limit: int = Query(50, ge=1, le=100),
+    status: Optional[str] = None,
+):
+    """Lista de CUFEs registrados"""
+    try:
+        query = db.query(CufeRecord).order_by(CufeRecord.created_at.desc())
+        
+        if status:
+            try:
+                status_enum = CufeStatusEnum(status)
+                query = query.filter(CufeRecord.status == status_enum)
+            except ValueError:
+                pass
+        
+        cufes = query.limit(limit).all()
+        
+        return JSONResponse(content={
+            "success": True,
+            "cufes": [
+                {
+                    "id": cufe.id,
+                    "cufe": cufe.cufe,
+                    "status": cufe.status.value if cufe.status else "pending",
+                    "supplier_name": cufe.supplier_name,
+                    "invoice_number": cufe.invoice_number,
+                    "invoice_id": cufe.invoice_id,
+                    "created_at": cufe.created_at.isoformat() if cufe.created_at else None,
+                    "error_message": cufe.error_message
+                }
+                for cufe in cufes
+            ]
+        })
+    except Exception as e:
+        logger.error(f"Error listando CUFEs: {e}", exc_info=True)
+        return JSONResponse(content={"success": False, "message": str(e), "cufes": []})
+
+
+@router.post("/api/cufe/register")
+async def register_cufe(
+    request: Request,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Registra un nuevo CUFE en el sistema"""
+    try:
+        data = await request.json()
+        cufe = data.get('cufe', '').strip()
+        
+        if not cufe:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "CUFE es requerido"}
+            )
+        
+        if len(cufe) != 96:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "CUFE debe tener 96 caracteres"}
+            )
+        
+        # Verificar si ya existe
+        existing = db.query(CufeRecord).filter(CufeRecord.cufe == cufe).first()
+        if existing:
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "success": False,
+                    "message": "Este CUFE ya está registrado",
+                    "cufe_id": existing.id
+                }
+            )
+        
+        # Crear registro
+        cufe_record = CufeRecord(
+            cufe=cufe,
+            status=CufeStatusEnum.PENDING,
+            created_by=current_user.id
+        )
+        db.add(cufe_record)
+        db.commit()
+        db.refresh(cufe_record)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "CUFE registrado exitosamente",
+            "cufe_id": cufe_record.id,
+            "dian_url": f"https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey={cufe}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error registrando CUFE: {e}", exc_info=True)
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e)}
+        )
+
+
+@router.post("/api/cufe/process-dian-pdf")
+async def process_dian_pdf(
+    file: UploadFile = File(...),
+    cufe_id: Optional[int] = Form(None),
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Procesa el PDF descargado desde la DIAN"""
+    try:
+        # Validar archivo
+        if not file.filename.lower().endswith('.pdf'):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Solo se permiten archivos PDF"}
+            )
+        
+        # Leer contenido
+        content = await file.read()
+        
+        # Extraer datos del PDF
+        extractor = PDFExtractorService()
+        extracted = extractor.extract_from_bytes(content, file.filename)
+        
+        if not extracted.success:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "No se pudieron extraer datos del PDF",
+                    "errors": extracted.errors
+                }
+            )
+        
+        # Actualizar registro de CUFE si existe
+        if cufe_id:
+            cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
+            if cufe_record:
+                cufe_record.status = CufeStatusEnum.PROCESSING
+                cufe_record.supplier_name = extracted.proveedor
+                cufe_record.invoice_number = extracted.numero_documento
+                db.commit()
+        
+        # Guardar factura en el sistema
+        service = InvoiceService(db)
+        
+        # Guardar PDF
+        import hashlib
+        file_hash = hashlib.sha256(content).hexdigest()
+        metadata = {
+            'filename': file.filename,
+            'cufe_cude': extracted.cufe_cude if extracted.cufe_cude else 'unknown',
+            'document_type': extracted.document_type if extracted.document_type else 'unknown'
+        }
+        service.save_pdf(content, file_hash, metadata)
+        
+        # Guardar factura
+        invoice = service.save_invoice(extracted, file_hash)
+        
+        # Actualizar CUFE como procesado
+        if cufe_id and cufe_record:
+            cufe_record.status = CufeStatusEnum.PROCESSED
+            cufe_record.invoice_id = invoice.id
+            db.commit()
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "PDF procesado e importado exitosamente",
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.numero_documento
+        })
+        
+    except Exception as e:
+        logger.error(f"Error procesando PDF de DIAN: {e}", exc_info=True)
+        
+        # Marcar CUFE como error
+        if cufe_id:
+            try:
+                cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
+                if cufe_record:
+                    cufe_record.status = CufeStatusEnum.ERROR
+                    cufe_record.error_message = str(e)
+                    db.commit()
+            except:
+                pass
+        
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e)}
+        )
+
+
+@router.delete("/api/cufe/{cufe_id}")
+async def delete_cufe(
+    cufe_id: int,
+    current_user: User = Depends(get_current_active_user_from_cookies),
+    db: Session = Depends(get_db),
+):
+    """Elimina un registro de CUFE"""
+    try:
+        cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
+        
+        if not cufe_record:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "CUFE no encontrado"}
+            )
+        
+        db.delete(cufe_record)
+        db.commit()
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "CUFE eliminado correctamente"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error eliminando CUFE: {e}", exc_info=True)
+        db.rollback()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e)}
+        )
