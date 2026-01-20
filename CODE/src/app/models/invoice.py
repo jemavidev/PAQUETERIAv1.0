@@ -134,8 +134,9 @@ class Invoice(Base):
     # La relación se define dinámicamente para evitar problemas de orden de carga
     
     # NUEVO: Estados de CUFE y DIAN
-    cufe_status = Column(SQLEnum(CufeStatus, values_callable=lambda x: [e.value for e in x]), default=CufeStatus.EXTRACTED, nullable=True, index=True)
-    dian_status = Column(SQLEnum(DianStatus, values_callable=lambda x: [e.value for e in x]), default=DianStatus.PENDING, nullable=True, index=True)
+    # Nota: Reutilizamos el enum 'cufestatus' existente que tiene: pending, downloading, downloaded, processing, processed, error
+    cufe_status = Column(String(20), default='processed', nullable=True, index=True)  # Usamos String por ahora
+    dian_status = Column(String(20), default='pending', nullable=True, index=True)    # Usamos String por ahora
     dian_pdf_id = Column(Integer, nullable=True, index=True)  # ID del PDF oficial de DIAN
     cufe_source = Column(String(20), nullable=True)  # 'extracted', 'manual', 'dian'
     
