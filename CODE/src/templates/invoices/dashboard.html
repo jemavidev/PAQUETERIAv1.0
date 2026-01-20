@@ -163,7 +163,7 @@ async function loadFacturasTab() {
                                 <span class="copy-text">Copiar</span>
                             </button>
                         </div>
-                    ` : '<span class="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded font-medium">Sin CUFE</span>';
+                    ` : '<span class="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded font-medium flex items-center gap-1"><span>CUFE</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></span>';
                     
                     // Estado con badge - manejar estados vacíos
                     const statusBadge = inv.status ? getStatusBadge(inv.status) : '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Sin estado</span>';
@@ -255,8 +255,8 @@ async function loadFacturasTab() {
 function getStatusBadge(status) {
     const badges = {
         'pending': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>',
-        'no_cufe': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Sin CUFE</span>',
-        'cufe_extracted': '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">CUFE Extraído</span>',
+        'no_cufe': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 flex items-center gap-1 inline-flex"><span>CUFE</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></span>',
+        'cufe_extracted': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 flex items-center gap-1 inline-flex"><span>CUFE</span><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></span>',
         'dian_downloaded': '<span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">DIAN Descargado</span>',
         'processed': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Procesada</span>',
         'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Error</span>',
