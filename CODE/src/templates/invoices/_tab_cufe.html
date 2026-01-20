@@ -563,3 +563,171 @@ function viewCufeInvoice(invoiceId) {
     window.location.href = `/invoices/detail/${invoiceId}`;
 }
 </script>
+
+
+<!-- Modal: Subir PDF DIAN Directo -->
+<div id="upload-dian-pdf-direct-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold">Subir PDF de DIAN</h3>
+            <button onclick="closeUploadDianPdfDirectModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-800">
+                    <strong>Subida directa de PDF</strong>
+                </p>
+                <p class="text-sm text-green-700 mt-2">
+                    Sube el PDF que ya descargaste desde la DIAN. El sistema extraerá automáticamente el CUFE y los datos de la factura.
+                </p>
+            </div>
+            
+            <div id="direct-dian-pdf-drop-zone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-colors hover:border-papyrus-blue cursor-pointer"
+                 ondrop="handleDirectDianPdfDrop(event)" 
+                 ondragover="handleDragOver(event)" 
+                 ondragleave="handleDragLeave(event)">
+                <input type="file" id="direct-dian-pdf-input-direct" accept=".pdf" class="hidden" onchange="handleDirectDianPdfSelect(event)">
+                <label for="direct-dian-pdf-input-direct" class="cursor-pointer">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">Arrastra el PDF aquí o haz clic para seleccionar</p>
+                    <p class="mt-1 text-xs text-gray-500">Solo archivos PDF de la DIAN</p>
+                </label>
+            </div>
+            
+            <div id="direct-dian-pdf-selected" class="hidden">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm font-medium" id="direct-dian-pdf-filename">-</span>
+                    </div>
+                    <button onclick="clearDirectDianPdfSelection()" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="direct-dian-pdf-progress" class="hidden">
+                <div class="flex items-center justify-center gap-2 text-papyrus-blue">
+                    <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm">Procesando PDF...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end gap-2">
+            <button onclick="closeUploadDianPdfDirectModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button onclick="uploadDirectDianPdf()" id="submit-direct-dian-pdf-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Procesar PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========================================
+// Modal: Subir PDF DIAN Directo (sin CUFE previo)
+// ========================================
+function openUploadDianPdfDirectModal() {
+    document.getElementById('upload-dian-pdf-direct-modal').classList.remove('hidden');
+    document.getElementById('direct-dian-pdf-selected').classList.add('hidden');
+    document.getElementById('direct-dian-pdf-drop-zone').classList.remove('hidden');
+    selectedDirectDianPdf = null;
+}
+
+function closeUploadDianPdfDirectModal() {
+    document.getElementById('upload-dian-pdf-direct-modal').classList.add('hidden');
+    selectedDirectDianPdf = null;
+}
+
+let selectedDirectDianPdf = null;
+
+function handleDirectDianPdfSelect(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        selectedDirectDianPdf = file;
+        document.getElementById('direct-dian-pdf-filename').textContent = file.name;
+        document.getElementById('direct-dian-pdf-drop-zone').classList.add('hidden');
+        document.getElementById('direct-dian-pdf-selected').classList.remove('hidden');
+    } else {
+        alert('Por favor selecciona un archivo PDF válido');
+    }
+}
+
+function handleDirectDianPdfDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('border-papyrus-blue', 'bg-blue-50');
+    
+    const file = event.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+        selectedDirectDianPdf = file;
+        document.getElementById('direct-dian-pdf-filename').textContent = file.name;
+        document.getElementById('direct-dian-pdf-drop-zone').classList.add('hidden');
+        document.getElementById('direct-dian-pdf-selected').classList.remove('hidden');
+    } else {
+        alert('Por favor selecciona un archivo PDF válido');
+    }
+}
+
+function clearDirectDianPdfSelection() {
+    selectedDirectDianPdf = null;
+    document.getElementById('direct-dian-pdf-drop-zone').classList.remove('hidden');
+    document.getElementById('direct-dian-pdf-selected').classList.add('hidden');
+    document.getElementById('direct-dian-pdf-input-direct').value = '';
+}
+
+async function uploadDirectDianPdf() {
+    if (!selectedDirectDianPdf) {
+        alert('Por favor selecciona un archivo PDF');
+        return;
+    }
+    
+    const progressDiv = document.getElementById('direct-dian-pdf-progress');
+    const submitBtn = document.getElementById('submit-direct-dian-pdf-btn');
+    
+    try {
+        progressDiv.classList.remove('hidden');
+        submitBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('file', selectedDirectDianPdf);
+        
+        const response = await fetch('/invoices/api/cufe/process-dian-pdf', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ PDF procesado exitosamente\nFactura: ' + result.invoice_number);
+            closeUploadDianPdfDirectModal();
+            loadCufeTab();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo procesar el PDF'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al procesar el PDF');
+    } finally {
+        progressDiv.classList.add('hidden');
+        submitBtn.disabled = false;
+    }
+}
+</script>
