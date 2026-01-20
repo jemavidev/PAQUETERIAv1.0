@@ -1710,17 +1710,6 @@ async def get_cufe_stats(
     })
 
 
-@router.get("/api/cufe/list")
-async def get_cufe_list(
-    current_user: User = Depends(get_current_active_user_from_cookies),
-    db: Session = Depends(get_db),
-    limit: int = 10,
-):
-    """Obtiene lista de CUFEs para el dashboard"""
-    # Por ahora retornar lista vacía ya que CUFE está en desarrollo
-    return JSONResponse(content={"cufes": []})
-
-
 @router.get("/api/products/stats")
 async def get_products_stats(
     current_user: User = Depends(get_current_active_user_from_cookies),
