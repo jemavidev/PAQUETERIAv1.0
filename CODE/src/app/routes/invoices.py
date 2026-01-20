@@ -2160,6 +2160,10 @@ async def process_dian_pdf(
     db: Session = Depends(get_db),
 ):
     """Procesa el PDF descargado desde la DIAN"""
+    import tempfile
+    import os
+    
+    temp_path = None
     try:
         # Validar archivo
         if not file.filename.lower().endswith('.pdf'):
@@ -2171,21 +2175,27 @@ async def process_dian_pdf(
         # Leer contenido
         content = await file.read()
         
+        # Guardar temporalmente para extraer datos
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            temp_file.write(content)
+            temp_path = temp_file.name
+        
         # Extraer datos del PDF
         extractor = PDFExtractorService()
-        extracted = extractor.extract_from_bytes(content, file.filename)
+        extracted, warnings = extractor.extract_from_pdf(temp_path, file.filename)
         
-        if not extracted.success:
+        if not extracted or not extracted.proveedor:
             return JSONResponse(
                 status_code=400,
                 content={
                     "success": False,
                     "message": "No se pudieron extraer datos del PDF",
-                    "errors": extracted.errors
+                    "warnings": [w.message for w in warnings] if warnings else []
                 }
             )
         
         # Actualizar registro de CUFE si existe
+        cufe_record = None
         if cufe_id:
             cufe_record = db.query(CufeRecord).filter(CufeRecord.id == cufe_id).first()
             if cufe_record:
@@ -2241,6 +2251,14 @@ async def process_dian_pdf(
             status_code=500,
             content={"success": False, "message": str(e)}
         )
+    
+    finally:
+        # Limpiar archivo temporal
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
 
 
 @router.delete("/api/cufe/{cufe_id}")
