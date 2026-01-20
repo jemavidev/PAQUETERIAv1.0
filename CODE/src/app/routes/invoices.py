@@ -2207,18 +2207,23 @@ async def process_dian_pdf(
         # Guardar factura en el sistema
         service = InvoiceService(db)
         
-        # Guardar PDF
+        # Guardar PDF en S3
         import hashlib
         file_hash = hashlib.sha256(content).hexdigest()
         metadata = {
             'filename': file.filename,
             'cufe_cude': extracted.cufe_cude if extracted.cufe_cude else 'unknown',
-            'document_type': extracted.document_type if extracted.document_type else 'unknown'
+            'document_type': str(extracted.document_type) if extracted.document_type else 'unknown'
         }
         service.save_pdf(content, file_hash, metadata)
         
-        # Guardar factura
-        invoice = service.save_invoice(extracted, file_hash)
+        # Guardar factura (pasando user_id y file_content correctamente)
+        invoice = service.save_invoice(
+            data=extracted,
+            user_id=current_user.id,
+            file_content=content,
+            replace_existing=False
+        )
         
         # Actualizar CUFE como procesado
         if cufe_id and cufe_record:
