@@ -443,33 +443,6 @@ async function saveInvoiceChanges(invoiceId) {
     }
 }
 
-async function reextractInvoice(invoiceId) {
-    if (!confirm('¿Re-extraer datos del PDF? Esto sobrescribirá los datos actuales.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/invoices/api/supplier-invoices/${invoiceId}/reextract`, {
-            method: 'POST'
-        });
-        
-        if (!response.ok) throw new Error('Error re-extrayendo datos');
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert(`✅ Datos re-extraídos correctamente\nCalidad: ${Math.round(result.extraction_quality * 100)}%`);
-            closeDetailModal();
-            loadFacturasTab();
-        } else {
-            alert('Error: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al re-extraer datos');
-    }
-}
-
 function viewPdf(invoiceId) {
     window.open(`/invoices/api/supplier-invoices/${invoiceId}/pdf`, '_blank');
 }
