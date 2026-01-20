@@ -27,7 +27,7 @@ class CufeRecord(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     cufe = Column(String(96), unique=True, nullable=False, index=True)
-    status = Column(SQLEnum(CufeStatus), default=CufeStatus.PENDING, nullable=False)
+    status = Column(SQLEnum(CufeStatus, values_callable=lambda x: [e.value for e in x]), default=CufeStatus.PENDING, nullable=False)
     
     # Información extraída
     supplier_name = Column(String(255), nullable=True)
