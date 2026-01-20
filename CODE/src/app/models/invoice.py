@@ -29,6 +29,25 @@ class ImportStatus(enum.Enum):
     REPLACED = "replaced"
 
 
+class CufeStatus(enum.Enum):
+    """Estado del CUFE en la factura"""
+    EXTRACTED = "extracted"      # CUFE extraído del PDF proveedor
+    MANUAL = "manual"             # CUFE agregado manualmente
+    VALIDATED = "validated"       # CUFE validado con archivo DIAN
+    MISSING = "missing"           # Sin CUFE
+    ERROR = "error"               # Error al extraer CUFE
+
+
+class DianStatus(enum.Enum):
+    """Estado del archivo DIAN"""
+    PENDING = "pending"           # Pendiente de obtener de DIAN
+    DOWNLOADING = "downloading"   # Descargando de DIAN
+    DOWNLOADED = "downloaded"     # PDF DIAN descargado
+    PROCESSED = "processed"       # PDF DIAN procesado
+    ERROR = "error"               # Error al procesar DIAN
+    NOT_REQUIRED = "not_required" # No requiere archivo DIAN
+
+
 class IrregularityType(enum.Enum):
     """Tipos de irregularidades detectadas"""
     PRECIO_ANOMALO = "precio_anomalo"
@@ -114,6 +133,12 @@ class Invoice(Base):
     supplier_invoice_id = Column(Integer, nullable=True, index=True)
     # La relación se define dinámicamente para evitar problemas de orden de carga
     
+    # NUEVO: Estados de CUFE y DIAN
+    cufe_status = Column(SQLEnum(CufeStatus, values_callable=lambda x: [e.value for e in x]), default=CufeStatus.EXTRACTED, nullable=True, index=True)
+    dian_status = Column(SQLEnum(DianStatus, values_callable=lambda x: [e.value for e in x]), default=DianStatus.PENDING, nullable=True, index=True)
+    dian_pdf_id = Column(Integer, nullable=True, index=True)  # ID del PDF oficial de DIAN
+    cufe_source = Column(String(20), nullable=True)  # 'extracted', 'manual', 'dian'
+    
     # Totales (en pesos colombianos, sin decimales)
     subtotal = Column(Integer, default=0)
     descuento = Column(Integer, default=0)
@@ -161,6 +186,36 @@ class Invoice(Base):
     def unresolved_irregularities_count(self) -> int:
         """Cuenta irregularidades sin resolver"""
         return sum(1 for irr in self.irregularities if not irr.resuelto)
+    
+    @property
+    def has_dian_pdf(self) -> bool:
+        """Verifica si tiene PDF oficial de DIAN"""
+        return self.dian_pdf_id is not None or self.dian_status == DianStatus.PROCESSED
+    
+    @property
+    def cufe_status_display(self) -> str:
+        """Texto amigable del estado CUFE"""
+        status_map = {
+            CufeStatus.EXTRACTED: "CUFE Extraído",
+            CufeStatus.MANUAL: "CUFE Manual",
+            CufeStatus.VALIDATED: "CUFE Validado",
+            CufeStatus.MISSING: "Sin CUFE",
+            CufeStatus.ERROR: "Error CUFE"
+        }
+        return status_map.get(self.cufe_status, "Desconocido")
+    
+    @property
+    def dian_status_display(self) -> str:
+        """Texto amigable del estado DIAN"""
+        status_map = {
+            DianStatus.PENDING: "Pendiente DIAN",
+            DianStatus.DOWNLOADING: "Descargando",
+            DianStatus.DOWNLOADED: "Descargado",
+            DianStatus.PROCESSED: "Procesado DIAN",
+            DianStatus.ERROR: "Error DIAN",
+            DianStatus.NOT_REQUIRED: "No Requerido"
+        }
+        return status_map.get(self.dian_status, "Desconocido")
 
 
 class InvoiceItem(Base):
