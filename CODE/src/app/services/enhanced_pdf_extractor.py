@@ -343,7 +343,7 @@ class EnhancedPDFExtractor:
             unique = {}
             for date, conf, source in candidates:
                 date_key = date.strftime('%Y-%m-%d')
-                if date_key not in unique or conf > unique[date_key][0]:
+                if date_key not in unique or conf > unique[date_key][1]:
                     unique[date_key] = (date, conf, source)
             
             sorted_candidates = sorted(
