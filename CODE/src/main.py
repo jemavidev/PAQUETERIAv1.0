@@ -45,7 +45,7 @@ from src.app.routes.config import router as config_router  # ✨ Nuevo: Endpoint
 from src.app.routes.customer_portal import router as customer_portal_api_router  # ✨ Portal de Clientes API
 from src.app.routes.customer_portal_views import router as customer_portal_views_router  # ✨ Portal de Clientes Vistas
 from src.app.routes.debug_portal import router as debug_portal_router  # ✨ Debug Portal
-from src.app.routes.invoices import router as invoices_router  # ✨ Facturas CUFE
+from src.app.routes.invoices_mockup import router as invoices_router  # ✨ Facturas CUFE (MOCKUP)
 from src.app.routes.products import router as products_router  # ✨ Productos
 from src.app.routes.environment import router as environment_router  # ✨ Información del entorno
 from src.app.routes.sync_staging import router as sync_staging_router  # ✨ Sincronización staging

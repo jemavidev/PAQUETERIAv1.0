@@ -42,23 +42,33 @@ templates = Jinja2Templates(directory="/app/src/templates", auto_reload=True)
 async def invoices_dashboard(
     request: Request,
     current_user: User = Depends(get_current_active_user_from_cookies),
-    db: Session = Depends(get_db),
 ):
-    """Dashboard principal de facturas"""
+    """Dashboard principal de facturas - MOCKUP (sin lógica de backend)"""
     context = get_auth_context_from_request(request)
     context["user"] = current_user
     
-    service = InvoiceService(db)
-    stats = service.get_dashboard_stats()
-    suppliers = service.get_all_suppliers()
+    # Datos estáticos de ejemplo (mockup)
+    context["stats"] = {
+        "total_facturas": 6,
+        "procesadas": 0,
+        "pendientes": 5,
+        "total_valor": 0
+    }
     
-    context["stats"] = stats
-    context["suppliers"] = suppliers
-    context["export_columns"] = [
-        {"value": col.value, "label": COLUMN_DISPLAY_NAMES[col]}
-        for col in ExportableColumn
+    context["suppliers"] = [
+        {"id": 1, "nit": "900123456", "razon_social": "PROVEEDOR EJEMPLO 1"},
+        {"id": 2, "nit": "900654321", "razon_social": "PROVEEDOR EJEMPLO 2"},
+        {"id": 3, "nit": "900111222", "razon_social": "RIAL S A"},
     ]
-    context["default_columns"] = [col.value for col in DEFAULT_EXPORT_COLUMNS]
+    
+    context["export_columns"] = [
+        {"value": "proveedor", "label": "Proveedor"},
+        {"value": "fecha", "label": "Fecha"},
+        {"value": "numero", "label": "Número"},
+        {"value": "cufe", "label": "CUFE"},
+        {"value": "total", "label": "Total"},
+    ]
+    context["default_columns"] = ["proveedor", "fecha", "numero", "cufe"]
     
     return templates.TemplateResponse("invoices/dashboard.html", context)
 
@@ -68,7 +78,7 @@ async def upload_page(
     request: Request,
     current_user: User = Depends(get_current_active_user_from_cookies),
 ):
-    """Página de carga de PDF"""
+    """Página de carga de PDF - MOCKUP (sin lógica de backend)"""
     context = get_auth_context_from_request(request)
     context["user"] = current_user
     return templates.TemplateResponse("invoices/upload.html", context)
@@ -78,6 +88,7 @@ async def upload_page(
 async def invoices_list(
     request: Request,
     current_user: User = Depends(get_current_active_user_from_cookies),
+):
     db: Session = Depends(get_db),
     page: int = 1,
     supplier: str = None,
