@@ -54,7 +54,7 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./CODE/.env
+      - ./.env.staging
     environment:
       - TZ=America/Bogota
       - PYTHONUNBUFFERED=1

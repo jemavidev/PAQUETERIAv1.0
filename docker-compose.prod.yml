@@ -36,7 +36,7 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./CODE/.env
+      - ./.env.production
     environment:
       - TZ=America/Bogota
       - PYTHONUNBUFFERED=1
@@ -78,7 +78,7 @@ services:
       app:
         condition: service_started
     env_file:
-      - ./CODE/.env
+      - ./.env.production
     environment:
       - TZ=America/Bogota
       - ENVIRONMENT=production
@@ -113,7 +113,7 @@ services:
       app:
         condition: service_started
     env_file:
-      - ./CODE/.env
+      - ./.env.production
     environment:
       - TZ=America/Bogota
       - ENVIRONMENT=production
