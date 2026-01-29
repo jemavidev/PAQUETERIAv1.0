@@ -83,6 +83,9 @@ services:
       # Datos persistentes
       - uploads_staging_data:/app/uploads
       - logs_staging_data:/app/logs
+      # Socket de Docker para sincronización
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
     command: >
       sh -c "mkdir -p /app/uploads && 
              cd /app && 
