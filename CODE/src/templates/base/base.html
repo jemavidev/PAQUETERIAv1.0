@@ -435,19 +435,16 @@
                             </div>
                         </div>
                         
-                        {# Botón de Sincronización (solo en staging) #}
+                        {# Botón de Sincronización (DESHABILITADO - solo mockup visual) #}
                         <div id="sync-button-container" class="hidden">
                             <button id="sync-button" 
-                                    class="group relative flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 border-yellow-400 hover:from-yellow-100 hover:to-yellow-200 hover:border-yellow-500 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Sincronizar datos de producción a staging">
-                                <svg id="sync-icon" class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    disabled
+                                    class="group relative flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
+                                    title="Sincronización deshabilitada (solo mockup visual)">
+                                <svg id="sync-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                 </svg>
                                 <span id="sync-text" class="font-bold">Staging</span>
-                                <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-                                </span>
                             </button>
                         </div>
                     </div>
@@ -1577,126 +1574,94 @@
             }
         });
         
-        // Configurar el botón de sincronización
+        // Configurar el botón de sincronización (DESHABILITADO)
         function setupSyncButton() {
             const syncButton = document.getElementById('sync-button');
-            const syncIcon = document.getElementById('sync-icon');
-            const syncText = document.getElementById('sync-text');
             
             if (!syncButton) return;
             
-            // Verificar estado al cargar
-            checkSyncStatus();
+            // Botón deshabilitado permanentemente - solo mockup visual
+            syncButton.disabled = true;
+            syncButton.title = 'Sincronización deshabilitada (solo mockup visual)';
             
-            // Click en el botón
-            syncButton.addEventListener('click', async function() {
-                if (syncButton.disabled) return;
-                
-                if (!confirm('¿Deseas sincronizar los datos de producción a staging?\n\nEsto sobrescribirá los datos actuales de staging.')) {
-                    return;
-                }
-                
-                try {
-                    syncButton.disabled = true;
-                    syncIcon.classList.add('animate-spin');
-                    syncText.textContent = 'Iniciando...';
-                    
-                    const response = await fetch('/api/staging/sync', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        pollSyncStatus();
-                    } else {
-                        throw new Error(result.detail || 'Error al iniciar sincronización');
-                    }
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error al iniciar sincronización: ' + error.message);
-                    syncButton.disabled = false;
-                    syncIcon.classList.remove('animate-spin');
-                    syncText.textContent = 'Sincronizar';
-                }
+            // Mostrar alerta si alguien intenta hacer clic
+            syncButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('⚠️ Funcionalidad deshabilitada\n\nLa sincronización está deshabilitada en esta versión mockup.\nEsta es solo una vista de prototipo visual.');
             });
         }
         
         // Verificar estado de sincronización
-        async function checkSyncStatus() {
-            try {
-                const response = await fetch('/api/staging/sync/status');
-                const status = await response.json();
-                
-                const syncButton = document.getElementById('sync-button');
-                const syncIcon = document.getElementById('sync-icon');
-                const syncText = document.getElementById('sync-text');
-                
-                if (!syncButton) return;
-                
-                if (status.is_running) {
-                    syncButton.disabled = true;
-                    syncIcon.classList.add('animate-spin');
-                    syncText.textContent = `Sincronizando... ${status.progress}%`;
-                    // Continuar polling
-                    setTimeout(checkSyncStatus, 2000);
-                } else {
-                    syncButton.disabled = false;
-                    syncIcon.classList.remove('animate-spin');
-                    syncText.textContent = 'Sincronizar';
-                    
-                    if (status.last_sync) {
-                        const lastSync = new Date(status.last_sync);
-                        syncButton.title = `Última sincronización: ${lastSync.toLocaleString()}`;
-                    }
-                }
-            } catch (error) {
-                console.error('Error verificando estado:', error);
-            }
-        }
-        
-        // Polling del estado durante sincronización
-        function pollSyncStatus() {
-            const interval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/staging/sync/status');
-                    const status = await response.json();
-                    
-                    const syncButton = document.getElementById('sync-button');
-                    const syncIcon = document.getElementById('sync-icon');
-                    const syncText = document.getElementById('sync-text');
-                    
-                    if (!syncButton) {
-                        clearInterval(interval);
-                        return;
-                    }
-                    
-                    if (status.is_running) {
-                        syncText.textContent = `Sincronizando... ${status.progress}%`;
-                    } else {
-                        clearInterval(interval);
-                        syncButton.disabled = false;
-                        syncIcon.classList.remove('animate-spin');
-                        syncText.textContent = 'Sincronizar';
-                        
-                        if (status.last_result === 'success') {
-                            alert('✅ Sincronización completada exitosamente.\n\nLa página se recargará para aplicar los cambios.');
-                            window.location.reload();
-                        } else if (status.last_result && status.last_result.startsWith('error')) {
-                            alert('❌ Error en la sincronización:\n\n' + status.last_result);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error en polling:', error);
-                    clearInterval(interval);
-                }
-            }, 2000); // Verificar cada 2 segundos
-        }
-    </script>
-</body>
+// DESHABILITADO:         async function checkSyncStatus() {
+// DESHABILITADO:             try {
+// DESHABILITADO:                 const response = await fetch('/api/staging/sync/status');
+// DESHABILITADO:                 const status = await response.json();
+// DESHABILITADO:                 
+// DESHABILITADO:                 const syncButton = document.getElementById('sync-button');
+// DESHABILITADO:                 const syncIcon = document.getElementById('sync-icon');
+// DESHABILITADO:                 const syncText = document.getElementById('sync-text');
+// DESHABILITADO:                 
+// DESHABILITADO:                 if (!syncButton) return;
+// DESHABILITADO:                 
+// DESHABILITADO:                 if (status.is_running) {
+// DESHABILITADO:                     syncButton.disabled = true;
+// DESHABILITADO:                     syncIcon.classList.add('animate-spin');
+// DESHABILITADO:                     syncText.textContent = `Sincronizando... ${status.progress}%`;
+// DESHABILITADO:                     // Continuar polling
+// DESHABILITADO:                     setTimeout(checkSyncStatus, 2000);
+// DESHABILITADO:                 } else {
+// DESHABILITADO:                     syncButton.disabled = false;
+// DESHABILITADO:                     syncIcon.classList.remove('animate-spin');
+// DESHABILITADO:                     syncText.textContent = 'Sincronizar';
+// DESHABILITADO:                     
+// DESHABILITADO:                     if (status.last_sync) {
+// DESHABILITADO:                         const lastSync = new Date(status.last_sync);
+// DESHABILITADO:                         syncButton.title = `Última sincronización: ${lastSync.toLocaleString()}`;
+// DESHABILITADO:                     }
+// DESHABILITADO:                 }
+// DESHABILITADO:             } catch (error) {
+// DESHABILITADO:                 console.error('Error verificando estado:', error);
+// DESHABILITADO:             }
+// DESHABILITADO:         }
+// DESHABILITADO:         
+// DESHABILITADO:         // Polling del estado durante sincronización
+// DESHABILITADO:         function pollSyncStatus() {
+// DESHABILITADO:             const interval = setInterval(async () => {
+// DESHABILITADO:                 try {
+// DESHABILITADO:                     const response = await fetch('/api/staging/sync/status');
+// DESHABILITADO:                     const status = await response.json();
+// DESHABILITADO:                     
+// DESHABILITADO:                     const syncButton = document.getElementById('sync-button');
+// DESHABILITADO:                     const syncIcon = document.getElementById('sync-icon');
+// DESHABILITADO:                     const syncText = document.getElementById('sync-text');
+// DESHABILITADO:                     
+// DESHABILITADO:                     if (!syncButton) {
+// DESHABILITADO:                         clearInterval(interval);
+// DESHABILITADO:                         return;
+// DESHABILITADO:                     }
+// DESHABILITADO:                     
+// DESHABILITADO:                     if (status.is_running) {
+// DESHABILITADO:                         syncText.textContent = `Sincronizando... ${status.progress}%`;
+// DESHABILITADO:                     } else {
+// DESHABILITADO:                         clearInterval(interval);
+// DESHABILITADO:                         syncButton.disabled = false;
+// DESHABILITADO:                         syncIcon.classList.remove('animate-spin');
+// DESHABILITADO:                         syncText.textContent = 'Sincronizar';
+// DESHABILITADO:                         
+// DESHABILITADO:                         if (status.last_result === 'success') {
+// DESHABILITADO:                             alert('✅ Sincronización completada exitosamente.\n\nLa página se recargará para aplicar los cambios.');
+// DESHABILITADO:                             window.location.reload();
+// DESHABILITADO:                         } else if (status.last_result && status.last_result.startsWith('error')) {
+// DESHABILITADO:                             alert('❌ Error en la sincronización:\n\n' + status.last_result);
+// DESHABILITADO:                         }
+// DESHABILITADO:                     }
+// DESHABILITADO:                 } catch (error) {
+// DESHABILITADO:                     console.error('Error en polling:', error);
+// DESHABILITADO:                     clearInterval(interval);
+// DESHABILITADO:                 }
+// DESHABILITADO:             }, 2000); // Verificar cada 2 segundos
+// DESHABILITADO:         }
+// DESHABILITADO:     </script>
+// DESHABILITADO: </body>
 
 </html>
