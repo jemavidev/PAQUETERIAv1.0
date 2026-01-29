@@ -478,6 +478,53 @@ health_check() {
     return 1
 }
 
+copy_env_file() {
+    log_step "Copiando archivo .env al servidor..."
+    
+    # Determinar qué archivo .env copiar según el entorno
+    local env_file=""
+    case $ENV_NAME in
+        staging)
+            env_file=".env.staging"
+            ;;
+        papyrus)
+            env_file=".env.production"
+            ;;
+        localhost)
+            env_file=".env"
+            ;;
+        *)
+            env_file=".env.${ENV_NAME}"
+            ;;
+    esac
+    
+    # Verificar que el archivo existe localmente
+    if [ ! -f "$PROJECT_ROOT/$env_file" ]; then
+        log_error "Archivo $env_file no encontrado en el proyecto local"
+        return 1
+    fi
+    
+    # Copiar el archivo al servidor
+    if [ "$ENV_TYPE" = "remote" ]; then
+        log_info "Copiando $env_file a $SSH_HOST:$PROJECT_PATH/$env_file"
+        scp $SSH_OPTIONS "$PROJECT_ROOT/$env_file" "$SSH_USER@$SSH_HOST:$PROJECT_PATH/$env_file"
+        
+        if [ $? -eq 0 ]; then
+            log_success "Archivo $env_file copiado exitosamente"
+            
+            # Verificar que el archivo existe en el servidor
+            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "ls -lh $PROJECT_PATH/$env_file"
+        else
+            log_error "Error al copiar archivo $env_file"
+            return 1
+        fi
+    else
+        log_info "Entorno local, no es necesario copiar archivo .env"
+    fi
+    
+    return 0
+}
+
 deploy_full() {
     local start_time=$(date +%s)
     
@@ -651,30 +698,36 @@ deploy_full() {
         fi
     fi
     
+    # Paso 1.5: Copiar archivo .env al servidor (solo para entornos remotos)
+    if [ "$ENV_TYPE" = "remote" ]; then
+        echo -e "${CYAN}[1.5/7]${NC} Copiando archivo .env al servidor"
+        copy_env_file
+    fi
+    
     # Paso 2: Backup
     if [ "$BACKUP_AUTO_BEFORE_DEPLOY" = true ]; then
-        echo -e "${CYAN}[2/6]${NC} Backup"
+        echo -e "${CYAN}[2/7]${NC} Backup"
         create_backup
     fi
     
     # Paso 3: Docker operations
-    echo -e "${CYAN}[3/6]${NC} Docker Operations"
+    echo -e "${CYAN}[3/7]${NC} Docker Operations"
     [ "$DOCKER_PULL_BEFORE_DEPLOY" = true ] && docker_operation "pull"
     [ "$DOCKER_REBUILD_ON_DEPLOY" = true ] && docker_operation "rebuild"
     docker_operation "up"
     
     # Paso 4: Health check
-    echo -e "${CYAN}[4/6]${NC} Health Check"
+    echo -e "${CYAN}[4/7]${NC} Health Check"
     health_check
     
     # Paso 5: Migraciones
     if [ "$MIGRATIONS_ENABLED" = true ] && [ "$MIGRATIONS_AUTO" = true ]; then
-        echo -e "${CYAN}[5/6]${NC} Migraciones"
+        echo -e "${CYAN}[5/7]${NC} Migraciones"
         execute_command "$MIGRATIONS_COMMAND" "Ejecutando migraciones..."
     fi
     
     # Paso 6: Post-deploy hook
-    echo -e "${CYAN}[6/6]${NC} Finalizando"
+    echo -e "${CYAN}[6/7]${NC} Finalizando"
     if [ -n "$POST_DEPLOY_HOOK" ] && [ -f "$PROJECT_ROOT/$POST_DEPLOY_HOOK" ]; then
         bash "$PROJECT_ROOT/$POST_DEPLOY_HOOK"
     fi
