@@ -8,12 +8,13 @@ ENV PYTHONPATH=/app:/app/src
 # Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema (incluyendo Node.js para Tailwind)
+# Instalar dependencias del sistema (incluyendo Node.js para Tailwind y Docker CLI)
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     nodejs \
     npm \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements

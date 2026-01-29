@@ -47,6 +47,8 @@ from src.app.routes.customer_portal_views import router as customer_portal_views
 from src.app.routes.debug_portal import router as debug_portal_router  # ✨ Debug Portal
 from src.app.routes.invoices import router as invoices_router  # ✨ Facturas CUFE
 from src.app.routes.products import router as products_router  # ✨ Productos
+from src.app.routes.environment import router as environment_router  # ✨ Información del entorno
+from src.app.routes.sync_staging import router as sync_staging_router  # ✨ Sincronización staging
 from src.app.middleware.rate_limiting import limiter, rate_limit_exceeded_handler
 from src.app.middleware.error_handler import setup_error_handlers
 from src.app.middleware.auth_middleware import AuthMiddleware  # Middleware refactorizado v2
@@ -255,6 +257,8 @@ app.include_router(customer_portal_views_router, tags=["Portal de Clientes - Vis
 app.include_router(debug_portal_router, tags=["Debug Portal"])  # ✨ Debug Portal
 app.include_router(invoices_router, prefix="/invoices", tags=["Facturas CUFE"])  # ✨ Facturas CUFE
 app.include_router(products_router, tags=["Productos"])  # ✨ Productos
+app.include_router(environment_router, tags=["Entorno"])  # ✨ Información del entorno
+app.include_router(sync_staging_router, tags=["Staging Sync"])  # ✨ Sincronización staging
 
 # Endpoint de health check
 @app.get("/health")

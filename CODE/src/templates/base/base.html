@@ -418,14 +418,39 @@
                 {# Logo, Nombre y Enlaces de Navegación - Todo al lado izquierdo #}
                 <div class="flex items-center space-x-6">
                     {# Logo y Nombre de la Aplicación #}
-                    <a href="/announce"
-                        class="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
-                        <div class="w-10 h-10 flex items-center justify-center">
-                            <img src="/static/images/favicon.png" alt="Logo EL CLUB - Colibrí"
-                                class="w-10 h-10 object-contain favicon-no-shadow">
+                    <div class="flex items-center space-x-3">
+                        <a href="/announce"
+                            class="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
+                            <div class="w-10 h-10 flex items-center justify-center">
+                                <img src="/static/images/favicon.png" alt="Logo EL CLUB - Colibrí"
+                                    class="w-10 h-10 object-contain favicon-no-shadow">
+                            </div>
+                            <div class="text-xl font-bold text-gray-800">PAQUETEX</div>
+                        </a>
+                        
+                        {# Indicador de Entorno #}
+                        <div id="env-indicator" class="hidden">
+                            <div class="relative">
+                                <span id="env-badge" class="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold rounded-full border"></span>
+                            </div>
                         </div>
-                        <div class="text-xl font-bold text-gray-800">PAQUETEX</div>
-                    </a>
+                        
+                        {# Botón de Sincronización (solo en staging) #}
+                        <div id="sync-button-container" class="hidden">
+                            <button id="sync-button" 
+                                    class="group relative flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 border-yellow-400 hover:from-yellow-100 hover:to-yellow-200 hover:border-yellow-500 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Sincronizar datos de producción a staging">
+                                <svg id="sync-icon" class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span id="sync-text" class="font-bold">Staging</span>
+                                <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
                     {# Enlaces de Navegación para Usuarios Autenticados #}
                     <div class="hidden md:flex items-center space-x-1">
@@ -1481,6 +1506,195 @@
         // Función para mostrar advertencias
         function showWarningMessage(message) {
             showWarning('Advertencia', message, { autoClose: true, closeDelay: 5000 });
+        }
+    </script>
+
+    {# Script para cargar el indicador de entorno #}
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                // Agregar timestamp para evitar caché
+                const response = await fetch('/api/environment?v=' + Date.now());
+                if (response.ok) {
+                    const data = await response.json();
+                    const indicator = document.getElementById('env-indicator');
+                    const badge = document.getElementById('env-badge');
+                    const syncButtonContainer = document.getElementById('sync-button-container');
+                    
+                    if (indicator && badge) {
+                        // Configurar colores según el entorno
+                        let bgColor, textColor, borderColor;
+                        
+                        if (data.color === 'green') {
+                            // Producción - Verde
+                            bgColor = 'bg-green-100';
+                            textColor = 'text-green-800';
+                            borderColor = 'border-green-300';
+                        } else if (data.color === 'yellow') {
+                            // Staging - Amarillo (solo indicador visual, sin texto)
+                            bgColor = 'bg-yellow-100';
+                            textColor = 'text-yellow-800';
+                            borderColor = 'border-yellow-300';
+                        } else {
+                            // Desarrollo - Rojo
+                            bgColor = 'bg-red-100';
+                            textColor = 'text-red-800';
+                            borderColor = 'border-red-300';
+                        }
+                        
+                        // Aplicar estilos
+                        badge.className = `inline-flex items-center justify-center px-2 py-1 text-xs font-semibold rounded-full border ${bgColor} ${textColor} ${borderColor}`;
+                        
+                        // Solo mostrar texto si NO es staging
+                        if (data.environment === 'staging') {
+                            // En staging: mostrar solo un punto indicador con pulso
+                            badge.className = `relative inline-flex h-3 w-3`;
+                            badge.innerHTML = `
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border-2 border-yellow-600"></span>
+                            `;
+                            badge.title = `Entorno: Staging | Base de datos: ${data.database}`;
+                        } else {
+                            badge.textContent = data.label;
+                            badge.title = `Base de datos: ${data.database}`;
+                        }
+                        
+                        // SIEMPRE mostrar el indicador
+                        indicator.classList.remove('hidden');
+                        
+                        // Mostrar botón de sincronización solo en staging
+                        if (data.environment === 'staging' && syncButtonContainer) {
+                            syncButtonContainer.classList.remove('hidden');
+                            setupSyncButton();
+                        }
+                        
+                        // Log para debug
+                        console.log('🔍 Entorno detectado:', data);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error cargando indicador de entorno:', error);
+            }
+        });
+        
+        // Configurar el botón de sincronización
+        function setupSyncButton() {
+            const syncButton = document.getElementById('sync-button');
+            const syncIcon = document.getElementById('sync-icon');
+            const syncText = document.getElementById('sync-text');
+            
+            if (!syncButton) return;
+            
+            // Verificar estado al cargar
+            checkSyncStatus();
+            
+            // Click en el botón
+            syncButton.addEventListener('click', async function() {
+                if (syncButton.disabled) return;
+                
+                if (!confirm('¿Deseas sincronizar los datos de producción a staging?\n\nEsto sobrescribirá los datos actuales de staging.')) {
+                    return;
+                }
+                
+                try {
+                    syncButton.disabled = true;
+                    syncIcon.classList.add('animate-spin');
+                    syncText.textContent = 'Iniciando...';
+                    
+                    const response = await fetch('/api/staging/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        pollSyncStatus();
+                    } else {
+                        throw new Error(result.detail || 'Error al iniciar sincronización');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al iniciar sincronización: ' + error.message);
+                    syncButton.disabled = false;
+                    syncIcon.classList.remove('animate-spin');
+                    syncText.textContent = 'Sincronizar';
+                }
+            });
+        }
+        
+        // Verificar estado de sincronización
+        async function checkSyncStatus() {
+            try {
+                const response = await fetch('/api/staging/sync/status');
+                const status = await response.json();
+                
+                const syncButton = document.getElementById('sync-button');
+                const syncIcon = document.getElementById('sync-icon');
+                const syncText = document.getElementById('sync-text');
+                
+                if (!syncButton) return;
+                
+                if (status.is_running) {
+                    syncButton.disabled = true;
+                    syncIcon.classList.add('animate-spin');
+                    syncText.textContent = `Sincronizando... ${status.progress}%`;
+                    // Continuar polling
+                    setTimeout(checkSyncStatus, 2000);
+                } else {
+                    syncButton.disabled = false;
+                    syncIcon.classList.remove('animate-spin');
+                    syncText.textContent = 'Sincronizar';
+                    
+                    if (status.last_sync) {
+                        const lastSync = new Date(status.last_sync);
+                        syncButton.title = `Última sincronización: ${lastSync.toLocaleString()}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando estado:', error);
+            }
+        }
+        
+        // Polling del estado durante sincronización
+        function pollSyncStatus() {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/staging/sync/status');
+                    const status = await response.json();
+                    
+                    const syncButton = document.getElementById('sync-button');
+                    const syncIcon = document.getElementById('sync-icon');
+                    const syncText = document.getElementById('sync-text');
+                    
+                    if (!syncButton) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    if (status.is_running) {
+                        syncText.textContent = `Sincronizando... ${status.progress}%`;
+                    } else {
+                        clearInterval(interval);
+                        syncButton.disabled = false;
+                        syncIcon.classList.remove('animate-spin');
+                        syncText.textContent = 'Sincronizar';
+                        
+                        if (status.last_result === 'success') {
+                            alert('✅ Sincronización completada exitosamente.\n\nLa página se recargará para aplicar los cambios.');
+                            window.location.reload();
+                        } else if (status.last_result && status.last_result.startsWith('error')) {
+                            alert('❌ Error en la sincronización:\n\n' + status.last_result);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error en polling:', error);
+                    clearInterval(interval);
+                }
+            }, 2000); // Verificar cada 2 segundos
         }
     </script>
 </body>

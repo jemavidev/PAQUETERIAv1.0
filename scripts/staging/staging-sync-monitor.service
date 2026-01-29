@@ -1,0 +1,22 @@
+[Unit]
+Description=Staging Database Sync Monitor
+After=docker.service network.target
+Wants=docker.service
+
+[Service]
+Type=simple
+User=rocky
+Group=docker
+WorkingDirectory=/home/rocky
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/bin/bash /home/rocky/sync_staging_monitor.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Permisos para acceder a Docker
+SupplementaryGroups=docker
+
+[Install]
+WantedBy=multi-user.target

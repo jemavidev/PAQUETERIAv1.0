@@ -91,6 +91,11 @@ API_PUBLIC_ROUTES: Set[str] = {
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
     
+    # Información del sistema
+    "/api/environment",  # Indicador de entorno (producción/staging/desarrollo)
+    "/api/staging/sync",  # Sincronización staging (solo funciona en staging)
+    "/api/staging/sync/status",  # Estado de sincronización
+    
     # Portal de Clientes (APIs públicas con OTP)
     "/api/customer-portal/request-otp",
     "/api/customer-portal/verify-otp",
