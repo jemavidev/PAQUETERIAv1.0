@@ -35,16 +35,6 @@ async def run_sync():
         
         logger.info("🔄 Iniciando sincronización de datos...")
         
-        # Verificar que el script existe en /tmp (compartido con el host)
-        script_path = "/tmp/sync_manual.sh"
-        
-        if not os.path.exists(script_path):
-            raise Exception(f"Script no encontrado: {script_path}. Copia ~/sync_manual.sh a /tmp/ en el host.")
-        
-        sync_status["progress"] = 20
-        sync_status["message"] = "Ejecutando sincronización..."
-        logger.info("📦 Ejecutando script de sincronización...")
-        
         # Obtener credenciales de la base de datos
         db_host = os.getenv("POSTGRES_HOST")
         db_user = os.getenv("POSTGRES_USER")
@@ -52,9 +42,6 @@ async def run_sync():
         
         if not all([db_host, db_user, db_pass]):
             raise Exception("Credenciales de base de datos no configuradas")
-        
-        # Ejecutar pg_dump y pg_restore directamente usando Docker con postgres:17-alpine
-        # que ya tiene las herramientas instaladas
         
         sync_status["progress"] = 30
         sync_status["message"] = "Exportando producción..."
