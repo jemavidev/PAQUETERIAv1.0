@@ -10,7 +10,14 @@ import logging
 
 from ..models.invoice_v2 import InvoiceV2, InvoiceProductV2
 from .pdf_parser_service import PDFParserService
-from .s3_service import S3Service
+
+# Importar S3Service de forma opcional
+try:
+    from .s3_service import S3Service
+    S3_AVAILABLE = True
+except ImportError:
+    S3_AVAILABLE = False
+    logger.warning("S3Service no disponible - los archivos no se subirán a S3")
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +30,7 @@ class InvoiceV2Service:
     def __init__(self, db: Session):
         self.db = db
         self.pdf_parser = PDFParserService()
-        self.s3_service = S3Service()
+        self.s3_service = S3Service() if S3_AVAILABLE else None
     
     # ===== TAB FACTURAS =====
     
@@ -49,7 +56,7 @@ class InvoiceV2Service:
         # Subir archivo a S3 (opcional)
         archivo_url = None
         archivo_s3_key = None
-        if file_obj:
+        if file_obj and self.s3_service:
             try:
                 s3_key = f"invoices/provider/{data['cufe']}.pdf"
                 archivo_url = self.s3_service.upload_file(file_obj, s3_key)
@@ -157,13 +164,13 @@ class InvoiceV2Service:
             return False
         
         # Eliminar archivos de S3 (opcional)
-        if invoice.archivo_proveedor_s3_key:
+        if invoice.archivo_proveedor_s3_key and self.s3_service:
             try:
                 self.s3_service.delete_file(invoice.archivo_proveedor_s3_key)
             except Exception as e:
                 logger.warning(f"No se pudo eliminar archivo proveedor de S3: {e}")
         
-        if invoice.archivo_dian_s3_key:
+        if invoice.archivo_dian_s3_key and self.s3_service:
             try:
                 self.s3_service.delete_file(invoice.archivo_dian_s3_key)
             except Exception as e:
@@ -201,7 +208,7 @@ class InvoiceV2Service:
         # Subir archivo a S3 (opcional)
         archivo_url = None
         archivo_s3_key = None
-        if file_obj:
+        if file_obj and self.s3_service:
             try:
                 s3_key = f"invoices/dian/{cufe}.pdf"
                 archivo_url = self.s3_service.upload_file(file_obj, s3_key)
