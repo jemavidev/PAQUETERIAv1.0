@@ -1,0 +1,119 @@
+{% extends "base/base.html" %}
+
+{% block title %}{% block page_title %}Sistema de Facturas{% endblock %} - PAQUETEX{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Tabs Navigation -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8">
+                <a href="/invoices/facturas" 
+                   class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'facturas' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    FACTURAS
+                </a>
+                <a href="/invoices/cufe" 
+                   class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'cufe' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                    <i class="fas fa-qrcode mr-2"></i>
+                    CUFE
+                </a>
+                <a href="/invoices/productos" 
+                   class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'productos' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                    <i class="fas fa-box mr-2"></i>
+                    PRODUCTOS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block invoice_content %}{% endblock %}
+    </main>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+<script>
+    // Utilidades globales
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        const colors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            info: 'bg-blue-500',
+            warning: 'bg-yellow-500'
+        };
+        const icons = {
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            info: 'info-circle',
+            warning: 'exclamation-triangle'
+        };
+        
+        toast.className = `${colors[type] || colors.success} px-6 py-4 rounded-lg shadow-lg text-white mb-2 transform transition-all duration-300 ease-in-out`;
+        toast.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${icons[type] || icons.success} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        const container = document.getElementById('toast-container');
+        container.appendChild(toast);
+        
+        // Animación de entrada
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            toast.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    function formatCurrency(value) {
+        if (!value) return '$0';
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-CO', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    }
+
+    function formatDateTime(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString('es-CO', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function truncateCufe(cufe) {
+        if (!cufe) return '-';
+        return cufe.substring(0, 16) + '...';
+    }
+</script>
+
+{% block invoice_scripts %}{% endblock %}
+{% endblock %}

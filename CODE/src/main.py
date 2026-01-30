@@ -48,6 +48,8 @@ from src.app.routes.debug_portal import router as debug_portal_router  # ✨ Deb
 from src.app.routes.products import router as products_router  # ✨ Productos
 from src.app.routes.environment import router as environment_router  # ✨ Información del entorno
 from src.app.routes.sync_staging import router as sync_staging_router  # ✨ Sincronización staging
+from src.app.routes.invoices_v2_routes import router as invoices_v2_api_router  # ✨ Sistema de Facturas V2 - API
+from src.app.routes.invoices_v2_web_routes import router as invoices_v2_web_router  # ✨ Sistema de Facturas V2 - Web
 from src.app.middleware.rate_limiting import limiter, rate_limit_exceeded_handler
 from src.app.middleware.error_handler import setup_error_handlers
 from src.app.middleware.auth_middleware import AuthMiddleware  # Middleware refactorizado v2
@@ -257,6 +259,8 @@ app.include_router(debug_portal_router, tags=["Debug Portal"])  # ✨ Debug Port
 app.include_router(products_router, tags=["Productos"])  # ✨ Productos
 app.include_router(environment_router, tags=["Entorno"])  # ✨ Información del entorno
 app.include_router(sync_staging_router, tags=["Staging Sync"])  # ✨ Sincronización staging
+app.include_router(invoices_v2_api_router, tags=["Facturas V2 - API"])  # ✨ Sistema de Facturas V2 - API
+app.include_router(invoices_v2_web_router, tags=["Facturas V2 - Web"])  # ✨ Sistema de Facturas V2 - Web
 
 # Endpoint de health check
 @app.get("/health")

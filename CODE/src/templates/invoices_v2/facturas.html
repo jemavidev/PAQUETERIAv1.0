@@ -1,0 +1,340 @@
+{% extends "invoices_v2/layout.html" %}
+
+{% block page_title %}Facturas{% endblock %}
+
+{% block invoice_content %}
+<div class="space-y-6">
+    <!-- Header con botón de carga -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Facturas de Proveedores</h2>
+            <p class="text-gray-600 mt-1">Carga y gestiona las facturas de tus proveedores</p>
+        </div>
+        <button onclick="document.getElementById('upload-modal').classList.remove('hidden')" 
+                class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+            <i class="fas fa-upload mr-2"></i>
+            Cargar Factura
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                <input type="text" id="search" placeholder="Proveedor, número, CUFE..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select id="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todos</option>
+                    <option value="pendiente_dian">Pendiente DIAN</option>
+                    <option value="completo">Completo</option>
+                    <option value="error">Error</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                <input type="date" id="fecha_desde" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                <input type="date" id="fecha_hasta" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+            <button onclick="loadInvoices()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>
+                Buscar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de facturas -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="invoices-tbody" class="bg-white divide-y divide-gray-200">
+                <!-- Cargado dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden text-center py-8">
+        <i class="fas fa-spinner fa-spin text-4xl text-papyrus-blue"></i>
+        <p class="text-gray-600 mt-2">Cargando facturas...</p>
+    </div>
+</div>
+
+<!-- Modal de carga -->
+<div id="upload-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">Cargar Factura de Proveedor</h3>
+        <form id="upload-form" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Archivo PDF</label>
+                <input type="file" id="pdf-file" accept=".pdf" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <p class="text-sm text-gray-500 mt-1">Se extraerá automáticamente: CUFE, Proveedor, Fecha, Número, Total</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('upload-modal').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-upload mr-2"></i>
+                    Cargar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de edición -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full">
+        <h3 class="text-xl font-bold mb-4">Editar Factura</h3>
+        <form id="edit-form">
+            <input type="hidden" id="edit-cufe">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Proveedor</label>
+                    <input type="text" id="edit-proveedor" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">NIT</label>
+                    <input type="text" id="edit-nit" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número Factura</label>
+                    <input type="text" id="edit-numero" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                    <input type="datetime-local" id="edit-fecha" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Total</label>
+                    <input type="number" id="edit-total" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                    <select id="edit-estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="pendiente_dian">Pendiente DIAN</option>
+                        <option value="completo">Completo</option>
+                        <option value="error">Error</option>
+                        <option value="sin_dian">Sin DIAN</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
+                <textarea id="edit-notas" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block invoice_scripts %}
+<script>
+    // Cargar facturas al iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+        loadInvoices();
+    });
+
+    async function loadInvoices() {
+        const loading = document.getElementById('loading');
+        const tbody = document.getElementById('invoices-tbody');
+        
+        loading.classList.remove('hidden');
+        tbody.innerHTML = '';
+        
+        const params = new URLSearchParams({
+            search: document.getElementById('search').value,
+            estado: document.getElementById('estado').value,
+            fecha_desde: document.getElementById('fecha_desde').value,
+            fecha_hasta: document.getElementById('fecha_hasta').value,
+        });
+        
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas?${params}`);
+            const invoices = await response.json();
+            
+            if (invoices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No se encontraron facturas</td></tr>';
+            } else {
+                invoices.forEach(invoice => {
+                    tbody.innerHTML += renderInvoiceRow(invoice);
+                });
+            }
+        } catch (error) {
+            showToast('Error cargando facturas', 'error');
+        } finally {
+            loading.classList.add('hidden');
+        }
+    }
+
+    function renderInvoiceRow(invoice) {
+        const estadoBadge = {
+            'pendiente_dian': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendiente DIAN</span>',
+            'completo': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Completo</span>',
+            'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Error</span>',
+            'sin_dian': '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Sin DIAN</span>',
+        };
+        
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm font-mono text-gray-900">${truncateCufe(invoice.cufe)}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">${invoice.proveedor_nombre || '-'}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">${invoice.numero_factura || '-'}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">${formatDate(invoice.fecha_emision)}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(invoice.total_factura)}</td>
+                <td class="px-6 py-4 text-sm">${estadoBadge[invoice.estado] || invoice.estado}</td>
+                <td class="px-6 py-4 text-sm space-x-2">
+                    <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    ${invoice.archivo_proveedor_url ? `<a href="${invoice.archivo_proveedor_url}" target="_blank" class="text-green-600 hover:text-green-800"><i class="fas fa-file-pdf"></i></a>` : ''}
+                </td>
+            </tr>
+        `;
+    }
+
+    // Upload form
+    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('pdf-file');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showToast('Selecciona un archivo PDF', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch('/api/v2/invoices/facturas/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                showToast('Factura cargada correctamente', 'success');
+                document.getElementById('upload-modal').classList.add('hidden');
+                fileInput.value = '';
+                loadInvoices();
+            } else {
+                const error = await response.json();
+                showToast(error.detail || 'Error cargando factura', 'error');
+            }
+        } catch (error) {
+            showToast('Error cargando factura', 'error');
+        }
+    });
+
+    async function editInvoice(cufe) {
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}`);
+            const invoice = await response.json();
+            
+            document.getElementById('edit-cufe').value = invoice.cufe;
+            document.getElementById('edit-proveedor').value = invoice.proveedor_nombre || '';
+            document.getElementById('edit-nit').value = invoice.proveedor_nit || '';
+            document.getElementById('edit-numero').value = invoice.numero_factura || '';
+            document.getElementById('edit-fecha').value = invoice.fecha_emision ? invoice.fecha_emision.substring(0, 16) : '';
+            document.getElementById('edit-total').value = invoice.total_factura || '';
+            document.getElementById('edit-estado').value = invoice.estado;
+            document.getElementById('edit-notas').value = invoice.notas || '';
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+        } catch (error) {
+            showToast('Error cargando factura', 'error');
+        }
+    }
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const cufe = document.getElementById('edit-cufe').value;
+        const data = {
+            proveedor_nombre: document.getElementById('edit-proveedor').value,
+            proveedor_nit: document.getElementById('edit-nit').value,
+            numero_factura: document.getElementById('edit-numero').value,
+            fecha_emision: document.getElementById('edit-fecha').value,
+            total_factura: parseFloat(document.getElementById('edit-total').value),
+            estado: document.getElementById('edit-estado').value,
+            notas: document.getElementById('edit-notas').value,
+        };
+        
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                showToast('Factura actualizada correctamente', 'success');
+                document.getElementById('edit-modal').classList.add('hidden');
+                loadInvoices();
+            } else {
+                showToast('Error actualizando factura', 'error');
+            }
+        } catch (error) {
+            showToast('Error actualizando factura', 'error');
+        }
+    });
+
+    async function deleteInvoice(cufe) {
+        if (!confirm('¿Estás seguro de eliminar esta factura? Se eliminarán también todos los productos asociados.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showToast('Factura eliminada correctamente', 'success');
+                loadInvoices();
+            } else {
+                showToast('Error eliminando factura', 'error');
+            }
+        } catch (error) {
+            showToast('Error eliminando factura', 'error');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,310 @@
+{% extends "invoices_v2/layout.html" %}
+
+{% block page_title %}Productos{% endblock %}
+
+{% block invoice_content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900">Catálogo de Productos</h2>
+        <p class="text-gray-600 mt-1">Consulta y filtra todos los productos comprados</p>
+    </div>
+
+    <!-- Filtros avanzados -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Producto</label>
+                <input type="text" id="search" placeholder="Descripción o código..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Proveedor</label>
+                <input type="text" id="proveedor" placeholder="Nombre del proveedor..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                <input type="date" id="fecha_desde" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                <input type="date" id="fecha_hasta" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+        <div class="mt-4 flex justify-between items-center">
+            <button onclick="clearFilters()" class="text-gray-600 hover:text-gray-900">
+                <i class="fas fa-times mr-2"></i>
+                Limpiar filtros
+            </button>
+            <button onclick="loadProducts()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+                <i class="fas fa-search mr-2"></i>
+                Buscar
+            </button>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex justify-between items-center mb-4">
+            <p id="results-count" class="text-sm text-gray-600">Cargando productos...</p>
+            <button onclick="exportToCSV()" class="text-papyrus-blue hover:text-blue-800">
+                <i class="fas fa-download mr-2"></i>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factura</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody" class="bg-white divide-y divide-gray-200">
+                    <!-- Cargado dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex justify-between items-center">
+        <button id="prev-btn" onclick="previousPage()" disabled
+                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-chevron-left mr-2"></i>
+            Anterior
+        </button>
+        <span id="page-info" class="text-sm text-gray-600">Página 1</span>
+        <button id="next-btn" onclick="nextPage()"
+                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Siguiente
+            <i class="fas fa-chevron-right ml-2"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Modal de historial -->
+<div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold">Historial de Compras</h3>
+            <button onclick="document.getElementById('history-modal').classList.add('hidden')" 
+                    class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="history-content">
+            <!-- Cargado dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block invoice_scripts %}
+<script>
+    let currentPage = 0;
+    const pageSize = 50;
+    let currentProducts = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProducts();
+    });
+
+    async function loadProducts() {
+        const tbody = document.getElementById('products-tbody');
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando productos...</td></tr>';
+        
+        const params = new URLSearchParams({
+            skip: currentPage * pageSize,
+            limit: pageSize,
+            search: document.getElementById('search').value,
+            proveedor: document.getElementById('proveedor').value,
+            fecha_desde: document.getElementById('fecha_desde').value,
+            fecha_hasta: document.getElementById('fecha_hasta').value,
+        });
+        
+        try {
+            const response = await fetch(`/api/v2/invoices/productos?${params}`);
+            const products = await response.json();
+            
+            currentProducts = products;
+            
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center text-gray-500">No se encontraron productos</td></tr>';
+                document.getElementById('results-count').textContent = 'No se encontraron productos';
+            } else {
+                tbody.innerHTML = '';
+                products.forEach(product => {
+                    tbody.innerHTML += renderProductRow(product);
+                });
+                
+                document.getElementById('results-count').textContent = `Mostrando ${products.length} productos`;
+            }
+            
+            // Actualizar botones de paginación
+            document.getElementById('prev-btn').disabled = currentPage === 0;
+            document.getElementById('next-btn').disabled = products.length < pageSize;
+            document.getElementById('page-info').textContent = `Página ${currentPage + 1}`;
+            
+        } catch (error) {
+            showToast('Error cargando productos', 'error');
+            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center text-red-500">Error cargando productos</td></tr>';
+        }
+    }
+
+    function renderProductRow(product) {
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm font-mono text-gray-900">${product.codigo_producto || '-'}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <div class="max-w-xs truncate" title="${product.descripcion || '-'}">
+                        ${product.descripcion || '-'}
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">${product.proveedor_nombre || '-'}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <a href="/invoices/facturas?search=${product.cufe}" class="text-papyrus-blue hover:underline">
+                        ${product.numero_factura || truncateCufe(product.cufe)}
+                    </a>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">${formatDate(product.fecha_compra)}</td>
+                <td class="px-6 py-4 text-sm text-right text-gray-900">${product.cantidad || '-'}</td>
+                <td class="px-6 py-4 text-sm text-right text-gray-900">${formatCurrency(product.precio_unitario)}</td>
+                <td class="px-6 py-4 text-sm text-right font-medium text-gray-900">${formatCurrency(product.total_item)}</td>
+                <td class="px-6 py-4 text-sm">
+                    ${product.codigo_producto ? `
+                        <button onclick="viewHistory('${product.codigo_producto}')" class="text-papyrus-blue hover:text-blue-800" title="Ver historial">
+                            <i class="fas fa-history"></i>
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `;
+    }
+
+    function clearFilters() {
+        document.getElementById('search').value = '';
+        document.getElementById('proveedor').value = '';
+        document.getElementById('fecha_desde').value = '';
+        document.getElementById('fecha_hasta').value = '';
+        currentPage = 0;
+        loadProducts();
+    }
+
+    function previousPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            loadProducts();
+        }
+    }
+
+    function nextPage() {
+        currentPage++;
+        loadProducts();
+    }
+
+    async function viewHistory(codigoProducto) {
+        try {
+            const response = await fetch(`/api/v2/invoices/productos/${codigoProducto}/history`);
+            const data = await response.json();
+            
+            const content = document.getElementById('history-content');
+            content.innerHTML = `
+                <div class="mb-6">
+                    <h4 class="font-bold text-lg">Código: ${data.codigo_producto}</h4>
+                    <p class="text-gray-600">Total de compras: ${data.total_compras}</p>
+                </div>
+                
+                <div class="space-y-4">
+                    ${data.historial.map(item => `
+                        <div class="border rounded-lg p-4 hover:bg-gray-50">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Proveedor</p>
+                                    <p class="font-medium">${item.factura.proveedor}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Factura</p>
+                                    <p class="font-medium">${item.factura.numero_factura}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Fecha</p>
+                                    <p>${formatDate(item.factura.fecha)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Cantidad</p>
+                                    <p>${item.producto.cantidad}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Precio Unitario</p>
+                                    <p class="font-medium">${formatCurrency(item.producto.precio_unitario)}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Total</p>
+                                    <p class="font-bold text-papyrus-blue">${formatCurrency(item.producto.total_item)}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-sm font-medium text-gray-600">Descripción</p>
+                                <p class="text-sm">${item.producto.descripcion || '-'}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('history-modal').classList.remove('hidden');
+        } catch (error) {
+            showToast('Error cargando historial', 'error');
+        }
+    }
+
+    function exportToCSV() {
+        if (currentProducts.length === 0) {
+            showToast('No hay productos para exportar', 'error');
+            return;
+        }
+        
+        const headers = ['Código', 'Descripción', 'Proveedor', 'Factura', 'Fecha', 'Cantidad', 'Precio Unitario', 'IVA %', 'Total'];
+        const rows = currentProducts.map(p => [
+            p.codigo_producto || '',
+            p.descripcion || '',
+            p.proveedor_nombre || '',
+            p.numero_factura || '',
+            p.fecha_compra || '',
+            p.cantidad || '',
+            p.precio_unitario || '',
+            p.iva_porcentaje || '',
+            p.total_item || ''
+        ]);
+        
+        let csv = headers.join(',') + '\n';
+        rows.forEach(row => {
+            csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `productos_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        
+        showToast('Archivo CSV descargado', 'success');
+    }
+</script>
+{% endblock %}
