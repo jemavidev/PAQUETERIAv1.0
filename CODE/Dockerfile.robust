@@ -4,6 +4,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app:/app/src
+ENV PIP_DEFAULT_TIMEOUT=300
+ENV PIP_RETRIES=5
 
 # Directorio de trabajo
 WORKDIR /app
@@ -17,14 +19,28 @@ RUN apt-get update && apt-get install -y \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
+# Actualizar pip primero
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
 # Copiar requirements
 COPY requirements.txt .
 
-# Instalar dependencias de Python con timeout aumentado y reintentos
-# Usar múltiples mirrors para mayor confiabilidad
+# Instalar dependencias críticas primero (las más grandes/problemáticas)
+RUN pip install --no-cache-dir --timeout=300 --retries=5 \
+    fastapi \
+    uvicorn \
+    sqlalchemy \
+    alembic \
+    pydantic
+
+# Instalar el resto de dependencias
 RUN pip install --no-cache-dir --timeout=300 --retries=5 \
     --index-url https://pypi.org/simple \
     --extra-index-url https://pypi.python.org/simple \
+    -r requirements.txt || \
+    # Si falla, intentar de nuevo con un mirror diferente
+    pip install --no-cache-dir --timeout=300 --retries=5 \
+    --index-url https://pypi.python.org/simple \
     -r requirements.txt
 
 # Copiar archivos de configuración de Tailwind
@@ -42,10 +58,10 @@ COPY alembic.ini /app/
 RUN npm run build:css
 
 # Crear directorios necesarios
-RUN mkdir -p /app/uploads /app/logs /app/backups/database
+RUN mkdir -p /app/uploads /app/src/static/css
 
 # Exponer puerto
 EXPOSE 8000
 
 # Comando de inicio
-CMD ["sh", "-c", "cd /app && PYTHONPATH=/app:/app/src python -m uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

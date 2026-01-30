@@ -10,6 +10,7 @@ from app.database import Base
 class Product(Base):
     """Modelo de Producto con todos los campos de DynamiaERP"""
     __tablename__ = "products"
+    __table_args__ = {'extend_existing': True}
     
     # IDs
     id = Column(Integer, primary_key=True, index=True)
@@ -168,6 +169,7 @@ class Product(Base):
 class ProductColumnConfig(Base):
     """Configuración de columnas visibles por usuario"""
     __tablename__ = "product_column_config"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
@@ -193,6 +195,7 @@ class ProductColumnConfig(Base):
 class ProductSyncLog(Base):
     """Log de sincronizaciones de productos"""
     __tablename__ = "product_sync_log"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     sync_date = Column(DateTime, nullable=False, index=True)

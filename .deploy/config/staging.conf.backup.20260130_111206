@@ -98,9 +98,9 @@ HEALTH_CHECK_INTERVAL=2             # Cada 2 segundos
 # │ MIGRACIONES                                                                │
 # └────────────────────────────────────────────────────────────────────────────┘
 
-MIGRATIONS_ENABLED=true            # Deshabilitado (misma BD que producción)
-MIGRATIONS_AUTO=true
-MIGRATIONS_COMMAND="docker compose -f docker-compose.staging.yml exec -T app alembic upgrade head"
+MIGRATIONS_ENABLED=false            # Deshabilitado (misma BD que producción)
+MIGRATIONS_AUTO=false
+MIGRATIONS_COMMAND="docker compose -f docker-compose.staging.yml exec -T app alembic upgrade heads"
 MIGRATIONS_ROLLBACK_COMMAND="docker compose -f docker-compose.staging.yml exec app alembic downgrade -1"
 
 # NOTA: Migraciones deshabilitadas porque staging comparte BD con producción
@@ -109,8 +109,8 @@ MIGRATIONS_ROLLBACK_COMMAND="docker compose -f docker-compose.staging.yml exec a
 # │ BACKUP                                                                     │
 # └────────────────────────────────────────────────────────────────────────────┘
 
-BACKUP_ENABLED=true                # Deshabilitado (misma BD que producción)
-BACKUP_AUTO_BEFORE_DEPLOY=true     # No hacer backup (BD compartida)
+BACKUP_ENABLED=false                # Deshabilitado (misma BD que producción)
+BACKUP_AUTO_BEFORE_DEPLOY=false     # No hacer backup (BD compartida)
 BACKUP_DB_COMMAND=""
 BACKUP_RETENTION_DAYS=0
 

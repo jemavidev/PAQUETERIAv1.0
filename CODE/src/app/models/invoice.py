@@ -77,6 +77,7 @@ class IrregularitySeverity(enum.Enum):
 class Supplier(Base):
     """Modelo de Proveedor"""
     __tablename__ = "suppliers"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     nit = Column(String(20), unique=True, index=True, nullable=False)
@@ -102,6 +103,7 @@ class Supplier(Base):
 class Invoice(Base):
     """Modelo de Factura/Documento"""
     __tablename__ = "invoices"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     
@@ -222,6 +224,7 @@ class Invoice(Base):
 class InvoiceItem(Base):
     """Modelo de Item/Producto de Factura"""
     __tablename__ = "invoice_items"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
@@ -283,6 +286,7 @@ class InvoiceItem(Base):
 class InvoiceIrregularity(Base):
     """Modelo de Irregularidades detectadas en facturas"""
     __tablename__ = "invoice_irregularities"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id", ondelete="CASCADE"), nullable=True, index=True)
@@ -317,6 +321,7 @@ class InvoiceIrregularity(Base):
 class InvoiceRejectedFile(Base):
     """Modelo de Archivos rechazados/no compatibles"""
     __tablename__ = "invoice_rejected_files"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     archivo_nombre = Column(String(255), nullable=False)
@@ -357,6 +362,7 @@ class SupplierInvoice(Base):
     Gestiona el flujo: Subir PDF → Extraer CUFE → Descargar DIAN → Importar
     """
     __tablename__ = "supplier_invoices"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     

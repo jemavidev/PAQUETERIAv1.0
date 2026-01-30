@@ -1,7 +1,7 @@
 """create invoice system v2
 
 Revision ID: 20260130_invoice_v2
-Revises: 20260119_170057_add_extraction_quality
+Revises: 20260119_170057
 Create Date: 2026-01-30 10:00:00.000000
 
 """
@@ -11,12 +11,15 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
 revision = '20260130_invoice_v2'
-down_revision = '20260119_170057_add_extraction_quality'
+down_revision = '20260119_170057'
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
+    # Habilitar extensión para búsqueda de texto PRIMERO
+    op.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm;')
+    
     # Tabla principal de facturas
     op.create_table(
         'invoices_v2',
@@ -152,9 +155,6 @@ def upgrade():
         sa.Index('idx_invoice_products_v2_descripcion', 'descripcion', postgresql_using='gin', postgresql_ops={'descripcion': 'gin_trgm_ops'}),
         sa.Index('idx_invoice_products_v2_fecha_compra', 'fecha_compra'),
     )
-    
-    # Habilitar extensión para búsqueda de texto
-    op.execute('CREATE EXTENSION IF NOT EXISTS pg_trgm;')
 
 
 def downgrade():
