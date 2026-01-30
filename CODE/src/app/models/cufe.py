@@ -8,6 +8,11 @@ import enum
 
 from app.models.base import Base
 
+# Import necesario para lazy loading con lambda
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.invoice import Invoice
+
 
 class CufeStatus(str, enum.Enum):
     """Estados del proceso de importación de CUFE"""
@@ -35,7 +40,7 @@ class CufeRecord(Base):
     
     # Relación con factura procesada
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
-    invoice = relationship("Invoice", foreign_keys=[invoice_id])
+    invoice = relationship(lambda: Invoice, foreign_keys=[invoice_id])
     
     # Metadatos
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

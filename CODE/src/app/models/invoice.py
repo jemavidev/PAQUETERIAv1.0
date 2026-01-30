@@ -94,7 +94,7 @@ class Supplier(Base):
     updated_at = Column(DateTime, default=get_colombia_now, onupdate=get_colombia_now)
     
     # Relaciones
-    invoices = relationship("Invoice", back_populates="supplier")
+    invoices = relationship(lambda: Invoice, back_populates="supplier")
 
     def __repr__(self):
         return f"<Supplier {self.razon_social} ({self.nit})>"
@@ -122,7 +122,7 @@ class Invoice(Base):
     
     # Proveedor (vendedor)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False, index=True)
-    supplier = relationship("Supplier", back_populates="invoices")
+    supplier = relationship(lambda: Supplier, back_populates="invoices")
     
     # NUEVO: Comprador (Papyrus)
     buyer_nit = Column(String(20), nullable=True, index=True)
@@ -174,8 +174,8 @@ class Invoice(Base):
     replaces_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
     
     # Relaciones
-    items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
-    irregularities = relationship("InvoiceIrregularity", back_populates="invoice", cascade="all, delete-orphan")
+    items = relationship(lambda: InvoiceItem, back_populates="invoice", cascade="all, delete-orphan")
+    irregularities = relationship(lambda: InvoiceIrregularity, back_populates="invoice", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Invoice {self.numero_documento} ({self.document_type.value})>"
@@ -267,8 +267,8 @@ class InvoiceItem(Base):
     notas = Column(Text, nullable=True)
     
     # Relación
-    invoice = relationship("Invoice", back_populates="items")
-    irregularities = relationship("InvoiceIrregularity", back_populates="item", cascade="all, delete-orphan")
+    invoice = relationship(lambda: Invoice, back_populates="items")
+    irregularities = relationship(lambda: InvoiceIrregularity, back_populates="item", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<InvoiceItem {self.descripcion[:30]}... ({self.cantidad} x {self.precio_unitario})>"
@@ -311,8 +311,8 @@ class InvoiceIrregularity(Base):
     created_at = Column(DateTime, default=get_colombia_now)
     
     # Relaciones
-    invoice = relationship("Invoice", back_populates="irregularities")
-    item = relationship("InvoiceItem", back_populates="irregularities")
+    invoice = relationship(lambda: Invoice, back_populates="irregularities")
+    item = relationship(lambda: InvoiceItem, back_populates="irregularities")
 
     def __repr__(self):
         return f"<Irregularity {self.tipo} - {self.severidad}>"
