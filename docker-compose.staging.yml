@@ -71,11 +71,11 @@ services:
     ports:
       - "0.0.0.0:8001:8000"
     volumes:
-      # Código Python (read-only para seguridad)
-      - ./CODE/src/app:/app/src/app:ro
-      - ./CODE/src/scripts:/app/src/scripts:ro
-      - ./CODE/src/main.py:/app/src/main.py:ro
-      - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Código Python (read-only para seguridad) - COMENTADO TEMPORALMENTE PARA USAR CÓDIGO DE LA IMAGEN
+      # - ./CODE/src/app:/app/src/app:ro
+      # - ./CODE/src/scripts:/app/src/scripts:ro
+      # - ./CODE/src/main.py:/app/src/main.py:ro
+      # - ./CODE/src/__init__.py:/app/src/__init__.py:ro
       # Archivos estáticos editables sin rebuild (CSS, JS, imágenes, PDFs)
       - ./CODE/src/static:/app/src/static
       # Templates HTML editables sin rebuild
