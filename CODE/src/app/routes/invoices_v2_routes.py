@@ -87,6 +87,46 @@ class StatisticsResponse(BaseModel):
 
 # ===== TAB 1: FACTURAS =====
 
+@router.post("/extract-cufe")
+async def extract_cufe_from_pdf(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Extrae solo el CUFE de un PDF (útil para carga múltiple de archivos DIAN)
+    """
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+    
+    # Guardar temporalmente
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+    
+    try:
+        service = InvoiceV2Service(db)
+        text = service.pdf_parser.extract_text_from_pdf(tmp_path)
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="No se pudo extraer texto del PDF")
+        
+        cufe = service.pdf_parser.extract_cufe(text)
+        
+        if not cufe:
+            raise HTTPException(status_code=400, detail="No se encontró código CUFE en el PDF")
+        
+        return {"cufe": cufe}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error extrayendo CUFE: {str(e)}")
+    finally:
+        # Limpiar archivo temporal
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
 @router.post("/facturas/upload", response_model=InvoiceResponse)
 async def upload_provider_invoice(
     file: UploadFile = File(...),

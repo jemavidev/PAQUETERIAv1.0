@@ -63,10 +63,14 @@
                     <option value="true">Validado</option>
                 </select>
             </div>
-            <div class="flex items-end">
-                <button onclick="loadCufeRecords()" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+            <div class="flex items-end gap-2">
+                <button onclick="loadCufeRecords()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
                     <i class="fas fa-search mr-2"></i>
                     Buscar
+                </button>
+                <button onclick="openUploadDianModal()" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg" title="Cargar archivos DIAN">
+                    <i class="fas fa-upload mr-2"></i>
+                    Cargar DIAN
                 </button>
             </div>
         </div>
@@ -92,37 +96,56 @@
     </div>
 </div>
 
-<!-- Modal de carga DIAN -->
+<!-- Modal de carga DIAN múltiple -->
 <div id="upload-dian-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full">
-        <h3 class="text-xl font-bold mb-4">Cargar Archivo DIAN</h3>
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">Cargar Archivos DIAN</h3>
         <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-sm text-blue-800">
                 <i class="fas fa-info-circle mr-2"></i>
-                Este archivo actualizará TODOS los datos de la factura. Es la fuente de verdad.
+                Estos archivos actualizarán TODOS los datos de las facturas. Son la fuente de verdad.
             </p>
         </div>
         <form id="upload-dian-form" enctype="multipart/form-data">
-            <input type="hidden" id="upload-cufe">
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">CUFE</label>
-                <input type="text" id="upload-cufe-display" readonly
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm">
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Archivo PDF DIAN</label>
-                <input type="file" id="dian-file" accept=".pdf" required
+                <label class="block text-sm font-medium text-gray-700 mb-2">Archivos PDF DIAN (múltiples)</label>
+                <input type="file" id="dian-files" accept=".pdf" multiple required
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                <p class="text-sm text-gray-500 mt-1">Se extraerán todos los datos: emisor, productos, totales, etc.</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    Se extraerán todos los datos: emisor, productos, totales, etc. El CUFE debe coincidir con una factura existente.
+                </p>
             </div>
+            
+            <!-- Lista de archivos seleccionados -->
+            <div id="dian-files-list" class="mb-4 hidden">
+                <p class="text-sm font-medium text-gray-700 mb-2">Archivos seleccionados:</p>
+                <div id="dian-files-container" class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    <!-- Archivos se mostrarán aquí -->
+                </div>
+            </div>
+            
+            <!-- Progreso de carga -->
+            <div id="dian-upload-progress" class="mb-4 hidden">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Procesando archivos DIAN...</span>
+                    <span id="dian-progress-text">0 / 0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="dian-progress-bar" class="bg-papyrus-blue h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="dian-upload-results" class="mt-3 space-y-1 max-h-32 overflow-y-auto">
+                    <!-- Resultados se mostrarán aquí -->
+                </div>
+            </div>
+            
             <div class="flex justify-end space-x-3">
-                <button type="button" onclick="document.getElementById('upload-dian-modal').classList.add('hidden')"
+                <button type="button" id="dian-cancel-btn" onclick="closeDianUploadModal()"
                         class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button type="submit" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                <button type="submit" id="dian-upload-btn" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
                     <i class="fas fa-upload mr-2"></i>
-                    Procesar
+                    Procesar <span id="dian-file-count"></span>
                 </button>
             </div>
         </form>
@@ -209,11 +232,6 @@
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(record.dian_total_neto || record.total_factura)}</td>
                 <td class="px-6 py-4 text-sm">${dianBadge}</td>
                 <td class="px-6 py-4 text-sm space-x-2">
-                    ${!record.dian_validado ? `
-                        <button onclick="openUploadDianModal('${record.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Cargar archivo DIAN">
-                            <i class="fas fa-upload"></i>
-                        </button>
-                    ` : ''}
                     <button onclick="viewDetails('${record.cufe}')" class="text-green-600 hover:text-green-800" title="Ver detalles">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -232,47 +250,154 @@
         showToast('CUFE copiado al portapapeles', 'success');
     }
 
-    function openUploadDianModal(cufe) {
-        document.getElementById('upload-cufe').value = cufe;
-        document.getElementById('upload-cufe-display').value = cufe;
+    function openUploadDianModal() {
         document.getElementById('upload-dian-modal').classList.remove('hidden');
     }
+    
+    // Mostrar archivos DIAN seleccionados
+    document.getElementById('dian-files').addEventListener('change', (e) => {
+        const files = e.target.files;
+        const filesList = document.getElementById('dian-files-list');
+        const filesContainer = document.getElementById('dian-files-container');
+        const fileCount = document.getElementById('dian-file-count');
+        
+        if (files.length > 0) {
+            filesList.classList.remove('hidden');
+            filesContainer.innerHTML = '';
+            
+            Array.from(files).forEach((file) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between text-sm p-2 bg-white rounded border';
+                fileItem.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
+                        </svg>
+                        <span class="truncate max-w-xs">${file.name}</span>
+                    </div>
+                    <span class="text-gray-500 ml-2">${(file.size / 1024).toFixed(1)} KB</span>
+                `;
+                filesContainer.appendChild(fileItem);
+            });
+            
+            fileCount.textContent = `(${files.length})`;
+        } else {
+            filesList.classList.add('hidden');
+            fileCount.textContent = '';
+        }
+    });
 
     document.getElementById('upload-dian-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const cufe = document.getElementById('upload-cufe').value;
-        const fileInput = document.getElementById('dian-file');
-        const file = fileInput.files[0];
+        const fileInput = document.getElementById('dian-files');
+        const files = fileInput.files;
         
-        if (!file) {
-            showToast('Selecciona un archivo PDF', 'error');
+        if (files.length === 0) {
+            showToast('Selecciona al menos un archivo PDF', 'error');
             return;
         }
         
-        const formData = new FormData();
-        formData.append('file', file);
+        // Mostrar progreso
+        const progressDiv = document.getElementById('dian-upload-progress');
+        const progressBar = document.getElementById('dian-progress-bar');
+        const progressText = document.getElementById('dian-progress-text');
+        const resultsDiv = document.getElementById('dian-upload-results');
+        const uploadBtn = document.getElementById('dian-upload-btn');
+        const cancelBtn = document.getElementById('dian-cancel-btn');
         
-        try {
-            const response = await fetch(`/api/v2/invoices/cufe/${cufe}/upload-dian`, {
-                method: 'POST',
-                body: formData
-            });
+        progressDiv.classList.remove('hidden');
+        resultsDiv.innerHTML = '';
+        uploadBtn.disabled = true;
+        cancelBtn.textContent = 'Cerrar';
+        
+        let completed = 0;
+        let successful = 0;
+        let failed = 0;
+        
+        // Procesar archivos secuencialmente (DIAN requiere extraer CUFE primero)
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
             
-            if (response.ok) {
-                showToast('Archivo DIAN procesado correctamente', 'success');
-                document.getElementById('upload-dian-modal').classList.add('hidden');
-                fileInput.value = '';
-                loadStatistics();
-                loadCufeRecords();
-            } else {
-                const error = await response.json();
-                showToast(error.detail || 'Error procesando archivo DIAN', 'error');
+            try {
+                // Primero extraer CUFE del archivo
+                const tempResponse = await fetch('/api/v2/invoices/extract-cufe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!tempResponse.ok) {
+                    throw new Error('No se pudo extraer CUFE');
+                }
+                
+                const { cufe } = await tempResponse.json();
+                
+                // Ahora subir el archivo DIAN con el CUFE
+                formData.append('file', file);
+                const response = await fetch(`/api/v2/invoices/cufe/${cufe}/upload-dian`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                completed++;
+                
+                if (response.ok) {
+                    successful++;
+                    const result = document.createElement('div');
+                    result.className = 'text-xs text-green-600';
+                    result.innerHTML = `✓ ${file.name} - CUFE: ${cufe.substring(0, 16)}...`;
+                    resultsDiv.appendChild(result);
+                } else {
+                    failed++;
+                    const error = await response.json();
+                    const result = document.createElement('div');
+                    result.className = 'text-xs text-red-600';
+                    result.innerHTML = `✗ ${file.name}: ${error.detail || 'Error'}`;
+                    resultsDiv.appendChild(result);
+                }
+            } catch (error) {
+                completed++;
+                failed++;
+                const result = document.createElement('div');
+                result.className = 'text-xs text-red-600';
+                result.innerHTML = `✗ ${file.name}: ${error.message || 'Error de conexión'}`;
+                resultsDiv.appendChild(result);
             }
-        } catch (error) {
-            showToast('Error procesando archivo DIAN', 'error');
+            
+            // Actualizar progreso
+            const progress = (completed / files.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${completed} / ${files.length}`;
         }
+        
+        // Mostrar resumen
+        if (successful > 0) {
+            showToast(`${successful} archivo(s) DIAN procesado(s) correctamente`, 'success');
+            loadStatistics();
+            loadCufeRecords();
+        }
+        if (failed > 0) {
+            showToast(`${failed} archivo(s) fallaron`, 'error');
+        }
+        
+        // Resetear después de 3 segundos
+        setTimeout(() => {
+            if (failed === 0) {
+                closeDianUploadModal();
+            }
+        }, 3000);
     });
+    
+    function closeDianUploadModal() {
+        document.getElementById('upload-dian-modal').classList.add('hidden');
+        document.getElementById('dian-files').value = '';
+        document.getElementById('dian-files-list').classList.add('hidden');
+        document.getElementById('dian-upload-progress').classList.add('hidden');
+        document.getElementById('dian-upload-btn').disabled = false;
+        document.getElementById('dian-cancel-btn').textContent = 'Cancelar';
+        document.getElementById('dian-file-count').textContent = '';
+    }
 
     async function viewDetails(cufe) {
         try {
