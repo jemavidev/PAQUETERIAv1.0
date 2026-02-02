@@ -58,9 +58,14 @@ class InvoiceV2Service:
         archivo_s3_key = None
         if file_obj and self.s3_service:
             try:
+                # Leer el contenido del archivo como bytes
+                file_content = file_obj.read()
+                file_obj.seek(0)  # Resetear el puntero por si se necesita después
+                
                 s3_key = f"invoices/provider/{data['cufe']}.pdf"
-                archivo_url = self.s3_service.upload_file(file_obj, s3_key)
+                archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
                 archivo_s3_key = s3_key
+                logger.info(f"✅ Archivo subido a S3: {s3_key}")
             except Exception as e:
                 logger.warning(f"No se pudo subir archivo a S3: {e}")
         
@@ -210,9 +215,14 @@ class InvoiceV2Service:
         archivo_s3_key = None
         if file_obj and self.s3_service:
             try:
+                # Leer el contenido del archivo como bytes
+                file_content = file_obj.read()
+                file_obj.seek(0)  # Resetear el puntero por si se necesita después
+                
                 s3_key = f"invoices/dian/{cufe}.pdf"
-                archivo_url = self.s3_service.upload_file(file_obj, s3_key)
+                archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
                 archivo_s3_key = s3_key
+                logger.info(f"✅ Archivo DIAN subido a S3: {s3_key}")
             except Exception as e:
                 logger.warning(f"No se pudo subir archivo DIAN a S3: {e}")
         

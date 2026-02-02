@@ -213,6 +213,18 @@ def list_invoices(
         fecha_desde=fecha_desde_parsed,
         fecha_hasta=fecha_hasta_parsed
     )
+    
+    # Generar URLs pre-firmadas para los archivos
+    for invoice in invoices:
+        if invoice.archivo_proveedor_s3_key and service.s3_service:
+            try:
+                invoice.archivo_proveedor_url = service.s3_service.generate_presigned_url(
+                    invoice.archivo_proveedor_s3_key,
+                    expiration=3600  # 1 hora
+                )
+            except Exception as e:
+                logger.warning(f"No se pudo generar URL pre-firmada para {invoice.cufe[:16]}: {e}")
+    
     return invoices
 
 
