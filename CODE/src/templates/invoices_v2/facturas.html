@@ -1,82 +1,157 @@
-{% extends "invoices_v2/layout.html" %}
+{% extends "base/base.html" %}
 
-{% block page_title %}Facturas{% endblock %}
+{% block title %}FACTURAS - PAQUETEX{% endblock %}
 
-{% block invoice_content %}
-<div class="space-y-6">
-    <!-- Header con botón de carga -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Facturas de Proveedores</h2>
-            <p class="text-gray-600 mt-1">Carga y gestiona las facturas de tus proveedores</p>
+{% block content %}
+<!-- Verificación de autenticación -->
+{% if not is_authenticated %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center">
+        <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
         </div>
-        <button onclick="document.getElementById('upload-modal').classList.remove('hidden')" 
-                class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
-            <i class="fas fa-upload mr-2"></i>
-            Cargar Factura
-        </button>
-    </div>
-
-    <!-- Filtros -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
-                <input type="text" id="search" placeholder="Proveedor, número, CUFE..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                <select id="estado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">Todos</option>
-                    <option value="pendiente_dian">Pendiente DIAN</option>
-                    <option value="completo">Completo</option>
-                    <option value="error">Error</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
-                <input type="date" id="fecha_desde" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
-                <input type="date" id="fecha_hasta" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-        </div>
-        <div class="mt-4 flex justify-end">
-            <button onclick="loadInvoices()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors duration-200">
-                <i class="fas fa-search mr-2"></i>
-                Buscar
-            </button>
+        <h3 class="text-lg font-medium text-gray-900">Acceso Restringido</h3>
+        <p class="mt-2 text-sm text-gray-500">Debes iniciar sesión para acceder a la gestión de facturas.</p>
+        <div class="mt-6">
+            <a href="/auth/login" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-papyrus-blue hover:bg-blue-700 transition-colors duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                Iniciar Sesión
+            </a>
         </div>
     </div>
+</div>
+{% else %}
 
-    <!-- Tabla de facturas -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="invoices-tbody" class="bg-white divide-y divide-gray-200">
-                <!-- Cargado dinámicamente -->
-            </tbody>
-        </table>
+<!-- Tabs Navigation de Facturas -->
+<div class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex space-x-8">
+            <a href="/invoices/facturas" 
+               class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'facturas' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                FACTURAS
+            </a>
+            <a href="/invoices/cufe" 
+               class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'cufe' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                </svg>
+                CUFE
+            </a>
+            <a href="/invoices/productos" 
+               class="py-4 px-1 border-b-2 font-medium text-sm {% if active_tab == 'productos' %}border-papyrus-blue text-papyrus-blue{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} transition-colors duration-200">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+                PRODUCTOS
+            </a>
+        </div>
     </div>
+</div>
 
-    <!-- Loading -->
-    <div id="loading" class="hidden text-center py-8">
-        <i class="fas fa-spinner fa-spin text-4xl text-papyrus-blue"></i>
-        <p class="text-gray-600 mt-2">Cargando facturas...</p>
+<div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-6 xl:py-8">
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Filtros y Acciones Compactos -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
+            <div class="flex flex-col space-y-3 lg:flex-row lg:items-center lg:space-x-6 lg:space-y-0">
+                <h1 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-light text-gray-900">Facturas de Proveedores</h1>
+
+                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 w-full">
+                    <!-- Búsqueda -->
+                    <div class="relative flex-1 min-w-0">
+                        <input id="search"
+                                type="text"
+                                placeholder="Proveedor, número, CUFE..."
+                                class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-base sm:text-base touch-manipulation"
+                                autocomplete="off">
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Botón para cargar factura -->
+                        <button onclick="document.getElementById('upload-modal').classList.remove('hidden')"
+                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-papyrus-blue hover:bg-blue-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation"
+                                title="Cargar nueva factura">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Filtros de estado -->
+                        <div class="flex items-center gap-1">
+                            <select id="estado" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue">
+                                <option value="">Todos</option>
+                                <option value="pendiente_dian">Pendiente DIAN</option>
+                                <option value="completo">Completo</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+
+                        <!-- Botón de buscar -->
+                        <button onclick="loadInvoices()"
+                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-gray-600 hover:bg-gray-700 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation"
+                                title="Buscar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Facturas -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">Lista de Facturas</h2>
+                    <div id="totalInvoicesCount" class="text-sm text-gray-700"></div>
+                </div>
+            </div>
+
+            <!-- Tabla responsive -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Número</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-40 md:w-48">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoices-tbody" class="bg-white divide-y divide-gray-200">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Loading state -->
+            <div id="loading" class="hidden text-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+                <p class="mt-4 text-sm text-gray-500">Cargando facturas...</p>
+            </div>
+
+            <!-- Empty state -->
+            <div id="invoices-empty" class="hidden text-center py-12">
+                <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">No hay facturas</h3>
+                <p class="mt-2 text-sm text-gray-500">No se encontraron facturas con los filtros aplicados.</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -195,15 +270,16 @@
     async function loadInvoices() {
         const loading = document.getElementById('loading');
         const tbody = document.getElementById('invoices-tbody');
+        const emptyState = document.getElementById('invoices-empty');
+        const totalCount = document.getElementById('totalInvoicesCount');
         
         loading.classList.remove('hidden');
         tbody.innerHTML = '';
+        emptyState.classList.add('hidden');
         
         const params = new URLSearchParams({
             search: document.getElementById('search').value,
             estado: document.getElementById('estado').value,
-            fecha_desde: document.getElementById('fecha_desde').value,
-            fecha_hasta: document.getElementById('fecha_hasta').value,
         });
         
         try {
@@ -211,11 +287,13 @@
             const invoices = await response.json();
             
             if (invoices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No se encontraron facturas</td></tr>';
+                emptyState.classList.remove('hidden');
+                totalCount.textContent = '';
             } else {
                 invoices.forEach(invoice => {
                     tbody.innerHTML += renderInvoiceRow(invoice);
                 });
+                totalCount.textContent = `Mostrando ${invoices.length} factura${invoices.length !== 1 ? 's' : ''}`;
             }
         } catch (error) {
             showToast('Error cargando facturas', 'error');
@@ -236,21 +314,79 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 text-sm font-mono text-gray-900">${truncateCufe(invoice.cufe)}</td>
                 <td class="px-6 py-4 text-sm text-gray-900">${invoice.proveedor_nombre || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">${invoice.numero_factura || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">${formatDate(invoice.fecha_emision)}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">${invoice.numero_factura || '-'}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden lg:table-cell">${formatDate(invoice.fecha_emision)}</td>
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(invoice.total_factura)}</td>
                 <td class="px-6 py-4 text-sm">${estadoBadge[invoice.estado] || invoice.estado}</td>
-                <td class="px-6 py-4 text-sm space-x-2">
-                    <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800">
-                        <i class="fas fa-edit"></i>
+                <td class="px-6 py-4 text-sm text-right space-x-2">
+                    <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Editar">
+                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
                     </button>
-                    <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800">
-                        <i class="fas fa-trash"></i>
+                    <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800" title="Eliminar">
+                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
                     </button>
-                    ${invoice.archivo_proveedor_url ? `<a href="${invoice.archivo_proveedor_url}" target="_blank" class="text-green-600 hover:text-green-800"><i class="fas fa-file-pdf"></i></a>` : ''}
+                    ${invoice.archivo_proveedor_url ? `<a href="${invoice.archivo_proveedor_url}" target="_blank" class="text-green-600 hover:text-green-800" title="Ver PDF"><svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></a>` : ''}
                 </td>
             </tr>
         `;
+    }
+
+    // Utilidades globales
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        const colors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            info: 'bg-blue-500',
+            warning: 'bg-yellow-500'
+        };
+        
+        toast.className = `${colors[type] || colors.success} fixed bottom-4 right-4 px-6 py-4 rounded-lg shadow-lg text-white mb-2 transform transition-all duration-300 ease-in-out z-50`;
+        toast.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    function formatCurrency(value) {
+        if (!value) return '$0';
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(value);
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-CO', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    }
+
+    function truncateCufe(cufe) {
+        if (!cufe) return '-';
+        return cufe.substring(0, 16) + '...';
     }
 
     // Mostrar archivos seleccionados
@@ -472,4 +608,5 @@
         }
     }
 </script>
+{% endif %}
 {% endblock %}

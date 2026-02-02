@@ -65,12 +65,12 @@ async def productos_page(
 
 
 @router.get("/", response_class=HTMLResponse)
-async def index_redirect(
+async def index_page(
     request: Request,
     current_user: User = Depends(get_current_active_user_from_cookies)
 ):
     """
-    Redirige a la vista de facturas por defecto
+    Vista principal de facturas (redirige a facturas por defecto)
     """
     return templates.TemplateResponse("invoices_v2/facturas.html", {
         "request": request,
