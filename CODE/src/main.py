@@ -116,6 +116,22 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_sch
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
+# Middleware para desactivar caché en API responses
+@app.middleware("http")
+async def no_cache_middleware(request: Request, call_next):
+    """
+    Middleware para desactivar caché en respuestas API
+    """
+    response = await call_next(request)
+    
+    # Solo aplicar a rutas API
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    
+    return response
+
 # Confiar en los headers del proxy (X-Forwarded-Proto, X-Forwarded-For, etc.)
 @app.middleware("http")
 async def proxy_headers_middleware(request: Request, call_next):
