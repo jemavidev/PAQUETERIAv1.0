@@ -249,6 +249,11 @@ class S3Service:
             print(f"🔧 Estructura nueva detectada: {s3_key}")
             return s3_key
         
+        # Si es una factura (invoices/...), usar tal como está SIN base_path
+        if s3_key.startswith('invoices/'):
+            print(f"🔧 Key de factura detectada (sin base_path): {s3_key}")
+            return s3_key
+        
         # Si es estructura antigua sin base_path, agregarlo
         normalized_key = f"{self.base_path}/{s3_key}"
         print(f"🔧 Key normalizada (estructura antigua): {normalized_key}")
