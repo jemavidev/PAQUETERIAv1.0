@@ -305,13 +305,14 @@
                 <td class="px-6 py-4 text-sm">${estadoBadge[invoice.estado] || invoice.estado}</td>
                 <td class="px-6 py-4 text-sm text-right">
                     <div class="flex items-center justify-end space-x-2">
-                        ${invoice.archivo_proveedor_url ? `
-                        <button onclick="downloadInvoice('${invoice.archivo_proveedor_url}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" class="text-green-600 hover:text-green-800" title="Descargar factura">
+                        <button onclick="downloadInvoice('${invoice.archivo_proveedor_url || ''}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" 
+                                class="${invoice.archivo_proveedor_url ? 'text-green-600 hover:text-green-800' : 'text-gray-300 cursor-not-allowed'}" 
+                                title="${invoice.archivo_proveedor_url ? 'Descargar factura PDF' : 'No hay archivo PDF disponible'}"
+                                ${!invoice.archivo_proveedor_url ? 'disabled' : ''}>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                             </svg>
                         </button>
-                        ` : ''}
                         <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Editar">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -339,6 +340,11 @@
 
     // Función para descargar factura
     function downloadInvoice(url, filename) {
+        if (!url || url.trim() === '') {
+            showToast('No hay archivo PDF disponible para esta factura', 'warning');
+            return;
+        }
+        
         const link = document.createElement('a');
         link.href = url;
         link.download = `factura_${filename}.pdf`;
