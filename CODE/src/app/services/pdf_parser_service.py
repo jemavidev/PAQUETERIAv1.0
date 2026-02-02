@@ -36,16 +36,19 @@ class PDFParserService:
     
     # Patrones de número de factura
     INVOICE_NUMBER_PATTERNS = [
-        r'(?:GRM|GRMZ)[\s]?(\d+)',  # GRM224813, GRMZ39813
-        r'(?:Factura|Número|No\.?|#)[\s:]+([A-Z0-9\-]+)',  # Factura: 23986, No. 004D-6454
-        r'(?:FEV|FV|AD)[\s]?([A-Z0-9\-]+)',  # FEV No. 123, FV09006851640112400000125
+        r'(?:N[uú]mero|Numero|No\.?|#)[\s:]*(?:de\s+)?(?:factura|documento)?[\s:]*([A-Z0-9\-]+)',  # Número: 123, No. factura: ABC-123
+        r'(?:Factura|FACTURA)[\s:]+(?:No\.?|N[uú]mero)?[\s:]*([A-Z0-9\-]+)',  # Factura: 123, FACTURA No. 456
+        r'(?:FEV|FV|AD|GRMZ?|POS)[\s\-]?(\d+)',  # FEV123, FV-456, AD789, GRM123, GRMZ456, POS789
+        r'Documento[\s:]+([A-Z0-9\-]+)',  # Documento: 123
+        r'(?:^|\n)([A-Z]{2,4}[\s\-]?\d{4,})',  # Patrón genérico: ABC1234, XY-5678
     ]
     
     # Patrones de total
     TOTAL_PATTERNS = [
-        r'(?:TOTAL|Total|T\s*O\s*T\s*A\s*L)[\s:$]*([0-9,.]+)',
-        r'(?:Total factura|Total documento|Valor a pagar)[\s:$COP]*([0-9,.]+)',
-        r'(?:Total neto|Total a Pagar)[\s:$COP]*([0-9,.]+)',
+        r'(?:Total\s+a\s+pagar|Valor\s+a\s+pagar|Total\s+factura|Total\s+documento)[\s:$COP]*([0-9,.]+)',  # Más específico primero
+        r'(?:Total\s+neto|Neto\s+a\s+pagar)[\s:$COP]*([0-9,.]+)',
+        r'(?:TOTAL|Total|T\s*O\s*T\s*A\s*L)[\s:$COP]*([0-9,.]+)',  # Genérico al final
+        r'(?:Valor\s+total|Total\s+general)[\s:$COP]*([0-9,.]+)',
     ]
     
     # Patrones de NIT
@@ -133,9 +136,12 @@ class PDFParserService:
         Extrae número de factura usando múltiples patrones
         """
         for pattern in PDFParserService.INVOICE_NUMBER_PATTERNS:
-            match = re.search(pattern, text, re.IGNORECASE)
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
             if match:
-                return match.group(1).strip() if match.lastindex else match.group(0).strip()
+                numero = match.group(1).strip()
+                # Validar que no sea muy corto o solo texto genérico
+                if len(numero) >= 3 and numero.upper() not in ['ELECTR', 'FACTURA', 'NUMERO', 'DOCUMENT']:
+                    return numero
         
         return None
     
@@ -150,11 +156,28 @@ class PDFParserService:
                 try:
                     # Limpiar formato de moneda
                     total_str = match.group(1)
-                    total_str = total_str.replace('.', '').replace(',', '.')  # 35.000,00 -> 35000.00
-                    total_str = re.sub(r'[^\d.]', '', total_str)  # Eliminar caracteres no numéricos
                     
-                    return Decimal(total_str)
-                except (ValueError, IndexError):
+                    # Remover puntos de miles y reemplazar coma decimal
+                    # Formato colombiano: 1.234.567,89 -> 1234567.89
+                    if ',' in total_str and '.' in total_str:
+                        # Tiene ambos: puntos son miles, coma es decimal
+                        total_str = total_str.replace('.', '').replace(',', '.')
+                    elif ',' in total_str:
+                        # Solo coma: es decimal
+                        total_str = total_str.replace(',', '.')
+                    elif total_str.count('.') > 1:
+                        # Múltiples puntos: son miles
+                        total_str = total_str.replace('.', '')
+                    
+                    # Eliminar caracteres no numéricos excepto punto decimal
+                    total_str = re.sub(r'[^\d.]', '', total_str)
+                    
+                    if total_str:
+                        total = Decimal(total_str)
+                        # Validar que sea un valor razonable (mayor a 0, menor a 1 billón)
+                        if 0 < total < 1000000000000:
+                            return total
+                except (ValueError, IndexError, Exception):
                     continue
         
         return None
@@ -162,28 +185,38 @@ class PDFParserService:
     @staticmethod
     def extract_provider_name(text: str) -> Optional[str]:
         """
-        Extrae nombre del proveedor usando heurísticas
+        Extrae nombre del proveedor usando heurísticas mejoradas
         """
-        # Buscar después de "Vendedor:", "Razón Social:", "Emisor:"
+        # Buscar después de palabras clave específicas
         patterns = [
-            r'(?:Vendedor|Razón Social|Emisor)[\s:]+([A-ZÁ-Ú\s]+(?:LTDA|SAS|S\.A\.S|S\.A\.|SA))',
-            r'(?:Datos del Emisor|Datos del vendedor)[\s\S]{0,100}?([A-ZÁ-Ú\s]+(?:LTDA|SAS|S\.A\.S|S\.A\.|SA))',
+            r'(?:Vendedor|Razón\s+Social|Razon\s+Social|Emisor|Proveedor)[\s:]+([A-ZÁÉÍÓÚÑ][A-ZÁ-Ú\s&.]+(?:LTDA|SAS|S\.A\.S|S\.A\.|SA|E\.U\.|EU))',
+            r'(?:Datos\s+del\s+Emisor|Datos\s+del\s+vendedor)[\s\S]{0,200}?([A-ZÁÉÍÓÚÑ][A-ZÁ-Ú\s&.]+(?:LTDA|SAS|S\.A\.S|S\.A\.|SA|E\.U\.|EU))',
+            r'(?:Nombre|Empresa)[\s:]+([A-ZÁÉÍÓÚÑ][A-ZÁ-Ú\s&.]+(?:LTDA|SAS|S\.A\.S|S\.A\.|SA|E\.U\.|EU))',
         ]
         
         for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
             if match:
-                return match.group(1).strip()
+                nombre = match.group(1).strip()
+                # Validar longitud mínima y que no sea solo siglas
+                if len(nombre) > 5 and not nombre.isupper() or len(nombre) > 15:
+                    # Limpiar espacios múltiples
+                    nombre = re.sub(r'\s+', ' ', nombre)
+                    return nombre
         
         # Si no encuentra, buscar líneas con NIT y tomar la anterior
         nit_match = re.search(PDFParserService.NIT_PATTERN, text)
         if nit_match:
             # Buscar líneas antes del NIT
             lines_before = text[:nit_match.start()].split('\n')
-            for line in reversed(lines_before[-5:]):  # Últimas 5 líneas antes del NIT
+            for line in reversed(lines_before[-10:]):  # Últimas 10 líneas antes del NIT
                 line = line.strip()
-                if len(line) > 5 and any(keyword in line.upper() for keyword in ['LTDA', 'SAS', 'S.A.S', 'S.A']):
-                    return line
+                # Buscar línea con razón social (mayúsculas, con tipo de sociedad)
+                if len(line) > 10 and any(keyword in line.upper() for keyword in ['LTDA', 'SAS', 'S.A.S', 'S.A', 'E.U']):
+                    # Limpiar y validar
+                    line = re.sub(r'\s+', ' ', line)
+                    if len(line) > 5 and line.upper() not in ['LISA', 'ELECTR', 'FACTURA']:
+                        return line
         
         return None
     
