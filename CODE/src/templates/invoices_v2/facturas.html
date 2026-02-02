@@ -34,15 +34,15 @@
                 <!-- Tabs compactos -->
                 <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                     <a href="/invoices/facturas" 
-                       class="px-4 py-2 text-sm font-medium {% if active_tab == 'facturas' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
+                       class="px-4 py-2 text-sm font-medium whitespace-nowrap {% if active_tab == 'facturas' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
                         FACTURAS
                     </a>
                     <a href="/invoices/cufe" 
-                       class="px-4 py-2 text-sm font-medium border-l border-gray-200 {% if active_tab == 'cufe' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
+                       class="px-4 py-2 text-sm font-medium whitespace-nowrap border-l border-gray-200 {% if active_tab == 'cufe' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
                         CUFE
                     </a>
                     <a href="/invoices/productos" 
-                       class="px-4 py-2 text-sm font-medium border-l border-gray-200 {% if active_tab == 'productos' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
+                       class="px-4 py-2 text-sm font-medium whitespace-nowrap border-l border-gray-200 {% if active_tab == 'productos' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
                         PRODUCTOS
                     </a>
                 </div>
@@ -280,35 +280,73 @@
 
     function renderInvoiceRow(invoice) {
         const estadoBadge = {
-            'pendiente_dian': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendiente DIAN</span>',
-            'completo': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Completo</span>',
-            'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Error</span>',
-            'sin_dian': '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Sin DIAN</span>',
+            'pendiente_dian': '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 whitespace-nowrap">Pend. DIAN</span>',
+            'completo': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">Completo</span>',
+            'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 whitespace-nowrap">Error</span>',
+            'sin_dian': '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 whitespace-nowrap">Sin DIAN</span>',
         };
         
         return `
             <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm font-mono text-gray-900">${truncateCufe(invoice.cufe)}</td>
+                <td class="px-6 py-4 text-sm font-mono text-gray-900">
+                    <div class="flex items-center space-x-2">
+                        <span class="truncate">${truncateCufe(invoice.cufe)}</span>
+                        <button onclick="copyCufe('${invoice.cufe}')" class="text-gray-400 hover:text-papyrus-blue" title="Copiar CUFE completo">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </td>
                 <td class="px-6 py-4 text-sm text-gray-900">${invoice.proveedor_nombre || '-'}</td>
                 <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">${invoice.numero_factura || '-'}</td>
                 <td class="px-6 py-4 text-sm text-gray-900 hidden lg:table-cell">${formatDate(invoice.fecha_emision)}</td>
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(invoice.total_factura)}</td>
                 <td class="px-6 py-4 text-sm">${estadoBadge[invoice.estado] || invoice.estado}</td>
-                <td class="px-6 py-4 text-sm text-right space-x-2">
-                    <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Editar">
-                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </button>
-                    <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800" title="Eliminar">
-                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                    ${invoice.archivo_proveedor_url ? `<a href="${invoice.archivo_proveedor_url}" target="_blank" class="text-green-600 hover:text-green-800" title="Ver PDF"><svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></a>` : ''}
+                <td class="px-6 py-4 text-sm text-right">
+                    <div class="flex items-center justify-end space-x-2">
+                        ${invoice.archivo_proveedor_url ? `
+                        <button onclick="downloadInvoice('${invoice.archivo_proveedor_url}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" class="text-green-600 hover:text-green-800" title="Descargar factura">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </button>
+                        ` : ''}
+                        <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Editar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800" title="Eliminar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
+    }
+
+    // Función para copiar CUFE al portapapeles
+    function copyCufe(cufe) {
+        navigator.clipboard.writeText(cufe).then(() => {
+            showToast('CUFE copiado al portapapeles', 'success');
+        }).catch(() => {
+            showToast('Error al copiar CUFE', 'error');
+        });
+    }
+
+    // Función para descargar factura
+    function downloadInvoice(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `factura_${filename}.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Descargando factura...', 'info');
     }
 
     // Utilidades globales
