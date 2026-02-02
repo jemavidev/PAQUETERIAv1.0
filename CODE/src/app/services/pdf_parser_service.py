@@ -52,9 +52,10 @@ class PDFParserService:
     NIT_PATTERN = r'(?:NIT|Nit)[\s:]+(\d{9,10}[-\d]?)'
     
     @staticmethod
-    def extract_text_from_pdf(pdf_path: str) -> str:
+    def extract_text_from_pdf(pdf_path: str, max_pages: int = 5) -> str:
         """
         Extrae texto de un PDF usando pdfplumber
+        OPTIMIZADO: Solo procesa las primeras páginas (donde está la info importante)
         """
         if not PDF_LIBRARY_AVAILABLE:
             logger.error("pdfplumber no está disponible")
@@ -63,10 +64,18 @@ class PDFParserService:
         try:
             text_parts = []
             with pdfplumber.open(pdf_path) as pdf:
-                for page in pdf.pages:
-                    page_text = page.extract_text()
+                # Solo procesar las primeras páginas (la info importante está al inicio)
+                pages_to_process = min(len(pdf.pages), max_pages)
+                
+                for i in range(pages_to_process):
+                    page_text = pdf.pages[i].extract_text()
                     if page_text:
                         text_parts.append(page_text)
+                    
+                    # Si ya encontramos CUFE, podemos parar antes
+                    combined_text = '\n'.join(text_parts)
+                    if len(combined_text) > 2000 and re.search(r'[0-9a-fA-F]{96}', combined_text):
+                        break
             
             return '\n'.join(text_parts)
         except Exception as e:
@@ -373,56 +382,47 @@ class PDFParserService:
     def _extract_productos(text: str) -> List[Dict[str, Any]]:
         """
         Extrae productos del documento DIAN
-        Busca tabla de productos
+        OPTIMIZADO: Extracción simplificada y rápida
         """
         productos = []
         
-        # Buscar sección de productos
-        match = re.search(r'(?:Detalles de productos|Detalle de Ítems)([\s\S]+?)(?:Notas finales|Datos totales)', text, re.IGNORECASE)
+        # Buscar sección de productos (limitar búsqueda)
+        match = re.search(r'(?:Detalles de productos|Detalle de Ítems|DETALLE)([\s\S]{0,5000}?)(?:Notas finales|Datos totales|Total|TOTAL)', text, re.IGNORECASE)
         if not match:
+            # Intentar buscar tabla simple
             return productos
         
         productos_section = match.group(1)
-        
-        # Buscar líneas de productos (patrón genérico)
-        # Formato típico: Nro | Código | Descripción | Cantidad | Precio | IVA | Total
         lines = productos_section.split('\n')
         
-        current_product = {}
-        for i, line in enumerate(lines):
+        # Buscar solo códigos EAN/UPC y descripciones básicas
+        for line in lines[:100]:  # Limitar a 100 líneas
             line = line.strip()
-            if not line:
+            if len(line) < 5:
                 continue
             
-            # Detectar inicio de producto (número de línea)
-            if re.match(r'^\d+\s', line):
-                if current_product:
-                    productos.append(current_product)
-                
-                current_product = {
-                    'linea_numero': None,
-                    'codigo_producto': None,
-                    'descripcion': None,
-                    'cantidad': None,
-                    'precio_unitario': None,
-                    'iva_porcentaje': None,
-                    'total_item': None,
-                }
-            
-            # Extraer código de producto (EAN/UPC - números largos)
+            # Buscar código de producto (EAN/UPC)
             codigo_match = re.search(r'\b(\d{13}|\d{12}|\d{8})\b', line)
-            if codigo_match and not current_product.get('codigo_producto'):
-                current_product['codigo_producto'] = codigo_match.group(1)
-            
-            # Extraer descripción (texto largo)
-            if len(line) > 20 and not current_product.get('descripcion'):
-                # Limpiar números y códigos
-                desc = re.sub(r'\d{8,}', '', line).strip()
-                if len(desc) > 10:
-                    current_product['descripcion'] = desc
-        
-        if current_product:
-            productos.append(current_product)
+            if codigo_match:
+                codigo = codigo_match.group(1)
+                
+                # Extraer descripción (texto después del código)
+                desc = line.replace(codigo, '').strip()
+                desc = re.sub(r'[\d,.$]+', '', desc).strip()  # Quitar números
+                
+                if len(desc) > 5:
+                    productos.append({
+                        'codigo_producto': codigo,
+                        'descripcion': desc[:200],  # Limitar longitud
+                        'cantidad': None,
+                        'precio_unitario': None,
+                        'iva_porcentaje': None,
+                        'total_item': None,
+                    })
+                
+                # Limitar a 50 productos
+                if len(productos) >= 50:
+                    break
         
         return productos
     

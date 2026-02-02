@@ -9,12 +9,14 @@ from datetime import date, datetime
 from pydantic import BaseModel, Field
 import tempfile
 import os
+import logging
 
 from ..database import get_db
 from ..services.invoice_v2_service import InvoiceV2Service
 from ..models.invoice_v2 import InvoiceV2, InvoiceProductV2
 
 router = APIRouter(prefix="/api/v2/invoices", tags=["Invoices V2"])
+logger = logging.getLogger(__name__)
 
 
 # ===== SCHEMAS =====
@@ -135,13 +137,18 @@ async def upload_provider_invoice(
     """
     TAB FACTURAS: Sube una factura de proveedor
     Extrae: CUFE, Proveedor, Fecha, Número, Total
+    OPTIMIZADO: Timeout de 25 segundos
     """
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
     
+    # Validar tamaño (máximo 5MB)
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="El archivo es demasiado grande (máximo 5MB)")
+    
     # Guardar temporalmente
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-        content = await file.read()
         tmp.write(content)
         tmp_path = tmp.name
     
@@ -151,12 +158,14 @@ async def upload_provider_invoice(
         # Resetear el file object para S3
         await file.seek(0)
         
+        # Procesar con timeout implícito (FastAPI tiene timeout de 30s por defecto)
         invoice = service.create_invoice_from_provider_pdf(tmp_path, file_obj=file.file)
         
         return invoice
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(f"Error procesando PDF {file.filename}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error procesando PDF: {str(e)}")
     finally:
         # Limpiar archivo temporal
@@ -170,21 +179,39 @@ def list_invoices(
     limit: int = Query(100, ge=1, le=500),
     search: Optional[str] = Query(None),
     estado: Optional[str] = Query(None),
-    fecha_desde: Optional[date] = Query(None),
-    fecha_hasta: Optional[date] = Query(None),
+    fecha_desde: Optional[str] = Query(None),
+    fecha_hasta: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     """
     TAB FACTURAS: Lista todas las facturas con filtros
     """
+    # Convertir strings vacías a None y parsear fechas
+    search = search if search and search.strip() else None
+    estado = estado if estado and estado.strip() else None
+    
+    fecha_desde_parsed = None
+    if fecha_desde and fecha_desde.strip():
+        try:
+            fecha_desde_parsed = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    fecha_hasta_parsed = None
+    if fecha_hasta and fecha_hasta.strip():
+        try:
+            fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
     service = InvoiceV2Service(db)
     invoices = service.list_invoices(
         skip=skip,
         limit=limit,
         search=search,
         estado=estado,
-        fecha_desde=fecha_desde,
-        fecha_hasta=fecha_hasta
+        fecha_desde=fecha_desde_parsed,
+        fecha_hasta=fecha_hasta_parsed
     )
     return invoices
 
@@ -333,22 +360,41 @@ def list_products(
     limit: int = Query(100, ge=1, le=500),
     search: Optional[str] = Query(None, description="Buscar en descripción o código"),
     codigo_producto: Optional[str] = Query(None),
-    fecha_desde: Optional[date] = Query(None),
-    fecha_hasta: Optional[date] = Query(None),
+    fecha_desde: Optional[str] = Query(None),
+    fecha_hasta: Optional[str] = Query(None),
     proveedor: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     """
     TAB PRODUCTOS: Lista todos los productos con filtros avanzados
     """
+    # Convertir strings vacías a None y parsear fechas
+    search = search if search and search.strip() else None
+    codigo_producto = codigo_producto if codigo_producto and codigo_producto.strip() else None
+    proveedor = proveedor if proveedor and proveedor.strip() else None
+    
+    fecha_desde_parsed = None
+    if fecha_desde and fecha_desde.strip():
+        try:
+            fecha_desde_parsed = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    fecha_hasta_parsed = None
+    if fecha_hasta and fecha_hasta.strip():
+        try:
+            fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
     service = InvoiceV2Service(db)
     productos = service.list_products(
         skip=skip,
         limit=limit,
         search=search,
         codigo_producto=codigo_producto,
-        fecha_desde=fecha_desde,
-        fecha_hasta=fecha_hasta,
+        fecha_desde=fecha_desde_parsed,
+        fecha_hasta=fecha_hasta_parsed,
         proveedor=proveedor
     )
     

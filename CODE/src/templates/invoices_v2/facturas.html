@@ -315,53 +315,60 @@
         let successful = 0;
         let failed = 0;
         
-        // Procesar archivos en paralelo (máximo 3 a la vez)
-        const batchSize = 3;
+        // Procesar archivos UNO POR UNO (más lento pero más estable)
         const filesArray = Array.from(files);
         
-        for (let i = 0; i < filesArray.length; i += batchSize) {
-            const batch = filesArray.slice(i, i + batchSize);
+        for (let i = 0; i < filesArray.length; i++) {
+            const file = filesArray[i];
+            const formData = new FormData();
+            formData.append('file', file);
             
-            await Promise.all(batch.map(async (file) => {
-                const formData = new FormData();
-                formData.append('file', file);
+            try {
+                // Timeout de 30 segundos por archivo
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
                 
-                try {
-                    const response = await fetch('/api/v2/invoices/facturas/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    completed++;
-                    
-                    if (response.ok) {
-                        successful++;
-                        const result = document.createElement('div');
-                        result.className = 'text-xs text-green-600';
-                        result.innerHTML = `✓ ${file.name}`;
-                        resultsDiv.appendChild(result);
-                    } else {
-                        failed++;
-                        const error = await response.json();
-                        const result = document.createElement('div');
-                        result.className = 'text-xs text-red-600';
-                        result.innerHTML = `✗ ${file.name}: ${error.detail || 'Error'}`;
-                        resultsDiv.appendChild(result);
-                    }
-                } catch (error) {
-                    completed++;
+                const response = await fetch('/api/v2/invoices/facturas/upload', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                completed++;
+                
+                if (response.ok) {
+                    successful++;
+                    const result = document.createElement('div');
+                    result.className = 'text-xs text-green-600';
+                    result.innerHTML = `✓ ${file.name}`;
+                    resultsDiv.appendChild(result);
+                } else {
                     failed++;
+                    const error = await response.json();
                     const result = document.createElement('div');
                     result.className = 'text-xs text-red-600';
-                    result.innerHTML = `✗ ${file.name}: Error de conexión`;
+                    result.innerHTML = `✗ ${file.name}: ${error.detail || 'Error'}`;
                     resultsDiv.appendChild(result);
                 }
-                
-                // Actualizar progreso
-                const progress = (completed / files.length) * 100;
-                progressBar.style.width = `${progress}%`;
-                progressText.textContent = `${completed} / ${files.length}`;
-            }));
+            } catch (error) {
+                completed++;
+                failed++;
+                const result = document.createElement('div');
+                result.className = 'text-xs text-red-600';
+                if (error.name === 'AbortError') {
+                    result.innerHTML = `✗ ${file.name}: Timeout (>30s)`;
+                } else {
+                    result.innerHTML = `✗ ${file.name}: ${error.message || 'Error de conexión'}`;
+                }
+                resultsDiv.appendChild(result);
+            }
+            
+            // Actualizar progreso
+            const progress = (completed / files.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${completed} / ${files.length}`;
         }
         
         // Mostrar resumen

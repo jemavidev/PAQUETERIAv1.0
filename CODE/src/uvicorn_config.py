@@ -15,7 +15,7 @@ IS_STAGING = ENVIRONMENT in ["staging", "development", "dev"]
 WORKERS = 2 if IS_STAGING else 3
 
 # Configuración de timeouts para evitar bloqueos
-TIMEOUT_KEEP_ALIVE = 30  # Mantener conexión viva por 30 segundos
+TIMEOUT_KEEP_ALIVE = 60  # Mantener conexión viva por 60 segundos (aumentado para PDFs)
 TIMEOUT_GRACEFUL_SHUTDOWN = 30  # Tiempo para apagar gracefully
 LIMIT_CONCURRENCY = 100 if IS_STAGING else 200
 
