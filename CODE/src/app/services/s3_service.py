@@ -235,28 +235,32 @@ class S3Service:
         Returns:
             str: Key normalizada para S3
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not s3_key:
             raise ValueError("s3_key no puede estar vacío")
         
+        # Si es una factura (invoices/...), usar tal como está SIN base_path
+        # IMPORTANTE: Las facturas se guardan en la raíz del bucket, no en base_path
+        if s3_key.startswith('invoices/'):
+            logger.info(f"🔧 Key de factura detectada (sin base_path): {s3_key}")
+            return s3_key
+        
         # Si ya incluye el base_path, usar tal como está
         if self.base_path in s3_key:
-            print(f"🔧 Key con base_path detectada: {s3_key}")
+            logger.info(f"🔧 Key con base_path detectada: {s3_key}")
             return s3_key
         
         # Si es estructura nueva (YYYY/MM/DD/packages/...), usar tal como está
         import re
         if re.match(r'^\d{4}/\d{2}/\d{2}/packages/', s3_key):
-            print(f"🔧 Estructura nueva detectada: {s3_key}")
-            return s3_key
-        
-        # Si es una factura (invoices/...), usar tal como está SIN base_path
-        if s3_key.startswith('invoices/'):
-            print(f"🔧 Key de factura detectada (sin base_path): {s3_key}")
+            logger.info(f"🔧 Estructura nueva detectada: {s3_key}")
             return s3_key
         
         # Si es estructura antigua sin base_path, agregarlo
         normalized_key = f"{self.base_path}/{s3_key}"
-        print(f"🔧 Key normalizada (estructura antigua): {normalized_key}")
+        logger.info(f"🔧 Key normalizada (estructura antigua): {normalized_key}")
         return normalized_key
     
     def _is_new_structure(self, s3_key: str) -> bool:
