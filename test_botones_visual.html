@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Visual - Botones Implementados</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .papyrus-blue { color: #2563eb; }
+        .bg-papyrus-blue { background-color: #2563eb; }
+        .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+        .hover\:text-papyrus-blue:hover { color: #2563eb; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">✅ Test Visual - Botones Implementados</h1>
+            <p class="text-gray-600">Esta es una vista previa de cómo deberían verse los botones en /invoices</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="border-b border-gray-100 px-8 py-6">
+                <h2 class="text-lg font-medium text-gray-900">Lista de Facturas (Ejemplo)</h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Fila de ejemplo 1 - CON archivo PDF -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-mono text-gray-900">
+                                <div class="flex items-center space-x-2">
+                                    <span class="truncate">8cf8ec5366fa9ea...</span>
+                                    <button onclick="alert('CUFE copiado: 8cf8ec5366fa9eaccea38cdffdfa0a7690edbaf31b89adce444ca0a322d19e50a79c86d67e0fbc81609dc9451975f0ad')" 
+                                            class="text-gray-400 hover:text-papyrus-blue transition-colors" 
+                                            title="Copiar CUFE completo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900">Proveedor ABC S.A.S.</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">FV-12345</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">15/01/2025</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">$1.250.000</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">Completo</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-right">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <!-- ✅ BOTÓN DE DESCARGAR (VERDE) -->
+                                    <button onclick="alert('Descargando factura FV-12345.pdf')" 
+                                            class="text-green-600 hover:text-green-800 transition-colors" 
+                                            title="Descargar factura">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                        </svg>
+                                    </button>
+                                    <!-- Botón de editar (AZUL) -->
+                                    <button onclick="alert('Editar factura')" 
+                                            class="text-blue-600 hover:text-blue-800 transition-colors" 
+                                            title="Editar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <!-- Botón de eliminar (ROJO) -->
+                                    <button onclick="alert('Eliminar factura')" 
+                                            class="text-red-600 hover:text-red-800 transition-colors" 
+                                            title="Eliminar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Fila de ejemplo 2 - SIN archivo PDF -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-mono text-gray-900">
+                                <div class="flex items-center space-x-2">
+                                    <span class="truncate">b95d05e6ff51cba...</span>
+                                    <button onclick="alert('CUFE copiado: b95d05e6ff51cbaf53e1510b1d213af6a0ec838d1e4420e708b99e9c723c984926586ce3a64de8d5a621b2eeea9ec051')" 
+                                            class="text-gray-400 hover:text-papyrus-blue transition-colors" 
+                                            title="Copiar CUFE completo">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900">Proveedor XYZ Ltda.</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">FV-67890</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">20/01/2025</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">$850.000</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 whitespace-nowrap">Pend. DIAN</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-right">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <!-- ❌ NO HAY BOTÓN DE DESCARGAR (sin archivo_proveedor_url) -->
+                                    <!-- Botón de editar (AZUL) -->
+                                    <button onclick="alert('Editar factura')" 
+                                            class="text-blue-600 hover:text-blue-800 transition-colors" 
+                                            title="Editar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <!-- Botón de eliminar (ROJO) -->
+                                    <button onclick="alert('Eliminar factura')" 
+                                            class="text-red-600 hover:text-red-800 transition-colors" 
+                                            title="Eliminar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Leyenda -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">📋 Leyenda de Botones</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">Copiar CUFE</p>
+                        <p class="text-sm text-gray-600">Copia el código CUFE completo al portapapeles. Aparece en la columna CUFE.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">Descargar PDF</p>
+                        <p class="text-sm text-gray-600">Descarga el archivo PDF original desde AWS S3. Solo aparece si existe el archivo.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">Editar</p>
+                        <p class="text-sm text-gray-600">Abre el modal para editar los datos de la factura.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">Eliminar</p>
+                        <p class="text-sm text-gray-600">Elimina la factura y todos sus productos asociados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-yellow-900 mb-3">⚠️ Si no ves estos botones en tu aplicación</h3>
+            <ol class="list-decimal list-inside space-y-2 text-yellow-800">
+                <li>Reinicia el servidor FastAPI</li>
+                <li>Limpia la caché del navegador (Ctrl + Shift + R)</li>
+                <li>Recarga la página /invoices</li>
+            </ol>
+            <p class="mt-4 text-sm text-yellow-700">
+                Lee el archivo <code class="bg-yellow-100 px-2 py-1 rounded">SOLUCION_BOTONES_NO_VISIBLES.md</code> para más detalles.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

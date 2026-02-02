@@ -30,9 +30,9 @@
     <div class="space-y-4 sm:space-y-6">
         <!-- Tabs Navigation de Facturas -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
-            <div class="flex flex-col space-y-3 lg:flex-row lg:items-center lg:space-x-6 lg:space-y-0">
+            <div class="flex flex-col space-y-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 lg:space-x-4">
                 <!-- Tabs compactos -->
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                     <a href="/invoices/facturas" 
                        class="px-4 py-2 text-sm font-medium whitespace-nowrap {% if active_tab == 'facturas' %}bg-papyrus-blue text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %} transition-colors duration-200">
                         FACTURAS
@@ -47,16 +47,16 @@
                     </a>
                 </div>
 
-                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 w-full">
+                <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 flex-1 lg:max-w-2xl">
                     <!-- Campo oculto para estado (usado por JavaScript) -->
                     <input type="hidden" id="estado" value="">
                     
                     <!-- Búsqueda -->
-                    <div class="relative flex-1 min-w-0">
+                    <div class="relative flex-1">
                         <input id="search"
                                 type="text"
                                 placeholder="Proveedor, número, CUFE..."
-                                class="w-full px-4 py-3 sm:py-2.5 md:py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-base sm:text-base touch-manipulation"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-sm touch-manipulation"
                                 autocomplete="off">
                     </div>
 
@@ -64,16 +64,16 @@
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <!-- Botón para cargar factura -->
                         <button onclick="document.getElementById('upload-modal').classList.remove('hidden')"
-                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-papyrus-blue hover:bg-blue-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation"
+                                class="inline-flex items-center justify-center w-10 h-10 border border-transparent rounded-lg shadow-sm text-white bg-papyrus-blue hover:bg-blue-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation"
                                 title="Cargar nueva factura">
-                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                         </button>
 
                         <!-- Botón de buscar -->
                         <button onclick="loadInvoices()"
-                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-gray-600 hover:bg-gray-700 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation"
+                                class="inline-flex items-center justify-center w-10 h-10 border border-transparent rounded-lg shadow-sm text-white bg-gray-600 hover:bg-gray-700 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation"
                                 title="Buscar">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
