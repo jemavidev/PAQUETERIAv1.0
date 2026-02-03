@@ -4,6 +4,7 @@ Rutas API para el sistema de facturas V2
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List, Optional
 from datetime import date, datetime
 from pydantic import BaseModel, Field
@@ -177,6 +178,62 @@ async def upload_provider_invoice(
         # Limpiar archivo temporal
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+@router.get("/facturas/count")
+def count_invoices(
+    search: Optional[str] = Query(None),
+    estado: Optional[str] = Query(None),
+    fecha_desde: Optional[str] = Query(None),
+    fecha_hasta: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    TAB FACTURAS: Cuenta el total de facturas con filtros (para paginación)
+    """
+    # Convertir strings vacías a None y parsear fechas
+    search = search if search and search.strip() else None
+    estado = estado if estado and estado.strip() else None
+    
+    fecha_desde_parsed = None
+    if fecha_desde and fecha_desde.strip():
+        try:
+            fecha_desde_parsed = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    fecha_hasta_parsed = None
+    if fecha_hasta and fecha_hasta.strip():
+        try:
+            fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    service = InvoiceV2Service(db)
+    
+    # Construir query con los mismos filtros que list_invoices
+    query = db.query(InvoiceV2)
+    
+    if search:
+        query = query.filter(
+            or_(
+                InvoiceV2.proveedor_nombre.ilike(f'%{search}%'),
+                InvoiceV2.numero_factura.ilike(f'%{search}%'),
+                InvoiceV2.cufe.ilike(f'%{search}%')
+            )
+        )
+    
+    if estado:
+        query = query.filter(InvoiceV2.estado == estado)
+    
+    if fecha_desde_parsed:
+        query = query.filter(InvoiceV2.fecha_emision >= fecha_desde_parsed)
+    if fecha_hasta_parsed:
+        query = query.filter(InvoiceV2.fecha_emision <= fecha_hasta_parsed)
+    
+    total = query.count()
+    
+    return {"total": total}
 
 
 @router.get("/facturas", response_model=List[InvoiceResponse])

@@ -51,13 +51,19 @@
                     <!-- Campo oculto para estado (usado por JavaScript) -->
                     <input type="hidden" id="estado" value="">
                     
-                    <!-- Búsqueda -->
+                    <!-- Búsqueda con búsqueda en tiempo real -->
                     <div class="relative flex-1">
                         <input id="search"
                                 type="text"
                                 placeholder="Proveedor, número, CUFE..."
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-sm touch-manipulation"
                                 autocomplete="off">
+                        <div id="search-loading" class="hidden absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <svg class="animate-spin h-4 w-4 text-papyrus-blue" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
                     </div>
 
                     <!-- Botones de acción -->
@@ -68,15 +74,6 @@
                                 title="Cargar nueva factura">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                        </button>
-
-                        <!-- Botón de buscar -->
-                        <button onclick="loadInvoices()"
-                                class="inline-flex items-center justify-center w-10 h-10 border border-transparent rounded-lg shadow-sm text-white bg-gray-600 hover:bg-gray-700 hover:shadow-md transition-all duration-200 active:scale-95 touch-manipulation"
-                                title="Buscar">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </button>
                     </div>
@@ -128,6 +125,50 @@
                 </div>
                 <h3 class="text-lg font-medium text-gray-900">No hay facturas</h3>
                 <p class="mt-2 text-sm text-gray-500">No se encontraron facturas con los filtros aplicados.</p>
+            </div>
+
+            <!-- Paginación -->
+            <div id="pagination" class="hidden border-t border-gray-200 px-4 py-3 sm:px-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <!-- Info de página -->
+                    <div class="text-sm text-gray-700">
+                        Mostrando <span id="page-start" class="font-medium">0</span> a <span id="page-end" class="font-medium">0</span> de <span id="page-total" class="font-medium">0</span> facturas
+                    </div>
+                    
+                    <!-- Controles de paginación -->
+                    <div class="flex items-center gap-2">
+                        <button id="prev-page" onclick="previousPage()" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                disabled>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <div class="flex items-center gap-1" id="page-numbers">
+                            <!-- Números de página se generan dinámicamente -->
+                        </div>
+                        
+                        <button id="next-page" onclick="nextPage()" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                disabled>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Selector de items por página -->
+                    <div class="flex items-center gap-2">
+                        <label for="page-size" class="text-sm text-gray-700">Por página:</label>
+                        <select id="page-size" onchange="changePageSize()" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-papyrus-blue focus:border-papyrus-blue">
+                            <option value="20">20</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -338,7 +379,100 @@
     // Cargar facturas al iniciar
     document.addEventListener('DOMContentLoaded', () => {
         loadInvoices();
+        
+        // Búsqueda en tiempo real con debounce
+        let searchTimeout;
+        document.getElementById('search').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const searchLoading = document.getElementById('search-loading');
+            searchLoading.classList.remove('hidden');
+            
+            searchTimeout = setTimeout(() => {
+                currentPage = 1; // Resetear a primera página
+                loadInvoices();
+                searchLoading.classList.add('hidden');
+            }, 500); // Esperar 500ms después de que el usuario deje de escribir
+        });
     });
+
+    // Variables de paginación
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalInvoices = 0;
+
+    function changePageSize() {
+        pageSize = parseInt(document.getElementById('page-size').value);
+        currentPage = 1;
+        loadInvoices();
+    }
+
+    function previousPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadInvoices();
+        }
+    }
+
+    function nextPage() {
+        const totalPages = Math.ceil(totalInvoices / pageSize);
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadInvoices();
+        }
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadInvoices();
+    }
+
+    function updatePagination(total) {
+        totalInvoices = total;
+        const totalPages = Math.ceil(total / pageSize);
+        const pagination = document.getElementById('pagination');
+        
+        if (total === 0) {
+            pagination.classList.add('hidden');
+            return;
+        }
+        
+        pagination.classList.remove('hidden');
+        
+        // Actualizar info
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, total);
+        document.getElementById('page-start').textContent = start;
+        document.getElementById('page-end').textContent = end;
+        document.getElementById('page-total').textContent = total;
+        
+        // Actualizar botones prev/next
+        document.getElementById('prev-page').disabled = currentPage === 1;
+        document.getElementById('next-page').disabled = currentPage === totalPages;
+        
+        // Generar números de página
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        // Mostrar máximo 5 páginas
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.onclick = () => goToPage(i);
+            btn.className = `px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                i === currentPage 
+                    ? 'bg-papyrus-blue text-white border-papyrus-blue' 
+                    : 'text-gray-700 border-gray-300 bg-white hover:bg-gray-50'
+            }`;
+            pageNumbers.appendChild(btn);
+        }
+    }
 
     // Sistema de tareas en segundo plano
     let activeTasks = [];
@@ -442,26 +576,38 @@
         tbody.innerHTML = '';
         emptyState.classList.add('hidden');
         
+        const skip = (currentPage - 1) * pageSize;
         const params = new URLSearchParams({
             search: document.getElementById('search').value,
             estado: document.getElementById('estado').value,
+            skip: skip,
+            limit: pageSize
         });
         
         try {
+            // Primero obtener el total de facturas
+            const countResponse = await fetch(`/api/v2/invoices/facturas/count?${params}`);
+            const countData = await countResponse.json();
+            const total = countData.total || 0;
+            
+            // Luego obtener las facturas de la página actual
             const response = await fetch(`/api/v2/invoices/facturas?${params}`);
             const invoices = await response.json();
             
             if (invoices.length === 0) {
                 emptyState.classList.remove('hidden');
                 totalCount.textContent = '';
+                updatePagination(0);
             } else {
                 invoices.forEach(invoice => {
                     tbody.innerHTML += renderInvoiceRow(invoice);
                 });
-                totalCount.textContent = `Mostrando ${invoices.length} factura${invoices.length !== 1 ? 's' : ''}`;
+                totalCount.textContent = `Total: ${total} factura${total !== 1 ? 's' : ''}`;
+                updatePagination(total);
             }
         } catch (error) {
             showToast('Error cargando facturas', 'error');
+            updatePagination(0);
         } finally {
             loading.classList.add('hidden');
         }
