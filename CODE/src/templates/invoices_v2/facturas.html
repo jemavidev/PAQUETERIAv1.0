@@ -283,7 +283,7 @@
                     <p class="text-xs text-gray-500">
                         Longitud: <span id="cufe-length" class="font-medium">0</span> / 128 caracteres
                     </p>
-                    <button type="button" onclick="document.getElementById('associate-new-cufe').value = ''" 
+                    <button type="button" onclick="document.getElementById('associate-new-cufe').value = ''; document.getElementById('cufe-length').textContent = '0';" 
                             class="text-xs text-gray-500 hover:text-gray-700">
                         Limpiar
                     </button>
@@ -306,11 +306,125 @@
     </div>
 </div>
 
+<!-- Panel de tareas en progreso (esquina inferior derecha) -->
+<div id="tasks-panel" class="hidden fixed bottom-4 right-4 bg-white rounded-lg shadow-2xl border border-gray-200 w-96 max-h-96 overflow-hidden z-50">
+    <div class="bg-gradient-to-r from-papyrus-blue to-blue-600 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center text-white">
+            <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="font-medium">Tareas en progreso</span>
+            <span id="tasks-count" class="ml-2 bg-white text-papyrus-blue rounded-full px-2 py-0.5 text-xs font-bold">0</span>
+        </div>
+        <button onclick="toggleTasksPanel()" class="text-white hover:text-gray-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+    <div id="tasks-list" class="overflow-y-auto max-h-80 divide-y divide-gray-100">
+        <!-- Las tareas se agregarán aquí dinámicamente -->
+    </div>
+</div>
+
 <script>
     // Cargar facturas al iniciar
     document.addEventListener('DOMContentLoaded', () => {
         loadInvoices();
     });
+
+    // Sistema de tareas en segundo plano
+    let activeTasks = [];
+    let taskIdCounter = 0;
+
+    function addTask(description, promise) {
+        const taskId = ++taskIdCounter;
+        const task = {
+            id: taskId,
+            description: description,
+            status: 'processing',
+            startTime: Date.now()
+        };
+        
+        activeTasks.push(task);
+        updateTasksPanel();
+        
+        promise
+            .then(() => {
+                task.status = 'completed';
+                updateTasksPanel();
+                setTimeout(() => removeTask(taskId), 3000);
+            })
+            .catch((error) => {
+                task.status = 'error';
+                task.error = error.message;
+                updateTasksPanel();
+                setTimeout(() => removeTask(taskId), 5000);
+            });
+        
+        return taskId;
+    }
+
+    function removeTask(taskId) {
+        activeTasks = activeTasks.filter(t => t.id !== taskId);
+        updateTasksPanel();
+    }
+
+    function updateTasksPanel() {
+        const panel = document.getElementById('tasks-panel');
+        const tasksList = document.getElementById('tasks-list');
+        const tasksCount = document.getElementById('tasks-count');
+        
+        if (activeTasks.length === 0) {
+            panel.classList.add('hidden');
+            return;
+        }
+        
+        panel.classList.remove('hidden');
+        tasksCount.textContent = activeTasks.length;
+        
+        tasksList.innerHTML = activeTasks.map(task => {
+            const statusIcon = {
+                'processing': `<svg class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>`,
+                'completed': `<svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>`,
+                'error': `<svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>`
+            };
+            
+            const statusText = {
+                'processing': 'Procesando...',
+                'completed': 'Completado',
+                'error': 'Error'
+            };
+            
+            return `
+                <div class="p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mt-0.5">
+                            ${statusIcon[task.status]}
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">${task.description}</p>
+                            <p class="text-xs text-gray-500 mt-1">${statusText[task.status]}</p>
+                            ${task.error ? `<p class="text-xs text-red-600 mt-1">${task.error}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleTasksPanel() {
+        const panel = document.getElementById('tasks-panel');
+        panel.classList.add('hidden');
+    }
 
     async function loadInvoices() {
         const loading = document.getElementById('loading');
@@ -752,7 +866,6 @@
         
         const tempCufe = document.getElementById('associate-temp-cufe').value;
         const newCufe = document.getElementById('associate-new-cufe').value.trim();
-        const submitBtn = document.getElementById('associate-cufe-btn');
         
         if (!newCufe || newCufe.length < 64) {
             showToast('El CUFE debe tener al menos 64 caracteres', 'error');
@@ -764,43 +877,84 @@
             return;
         }
         
-        // Deshabilitar botón mientras procesa
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Asociando...
-        `;
+        // Cerrar modal inmediatamente
+        closeAssociateCufeModal();
         
-        try {
+        // Agregar tarea al panel
+        const taskPromise = (async () => {
             const response = await fetch(`/api/v2/invoices/facturas/${encodeURIComponent(tempCufe)}/update-cufe?new_cufe=${encodeURIComponent(newCufe)}`, {
                 method: 'PUT'
             });
             
-            if (response.ok) {
-                const result = await response.json();
-                showToast('✅ CUFE asociado correctamente', 'success');
-                closeAssociateCufeModal();
-                loadInvoices();
-            } else {
+            if (!response.ok) {
                 const error = await response.json();
-                showToast(error.detail || 'Error asociando CUFE', 'error');
+                throw new Error(error.detail || 'Error asociando CUFE');
+            }
+            
+            const result = await response.json();
+            showToast('✅ CUFE asociado correctamente', 'success');
+            
+            // Refrescar solo esa factura
+            await refreshSingleInvoice(newCufe);
+        })();
+        
+        addTask(`Asociando CUFE: ${newCufe.substring(0, 16)}...`, taskPromise);
+    });
+
+    // Marcar factura como procesando
+    function markInvoiceAsProcessing(cufe) {
+        const rows = document.querySelectorAll('#invoices-tbody tr');
+        rows.forEach(row => {
+            const cufeCell = row.querySelector('td:first-child span');
+            if (cufeCell && cufeCell.textContent.includes('TEMPORAL')) {
+                row.classList.add('opacity-50');
+                const actionsCell = row.querySelector('td:last-child');
+                if (actionsCell) {
+                    actionsCell.innerHTML = `
+                        <div class="flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="ml-2 text-sm text-gray-600">Procesando...</span>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+
+    // Refrescar una sola factura
+    async function refreshSingleInvoice(cufe) {
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${encodeURIComponent(cufe)}`);
+            if (response.ok) {
+                const invoice = await response.json();
+                // Buscar y actualizar solo esa fila
+                const rows = document.querySelectorAll('#invoices-tbody tr');
+                let found = false;
+                rows.forEach(row => {
+                    const cufeCell = row.querySelector('td:first-child span');
+                    if (cufeCell && (cufeCell.textContent.includes('TEMPORAL') || row.classList.contains('opacity-50'))) {
+                        // Crear nueva fila
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = renderInvoiceRow(invoice);
+                        const newRow = tempDiv.firstElementChild;
+                        row.replaceWith(newRow);
+                        found = true;
+                    }
+                });
+                
+                // Si no se encontró, recargar toda la tabla
+                if (!found) {
+                    await loadInvoices();
+                }
             }
         } catch (error) {
-            showToast('Error de conexión al asociar CUFE', 'error');
-        } finally {
-            // Restaurar botón
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = `
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                </svg>
-                Asociar CUFE
-            `;
+            console.error('Error refrescando factura:', error);
+            await loadInvoices();
         }
-    });
+    }
 </script>
 {% endif %}
 {% endblock %}
