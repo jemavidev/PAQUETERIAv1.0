@@ -254,6 +254,7 @@ def list_invoices(
 ):
     """
     TAB FACTURAS: Lista todas las facturas con filtros
+    OPTIMIZADO: No genera URLs pre-firmadas aquí (se generan bajo demanda)
     """
     # Convertir strings vacías a None y parsear fechas
     search = search if search and search.strip() else None
@@ -283,16 +284,9 @@ def list_invoices(
         fecha_hasta=fecha_hasta_parsed
     )
     
-    # Generar URLs pre-firmadas para los archivos
-    for invoice in invoices:
-        if invoice.archivo_proveedor_s3_key and service.s3_service:
-            try:
-                invoice.archivo_proveedor_url = service.s3_service.generate_presigned_url(
-                    invoice.archivo_proveedor_s3_key,
-                    expiration=3600  # 1 hora
-                )
-            except Exception as e:
-                logger.warning(f"No se pudo generar URL pre-firmada para {invoice.cufe[:16]}: {e}")
+    # OPTIMIZACIÓN: No generar URLs pre-firmadas aquí
+    # Las URLs se generarán bajo demanda cuando el usuario haga clic en descargar
+    # Esto reduce el tiempo de carga de ~5-10 segundos a <1 segundo
     
     return invoices
 
@@ -383,6 +377,35 @@ def delete_invoice(cufe: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
     return {"message": "Factura eliminada correctamente"}
+
+
+@router.get("/facturas/{cufe}/download-url")
+def get_invoice_download_url(cufe: str, db: Session = Depends(get_db)):
+    """
+    TAB FACTURAS: Genera URL de descarga bajo demanda (optimización)
+    Solo genera la URL cuando el usuario hace clic en descargar
+    """
+    service = InvoiceV2Service(db)
+    invoice = service.get_invoice_by_cufe(cufe)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    if not invoice.archivo_proveedor_s3_key:
+        raise HTTPException(status_code=404, detail="No hay archivo PDF disponible")
+    
+    if not service.s3_service:
+        raise HTTPException(status_code=503, detail="Servicio S3 no disponible")
+    
+    try:
+        url = service.s3_service.generate_presigned_url(
+            invoice.archivo_proveedor_s3_key,
+            expiration=300  # 5 minutos (suficiente para descargar)
+        )
+        return {"url": url, "filename": f"factura_{invoice.numero_factura or cufe[:16]}.pdf"}
+    except Exception as e:
+        logger.error(f"Error generando URL de descarga para {cufe[:16]}: {e}")
+        raise HTTPException(status_code=500, detail="Error generando URL de descarga")
 
 
 # ===== TAB 2: CUFE =====

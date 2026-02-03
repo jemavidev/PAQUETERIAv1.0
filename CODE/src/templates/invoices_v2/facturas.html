@@ -681,10 +681,10 @@
                                 </svg>
                             </button>` : ''
                         }
-                        <button onclick="downloadInvoice('${invoice.archivo_proveedor_url || ''}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" 
-                                class="${invoice.archivo_proveedor_url ? 'text-green-600 hover:text-green-800' : 'text-gray-300 cursor-not-allowed'}" 
-                                title="${invoice.archivo_proveedor_url ? 'Descargar factura PDF' : 'No hay archivo PDF disponible'}"
-                                ${!invoice.archivo_proveedor_url ? 'disabled' : ''}>
+                        <button onclick="downloadInvoice('${invoice.cufe}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" 
+                                class="${invoice.archivo_proveedor_s3_key ? 'text-green-600 hover:text-green-800' : 'text-gray-300 cursor-not-allowed'}" 
+                                title="${invoice.archivo_proveedor_s3_key ? 'Descargar factura PDF' : 'No hay archivo PDF disponible'}"
+                                ${!invoice.archivo_proveedor_s3_key ? 'disabled' : ''}>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                             </svg>
@@ -714,21 +714,45 @@
         });
     }
 
-    // Función para descargar factura
-    function downloadInvoice(url, filename) {
-        if (!url || url.trim() === '') {
-            showToast('No hay archivo PDF disponible para esta factura', 'warning');
+    // Función para descargar factura (OPTIMIZADO: genera URL bajo demanda)
+    async function downloadInvoice(cufe, filename) {
+        if (!cufe) {
+            showToast('No se puede descargar: CUFE no disponible', 'warning');
             return;
         }
         
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `factura_${filename}.pdf`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Descargando factura...', 'info');
+        try {
+            // Mostrar indicador de carga
+            showToast('Generando enlace de descarga...', 'info');
+            
+            // Obtener URL de descarga bajo demanda
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}/download-url`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    showToast('No hay archivo PDF disponible para esta factura', 'warning');
+                } else {
+                    showToast('Error al generar enlace de descarga', 'error');
+                }
+                return;
+            }
+            
+            const data = await response.json();
+            
+            // Descargar archivo
+            const link = document.createElement('a');
+            link.href = data.url;
+            link.download = data.filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Descargando factura...', 'success');
+        } catch (error) {
+            console.error('Error descargando factura:', error);
+            showToast('Error al descargar factura', 'error');
+        }
     }
 
     // Utilidades globales

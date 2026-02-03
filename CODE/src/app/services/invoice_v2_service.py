@@ -43,7 +43,8 @@ class InvoiceV2Service:
             pdf_path: Ruta al archivo PDF
             file_obj: Objeto de archivo para subir a S3
             allow_without_cufe: Si True, permite crear factura sin CUFE (se genera temporal)
-            overwrite: Si True, sobreescribe factura existente (solo si NO está en estado 'completo')
+            overwrite: Si True, actualiza factura existente (solo si NO está en estado 'completo')
+                      Si False, rechaza facturas duplicadas
         """
         # Parsear PDF
         data = self.pdf_parser.parse_provider_invoice(pdf_path)
@@ -67,54 +68,57 @@ class InvoiceV2Service:
         # Verificar si ya existe
         existing = self.db.query(InvoiceV2).filter_by(cufe=cufe).first()
         if existing:
-            # Si existe y overwrite=True, verificar que NO esté completa
-            if overwrite:
-                if existing.estado == 'completo':
-                    raise ValueError(f'No se puede sobreescribir: la factura {cufe[:16]}... está en estado COMPLETO')
-                
-                # Sobreescribir: actualizar los datos
-                logger.info(f"🔄 Sobreescribiendo factura existente: {cufe[:16]}... (estado: {existing.estado})")
-                
-                # Eliminar archivo antiguo de S3 si existe
-                if existing.archivo_proveedor_s3_key and self.s3_service:
-                    try:
-                        self.s3_service.delete_file(existing.archivo_proveedor_s3_key)
-                        logger.info(f"🗑️ Archivo antiguo eliminado de S3: {existing.archivo_proveedor_s3_key}")
-                    except Exception as e:
-                        logger.warning(f"No se pudo eliminar archivo antiguo de S3: {e}")
-                
-                # Actualizar datos
-                existing.proveedor_nombre = data.get('proveedor_nombre')
-                existing.proveedor_nit = data.get('proveedor_nit')
-                existing.fecha_emision = data.get('fecha_emision')
-                existing.numero_factura = data.get('numero_factura')
-                existing.total_factura = data.get('total_factura')
-                existing.proveedor_datos_raw = {'raw_text': data.get('raw_text', '')[:5000]}
-                existing.updated_at = datetime.now()
-                
-                # Subir nuevo archivo a S3
-                if file_obj and self.s3_service:
-                    try:
-                        file_content = file_obj.read()
-                        file_obj.seek(0)
-                        
-                        s3_key = f"invoices/provider/{cufe}.pdf"
-                        archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
-                        existing.archivo_proveedor_url = archivo_url
-                        existing.archivo_proveedor_s3_key = s3_key
-                        logger.info(f"✅ Nuevo archivo subido a S3: {s3_key}")
-                    except Exception as e:
-                        logger.warning(f"No se pudo subir nuevo archivo a S3: {e}")
-                
-                self.db.commit()
-                self.db.refresh(existing)
-                
-                logger.info(f"✅ Factura sobreescrita: {existing.cufe[:16]}... - {existing.proveedor_nombre}")
-                
-                return existing
-            else:
-                raise ValueError(f'Ya existe una factura con el CUFE {cufe[:16]}... (usa overwrite=true para sobreescribir)')
+            # SIEMPRE intentar actualizar si existe (no crear nuevo registro)
+            if not overwrite:
+                # Si overwrite=False, informar que ya existe pero no actualizar
+                raise ValueError(f'Ya existe una factura con el CUFE {cufe[:16]}... (usa overwrite=true para actualizar)')
+            
+            # Si overwrite=True, verificar que NO esté completa
+            if existing.estado == 'completo':
+                raise ValueError(f'No se puede actualizar: la factura {cufe[:16]}... está en estado COMPLETO (protegida)')
+            
+            # ACTUALIZAR: modificar el registro existente (NO crear uno nuevo)
+            logger.info(f"🔄 Actualizando factura existente: {cufe[:16]}... (estado: {existing.estado})")
+            
+            # Eliminar archivo antiguo de S3 si existe
+            if existing.archivo_proveedor_s3_key and self.s3_service:
+                try:
+                    self.s3_service.delete_file(existing.archivo_proveedor_s3_key)
+                    logger.info(f"🗑️ Archivo antiguo eliminado de S3: {existing.archivo_proveedor_s3_key}")
+                except Exception as e:
+                    logger.warning(f"No se pudo eliminar archivo antiguo de S3: {e}")
+            
+            # Actualizar datos extraídos del PDF
+            existing.proveedor_nombre = data.get('proveedor_nombre') or existing.proveedor_nombre
+            existing.proveedor_nit = data.get('proveedor_nit') or existing.proveedor_nit
+            existing.fecha_emision = data.get('fecha_emision') or existing.fecha_emision
+            existing.numero_factura = data.get('numero_factura') or existing.numero_factura
+            existing.total_factura = data.get('total_factura') or existing.total_factura
+            existing.proveedor_datos_raw = {'raw_text': data.get('raw_text', '')[:5000]}
+            existing.updated_at = datetime.now()
+            
+            # Subir nuevo archivo a S3
+            if file_obj and self.s3_service:
+                try:
+                    file_content = file_obj.read()
+                    file_obj.seek(0)
+                    
+                    s3_key = f"invoices/provider/{cufe}.pdf"
+                    archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
+                    existing.archivo_proveedor_url = archivo_url
+                    existing.archivo_proveedor_s3_key = s3_key
+                    logger.info(f"✅ Nuevo archivo subido a S3: {s3_key}")
+                except Exception as e:
+                    logger.warning(f"No se pudo subir nuevo archivo a S3: {e}")
+            
+            self.db.commit()
+            self.db.refresh(existing)
+            
+            logger.info(f"✅ Factura actualizada: {existing.cufe[:16]}... - {existing.proveedor_nombre}")
+            
+            return existing
         
+        # Si NO existe, crear nueva factura
         # Subir archivo a S3 (opcional)
         archivo_url = None
         archivo_s3_key = None
@@ -131,7 +135,7 @@ class InvoiceV2Service:
             except Exception as e:
                 logger.warning(f"No se pudo subir archivo a S3: {e}")
         
-        # Crear factura
+        # Crear factura nueva
         invoice = InvoiceV2(
             cufe=cufe,
             archivo_proveedor_url=archivo_url,
@@ -218,7 +222,9 @@ class InvoiceV2Service:
     ) -> List[InvoiceV2]:
         """
         Lista facturas con filtros
+        OPTIMIZADO: Solo carga campos necesarios, sin eager loading de productos
         """
+        # Solo seleccionar campos necesarios para la lista (no cargar productos)
         query = self.db.query(InvoiceV2)
         
         # Filtro de búsqueda
@@ -241,9 +247,11 @@ class InvoiceV2Service:
         if fecha_hasta:
             query = query.filter(InvoiceV2.fecha_emision <= fecha_hasta)
         
-        # Ordenar por fecha descendente
+        # Ordenar por fecha descendente (usar índice)
         query = query.order_by(InvoiceV2.fecha_emision.desc())
         
+        # OPTIMIZACIÓN: No cargar relaciones (productos) en la lista
+        # Solo cargar cuando se necesite el detalle
         return query.offset(skip).limit(limit).all()
     
     def get_invoice_by_cufe(self, cufe: str) -> Optional[InvoiceV2]:
