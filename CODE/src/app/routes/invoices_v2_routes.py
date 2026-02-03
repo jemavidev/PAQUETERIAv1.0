@@ -132,11 +132,13 @@ async def extract_cufe_from_pdf(
 @router.post("/facturas/upload", response_model=InvoiceResponse)
 async def upload_provider_invoice(
     file: UploadFile = File(...),
+    allow_without_cufe: bool = Query(default=True, description="Permitir carga sin CUFE"),
     db: Session = Depends(get_db)
 ):
     """
     TAB FACTURAS: Sube una factura de proveedor
     Extrae: CUFE, Proveedor, Fecha, Número, Total
+    Si no se puede extraer el CUFE, se genera uno temporal y se puede asociar manualmente después
     OPTIMIZADO: Timeout de 25 segundos
     """
     if not file.filename.endswith('.pdf'):
@@ -159,7 +161,11 @@ async def upload_provider_invoice(
         await file.seek(0)
         
         # Procesar con timeout implícito (FastAPI tiene timeout de 30s por defecto)
-        invoice = service.create_invoice_from_provider_pdf(tmp_path, file_obj=file.file)
+        invoice = service.create_invoice_from_provider_pdf(
+            tmp_path, 
+            file_obj=file.file,
+            allow_without_cufe=allow_without_cufe
+        )
         
         return invoice
     except ValueError as e:
@@ -261,6 +267,32 @@ def update_invoice(
         return invoice
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.put("/facturas/{temp_cufe}/update-cufe")
+def update_invoice_cufe(
+    temp_cufe: str,
+    new_cufe: str = Query(..., description="Nuevo CUFE real"),
+    db: Session = Depends(get_db)
+):
+    """
+    TAB FACTURAS: Actualiza el CUFE de una factura (para facturas con CUFE temporal)
+    Útil cuando no se pudo extraer el CUFE automáticamente
+    """
+    service = InvoiceV2Service(db)
+    
+    try:
+        invoice = service.update_invoice_cufe(temp_cufe, new_cufe)
+        return {
+            "message": "CUFE actualizado correctamente",
+            "old_cufe": temp_cufe[:16] + "...",
+            "new_cufe": new_cufe[:16] + "...",
+            "invoice": invoice
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error actualizando CUFE: {str(e)}")
 
 
 @router.delete("/facturas/{cufe}")

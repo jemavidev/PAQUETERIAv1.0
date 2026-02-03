@@ -34,10 +34,15 @@ class InvoiceV2Service:
     
     # ===== TAB FACTURAS =====
     
-    def create_invoice_from_provider_pdf(self, pdf_path: str, file_obj=None) -> InvoiceV2:
+    def create_invoice_from_provider_pdf(self, pdf_path: str, file_obj=None, allow_without_cufe: bool = False) -> InvoiceV2:
         """
         Crea una factura desde el PDF del proveedor
         Extrae: CUFE, Proveedor, Fecha, Número, Total
+        
+        Args:
+            pdf_path: Ruta al archivo PDF
+            file_obj: Objeto de archivo para subir a S3
+            allow_without_cufe: Si True, permite crear factura sin CUFE (se genera temporal)
         """
         # Parsear PDF
         data = self.pdf_parser.parse_provider_invoice(pdf_path)
@@ -45,13 +50,23 @@ class InvoiceV2Service:
         if 'error' in data:
             raise ValueError(data['error'])
         
-        if not data.get('cufe'):
-            raise ValueError('No se pudo extraer el código CUFE del PDF')
+        # Generar CUFE temporal si no se pudo extraer
+        cufe = data.get('cufe')
+        if not cufe:
+            if not allow_without_cufe:
+                raise ValueError('No se pudo extraer el código CUFE del PDF')
+            
+            # Generar CUFE temporal único
+            import uuid
+            import hashlib
+            temp_id = str(uuid.uuid4())
+            cufe = f"TEMP_{hashlib.sha256(temp_id.encode()).hexdigest()[:120]}"
+            logger.warning(f"⚠️ CUFE no encontrado, generando temporal: {cufe[:20]}...")
         
         # Verificar si ya existe
-        existing = self.db.query(InvoiceV2).filter_by(cufe=data['cufe']).first()
+        existing = self.db.query(InvoiceV2).filter_by(cufe=cufe).first()
         if existing:
-            raise ValueError(f'Ya existe una factura con el CUFE {data["cufe"][:16]}...')
+            raise ValueError(f'Ya existe una factura con el CUFE {cufe[:16]}...')
         
         # Subir archivo a S3 (opcional)
         archivo_url = None
@@ -62,7 +77,7 @@ class InvoiceV2Service:
                 file_content = file_obj.read()
                 file_obj.seek(0)  # Resetear el puntero por si se necesita después
                 
-                s3_key = f"invoices/provider/{data['cufe']}.pdf"
+                s3_key = f"invoices/provider/{cufe}.pdf"
                 archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
                 archivo_s3_key = s3_key
                 logger.info(f"✅ Archivo subido a S3: {s3_key}")
@@ -71,7 +86,7 @@ class InvoiceV2Service:
         
         # Crear factura
         invoice = InvoiceV2(
-            cufe=data['cufe'],
+            cufe=cufe,
             archivo_proveedor_url=archivo_url,
             archivo_proveedor_s3_key=archivo_s3_key,
             proveedor_nombre=data.get('proveedor_nombre'),
@@ -80,7 +95,7 @@ class InvoiceV2Service:
             numero_factura=data.get('numero_factura'),
             total_factura=data.get('total_factura'),
             proveedor_datos_raw={'raw_text': data.get('raw_text', '')[:5000]},  # Limitar tamaño
-            estado='pendiente_dian'
+            estado='sin_cufe' if cufe.startswith('TEMP_') else 'pendiente_dian'
         )
         
         self.db.add(invoice)
@@ -88,6 +103,60 @@ class InvoiceV2Service:
         self.db.refresh(invoice)
         
         logger.info(f"Factura creada: {invoice.cufe[:16]}... - {invoice.proveedor_nombre}")
+        
+        return invoice
+    
+    def update_invoice_cufe(self, temp_cufe: str, new_cufe: str) -> InvoiceV2:
+        """
+        Actualiza el CUFE de una factura (para facturas con CUFE temporal)
+        
+        Args:
+            temp_cufe: CUFE temporal actual
+            new_cufe: Nuevo CUFE real
+        """
+        invoice = self.get_invoice_by_cufe(temp_cufe)
+        if not invoice:
+            raise ValueError(f'Factura no encontrada: {temp_cufe}')
+        
+        # Verificar que el nuevo CUFE no exista
+        existing = self.db.query(InvoiceV2).filter_by(cufe=new_cufe).first()
+        if existing:
+            raise ValueError(f'Ya existe una factura con el CUFE {new_cufe[:16]}...')
+        
+        # Actualizar CUFE
+        old_cufe = invoice.cufe
+        invoice.cufe = new_cufe
+        invoice.estado = 'pendiente_dian'
+        invoice.updated_at = datetime.now()
+        
+        # Actualizar key de S3 si existe
+        if invoice.archivo_proveedor_s3_key and self.s3_service:
+            try:
+                old_key = invoice.archivo_proveedor_s3_key
+                new_key = f"invoices/provider/{new_cufe}.pdf"
+                
+                # Copiar archivo con nueva key
+                self.s3_service.s3_client.copy_object(
+                    Bucket=self.s3_service.bucket_name,
+                    CopySource={'Bucket': self.s3_service.bucket_name, 'Key': old_key},
+                    Key=new_key
+                )
+                
+                # Eliminar archivo antiguo
+                self.s3_service.delete_file(old_key)
+                
+                # Actualizar referencias
+                invoice.archivo_proveedor_s3_key = new_key
+                invoice.archivo_proveedor_url = self.s3_service.generate_presigned_url(new_key)
+                
+                logger.info(f"✅ Archivo S3 renombrado: {old_key} -> {new_key}")
+            except Exception as e:
+                logger.warning(f"No se pudo renombrar archivo en S3: {e}")
+        
+        self.db.commit()
+        self.db.refresh(invoice)
+        
+        logger.info(f"CUFE actualizado: {old_cufe[:16]}... -> {new_cufe[:16]}...")
         
         return invoice
     
