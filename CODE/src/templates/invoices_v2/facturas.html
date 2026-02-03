@@ -961,8 +961,8 @@
             const result = await response.json();
             showToast('✅ CUFE asociado correctamente', 'success');
             
-            // Refrescar solo esa factura
-            await refreshSingleInvoice(newCufe);
+            // Recargar toda la tabla para evitar duplicados
+            await loadInvoices();
         })();
         
         addTask(`Asociando CUFE: ${newCufe.substring(0, 16)}...`, taskPromise);
@@ -997,10 +997,11 @@
             const response = await fetch(`/api/v2/invoices/facturas/${encodeURIComponent(cufe)}`);
             if (response.ok) {
                 const invoice = await response.json();
-                // Buscar y actualizar solo esa fila
+                // Buscar y actualizar solo la PRIMERA fila que coincida
                 const rows = document.querySelectorAll('#invoices-tbody tr');
                 let found = false;
-                rows.forEach(row => {
+                
+                for (let row of rows) {
                     const cufeCell = row.querySelector('td:first-child span');
                     if (cufeCell && (cufeCell.textContent.includes('TEMPORAL') || row.classList.contains('opacity-50'))) {
                         // Crear nueva fila
@@ -1009,8 +1010,9 @@
                         const newRow = tempDiv.firstElementChild;
                         row.replaceWith(newRow);
                         found = true;
+                        break; // IMPORTANTE: Solo reemplazar UNA fila
                     }
-                });
+                }
                 
                 // Si no se encontró, recargar toda la tabla
                 if (!found) {
