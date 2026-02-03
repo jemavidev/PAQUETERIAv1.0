@@ -134,6 +134,7 @@ async def extract_cufe_from_pdf(
 async def upload_provider_invoice(
     file: UploadFile = File(...),
     allow_without_cufe: bool = Query(default=True, description="Permitir carga sin CUFE"),
+    overwrite: bool = Query(default=False, description="Sobreescribir factura existente si no está completa"),
     db: Session = Depends(get_db)
 ):
     """
@@ -141,6 +142,10 @@ async def upload_provider_invoice(
     Extrae: CUFE, Proveedor, Fecha, Número, Total
     Si no se puede extraer el CUFE, se genera uno temporal y se puede asociar manualmente después
     OPTIMIZADO: Timeout de 25 segundos
+    
+    Parámetros:
+    - allow_without_cufe: Permite crear factura sin CUFE (genera temporal)
+    - overwrite: Si True, sobreescribe factura existente (solo si NO está en estado 'completo')
     """
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
@@ -165,7 +170,8 @@ async def upload_provider_invoice(
         invoice = service.create_invoice_from_provider_pdf(
             tmp_path, 
             file_obj=file.file,
-            allow_without_cufe=allow_without_cufe
+            allow_without_cufe=allow_without_cufe,
+            overwrite=overwrite
         )
         
         return invoice

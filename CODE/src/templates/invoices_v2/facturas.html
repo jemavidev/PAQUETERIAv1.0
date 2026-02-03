@@ -188,6 +188,27 @@
                 </p>
             </div>
             
+            <!-- Opción de sobreescritura -->
+            <div class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="overwrite-checkbox" type="checkbox" 
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3">
+                        <label for="overwrite-checkbox" class="font-medium text-sm text-blue-900 cursor-pointer">
+                            Sobreescribir facturas existentes
+                        </label>
+                        <p class="text-xs text-blue-700 mt-1">
+                            Si una factura con el mismo CUFE ya existe y NO está en estado "Completo", se actualizarán sus datos con la nueva información.
+                        </p>
+                        <p class="text-xs text-blue-600 mt-1 font-medium">
+                            ⚠️ Las facturas en estado "Completo" NO se sobreescribirán (están protegidas).
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Lista de archivos seleccionados -->
             <div id="files-list" class="mb-4 hidden">
                 <p class="text-sm font-medium text-gray-700 mb-2">Archivos seleccionados:</p>
@@ -803,6 +824,8 @@
         
         const fileInput = document.getElementById('pdf-files');
         const files = fileInput.files;
+        const overwriteCheckbox = document.getElementById('overwrite-checkbox');
+        const overwrite = overwriteCheckbox.checked;
         
         if (files.length === 0) {
             showToast('Selecciona al menos un archivo PDF', 'error');
@@ -825,6 +848,7 @@
         let completed = 0;
         let successful = 0;
         let failed = 0;
+        let overwritten = 0;
         
         // Procesar archivos UNO POR UNO (más lento pero más estable)
         const filesArray = Array.from(files);
@@ -839,7 +863,10 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
                 
-                const response = await fetch('/api/v2/invoices/facturas/upload', {
+                // Agregar parámetro de sobreescritura en la URL
+                const url = `/api/v2/invoices/facturas/upload?overwrite=${overwrite}`;
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal
@@ -856,12 +883,22 @@
                     result.innerHTML = `✓ ${file.name}`;
                     resultsDiv.appendChild(result);
                 } else {
-                    failed++;
                     const error = await response.json();
-                    const result = document.createElement('div');
-                    result.className = 'text-xs text-red-600';
-                    result.innerHTML = `✗ ${file.name}: ${error.detail || 'Error'}`;
-                    resultsDiv.appendChild(result);
+                    
+                    // Si el error es por factura existente y overwrite está desactivado, mostrar mensaje especial
+                    if (error.detail && error.detail.includes('Ya existe') && !overwrite) {
+                        const result = document.createElement('div');
+                        result.className = 'text-xs text-yellow-600';
+                        result.innerHTML = `⚠ ${file.name}: Ya existe (activa "Sobreescribir" para actualizar)`;
+                        resultsDiv.appendChild(result);
+                        failed++;
+                    } else {
+                        failed++;
+                        const result = document.createElement('div');
+                        result.className = 'text-xs text-red-600';
+                        result.innerHTML = `✗ ${file.name}: ${error.detail || 'Error'}`;
+                        resultsDiv.appendChild(result);
+                    }
                 }
             } catch (error) {
                 completed++;
@@ -884,7 +921,10 @@
         
         // Mostrar resumen
         if (successful > 0) {
-            showToast(`${successful} factura(s) cargada(s) correctamente`, 'success');
+            const message = overwrite 
+                ? `${successful} factura(s) procesada(s) correctamente` 
+                : `${successful} factura(s) cargada(s) correctamente`;
+            showToast(message, 'success');
             loadInvoices();
         }
         if (failed > 0) {
