@@ -283,10 +283,16 @@
                     <p class="text-xs text-gray-500">
                         Longitud: <span id="cufe-length" class="font-medium">0</span> / 128 caracteres
                     </p>
-                    <button type="button" onclick="document.getElementById('associate-new-cufe').value = ''; document.getElementById('cufe-length').textContent = '0';" 
-                            class="text-xs text-gray-500 hover:text-gray-700">
-                        Limpiar
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="cleanCufeSpaces()" 
+                                class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                            🧹 Limpiar espacios
+                        </button>
+                        <button type="button" onclick="document.getElementById('associate-new-cufe').value = ''; document.getElementById('cufe-length').textContent = '0'; document.getElementById('cufe-length').className = 'font-medium text-gray-600';" 
+                                class="text-xs text-gray-500 hover:text-gray-700">
+                            Borrar todo
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
@@ -836,6 +842,7 @@
         document.getElementById('associate-temp-cufe').value = tempCufe;
         document.getElementById('associate-new-cufe').value = '';
         document.getElementById('cufe-length').textContent = '0';
+        document.getElementById('cufe-length').className = 'font-medium text-gray-600';
         document.getElementById('associate-cufe-modal').classList.remove('hidden');
     }
 
@@ -843,6 +850,38 @@
         document.getElementById('associate-cufe-modal').classList.add('hidden');
         document.getElementById('associate-new-cufe').value = '';
         document.getElementById('cufe-length').textContent = '0';
+        document.getElementById('cufe-length').className = 'font-medium text-gray-600';
+    }
+
+    // Limpiar espacios manualmente
+    function cleanCufeSpaces() {
+        const textarea = document.getElementById('associate-new-cufe');
+        const originalText = textarea.value;
+        
+        // Limpiar: eliminar TODOS los espacios, saltos de línea, tabs, etc.
+        const cleanedText = originalText
+            .replace(/\s+/g, '')  // Eliminar todos los espacios en blanco
+            .replace(/[\r\n\t]/g, '')  // Eliminar saltos de línea y tabs
+            .trim();  // Eliminar espacios al inicio y final
+        
+        textarea.value = cleanedText;
+        
+        // Actualizar el contador
+        const length = cleanedText.length;
+        const lengthSpan = document.getElementById('cufe-length');
+        lengthSpan.textContent = length;
+        
+        // Cambiar color según validez
+        if (length === 0) {
+            lengthSpan.className = 'font-medium text-gray-600';
+            showToast('⚠️ No hay texto para limpiar', 'warning');
+        } else if (length >= 64 && length <= 128) {
+            lengthSpan.className = 'font-medium text-green-600';
+            showToast(`✅ CUFE limpio: ${length} caracteres`, 'success');
+        } else {
+            lengthSpan.className = 'font-medium text-red-600';
+            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser 64-128)`, 'warning');
+        }
     }
 
     // Contador de caracteres para CUFE
@@ -858,6 +897,39 @@
             lengthSpan.className = 'font-medium text-green-600';
         } else {
             lengthSpan.className = 'font-medium text-red-600';
+        }
+    });
+
+    // Limpiar automáticamente al pegar
+    document.getElementById('associate-new-cufe').addEventListener('paste', (e) => {
+        e.preventDefault();
+        
+        // Obtener el texto pegado
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // Limpiar: eliminar TODOS los espacios, saltos de línea, tabs, etc.
+        const cleanedText = pastedText
+            .replace(/\s+/g, '')  // Eliminar todos los espacios en blanco
+            .replace(/[\r\n\t]/g, '')  // Eliminar saltos de línea y tabs
+            .trim();  // Eliminar espacios al inicio y final
+        
+        // Insertar el texto limpio
+        e.target.value = cleanedText;
+        
+        // Actualizar el contador
+        const length = cleanedText.length;
+        const lengthSpan = document.getElementById('cufe-length');
+        lengthSpan.textContent = length;
+        
+        // Cambiar color según validez
+        if (length === 0) {
+            lengthSpan.className = 'font-medium text-gray-600';
+        } else if (length >= 64 && length <= 128) {
+            lengthSpan.className = 'font-medium text-green-600';
+            showToast(`✅ CUFE limpio: ${length} caracteres`, 'success');
+        } else {
+            lengthSpan.className = 'font-medium text-red-600';
+            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser 64-128)`, 'warning');
         }
     });
 
