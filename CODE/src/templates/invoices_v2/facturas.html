@@ -262,7 +262,7 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm text-orange-700">
-                        <strong>Importante:</strong> El código CUFE debe ser el código completo de 128 caracteres que aparece en la factura electrónica de la DIAN.
+                        <strong>Importante:</strong> El código CUFE debe ser el código completo de 96 caracteres que aparece en la factura electrónica de la DIAN.
                     </p>
                 </div>
             </div>
@@ -276,12 +276,12 @@
                 </label>
                 <textarea id="associate-new-cufe" 
                        rows="3"
-                       placeholder="Pega aquí el código CUFE completo (128 caracteres)&#10;Ejemplo: 8cf8ec5366fa9eaccea38cdffdfa0a7690edbaf31b89adce444ca0a322d19e50a79c86d67e0fbc81609dc9451975f0ad..."
+                       placeholder="Pega aquí el código CUFE completo (96 caracteres)&#10;Ejemplo: 8cf8ec5366fa9eaccea38cdffdfa0a7690edbaf31b89adce444ca0a322d19e50a79c86d67e0fbc81609dc9451975f0ad"
                        class="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                        required></textarea>
                 <div class="flex items-center justify-between mt-2">
                     <p class="text-xs text-gray-500">
-                        Longitud: <span id="cufe-length" class="font-medium">0</span> / 128 caracteres
+                        Longitud: <span id="cufe-length" class="font-medium">0</span> / 96 caracteres
                     </p>
                     <div class="flex items-center space-x-2">
                         <button type="button" onclick="cleanCufeSpaces()" 
@@ -871,16 +871,16 @@
         const lengthSpan = document.getElementById('cufe-length');
         lengthSpan.textContent = length;
         
-        // Cambiar color según validez
+        // Cambiar color según validez (exactamente 96 caracteres)
         if (length === 0) {
             lengthSpan.className = 'font-medium text-gray-600';
             showToast('⚠️ No hay texto para limpiar', 'warning');
-        } else if (length >= 64 && length <= 128) {
+        } else if (length === 96) {
             lengthSpan.className = 'font-medium text-green-600';
             showToast(`✅ CUFE limpio: ${length} caracteres`, 'success');
         } else {
             lengthSpan.className = 'font-medium text-red-600';
-            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser 64-128)`, 'warning');
+            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser exactamente 96)`, 'warning');
         }
     }
 
@@ -890,10 +890,10 @@
         const lengthSpan = document.getElementById('cufe-length');
         lengthSpan.textContent = length;
         
-        // Cambiar color según validez
+        // Cambiar color según validez (exactamente 96 caracteres)
         if (length === 0) {
             lengthSpan.className = 'font-medium text-gray-600';
-        } else if (length >= 64 && length <= 128) {
+        } else if (length === 96) {
             lengthSpan.className = 'font-medium text-green-600';
         } else {
             lengthSpan.className = 'font-medium text-red-600';
@@ -921,15 +921,15 @@
         const lengthSpan = document.getElementById('cufe-length');
         lengthSpan.textContent = length;
         
-        // Cambiar color según validez
+        // Cambiar color según validez (exactamente 96 caracteres)
         if (length === 0) {
             lengthSpan.className = 'font-medium text-gray-600';
-        } else if (length >= 64 && length <= 128) {
+        } else if (length === 96) {
             lengthSpan.className = 'font-medium text-green-600';
             showToast(`✅ CUFE limpio: ${length} caracteres`, 'success');
         } else {
             lengthSpan.className = 'font-medium text-red-600';
-            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser 64-128)`, 'warning');
+            showToast(`⚠️ CUFE tiene ${length} caracteres (debe ser exactamente 96)`, 'warning');
         }
     });
 
@@ -939,13 +939,8 @@
         const tempCufe = document.getElementById('associate-temp-cufe').value;
         const newCufe = document.getElementById('associate-new-cufe').value.trim();
         
-        if (!newCufe || newCufe.length < 64) {
-            showToast('El CUFE debe tener al menos 64 caracteres', 'error');
-            return;
-        }
-        
-        if (newCufe.length > 128) {
-            showToast('El CUFE no puede tener más de 128 caracteres', 'error');
+        if (newCufe.length !== 96) {
+            showToast('El CUFE debe tener exactamente 96 caracteres', 'error');
             return;
         }
         

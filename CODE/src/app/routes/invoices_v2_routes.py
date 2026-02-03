@@ -272,13 +272,27 @@ def update_invoice(
 @router.put("/facturas/{temp_cufe}/update-cufe")
 def update_invoice_cufe(
     temp_cufe: str,
-    new_cufe: str = Query(..., description="Nuevo CUFE real"),
+    new_cufe: str = Query(..., description="Nuevo CUFE real (96 caracteres exactos)"),
     db: Session = Depends(get_db)
 ):
     """
     TAB FACTURAS: Actualiza el CUFE de una factura (para facturas con CUFE temporal)
     Útil cuando no se pudo extraer el CUFE automáticamente
     """
+    # Validar longitud del CUFE (exactamente 96 caracteres)
+    if len(new_cufe) != 96:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"El CUFE debe tener exactamente 96 caracteres (recibido: {len(new_cufe)})"
+        )
+    
+    # Validar que solo contenga caracteres hexadecimales
+    if not all(c in '0123456789abcdefABCDEF' for c in new_cufe):
+        raise HTTPException(
+            status_code=400,
+            detail="El CUFE solo puede contener caracteres hexadecimales (0-9, a-f, A-F)"
+        )
+    
     service = InvoiceV2Service(db)
     
     try:
