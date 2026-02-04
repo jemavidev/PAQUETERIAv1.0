@@ -141,6 +141,75 @@
                 <h3 class="text-lg font-medium text-gray-900">No hay facturas</h3>
                 <p class="mt-2 text-sm text-gray-500">No se encontraron facturas con los filtros aplicados.</p>
             </div>
+
+            <!-- Paginación -->
+            <div id="pagination-container" class="hidden border-t border-gray-200 px-4 py-3 sm:px-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <!-- Info de página -->
+                    <div class="text-sm text-gray-700">
+                        Mostrando <span id="page-start" class="font-medium">0</span> a <span id="page-end" class="font-medium">0</span> de <span id="total-items" class="font-medium">0</span> facturas
+                    </div>
+                    
+                    <!-- Controles de paginación -->
+                    <div class="flex items-center gap-2">
+                        <!-- Botón Primera página -->
+                        <button id="first-page-btn" 
+                                onclick="goToPage(1)" 
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Primera página">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Botón Anterior -->
+                        <button id="prev-page-btn" 
+                                onclick="previousPage()" 
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Página anterior">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Números de página -->
+                        <div id="page-numbers" class="flex items-center gap-1">
+                            <!-- Se generarán dinámicamente -->
+                        </div>
+                        
+                        <!-- Botón Siguiente -->
+                        <button id="next-page-btn" 
+                                onclick="nextPage()" 
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Página siguiente">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Botón Última página -->
+                        <button id="last-page-btn" 
+                                onclick="goToPage(totalPages)" 
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Última página">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Selector de items por página -->
+                        <select id="items-per-page" 
+                                onchange="changeItemsPerPage()" 
+                                class="ml-2 px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-papyrus-blue">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-sm text-gray-600">por página</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -293,6 +362,12 @@
 </div>
 
 <script>
+    // Variables de paginación
+    let currentPage = 1;
+    let itemsPerPage = 25;
+    let totalPages = 1;
+    let totalItems = 0;
+
     // Cargar facturas al iniciar
     document.addEventListener('DOMContentLoaded', () => {
         loadInvoices();
@@ -303,34 +378,158 @@
         const tbody = document.getElementById('invoices-tbody');
         const emptyState = document.getElementById('invoices-empty');
         const totalCount = document.getElementById('totalInvoicesCount');
+        const paginationContainer = document.getElementById('pagination-container');
         
         loading.classList.remove('hidden');
         tbody.innerHTML = '';
         emptyState.classList.add('hidden');
+        paginationContainer.classList.add('hidden');
         
+        const skip = (currentPage - 1) * itemsPerPage;
         const params = new URLSearchParams({
             search: document.getElementById('search').value,
             estado: document.getElementById('estado').value,
+            skip: skip,
+            limit: itemsPerPage
         });
         
         try {
             const response = await fetch(`/api/v2/invoices/facturas?${params}`);
-            const invoices = await response.json();
+            const data = await response.json();
             
-            if (invoices.length === 0) {
+            // Extraer datos de la respuesta
+            const invoices = data.items || [];
+            totalItems = data.total || 0;
+            totalPages = data.total_pages || 1;
+            
+            if (invoices.length === 0 && currentPage === 1) {
                 emptyState.classList.remove('hidden');
                 totalCount.textContent = '';
             } else {
                 invoices.forEach(invoice => {
                     tbody.innerHTML += renderInvoiceRow(invoice);
                 });
-                totalCount.textContent = `Mostrando ${invoices.length} factura${invoices.length !== 1 ? 's' : ''}`;
+                
+                // Actualizar info de paginación
+                const pageStart = skip + 1;
+                const pageEnd = skip + invoices.length;
+                totalCount.textContent = `Mostrando ${pageStart}-${pageEnd} de ${totalItems} facturas`;
+                
+                // Mostrar controles de paginación si hay más de una página
+                if (totalPages > 1) {
+                    updatePaginationControls(pageStart, pageEnd, totalItems);
+                    paginationContainer.classList.remove('hidden');
+                }
             }
         } catch (error) {
+            console.error('Error cargando facturas:', error);
             showToast('Error cargando facturas', 'error');
         } finally {
             loading.classList.add('hidden');
         }
+    }
+
+    function updatePaginationControls(pageStart, pageEnd, total) {
+        // Actualizar info de página
+        document.getElementById('page-start').textContent = pageStart;
+        document.getElementById('page-end').textContent = pageEnd;
+        document.getElementById('total-items').textContent = total;
+        
+        // Actualizar botones
+        const hasPrevPage = currentPage > 1;
+        const hasNextPage = currentPage < totalPages;
+        
+        document.getElementById('first-page-btn').disabled = !hasPrevPage;
+        document.getElementById('prev-page-btn').disabled = !hasPrevPage;
+        document.getElementById('next-page-btn').disabled = !hasNextPage;
+        document.getElementById('last-page-btn').disabled = !hasNextPage;
+        
+        // Generar números de página (mostrar 5 páginas alrededor de la actual)
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        
+        // Ajustar startPage si estamos cerca del final
+        if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        // Agregar "..." al inicio si es necesario
+        if (startPage > 1) {
+            const firstBtn = document.createElement('button');
+            firstBtn.textContent = '1';
+            firstBtn.onclick = () => goToPage(1);
+            firstBtn.className = 'px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50';
+            pageNumbers.appendChild(firstBtn);
+            
+            if (startPage > 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.className = 'px-2 text-gray-500';
+                pageNumbers.appendChild(dots);
+            }
+        }
+        
+        // Agregar páginas
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.onclick = () => goToPage(i);
+            pageBtn.className = `px-3 py-1 border rounded-lg text-sm ${
+                i === currentPage 
+                    ? 'bg-papyrus-blue text-white border-papyrus-blue' 
+                    : 'border-gray-300 hover:bg-gray-50'
+            }`;
+            pageNumbers.appendChild(pageBtn);
+        }
+        
+        // Agregar "..." al final si es necesario
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.className = 'px-2 text-gray-500';
+                pageNumbers.appendChild(dots);
+            }
+            
+            const lastBtn = document.createElement('button');
+            lastBtn.textContent = totalPages;
+            lastBtn.onclick = () => goToPage(totalPages);
+            lastBtn.className = 'px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50';
+            pageNumbers.appendChild(lastBtn);
+        }
+    }
+
+    function goToPage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadInvoices();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadInvoices();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function previousPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadInvoices();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function changeItemsPerPage() {
+        itemsPerPage = parseInt(document.getElementById('items-per-page').value);
+        currentPage = 1; // Resetear a la primera página
+        loadInvoices();
     }
 
     function renderInvoiceRow(invoice) {

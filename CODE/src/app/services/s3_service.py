@@ -290,6 +290,33 @@ class S3Service:
         # Si no contiene base_path, asumir que es estructura nueva
         return True
 
+    def copy_file(self, source_key: str, dest_key: str) -> bool:
+        """
+        Copiar archivo dentro del mismo bucket S3
+
+        Args:
+            source_key: Key del archivo origen
+            dest_key: Key del archivo destino
+
+        Returns:
+            bool: True si se copió correctamente
+        """
+        try:
+            copy_source = {
+                'Bucket': self.bucket_name,
+                'Key': source_key
+            }
+            self.s3_client.copy_object(
+                CopySource=copy_source,
+                Bucket=self.bucket_name,
+                Key=dest_key
+            )
+            print(f"✅ Archivo copiado en S3: {source_key} -> {dest_key}")
+            return True
+        except ClientError as e:
+            print(f"❌ Error copiando archivo en S3: {str(e)}")
+            return False
+
     def delete_file(self, s3_key: str) -> bool:
         """
         Eliminar archivo de S3

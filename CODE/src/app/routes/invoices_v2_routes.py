@@ -42,6 +42,14 @@ class InvoiceResponse(BaseModel):
         from_attributes = True
 
 
+class InvoiceListResponse(BaseModel):
+    items: List[InvoiceResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class InvoiceDetailResponse(InvoiceResponse):
     productos_count: int = 0
 
@@ -179,10 +187,10 @@ async def upload_provider_invoice(
             os.unlink(tmp_path)
 
 
-@router.get("/facturas", response_model=List[InvoiceResponse])
+@router.get("/facturas", response_model=InvoiceListResponse)
 def list_invoices(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(25, ge=1, le=500),
     search: Optional[str] = Query(None),
     estado: Optional[str] = Query(None),
     fecha_desde: Optional[str] = Query(None),
@@ -190,7 +198,7 @@ def list_invoices(
     db: Session = Depends(get_db)
 ):
     """
-    TAB FACTURAS: Lista todas las facturas con filtros
+    TAB FACTURAS: Lista todas las facturas con filtros y paginación
     """
     # Convertir strings vacías a None y parsear fechas
     search = search if search and search.strip() else None
@@ -211,6 +219,36 @@ def list_invoices(
             pass
     
     service = InvoiceV2Service(db)
+    
+    # Obtener total de items (sin paginación)
+    from sqlalchemy import func
+    from ..models.invoice_v2 import InvoiceV2
+    
+    query = db.query(InvoiceV2)
+    
+    # Aplicar filtros
+    if search:
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                InvoiceV2.proveedor_nombre.ilike(f'%{search}%'),
+                InvoiceV2.numero_factura.ilike(f'%{search}%'),
+                InvoiceV2.cufe.ilike(f'%{search}%')
+            )
+        )
+    
+    if estado:
+        query = query.filter(InvoiceV2.estado == estado)
+    
+    if fecha_desde_parsed:
+        query = query.filter(InvoiceV2.fecha_emision >= fecha_desde_parsed)
+    if fecha_hasta_parsed:
+        query = query.filter(InvoiceV2.fecha_emision <= fecha_hasta_parsed)
+    
+    # Contar total
+    total = query.count()
+    
+    # Obtener items paginados
     invoices = service.list_invoices(
         skip=skip,
         limit=limit,
@@ -231,7 +269,17 @@ def list_invoices(
             except Exception as e:
                 logger.warning(f"No se pudo generar URL pre-firmada para {invoice.cufe[:16]}: {e}")
     
-    return invoices
+    # Calcular páginas
+    page = (skip // limit) + 1
+    total_pages = (total + limit - 1) // limit  # Redondear hacia arriba
+    
+    return InvoiceListResponse(
+        items=invoices,
+        total=total,
+        page=page,
+        page_size=limit,
+        total_pages=total_pages
+    )
 
 
 @router.get("/facturas/{cufe}", response_model=InvoiceDetailResponse)
@@ -455,3 +503,71 @@ def get_statistics(db: Session = Depends(get_db)):
     service = InvoiceV2Service(db)
     stats = service.get_statistics()
     return stats
+
+
+@router.put("/facturas/{temp_cufe}/update-cufe")
+async def update_invoice_cufe(
+    temp_cufe: str,
+    new_cufe: str = Query(..., min_length=96, max_length=96),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualiza el CUFE de una factura (de temporal a real)
+    """
+    service = InvoiceV2Service(db)
+    
+    # Verificar que la factura existe
+    invoice = service.get_invoice_by_cufe(temp_cufe)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Verificar que el CUFE actual es temporal
+    if not temp_cufe.startswith('TEMP_'):
+        raise HTTPException(status_code=400, detail="Esta factura ya tiene un CUFE real")
+    
+    # Validar que el nuevo CUFE es hexadecimal
+    import re
+    if not re.match(r'^[0-9a-fA-F]{96}$', new_cufe):
+        raise HTTPException(status_code=400, detail="El CUFE debe contener solo caracteres hexadecimales (0-9, a-f)")
+    
+    # Verificar que el nuevo CUFE no existe
+    existing = service.get_invoice_by_cufe(new_cufe.lower())
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Ya existe una factura con el CUFE {new_cufe[:16]}...")
+    
+    # Actualizar el CUFE
+    try:
+        invoice.cufe = new_cufe.lower()
+        invoice.estado = 'pendiente_dian'  # Cambiar estado de sin_cufe a pendiente_dian
+        invoice.updated_at = datetime.now()
+        
+        # Si tiene archivo en S3, renombrar la clave
+        if invoice.archivo_proveedor_s3_key and service.s3_service:
+            try:
+                old_key = invoice.archivo_proveedor_s3_key
+                new_key = f"invoices/provider/{new_cufe.lower()}.pdf"
+                
+                # Copiar archivo con nueva clave
+                service.s3_service.copy_file(old_key, new_key)
+                
+                # Eliminar archivo antiguo
+                service.s3_service.delete_file(old_key)
+                
+                # Actualizar clave en BD
+                invoice.archivo_proveedor_s3_key = new_key
+                invoice.archivo_proveedor_url = service.s3_service.generate_presigned_url(new_key, expiration=3600)
+                
+                logger.info(f"✅ Archivo S3 renombrado: {old_key} -> {new_key}")
+            except Exception as e:
+                logger.warning(f"No se pudo renombrar archivo en S3: {e}")
+        
+        db.commit()
+        db.refresh(invoice)
+        
+        logger.info(f"✅ CUFE actualizado: {temp_cufe[:20]}... -> {new_cufe[:20]}...")
+        
+        return invoice
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error actualizando CUFE: {e}")
+        raise HTTPException(status_code=500, detail=f"Error actualizando CUFE: {str(e)}")

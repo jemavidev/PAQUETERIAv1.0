@@ -46,15 +46,27 @@ class InvoiceV2Service:
             overwrite: Si True, actualiza factura existente (solo si NO está en estado 'completo')
         """
         # Parsear PDF
+        logger.info(f"📄 Parseando PDF: {pdf_path}")
         data = self.pdf_parser.parse_provider_invoice(pdf_path)
         
         if 'error' in data:
+            logger.error(f"❌ Error parseando PDF: {data['error']}")
             raise ValueError(data['error'])
+        
+        # Log de datos extraídos
+        logger.info(f"📊 Datos extraídos del PDF:")
+        logger.info(f"   - CUFE: {data.get('cufe', 'NO ENCONTRADO')[:20] if data.get('cufe') else 'NO ENCONTRADO'}...")
+        logger.info(f"   - Proveedor: {data.get('proveedor_nombre', 'NO ENCONTRADO')}")
+        logger.info(f"   - NIT: {data.get('proveedor_nit', 'NO ENCONTRADO')}")
+        logger.info(f"   - Número: {data.get('numero_factura', 'NO ENCONTRADO')}")
+        logger.info(f"   - Fecha: {data.get('fecha_emision', 'NO ENCONTRADO')}")
+        logger.info(f"   - Total: {data.get('total_factura', 'NO ENCONTRADO')}")
         
         # Generar CUFE temporal si no se pudo extraer
         cufe = data.get('cufe')
         if not cufe:
             if not allow_without_cufe:
+                logger.error("❌ No se pudo extraer CUFE y allow_without_cufe=False")
                 raise ValueError('No se pudo extraer el código CUFE del PDF')
             
             # Generar CUFE temporal único
@@ -63,6 +75,8 @@ class InvoiceV2Service:
             temp_id = str(uuid.uuid4())
             cufe = f"TEMP_{hashlib.sha256(temp_id.encode()).hexdigest()[:120]}"
             logger.warning(f"⚠️ CUFE no encontrado, generando temporal: {cufe[:20]}...")
+        else:
+            logger.info(f"✅ CUFE extraído correctamente: {cufe[:20]}...")
         
         # Verificar si ya existe
         existing = self.db.query(InvoiceV2).filter_by(cufe=cufe).first()
@@ -150,7 +164,7 @@ class InvoiceV2Service:
         self.db.commit()
         self.db.refresh(invoice)
         
-        logger.info(f"Factura creada: {invoice.cufe[:16]}... - {invoice.proveedor_nombre}")
+        logger.info(f"✅ Factura creada: {invoice.cufe[:16]}... - {invoice.proveedor_nombre} (estado: {invoice.estado})")
         
         return invoice
     
