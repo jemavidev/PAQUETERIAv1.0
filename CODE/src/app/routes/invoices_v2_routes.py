@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 class InvoiceResponse(BaseModel):
     cufe: str
     archivo_proveedor_url: Optional[str]
+    archivo_proveedor_s3_key: Optional[str]  # ✅ AGREGADO para que el frontend sepa si hay archivo
     archivo_dian_url: Optional[str]
+    archivo_dian_s3_key: Optional[str]  # ✅ AGREGADO para consistencia
     proveedor_nombre: Optional[str]
     proveedor_nit: Optional[str]
     fecha_emision: Optional[datetime]
