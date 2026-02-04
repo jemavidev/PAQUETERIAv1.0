@@ -34,10 +34,16 @@ class InvoiceV2Service:
     
     # ===== TAB FACTURAS =====
     
-    def create_invoice_from_provider_pdf(self, pdf_path: str, file_obj=None) -> InvoiceV2:
+    def create_invoice_from_provider_pdf(self, pdf_path: str, file_obj=None, allow_without_cufe: bool = False, overwrite: bool = False) -> InvoiceV2:
         """
         Crea una factura desde el PDF del proveedor
-        Extrae: CUFE, Proveedor, Fecha, Número, Total
+        Extrae: CUFE (si es posible, sino genera temporal si allow_without_cufe=True)
+        
+        Args:
+            pdf_path: Ruta al archivo PDF
+            file_obj: Objeto de archivo para subir a S3
+            allow_without_cufe: Si True, permite crear factura sin CUFE (genera temporal)
+            overwrite: Si True, actualiza factura existente (solo si NO está en estado 'completo')
         """
         # Parsear PDF
         data = self.pdf_parser.parse_provider_invoice(pdf_path)
@@ -45,14 +51,71 @@ class InvoiceV2Service:
         if 'error' in data:
             raise ValueError(data['error'])
         
-        if not data.get('cufe'):
-            raise ValueError('No se pudo extraer el código CUFE del PDF')
+        # Generar CUFE temporal si no se pudo extraer
+        cufe = data.get('cufe')
+        if not cufe:
+            if not allow_without_cufe:
+                raise ValueError('No se pudo extraer el código CUFE del PDF')
+            
+            # Generar CUFE temporal único
+            import uuid
+            import hashlib
+            temp_id = str(uuid.uuid4())
+            cufe = f"TEMP_{hashlib.sha256(temp_id.encode()).hexdigest()[:120]}"
+            logger.warning(f"⚠️ CUFE no encontrado, generando temporal: {cufe[:20]}...")
         
         # Verificar si ya existe
-        existing = self.db.query(InvoiceV2).filter_by(cufe=data['cufe']).first()
+        existing = self.db.query(InvoiceV2).filter_by(cufe=cufe).first()
         if existing:
-            raise ValueError(f'Ya existe una factura con el CUFE {data["cufe"][:16]}...')
+            if not overwrite:
+                raise ValueError(f'Ya existe una factura con el CUFE {cufe[:16]}... (usa overwrite=true para actualizar)')
+            
+            # Si overwrite=True, verificar que NO esté completa
+            if existing.estado == 'completo':
+                raise ValueError(f'No se puede actualizar: la factura {cufe[:16]}... está en estado COMPLETO (protegida)')
+            
+            # ACTUALIZAR: modificar el registro existente
+            logger.info(f"🔄 Actualizando factura existente: {cufe[:16]}... (estado: {existing.estado})")
+            
+            # Eliminar archivo antiguo de S3 si existe
+            if existing.archivo_proveedor_s3_key and self.s3_service:
+                try:
+                    self.s3_service.delete_file(existing.archivo_proveedor_s3_key)
+                    logger.info(f"🗑️ Archivo antiguo eliminado de S3: {existing.archivo_proveedor_s3_key}")
+                except Exception as e:
+                    logger.warning(f"No se pudo eliminar archivo antiguo de S3: {e}")
+            
+            # Actualizar datos
+            existing.proveedor_nombre = data.get('proveedor_nombre') or existing.proveedor_nombre
+            existing.proveedor_nit = data.get('proveedor_nit') or existing.proveedor_nit
+            existing.fecha_emision = data.get('fecha_emision') or existing.fecha_emision
+            existing.numero_factura = data.get('numero_factura') or existing.numero_factura
+            existing.total_factura = data.get('total_factura') or existing.total_factura
+            existing.proveedor_datos_raw = {'raw_text': data.get('raw_text', '')[:5000]}
+            existing.updated_at = datetime.now()
+            
+            # Subir nuevo archivo a S3
+            if file_obj and self.s3_service:
+                try:
+                    file_content = file_obj.read()
+                    file_obj.seek(0)
+                    
+                    s3_key = f"invoices/provider/{cufe}.pdf"
+                    archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
+                    existing.archivo_proveedor_url = archivo_url
+                    existing.archivo_proveedor_s3_key = s3_key
+                    logger.info(f"✅ Nuevo archivo subido a S3: {s3_key}")
+                except Exception as e:
+                    logger.warning(f"No se pudo subir nuevo archivo a S3: {e}")
+            
+            self.db.commit()
+            self.db.refresh(existing)
+            
+            logger.info(f"✅ Factura actualizada: {existing.cufe[:16]}... - {existing.proveedor_nombre}")
+            
+            return existing
         
+        # Si NO existe, crear nueva factura
         # Subir archivo a S3 (opcional)
         archivo_url = None
         archivo_s3_key = None
@@ -62,16 +125,16 @@ class InvoiceV2Service:
                 file_content = file_obj.read()
                 file_obj.seek(0)  # Resetear el puntero por si se necesita después
                 
-                s3_key = f"invoices/provider/{data['cufe']}.pdf"
+                s3_key = f"invoices/provider/{cufe}.pdf"
                 archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
                 archivo_s3_key = s3_key
                 logger.info(f"✅ Archivo subido a S3: {s3_key}")
             except Exception as e:
                 logger.warning(f"No se pudo subir archivo a S3: {e}")
         
-        # Crear factura
+        # Crear factura nueva
         invoice = InvoiceV2(
-            cufe=data['cufe'],
+            cufe=cufe,
             archivo_proveedor_url=archivo_url,
             archivo_proveedor_s3_key=archivo_s3_key,
             proveedor_nombre=data.get('proveedor_nombre'),
@@ -80,7 +143,7 @@ class InvoiceV2Service:
             numero_factura=data.get('numero_factura'),
             total_factura=data.get('total_factura'),
             proveedor_datos_raw={'raw_text': data.get('raw_text', '')[:5000]},  # Limitar tamaño
-            estado='pendiente_dian'
+            estado='sin_cufe' if cufe.startswith('TEMP_') else 'pendiente_dian'
         )
         
         self.db.add(invoice)
