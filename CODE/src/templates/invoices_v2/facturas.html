@@ -249,6 +249,49 @@
     </div>
 </div>
 
+<!-- Modal de asociar CUFE -->
+<div id="associate-cufe-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">Asociar CUFE Real</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            Esta factura tiene un CUFE temporal. Ingresa el CUFE real (96 caracteres) para actualizarla.
+        </p>
+        <form id="associate-cufe-form">
+            <input type="hidden" id="associate-temp-cufe">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    CUFE Real (96 caracteres)
+                </label>
+                <textarea id="associate-new-cufe" 
+                          rows="4" 
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                          placeholder="Pega aquí el CUFE completo (96 caracteres hexadecimales)"
+                          required></textarea>
+                <div class="flex items-center justify-between mt-2">
+                    <span id="cufe-length" class="text-sm font-medium text-gray-600">0 caracteres</span>
+                    <button type="button" 
+                            onclick="cleanCufeSpaces()" 
+                            class="text-sm text-blue-600 hover:text-blue-800"
+                            title="Eliminar espacios y saltos de línea">
+                        🧹 Limpiar espacios
+                    </button>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" 
+                        onclick="closeAssociateCufeModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg">
+                    Asociar CUFE
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Cargar facturas al iniciar
     document.addEventListener('DOMContentLoaded', () => {
@@ -753,6 +796,118 @@
         document.getElementById('select-all').checked = false;
         updateSelectedCount();
     }
+
+    // Funciones para asociar CUFE
+    function showAssociateCufeModal(tempCufe) {
+        document.getElementById('associate-temp-cufe').value = tempCufe;
+        document.getElementById('associate-new-cufe').value = '';
+        document.getElementById('cufe-length').textContent = '0 caracteres';
+        document.getElementById('cufe-length').className = 'text-sm font-medium text-gray-600';
+        document.getElementById('associate-cufe-modal').classList.remove('hidden');
+    }
+
+    function closeAssociateCufeModal() {
+        document.getElementById('associate-cufe-modal').classList.add('hidden');
+        document.getElementById('associate-new-cufe').value = '';
+        document.getElementById('cufe-length').textContent = '0 caracteres';
+        document.getElementById('cufe-length').className = 'text-sm font-medium text-gray-600';
+    }
+
+    function cleanCufeSpaces() {
+        const textarea = document.getElementById('associate-new-cufe');
+        const originalText = textarea.value;
+        
+        // Limpiar: eliminar TODOS los espacios, saltos de línea, tabs, etc.
+        const cleanedText = originalText
+            .replace(/\s+/g, '')  // Eliminar todos los espacios en blanco
+            .replace(/[\r\n\t]/g, '')  // Eliminar saltos de línea y tabs
+            .trim();  // Eliminar espacios al inicio y final
+        
+        textarea.value = cleanedText;
+        updateCufeLength();
+        showToast('Espacios eliminados', 'success');
+    }
+
+    function updateCufeLength() {
+        const textarea = document.getElementById('associate-new-cufe');
+        const length = textarea.value.length;
+        const lengthSpan = document.getElementById('cufe-length');
+        
+        lengthSpan.textContent = `${length} caracteres`;
+        
+        if (length === 96) {
+            lengthSpan.className = 'text-sm font-medium text-green-600';
+        } else if (length > 96) {
+            lengthSpan.className = 'text-sm font-medium text-red-600';
+        } else if (length > 0) {
+            lengthSpan.className = 'text-sm font-medium text-orange-600';
+        } else {
+            lengthSpan.className = 'text-sm font-medium text-gray-600';
+        }
+    }
+
+    // Event listeners para el modal de asociar CUFE
+    document.getElementById('associate-new-cufe').addEventListener('input', updateCufeLength);
+    
+    // Auto-limpiar espacios al pegar
+    document.getElementById('associate-new-cufe').addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // Limpiar: eliminar TODOS los espacios, saltos de línea, tabs, etc.
+        const cleanedText = pastedText
+            .replace(/\s+/g, '')  // Eliminar todos los espacios en blanco
+            .replace(/[\r\n\t]/g, '')  // Eliminar saltos de línea y tabs
+            .trim();  // Eliminar espacios al inicio y final
+        
+        // Insertar el texto limpio
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        
+        textarea.value = text.substring(0, start) + cleanedText + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + cleanedText.length;
+        
+        updateCufeLength();
+    });
+
+    // Form submit para asociar CUFE
+    document.getElementById('associate-cufe-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const tempCufe = document.getElementById('associate-temp-cufe').value;
+        const newCufe = document.getElementById('associate-new-cufe').value.trim();
+        
+        // Validar longitud
+        if (newCufe.length !== 96) {
+            showToast(`El CUFE debe tener exactamente 96 caracteres (actual: ${newCufe.length})`, 'error');
+            return;
+        }
+        
+        // Validar que solo contenga caracteres hexadecimales
+        if (!/^[0-9a-fA-F]+$/.test(newCufe)) {
+            showToast('El CUFE solo puede contener caracteres hexadecimales (0-9, a-f, A-F)', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${tempCufe}/update-cufe?new_cufe=${newCufe}`, {
+                method: 'PUT'
+            });
+            
+            if (response.ok) {
+                showToast('✅ CUFE asociado correctamente', 'success');
+                closeAssociateCufeModal();
+                loadInvoices();
+            } else {
+                const error = await response.json();
+                showToast(`Error: ${error.detail || 'No se pudo asociar el CUFE'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Error asociando CUFE', 'error');
+        }
+    });
 </script>
 {% endif %}
 {% endblock %}
