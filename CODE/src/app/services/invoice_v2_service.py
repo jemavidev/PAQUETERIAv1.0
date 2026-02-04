@@ -135,16 +135,28 @@ class InvoiceV2Service:
         archivo_s3_key = None
         if file_obj and self.s3_service:
             try:
+                logger.info(f"📤 Intentando subir archivo a S3...")
                 # Leer el contenido del archivo como bytes
                 file_content = file_obj.read()
                 file_obj.seek(0)  # Resetear el puntero por si se necesita después
                 
+                logger.info(f"   Tamaño del archivo: {len(file_content)} bytes")
+                
                 s3_key = f"invoices/provider/{cufe}.pdf"
+                logger.info(f"   S3 Key: {s3_key}")
+                
                 archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/pdf')
                 archivo_s3_key = s3_key
                 logger.info(f"✅ Archivo subido a S3: {s3_key}")
+                logger.info(f"   URL: {archivo_url[:100]}...")
             except Exception as e:
-                logger.warning(f"No se pudo subir archivo a S3: {e}")
+                logger.error(f"❌ Error subiendo archivo a S3: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        elif not file_obj:
+            logger.warning("⚠️ No se proporcionó file_obj, archivo no se subirá a S3")
+        elif not self.s3_service:
+            logger.warning("⚠️ S3Service no está disponible, archivo no se subirá a S3")
         
         # Crear factura nueva
         invoice = InvoiceV2(

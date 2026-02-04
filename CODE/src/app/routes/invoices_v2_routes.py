@@ -151,12 +151,14 @@ async def upload_provider_invoice(
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
     
-    # Validar tamaño (máximo 5MB)
+    # Leer contenido del archivo
     content = await file.read()
+    
+    # Validar tamaño (máximo 5MB)
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="El archivo es demasiado grande (máximo 5MB)")
     
-    # Guardar temporalmente
+    # Guardar temporalmente para procesamiento
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
         tmp.write(content)
         tmp_path = tmp.name
@@ -164,22 +166,30 @@ async def upload_provider_invoice(
     try:
         service = InvoiceV2Service(db)
         
-        # Resetear el file object para S3
-        await file.seek(0)
+        # Crear un objeto BytesIO para S3 (no depende del file.file que ya se leyó)
+        from io import BytesIO
+        file_for_s3 = BytesIO(content)
+        file_for_s3.name = file.filename  # Agregar nombre para S3
+        
+        logger.info(f"📤 Subiendo factura: {file.filename} ({len(content)} bytes)")
         
         # SIEMPRE permitir carga sin CUFE (genera temporal)
         invoice = service.create_invoice_from_provider_pdf(
             tmp_path, 
-            file_obj=file.file,
-            allow_without_cufe=True,  # ✅ SIEMPRE True
+            file_obj=file_for_s3,  # ✅ Usar BytesIO con contenido completo
+            allow_without_cufe=True,
             overwrite=False
         )
+        
+        logger.info(f"✅ Factura creada: {invoice.cufe[:20]}... - S3 Key: {invoice.archivo_proveedor_s3_key or 'NO SUBIDO'}")
         
         return invoice
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Error procesando PDF {file.filename}: {str(e)}")
+        logger.error(f"❌ Error procesando PDF {file.filename}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error procesando PDF: {str(e)}")
     finally:
         # Limpiar archivo temporal
@@ -280,6 +290,35 @@ def list_invoices(
         page_size=limit,
         total_pages=total_pages
     )
+
+
+@router.get("/facturas/{cufe}/download-url")
+async def get_invoice_download_url(cufe: str, db: Session = Depends(get_db)):
+    """
+    Genera URL de descarga temporal para el PDF de la factura
+    """
+    service = InvoiceV2Service(db)
+    invoice = service.get_invoice_by_cufe(cufe)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    if not invoice.archivo_proveedor_s3_key:
+        raise HTTPException(status_code=404, detail="No hay archivo PDF disponible para esta factura")
+    
+    if not service.s3_service:
+        raise HTTPException(status_code=500, detail="Servicio S3 no disponible")
+    
+    try:
+        # Generar URL pre-firmada válida por 1 hora
+        url = service.s3_service.generate_presigned_url(
+            invoice.archivo_proveedor_s3_key,
+            expiration=3600
+        )
+        return {"url": url, "filename": f"factura_{invoice.numero_factura or cufe[:16]}.pdf"}
+    except Exception as e:
+        logger.error(f"Error generando URL de descarga: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generando URL de descarga: {str(e)}")
 
 
 @router.get("/facturas/{cufe}", response_model=InvoiceDetailResponse)

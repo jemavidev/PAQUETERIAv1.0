@@ -61,7 +61,7 @@ class PDFParserService:
         OPTIMIZADO: Solo procesa las primeras páginas (donde está la info importante)
         """
         if not PDF_LIBRARY_AVAILABLE:
-            logger.error("pdfplumber no está disponible")
+            logger.error("❌ pdfplumber no está disponible - instalar con: pip install pdfplumber")
             return ""
         
         try:
@@ -69,20 +69,27 @@ class PDFParserService:
             with pdfplumber.open(pdf_path) as pdf:
                 # Solo procesar las primeras páginas (la info importante está al inicio)
                 pages_to_process = min(len(pdf.pages), max_pages)
+                logger.info(f"📄 Procesando {pages_to_process} páginas del PDF")
                 
                 for i in range(pages_to_process):
                     page_text = pdf.pages[i].extract_text()
                     if page_text:
                         text_parts.append(page_text)
+                        logger.debug(f"   Página {i+1}: {len(page_text)} caracteres extraídos")
                     
                     # Si ya encontramos CUFE, podemos parar antes
                     combined_text = '\n'.join(text_parts)
                     if len(combined_text) > 2000 and re.search(r'[0-9a-fA-F]{96}', combined_text):
+                        logger.info(f"✅ CUFE encontrado en página {i+1}, deteniendo extracción")
                         break
             
-            return '\n'.join(text_parts)
+            total_text = '\n'.join(text_parts)
+            logger.info(f"📊 Total extraído: {len(total_text)} caracteres")
+            return total_text
         except Exception as e:
-            logger.error(f"Error extracting text from PDF: {e}")
+            logger.error(f"❌ Error extracting text from PDF: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return ""
     
     @staticmethod
@@ -90,22 +97,41 @@ class PDFParserService:
         """
         Extrae el código CUFE/CUDE/CUDS (96 caracteres hexadecimales)
         """
+        if not text:
+            logger.warning("⚠️ Texto vacío, no se puede extraer CUFE")
+            return None
+        
+        logger.info(f"🔍 Buscando CUFE en texto de {len(text)} caracteres")
+        
         # Buscar patrón de 96 caracteres hex
         matches = re.findall(PDFParserService.CUFE_PATTERN, text, re.IGNORECASE)
         
         if matches:
+            logger.info(f"✅ Encontrados {len(matches)} patrones de 96 caracteres hex")
             # Puede estar dividido en múltiples líneas, intentar unir
             cufe = matches[0]
             
             # Si encontramos múltiples coincidencias cercanas, unirlas
             if len(cufe) < 96 and len(matches) > 1:
                 cufe = ''.join(matches[:3])  # Unir hasta 3 fragmentos
+                logger.info(f"🔗 Uniendo fragmentos: {len(cufe)} caracteres")
             
             # Limpiar y validar
             cufe = cufe.strip().replace('\n', '').replace(' ', '')
             
             if len(cufe) == 96:
+                logger.info(f"✅ CUFE válido extraído: {cufe[:20]}...{cufe[-20:]}")
                 return cufe.lower()
+            else:
+                logger.warning(f"⚠️ CUFE con longitud incorrecta: {len(cufe)} caracteres")
+        else:
+            logger.warning("❌ No se encontró patrón de 96 caracteres hexadecimales")
+            # Buscar patrones más cortos para debugging
+            shorter_matches = re.findall(r'[0-9a-fA-F]{32,}', text, re.IGNORECASE)
+            if shorter_matches:
+                logger.info(f"ℹ️ Encontrados {len(shorter_matches)} patrones hex más cortos:")
+                for i, match in enumerate(shorter_matches[:3]):
+                    logger.info(f"   {i+1}. {match[:40]}... (longitud: {len(match)})")
         
         return None
     
