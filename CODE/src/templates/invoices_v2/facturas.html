@@ -98,13 +98,25 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-6 py-3 text-left">
+                                <input type="checkbox" id="select-all" 
+                                       class="rounded border-gray-300 text-papyrus-blue focus:ring-papyrus-blue cursor-pointer"
+                                       onchange="toggleSelectAll(this)">
+                            </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Número</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-40 md:w-48">Acciones</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-40 md:w-48">
+                                <button id="delete-selected-btn" 
+                                        onclick="deleteSelectedInvoices()" 
+                                        class="hidden px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                        title="Eliminar seleccionadas">
+                                    🗑️ Eliminar (<span id="selected-count">0</span>)
+                                </button>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="invoices-tbody" class="bg-white divide-y divide-gray-200">
@@ -284,38 +296,59 @@
             'completo': '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">Completo</span>',
             'error': '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 whitespace-nowrap">Error</span>',
             'sin_dian': '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 whitespace-nowrap">Sin DIAN</span>',
+            'sin_cufe': '<span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800 whitespace-nowrap">Sin CUFE</span>',
         };
         
+        const isTempCufe = invoice.cufe.startsWith('TEMP_');
+        const cufeDisplay = isTempCufe ? 'TEMPORAL' : truncateCufe(invoice.cufe);
+        
         return `
-            <tr class="hover:bg-gray-50">
+            <tr class="hover:bg-gray-50 ${isTempCufe ? 'bg-orange-50' : ''}" data-cufe="${invoice.cufe}">
+                <td class="px-6 py-4">
+                    <input type="checkbox" 
+                           class="invoice-checkbox rounded border-gray-300 text-papyrus-blue focus:ring-papyrus-blue cursor-pointer" 
+                           value="${invoice.cufe}"
+                           onchange="updateSelectedCount()">
+                </td>
                 <td class="px-6 py-4 text-sm font-mono text-gray-900">
                     <div class="flex items-center space-x-2">
-                        <span class="truncate">${truncateCufe(invoice.cufe)}</span>
-                        <button onclick="copyCufe('${invoice.cufe}')" class="text-gray-400 hover:text-papyrus-blue" title="Copiar CUFE completo">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                            </svg>
-                        </button>
+                        <span class="truncate ${isTempCufe ? 'text-orange-600 font-bold' : ''}">${cufeDisplay}</span>
+                        ${isTempCufe ? 
+                            `<button onclick="showAssociateCufeModal('${invoice.cufe}')" class="text-orange-600 hover:text-orange-800" title="Asociar CUFE real">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                </svg>
+                            </button>` :
+                            `<button onclick="copyCufe('${invoice.cufe}')" class="text-gray-400 hover:text-papyrus-blue" title="Copiar CUFE completo">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>`
+                        }
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${invoice.proveedor_nombre || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">${invoice.numero_factura || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900 hidden lg:table-cell">${formatDate(invoice.fecha_emision)}</td>
-                <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(invoice.total_factura)}</td>
+                <td class="px-6 py-4 text-sm text-gray-400">-</td>
+                <td class="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">-</td>
+                <td class="px-6 py-4 text-sm text-gray-400 hidden lg:table-cell">-</td>
+                <td class="px-6 py-4 text-sm text-gray-400">-</td>
                 <td class="px-6 py-4 text-sm">${estadoBadge[invoice.estado] || invoice.estado}</td>
                 <td class="px-6 py-4 text-sm text-right">
                     <div class="flex items-center justify-end space-x-2">
-                        <button onclick="downloadInvoice('${invoice.archivo_proveedor_url || ''}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" 
-                                class="${invoice.archivo_proveedor_url ? 'text-green-600 hover:text-green-800' : 'text-gray-300 cursor-not-allowed'}" 
-                                title="${invoice.archivo_proveedor_url ? 'Descargar factura PDF' : 'No hay archivo PDF disponible'}"
-                                ${!invoice.archivo_proveedor_url ? 'disabled' : ''}>
+                        ${isTempCufe ? 
+                            `<button onclick="showAssociateCufeModal('${invoice.cufe}')" 
+                                    class="text-orange-600 hover:text-orange-800 font-medium" 
+                                    title="Asociar CUFE real">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                            </button>` : ''
+                        }
+                        <button onclick="downloadInvoice('${invoice.cufe}', '${invoice.numero_factura || invoice.cufe.substring(0, 16)}')" 
+                                class="${invoice.archivo_proveedor_s3_key ? 'text-green-600 hover:text-green-800' : 'text-gray-300 cursor-not-allowed'}" 
+                                title="${invoice.archivo_proveedor_s3_key ? 'Descargar factura PDF' : 'No hay archivo PDF disponible'}"
+                                ${!invoice.archivo_proveedor_s3_key ? 'disabled' : ''}>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                        </button>
-                        <button onclick="editInvoice('${invoice.cufe}')" class="text-papyrus-blue hover:text-blue-800" title="Editar">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                             </svg>
                         </button>
                         <button onclick="deleteInvoice('${invoice.cufe}')" class="text-red-600 hover:text-red-800" title="Eliminar">
@@ -626,6 +659,99 @@
         } catch (error) {
             showToast('Error eliminando factura', 'error');
         }
+    }
+
+    // Funciones para selección múltiple y eliminación en lote
+    function toggleSelectAll(checkbox) {
+        const checkboxes = document.querySelectorAll('.invoice-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.invoice-checkbox:checked');
+        const count = checkboxes.length;
+        const selectAllCheckbox = document.getElementById('select-all');
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        const countSpan = document.getElementById('selected-count');
+        
+        // Actualizar contador
+        countSpan.textContent = count;
+        
+        // Mostrar/ocultar botón de eliminar
+        if (count > 0) {
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+        
+        // Actualizar estado del checkbox "seleccionar todos"
+        const allCheckboxes = document.querySelectorAll('.invoice-checkbox');
+        if (allCheckboxes.length > 0) {
+            selectAllCheckbox.checked = count === allCheckboxes.length;
+            selectAllCheckbox.indeterminate = count > 0 && count < allCheckboxes.length;
+        }
+    }
+
+    async function deleteSelectedInvoices() {
+        const checkboxes = document.querySelectorAll('.invoice-checkbox:checked');
+        const count = checkboxes.length;
+        
+        if (count === 0) {
+            showToast('No hay facturas seleccionadas', 'warning');
+            return;
+        }
+        
+        if (!confirm(`¿Estás seguro de eliminar ${count} factura${count > 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+        
+        const cufes = Array.from(checkboxes).map(cb => cb.value);
+        
+        // Mostrar progreso
+        showToast(`Eliminando ${count} facturas...`, 'info');
+        
+        let deleted = 0;
+        let failed = 0;
+        
+        // Eliminar en paralelo (máximo 5 a la vez para no sobrecargar)
+        const batchSize = 5;
+        for (let i = 0; i < cufes.length; i += batchSize) {
+            const batch = cufes.slice(i, i + batchSize);
+            const promises = batch.map(cufe => 
+                fetch(`/api/v2/invoices/facturas/${cufe}`, { method: 'DELETE' })
+                    .then(response => {
+                        if (response.ok) {
+                            deleted++;
+                        } else {
+                            failed++;
+                        }
+                    })
+                    .catch(() => {
+                        failed++;
+                    })
+            );
+            
+            await Promise.all(promises);
+        }
+        
+        // Mostrar resultado
+        if (failed === 0) {
+            showToast(`✅ ${deleted} facturas eliminadas correctamente`, 'success');
+        } else if (deleted === 0) {
+            showToast(`❌ Error: No se pudo eliminar ninguna factura`, 'error');
+        } else {
+            showToast(`⚠️ ${deleted} eliminadas, ${failed} fallidas`, 'warning');
+        }
+        
+        // Recargar lista
+        loadInvoices();
+        
+        // Limpiar selección
+        document.getElementById('select-all').checked = false;
+        updateSelectedCount();
     }
 </script>
 {% endif %}

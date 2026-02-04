@@ -136,7 +136,8 @@ async def upload_provider_invoice(
 ):
     """
     TAB FACTURAS: Sube una factura de proveedor
-    Extrae: CUFE, Proveedor, Fecha, Número, Total
+    Extrae: CUFE (si es posible, sino genera temporal)
+    SIEMPRE permite la carga aunque no tenga CUFE
     OPTIMIZADO: Timeout de 25 segundos
     """
     if not file.filename.endswith('.pdf'):
@@ -158,8 +159,13 @@ async def upload_provider_invoice(
         # Resetear el file object para S3
         await file.seek(0)
         
-        # Procesar con timeout implícito (FastAPI tiene timeout de 30s por defecto)
-        invoice = service.create_invoice_from_provider_pdf(tmp_path, file_obj=file.file)
+        # SIEMPRE permitir carga sin CUFE (genera temporal)
+        invoice = service.create_invoice_from_provider_pdf(
+            tmp_path, 
+            file_obj=file.file,
+            allow_without_cufe=True,  # ✅ SIEMPRE True
+            overwrite=False
+        )
         
         return invoice
     except ValueError as e:
