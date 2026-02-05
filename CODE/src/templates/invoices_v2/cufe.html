@@ -2,97 +2,156 @@
 
 {% block page_title %}CUFE{% endblock %}
 
+{% block search_bar %}
+<div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 flex-1 lg:max-w-2xl">
+    <!-- Campo oculto para estado -->
+    <input type="hidden" id="estado" value="">
+    
+    <!-- Búsqueda -->
+    <div class="relative flex-1">
+        <input id="search"
+                type="text"
+                placeholder="CUFE, proveedor, número... (búsqueda automática)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-sm touch-manipulation"
+                autocomplete="off">
+        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <svg id="search-icon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+        <!-- Botón para cargar archivos DIAN -->
+        <button onclick="openUploadDianModal()"
+                class="inline-flex items-center justify-center w-10 h-10 border border-transparent rounded-lg shadow-sm text-white bg-papyrus-blue hover:bg-blue-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation"
+                title="Cargar archivos DIAN">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
 {% block invoice_content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div>
-        <h2 class="text-2xl font-bold text-gray-900">Gestión de Códigos CUFE</h2>
-        <p class="text-gray-600 mt-1">Descarga y procesa los archivos DIAN para completar la información</p>
-    </div>
-
-    <!-- Estadísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
-                    <i class="fas fa-clock text-yellow-600 text-2xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Pendientes DIAN</p>
-                    <p id="stat-pendientes" class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                    <i class="fas fa-check-circle text-green-600 text-2xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Completos</p>
-                    <p id="stat-completos" class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
-                    <i class="fas fa-box text-papyrus-blue text-2xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total Productos</p>
-                    <p id="stat-productos" class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
-                <input type="text" id="search" placeholder="CUFE, proveedor..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Estado DIAN</label>
-                <select id="dian_validado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">Todos</option>
-                    <option value="false">Pendiente</option>
-                    <option value="true">Validado</option>
-                </select>
-            </div>
-            <div class="flex items-end gap-2">
-                <button onclick="loadCufeRecords()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
-                    <i class="fas fa-search mr-2"></i>
-                    Buscar
-                </button>
-                <button onclick="openUploadDianModal()" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg" title="Cargar archivos DIAN">
-                    <i class="fas fa-upload mr-2"></i>
-                    Cargar DIAN
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="space-y-4 sm:space-y-6">
 
     <!-- Tabla de CUFE -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado DIAN</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="cufe-tbody" class="bg-white divide-y divide-gray-200">
-                <!-- Cargado dinámicamente -->
-            </tbody>
-        </table>
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-medium text-gray-900">Registros CUFE</h2>
+                <div id="totalCufeCount" class="text-sm text-gray-700"></div>
+            </div>
+        </div>
+
+        <!-- Tabla responsive -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUFE</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Número</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="cufe-tbody" class="bg-white divide-y divide-gray-200">
+                    <!-- Cargado dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading" class="hidden text-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+            <p class="mt-4 text-sm text-gray-500">Cargando registros CUFE...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="cufe-empty" class="hidden text-center py-12">
+            <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">No hay registros CUFE</h3>
+            <p class="mt-2 text-sm text-gray-500">No se encontraron registros con los filtros aplicados.</p>
+        </div>
+
+        <!-- Paginación -->
+        <div id="pagination-container" class="hidden border-t border-gray-200 px-4 py-3 sm:px-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <!-- Info de página -->
+                <div class="text-sm text-gray-700">
+                    Mostrando <span id="page-start" class="font-medium">0</span> a <span id="page-end" class="font-medium">0</span> de <span id="total-items" class="font-medium">0</span> registros
+                </div>
+                
+                <!-- Controles de paginación -->
+                <div class="flex items-center gap-2">
+                    <!-- Botón Primera página -->
+                    <button id="first-page-btn" 
+                            onclick="goToPage(1)" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Primera página">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botón Anterior -->
+                    <button id="prev-page-btn" 
+                            onclick="previousPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Página anterior">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="page-numbers" class="flex items-center gap-1">
+                        <!-- Se generarán dinámicamente -->
+                    </div>
+                    
+                    <!-- Botón Siguiente -->
+                    <button id="next-page-btn" 
+                            onclick="nextPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Página siguiente">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botón Última página -->
+                    <button id="last-page-btn" 
+                            onclick="goToPage(totalPages)" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Última página">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Selector de items por página -->
+                    <select id="items-per-page" 
+                            onchange="changeItemsPerPage()" 
+                            class="ml-2 px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-papyrus-blue">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-sm text-gray-600">por página</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -101,16 +160,20 @@
     <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-bold mb-4">Cargar Archivos DIAN</h3>
         <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p class="text-sm text-blue-800">
-                <i class="fas fa-info-circle mr-2"></i>
-                Estos archivos actualizarán TODOS los datos de las facturas. Son la fuente de verdad.
-            </p>
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm text-blue-800">
+                    Estos archivos actualizarán TODOS los datos de las facturas. Son la fuente de verdad oficial de la DIAN.
+                </p>
+            </div>
         </div>
         <form id="upload-dian-form" enctype="multipart/form-data">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Archivos PDF DIAN (múltiples)</label>
                 <input type="file" id="dian-files" accept=".pdf" multiple required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-papyrus-blue">
                 <p class="text-sm text-gray-500 mt-1">
                     Se extraerán todos los datos: emisor, productos, totales, etc. El CUFE debe coincidir con una factura existente.
                 </p>
@@ -140,11 +203,13 @@
             
             <div class="flex justify-end space-x-3">
                 <button type="button" id="dian-cancel-btn" onclick="closeDianUploadModal()"
-                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     Cancelar
                 </button>
-                <button type="submit" id="dian-upload-btn" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
-                    <i class="fas fa-upload mr-2"></i>
+                <button type="submit" id="dian-upload-btn" class="bg-papyrus-blue hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
                     Procesar <span id="dian-file-count"></span>
                 </button>
             </div>
@@ -153,17 +218,47 @@
 </div>
 
 <!-- Modal de detalles -->
-<div id="details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-    <div class="bg-white rounded-lg p-8 max-w-4xl w-full my-8">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold">Detalles Completos</h3>
-            <button onclick="document.getElementById('details-modal').classList.add('hidden')" 
-                    class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
+<div id="details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full my-8 max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header del modal -->
+        <div class="bg-gradient-to-r from-papyrus-blue to-blue-600 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Factura Electrónica</h3>
+                    <p class="text-blue-100 text-sm">Información completa validada por DIAN</p>
+                </div>
+            </div>
+            <button onclick="closeDetailsModal()" 
+                    class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
             </button>
         </div>
-        <div id="details-content" class="space-y-6">
+        
+        <!-- Contenido del modal con scroll -->
+        <div id="details-content" class="flex-1 overflow-y-auto p-6 bg-gray-50">
             <!-- Cargado dinámicamente -->
+        </div>
+        
+        <!-- Footer del modal -->
+        <div class="bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+            <button onclick="closeDetailsModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                Cerrar
+            </button>
+            <button onclick="printInvoiceDetails()" 
+                    class="px-4 py-2 bg-papyrus-blue text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Imprimir
+            </button>
         </div>
     </div>
 </div>
@@ -171,83 +266,321 @@
 
 {% block invoice_scripts %}
 <script>
+    // Variables de paginación
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
+    let totalItems = 0;
+
+    // Variables para debounce
+    let searchTimeout = null;
+    let isSearching = false;
+
     document.addEventListener('DOMContentLoaded', () => {
-        loadStatistics();
         loadCufeRecords();
+        
+        // Búsqueda automática mientras escribes (con debounce de 500ms)
+        const searchInput = document.getElementById('search');
+        const searchIcon = document.getElementById('search-icon');
+        
+        searchInput.addEventListener('input', () => {
+            // Cancelar búsqueda anterior si existe
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Mostrar indicador de búsqueda
+            isSearching = true;
+            searchInput.classList.add('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+            searchIcon.classList.add('animate-pulse', 'text-papyrus-blue');
+            
+            // Esperar 500ms después de que el usuario deje de escribir
+            searchTimeout = setTimeout(() => {
+                currentPage = 1; // Resetear a la primera página
+                loadCufeRecords();
+                isSearching = false;
+                searchInput.classList.remove('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+                searchIcon.classList.remove('animate-pulse', 'text-papyrus-blue');
+            }, 500);
+        });
+        
+        // También permitir buscar con Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                currentPage = 1;
+                loadCufeRecords();
+                isSearching = false;
+                searchInput.classList.remove('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+                searchIcon.classList.remove('animate-pulse', 'text-papyrus-blue');
+            }
+        });
     });
 
-    async function loadStatistics() {
-        try {
-            const response = await fetch('/api/v2/invoices/statistics');
-            const stats = await response.json();
-            
-            document.getElementById('stat-pendientes').textContent = stats.facturas_pendientes;
-            document.getElementById('stat-completos').textContent = stats.facturas_completas;
-            document.getElementById('stat-productos').textContent = stats.total_productos;
-        } catch (error) {
-            console.error('Error loading statistics:', error);
-        }
+    function filterByDianStatus() {
+        currentPage = 1; // Resetear a la primera página
+        loadCufeRecords();
     }
 
     async function loadCufeRecords() {
+        const loading = document.getElementById('loading');
         const tbody = document.getElementById('cufe-tbody');
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando...</td></tr>';
+        const emptyState = document.getElementById('cufe-empty');
+        const totalCount = document.getElementById('totalCufeCount');
+        const paginationContainer = document.getElementById('pagination-container');
         
+        loading.classList.remove('hidden');
+        tbody.innerHTML = '';
+        emptyState.classList.add('hidden');
+        paginationContainer.classList.add('hidden');
+        
+        const skip = (currentPage - 1) * itemsPerPage;
         const params = new URLSearchParams({
             search: document.getElementById('search').value,
-            dian_validado: document.getElementById('dian_validado').value,
+            estado: document.getElementById('estado').value,
+            skip: skip,
+            limit: itemsPerPage
         });
         
         try {
-            const response = await fetch(`/api/v2/invoices/cufe?${params}`);
-            const records = await response.json();
+            // Consultar el endpoint de facturas en lugar de CUFE
+            const response = await fetch(`/api/v2/invoices/facturas?${params}`);
+            const data = await response.json();
             
-            if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No se encontraron registros</td></tr>';
+            // Manejar respuesta con paginación
+            const records = data.items || [];
+            const total = data.total || 0;
+            totalItems = total;
+            totalPages = data.total_pages || 1;
+            
+            if (records.length === 0 && currentPage === 1) {
+                emptyState.classList.remove('hidden');
+                totalCount.textContent = '';
             } else {
-                tbody.innerHTML = '';
                 records.forEach(record => {
                     tbody.innerHTML += renderCufeRow(record);
                 });
+                
+                // Actualizar info de paginación
+                const pageStart = skip + 1;
+                const pageEnd = skip + records.length;
+                totalCount.textContent = `Mostrando ${pageStart}-${pageEnd} de ${totalItems} facturas`;
+                
+                // Mostrar controles de paginación si hay más de una página
+                if (totalPages > 1) {
+                    updatePaginationControls(pageStart, pageEnd, totalItems);
+                    paginationContainer.classList.remove('hidden');
+                }
             }
         } catch (error) {
-            showToast('Error cargando registros', 'error');
+            console.error('Error cargando facturas:', error);
+            showToast('Error cargando facturas', 'error');
+        } finally {
+            loading.classList.add('hidden');
         }
     }
 
-    function renderCufeRow(record) {
-        const dianBadge = record.dian_validado 
-            ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800"><i class="fas fa-check mr-1"></i>Validado</span>'
-            : '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>Pendiente</span>';
+    function updatePaginationControls(pageStart, pageEnd, total) {
+        // Actualizar info de página
+        document.getElementById('page-start').textContent = pageStart;
+        document.getElementById('page-end').textContent = pageEnd;
+        document.getElementById('total-items').textContent = total;
+        
+        // Actualizar botones
+        const hasPrevPage = currentPage > 1;
+        const hasNextPage = currentPage < totalPages;
+        
+        document.getElementById('first-page-btn').disabled = !hasPrevPage;
+        document.getElementById('prev-page-btn').disabled = !hasPrevPage;
+        document.getElementById('next-page-btn').disabled = !hasNextPage;
+        document.getElementById('last-page-btn').disabled = !hasNextPage;
+        
+        // Generar números de página
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        
+        if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        // Agregar "..." al inicio si es necesario
+        if (startPage > 1) {
+            const firstBtn = document.createElement('button');
+            firstBtn.textContent = '1';
+            firstBtn.onclick = () => goToPage(1);
+            firstBtn.className = 'px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50';
+            pageNumbers.appendChild(firstBtn);
+            
+            if (startPage > 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.className = 'px-2 text-gray-500';
+                pageNumbers.appendChild(dots);
+            }
+        }
+        
+        // Agregar páginas
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.onclick = () => goToPage(i);
+            pageBtn.className = `px-3 py-1 border rounded-lg text-sm ${
+                i === currentPage 
+                    ? 'bg-papyrus-blue text-white border-papyrus-blue' 
+                    : 'border-gray-300 hover:bg-gray-50'
+            }`;
+            pageNumbers.appendChild(pageBtn);
+        }
+        
+        // Agregar "..." al final si es necesario
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.className = 'px-2 text-gray-500';
+                pageNumbers.appendChild(dots);
+            }
+            
+            const lastBtn = document.createElement('button');
+            lastBtn.textContent = totalPages;
+            lastBtn.onclick = () => goToPage(totalPages);
+            lastBtn.className = 'px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50';
+            pageNumbers.appendChild(lastBtn);
+        }
+    }
+
+    function goToPage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadCufeRecords();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function previousPage() {
+        if (currentPage > 1) {
+            goToPage(currentPage - 1);
+        }
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            goToPage(currentPage + 1);
+        }
+    }
+
+    function changeItemsPerPage() {
+        itemsPerPage = parseInt(document.getElementById('items-per-page').value);
+        currentPage = 1;
+        loadCufeRecords();
+    }
+
+    function renderCufeRow(invoice) {
+        // Determinar estado DIAN basado en si tiene datos DIAN
+        const dianValidado = invoice.dian_validado || (invoice.dian_emisor_razon_social && invoice.dian_total_neto);
+        const dianBadge = dianValidado
+            ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">✓ Validado</span>'
+            : '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 whitespace-nowrap">⏱ Pendiente</span>';
+        
+        // Determinar si tiene archivo DIAN
+        const hasArchivoDIAN = invoice.archivo_dian_s3_key || invoice.archivo_dian_url;
+        
+        // Datos a mostrar según estado
+        const proveedor = dianValidado ? (invoice.dian_emisor_razon_social || invoice.proveedor_nombre || '-') : '<span class="text-gray-400 italic text-xs">Pendiente validación DIAN</span>';
+        const numero = dianValidado ? (invoice.numero_factura || '-') : '<span class="text-gray-400 italic text-xs">-</span>';
+        const fecha = dianValidado ? formatDate(invoice.fecha_emision) : '<span class="text-gray-400 italic text-xs">-</span>';
+        const total = dianValidado ? formatCurrency(invoice.dian_total_neto || invoice.total_factura) : '<span class="text-gray-400 italic text-xs">-</span>';
         
         return `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm font-mono text-gray-900">
-                    <button onclick="copyCufe('${record.cufe}')" class="hover:text-papyrus-blue" title="Copiar CUFE">
-                        ${truncateCufe(record.cufe)} <i class="fas fa-copy text-xs"></i>
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm">
+                    <button onclick="copyCufe('${invoice.cufe}')" 
+                            class="font-mono text-gray-900 hover:text-papyrus-blue transition-colors flex items-center gap-2" 
+                            title="Copiar CUFE completo">
+                        <span>${truncateCufe(invoice.cufe)}</span>
+                        <svg class="w-4 h-4 text-gray-400 hover:text-papyrus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
                     </button>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${record.dian_emisor_razon_social || record.proveedor_nombre || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">${record.numero_factura || '-'}</td>
-                <td class="px-6 py-4 text-sm font-medium text-gray-900">${formatCurrency(record.dian_total_neto || record.total_factura)}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">${proveedor}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">${numero}</td>
+                <td class="px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">${fecha}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900">${total}</td>
                 <td class="px-6 py-4 text-sm">${dianBadge}</td>
-                <td class="px-6 py-4 text-sm space-x-2">
-                    <button onclick="viewDetails('${record.cufe}')" class="text-green-600 hover:text-green-800" title="Ver detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <a href="https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${record.cufe}" target="_blank" 
-                       class="text-purple-600 hover:text-purple-800" title="Ver en DIAN">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                    ${record.archivo_dian_url ? `<a href="${record.archivo_dian_url}" target="_blank" class="text-red-600 hover:text-red-800" title="Ver PDF DIAN"><i class="fas fa-file-pdf"></i></a>` : ''}
+                <td class="px-6 py-4 text-sm text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        ${!dianValidado ? `
+                            <button onclick="openUploadDianModal()" 
+                                    class="text-orange-600 hover:text-orange-800 transition-colors" 
+                                    title="Cargar archivo DIAN">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        ${!dianValidado ? `
+                            <a href="https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${invoice.cufe}" 
+                               target="_blank" 
+                               class="text-purple-600 hover:text-purple-800 transition-colors" 
+                               title="Ver en portal DIAN">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                            </a>
+                        ` : ''}
+                        ${hasArchivoDIAN ? `
+                            <button onclick="downloadInvoicePDF('${invoice.cufe}')" 
+                                    class="text-red-600 hover:text-red-800 transition-colors" 
+                                    title="Descargar PDF DIAN">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `;
     }
 
+    async function downloadInvoicePDF(cufe) {
+        try {
+            // Solicitar URL de descarga del archivo DIAN
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}/download-url?file_type=dian`);
+            
+            if (!response.ok) {
+                const error = await response.json();
+                showToast(error.detail || 'No hay archivo PDF DIAN disponible', 'warning');
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (data.download_url) {
+                // Abrir en nueva pestaña para descargar
+                window.open(data.download_url, '_blank');
+                showToast('Descargando archivo DIAN...', 'success');
+            } else {
+                showToast('No se pudo obtener la URL de descarga', 'error');
+            }
+        } catch (error) {
+            console.error('Error descargando archivo DIAN:', error);
+            showToast('Error al descargar el archivo DIAN', 'error');
+        }
+    }
+
     function copyCufe(cufe) {
-        navigator.clipboard.writeText(cufe);
-        showToast('CUFE copiado al portapapeles', 'success');
+        navigator.clipboard.writeText(cufe).then(() => {
+            showToast('CUFE copiado al portapapeles', 'success');
+        }).catch(() => {
+            showToast('Error al copiar CUFE', 'error');
+        });
     }
 
     function openUploadDianModal() {
@@ -374,7 +707,6 @@
         // Mostrar resumen
         if (successful > 0) {
             showToast(`${successful} archivo(s) DIAN procesado(s) correctamente`, 'success');
-            loadStatistics();
             loadCufeRecords();
         }
         if (failed > 0) {
@@ -399,78 +731,5 @@
         document.getElementById('dian-file-count').textContent = '';
     }
 
-    async function viewDetails(cufe) {
-        try {
-            const response = await fetch(`/api/v2/invoices/cufe/${cufe}/full`);
-            const data = await response.json();
-            
-            const content = document.getElementById('details-content');
-            content.innerHTML = `
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Información General</h4>
-                        <dl class="space-y-2 text-sm">
-                            <div><dt class="font-medium text-gray-600">CUFE:</dt><dd class="font-mono text-xs break-all">${data.factura.cufe}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Número:</dt><dd>${data.factura.numero_factura || '-'}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Fecha:</dt><dd>${formatDateTime(data.factura.fecha_emision)}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Estado:</dt><dd>${data.factura.estado}</dd></div>
-                        </dl>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Emisor (DIAN)</h4>
-                        <dl class="space-y-2 text-sm">
-                            <div><dt class="font-medium text-gray-600">Razón Social:</dt><dd>${data.factura.dian_emisor_razon_social || '-'}</dd></div>
-                            <div><dt class="font-medium text-gray-600">NIT:</dt><dd>${data.factura.dian_emisor_nit || '-'}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Dirección:</dt><dd>${data.factura.dian_emisor_direccion || '-'}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Teléfono:</dt><dd>${data.factura.dian_emisor_telefono || '-'}</dd></div>
-                            <div><dt class="font-medium text-gray-600">Email:</dt><dd>${data.factura.dian_emisor_email || '-'}</dd></div>
-                        </dl>
-                    </div>
-                </div>
-                
-                <div>
-                    <h4 class="font-bold text-lg mb-3">Totales</h4>
-                    <dl class="grid grid-cols-4 gap-4 text-sm">
-                        <div><dt class="font-medium text-gray-600">Subtotal:</dt><dd class="font-bold">${formatCurrency(data.factura.dian_subtotal)}</dd></div>
-                        <div><dt class="font-medium text-gray-600">IVA:</dt><dd class="font-bold">${formatCurrency(data.factura.dian_total_iva)}</dd></div>
-                        <div><dt class="font-medium text-gray-600">Descuentos:</dt><dd class="font-bold">${formatCurrency(data.factura.dian_total_descuentos)}</dd></div>
-                        <div><dt class="font-medium text-gray-600">Total:</dt><dd class="font-bold text-lg text-papyrus-blue">${formatCurrency(data.factura.dian_total_neto)}</dd></div>
-                    </dl>
-                </div>
-                
-                <div>
-                    <h4 class="font-bold text-lg mb-3">Productos (${data.productos.length})</h4>
-                    <div class="max-h-64 overflow-y-auto border rounded-lg">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-gray-50 sticky top-0">
-                                <tr>
-                                    <th class="px-4 py-2 text-left">Descripción</th>
-                                    <th class="px-4 py-2 text-left">Código</th>
-                                    <th class="px-4 py-2 text-right">Cantidad</th>
-                                    <th class="px-4 py-2 text-right">Precio</th>
-                                    <th class="px-4 py-2 text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y">
-                                ${data.productos.map(p => `
-                                    <tr>
-                                        <td class="px-4 py-2">${p.descripcion || '-'}</td>
-                                        <td class="px-4 py-2 font-mono text-xs">${p.codigo_producto || '-'}</td>
-                                        <td class="px-4 py-2 text-right">${p.cantidad || '-'}</td>
-                                        <td class="px-4 py-2 text-right">${formatCurrency(p.precio_unitario)}</td>
-                                        <td class="px-4 py-2 text-right font-medium">${formatCurrency(p.total_item)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('details-modal').classList.remove('hidden');
-        } catch (error) {
-            showToast('Error cargando detalles', 'error');
-        }
-    }
 </script>
 {% endblock %}

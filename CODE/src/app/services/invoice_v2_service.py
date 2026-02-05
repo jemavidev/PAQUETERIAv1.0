@@ -82,11 +82,11 @@ class InvoiceV2Service:
         existing = self.db.query(InvoiceV2).filter_by(cufe=cufe).first()
         if existing:
             if not overwrite:
-                raise ValueError(f'Ya existe una factura con el CUFE {cufe[:16]}... (usa overwrite=true para actualizar)')
+                raise ValueError(f'✓ Esta factura ya está registrada en el sistema. CUFE: {cufe}')
             
             # Si overwrite=True, verificar que NO esté completa
             if existing.estado == 'completo':
-                raise ValueError(f'No se puede actualizar: la factura {cufe[:16]}... está en estado COMPLETO (protegida)')
+                raise ValueError(f'⚠️ Esta factura no se puede actualizar porque ya está completa y validada')
             
             # ACTUALIZAR: modificar el registro existente
             logger.info(f"🔄 Actualizando factura existente: {cufe[:16]}... (estado: {existing.estado})")

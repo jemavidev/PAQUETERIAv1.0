@@ -278,9 +278,17 @@ def list_invoices(
 
 
 @router.get("/facturas/{cufe}/download-url")
-async def get_invoice_download_url(cufe: str, db: Session = Depends(get_db)):
+async def get_invoice_download_url(
+    cufe: str, 
+    file_type: str = "proveedor",  # "proveedor" o "dian"
+    db: Session = Depends(get_db)
+):
     """
     Genera URL de descarga temporal para el PDF de la factura
+    
+    Args:
+        cufe: CUFE de la factura
+        file_type: Tipo de archivo a descargar ("proveedor" o "dian")
     """
     service = InvoiceV2Service(db)
     invoice = service.get_invoice_by_cufe(cufe)
@@ -288,8 +296,18 @@ async def get_invoice_download_url(cufe: str, db: Session = Depends(get_db)):
     if not invoice:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
-    if not invoice.archivo_proveedor_s3_key:
-        raise HTTPException(status_code=404, detail="No hay archivo PDF disponible para esta factura")
+    # Determinar qué archivo descargar
+    if file_type == "dian":
+        s3_key = invoice.archivo_dian_s3_key
+        file_prefix = "factura_dian"
+        error_msg = "No hay archivo PDF DIAN disponible para esta factura"
+    else:
+        s3_key = invoice.archivo_proveedor_s3_key
+        file_prefix = "factura_proveedor"
+        error_msg = "No hay archivo PDF del proveedor disponible para esta factura"
+    
+    if not s3_key:
+        raise HTTPException(status_code=404, detail=error_msg)
     
     if not service.s3_service:
         raise HTTPException(status_code=500, detail="Servicio S3 no disponible")
@@ -297,10 +315,11 @@ async def get_invoice_download_url(cufe: str, db: Session = Depends(get_db)):
     try:
         # Generar URL pre-firmada válida por 1 hora
         url = service.s3_service.generate_presigned_url(
-            invoice.archivo_proveedor_s3_key,
+            s3_key,
             expiration=3600
         )
-        return {"url": url, "filename": f"factura_{invoice.numero_factura or cufe[:16]}.pdf"}
+        filename = f"{file_prefix}_{invoice.numero_factura or cufe[:16]}.pdf"
+        return {"download_url": url, "filename": filename}
     except Exception as e:
         logger.error(f"Error generando URL de descarga: {e}")
         raise HTTPException(status_code=500, detail=f"Error generando URL de descarga: {str(e)}")
@@ -557,7 +576,7 @@ async def update_invoice_cufe(
     # Verificar que el nuevo CUFE no existe
     existing = service.get_invoice_by_cufe(new_cufe.lower())
     if existing:
-        raise HTTPException(status_code=400, detail=f"Ya existe una factura con el CUFE {new_cufe[:16]}...")
+        raise HTTPException(status_code=400, detail=f"⚠️ Este CUFE ya está asociado a otra factura en el sistema")
     
     # Actualizar el CUFE
     try:

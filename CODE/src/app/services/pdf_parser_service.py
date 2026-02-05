@@ -59,6 +59,7 @@ class PDFParserService:
         """
         Extrae texto de un PDF usando pdfplumber
         OPTIMIZADO: Solo procesa las primeras páginas (donde está la info importante)
+        Para documentos DIAN, usar max_pages=999 para procesar todas las páginas
         """
         if not PDF_LIBRARY_AVAILABLE:
             logger.error("❌ pdfplumber no está disponible - instalar con: pip install pdfplumber")
@@ -67,21 +68,15 @@ class PDFParserService:
         try:
             text_parts = []
             with pdfplumber.open(pdf_path) as pdf:
-                # Solo procesar las primeras páginas (la info importante está al inicio)
+                # Procesar páginas según el límite especificado
                 pages_to_process = min(len(pdf.pages), max_pages)
-                logger.info(f"📄 Procesando {pages_to_process} páginas del PDF")
+                logger.info(f"📄 Procesando {pages_to_process} de {len(pdf.pages)} páginas del PDF")
                 
                 for i in range(pages_to_process):
                     page_text = pdf.pages[i].extract_text()
                     if page_text:
                         text_parts.append(page_text)
                         logger.debug(f"   Página {i+1}: {len(page_text)} caracteres extraídos")
-                    
-                    # Si ya encontramos CUFE, podemos parar antes
-                    combined_text = '\n'.join(text_parts)
-                    if len(combined_text) > 2000 and re.search(r'[0-9a-fA-F]{96}', combined_text):
-                        logger.info(f"✅ CUFE encontrado en página {i+1}, deteniendo extracción")
-                        break
             
             total_text = '\n'.join(text_parts)
             logger.info(f"📊 Total extraído: {len(total_text)} caracteres")
@@ -324,7 +319,8 @@ class PDFParserService:
         Parsea un documento DIAN (más estructurado)
         Extrae TODOS los datos posibles
         """
-        text = cls.extract_text_from_pdf(pdf_path)
+        # Para documentos DIAN, necesitamos TODAS las páginas porque el total está en la última
+        text = cls.extract_text_from_pdf(pdf_path, max_pages=999)
         
         if not text:
             return {'error': 'No se pudo extraer texto del PDF'}
@@ -455,11 +451,15 @@ class PDFParserService:
         """Extrae todos los totales financieros"""
         totales = {}
         
+        # Buscar específicamente los valores correctos que aparecen en la última hoja
+        # "Total factura (=)" o "Total documento" son los valores correctos y definitivos
         patterns = {
             'subtotal': r'(?:Subtotal|SUBTOTAL)[\s:$COP]*([0-9,.]+)',
             'total_bruto': r'(?:Total bruto|Total Bruto)[\s:$COP]*([0-9,.]+)',
             'total_iva': r'(?:Total IVA|IVA|Total impuesto)[\s:$COP]*([0-9,.]+)',
-            'total_neto': r'(?:Total neto|Total documento|Total factura)[\s:$COP]*([0-9,.]+)',
+            # Buscar "Total factura (=)" o "Total documento" con más flexibilidad
+            # Permite caracteres especiales y espacios entre el texto y el número
+            'total_neto': r'(?:Total factura\s*\(=\)|Total factura \(=\)|Total factura\(=\)|Total documento)[\s\$COP\u3164]*([0-9,.]+)',
         }
         
         for key, pattern in patterns.items():
@@ -472,7 +472,26 @@ class PDFParserService:
                 except:
                     totales[key] = None
             else:
-                totales[key] = None
+                # Si no encuentra los patrones principales, buscar alternativas
+                if key == 'total_neto':
+                    fallback_patterns = [
+                        r'(?:Total neto factura|Total Neto)[\s\$COP\u3164]*([0-9,.]+)',
+                        r'(?:TOTAL A PAGAR|Total a pagar)[\s\$COP\u3164]*([0-9,.]+)',
+                        r'(?:Total factura|Total Factura)[\s\$COP\u3164]*([0-9,.]+)',
+                    ]
+                    for fallback in fallback_patterns:
+                        match = re.search(fallback, text, re.IGNORECASE)
+                        if match:
+                            try:
+                                value_str = match.group(1).replace('.', '').replace(',', '.')
+                                value_str = re.sub(r'[^\d.]', '', value_str)
+                                totales[key] = Decimal(value_str)
+                                break
+                            except:
+                                continue
+                
+                if key not in totales or totales[key] is None:
+                    totales[key] = None
         
         return totales
     
