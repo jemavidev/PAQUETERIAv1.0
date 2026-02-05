@@ -1,0 +1,1322 @@
+{
+  "total": 33,
+  "estadisticas": {
+    "con_cufe_encontrado": 0,
+    "sin_texto": 0,
+    "con_patrones": 33
+  },
+  "facturas": [
+    {
+      "cufe_temp": "TEMP_91703ab27e1e0d3fcf1028bfb224030011b582aa9540577566c96244863b2fe9",
+      "proveedor": "COMERCIALIZADORA RACOPI S.A.S. FACTURA ELECTRONICA",
+      "created_at": "2026-02-04 16:35:00.706829",
+      "s3_key": "invoices/provider/TEMP_91703ab27e1e0d3fcf1028bfb224030011b582aa9540577566c96244863b2fe9.pdf",
+      "diagnostico": {
+        "texto_extraido": 2708,
+        "patrones_hex": [
+          {
+            "patron": "e647d6cf12f9bc1469aceffdbcaf7c6e31b0c5d73bed01bc",
+            "longitud": 48
+          },
+          {
+            "patron": "bfb41e1a5ce6ee7f330697f461b649d1b97b413554a76f6b",
+            "longitud": 48
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "lefonos: 3720903 - 3106568585\nCufe:\ne647d6cf12f9bc1469aceffdbcaf7c6e31b0c5d73bed01bc\nbfb41e1a5ce6ee7"
+          }
+        ],
+        "formato": {
+          "lineas": 67,
+          "palabras": 456,
+          "numeros": 801,
+          "letras": 1266
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_be9a9f4c4012fe8f767825f815af213fcce436e87416e5a18df7217bfc592716",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:59.361885",
+      "s3_key": "invoices/provider/TEMP_be9a9f4c4012fe8f767825f815af213fcce436e87416e5a18df7217bfc592716.pdf",
+      "diagnostico": {
+        "texto_extraido": 2651,
+        "patrones_hex": [
+          {
+            "patron": "ff5fcd60a8d39c4e29456d71bb211834",
+            "longitud": 32
+          },
+          {
+            "patron": "4e099cb592a959f7a4ffe2e1e533ea03",
+            "longitud": 32
+          },
+          {
+            "patron": "406b744ad08365da07e28f180d080635",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:ff5fcd60a8d39c4e29456d71bb211834\n4e099cb592a959f7a4ffe2e1e533ea03"
+          }
+        ],
+        "formato": {
+          "lineas": 81,
+          "palabras": 300,
+          "numeros": 616,
+          "letras": 1277
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_1c8a04b05ebe42343d26422fc9dff84015e4d3c1048280513776c087d349f3d2",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:58.245268",
+      "s3_key": "invoices/provider/TEMP_1c8a04b05ebe42343d26422fc9dff84015e4d3c1048280513776c087d349f3d2.pdf",
+      "diagnostico": {
+        "texto_extraido": 2651,
+        "patrones_hex": [
+          {
+            "patron": "ff5fcd60a8d39c4e29456d71bb211834",
+            "longitud": 32
+          },
+          {
+            "patron": "4e099cb592a959f7a4ffe2e1e533ea03",
+            "longitud": 32
+          },
+          {
+            "patron": "406b744ad08365da07e28f180d080635",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:ff5fcd60a8d39c4e29456d71bb211834\n4e099cb592a959f7a4ffe2e1e533ea03"
+          }
+        ],
+        "formato": {
+          "lineas": 81,
+          "palabras": 300,
+          "numeros": 616,
+          "letras": 1277
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_d0d3ab3daae0997e52685afd3ba4b7434ffc8bb0ed950a367dd33dcd01402a49",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:57.081223",
+      "s3_key": "invoices/provider/TEMP_d0d3ab3daae0997e52685afd3ba4b7434ffc8bb0ed950a367dd33dcd01402a49.pdf",
+      "diagnostico": {
+        "texto_extraido": 4870,
+        "patrones_hex": [
+          {
+            "patron": "fcdadc33e7d3e1c306aaa78a0d746f9d",
+            "longitud": 32
+          },
+          {
+            "patron": "5e7b83dfeb42cbdee1df1ea8fa5f068a",
+            "longitud": 32
+          },
+          {
+            "patron": "b68f44c0d59141b298294cee613f0cf7",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:fcdadc33e7d3e1c306aaa78a0d746f9d\n5e7b83dfeb42cbdee1df1ea8fa5f068a"
+          }
+        ],
+        "formato": {
+          "lineas": 168,
+          "palabras": 707,
+          "numeros": 1245,
+          "letras": 2335
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_2966b55b6a2bf8f24783a6a6405bc7d49e3d4832d5094f3bfa11e72243393333",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:55.711368",
+      "s3_key": "invoices/provider/TEMP_2966b55b6a2bf8f24783a6a6405bc7d49e3d4832d5094f3bfa11e72243393333.pdf",
+      "diagnostico": {
+        "texto_extraido": 2593,
+        "patrones_hex": [
+          {
+            "patron": "f8048253e63ee9c0246d4bd7cb497972",
+            "longitud": 32
+          },
+          {
+            "patron": "a21edf42a9d9a2b0d8b8b58ce32e1d33",
+            "longitud": 32
+          },
+          {
+            "patron": "5efa1427d2016aa4821c9ee724cc0217",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:f8048253e63ee9c0246d4bd7cb497972\na21edf42a9d9a2b0d8b8b58ce32e1d33"
+          }
+        ],
+        "formato": {
+          "lineas": 79,
+          "palabras": 290,
+          "numeros": 563,
+          "letras": 1280
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_a87890a1cad068d21f81bcc46ef8160cfd0ebf6169c0be034bea4972c8eae4dc",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:53.313868",
+      "s3_key": "invoices/provider/TEMP_a87890a1cad068d21f81bcc46ef8160cfd0ebf6169c0be034bea4972c8eae4dc.pdf",
+      "diagnostico": {
+        "texto_extraido": 2641,
+        "patrones_hex": [
+          {
+            "patron": "cb13c4406d7fadca4d8e7f3a503c01ac",
+            "longitud": 32
+          },
+          {
+            "patron": "8ac1939829607efccb4426107cfabad0",
+            "longitud": 32
+          },
+          {
+            "patron": "cfeaf2705510f4ea4e295fffb8482cf6",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:cb13c4406d7fadca4d8e7f3a503c01ac\n8ac1939829607efccb4426107cfabad0"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "6v\nj80XFx14lCXfLQ19JpWe+ZSa9lfQrwq2\n86gMCGwvp3gcqucK0uIa27c9Cs0zkg0J\nzICKC4iJ/PE4BgDw6Wze1Fw1FTR/LZ6"
+          }
+        ],
+        "formato": {
+          "lineas": 79,
+          "palabras": 296,
+          "numeros": 593,
+          "letras": 1275
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_bf0508b5706ae7582a4112d0242a0d0063e3fbb47dd834566fea42f41388d606",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:52.182676",
+      "s3_key": "invoices/provider/TEMP_bf0508b5706ae7582a4112d0242a0d0063e3fbb47dd834566fea42f41388d606.pdf",
+      "diagnostico": {
+        "texto_extraido": 1874,
+        "patrones_hex": [
+          {
+            "patron": "c7a5948fb6b77607578e57655ea13d9d",
+            "longitud": 32
+          },
+          {
+            "patron": "d37e45a8f907ea61835ef4ac7c207809",
+            "longitud": 32
+          },
+          {
+            "patron": "722abf7a8484608d5483fb714c0dc905",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:c7a5948fb6b77607578e57655ea13d9d\nd37e45a8f907ea61835ef4ac7c207809"
+          }
+        ],
+        "formato": {
+          "lineas": 58,
+          "palabras": 181,
+          "numeros": 326,
+          "letras": 987
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_5a31a4cdb1f545f4849a25271180035ac9b2dc52a3ae00f8d7f2d409066b608e",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:51.074818",
+      "s3_key": "invoices/provider/TEMP_5a31a4cdb1f545f4849a25271180035ac9b2dc52a3ae00f8d7f2d409066b608e.pdf",
+      "diagnostico": {
+        "texto_extraido": 2726,
+        "patrones_hex": [
+          {
+            "patron": "c4ec8f16bc6ca9d2a47def9379de819d",
+            "longitud": 32
+          },
+          {
+            "patron": "3ac41a86bb9c6376d8f770c4371c2aca",
+            "longitud": 32
+          },
+          {
+            "patron": "9640d02f8f65dbc4355395ce2777ec38",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:c4ec8f16bc6ca9d2a47def9379de819d\n3ac41a86bb9c6376d8f770c4371c2aca"
+          }
+        ],
+        "formato": {
+          "lineas": 90,
+          "palabras": 330,
+          "numeros": 534,
+          "letras": 1432
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_032272963f281f5b37277b60d367ac0b8da3606599f2afc948b95137532ed0a0",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:49.831618",
+      "s3_key": "invoices/provider/TEMP_032272963f281f5b37277b60d367ac0b8da3606599f2afc948b95137532ed0a0.pdf",
+      "diagnostico": {
+        "texto_extraido": 2483,
+        "patrones_hex": [
+          {
+            "patron": "b6613bfc1d5c56247dbdc7af48b45a6f",
+            "longitud": 32
+          },
+          {
+            "patron": "71e52b73f74bd0226bb35f9afff54fcc",
+            "longitud": 32
+          },
+          {
+            "patron": "e243808f52980fab18c08cbb7aa1220e",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:b6613bfc1d5c56247dbdc7af48b45a6f\n71e52b73f74bd0226bb35f9afff54fcc"
+          }
+        ],
+        "formato": {
+          "lineas": 75,
+          "palabras": 274,
+          "numeros": 521,
+          "letras": 1236
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_f0d52992d00bbc831af90ff3dd9ff64199d154c2d35c3e4492e40805fa75ee83",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:48.504000",
+      "s3_key": "invoices/provider/TEMP_f0d52992d00bbc831af90ff3dd9ff64199d154c2d35c3e4492e40805fa75ee83.pdf",
+      "diagnostico": {
+        "texto_extraido": 2683,
+        "patrones_hex": [
+          {
+            "patron": "faaab8e325328071926bddd3efbc7a71",
+            "longitud": 32
+          },
+          {
+            "patron": "ce01a3b4ebb411a639aaf8ebb8635664",
+            "longitud": 32
+          },
+          {
+            "patron": "15a5813fa4e5c31fa827fdaba5756434",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:faaab8e325328071926bddd3efbc7a71\nce01a3b4ebb411a639aaf8ebb8635664"
+          }
+        ],
+        "formato": {
+          "lineas": 79,
+          "palabras": 303,
+          "numeros": 603,
+          "letras": 1305
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_fb12ecc8317eda98416335488edd05690d473af92925df002f39ad253d0f7287",
+      "proveedor": "ALMACEN VENEPLAST SAS",
+      "created_at": "2026-02-04 16:34:47.327150",
+      "s3_key": "invoices/provider/TEMP_fb12ecc8317eda98416335488edd05690d473af92925df002f39ad253d0f7287.pdf",
+      "diagnostico": {
+        "texto_extraido": 2888,
+        "patrones_hex": [
+          {
+            "patron": "8896b562729c15bc9af5fdfcf8d0850b426c8d4b",
+            "longitud": 40
+          },
+          {
+            "patron": "aedc8ebfbff679c48cda1da939a179d356798996",
+            "longitud": 40
+          },
+          {
+            "patron": "8896b562729c15bc9af5fdfcf8d0850b",
+            "longitud": 32
+          },
+          {
+            "patron": "426c8d4baedc8ebfbff679c48cda1da9",
+            "longitud": 32
+          },
+          {
+            "patron": "39a179d356798996f01db142c4bee357",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:8896b562729c15bc9af5fdfcf8d0850b\n426c8d4baedc8ebfbff679c48cda1da9"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "FIRMA DIGITAL:\nfgZ5Ni2tqPLCtmAqrhZ6iSc5/9Zej0zfzva5IJcD\npBBaCfhrdv5oxdvXdfSvYOt5CGtCfZh0EAmYedFp\nNAY"
+          }
+        ],
+        "formato": {
+          "lineas": 88,
+          "palabras": 277,
+          "numeros": 625,
+          "letras": 1555
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_476a358adc500da9d6c37af9a73e20d41d75671bea8e772bda76b5a653c8b862",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:46.195220",
+      "s3_key": "invoices/provider/TEMP_476a358adc500da9d6c37af9a73e20d41d75671bea8e772bda76b5a653c8b862.pdf",
+      "diagnostico": {
+        "texto_extraido": 3904,
+        "patrones_hex": [
+          {
+            "patron": "2ff442f0a57469b998af3c4edaedebcaeb159211",
+            "longitud": 40
+          },
+          {
+            "patron": "6766018c238b37dbcabb5c20df926f2c",
+            "longitud": 32
+          },
+          {
+            "patron": "993f89ba4be2580e37ec1c0a2ff442f0",
+            "longitud": 32
+          },
+          {
+            "patron": "a57469b998af3c4edaedebcaeb159211",
+            "longitud": 32
+          },
+          {
+            "patron": "6766018c238b37dbcabb5c20df926f2c",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:993f89ba4be2580e37ec1c0a2ff442f0\na57469b998af3c4edaedebcaeb159211"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "018c238b37dbcabb5c20df926f2c\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nFLIBgWV"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nFLIBgWVf+yeXFMTxFwLxwHNE3lBVd0XJDTbTydIb\nFqwcQgm"
+          }
+        ],
+        "formato": {
+          "lineas": 118,
+          "palabras": 423,
+          "numeros": 933,
+          "letras": 1988
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_0429fbae9850ad97a29160a0f05e7a5be29a85a3691c652ec59956df6e661663",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:44.988379",
+      "s3_key": "invoices/provider/TEMP_0429fbae9850ad97a29160a0f05e7a5be29a85a3691c652ec59956df6e661663.pdf",
+      "diagnostico": {
+        "texto_extraido": 1894,
+        "patrones_hex": [
+          {
+            "patron": "862a203aede5e0681bee71274f8d6051",
+            "longitud": 32
+          },
+          {
+            "patron": "f39e543b73d9312e99619fb5902d3729",
+            "longitud": 32
+          },
+          {
+            "patron": "9c90d0c0e3154022bc444fb0f3a24286",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:862a203aede5e0681bee71274f8d6051\nf39e543b73d9312e99619fb5902d3729"
+          }
+        ],
+        "formato": {
+          "lineas": 59,
+          "palabras": 187,
+          "numeros": 347,
+          "letras": 973
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_535a53232842f46fd6c67bd4eed3fdc245712e20be8145192baebdc56b826a29",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:43.861808",
+      "s3_key": "invoices/provider/TEMP_535a53232842f46fd6c67bd4eed3fdc245712e20be8145192baebdc56b826a29.pdf",
+      "diagnostico": {
+        "texto_extraido": 3734,
+        "patrones_hex": [
+          {
+            "patron": "8789a783abbbfbcbfa01a0a47b0b725f73d77404",
+            "longitud": 40
+          },
+          {
+            "patron": "efce20513db7bbe03aa2b540b510ace2",
+            "longitud": 32
+          },
+          {
+            "patron": "411de32562b6e30a4e32cf748789a783",
+            "longitud": 32
+          },
+          {
+            "patron": "abbbfbcbfa01a0a47b0b725f73d77404",
+            "longitud": 32
+          },
+          {
+            "patron": "efce20513db7bbe03aa2b540b510ace2",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:411de32562b6e30a4e32cf748789a783\nabbbfbcbfa01a0a47b0b725f73d77404"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "20513db7bbe03aa2b540b510ace2\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\ndLIUbrT"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\ndLIUbrTD1KWzo4IPavRlbiqFdhy37yQ99vKLl3E7\nQfit8Ae"
+          }
+        ],
+        "formato": {
+          "lineas": 110,
+          "palabras": 396,
+          "numeros": 895,
+          "letras": 1917
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_6ed4c6a2ba3982f1c1663531abc694c5765c1635c3c75ab6360fa15d071ea18e",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:42.674508",
+      "s3_key": "invoices/provider/TEMP_6ed4c6a2ba3982f1c1663531abc694c5765c1635c3c75ab6360fa15d071ea18e.pdf",
+      "diagnostico": {
+        "texto_extraido": 1455,
+        "patrones_hex": [
+          {
+            "patron": "84b64483fcc225b40fb39a3c6d32019b",
+            "longitud": 32
+          },
+          {
+            "patron": "81200df9c9307fda8b980239614a9c55",
+            "longitud": 32
+          },
+          {
+            "patron": "ecfe8891f5881253e996fad4a9a4b53e",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing NIT:\n890.319.193-3\nCUFE:84b64483fcc225b40fb39a3c6d32019b\n81200df9c9307fda8b980239614a9c55"
+          }
+        ],
+        "formato": {
+          "lineas": 50,
+          "palabras": 156,
+          "numeros": 266,
+          "letras": 662
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_e2be8807de46d8c5671ca71a9c880346176277e684d085e2cdd4503dd889358b",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:41.339401",
+      "s3_key": "invoices/provider/TEMP_e2be8807de46d8c5671ca71a9c880346176277e684d085e2cdd4503dd889358b.pdf",
+      "diagnostico": {
+        "texto_extraido": 3548,
+        "patrones_hex": [
+          {
+            "patron": "b91eac7b7676162c6f72ee46f72bd6e8252bfd78",
+            "longitud": 40
+          },
+          {
+            "patron": "784d09933bbecdfba41e9708ee9bd1cc",
+            "longitud": 32
+          },
+          {
+            "patron": "45f14967b3a9020e814f79d2b91eac7b",
+            "longitud": 32
+          },
+          {
+            "patron": "7676162c6f72ee46f72bd6e8252bfd78",
+            "longitud": 32
+          },
+          {
+            "patron": "784d09933bbecdfba41e9708ee9bd1cc",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:45f14967b3a9020e814f79d2b91eac7b\n7676162c6f72ee46f72bd6e8252bfd78"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "09933bbecdfba41e9708ee9bd1cc\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nbA2zUMp"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nbA2zUMpg6TwP3T+LxKa/Yqr3P0VmmjJwmwJ3jOfn\nHckOQWx"
+          }
+        ],
+        "formato": {
+          "lineas": 108,
+          "palabras": 373,
+          "numeros": 820,
+          "letras": 1815
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_dd0b579b6b900878bc0b4b766ef8f459d0633a444d06d106ed3fc2a51b6eab54",
+      "proveedor": "Veneplast Ltda",
+      "created_at": "2026-02-04 16:34:40.191857",
+      "s3_key": "invoices/provider/TEMP_dd0b579b6b900878bc0b4b766ef8f459d0633a444d06d106ed3fc2a51b6eab54.pdf",
+      "diagnostico": {
+        "texto_extraido": 1901,
+        "patrones_hex": [
+          {
+            "patron": "9a10fe982cff5c6ed33babccb7b00038",
+            "longitud": 32
+          },
+          {
+            "patron": "4d431f7db8272ddae9a70a3878d003ea",
+            "longitud": 32
+          },
+          {
+            "patron": "467aeedb856769735037a9eb9961905a",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:9a10fe982cff5c6ed33babccb7b00038\n4d431f7db8272ddae9a70a3878d003ea"
+          }
+        ],
+        "formato": {
+          "lineas": 60,
+          "palabras": 183,
+          "numeros": 330,
+          "letras": 998
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_7cdaa16062e48b2c6c439f793ca39bf94122f0885f5bd7b4272373ddd9424c0e",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:39.050938",
+      "s3_key": "invoices/provider/TEMP_7cdaa16062e48b2c6c439f793ca39bf94122f0885f5bd7b4272373ddd9424c0e.pdf",
+      "diagnostico": {
+        "texto_extraido": 1991,
+        "patrones_hex": [
+          {
+            "patron": "8c1f08be9c7903a64980a841a3e40fd3",
+            "longitud": 32
+          },
+          {
+            "patron": "41ca951c6047cfd572574fd6c8201d6b",
+            "longitud": 32
+          },
+          {
+            "patron": "c368e4258ebcdc4d578a4723375cb1c8",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:8c1f08be9c7903a64980a841a3e40fd3\n41ca951c6047cfd572574fd6c8201d6b"
+          }
+        ],
+        "formato": {
+          "lineas": 62,
+          "palabras": 199,
+          "numeros": 375,
+          "letras": 1019
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_6dad28bcba47b0863c23e80fef7b394b6a4a0b1a58ccb17f1d3722f177924c91",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:37.945055",
+      "s3_key": "invoices/provider/TEMP_6dad28bcba47b0863c23e80fef7b394b6a4a0b1a58ccb17f1d3722f177924c91.pdf",
+      "diagnostico": {
+        "texto_extraido": 3082,
+        "patrones_hex": [
+          {
+            "patron": "3d497af9bfaadc74c1237da766f7e53f4e48a6a7",
+            "longitud": 40
+          },
+          {
+            "patron": "e16b5c6ddbcb4eaae98e5d3e6ee25105",
+            "longitud": 32
+          },
+          {
+            "patron": "5f08bc2008a11fa87ff0c13c3d497af9",
+            "longitud": 32
+          },
+          {
+            "patron": "bfaadc74c1237da766f7e53f4e48a6a7",
+            "longitud": 32
+          },
+          {
+            "patron": "e16b5c6ddbcb4eaae98e5d3e6ee25105",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:5f08bc2008a11fa87ff0c13c3d497af9\nbfaadc74c1237da766f7e53f4e48a6a7"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "5c6ddbcb4eaae98e5d3e6ee25105\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nPwYdn3B"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nPwYdn3B17Dm98O9qhbtD56r+dv8bKJwKnpan/oal\nilT3idc"
+          }
+        ],
+        "formato": {
+          "lineas": 95,
+          "palabras": 301,
+          "numeros": 672,
+          "letras": 1642
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_e97ec1055b0f1c83240a33baeede79b95444e1c3cf3368b43024fc27ead87f8a",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:36.771693",
+      "s3_key": "invoices/provider/TEMP_e97ec1055b0f1c83240a33baeede79b95444e1c3cf3368b43024fc27ead87f8a.pdf",
+      "diagnostico": {
+        "texto_extraido": 2948,
+        "patrones_hex": [
+          {
+            "patron": "292d5c1586218a939979e80367c325c636c6c302",
+            "longitud": 40
+          },
+          {
+            "patron": "96e9711b67850d6850e60aa352cdbf8c",
+            "longitud": 32
+          },
+          {
+            "patron": "005e5c095b1d2d4b317295e3292d5c15",
+            "longitud": 32
+          },
+          {
+            "patron": "86218a939979e80367c325c636c6c302",
+            "longitud": 32
+          },
+          {
+            "patron": "96e9711b67850d6850e60aa352cdbf8c",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:005e5c095b1d2d4b317295e3292d5c15\n86218a939979e80367c325c636c6c302"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "711b67850d6850e60aa352cdbf8c\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nR2fDCq0"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\nR2fDCq0DKd9IwHBr18fLAJrRd9rtWISsFhWBQngX\nG+2vc9o"
+          }
+        ],
+        "formato": {
+          "lineas": 89,
+          "palabras": 279,
+          "numeros": 622,
+          "letras": 1575
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_1abfdd97d5c23e2f7b4cf21d092f4e5410eaaf5dd6a4682bd0ceeda73206d8f9",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:35.647778",
+      "s3_key": "invoices/provider/TEMP_1abfdd97d5c23e2f7b4cf21d092f4e5410eaaf5dd6a4682bd0ceeda73206d8f9.pdf",
+      "diagnostico": {
+        "texto_extraido": 3849,
+        "patrones_hex": [
+          {
+            "patron": "4e80154be0db3b7679186aa3adda5936b151cc29",
+            "longitud": 40
+          },
+          {
+            "patron": "0513087b6da0716789b7d502a1104a2b",
+            "longitud": 32
+          },
+          {
+            "patron": "5b6b7a310bdada9e7d428f594e80154b",
+            "longitud": 32
+          },
+          {
+            "patron": "e0db3b7679186aa3adda5936b151cc29",
+            "longitud": 32
+          },
+          {
+            "patron": "0513087b6da0716789b7d502a1104a2b",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "ra electrónica de\nventa\n\u001bp07y\nCUFE:5b6b7a310bdada9e7d428f594e80154b\ne0db3b7679186aa3adda5936b151cc29"
+          },
+          {
+            "keyword": "codigo",
+            "contexto": "087b6da0716789b7d502a1104a2b\" codigo\n=\"-1\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\niC/acWv"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "\" mensaje=\"EXITO\" DoctoRef=\"\" qrdata\nFIRMA DIGITAL:\niC/acWv5A0eaE5JSDtS17p5r7yBrrACC5YK393h1\n/0qfaGR"
+          }
+        ],
+        "formato": {
+          "lineas": 116,
+          "palabras": 408,
+          "numeros": 938,
+          "letras": 1936
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_4d5784123b1e60d1e340c877e5151ff7da31c372fe585dd4f9ab5efda615c444",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:34.475099",
+      "s3_key": "invoices/provider/TEMP_4d5784123b1e60d1e340c877e5151ff7da31c372fe585dd4f9ab5efda615c444.pdf",
+      "diagnostico": {
+        "texto_extraido": 3404,
+        "patrones_hex": [
+          {
+            "patron": "2caf7a8a554fd715b8f72fd9a63ff2ba",
+            "longitud": 32
+          },
+          {
+            "patron": "3f15540a90f8fb83a982c16c9e1d876a",
+            "longitud": 32
+          },
+          {
+            "patron": "48676093be8cf06db920825fffe6a06a",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:2caf7a8a554fd715b8f72fd9a63ff2ba\n3f15540a90f8fb83a982c16c9e1d876a"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "rJ0sEQYb0Nryzh5/Q8hOkxReh\n4JGVQr1qyF7Nhy+Qfjrw9w=="
+          }
+        ],
+        "formato": {
+          "lineas": 101,
+          "palabras": 406,
+          "numeros": 824,
+          "letras": 1636
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_0b0854911ddea6d46a44dcdc9f542f2c928808a8000176574e91df88df8840f6",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:33.143369",
+      "s3_key": "invoices/provider/TEMP_0b0854911ddea6d46a44dcdc9f542f2c928808a8000176574e91df88df8840f6.pdf",
+      "diagnostico": {
+        "texto_extraido": 2523,
+        "patrones_hex": [
+          {
+            "patron": "0e343f465a14be839f22266faf42b928",
+            "longitud": 32
+          },
+          {
+            "patron": "203c20058ab340cdbc97dd74fd63ec7d",
+            "longitud": 32
+          },
+          {
+            "patron": "0d8eabd261062ccd23cfb20944650265",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:0e343f465a14be839f22266faf42b928\n203c20058ab340cdbc97dd74fd63ec7d"
+          }
+        ],
+        "formato": {
+          "lineas": 75,
+          "palabras": 279,
+          "numeros": 539,
+          "letras": 1241
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_08d34463c9fffe929a6f1d6a90c878e19fefb2639b9b2f1f4307dba466dd6df4",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:31.793252",
+      "s3_key": "invoices/provider/TEMP_08d34463c9fffe929a6f1d6a90c878e19fefb2639b9b2f1f4307dba466dd6df4.pdf",
+      "diagnostico": {
+        "texto_extraido": 2265,
+        "patrones_hex": [
+          {
+            "patron": "ebf96816015d5dca9c6863c3724bd752",
+            "longitud": 32
+          },
+          {
+            "patron": "7caf7aef9dad83763902bf1232e5bc6d",
+            "longitud": 32
+          },
+          {
+            "patron": "6390740a60d6d9fdef89f3381ee1f7f2",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:ebf96816015d5dca9c6863c3724bd752\n7caf7aef9dad83763902bf1232e5bc6d"
+          }
+        ],
+        "formato": {
+          "lineas": 70,
+          "palabras": 240,
+          "numeros": 454,
+          "letras": 1149
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_a7e0a4fc96075c8b7afdec985e2d232a39f07697ed28eab9f79d59b72756bbde",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:30.664596",
+      "s3_key": "invoices/provider/TEMP_a7e0a4fc96075c8b7afdec985e2d232a39f07697ed28eab9f79d59b72756bbde.pdf",
+      "diagnostico": {
+        "texto_extraido": 2082,
+        "patrones_hex": [
+          {
+            "patron": "e2c512cb32c4ef0ef7fbe688d0b467d1",
+            "longitud": 32
+          },
+          {
+            "patron": "be556b5a6ef204b26e2e5e51c25a78fe",
+            "longitud": 32
+          },
+          {
+            "patron": "6c35ef32cc0ab0e07a5ed680aff51854",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:e2c512cb32c4ef0ef7fbe688d0b467d1\nbe556b5a6ef204b26e2e5e51c25a78fe"
+          }
+        ],
+        "formato": {
+          "lineas": 64,
+          "palabras": 215,
+          "numeros": 361,
+          "letras": 1088
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_2d96e2afc186de1e7a0c4dc9361c77180ef14e91a0a5be666dc839571a3eaec3",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:29.537638",
+      "s3_key": "invoices/provider/TEMP_2d96e2afc186de1e7a0c4dc9361c77180ef14e91a0a5be666dc839571a3eaec3.pdf",
+      "diagnostico": {
+        "texto_extraido": 1867,
+        "patrones_hex": [
+          {
+            "patron": "d5adb2d596d4303babc486a32d0fc004",
+            "longitud": 32
+          },
+          {
+            "patron": "b8478d6455f2257b156a0e67cb87320c",
+            "longitud": 32
+          },
+          {
+            "patron": "a89dc321751a6568a90458abb8988ec4",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:d5adb2d596d4303babc486a32d0fc004\nb8478d6455f2257b156a0e67cb87320c"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "NpSkWH\nimnF6YsXFD+nGe72u6sX9n3qrcpIk6nQ\npLE4NK08wwlZPgILW1cEgH5+lryc2y7M\nrOlRiS1zRpOayCCygMpEOTyvmtw"
+          }
+        ],
+        "formato": {
+          "lineas": 58,
+          "palabras": 180,
+          "numeros": 314,
+          "letras": 986
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_1c6c0a67615179b93e8e2926c784a22851d02568af93c5732447c8e344891cd3",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:20.697318",
+      "s3_key": "invoices/provider/TEMP_1c6c0a67615179b93e8e2926c784a22851d02568af93c5732447c8e344891cd3.pdf",
+      "diagnostico": {
+        "texto_extraido": 1935,
+        "patrones_hex": [
+          {
+            "patron": "871b8264b3046ff36431c35dd57f97bb",
+            "longitud": 32
+          },
+          {
+            "patron": "5d7d5c7fb4791571429b00ead6259a06",
+            "longitud": 32
+          },
+          {
+            "patron": "f391ada28aed868c5de7435af84bca48",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:871b8264b3046ff36431c35dd57f97bb\n5d7d5c7fb4791571429b00ead6259a06"
+          }
+        ],
+        "formato": {
+          "lineas": 60,
+          "palabras": 191,
+          "numeros": 356,
+          "letras": 1000
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_76aa659075f579cac7a0505f30182ab2489816965f93b8a6e500598b399354f3",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:19.579664",
+      "s3_key": "invoices/provider/TEMP_76aa659075f579cac7a0505f30182ab2489816965f93b8a6e500598b399354f3.pdf",
+      "diagnostico": {
+        "texto_extraido": 3250,
+        "patrones_hex": [
+          {
+            "patron": "52cf0b98dde299a8d069c6746e9b81b1",
+            "longitud": 32
+          },
+          {
+            "patron": "22dd65e934dca7ebc2c00147428c1132",
+            "longitud": 32
+          },
+          {
+            "patron": "128e3fa612bb929bc9f5bdd948524941",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:52cf0b98dde299a8d069c6746e9b81b1\n22dd65e934dca7ebc2c00147428c1132"
+          }
+        ],
+        "formato": {
+          "lineas": 98,
+          "palabras": 390,
+          "numeros": 797,
+          "letras": 1539
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_ca191d3df8e70f694c3305caa6d4d7cfe33d709b0449a1a97fbefa47d9b34c68",
+      "proveedor": "Veneplast Ltda",
+      "created_at": "2026-02-04 16:34:18.395050",
+      "s3_key": "invoices/provider/TEMP_ca191d3df8e70f694c3305caa6d4d7cfe33d709b0449a1a97fbefa47d9b34c68.pdf",
+      "diagnostico": {
+        "texto_extraido": 2065,
+        "patrones_hex": [
+          {
+            "patron": "42b379089d6248bdf017653a109b8856",
+            "longitud": 32
+          },
+          {
+            "patron": "04f84cee6818f5dd0cfb249017825ed5",
+            "longitud": 32
+          },
+          {
+            "patron": "66d56b025aa3fa88bd10629e6a4bb62f",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:42b379089d6248bdf017653a109b8856\n04f84cee6818f5dd0cfb249017825ed5"
+          }
+        ],
+        "formato": {
+          "lineas": 65,
+          "palabras": 207,
+          "numeros": 385,
+          "letras": 1079
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_33c04e16f686e5ff5b2601e02b14ea257038e3f79ccf373622a76b3c3e32f36d",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:17.160021",
+      "s3_key": "invoices/provider/TEMP_33c04e16f686e5ff5b2601e02b14ea257038e3f79ccf373622a76b3c3e32f36d.pdf",
+      "diagnostico": {
+        "texto_extraido": 2000,
+        "patrones_hex": [
+          {
+            "patron": "21bb002f269805b73ac22c5966cd9c91",
+            "longitud": 32
+          },
+          {
+            "patron": "c3f13eacb76844986fd9b88c86f0305d",
+            "longitud": 32
+          },
+          {
+            "patron": "a41f432151997d3db36d96dfb0b10c13",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:21bb002f269805b73ac22c5966cd9c91\nc3f13eacb76844986fd9b88c86f0305d"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "Q02CI6kmGEOY7TPYkyp9fHAp2cqY/\nQrQBBITitne+pMo8H27wLPuGV3iCIpfc\nvVD679nIij8NIgkBbQVhR8qKnVdqO/VC\nHPBn"
+          }
+        ],
+        "formato": {
+          "lineas": 62,
+          "palabras": 200,
+          "numeros": 354,
+          "letras": 1050
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_2379c07384cbe42684d72d1a8ab9c3f872cab91eb6458161f7030ecd1758d278",
+      "proveedor": "ALMACEN VENEPLAST SAS",
+      "created_at": "2026-02-04 16:34:16.054098",
+      "s3_key": "invoices/provider/TEMP_2379c07384cbe42684d72d1a8ab9c3f872cab91eb6458161f7030ecd1758d278.pdf",
+      "diagnostico": {
+        "texto_extraido": 2296,
+        "patrones_hex": [
+          {
+            "patron": "9a08220827564c03bbc2c9dea3d682b5",
+            "longitud": 32
+          },
+          {
+            "patron": "0e70391b873c1ef5450af089f8eaad65",
+            "longitud": 32
+          },
+          {
+            "patron": "909182eb584ffd1cde11c18614b27f31",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:9a08220827564c03bbc2c9dea3d682b5\n0e70391b873c1ef5450af089f8eaad65"
+          },
+          {
+            "keyword": "QR",
+            "contexto": "R\ncHBEFOSZTpn7EQ/v8y8rXseE6p1CQRvV\nZggQOnGju/ZW2KffygYGbWyN4+0DcLXs\nK36PQombmaoYvcJ5xsCYbHNv9/5PUjnu"
+          }
+        ],
+        "formato": {
+          "lineas": 70,
+          "palabras": 246,
+          "numeros": 476,
+          "letras": 1162
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_90662032d495512da008152b759799cec88589b5fe109ceb53c6ec0b8dc67b9f",
+      "proveedor": "SOLUCIONES MAF S.A.S.",
+      "created_at": "2026-02-04 16:34:14.959577",
+      "s3_key": "invoices/provider/TEMP_90662032d495512da008152b759799cec88589b5fe109ceb53c6ec0b8dc67b9f.pdf",
+      "diagnostico": {
+        "texto_extraido": 3465,
+        "patrones_hex": [
+          {
+            "patron": "6ee372e238cc82c3d95fa44faa0869cd",
+            "longitud": 32
+          },
+          {
+            "patron": "5c6e0e45d51cef31b9828697aad65af8",
+            "longitud": 32
+          },
+          {
+            "patron": "f2e3a89ff13f799961ad968c89503f8e",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:6ee372e238cc82c3d95fa44faa0869cd\n5c6e0e45d51cef31b9828697aad65af8"
+          }
+        ],
+        "formato": {
+          "lineas": 111,
+          "palabras": 475,
+          "numeros": 781,
+          "letras": 1729
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    },
+    {
+      "cufe_temp": "TEMP_796dc836bcc9109ad3f47a42a920c8b3b374c02bf61ff3849fdf090eccf45bc6",
+      "proveedor": null,
+      "created_at": "2026-02-04 16:34:13.632909",
+      "s3_key": "invoices/provider/TEMP_796dc836bcc9109ad3f47a42a920c8b3b374c02bf61ff3849fdf090eccf45bc6.pdf",
+      "diagnostico": {
+        "texto_extraido": 1867,
+        "patrones_hex": [
+          {
+            "patron": "4fd2e062479406514410645181a51db2",
+            "longitud": 32
+          },
+          {
+            "patron": "e951f2524ff8725694e09ae48993d4a7",
+            "longitud": 32
+          },
+          {
+            "patron": "62e85ec23981ab6f9203c0ad9a3c4a8d",
+            "longitud": 32
+          }
+        ],
+        "palabras_clave": [
+          {
+            "keyword": "CUFE",
+            "contexto": "-Invoicing\nNIT: 890.319.193-3\nCUFE:4fd2e062479406514410645181a51db2\ne951f2524ff8725694e09ae48993d4a7"
+          }
+        ],
+        "formato": {
+          "lineas": 58,
+          "palabras": 179,
+          "numeros": 338,
+          "letras": 969
+        },
+        "causa_probable": "CUFE no está en formato estándar"
+      }
+    }
+  ]
+}

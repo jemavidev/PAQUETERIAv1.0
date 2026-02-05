@@ -228,7 +228,7 @@ try:
         print(f"      → Revisar si el CUFE está dividido o con formato especial")
     
     # Guardar reporte en JSON
-    reporte_path = 'CODE/reporte_facturas_temporales.json'
+    reporte_path = 'reporte_facturas_temporales.json'
     with open(reporte_path, 'w', encoding='utf-8') as f:
         json.dump({
             'total': total,

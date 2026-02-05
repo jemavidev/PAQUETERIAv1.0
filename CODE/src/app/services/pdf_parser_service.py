@@ -96,6 +96,10 @@ class PDFParserService:
     def extract_cufe(text: str) -> Optional[str]:
         """
         Extrae el código CUFE/CUDE/CUDS (96 caracteres hexadecimales)
+        Soporta múltiples formatos:
+        - 96 caracteres consecutivos
+        - CUFE dividido en múltiples líneas
+        - CUFE con espacios o separadores
         """
         if not text:
             logger.warning("⚠️ Texto vacío, no se puede extraer CUFE")
@@ -103,35 +107,70 @@ class PDFParserService:
         
         logger.info(f"🔍 Buscando CUFE en texto de {len(text)} caracteres")
         
-        # Buscar patrón de 96 caracteres hex
+        # ESTRATEGIA 1: Patrón estándar (96 caracteres consecutivos)
         matches = re.findall(PDFParserService.CUFE_PATTERN, text, re.IGNORECASE)
-        
         if matches:
             logger.info(f"✅ Encontrados {len(matches)} patrones de 96 caracteres hex")
-            # Puede estar dividido en múltiples líneas, intentar unir
-            cufe = matches[0]
-            
-            # Si encontramos múltiples coincidencias cercanas, unirlas
-            if len(cufe) < 96 and len(matches) > 1:
-                cufe = ''.join(matches[:3])  # Unir hasta 3 fragmentos
-                logger.info(f"🔗 Uniendo fragmentos: {len(cufe)} caracteres")
-            
-            # Limpiar y validar
-            cufe = cufe.strip().replace('\n', '').replace(' ', '')
-            
+            cufe = matches[0].strip().replace('\n', '').replace(' ', '').lower()
             if len(cufe) == 96:
-                logger.info(f"✅ CUFE válido extraído: {cufe[:20]}...{cufe[-20:]}")
-                return cufe.lower()
+                logger.info(f"✅ CUFE válido extraído (estándar): {cufe[:20]}...{cufe[-20:]}")
+                return cufe
+        
+        # ESTRATEGIA 2: CUFE después de palabra clave (dividido en líneas)
+        logger.info("🔍 Buscando CUFE dividido después de palabra clave...")
+        keywords = ['CUFE:', 'CUDE:', 'CUDS:', 'Cufe:', 'Cude:', 'Cuds:']
+        for keyword in keywords:
+            if keyword in text:
+                # Encontrar posición de la palabra clave
+                idx = text.find(keyword)
+                # Saltar la palabra clave y cualquier espacio/salto de línea
+                start_idx = idx + len(keyword)
+                # Extraer las siguientes 300 caracteres (suficiente para CUFE dividido)
+                section = text[start_idx:start_idx+300]
+                
+                # Extraer solo caracteres hexadecimales (ignorar espacios, saltos de línea, etc)
+                hex_chars = re.findall(r'[0-9a-fA-F]', section, re.IGNORECASE)
+                cufe = ''.join(hex_chars)
+                
+                # Tomar los primeros 96 caracteres
+                if len(cufe) >= 96:
+                    cufe = cufe[:96].lower()
+                    logger.info(f"✅ CUFE válido extraído (después de '{keyword}'): {cufe[:20]}...{cufe[-20:]}")
+                    return cufe
+                else:
+                    logger.info(f"   Encontrados {len(cufe)} caracteres hex después de '{keyword}' (insuficiente)")
+        
+        # ESTRATEGIA 3: Buscar múltiples fragmentos de 32 caracteres y unirlos
+        logger.info("🔍 Buscando fragmentos de CUFE para unir...")
+        shorter_matches = re.findall(r'[0-9a-fA-F]{32}', text, re.IGNORECASE)
+        if len(shorter_matches) >= 3:
+            # Intentar unir los primeros 3 fragmentos de 32 caracteres
+            cufe = ''.join(shorter_matches[:3]).lower()
+            if len(cufe) == 96:
+                logger.info(f"✅ CUFE válido extraído (uniendo 3 fragmentos): {cufe[:20]}...{cufe[-20:]}")
+                return cufe
             else:
-                logger.warning(f"⚠️ CUFE con longitud incorrecta: {len(cufe)} caracteres")
-        else:
-            logger.warning("❌ No se encontró patrón de 96 caracteres hexadecimales")
-            # Buscar patrones más cortos para debugging
-            shorter_matches = re.findall(r'[0-9a-fA-F]{32,}', text, re.IGNORECASE)
-            if shorter_matches:
-                logger.info(f"ℹ️ Encontrados {len(shorter_matches)} patrones hex más cortos:")
-                for i, match in enumerate(shorter_matches[:3]):
-                    logger.info(f"   {i+1}. {match[:40]}... (longitud: {len(match)})")
+                logger.info(f"   Unión de fragmentos resultó en {len(cufe)} caracteres (esperado: 96)")
+        
+        # ESTRATEGIA 4: CUFE con espacios (eliminar espacios y unir)
+        logger.info("🔍 Buscando CUFE con espacios...")
+        # Buscar secuencias de hex con espacios opcionales
+        pattern = r'([0-9a-fA-F\s]{100,200})'
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for match in matches:
+            cleaned = re.sub(r'[^0-9a-fA-F]', '', match)
+            if len(cleaned) >= 96:
+                cufe = cleaned[:96].lower()
+                logger.info(f"✅ CUFE válido extraído (con espacios): {cufe[:20]}...{cufe[-20:]}")
+                return cufe
+        
+        # No se encontró CUFE
+        logger.warning("❌ No se pudo extraer CUFE con ninguna estrategia")
+        shorter_matches = re.findall(r'[0-9a-fA-F]{16,}', text, re.IGNORECASE)
+        if shorter_matches:
+            logger.info(f"ℹ️ Encontrados {len(shorter_matches)} patrones hex:")
+            for i, match in enumerate(shorter_matches[:5]):
+                logger.info(f"   {i+1}. {match[:40]}... (longitud: {len(match)})")
         
         return None
     

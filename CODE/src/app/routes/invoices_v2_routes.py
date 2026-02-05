@@ -211,6 +211,7 @@ def list_invoices(
 ):
     """
     TAB FACTURAS: Lista todas las facturas con filtros y paginación
+    OPTIMIZADO: Usa una sola query para contar y obtener items
     """
     # Convertir strings vacías a None y parsear fechas
     search = search if search and search.strip() else None
@@ -230,17 +231,14 @@ def list_invoices(
         except ValueError:
             pass
     
-    service = InvoiceV2Service(db)
-    
-    # Obtener total de items (sin paginación)
-    from sqlalchemy import func
+    # Construir query base UNA SOLA VEZ
+    from sqlalchemy import or_
     from ..models.invoice_v2 import InvoiceV2
     
     query = db.query(InvoiceV2)
     
     # Aplicar filtros
     if search:
-        from sqlalchemy import or_
         query = query.filter(
             or_(
                 InvoiceV2.proveedor_nombre.ilike(f'%{search}%'),
@@ -257,29 +255,14 @@ def list_invoices(
     if fecha_hasta_parsed:
         query = query.filter(InvoiceV2.fecha_emision <= fecha_hasta_parsed)
     
-    # Contar total
+    # Contar total (rápido con la misma query)
     total = query.count()
     
-    # Obtener items paginados
-    invoices = service.list_invoices(
-        skip=skip,
-        limit=limit,
-        search=search,
-        estado=estado,
-        fecha_desde=fecha_desde_parsed,
-        fecha_hasta=fecha_hasta_parsed
-    )
+    # Obtener items paginados con ordenamiento
+    invoices = query.order_by(InvoiceV2.created_at.desc()).offset(skip).limit(limit).all()
     
-    # Generar URLs pre-firmadas para los archivos
-    for invoice in invoices:
-        if invoice.archivo_proveedor_s3_key and service.s3_service:
-            try:
-                invoice.archivo_proveedor_url = service.s3_service.generate_presigned_url(
-                    invoice.archivo_proveedor_s3_key,
-                    expiration=3600  # 1 hora
-                )
-            except Exception as e:
-                logger.warning(f"No se pudo generar URL pre-firmada para {invoice.cufe[:16]}: {e}")
+    # NO generar URLs pre-firmadas aquí (se generan bajo demanda al descargar)
+    # Esto ahorra MUCHO tiempo
     
     # Calcular páginas
     page = (skip // limit) + 1
