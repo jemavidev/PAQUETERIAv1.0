@@ -191,6 +191,81 @@ class PDFParserService:
         return None
     
     @staticmethod
+    def extract_dian_date(text: str) -> Optional[datetime]:
+        """
+        Extrae fecha específicamente de documentos DIAN
+        Busca en orden de prioridad:
+        1. "Fecha de Emisión:" (primera página)
+        2. "Documento generado el:" (última página)
+        """
+        # ESTRATEGIA 1: Buscar "Fecha de Emisión:" (más confiable)
+        patterns_priority = [
+            r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD/MM/YYYY o DD-MM-YYYY
+            r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY/MM/DD o YYYY-MM-DD
+        ]
+        
+        for pattern in patterns_priority:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    groups = match.groups()
+                    if len(groups[0]) == 4:  # YYYY-MM-DD
+                        year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
+                    else:  # DD-MM-YYYY
+                        day, month, year = int(groups[0]), int(groups[1]), int(groups[2])
+                    
+                    fecha = datetime(year, month, day)
+                    logger.info(f"✅ Fecha extraída de 'Fecha de Emisión': {fecha.strftime('%Y-%m-%d')}")
+                    return fecha
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"Error parseando fecha de emisión: {e}")
+                    continue
+        
+        # ESTRATEGIA 2: Buscar "Documento generado el:" (alternativa)
+        patterns_generated = [
+            r'Documento\s+generado\s+el[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD/MM/YYYY
+            r'Documento\s+generado\s+el[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY/MM/DD
+        ]
+        
+        for pattern in patterns_generated:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    groups = match.groups()
+                    if len(groups[0]) == 4:  # YYYY-MM-DD
+                        year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
+                    else:  # DD-MM-YYYY
+                        day, month, year = int(groups[0]), int(groups[1]), int(groups[2])
+                    
+                    fecha = datetime(year, month, day)
+                    logger.info(f"✅ Fecha extraída de 'Documento generado el': {fecha.strftime('%Y-%m-%d')}")
+                    return fecha
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"Error parseando fecha generada: {e}")
+                    continue
+        
+        # ESTRATEGIA 3: Fallback a patrones genéricos (si no encuentra las anteriores)
+        logger.warning("⚠️ No se encontró 'Fecha de Emisión' ni 'Documento generado el', usando patrones genéricos")
+        for pattern in PDFParserService.DATE_PATTERNS:
+            matches = re.findall(pattern, text)
+            if matches:
+                try:
+                    match = matches[0]
+                    if len(match[0]) == 4:  # YYYY-MM-DD
+                        year, month, day = int(match[0]), int(match[1]), int(match[2])
+                    else:  # DD-MM-YYYY
+                        day, month, year = int(match[0]), int(match[1]), int(match[2])
+                    
+                    fecha = datetime(year, month, day)
+                    logger.info(f"✅ Fecha extraída (genérico): {fecha.strftime('%Y-%m-%d')}")
+                    return fecha
+                except (ValueError, IndexError):
+                    continue
+        
+        logger.warning("❌ No se pudo extraer fecha del documento DIAN")
+        return None
+    
+    @staticmethod
     def extract_invoice_number(text: str) -> Optional[str]:
         """
         Extrae número de factura usando múltiples patrones
@@ -329,7 +404,7 @@ class PDFParserService:
             'cufe': cls.extract_cufe(text),
             'tipo_documento': cls._extract_document_type(text),
             'numero_documento': cls.extract_invoice_number(text),
-            'fecha_emision': cls.extract_date(text),
+            'fecha_emision': cls.extract_dian_date(text),  # Usar método específico para DIAN
             
             # Emisor
             'emisor': cls._extract_emisor(text),
