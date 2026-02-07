@@ -195,16 +195,29 @@ class PDFParserService:
         """
         Extrae fecha específicamente de documentos DIAN
         Busca en orden de prioridad:
-        1. "Fecha de Emisión:" (primera página)
-        2. "Documento generado el:" (última página)
+        1. "Fecha y hora de expedición:" (formato ISO)
+        2. "Fecha de Emisión:" (primera página)
+        3. "Documento generado el:" (última página)
         """
-        # ESTRATEGIA 1: Buscar "Fecha de Emisión:" (más confiable)
-        patterns_priority = [
+        # ESTRATEGIA 1: Buscar "Fecha y hora de expedición:" (formato ISO más confiable)
+        pattern_expedicion = r'Fecha\s+y\s+hora\s+de\s+expedici[oó]n[\s:]+(\d{4})-(\d{1,2})-(\d{1,2})'
+        match = re.search(pattern_expedicion, text, re.IGNORECASE)
+        if match:
+            try:
+                year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+                fecha = datetime(year, month, day)
+                logger.info(f"✅ Fecha extraída de 'Fecha y hora de expedición': {fecha.strftime('%Y-%m-%d')}")
+                return fecha
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Error parseando fecha de expedición: {e}")
+        
+        # ESTRATEGIA 2: Buscar "Fecha de Emisión:" (más confiable)
+        patterns_emision = [
             r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD/MM/YYYY o DD-MM-YYYY
             r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY/MM/DD o YYYY-MM-DD
         ]
         
-        for pattern in patterns_priority:
+        for pattern in patterns_emision:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 try:
@@ -221,13 +234,13 @@ class PDFParserService:
                     logger.warning(f"Error parseando fecha de emisión: {e}")
                     continue
         
-        # ESTRATEGIA 2: Buscar "Documento generado el:" (alternativa)
-        patterns_generated = [
+        # ESTRATEGIA 3: Buscar "Documento generado el:" (alternativa)
+        patterns_generado = [
             r'Documento\s+generado\s+el[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD/MM/YYYY
             r'Documento\s+generado\s+el[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY/MM/DD
         ]
         
-        for pattern in patterns_generated:
+        for pattern in patterns_generado:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 try:
@@ -244,8 +257,8 @@ class PDFParserService:
                     logger.warning(f"Error parseando fecha generada: {e}")
                     continue
         
-        # ESTRATEGIA 3: Fallback a patrones genéricos (si no encuentra las anteriores)
-        logger.warning("⚠️ No se encontró 'Fecha de Emisión' ni 'Documento generado el', usando patrones genéricos")
+        # ESTRATEGIA 4: Fallback a patrones genéricos (si no encuentra las anteriores)
+        logger.warning("⚠️ No se encontró 'Fecha y hora de expedición', 'Fecha de Emisión' ni 'Documento generado el', usando patrones genéricos")
         for pattern in PDFParserService.DATE_PATTERNS:
             matches = re.findall(pattern, text)
             if matches:

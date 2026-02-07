@@ -1,98 +1,140 @@
 #!/usr/bin/env python3
 """
-Script simple para analizar PDFs sin dependencias de la app
+Script simple para probar extracción de fecha sin dependencias
 """
-import sys
 import re
+import pdfplumber
+from datetime import datetime
 
-try:
-    import pdfplumber
-except ImportError:
-    print("❌ Error: pdfplumber no está instalado")
-    print("   Instalar con: pip install pdfplumber")
-    sys.exit(1)
-
-def analyze_pdf(pdf_path):
-    """Analiza un PDF y busca patrones de total"""
-    print(f"\n{'='*80}")
-    print(f"📄 Analizando: {pdf_path}")
-    print(f"{'='*80}\n")
-    
+def extract_text_from_pdf(pdf_path: str, max_pages: int = 999) -> str:
+    """Extrae texto de un PDF"""
     try:
+        text_parts = []
         with pdfplumber.open(pdf_path) as pdf:
-            print(f"📊 Total de páginas: {len(pdf.pages)}\n")
+            pages_to_process = min(len(pdf.pages), max_pages)
+            print(f"📄 Procesando {pages_to_process} de {len(pdf.pages)} páginas")
             
-            # Extraer texto de todas las páginas
-            all_text = ""
-            for i, page in enumerate(pdf.pages):
-                text = page.extract_text()
-                if text:
-                    all_text += text + "\n"
-                    print(f"   Página {i+1}: {len(text)} caracteres")
-            
-            print(f"\n📝 Total de texto extraído: {len(all_text)} caracteres\n")
-            
-            # Buscar patrones de total
-            print(f"{'─'*80}")
-            print(f"🔍 BUSCANDO PATRONES DE TOTAL:")
-            print(f"{'─'*80}\n")
-            
-            patterns = [
-                (r'Total factura\s*\(=\)[\s\$COP\u3164]*([0-9,.]+)', 'Total factura (=)'),
-                (r'Total documento[\s\$COP\u3164]*([0-9,.]+)', 'Total documento'),
-                (r'Total neto factura[\s\$COP\u3164]*([0-9,.]+)', 'Total neto factura'),
-                (r'TOTAL A PAGAR[\s\$COP\u3164]*([0-9,.]+)', 'TOTAL A PAGAR'),
-                (r'Total factura[\s\$COP\u3164]*([0-9,.]+)', 'Total factura'),
-                (r'Total[\s\$COP\u3164]*([0-9,.]+)', 'Total'),
-            ]
-            
-            found_any = False
-            for pattern, name in patterns:
-                matches = list(re.finditer(pattern, all_text, re.IGNORECASE))
-                if matches:
-                    found_any = True
-                    print(f"✅ Patrón '{name}' encontrado {len(matches)} veces:")
-                    for i, match in enumerate(matches[:5], 1):  # Mostrar máximo 5
-                        value_str = match.group(1)
-                        # Convertir a número
-                        try:
-                            value_clean = value_str.replace('.', '').replace(',', '.')
-                            value_clean = re.sub(r'[^\d.]', '', value_clean)
-                            value_num = float(value_clean)
-                            print(f"   {i}. {value_str} → ${value_num:,.2f}")
-                        except:
-                            print(f"   {i}. {value_str} → Error al convertir")
-                    print()
-            
-            if not found_any:
-                print("⚠️ No se encontraron patrones de total\n")
-            
-            # Mostrar últimas 3000 caracteres (donde suelen estar los totales)
-            print(f"{'─'*80}")
-            print(f"📝 ÚLTIMAS 3000 CARACTERES DEL PDF:")
-            print(f"{'─'*80}\n")
-            
-            text_end = all_text[-3000:] if len(all_text) > 3000 else all_text
-            lines = text_end.split('\n')
-            
-            # Filtrar líneas relevantes
-            for line in lines:
-                line_lower = line.lower()
-                if any(keyword in line_lower for keyword in ['total', 'subtotal', 'iva', 'neto', 'pagar']):
-                    print(f"   {line.strip()}")
-            
-            print(f"\n{'─'*80}")
-            
+            for i in range(pages_to_process):
+                page_text = pdf.pages[i].extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+        
+        return '\n'.join(text_parts)
     except Exception as e:
         print(f"❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+        return ""
+
+def extract_dian_date(text: str):
+    """Extrae fecha de documento DIAN"""
+    print(f"\n🔍 Buscando fecha en texto de {len(text)} caracteres...\n")
     
-    print(f"\n{'='*80}\n")
+    # ESTRATEGIA 1: "Fecha y hora de expedición:"
+    print("1️⃣ Buscando 'Fecha y hora de expedición:'...")
+    pattern_expedicion = r'Fecha\s+y\s+hora\s+de\s+expedici[oó]n[\s:]+(\d{4})-(\d{1,2})-(\d{1,2})'
+    match = re.search(pattern_expedicion, text, re.IGNORECASE)
+    if match:
+        year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        fecha = datetime(year, month, day)
+        print(f"   ✅ ENCONTRADA: {fecha.strftime('%d/%m/%Y')}")
+        print(f"   📝 Texto completo: {match.group(0)}")
+        return fecha
+    else:
+        print(f"   ❌ No encontrada")
+    
+    # ESTRATEGIA 2: "Fecha de Emisión:"
+    print("\n2️⃣ Buscando 'Fecha de Emisión:'...")
+    patterns_emision = [
+        r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',
+        r'Fecha\s+de\s+[Ee]misi[oó]n[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+    ]
+    
+    for pattern in patterns_emision:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            groups = match.groups()
+            if len(groups[0]) == 4:  # YYYY-MM-DD
+                year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
+            else:  # DD-MM-YYYY
+                day, month, year = int(groups[0]), int(groups[1]), int(groups[2])
+            
+            fecha = datetime(year, month, day)
+            print(f"   ✅ ENCONTRADA: {fecha.strftime('%d/%m/%Y')}")
+            print(f"   📝 Texto completo: {match.group(0)}")
+            return fecha
+    
+    print(f"   ❌ No encontrada")
+    
+    # ESTRATEGIA 3: "Documento generado el:"
+    print("\n3️⃣ Buscando 'Documento generado el:'...")
+    patterns_generado = [
+        r'Documento\s+generado\s+el[\s:]+(\d{1,2})[/-](\d{1,2})[/-](\d{4})',
+        r'Documento\s+generado\s+el[\s:]+(\d{4})[/-](\d{1,2})[/-](\d{1,2})',
+    ]
+    
+    for pattern in patterns_generado:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            groups = match.groups()
+            if len(groups[0]) == 4:  # YYYY-MM-DD
+                year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
+            else:  # DD-MM-YYYY
+                day, month, year = int(groups[0]), int(groups[1]), int(groups[2])
+            
+            fecha = datetime(year, month, day)
+            print(f"   ✅ ENCONTRADA: {fecha.strftime('%d/%m/%Y')}")
+            print(f"   📝 Texto completo: {match.group(0)}")
+            return fecha
+    
+    print(f"   ❌ No encontrada")
+    return None
+
+def test_pdf(pdf_path):
+    """Test principal"""
+    print(f"\n{'='*80}")
+    print(f"🧪 TEST DE EXTRACCIÓN DE FECHA")
+    print(f"{'='*80}")
+    print(f"📄 Archivo: {pdf_path}")
+    print(f"{'='*80}\n")
+    
+    # Extraer texto
+    text = extract_text_from_pdf(pdf_path)
+    
+    if not text:
+        print("❌ No se pudo extraer texto")
+        return
+    
+    # Buscar fecha
+    fecha = extract_dian_date(text)
+    
+    # Resultado final
+    print(f"\n{'='*80}")
+    print(f"📅 RESULTADO FINAL")
+    print(f"{'='*80}")
+    if fecha:
+        print(f"   ✅ Fecha extraída: {fecha.strftime('%d/%m/%Y')}")
+        print(f"   📆 Formato ISO: {fecha.strftime('%Y-%m-%d')}")
+        print(f"\n   ✅ Fecha correcta esperada: 21/11/2025")
+        if fecha.strftime('%d/%m/%Y') == '21/11/2025':
+            print(f"   🎉 ¡CORRECTO! La fecha coincide")
+        else:
+            print(f"   ⚠️ INCORRECTO - La fecha no coincide")
+    else:
+        print(f"   ❌ No se pudo extraer la fecha")
+    print(f"{'='*80}\n")
+    
+    # Mostrar primeras líneas del PDF para debugging
+    print(f"\n{'='*80}")
+    print(f"📝 PRIMERAS 20 LÍNEAS DEL PDF (para debugging)")
+    print(f"{'='*80}")
+    lines = text.split('\n')[:20]
+    for i, line in enumerate(lines, 1):
+        print(f"{i:2d}. {line}")
+    print(f"{'='*80}\n")
 
 if __name__ == "__main__":
+    import sys
     if len(sys.argv) < 2:
         print("Uso: python3 test_pdf_simple.py <ruta_al_pdf>")
         sys.exit(1)
     
-    analyze_pdf(sys.argv[1])
+    test_pdf(sys.argv[1])

@@ -323,6 +323,15 @@ class InvoiceV2Service:
         invoice.dian_tipo_documento = data.get('tipo_documento')
         invoice.dian_numero_documento = data.get('numero_documento')
         
+        # Actualizar fecha de emisión desde DIAN (fuente de verdad)
+        if data.get('fecha_emision'):
+            invoice.fecha_emision = data.get('fecha_emision')
+            logger.info(f"✅ Fecha actualizada desde DIAN: {data.get('fecha_emision')}")
+        
+        # Actualizar número de factura si está disponible
+        if data.get('numero_documento'):
+            invoice.numero_factura = data.get('numero_documento')
+        
         # Emisor
         emisor = data.get('emisor', {})
         invoice.dian_emisor_razon_social = emisor.get('razon_social')
