@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Botón Limpiar Búsqueda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'papyrus-blue': '#2563eb',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">Test Botón Limpiar Búsqueda</h1>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">Campo de búsqueda con botón X</h2>
+            
+            <!-- Campo de búsqueda -->
+            <div class="relative">
+                <input id="search"
+                        type="text"
+                        placeholder="CUFE, proveedor, número... (búsqueda automática)"
+                        class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white transition-colors text-sm"
+                        autocomplete="off">
+                
+                <!-- Botón limpiar (X) - solo visible cuando hay texto -->
+                <button id="clear-search-btn" 
+                        type="button"
+                        onclick="clearSearch()"
+                        class="hidden absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-gray-100"
+                        title="Limpiar búsqueda">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <p class="mt-3 text-sm text-gray-600">
+                ℹ️ El botón X aparece automáticamente cuando escribes algo
+            </p>
+        </div>
+        
+        <!-- Resultados simulados -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">Resultados de búsqueda</h3>
+            <div id="results" class="space-y-2">
+                <p class="text-gray-500 italic">Escribe algo para buscar...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search');
+        const clearBtn = document.getElementById('clear-search-btn');
+        const searchIcon = document.getElementById('search-icon');
+        const resultsDiv = document.getElementById('results');
+        
+        let searchTimeout = null;
+        
+        // Mostrar/ocultar botón de limpiar según el contenido
+        searchInput.addEventListener('input', () => {
+            // Mostrar/ocultar botón X
+            if (searchInput.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            
+            // Cancelar búsqueda anterior si existe
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Mostrar indicador de búsqueda
+            searchInput.classList.add('border-blue-600', 'ring-1', 'ring-blue-600');
+            searchIcon.classList.add('animate-pulse', 'text-blue-600');
+            
+            // Simular búsqueda después de 500ms
+            searchTimeout = setTimeout(() => {
+                performSearch();
+                searchInput.classList.remove('border-blue-600', 'ring-1', 'ring-blue-600');
+                searchIcon.classList.remove('animate-pulse', 'text-blue-600');
+            }, 500);
+        });
+        
+        // También permitir buscar con Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                performSearch();
+                searchInput.classList.remove('border-blue-600', 'ring-1', 'ring-blue-600');
+                searchIcon.classList.remove('animate-pulse', 'text-blue-600');
+            }
+        });
+        
+        function clearSearch() {
+            searchInput.value = '';
+            clearBtn.classList.add('hidden');
+            performSearch();
+            searchInput.focus();
+        }
+        
+        function performSearch() {
+            const query = searchInput.value.trim();
+            
+            if (query === '') {
+                resultsDiv.innerHTML = '<p class="text-gray-500 italic">Escribe algo para buscar...</p>';
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-sm font-medium text-blue-900">Buscando: "${query}"</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p class="text-sm text-gray-700">✓ Resultado 1 - Factura MAF-001</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p class="text-sm text-gray-700">✓ Resultado 2 - Factura MAF-002</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p class="text-sm text-gray-700">✓ Resultado 3 - Factura MAF-003</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Inicializar
+        performSearch();
+    </script>
+</body>
+</html>

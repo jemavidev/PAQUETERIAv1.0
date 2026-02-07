@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal DIAN - Drag & Drop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'papyrus-blue': '#2563eb',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">Test Modal DIAN con Drag & Drop</h1>
+        
+        <button onclick="openModal()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md">
+            Abrir Modal de Carga DIAN
+        </button>
+        
+        <!-- Modal de carga DIAN múltiple con Drag & Drop -->
+        <div id="upload-dian-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-2xl">
+                    <h3 class="text-xl font-bold text-white">Archivos DIAN</h3>
+                </div>
+                
+                <form id="upload-dian-form" enctype="multipart/form-data" class="p-6">
+                    <!-- Zona de Drag & Drop -->
+                    <div id="drop-zone" class="relative border-3 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all duration-200 hover:border-blue-600 hover:bg-blue-50 cursor-pointer group">
+                        <input type="file" id="dian-files" accept=".pdf" multiple class="hidden">
+                        
+                        <!-- Icono y texto -->
+                        <div class="pointer-events-none">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 group-hover:text-blue-600 transition-colors mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-lg font-medium text-gray-700 mb-2">Arrastra archivos PDF aquí</p>
+                            <p class="text-sm text-gray-500 mb-4">o haz clic para seleccionar</p>
+                            <div class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium group-hover:bg-blue-700 transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Seleccionar archivos
+                            </div>
+                        </div>
+                        
+                        <!-- Overlay cuando se arrastra -->
+                        <div id="drop-overlay" class="hidden absolute inset-0 bg-blue-600 bg-opacity-10 border-3 border-blue-600 rounded-xl flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-20 h-20 mx-auto text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                </svg>
+                                <p class="text-xl font-bold text-blue-600">Suelta los archivos aquí</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de archivos seleccionados -->
+                    <div id="dian-files-list" class="mt-4 hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-700">
+                                <span id="files-count-text">0</span> archivo(s) seleccionado(s)
+                            </p>
+                            <button type="button" onclick="clearSelectedFiles()" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                Limpiar todo
+                            </button>
+                        </div>
+                        <div id="dian-files-container" class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                            <!-- Archivos se mostrarán aquí -->
+                        </div>
+                    </div>
+                    
+                    <!-- Progreso de carga -->
+                    <div id="dian-upload-progress" class="mt-4 hidden">
+                        <div class="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                            <span>Procesando...</span>
+                            <span id="dian-progress-text">0 / 0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="dian-progress-bar" class="bg-gradient-to-r from-blue-600 to-blue-500 h-3 rounded-full transition-all duration-300 shadow-sm" style="width: 0%"></div>
+                        </div>
+                        <div id="dian-upload-results" class="mt-3 space-y-1 max-h-40 overflow-y-auto">
+                            <!-- Resultados se mostrarán aquí -->
+                        </div>
+                    </div>
+                    
+                    <!-- Botones -->
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+                        <button type="button" onclick="closeModal()"
+                                class="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                            Cancelar
+                        </button>
+                        <button type="submit" id="dian-upload-btn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Procesar <span id="dian-file-count"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .border-3 {
+            border-width: 3px;
+        }
+    </style>
+
+    <script>
+        function openModal() {
+            document.getElementById('upload-dian-modal').classList.remove('hidden');
+            setupDragAndDrop();
+        }
+
+        function closeModal() {
+            document.getElementById('upload-dian-modal').classList.add('hidden');
+            document.getElementById('dian-files').value = '';
+            document.getElementById('dian-files-list').classList.add('hidden');
+            document.getElementById('dian-files-container').innerHTML = '';
+            document.getElementById('files-count-text').textContent = '0';
+            document.getElementById('dian-file-count').textContent = '';
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const dropOverlay = document.getElementById('drop-overlay');
+            const fileInput = document.getElementById('dian-files');
+            
+            // Click en la zona para abrir selector
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Prevenir comportamiento por defecto
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight cuando se arrastra sobre la zona
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropOverlay.classList.remove('hidden');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropOverlay.classList.add('hidden');
+                }, false);
+            });
+            
+            // Manejar drop
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                // Asignar archivos al input
+                fileInput.files = files;
+                
+                // Disparar evento change
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }, false);
+        }
+
+        document.getElementById('dian-files').addEventListener('change', (e) => {
+            const files = e.target.files;
+            displaySelectedFiles(files);
+        });
+
+        function displaySelectedFiles(files) {
+            const filesList = document.getElementById('dian-files-list');
+            const filesContainer = document.getElementById('dian-files-container');
+            const fileCount = document.getElementById('dian-file-count');
+            const filesCountText = document.getElementById('files-count-text');
+            
+            if (files.length > 0) {
+                filesList.classList.remove('hidden');
+                filesContainer.innerHTML = '';
+                
+                Array.from(files).forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-600 transition-colors group';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center flex-1 min-w-0">
+                            <div class="flex-shrink-0 w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+                                <p class="text-xs text-gray-500">${(file.size / 1024).toFixed(1)} KB</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="removeFile(${index})" class="ml-3 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    `;
+                    filesContainer.appendChild(fileItem);
+                });
+                
+                fileCount.textContent = `(${files.length})`;
+                filesCountText.textContent = files.length;
+                document.getElementById('dian-upload-btn').disabled = false;
+            } else {
+                filesList.classList.add('hidden');
+                fileCount.textContent = '';
+                filesCountText.textContent = '0';
+                document.getElementById('dian-upload-btn').disabled = true;
+            }
+        }
+
+        function removeFile(index) {
+            const fileInput = document.getElementById('dian-files');
+            const dt = new DataTransfer();
+            const files = Array.from(fileInput.files);
+            
+            files.forEach((file, i) => {
+                if (i !== index) {
+                    dt.items.add(file);
+                }
+            });
+            
+            fileInput.files = dt.files;
+            displaySelectedFiles(fileInput.files);
+        }
+
+        function clearSelectedFiles() {
+            const fileInput = document.getElementById('dian-files');
+            fileInput.value = '';
+            displaySelectedFiles([]);
+        }
+
+        // Simular procesamiento
+        document.getElementById('upload-dian-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const files = document.getElementById('dian-files').files;
+            if (files.length === 0) return;
+            
+            const progressDiv = document.getElementById('dian-upload-progress');
+            const progressBar = document.getElementById('dian-progress-bar');
+            const progressText = document.getElementById('dian-progress-text');
+            const resultsDiv = document.getElementById('dian-upload-results');
+            
+            progressDiv.classList.remove('hidden');
+            resultsDiv.innerHTML = '';
+            
+            let completed = 0;
+            const total = files.length;
+            
+            // Simular procesamiento
+            const interval = setInterval(() => {
+                if (completed < total) {
+                    completed++;
+                    const progress = (completed / total) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${completed} / ${total}`;
+                    
+                    const result = document.createElement('div');
+                    result.className = 'text-xs text-green-600';
+                    result.innerHTML = `✓ Archivo ${completed} procesado correctamente`;
+                    resultsDiv.appendChild(result);
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        alert('¡Procesamiento completado!');
+                    }, 500);
+                }
+            }, 800);
+        });
+    </script>
+</body>
+</html>

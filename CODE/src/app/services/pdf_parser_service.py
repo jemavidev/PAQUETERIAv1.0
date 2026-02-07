@@ -456,42 +456,52 @@ class PDFParserService:
     
     @staticmethod
     def _extract_emisor(text: str) -> Dict[str, Optional[str]]:
-        """Extrae datos del emisor/vendedor"""
+        """Extrae datos del emisor/vendedor (NO del adquiriente)"""
         emisor = {}
         
-        # Razón social
-        match = re.search(r'(?:Razón social|Razon Social)[\s:]+([^\n]+)', text, re.IGNORECASE)
+        # IMPORTANTE: Buscar específicamente en la sección "Datos del vendedor"
+        # NO en "Datos del adquiriente" que aparece primero
+        vendor_section_match = re.search(
+            r'(?:Datos del vendedor|DATOS DEL VENDEDOR|Datos del emisor|DATOS DEL EMISOR)([\s\S]{0,800}?)(?:Detalles de productos|Detalle|DETALLE|Condiciones|CONDICIONES)',
+            text,
+            re.IGNORECASE
+        )
+        
+        search_text = vendor_section_match.group(1) if vendor_section_match else text
+        
+        # Razón social - buscar en la sección del vendedor
+        match = re.search(r'(?:Razón social|Razon Social)[\s:]+([^\n]+)', search_text, re.IGNORECASE)
         emisor['razon_social'] = match.group(1).strip() if match else None
         
-        # NIT
-        match = re.search(r'(?:NIT|Nit|Número de documento)[\s:]+(\d{9,10}[-\d]?)', text)
+        # NIT - buscar en la sección del vendedor
+        match = re.search(r'(?:NIT|Nit|Número de documento)[\s:]+(\d{9,10}[-\d]?)', search_text)
         emisor['nit'] = match.group(1).strip() if match else None
         
         # Dirección
-        match = re.search(r'(?:Dirección|Direccion)[\s:]+([^\n]+)', text, re.IGNORECASE)
+        match = re.search(r'(?:Dirección|Direccion)[\s:]+([^\n]+)', search_text, re.IGNORECASE)
         emisor['direccion'] = match.group(1).strip() if match else None
         
         # Teléfono
-        match = re.search(r'(?:Teléfono|Telefono|Móvil|Movil)[\s:]+([^\n]+)', text, re.IGNORECASE)
+        match = re.search(r'(?:Teléfono|Telefono|Móvil|Movil)[\s:]+([^\n]+)', search_text, re.IGNORECASE)
         emisor['telefono'] = match.group(1).strip() if match else None
         
         # Email
-        match = re.search(r'(?:Correo|Email)[\s:]+([^\n]+)', text, re.IGNORECASE)
+        match = re.search(r'(?:Correo|Email)[\s:]+([^\n]+)', search_text, re.IGNORECASE)
         emisor['email'] = match.group(1).strip() if match else None
         
         # Régimen fiscal
-        match = re.search(r'(?:Régimen fiscal|Regimen fiscal)[\s:]+([^\n]+)', text, re.IGNORECASE)
+        match = re.search(r'(?:Régimen fiscal|Regimen fiscal)[\s:]+([^\n]+)', search_text, re.IGNORECASE)
         emisor['regimen_fiscal'] = match.group(1).strip() if match else None
         
         return emisor
     
     @staticmethod
     def _extract_adquiriente(text: str) -> Dict[str, Optional[str]]:
-        """Extrae datos del adquiriente/comprador"""
+        """Extrae datos del adquiriente/comprador (NO del vendedor)"""
         adquiriente = {}
         
-        # Buscar sección de adquiriente
-        match = re.search(r'(?:Datos del adquiriente|Datos del Cliente|DATOS DEL CLIENTE)([\s\S]{0,500})', text, re.IGNORECASE)
+        # Buscar específicamente en la sección de adquiriente
+        match = re.search(r'(?:Datos del adquiriente|Datos del Cliente|DATOS DEL CLIENTE|DATOS DEL ADQUIRIENTE)([\s\S]{0,500}?)(?:Datos del vendedor|DATOS DEL VENDEDOR|Detalles|DETALLES)', text, re.IGNORECASE)
         if match:
             section = match.group(1)
             
@@ -500,7 +510,7 @@ class PDFParserService:
             adquiriente['razon_social'] = match.group(1).strip() if match else None
             
             # NIT
-            match = re.search(r'(?:NIT|Nit)[\s:]+(\d{9,10}[-\d]?)', section)
+            match = re.search(r'(?:NIT|Nit|NIT del adquiriente)[\s:]+(\d{9,10}[-\d]?)', section)
             adquiriente['nit'] = match.group(1).strip() if match else None
         
         return adquiriente

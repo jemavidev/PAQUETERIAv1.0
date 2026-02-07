@@ -8,7 +8,7 @@ from datetime import datetime
 import enum
 from typing import TYPE_CHECKING
 
-from app.models.base import Base
+from .base import Base
 from app.utils.datetime_utils import get_colombia_now
 
 if TYPE_CHECKING:
