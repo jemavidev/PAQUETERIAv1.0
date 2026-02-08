@@ -630,6 +630,80 @@ class PDFParserService:
         while i < len(lines) and len(productos) < 200:
             line = lines[i].strip()
             
+            # FORMATO 0: Nuevo formato con descripción entre código y U/M
+            # Formato: Nro Código Descripción U/M Cantidad Precio Descuento Recargo IVA_valor IVA_% Total
+            # Ejemplo: "1 631668 BOLSA DE PAPEL SELVA 33H-20CTG-25 A9 REF:9141 94 6,00 $ 840,34 $ 0,00 $ 0,00 $ 957,99 19.00 $ 5.042,04"
+            match_formato_nuevo = re.match(
+                r'^(\d{1,3})\s+(\d{3,13})\s+(.+?)\s+(\d{2,3})\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                line
+            )
+            
+            if match_formato_nuevo:
+                try:
+                    nro = match_formato_nuevo.group(1)
+                    codigo = match_formato_nuevo.group(2)
+                    descripcion = match_formato_nuevo.group(3).strip()
+                    unidad_codigo = match_formato_nuevo.group(4)  # 94 = NIU en este formato
+                    cantidad_str = match_formato_nuevo.group(5).replace(',', '.')
+                    precio_unit_str = match_formato_nuevo.group(6).replace('.', '').replace(',', '.')
+                    
+                    cantidad = float(cantidad_str)
+                    precio_unitario = float(precio_unit_str)
+                    
+                    # Mapear código de unidad a nombre
+                    unidad_map = {
+                        '94': 'NIU',
+                        '10': 'PK',
+                        '11': 'BX',
+                        '01': 'UND',
+                    }
+                    unidad = unidad_map.get(unidad_codigo, 'NIU')
+                    
+                    # Limpiar descripción (remover espacios múltiples)
+                    descripcion = re.sub(r'\s+', ' ', descripcion)
+                    descripcion = descripcion[:250]
+                    
+                    # Buscar todos los valores monetarios en la línea
+                    valores = re.findall(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?)', line)
+                    
+                    # Buscar IVA porcentaje (número seguido de .00 cerca del final)
+                    iva_porcentaje = 0.0
+                    # Buscar patrón: valor_iva IVA_% $ total
+                    # Ejemplo: "$ 957,99 19.00 $ 5.042,04"
+                    iva_match = re.search(r'\$\s*[0-9.,]+\s+(\d{1,2})[.,]00\s+\$', line)
+                    if iva_match:
+                        iva_porcentaje = float(iva_match.group(1))
+                    
+                    # Total es el último valor monetario
+                    total_item = None
+                    if valores:
+                        try:
+                            total_str = valores[-1].replace('.', '').replace(',', '.')
+                            total_item = float(total_str)
+                        except:
+                            pass
+                    
+                    if not total_item:
+                        total_item = precio_unitario * cantidad
+                    
+                    productos.append({
+                        'codigo_producto': codigo,
+                        'descripcion': descripcion,
+                        'cantidad': cantidad,
+                        'unidad_medida': unidad,
+                        'precio_unitario': precio_unitario,
+                        'iva_porcentaje': iva_porcentaje,
+                        'total_item': total_item,
+                    })
+                    
+                    logger.info(f"Producto extraido (FORMATO NUEVO): {codigo} - {descripcion[:40]}...")
+                    
+                except Exception as e:
+                    logger.warning(f"Error procesando producto FORMATO NUEVO linea {i}: {e}")
+                    
+                i += 1
+                continue
+            
             # FORMATO 1: CUFE - Línea que comienza con número
             # Formato: Nro [Código] U/M Cantidad Precio...
             match_producto = re.match(

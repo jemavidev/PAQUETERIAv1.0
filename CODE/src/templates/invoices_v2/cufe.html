@@ -176,25 +176,24 @@
 
 <!-- Modal de carga DIAN múltiple con Drag & Drop -->
 <div id="upload-dian-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-papyrus-blue to-blue-600 px-6 py-4 rounded-t-2xl">
-            <h3 class="text-xl font-bold text-white">Archivos DIAN</h3>
-        </div>
-        
-        <form id="upload-dian-form" enctype="multipart/form-data" class="p-6">
+    <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <form id="upload-dian-form" enctype="multipart/form-data" class="p-8">
+            <!-- Título -->
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Cargar Archivos DIAN</h3>
+            <p class="text-sm text-gray-600 mb-6">Selecciona o arrastra los archivos PDF de la DIAN que deseas procesar</p>
+            
             <!-- Zona de Drag & Drop -->
-            <div id="drop-zone" class="relative border-3 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all duration-200 hover:border-papyrus-blue hover:bg-blue-50 cursor-pointer group">
+            <div id="drop-zone" class="relative border-2 border-dashed border-gray-300 rounded-xl py-6 px-6 text-center transition-all duration-300 hover:border-papyrus-blue hover:bg-blue-50/30 cursor-pointer group">
                 <input type="file" id="dian-files" accept=".pdf" multiple required class="hidden">
                 
                 <!-- Icono y texto -->
-                <div class="pointer-events-none">
-                    <svg class="w-16 h-16 mx-auto text-gray-400 group-hover:text-papyrus-blue transition-colors mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="pointer-events-none transition-all duration-300" id="drop-zone-content">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 group-hover:text-papyrus-blue transition-all duration-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
-                    <p class="text-lg font-medium text-gray-700 mb-2">Arrastra archivos PDF aquí</p>
-                    <p class="text-sm text-gray-500 mb-4">o haz clic para seleccionar</p>
-                    <div class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg text-sm font-medium group-hover:bg-blue-700 transition-colors">
+                    <p class="text-lg font-medium text-gray-700 mb-1">Arrastra archivos PDF aquí</p>
+                    <p class="text-sm text-gray-500 mb-3">o haz clic para seleccionar</p>
+                    <div class="inline-flex items-center px-4 py-2 bg-papyrus-blue text-white rounded-lg text-sm font-medium group-hover:bg-blue-700 transition-colors shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
@@ -202,13 +201,23 @@
                     </div>
                 </div>
                 
-                <!-- Overlay cuando se arrastra -->
-                <div id="drop-overlay" class="hidden absolute inset-0 bg-papyrus-blue bg-opacity-10 border-3 border-papyrus-blue rounded-xl flex items-center justify-center">
-                    <div class="text-center">
-                        <svg class="w-20 h-20 mx-auto text-papyrus-blue mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                        </svg>
-                        <p class="text-xl font-bold text-papyrus-blue">Suelta los archivos aquí</p>
+                <!-- Overlay cuando se arrastra - MEJORADO -->
+                <div id="drop-overlay" class="hidden absolute inset-0 rounded-xl flex items-center justify-center pointer-events-none">
+                    <!-- Borde animado -->
+                    <div class="absolute inset-0 border-4 border-papyrus-blue rounded-xl animate-pulse-border"></div>
+                    
+                    <!-- Fondo sutil con gradiente -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-blue-100/60 to-papyrus-blue/10 rounded-xl backdrop-blur-sm"></div>
+                    
+                    <!-- Contenido central -->
+                    <div class="relative text-center z-10">
+                        <div class="bg-white/90 rounded-2xl py-5 px-8 shadow-2xl border-2 border-papyrus-blue">
+                            <svg class="w-16 h-16 mx-auto text-papyrus-blue mb-2 animate-bounce-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                            <p class="text-xl font-bold text-papyrus-blue">Suelta los archivos aquí</p>
+                            <p class="text-sm text-gray-600 mt-1">Se procesarán automáticamente</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -243,12 +252,12 @@
             </div>
             
             <!-- Botones -->
-            <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
                 <button type="button" id="dian-cancel-btn" onclick="closeDianUploadModal()"
-                        class="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                        class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">
                     Cancelar
                 </button>
-                <button type="submit" id="dian-upload-btn" class="px-5 py-2.5 bg-papyrus-blue hover:bg-blue-700 text-white rounded-lg transition-all font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="submit" id="dian-upload-btn" class="px-6 py-2.5 bg-papyrus-blue hover:bg-blue-700 text-white rounded-lg transition-all font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
@@ -391,7 +400,7 @@
         const paginationContainer = document.getElementById('pagination-container');
         
         loading.classList.remove('hidden');
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; // Limpiar tabla antes de cargar
         emptyState.classList.add('hidden');
         paginationContainer.classList.add('hidden');
         
@@ -418,9 +427,9 @@
                 emptyState.classList.remove('hidden');
                 totalCount.textContent = '';
             } else {
-                records.forEach(record => {
-                    tbody.innerHTML += renderCufeRow(record);
-                });
+                // Renderizar todos los registros de una vez
+                const htmlContent = records.map(record => renderCufeRow(record)).join('');
+                tbody.innerHTML = htmlContent;
                 
                 // Actualizar info de paginación
                 const pageStart = skip + 1;

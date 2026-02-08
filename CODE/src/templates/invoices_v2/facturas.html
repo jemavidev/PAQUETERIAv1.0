@@ -508,7 +508,7 @@
         const paginationContainer = document.getElementById('pagination-container');
         
         loading.classList.remove('hidden');
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; // Limpiar tabla antes de cargar
         emptyState.classList.add('hidden');
         paginationContainer.classList.add('hidden');
         
@@ -533,9 +533,9 @@
                 emptyState.classList.remove('hidden');
                 totalCount.textContent = '';
             } else {
-                invoices.forEach(invoice => {
-                    tbody.innerHTML += renderInvoiceRow(invoice);
-                });
+                // Renderizar todas las facturas de una vez
+                const htmlContent = invoices.map(invoice => renderInvoiceRow(invoice)).join('');
+                tbody.innerHTML = htmlContent;
                 
                 // Actualizar info de paginación
                 const pageStart = skip + 1;

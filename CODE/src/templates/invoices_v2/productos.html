@@ -192,11 +192,13 @@
 
 {% block invoice_scripts %}
 <script>
+<script>
     // Variables de paginación
     let currentPage = 1;
-    let itemsPerPage = 10;
+    let itemsPerPage = 25; // Cambiado a 25 por defecto
     let totalPages = 1;
     let totalItems = 0;
+
     let currentProducts = [];
 
     // Variables para debounce
@@ -271,7 +273,7 @@
         const paginationContainer = document.getElementById('pagination-container');
         
         loading.classList.remove('hidden');
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; // Limpiar tabla antes de cargar
         emptyState.classList.add('hidden');
         paginationContainer.classList.add('hidden');
         
@@ -293,9 +295,9 @@
                 emptyState.classList.remove('hidden');
                 totalCount.textContent = '';
             } else {
-                products.forEach(product => {
-                    tbody.innerHTML += renderProductRow(product);
-                });
+                // Renderizar todos los productos de una vez
+                const htmlContent = products.map(product => renderProductRow(product)).join('');
+                tbody.innerHTML = htmlContent;
                 
                 // Actualizar info de paginación
                 const pageStart = skip + 1;
