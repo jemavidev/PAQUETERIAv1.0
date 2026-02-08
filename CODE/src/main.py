@@ -174,12 +174,23 @@ app.state.limiter = limiter  # Set the limiter in app state for middleware
 app.add_exception_handler(429, rate_limit_exceeded_handler)
 
 # Montar archivos estáticos (sin cache para desarrollo, permite cambios en tiempo real)
-app.mount("/static", StaticFiles(directory="/app/src/static"), name="static")
-
-# Montar uploads desde /app/uploads (volumen dedicado)
-# Crear directorio si no existe
+# Detectar si estamos en Docker o desarrollo local
+import os
 from pathlib import Path
-uploads_dir = Path("/app/uploads")
+
+if os.path.exists("/app"):
+    # Docker
+    static_dir = "/app/src/static"
+    uploads_dir = Path("/app/uploads")
+else:
+    # Desarrollo local
+    base_dir = Path(__file__).parent.parent
+    static_dir = str(base_dir / "src" / "static")
+    uploads_dir = base_dir / "uploads"
+
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Montar uploads
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 

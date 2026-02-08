@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script para analizar patrones en archivos CUFE
-Extrae texto de múltiples PDFs y detecta formatos de productos
+Script para analizar patrones en archivos CUFE - VERSIÓN EXTENDIDA
+Analiza el directorio completo con 113+ archivos
 """
 import os
 import sys
@@ -92,7 +92,7 @@ def analyze_product_lines(seccion: str) -> dict:
         'formato_detectado': None,
     }
     
-    # Analizar primeras 20 líneas de productos
+    # Analizar primeras 30 líneas de productos
     for i, line in enumerate(lines[:30]):
         line = line.strip()
         if not line or len(line) < 10:
@@ -102,7 +102,7 @@ def analyze_product_lines(seccion: str) -> dict:
         if re.match(r'^\d{1,3}\s+', line):
             analysis['sample_lines'].append(line)
             
-            # PATRÓN 1: Nro Código Descripción U/M Cantidad Precio...
+            # PATRÓN 0: Nro Código Descripción U/M Cantidad Precio...
             if re.match(r'^\d{1,3}\s+\d{3,13}\s+.+?\s+\d{2,3}\s+[0-9]+[.,][0-9]{2}\s+\$', line):
                 analysis['patterns_found'].append('FORMATO_0: Nro Código Descripción U/M Cantidad Precio')
                 analysis['formato_detectado'] = 'FORMATO_0'
@@ -111,7 +111,7 @@ def analyze_product_lines(seccion: str) -> dict:
                 analysis['has_cantidad'] = True
                 analysis['has_precio'] = True
             
-            # PATRÓN 2: Nro Código U/M Cantidad Precio (descripción en otra línea)
+            # PATRÓN 1: Nro Código U/M Cantidad Precio (descripción en otra línea)
             elif re.match(r'^\d{1,3}\s+\d{3,13}\s+(NIU|PK|BX|UND|UN|EA|\d{2})\s+[0-9]+[.,][0-9]{2}\s+\$', line):
                 analysis['patterns_found'].append('FORMATO_1: Nro Código U/M Cantidad Precio')
                 if not analysis['formato_detectado']:
@@ -120,15 +120,15 @@ def analyze_product_lines(seccion: str) -> dict:
                 analysis['has_cantidad'] = True
                 analysis['has_precio'] = True
             
-            # PATRÓN 3: Nro U/M Cantidad Precio (sin código)
-            elif re.match(r'^\d{1,3}\s+(NIU|PK|BX|UND|UN|EA|\d{2})\s+[0-9]+[.,][0-9]{2}\s+\$', line):
+            # PATRÓN 5: Nro U/M Cantidad Precio (sin código)
+            elif re.match(r'^\d{1,3}\s+(\d{2})\s+[0-9]+[.,][0-9]{2}\s+\$', line):
                 analysis['patterns_found'].append('FORMATO_5: Nro U/M Cantidad Precio (sin código)')
                 if not analysis['formato_detectado']:
                     analysis['formato_detectado'] = 'FORMATO_5'
                 analysis['has_cantidad'] = True
                 analysis['has_precio'] = True
             
-            # PATRÓN 4: Nro Código Descripción_Corta U/M | texto Cantidad
+            # PATRÓN 2: Nro Código Descripción U/M | texto Cantidad
             elif re.match(r'^\d{1,3}\s+\d{3,13}\s+.+?\s+(NIU|PK|BX|UND|UN|EA)\s*\|', line):
                 analysis['patterns_found'].append('FORMATO_2: Nro Código Descripción U/M | texto Cantidad')
                 if not analysis['formato_detectado']:
@@ -152,7 +152,7 @@ def analyze_product_lines(seccion: str) -> dict:
     return analysis
 
 def main():
-    cufe_dir = Path("/home/stk/Documents/GIT/PAQUETEX v1.0/CUFE/CUFE")
+    cufe_dir = Path("/home/stk/Downloads/INVOICES FULL/CUFE")
     
     if not cufe_dir.exists():
         print(f"❌ Error: Directorio no encontrado: {cufe_dir}")
@@ -165,7 +165,7 @@ def main():
         return
     
     print("=" * 100)
-    print("🔍 ANÁLISIS DE PATRONES EN ARCHIVOS CUFE")
+    print("🔍 ANÁLISIS EXTENDIDO DE PATRONES EN ARCHIVOS CUFE")
     print("=" * 100)
     print(f"\n📁 Directorio: {cufe_dir}")
     print(f"📄 Archivos encontrados: {len(pdf_files)}")
@@ -173,56 +173,39 @@ def main():
     
     # Analizar TODOS los archivos
     resultados = []
+    errores = []
     
     for i, pdf_file in enumerate(pdf_files, 1):
-        print(f"\n{'='*100}")
-        print(f"📄 ARCHIVO {i}/{len(pdf_files)}: {pdf_file.name[:60]}...")
-        print(f"{'='*100}")
+        # Mostrar progreso cada 10 archivos
+        if i % 10 == 0 or i == 1:
+            print(f"\n{'='*100}")
+            print(f"📄 Procesando archivo {i}/{len(pdf_files)}: {pdf_file.name[:60]}...")
+            print(f"{'='*100}")
         
         # Extraer texto
-        print("   Extrayendo texto...", end=" ")
         text = extract_text_from_pdf(str(pdf_file))
         
         if text.startswith("ERROR"):
-            print(f"❌ {text}")
+            errores.append({'archivo': pdf_file.name, 'error': text})
+            if i % 10 == 0 or i == 1:
+                print(f"   ❌ {text}")
             continue
         
-        print(f"✅ ({len(text)} caracteres)")
-        
         # Buscar sección de productos
-        print("   Buscando sección de productos...", end=" ")
         inicio_pattern, fin_pattern, seccion = find_products_section(text)
         
         if not seccion:
-            print("❌ No encontrada")
+            errores.append({'archivo': pdf_file.name, 'error': 'No se encontró sección de productos'})
+            if i % 10 == 0 or i == 1:
+                print(f"   ❌ No se encontró sección de productos")
             continue
         
-        print(f"✅")
-        print(f"      Inicio: {inicio_pattern}")
-        print(f"      Fin: {fin_pattern}")
-        print(f"      Tamaño: {len(seccion)} caracteres")
-        
         # Analizar patrones
-        print("   Analizando patrones...", end=" ")
         analysis = analyze_product_lines(seccion)
-        print(f"✅")
         
-        print(f"\n   📊 ANÁLISIS:")
-        print(f"      Formato detectado: {analysis['formato_detectado'] or 'DESCONOCIDO'}")
-        print(f"      Patrones encontrados: {len(analysis['patterns_found'])}")
-        for pattern in analysis['patterns_found']:
-            print(f"         - {pattern}")
-        
-        print(f"\n      Características:")
-        print(f"         ✅ Código: {'SÍ' if analysis['has_codigo'] else 'NO'}")
-        print(f"         ✅ Descripción: {'SÍ' if analysis['has_descripcion'] else 'NO'}")
-        print(f"         ✅ Cantidad: {'SÍ' if analysis['has_cantidad'] else 'NO'}")
-        print(f"         ✅ Precio: {'SÍ' if analysis['has_precio'] else 'NO'}")
-        print(f"         ✅ IVA: {'SÍ' if analysis['has_iva'] else 'NO'}")
-        
-        print(f"\n      📝 Muestra de líneas (primeras 5):")
-        for j, sample in enumerate(analysis['sample_lines'][:5], 1):
-            print(f"         {j}. {sample[:90]}...")
+        if i % 10 == 0 or i == 1:
+            print(f"   ✅ Formato: {analysis['formato_detectado'] or 'DESCONOCIDO'}")
+            print(f"   📊 Código: {'✅' if analysis['has_codigo'] else '❌'}")
         
         resultados.append({
             'archivo': pdf_file.name,
@@ -234,8 +217,13 @@ def main():
     
     # Resumen final
     print("\n" + "=" * 100)
-    print("📊 RESUMEN DE ANÁLISIS")
+    print("📊 RESUMEN DE ANÁLISIS EXTENDIDO")
     print("=" * 100)
+    
+    print(f"\n📈 Estadísticas generales:")
+    print(f"   Total de archivos: {len(pdf_files)}")
+    print(f"   Archivos analizados: {len(resultados)}")
+    print(f"   Archivos con errores: {len(errores)}")
     
     formatos_count = {}
     for r in resultados:
@@ -244,24 +232,40 @@ def main():
     
     print(f"\n🎯 Formatos detectados:")
     for formato, count in sorted(formatos_count.items(), key=lambda x: x[1], reverse=True):
-        print(f"   {formato}: {count} archivos")
+        porcentaje = (count / len(resultados) * 100) if resultados else 0
+        print(f"   {formato}: {count} archivos ({porcentaje:.1f}%)")
     
     print(f"\n📋 Archivos con código de producto:")
     con_codigo = sum(1 for r in resultados if r['has_codigo'])
     sin_codigo = len(resultados) - con_codigo
-    print(f"   ✅ Con código: {con_codigo}")
-    print(f"   ❌ Sin código: {sin_codigo}")
+    porcentaje_con = (con_codigo / len(resultados) * 100) if resultados else 0
+    porcentaje_sin = (sin_codigo / len(resultados) * 100) if resultados else 0
+    print(f"   ✅ Con código: {con_codigo} ({porcentaje_con:.1f}%)")
+    print(f"   ❌ Sin código: {sin_codigo} ({porcentaje_sin:.1f}%)")
     
-    print(f"\n📝 Detalles por archivo:")
-    for i, r in enumerate(resultados, 1):
-        print(f"\n   {i}. {r['archivo'][:50]}...")
-        print(f"      Formato: {r['formato'] or 'DESCONOCIDO'}")
-        print(f"      Código: {'✅' if r['has_codigo'] else '❌'}")
-        if r['sample_lines']:
-            print(f"      Muestra: {r['sample_lines'][0][:70]}...")
+    if errores:
+        print(f"\n⚠️ Archivos con errores ({len(errores)}):")
+        for i, err in enumerate(errores[:10], 1):
+            print(f"   {i}. {err['archivo'][:50]}... - {err['error'][:50]}")
+        if len(errores) > 10:
+            print(f"   ... y {len(errores) - 10} errores más")
+    
+    # Mostrar ejemplos de cada formato
+    print(f"\n📝 Ejemplos por formato:")
+    formatos_mostrados = set()
+    for r in resultados:
+        formato = r['formato'] or 'DESCONOCIDO'
+        if formato not in formatos_mostrados and len(formatos_mostrados) < 5:
+            formatos_mostrados.add(formato)
+            print(f"\n   {formato}:")
+            print(f"      Archivo: {r['archivo'][:60]}...")
+            print(f"      Código: {'✅' if r['has_codigo'] else '❌'}")
+            if r['sample_lines']:
+                print(f"      Muestra: {r['sample_lines'][0][:70]}...")
     
     print("\n" + "=" * 100)
-    print("✅ Análisis completado")
+    print("✅ Análisis extendido completado")
+    print(f"📊 Total: {len(resultados)} archivos analizados de {len(pdf_files)} encontrados")
     print("=" * 100)
 
 if __name__ == '__main__':

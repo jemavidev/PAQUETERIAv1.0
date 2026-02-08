@@ -286,6 +286,24 @@
         
         try {
             const response = await fetch(`/api/v2/invoices/productos?${params}`);
+            
+            // Verificar si la respuesta es exitosa
+            if (!response.ok) {
+                const errorData = await response.json();
+                
+                // Si no está autenticado, redirigir al login
+                if (response.status === 401 || response.status === 403) {
+                    console.error('❌ No autenticado - redirigiendo al login');
+                    showToast('Sesión expirada. Redirigiendo al login...', 'warning');
+                    setTimeout(() => {
+                        window.location.href = errorData.redirect_url || '/auth/login';
+                    }, 1500);
+                    return;
+                }
+                
+                throw new Error(errorData.detail || 'Error cargando productos');
+            }
+            
             const products = await response.json();
             
             currentProducts = products;
@@ -312,7 +330,8 @@
             }
         } catch (error) {
             console.error('Error cargando productos:', error);
-            showToast('Error cargando productos', 'error');
+            showToast(error.message || 'Error cargando productos', 'error');
+            emptyState.classList.remove('hidden');
         } finally {
             loading.classList.add('hidden');
         }

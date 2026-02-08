@@ -35,7 +35,14 @@ if USE_S3:
         USE_S3 = False
 
 # Configuración de almacenamiento local (fallback)
-LOCAL_STORAGE_PATH = Path("/app/uploads")
+# Usar ruta relativa para desarrollo local, absoluta para Docker
+import os
+if os.path.exists("/app"):
+    LOCAL_STORAGE_PATH = Path("/app/uploads")
+else:
+    # Desarrollo local: usar directorio uploads en el proyecto
+    LOCAL_STORAGE_PATH = Path(__file__).parent.parent.parent.parent / "uploads"
+
 LOCAL_STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
 print(f"📦 Modo de almacenamiento: {'AWS S3' if USE_S3 else 'Local (Fallback)'}")

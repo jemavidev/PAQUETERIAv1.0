@@ -604,12 +604,15 @@ class PDFParserService:
         productos = []
         
         # Buscar sección de productos con más variantes
+        # IMPORTANTE: La sección termina en "Datos Totales" o "Notas Finales"
         patterns = [
-            r'(?:Detalles de [Pp]roductos|Detalle de Ítems|DETALLE DE PRODUCTOS|DETALLE)([\s\S]{0,15000}?)(?:Notas [Ff]inales|Datos [Tt]otales|Observaciones|OBSERVACIONES|Total factura|TOTAL FACTURA|IVA=)',
-            r'(?:DESCRIPCIÓN|DESCRIPCION|Descripción del Producto)([\s\S]{0,15000}?)(?:Notas|NOTAS|Total|TOTAL|IVA=|Observaciones)',
-            r'(?:Item|ITEM|Ítem|ÍTEM)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|IVA=)',
-            r'(?:Código\s+Cantidad|CODIGO\s+CANTIDAD)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|IVA=|Observaciones|DESPUES DE)',
-            r'(?:No\.\s+Código\s+Descripción|Código\s+Descripción\s+U/M)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|Observaciones|OBSERVACIONES)',
+            r'(?:Detalles de [Pp]roductos|Detalle de Ítems|DETALLE DE PRODUCTOS|DETALLE)([\s\S]+?)(?:Notas [Ff]inales|Datos [Tt]otales|TOTAL ITEMS|Observaciones|OBSERVACIONES)',
+            r'(?:DESCRIPCIÓN|DESCRIPCION|Descripción del Producto)([\s\S]+?)(?:Notas [Ff]inales|Datos [Tt]otales|TOTAL ITEMS|Observaciones)',
+            r'(?:Item|ITEM|Ítem|ÍTEM)([\s\S]+?)(?:Notas [Ff]inales|Datos [Tt]otales|TOTAL ITEMS|Subtotal|SUBTOTAL)',
+            r'(?:Código\s+Cantidad|CODIGO\s+CANTIDAD)([\s\S]+?)(?:Notas [Ff]inales|Datos [Tt]otales|TOTAL ITEMS|Subtotal|SUBTOTAL)',
+            r'(?:No\.\s+Código\s+Descripción|Código\s+Descripción\s+U/M)([\s\S]+?)(?:Notas [Ff]inales|Datos [Tt]otales|TOTAL ITEMS|Subtotal|SUBTOTAL)',
+            # Formato POS/Ticket
+            r'(?:# Descripcion de Item|Descripcion de Item)([\s\S]+?)(?:TOTAL ITEMS|T O T A L|DETALLE DE VALORES)',
         ]
         
         productos_section = None
@@ -629,6 +632,16 @@ class PDFParserService:
         i = 0
         while i < len(lines) and len(productos) < 200:
             line = lines[i].strip()
+            
+            # DETENER si encontramos marcadores de fin de tabla
+            if any(marker in line for marker in ['TOTAL ITEMS', 'Datos Totales', 'Notas Finales', 'T O T A L', 'DETALLE DE VALORES', 'INFORMACION TRIBUTARIA']):
+                logger.info(f"Fin de tabla de productos detectado en línea: {line[:50]}")
+                break
+            
+            # Saltar líneas vacías o separadores
+            if not line or line.startswith('---') or line.startswith('==='):
+                i += 1
+                continue
             
             # FORMATO 0: Nuevo formato con descripción entre código y U/M
             # Formato: Nro Código Descripción U/M Cantidad Precio Descuento Recargo IVA_valor IVA_% Total
@@ -704,17 +717,138 @@ class PDFParserService:
                 i += 1
                 continue
             
+            # FORMATO 7: Descripción en línea anterior + Nro Código Descripción? U/M Cantidad Precio
+            # Este formato tiene descripción dividida en 2-3 líneas (antes, en medio, después)
+            # Ejemplo:
+            # "BOLSA DE PAPEL SELVA 33"
+            # "1 631668 94 6,00 $ 840,34 $ 0,00 $ 0,00 $ 957,99 19.00 $ 5.042,04"
+            # "H-20CTG-25 A9 REF:9141"
+            # O también:
+            # "BANDERIN METALIZADO B"
+            # "1 787138 IENVENIDO PF-4-DO (NEO EA 3,00 $ 2.941,18..."
+            # "N PARTY)"
+            # NOTA: Acepta códigos de 1+ dígitos si hay descripción en líneas adyacentes
+            match_formato7 = re.match(
+                r'^(\d{1,3})\s+(\d{1,13})\s+(.+?)\s+(EA|PC|UN|UND|NIU|PK|BX|WSD)\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                line
+            )
+            
+            # Si no coincide, intentar sin descripción en medio
+            if not match_formato7:
+                match_formato7 = re.match(
+                    r'^(\d{1,3})\s+(\d{1,13})\s+(\d{2}|EA|PC|UN|UND|NIU|PK|BX|WSD)\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                    line
+                )
+            
+            if match_formato7:
+                try:
+                    # Verificar si tiene descripción en medio o no
+                    if len(match_formato7.groups()) == 6:
+                        # Tiene descripción en medio
+                        nro = match_formato7.group(1)
+                        codigo = match_formato7.group(2)
+                        descripcion_inline = match_formato7.group(3).strip()
+                        unidad_codigo = match_formato7.group(4)
+                        cantidad_str = match_formato7.group(5).replace(',', '.')
+                        precio_unit_str = match_formato7.group(6).replace('.', '').replace(',', '.')
+                    else:
+                        # Sin descripción en medio
+                        nro = match_formato7.group(1)
+                        codigo = match_formato7.group(2)
+                        descripcion_inline = ""
+                        unidad_codigo = match_formato7.group(3)
+                        cantidad_str = match_formato7.group(4).replace(',', '.')
+                        precio_unit_str = match_formato7.group(5).replace('.', '').replace(',', '.')
+                    
+                    cantidad = float(cantidad_str)
+                    precio_unitario = float(precio_unit_str)
+                    
+                    # Mapear código de unidad
+                    unidad_map = {
+                        '94': 'NIU',
+                        '10': 'PK',
+                        '11': 'BX',
+                        '01': 'UND',
+                    }
+                    unidad = unidad_map.get(unidad_codigo, unidad_codigo)
+                    
+                    # Buscar descripción en línea ANTERIOR
+                    descripcion_anterior = ""
+                    if i > 0:
+                        prev_line = lines[i-1].strip()
+                        if prev_line and not re.match(r'^\d+\s', prev_line) and len(prev_line) > 3:
+                            if not any(keyword in prev_line.upper() for keyword in ['PRECIO', 'CANTIDAD', 'CODIGO', 'DESCRIPCION', 'DETALLE', 'IMPUESTOS']):
+                                descripcion_anterior = prev_line
+                    
+                    # Buscar descripción en línea SIGUIENTE
+                    descripcion_siguiente = ""
+                    if i + 1 < len(lines):
+                        next_line = lines[i+1].strip()
+                        if next_line and not re.match(r'^\d+\s', next_line) and len(next_line) > 3:
+                            if not any(keyword in next_line.upper() for keyword in ['PRECIO', 'CANTIDAD', 'CODIGO', 'DESCRIPCION', 'DETALLE', 'HOJA']):
+                                descripcion_siguiente = next_line
+                    
+                    # Combinar descripciones
+                    descripcion = f"{descripcion_anterior} {descripcion_inline} {descripcion_siguiente}".strip()
+                    if not descripcion:
+                        descripcion = f"Producto {nro}"
+                    
+                    # Limpiar descripción
+                    descripcion = re.sub(r'\s+', ' ', descripcion)
+                    descripcion = descripcion[:250]
+                    
+                    # Buscar IVA y total
+                    valores = re.findall(r'\$\s*([0-9.,]+)', line)
+                    iva_porcentaje = 0.0
+                    total_item = None
+                    
+                    # Buscar IVA porcentaje
+                    iva_match = re.search(r'(\d{1,2})[.,]00\s+\$', line)
+                    if iva_match:
+                        iva_porcentaje = float(iva_match.group(1))
+                    
+                    # Total es el último valor monetario
+                    if valores:
+                        try:
+                            total_str = valores[-1].replace('.', '').replace(',', '.')
+                            total_item = float(total_str)
+                        except:
+                            pass
+                    
+                    if not total_item:
+                        total_item = precio_unitario * cantidad
+                    
+                    productos.append({
+                        'codigo_producto': codigo,
+                        'descripcion': descripcion,
+                        'cantidad': cantidad,
+                        'unidad_medida': unidad,
+                        'precio_unitario': precio_unitario,
+                        'iva_porcentaje': iva_porcentaje,
+                        'total_item': total_item,
+                    })
+                    
+                    logger.info(f"Producto extraido (FORMATO 7 - desc multi-línea): {codigo} - {descripcion[:40]}...")
+                    
+                except Exception as e:
+                    logger.warning(f"Error procesando producto FORMATO 7 linea {i}: {e}")
+                
+                i += 1
+                continue
+            
             # FORMATO 1: CUFE - Línea que comienza con número
             # Formato: Nro [Código] U/M Cantidad Precio...
+            # IMPORTANTE: Solo procesar si tiene código de producto (3+ dígitos)
+            # Soporta unidades: NIU, PK, BX, UND, UN, WSD, EA, PC
             match_producto = re.match(
-                r'^(\d{1,3})\s+(\d{3,13})?\s+(NIU|PK|BX|UND|UN)?\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                r'^(\d{1,3})\s+([A-Z]{0,2}\d{3,13})\s+(NIU|PK|BX|UND|UN|WSD|EA|PC)?\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
                 line
             )
             
             if match_producto:
                 try:
                     nro = match_producto.group(1)
-                    codigo = match_producto.group(2) if match_producto.group(2) else ""
+                    codigo = match_producto.group(2)  # Ahora es obligatorio
                     unidad = match_producto.group(3) if match_producto.group(3) else "NIU"
                     cantidad_str = match_producto.group(4).replace(',', '.')
                     precio_unit_str = match_producto.group(5).replace('.', '').replace(',', '.')
@@ -764,10 +898,6 @@ class PDFParserService:
                     if iva_match:
                         iva_porcentaje = float(iva_match.group(1))
                     
-                    # Si no hay código, usar el número de línea
-                    if not codigo:
-                        codigo = f"ITEM-{nro}"
-                    
                     productos.append({
                         'codigo_producto': codigo,
                         'descripcion': descripcion if descripcion else f"Producto {nro}",
@@ -786,9 +916,10 @@ class PDFParserService:
             # FORMATO 2: CUDE (Documento Equivalente POS)
             # Formato: Nro Código Descripción U/M Cantidad IVA % Precio Fecha
             # Ejemplo: "1 00028475 TABLA NIU | número 6.00 2800.00 2,682.35 19.00 14117.65"
+            # Soporta unidades: NIU, PK, BX, UND, UN, WSD, EA, PC
             else:
                 match_cude = re.match(
-                    r'^(\d{1,3})\s+(\d{3,13})\s+([A-ZÁÉÍÓÚÑ\s\w/\-\.]+?)\s+(NIU|PK|BX|UND|UN)\s*\|\s*\w+\s+([0-9]+[.,][0-9]{2})\s+([0-9.,]+)',
+                    r'^(\d{1,3})\s+([A-Z]{0,2}\d{3,13})\s+([A-ZÁÉÍÓÚÑ\s\w/\-\.]+?)\s+(NIU|PK|BX|UND|UN|WSD|EA|PC)\s*\|\s*\w+\s+([0-9]+[.,][0-9]{2})\s+([0-9.,]+)',
                     line,
                     re.IGNORECASE
                 )
@@ -847,6 +978,199 @@ class PDFParserService:
                         
                     except Exception as e:
                         logger.warning(f"Error procesando producto CUDE linea {i}: {e}")
+                
+                # FORMATO 6: Ticket POS (descripción en una línea, datos en la siguiente)
+            # Formato línea 1: Nro Descripción
+            # Formato línea 2: Referencia Cantidad U.M Precio Total
+            # Ejemplo:
+            # "1 CINTA EMPAQUE 30MX48MM TRANSP TESA"
+            # "29036 6.00 U 1,980 11,880*"
+            if re.match(r'^\d{1,3}\s+[A-ZÁÉÍÓÚÑ]', line) and i + 1 < len(lines):
+                next_line = lines[i+1].strip()
+                # Verificar si la siguiente línea tiene el formato: codigo cantidad unidad precio total
+                match_datos = re.match(
+                    r'^(\d{3,13})\s+([0-9]+[.,][0-9]{2})\s+([A-Z]{1,3})\s+([0-9.,]+)\s+([0-9.,]+)\*?',
+                    next_line
+                )
+                
+                if match_datos:
+                    try:
+                        # Extraer número y descripción de la primera línea
+                        match_desc = re.match(r'^(\d{1,3})\s+(.+)$', line)
+                        if match_desc:
+                            nro = match_desc.group(1)
+                            descripcion = match_desc.group(2).strip()
+                            
+                            # Extraer datos de la segunda línea
+                            codigo = match_datos.group(1)
+                            cantidad_str = match_datos.group(2).replace(',', '.')
+                            unidad = match_datos.group(3)
+                            precio_unit_str = match_datos.group(4).replace('.', '').replace(',', '.')
+                            total_str = match_datos.group(5).replace('.', '').replace(',', '.')
+                            
+                            cantidad = float(cantidad_str)
+                            precio_unitario = float(precio_unit_str)
+                            total_item = float(total_str)
+                            
+                            # Mapear unidades
+                            unidad_map = {
+                                'U': 'NIU',
+                                'PQ': 'PK',
+                                'CJ': 'BX',
+                                'UN': 'UND',
+                            }
+                            unidad = unidad_map.get(unidad, unidad)
+                            
+                            productos.append({
+                                'codigo_producto': codigo,
+                                'descripcion': descripcion[:250],
+                                'cantidad': cantidad,
+                                'unidad_medida': unidad,
+                                'precio_unitario': precio_unitario,
+                                'iva_porcentaje': 0.0,  # Se calculará después si está disponible
+                                'total_item': total_item,
+                            })
+                            
+                            logger.info(f"Producto extraido (FORMATO POS): {codigo} - {descripcion[:40]}...")
+                            
+                            # Saltar la siguiente línea ya que la procesamos
+                            i += 2
+                            continue
+                            
+                    except Exception as e:
+                        logger.warning(f"Error procesando producto FORMATO POS linea {i}: {e}")
+            
+            # FORMATO 5: Sin código de producto (solo número de línea)
+                # Formato: Nro U/M Cantidad Precio...
+                # Ejemplo: "1 94 6,00 $ 750,00 $ 0,00 $ 0,00 $ 4.500,00"
+                # Ejemplo: "2 ALCANCIA GRANDE 94 6,00 $ 1.200,00 $ 0,00 $ 0,00 $ 7.200,00"
+                # Ejemplo: "1 EA 26,00 $ 2.142,86 $ 0,00 $ 0,00 $ 10.585,73 19.00 $ 55.714,36"
+                # Soporta unidades: Código numérico (94, 10) o texto (EA, PC, UN, UND)
+                else:
+                    # Intentar con descripción en la misma línea (más común)
+                    # Patrón: Nro DESCRIPCION U/M Cantidad Precio...
+                    match_formato5_con_desc = re.match(
+                        r'^(\d{1,3})\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s\w/\-\.()]+?)\s+(\d{2}|EA|PC|UN|UND)\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                        line,
+                        re.IGNORECASE
+                    )
+                    
+                    # Intentar sin descripción en la misma línea (menos común)
+                    # Patrón: Nro U/M Cantidad Precio...
+                    match_formato5_sin_desc = None
+                    if not match_formato5_con_desc:
+                        match_formato5_sin_desc = re.match(
+                            r'^(\d{1,3})\s+(\d{2}|EA|PC|UN|UND)\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                            line,
+                            re.IGNORECASE
+                        )
+                    
+                    if match_formato5_con_desc or match_formato5_sin_desc:
+                        try:
+                            if match_formato5_con_desc:
+                                nro = match_formato5_con_desc.group(1)
+                                descripcion_inline = match_formato5_con_desc.group(2).strip()
+                                unidad_codigo = match_formato5_con_desc.group(3)
+                                cantidad_str = match_formato5_con_desc.group(4).replace(',', '.')
+                                precio_unit_str = match_formato5_con_desc.group(5).replace('.', '').replace(',', '.')
+                            else:
+                                nro = match_formato5_sin_desc.group(1)
+                                descripcion_inline = ""
+                                unidad_codigo = match_formato5_sin_desc.group(2)
+                                cantidad_str = match_formato5_sin_desc.group(3).replace(',', '.')
+                                precio_unit_str = match_formato5_sin_desc.group(4).replace('.', '').replace(',', '.')
+                            
+                            cantidad = float(cantidad_str)
+                            precio_unitario = float(precio_unit_str)
+                            
+                            # Mapear código de unidad a nombre
+                            unidad_map = {
+                                '94': 'NIU',
+                                '10': 'PK',
+                                '11': 'BX',
+                                '01': 'UND',
+                                'EA': 'EA',
+                                'PC': 'PC',
+                                'UN': 'UN',
+                                'UND': 'UND',
+                            }
+                            unidad = unidad_map.get(unidad_codigo.upper(), unidad_codigo.upper())
+                            
+                            # Buscar descripción en línea ANTERIOR
+                            descripcion_anterior = ""
+                            if i > 0:
+                                prev_line = lines[i-1].strip()
+                                if prev_line and not re.match(r'^\d+\s', prev_line) and len(prev_line) > 3:
+                                    # Verificar que no sea una línea de encabezado
+                                    if not any(keyword in prev_line.upper() for keyword in ['PRECIO', 'CANTIDAD', 'CODIGO', 'DESCRIPCION', 'DETALLE']):
+                                        descripcion_anterior = prev_line
+                            
+                            # Buscar descripción en línea SIGUIENTE
+                            descripcion_siguiente = ""
+                            if i + 1 < len(lines):
+                                next_line = lines[i+1].strip()
+                                if next_line and not re.match(r'^\d+\s', next_line) and len(next_line) > 3:
+                                    # Verificar que no sea una línea de encabezado
+                                    if not any(keyword in next_line.upper() for keyword in ['PRECIO', 'CANTIDAD', 'CODIGO', 'DESCRIPCION', 'DETALLE']):
+                                        descripcion_siguiente = next_line
+                            
+                            # Combinar descripciones
+                            descripcion_parts = []
+                            if descripcion_anterior:
+                                descripcion_parts.append(descripcion_anterior)
+                            if descripcion_inline:
+                                descripcion_parts.append(descripcion_inline)
+                            if descripcion_siguiente:
+                                descripcion_parts.append(descripcion_siguiente)
+                            
+                            descripcion = ' '.join(descripcion_parts).strip()
+                            
+                            # Limpiar descripción
+                            descripcion = re.sub(r'\s+', ' ', descripcion)
+                            descripcion = descripcion[:250]
+                            
+                            # Si no hay descripción, usar genérico
+                            if not descripcion:
+                                descripcion = f"Producto {nro}"
+                            
+                            # Código generado: ITEM-{nro}
+                            codigo = f"ITEM-{nro}"
+                            
+                            # Buscar IVA y total
+                            valores = re.findall(r'\$\s*([0-9.,]+)', line)
+                            iva_porcentaje = 0.0
+                            total_item = None
+                            
+                            # Buscar IVA porcentaje (número seguido de .00 cerca del final)
+                            iva_match = re.search(r'(\d{1,2})[.,]00\s+\$', line)
+                            if iva_match:
+                                iva_porcentaje = float(iva_match.group(1))
+                            
+                            # Total es el último valor monetario
+                            if valores:
+                                try:
+                                    total_str = valores[-1].replace('.', '').replace(',', '.')
+                                    total_item = float(total_str)
+                                except:
+                                    pass
+                            
+                            if not total_item:
+                                total_item = precio_unitario * cantidad
+                            
+                            productos.append({
+                                'codigo_producto': codigo,
+                                'descripcion': descripcion,
+                                'cantidad': cantidad,
+                                'unidad_medida': unidad,
+                                'precio_unitario': precio_unitario,
+                                'iva_porcentaje': iva_porcentaje,
+                                'total_item': total_item,
+                            })
+                            
+                            logger.info(f"Producto extraido (FORMATO 5 - sin código): {codigo} - {descripcion[:40]}...")
+                            
+                        except Exception as e:
+                            logger.warning(f"Error procesando producto FORMATO 5 linea {i}: {e}")
             
             i += 1
         
