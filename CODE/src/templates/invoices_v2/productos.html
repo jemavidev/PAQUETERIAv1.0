@@ -1,77 +1,59 @@
 {% extends "invoices_v2/layout.html" %}
 
-{% block page_title %}Productos{% endblock %}
+{% block page_title %}PRODUCTOS{% endblock %}
+
+{% block search_bar %}
+<div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 flex-1 lg:max-w-2xl">
+    <!-- Búsqueda -->
+    <div class="relative flex-1">
+        <input id="search"
+                type="text"
+                placeholder="Código, descripción, proveedor... (búsqueda automática)"
+                class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-sm touch-manipulation"
+                autocomplete="off">
+        
+        <!-- Botón limpiar (X) - solo visible cuando hay texto -->
+        <button id="clear-search-btn" 
+                type="button"
+                onclick="clearSearch()"
+                class="hidden absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-gray-100"
+                title="Limpiar búsqueda">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+{% endblock %}
 
 {% block invoice_content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div>
-        <h2 class="text-2xl font-bold text-gray-900">Catálogo de Productos</h2>
-        <p class="text-gray-600 mt-1">Consulta y filtra todos los productos comprados</p>
-    </div>
+<div class="space-y-4 sm:space-y-6">
 
-    <!-- Filtros avanzados -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Producto</label>
-                <input type="text" id="search" placeholder="Descripción o código..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Proveedor</label>
-                <input type="text" id="proveedor" placeholder="Nombre del proveedor..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
-                <input type="date" id="fecha_desde" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
-                <input type="date" id="fecha_hasta" 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    <!-- Tabla de Productos -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="border-b border-gray-100 px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-medium text-gray-900">PRODUCTOS</h2>
+                <div id="totalProductsCount" class="text-sm text-gray-700"></div>
             </div>
         </div>
-        <div class="mt-4 flex justify-between items-center">
-            <button onclick="clearFilters()" class="text-gray-600 hover:text-gray-900">
-                <i class="fas fa-times mr-2"></i>
-                Limpiar filtros
-            </button>
-            <button onclick="loadProducts()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
-                <i class="fas fa-search mr-2"></i>
-                Buscar
-            </button>
-        </div>
-    </div>
 
-    <!-- Resultados -->
-    <div class="bg-white rounded-lg shadow p-4">
-        <div class="flex justify-between items-center mb-4">
-            <p id="results-count" class="text-sm text-gray-600">Cargando productos...</p>
-            <button onclick="exportToCSV()" class="text-papyrus-blue hover:text-blue-800">
-                <i class="fas fa-download mr-2"></i>
-                Exportar CSV
-            </button>
-        </div>
-    </div>
-
-    <!-- Tabla de productos -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <!-- Tabla responsive -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factura</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Factura</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Cantidad</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Variación</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Compras</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="products-tbody" class="bg-white divide-y divide-gray-200">
@@ -79,36 +61,130 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="flex justify-between items-center">
-        <button id="prev-btn" onclick="previousPage()" disabled
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            <i class="fas fa-chevron-left mr-2"></i>
-            Anterior
-        </button>
-        <span id="page-info" class="text-sm text-gray-600">Página 1</span>
-        <button id="next-btn" onclick="nextPage()"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            Siguiente
-            <i class="fas fa-chevron-right ml-2"></i>
-        </button>
+        <!-- Loading state -->
+        <div id="loading" class="hidden text-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-papyrus-blue mx-auto"></div>
+            <p class="mt-4 text-sm text-gray-500">Cargando productos...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="products-empty" class="hidden text-center py-12">
+            <div class="bg-gray-100 rounded-lg p-3 inline-flex mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">No hay productos</h3>
+            <p class="mt-2 text-sm text-gray-500">No se encontraron productos con los filtros aplicados.</p>
+        </div>
+
+        <!-- Paginación -->
+        <div id="pagination-container" class="hidden border-t border-gray-200 px-4 py-3 sm:px-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <!-- Info de página -->
+                <div class="text-sm text-gray-700">
+                    Mostrando <span id="page-start" class="font-medium">0</span> a <span id="page-end" class="font-medium">0</span> de <span id="total-items" class="font-medium">0</span> productos
+                </div>
+                
+                <!-- Controles de paginación -->
+                <div class="flex items-center gap-2">
+                    <!-- Botón Primera página -->
+                    <button id="first-page-btn" 
+                            onclick="goToPage(1)" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Primera página">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botón Anterior -->
+                    <button id="prev-page-btn" 
+                            onclick="previousPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Página anterior">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Números de página -->
+                    <div id="page-numbers" class="flex items-center gap-1">
+                        <!-- Se generarán dinámicamente -->
+                    </div>
+                    
+                    <!-- Botón Siguiente -->
+                    <button id="next-page-btn" 
+                            onclick="nextPage()" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Página siguiente">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botón Última página -->
+                    <button id="last-page-btn" 
+                            onclick="goToPage(totalPages)" 
+                            class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Última página">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Selector de items por página -->
+                    <select id="items-per-page" 
+                            onchange="changeItemsPerPage()" 
+                            class="ml-2 px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-papyrus-blue">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-sm text-gray-600">por página</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Modal de historial -->
-<div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold">Historial de Compras</h3>
-            <button onclick="document.getElementById('history-modal').classList.add('hidden')" 
-                    class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
+<div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full my-8 max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header del modal -->
+        <div class="bg-gradient-to-r from-papyrus-blue to-blue-600 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Historial de Compras</h3>
+                    <p class="text-blue-100 text-sm">Todas las compras de este producto</p>
+                </div>
+            </div>
+            <button onclick="closeHistoryModal()" 
+                    class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
             </button>
         </div>
-        <div id="history-content">
+        
+        <!-- Contenido del modal con scroll -->
+        <div id="history-content" class="flex-1 overflow-y-auto p-6 bg-gray-50">
             <!-- Cargado dinámicamente -->
+        </div>
+        
+        <!-- Footer del modal -->
+        <div class="bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+            <button onclick="closeHistoryModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>
@@ -116,25 +192,94 @@
 
 {% block invoice_scripts %}
 <script>
-    let currentPage = 0;
-    const pageSize = 50;
+    // Variables de paginación
+    let currentPage = 1;
+    let itemsPerPage = 10;
+    let totalPages = 1;
+    let totalItems = 0;
     let currentProducts = [];
+
+    // Variables para debounce
+    let searchTimeout = null;
+    let isSearching = false;
 
     document.addEventListener('DOMContentLoaded', () => {
         loadProducts();
+        
+        // Búsqueda automática mientras escribes (con debounce de 500ms)
+        const searchInput = document.getElementById('search');
+        const clearBtn = document.getElementById('clear-search-btn');
+        
+        // Mostrar/ocultar botón de limpiar según el contenido
+        searchInput.addEventListener('input', () => {
+            // Mostrar/ocultar botón X
+            if (searchInput.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            
+            // Cancelar búsqueda anterior si existe
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Mostrar indicador de búsqueda
+            isSearching = true;
+            searchInput.classList.add('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+            
+            // Esperar 500ms después de que el usuario deje de escribir
+            searchTimeout = setTimeout(() => {
+                currentPage = 1; // Resetear a la primera página
+                loadProducts();
+                isSearching = false;
+                searchInput.classList.remove('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+            }, 500);
+        });
+        
+        // También permitir buscar con Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                currentPage = 1;
+                loadProducts();
+                isSearching = false;
+                searchInput.classList.remove('border-papyrus-blue', 'ring-1', 'ring-papyrus-blue');
+            }
+        });
     });
 
-    async function loadProducts() {
-        const tbody = document.getElementById('products-tbody');
-        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando productos...</td></tr>';
+    // Función para limpiar búsqueda
+    function clearSearch() {
+        const searchInput = document.getElementById('search');
+        const clearBtn = document.getElementById('clear-search-btn');
         
+        searchInput.value = '';
+        clearBtn.classList.add('hidden');
+        currentPage = 1;
+        loadProducts();
+        searchInput.focus();
+    }
+
+    async function loadProducts() {
+        const loading = document.getElementById('loading');
+        const tbody = document.getElementById('products-tbody');
+        const emptyState = document.getElementById('products-empty');
+        const totalCount = document.getElementById('totalProductsCount');
+        const paginationContainer = document.getElementById('pagination-container');
+        
+        loading.classList.remove('hidden');
+        tbody.innerHTML = '';
+        emptyState.classList.add('hidden');
+        paginationContainer.classList.add('hidden');
+        
+        const skip = (currentPage - 1) * itemsPerPage;
         const params = new URLSearchParams({
-            skip: currentPage * pageSize,
-            limit: pageSize,
-            search: document.getElementById('search').value,
-            proveedor: document.getElementById('proveedor').value,
-            fecha_desde: document.getElementById('fecha_desde').value,
-            fecha_hasta: document.getElementById('fecha_hasta').value,
+            skip: skip,
+            limit: itemsPerPage,
+            search: document.getElementById('search').value
         });
         
         try {
@@ -142,55 +287,173 @@
             const products = await response.json();
             
             currentProducts = products;
+            totalItems = products.length; // Nota: el endpoint actual no devuelve total, ajustar si es necesario
             
-            if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center text-gray-500">No se encontraron productos</td></tr>';
-                document.getElementById('results-count').textContent = 'No se encontraron productos';
+            if (products.length === 0 && currentPage === 1) {
+                emptyState.classList.remove('hidden');
+                totalCount.textContent = '';
             } else {
-                tbody.innerHTML = '';
                 products.forEach(product => {
                     tbody.innerHTML += renderProductRow(product);
                 });
                 
-                document.getElementById('results-count').textContent = `Mostrando ${products.length} productos`;
+                // Actualizar info de paginación
+                const pageStart = skip + 1;
+                const pageEnd = skip + products.length;
+                totalCount.textContent = `Mostrando ${pageStart}-${pageEnd} productos`;
+                
+                // Mostrar controles de paginación si hay productos
+                if (products.length > 0) {
+                    updatePaginationControls(pageStart, pageEnd, products.length);
+                    paginationContainer.classList.remove('hidden');
+                }
             }
-            
-            // Actualizar botones de paginación
-            document.getElementById('prev-btn').disabled = currentPage === 0;
-            document.getElementById('next-btn').disabled = products.length < pageSize;
-            document.getElementById('page-info').textContent = `Página ${currentPage + 1}`;
-            
         } catch (error) {
+            console.error('Error cargando productos:', error);
             showToast('Error cargando productos', 'error');
-            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center text-red-500">Error cargando productos</td></tr>';
+        } finally {
+            loading.classList.add('hidden');
         }
     }
 
+    function updatePaginationControls(pageStart, pageEnd, total) {
+        // Actualizar info de página
+        document.getElementById('page-start').textContent = pageStart;
+        document.getElementById('page-end').textContent = pageEnd;
+        document.getElementById('total-items').textContent = total;
+        
+        // Actualizar botones
+        const hasPrevPage = currentPage > 1;
+        const hasNextPage = currentProducts.length >= itemsPerPage;
+        
+        document.getElementById('first-page-btn').disabled = !hasPrevPage;
+        document.getElementById('prev-page-btn').disabled = !hasPrevPage;
+        document.getElementById('next-page-btn').disabled = !hasNextPage;
+        document.getElementById('last-page-btn').disabled = !hasNextPage;
+        
+        // Generar números de página (simplificado)
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = currentPage;
+        pageBtn.className = 'px-3 py-1 border rounded-lg text-sm bg-papyrus-blue text-white border-papyrus-blue';
+        pageNumbers.appendChild(pageBtn);
+    }
+
+    function goToPage(page) {
+        if (page < 1) return;
+        currentPage = page;
+        loadProducts();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function previousPage() {
+        if (currentPage > 1) {
+            goToPage(currentPage - 1);
+        }
+    }
+
+    function nextPage() {
+        if (currentProducts.length >= itemsPerPage) {
+            goToPage(currentPage + 1);
+        }
+    }
+
+    function changeItemsPerPage() {
+        itemsPerPage = parseInt(document.getElementById('items-per-page').value);
+        currentPage = 1;
+        loadProducts();
+    }
+
     function renderProductRow(product) {
+        // Proveedor en mayúsculas
+        const proveedorRaw = product.proveedor_nombre || '-';
+        const proveedor = `<span class="uppercase whitespace-nowrap overflow-hidden text-ellipsis block max-w-xs" title="${proveedorRaw}">${proveedorRaw}</span>`;
+        
+        // Número de factura en una sola línea
+        const numeroFactura = product.numero_factura 
+            ? `<span class="whitespace-nowrap">${product.numero_factura}</span>` 
+            : truncateCufe(product.cufe);
+        
+        // Renderizar variación de precio con indicador visual
+        let variacionHTML = '-';
+        if (product.variacion_tipo && product.variacion_tipo !== 'primera_compra') {
+            const variacion = product.variacion_precio || 0;
+            let iconHTML = '';
+            let colorClass = 'text-gray-600';
+            let bgClass = 'bg-gray-100';
+            
+            if (product.variacion_tipo === 'subio') {
+                iconHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>';
+                colorClass = 'text-red-600';
+                bgClass = 'bg-red-50';
+            } else if (product.variacion_tipo === 'bajo') {
+                iconHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>';
+                colorClass = 'text-green-600';
+                bgClass = 'bg-green-50';
+            } else if (product.variacion_tipo === 'igual') {
+                iconHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"></path></svg>';
+                colorClass = 'text-blue-600';
+                bgClass = 'bg-blue-50';
+            }
+            
+            variacionHTML = `
+                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full ${bgClass} ${colorClass}">
+                    ${iconHTML}
+                    <span class="text-xs font-semibold">${Math.abs(variacion).toFixed(1)}%</span>
+                </div>
+            `;
+        } else if (product.variacion_tipo === 'primera_compra') {
+            variacionHTML = '<span class="text-xs text-gray-500 italic">Primera</span>';
+        }
+        
+        // Renderizar total de compras con badge
+        let comprasHTML = '-';
+        if (product.total_compras_producto) {
+            const count = product.total_compras_producto;
+            let badgeClass = 'bg-gray-100 text-gray-700';
+            if (count >= 10) badgeClass = 'bg-purple-100 text-purple-700';
+            else if (count >= 5) badgeClass = 'bg-blue-100 text-blue-700';
+            
+            comprasHTML = `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badgeClass}">${count}x</span>`;
+        }
+        
         return `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm font-mono text-gray-900">${product.codigo_producto || '-'}</td>
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm font-mono text-gray-900">
+                    <span class="whitespace-nowrap">${product.codigo_producto || '-'}</span>
+                </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                     <div class="max-w-xs truncate" title="${product.descripcion || '-'}">
                         ${product.descripcion || '-'}
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${product.proveedor_nombre || '-'}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">
+                <td class="px-6 py-4 text-sm text-gray-900">${proveedor}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
                     <a href="/invoices/facturas?search=${product.cufe}" class="text-papyrus-blue hover:underline">
-                        ${product.numero_factura || truncateCufe(product.cufe)}
+                        ${numeroFactura}
                     </a>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${formatDate(product.fecha_compra)}</td>
-                <td class="px-6 py-4 text-sm text-right text-gray-900">${product.cantidad || '-'}</td>
-                <td class="px-6 py-4 text-sm text-right text-gray-900">${formatCurrency(product.precio_unitario)}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden lg:table-cell">${formatDate(product.fecha_compra)}</td>
+                <td class="px-6 py-4 text-sm text-right text-gray-900 hidden md:table-cell">${product.cantidad || '-'}</td>
+                <td class="px-6 py-4 text-sm text-right text-gray-900">
+                    <div class="font-medium">${formatCurrency(product.precio_unitario)}</div>
+                    ${product.precio_promedio ? `<div class="text-xs text-gray-500">Prom: ${formatCurrency(product.precio_promedio)}</div>` : ''}
+                </td>
+                <td class="px-6 py-4 text-sm text-right hidden lg:table-cell">${variacionHTML}</td>
+                <td class="px-6 py-4 text-sm text-right hidden xl:table-cell">${comprasHTML}</td>
                 <td class="px-6 py-4 text-sm text-right font-medium text-gray-900">${formatCurrency(product.total_item)}</td>
-                <td class="px-6 py-4 text-sm">
+                <td class="px-6 py-4 text-sm text-center">
                     ${product.codigo_producto ? `
-                        <button onclick="viewHistory('${product.codigo_producto}')" class="text-papyrus-blue hover:text-blue-800" title="Ver historial">
-                            <i class="fas fa-history"></i>
+                        <button onclick="viewHistory('${product.codigo_producto}')" 
+                                class="text-papyrus-blue hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors" 
+                                title="Ver historial">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </button>
-                    ` : ''}
+                    ` : '-'}
                 </td>
             </tr>
         `;
@@ -198,22 +461,7 @@
 
     function clearFilters() {
         document.getElementById('search').value = '';
-        document.getElementById('proveedor').value = '';
-        document.getElementById('fecha_desde').value = '';
-        document.getElementById('fecha_hasta').value = '';
-        currentPage = 0;
-        loadProducts();
-    }
-
-    function previousPage() {
-        if (currentPage > 0) {
-            currentPage--;
-            loadProducts();
-        }
-    }
-
-    function nextPage() {
-        currentPage++;
+        currentPage = 1;
         loadProducts();
     }
 
@@ -222,89 +470,138 @@
             const response = await fetch(`/api/v2/invoices/productos/${codigoProducto}/history`);
             const data = await response.json();
             
+            // Calcular estadísticas
+            const precios = data.historial.map(item => item.producto.precio_unitario).filter(p => p);
+            const precioMin = precios.length > 0 ? Math.min(...precios) : 0;
+            const precioMax = precios.length > 0 ? Math.max(...precios) : 0;
+            const precioPromedio = precios.length > 0 ? precios.reduce((a, b) => a + b, 0) / precios.length : 0;
+            
             const content = document.getElementById('history-content');
             content.innerHTML = `
-                <div class="mb-6">
-                    <h4 class="font-bold text-lg">Código: ${data.codigo_producto}</h4>
-                    <p class="text-gray-600">Total de compras: ${data.total_compras}</p>
+                <!-- Estadísticas generales -->
+                <div class="mb-6 bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Código del Producto</p>
+                            <p class="text-lg font-bold text-gray-900 font-mono">${data.codigo_producto}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Total de Compras</p>
+                            <p class="text-lg font-bold text-papyrus-blue">${data.total_compras}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Precio Promedio</p>
+                            <p class="text-lg font-bold text-green-600">${formatCurrency(precioPromedio)}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rango de Precios</p>
+                            <p class="text-sm text-gray-700">
+                                <span class="text-green-600 font-semibold">${formatCurrency(precioMin)}</span>
+                                <span class="text-gray-400 mx-1">-</span>
+                                <span class="text-red-600 font-semibold">${formatCurrency(precioMax)}</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="space-y-4">
-                    ${data.historial.map(item => `
-                        <div class="border rounded-lg p-4 hover:bg-gray-50">
-                            <div class="grid grid-cols-2 gap-4">
+                <!-- Historial de compras -->
+                <div class="space-y-3">
+                    ${data.historial.map((item, index) => {
+                        // Calcular variación respecto a la compra anterior
+                        let variacionHTML = '';
+                        if (index < data.historial.length - 1) {
+                            const precioActual = item.producto.precio_unitario;
+                            const precioAnterior = data.historial[index + 1].producto.precio_unitario;
+                            if (precioActual && precioAnterior) {
+                                const variacion = ((precioActual - precioAnterior) / precioAnterior) * 100;
+                                let iconHTML = '';
+                                let colorClass = 'text-gray-600';
+                                let bgClass = 'bg-gray-100';
+                                
+                                if (Math.abs(variacion) < 0.5) {
+                                    iconHTML = '→';
+                                    colorClass = 'text-blue-600';
+                                    bgClass = 'bg-blue-50';
+                                } else if (variacion > 0) {
+                                    iconHTML = '↑';
+                                    colorClass = 'text-red-600';
+                                    bgClass = 'bg-red-50';
+                                } else {
+                                    iconHTML = '↓';
+                                    colorClass = 'text-green-600';
+                                    bgClass = 'bg-green-50';
+                                }
+                                
+                                variacionHTML = `
+                                    <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full ${bgClass} ${colorClass} text-xs font-semibold">
+                                        <span>${iconHTML}</span>
+                                        <span>${Math.abs(variacion).toFixed(1)}%</span>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            variacionHTML = '<span class="text-xs text-gray-500 italic">Primera compra</span>';
+                        }
+                        
+                        return `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-papyrus-blue text-white text-sm font-bold">
+                                        ${data.total_compras - index}
+                                    </span>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 uppercase">Fecha</p>
+                                        <p class="text-sm font-medium text-gray-900">${formatDate(item.factura.fecha)}</p>
+                                    </div>
+                                </div>
+                                ${variacionHTML}
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Proveedor</p>
-                                    <p class="font-medium">${item.factura.proveedor}</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">Proveedor</p>
+                                    <p class="font-medium text-gray-900 uppercase">${item.factura.proveedor}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Factura</p>
-                                    <p class="font-medium">${item.factura.numero_factura}</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">Factura</p>
+                                    <p class="font-medium text-gray-900">${item.factura.numero_factura}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Fecha</p>
-                                    <p>${formatDate(item.factura.fecha)}</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">Cantidad</p>
+                                    <p class="text-gray-900">${item.producto.cantidad}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Cantidad</p>
-                                    <p>${item.producto.cantidad}</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">Precio Unitario</p>
+                                    <p class="font-medium text-gray-900">${formatCurrency(item.producto.precio_unitario)}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Precio Unitario</p>
-                                    <p class="font-medium">${formatCurrency(item.producto.precio_unitario)}</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">IVA</p>
+                                    <p class="text-gray-900">${item.producto.iva_porcentaje || 0}%</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-600">Total</p>
+                                    <p class="text-xs font-medium text-gray-500 uppercase">Total</p>
                                     <p class="font-bold text-papyrus-blue">${formatCurrency(item.producto.total_item)}</p>
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <p class="text-sm font-medium text-gray-600">Descripción</p>
-                                <p class="text-sm">${item.producto.descripcion || '-'}</p>
+                            <div class="mt-3 pt-3 border-t border-gray-100">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Descripción</p>
+                                <p class="text-sm text-gray-700">${item.producto.descripcion || '-'}</p>
                             </div>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             `;
             
             document.getElementById('history-modal').classList.remove('hidden');
         } catch (error) {
+            console.error('Error cargando historial:', error);
             showToast('Error cargando historial', 'error');
         }
     }
 
-    function exportToCSV() {
-        if (currentProducts.length === 0) {
-            showToast('No hay productos para exportar', 'error');
-            return;
-        }
-        
-        const headers = ['Código', 'Descripción', 'Proveedor', 'Factura', 'Fecha', 'Cantidad', 'Precio Unitario', 'IVA %', 'Total'];
-        const rows = currentProducts.map(p => [
-            p.codigo_producto || '',
-            p.descripcion || '',
-            p.proveedor_nombre || '',
-            p.numero_factura || '',
-            p.fecha_compra || '',
-            p.cantidad || '',
-            p.precio_unitario || '',
-            p.iva_porcentaje || '',
-            p.total_item || ''
-        ]);
-        
-        let csv = headers.join(',') + '\n';
-        rows.forEach(row => {
-            csv += row.map(cell => `"${cell}"`).join(',') + '\n';
-        });
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `productos_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        
-        showToast('Archivo CSV descargado', 'success');
+    function closeHistoryModal() {
+        document.getElementById('history-modal').classList.add('hidden');
     }
 </script>
 {% endblock %}

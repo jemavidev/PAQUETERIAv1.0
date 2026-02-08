@@ -378,21 +378,58 @@ class InvoiceV2Service:
         # Eliminar productos anteriores (si existen)
         self.db.query(InvoiceProductV2).filter_by(cufe=cufe).delete()
         
-        # Insertar productos
+        # Insertar productos con trazabilidad
         productos = data.get('productos', [])
+        fecha_compra = invoice.fecha_emision.date() if invoice.fecha_emision else None
+        
         for i, prod_data in enumerate(productos):
-            producto = InvoiceProductV2(
-                cufe=cufe,
-                linea_numero=i + 1,
-                codigo_producto=prod_data.get('codigo_producto'),
-                descripcion=prod_data.get('descripcion'),
-                cantidad=prod_data.get('cantidad'),
-                precio_unitario=prod_data.get('precio_unitario'),
-                iva_porcentaje=prod_data.get('iva_porcentaje'),
-                total_item=prod_data.get('total_item'),
-                fecha_compra=invoice.fecha_emision.date() if invoice.fecha_emision else None,
-                datos_raw=prod_data
-            )
+            # Calcular trazabilidad si tenemos código de producto y precio
+            traceability_data = {}
+            codigo_prod = prod_data.get('codigo_producto')
+            precio_unit = prod_data.get('precio_unitario')
+            
+            if codigo_prod and precio_unit and fecha_compra:
+                try:
+                    traceability_data = self.calculate_product_traceability(
+                        codigo_producto=codigo_prod,
+                        precio_actual=Decimal(str(precio_unit)),
+                        fecha_actual=fecha_compra,
+                        proveedor_actual=invoice.proveedor_nombre or invoice.dian_emisor_razon_social
+                    )
+                except Exception as e:
+                    logger.warning(f"No se pudo calcular trazabilidad para {codigo_prod}: {e}")
+            
+            # Crear producto con datos básicos
+            producto_data = {
+                'cufe': cufe,
+                'linea_numero': i + 1,
+                'codigo_producto': codigo_prod,
+                'descripcion': prod_data.get('descripcion'),
+                'cantidad': prod_data.get('cantidad'),
+                'precio_unitario': precio_unit,
+                'iva_porcentaje': prod_data.get('iva_porcentaje'),
+                'total_item': prod_data.get('total_item'),
+                'fecha_compra': fecha_compra,
+                'datos_raw': prod_data
+            }
+            
+            # Agregar campos de trazabilidad solo si existen en el modelo
+            # (para compatibilidad con BD sin migración)
+            if traceability_data and hasattr(InvoiceProductV2, 'proveedor_nombre'):
+                producto_data.update({
+                    'proveedor_nombre': traceability_data.get('proveedor_nombre'),
+                    'precio_anterior': traceability_data.get('precio_anterior'),
+                    'variacion_precio': traceability_data.get('variacion_precio'),
+                    'variacion_tipo': traceability_data.get('variacion_tipo'),
+                    'precio_promedio': traceability_data.get('precio_promedio'),
+                    'precio_minimo_historico': traceability_data.get('precio_minimo_historico'),
+                    'precio_maximo_historico': traceability_data.get('precio_maximo_historico'),
+                    'total_compras_producto': traceability_data.get('total_compras_producto'),
+                    'ultimo_proveedor': traceability_data.get('ultimo_proveedor'),
+                    'dias_desde_ultima_compra': traceability_data.get('dias_desde_ultima_compra')
+                })
+            
+            producto = InvoiceProductV2(**producto_data)
             self.db.add(producto)
         
         self.db.commit()
@@ -468,6 +505,96 @@ class InvoiceV2Service:
             })
         
         return history
+    
+    def calculate_product_traceability(
+        self, 
+        codigo_producto: str, 
+        precio_actual: Decimal, 
+        fecha_actual: date,
+        proveedor_actual: str
+    ) -> Dict[str, Any]:
+        """
+        Calcula datos de trazabilidad para un producto
+        
+        Args:
+            codigo_producto: Código del producto
+            precio_actual: Precio unitario de la compra actual
+            fecha_actual: Fecha de la compra actual
+            proveedor_actual: Nombre del proveedor actual
+            
+        Returns:
+            Dict con campos de trazabilidad calculados
+        """
+        # Buscar compras anteriores del mismo producto (ordenadas por fecha desc)
+        compras_anteriores = self.db.query(InvoiceProductV2).filter(
+            InvoiceProductV2.codigo_producto == codigo_producto,
+            InvoiceProductV2.fecha_compra < fecha_actual
+        ).order_by(InvoiceProductV2.fecha_compra.desc()).all()
+        
+        # Inicializar valores por defecto
+        traceability_data = {
+            'proveedor_nombre': proveedor_actual,
+            'precio_anterior': None,
+            'variacion_precio': None,
+            'variacion_tipo': 'primera_compra',
+            'precio_promedio': precio_actual,
+            'precio_minimo_historico': precio_actual,
+            'precio_maximo_historico': precio_actual,
+            'total_compras_producto': 1,
+            'ultimo_proveedor': None,
+            'dias_desde_ultima_compra': None
+        }
+        
+        if not compras_anteriores:
+            # Primera compra de este producto
+            logger.info(f"Primera compra del producto {codigo_producto}")
+            return traceability_data
+        
+        # Obtener la última compra
+        ultima_compra = compras_anteriores[0]
+        traceability_data['precio_anterior'] = ultima_compra.precio_unitario
+        traceability_data['ultimo_proveedor'] = ultima_compra.proveedor_nombre
+        
+        # Calcular días desde última compra
+        if ultima_compra.fecha_compra:
+            dias = (fecha_actual - ultima_compra.fecha_compra).days
+            traceability_data['dias_desde_ultima_compra'] = dias
+        
+        # Calcular variación de precio
+        if ultima_compra.precio_unitario and precio_actual:
+            precio_ant = float(ultima_compra.precio_unitario)
+            precio_act = float(precio_actual)
+            
+            if precio_ant > 0:
+                variacion = ((precio_act - precio_ant) / precio_ant) * 100
+                traceability_data['variacion_precio'] = round(Decimal(str(variacion)), 2)
+                
+                # Determinar tipo de variación (con tolerancia de 0.5%)
+                if abs(variacion) < 0.5:
+                    traceability_data['variacion_tipo'] = 'igual'
+                elif variacion > 0:
+                    traceability_data['variacion_tipo'] = 'subio'
+                else:
+                    traceability_data['variacion_tipo'] = 'bajo'
+        
+        # Calcular estadísticas históricas
+        precios = [float(c.precio_unitario) for c in compras_anteriores if c.precio_unitario]
+        precios.append(float(precio_actual))
+        
+        if precios:
+            traceability_data['precio_promedio'] = Decimal(str(round(sum(precios) / len(precios), 2)))
+            traceability_data['precio_minimo_historico'] = Decimal(str(min(precios)))
+            traceability_data['precio_maximo_historico'] = Decimal(str(max(precios)))
+        
+        # Total de compras (incluyendo la actual)
+        traceability_data['total_compras_producto'] = len(compras_anteriores) + 1
+        
+        logger.info(f"Trazabilidad calculada para {codigo_producto}: "
+                   f"Compra #{traceability_data['total_compras_producto']}, "
+                   f"Variación: {traceability_data['variacion_tipo']} "
+                   f"({traceability_data['variacion_precio']}%)")
+        
+        return traceability_data
     
     def get_statistics(self) -> Dict[str, Any]:
         """

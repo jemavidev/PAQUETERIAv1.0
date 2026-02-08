@@ -97,6 +97,46 @@ class S3Service:
             print(f"❌ Error inesperado en S3: {str(e)}")
             raise Exception(f"Error uploading to S3: {str(e)}")
 
+    def download_file(self, s3_key: str) -> Optional[bytes]:
+        """
+        Descargar archivo de S3
+
+        Args:
+            s3_key: Key del archivo en S3
+
+        Returns:
+            bytes: Contenido del archivo o None si no existe
+        """
+        try:
+            print(f"📥 Descargando archivo de S3:")
+            print(f"   📦 Bucket: {self.bucket_name}")
+            print(f"   🔑 Key: {s3_key}")
+
+            # Descargar archivo de S3
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+
+            file_content = response['Body'].read()
+            print(f"✅ Archivo descargado exitosamente:")
+            print(f"   📏 Tamaño: {len(file_content)} bytes")
+
+            return file_content
+
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == '404' or error_code == 'NoSuchKey':
+                print(f"⚠️ Archivo no encontrado en S3: {s3_key}")
+                return None
+            else:
+                error_message = e.response['Error']['Message']
+                print(f"❌ Error de S3 - Código: {error_code}, Mensaje: {error_message}")
+                raise Exception(f"Error downloading from S3 ({error_code}): {error_message}")
+        except Exception as e:
+            print(f"❌ Error inesperado descargando de S3: {str(e)}")
+            raise Exception(f"Error downloading from S3: {str(e)}")
+
     def upload_file_legacy(self, file_content: bytes, filename: str, package_id: int, file_type: str = 'reception_image') -> dict:
         """
         Método legacy para compatibilidad - Subir archivo a S3 con generación automática de key

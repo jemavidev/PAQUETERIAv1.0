@@ -167,8 +167,28 @@ class InvoiceProductV2(Base):
     subtotal = Column(Numeric(15, 2), nullable=True)
     total_item = Column(Numeric(15, 2), nullable=True)
     
+    # ===== CAMPOS DE TRAZABILIDAD =====
+    # NOTA: Estos campos requieren ejecutar la migración: alembic upgrade head
+    # Comentados temporalmente para compatibilidad con BD sin migración
+    
+    # Información del proveedor (denormalizado para queries rápidas)
+    # proveedor_nombre = Column(String(255), nullable=True, index=True)
+    
+    # Análisis de precios
+    # precio_anterior = Column(Numeric(15, 2), nullable=True, comment='Precio unitario de la compra anterior')
+    # variacion_precio = Column(Numeric(10, 2), nullable=True, comment='% de variación respecto al precio anterior')
+    # variacion_tipo = Column(String(20), nullable=True, index=True, comment='subio, bajo, igual, primera_compra')
+    # precio_promedio = Column(Numeric(15, 2), nullable=True, comment='Precio promedio histórico')
+    # precio_minimo_historico = Column(Numeric(15, 2), nullable=True, comment='Precio mínimo histórico')
+    # precio_maximo_historico = Column(Numeric(15, 2), nullable=True, comment='Precio máximo histórico')
+    
+    # Estadísticas de compra
+    # total_compras_producto = Column(Integer, default=0, nullable=True, comment='Total de veces comprado')
+    # ultimo_proveedor = Column(String(255), nullable=True, comment='Proveedor de la última compra')
+    # dias_desde_ultima_compra = Column(Integer, nullable=True, comment='Días desde última compra')
+    
     # Metadatos
-    fecha_compra = Column(Date, nullable=True)
+    fecha_compra = Column(Date, nullable=True, index=True)
     datos_raw = Column(JSONB, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     
@@ -180,7 +200,7 @@ class InvoiceProductV2(Base):
     
     def to_dict(self):
         """Convierte el modelo a diccionario"""
-        return {
+        base_dict = {
             'id': self.id,
             'cufe': self.cufe,
             'linea_numero': self.linea_numero,
@@ -196,3 +216,20 @@ class InvoiceProductV2(Base):
             'total_item': float(self.total_item) if self.total_item else None,
             'fecha_compra': self.fecha_compra.isoformat() if self.fecha_compra else None,
         }
+        
+        # Agregar campos de trazabilidad solo si existen (compatibilidad con BD sin migración)
+        if hasattr(self, 'proveedor_nombre'):
+            base_dict.update({
+                'proveedor_nombre': self.proveedor_nombre,
+                'precio_anterior': float(self.precio_anterior) if self.precio_anterior else None,
+                'variacion_precio': float(self.variacion_precio) if self.variacion_precio else None,
+                'variacion_tipo': self.variacion_tipo,
+                'precio_promedio': float(self.precio_promedio) if self.precio_promedio else None,
+                'precio_minimo_historico': float(self.precio_minimo_historico) if self.precio_minimo_historico else None,
+                'precio_maximo_historico': float(self.precio_maximo_historico) if self.precio_maximo_historico else None,
+                'total_compras_producto': self.total_compras_producto,
+                'ultimo_proveedor': self.ultimo_proveedor,
+                'dias_desde_ultima_compra': self.dias_desde_ultima_compra,
+            })
+        
+        return base_dict

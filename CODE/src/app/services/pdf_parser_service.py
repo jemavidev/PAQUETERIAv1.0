@@ -596,49 +596,187 @@ class PDFParserService:
     @staticmethod
     def _extract_productos(text: str) -> List[Dict[str, Any]]:
         """
-        Extrae productos del documento DIAN
-        OPTIMIZADO: Extracción simplificada y rápida
+        Extrae productos del documento DIAN con TODA la información
+        Maneja múltiples formatos:
+        1. CUFE (Factura Electrónica) - descripción en múltiples líneas
+        2. CUDE (Documento Equivalente POS) - formato tabular
         """
         productos = []
         
-        # Buscar sección de productos (limitar búsqueda)
-        match = re.search(r'(?:Detalles de productos|Detalle de Ítems|DETALLE)([\s\S]{0,5000}?)(?:Notas finales|Datos totales|Total|TOTAL)', text, re.IGNORECASE)
-        if not match:
-            # Intentar buscar tabla simple
+        # Buscar sección de productos con más variantes
+        patterns = [
+            r'(?:Detalles de [Pp]roductos|Detalle de Ítems|DETALLE DE PRODUCTOS|DETALLE)([\s\S]{0,15000}?)(?:Notas [Ff]inales|Datos [Tt]otales|Observaciones|OBSERVACIONES|Total factura|TOTAL FACTURA|IVA=)',
+            r'(?:DESCRIPCIÓN|DESCRIPCION|Descripción del Producto)([\s\S]{0,15000}?)(?:Notas|NOTAS|Total|TOTAL|IVA=|Observaciones)',
+            r'(?:Item|ITEM|Ítem|ÍTEM)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|IVA=)',
+            r'(?:Código\s+Cantidad|CODIGO\s+CANTIDAD)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|IVA=|Observaciones|DESPUES DE)',
+            r'(?:No\.\s+Código\s+Descripción|Código\s+Descripción\s+U/M)([\s\S]{0,15000}?)(?:Subtotal|SUBTOTAL|Total|TOTAL|Observaciones|OBSERVACIONES)',
+        ]
+        
+        productos_section = None
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                productos_section = match.group(1)
+                logger.info(f"Seccion de productos encontrada con patron")
+                break
+        
+        if not productos_section:
+            logger.warning("No se encontro seccion de productos en el PDF")
             return productos
         
-        productos_section = match.group(1)
         lines = productos_section.split('\n')
         
-        # Buscar solo códigos EAN/UPC y descripciones básicas
-        for line in lines[:100]:  # Limitar a 100 líneas
-            line = line.strip()
-            if len(line) < 5:
-                continue
+        i = 0
+        while i < len(lines) and len(productos) < 200:
+            line = lines[i].strip()
             
-            # Buscar código de producto (EAN/UPC)
-            codigo_match = re.search(r'\b(\d{13}|\d{12}|\d{8})\b', line)
-            if codigo_match:
-                codigo = codigo_match.group(1)
-                
-                # Extraer descripción (texto después del código)
-                desc = line.replace(codigo, '').strip()
-                desc = re.sub(r'[\d,.$]+', '', desc).strip()  # Quitar números
-                
-                if len(desc) > 5:
+            # FORMATO 1: CUFE - Línea que comienza con número
+            # Formato: Nro [Código] U/M Cantidad Precio...
+            match_producto = re.match(
+                r'^(\d{1,3})\s+(\d{3,13})?\s+(NIU|PK|BX|UND|UN)?\s+([0-9]+[.,][0-9]{2})\s+\$\s*([0-9.,]+)',
+                line
+            )
+            
+            if match_producto:
+                try:
+                    nro = match_producto.group(1)
+                    codigo = match_producto.group(2) if match_producto.group(2) else ""
+                    unidad = match_producto.group(3) if match_producto.group(3) else "NIU"
+                    cantidad_str = match_producto.group(4).replace(',', '.')
+                    precio_unit_str = match_producto.group(5).replace('.', '').replace(',', '.')
+                    
+                    cantidad = float(cantidad_str)
+                    precio_unitario = float(precio_unit_str)
+                    
+                    # Buscar descripción en la línea ANTERIOR
+                    descripcion_parte1 = ""
+                    if i > 0:
+                        prev_line = lines[i-1].strip()
+                        if prev_line and not re.match(r'^\d+\s', prev_line):
+                            descripcion_parte1 = prev_line
+                    
+                    # Buscar descripción adicional al FINAL de la línea actual
+                    descripcion_parte2 = ""
+                    resto = re.split(r'\$\s*[0-9.,]+', line)
+                    if len(resto) > 1:
+                        descripcion_parte2 = resto[-1].strip()
+                    
+                    # Combinar descripciones
+                    descripcion = f"{descripcion_parte1} {descripcion_parte2}".strip()
+                    
+                    # Si no hay descripción, buscar en línea siguiente
+                    if not descripcion and i + 1 < len(lines):
+                        next_line = lines[i+1].strip()
+                        if next_line and not re.match(r'^\d+\s', next_line):
+                            descripcion = next_line
+                    
+                    # Limpiar descripción
+                    descripcion = re.sub(r'\s+', ' ', descripcion)
+                    descripcion = descripcion[:250]
+                    
+                    # Buscar total (último valor monetario)
+                    valores = re.findall(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?)', line)
+                    total_item = None
+                    if valores:
+                        try:
+                            total_str = valores[-1].replace('.', '').replace(',', '.')
+                            total_item = float(total_str)
+                        except:
+                            pass
+                    
+                    # Buscar IVA
+                    iva_porcentaje = 0.0
+                    iva_match = re.search(r'(\d{1,2})[.,]00\s+', line)
+                    if iva_match:
+                        iva_porcentaje = float(iva_match.group(1))
+                    
+                    # Si no hay código, usar el número de línea
+                    if not codigo:
+                        codigo = f"ITEM-{nro}"
+                    
                     productos.append({
                         'codigo_producto': codigo,
-                        'descripcion': desc[:200],  # Limitar longitud
-                        'cantidad': None,
-                        'precio_unitario': None,
-                        'iva_porcentaje': None,
-                        'total_item': None,
+                        'descripcion': descripcion if descripcion else f"Producto {nro}",
+                        'cantidad': cantidad,
+                        'unidad_medida': unidad,
+                        'precio_unitario': precio_unitario,
+                        'iva_porcentaje': iva_porcentaje,
+                        'total_item': total_item if total_item else (precio_unitario * cantidad),
                     })
+                    
+                    logger.info(f"Producto extraido (CUFE): {codigo} - {descripcion[:40]}...")
+                    
+                except Exception as e:
+                    logger.warning(f"Error procesando producto CUFE linea {i}: {e}")
+            
+            # FORMATO 2: CUDE (Documento Equivalente POS)
+            # Formato: Nro Código Descripción U/M Cantidad IVA % Precio Fecha
+            # Ejemplo: "1 00028475 TABLA NIU | número 6.00 2800.00 2,682.35 19.00 14117.65"
+            else:
+                match_cude = re.match(
+                    r'^(\d{1,3})\s+(\d{3,13})\s+([A-ZÁÉÍÓÚÑ\s\w/\-\.]+?)\s+(NIU|PK|BX|UND|UN)\s*\|\s*\w+\s+([0-9]+[.,][0-9]{2})\s+([0-9.,]+)',
+                    line,
+                    re.IGNORECASE
+                )
                 
-                # Limitar a 50 productos
-                if len(productos) >= 50:
-                    break
+                if match_cude:
+                    try:
+                        nro = match_cude.group(1)
+                        codigo = match_cude.group(2)
+                        descripcion = match_cude.group(3).strip()
+                        unidad = match_cude.group(4)
+                        cantidad_str = match_cude.group(5).replace(',', '.')
+                        precio_unit_str = match_cude.group(6).replace('.', '').replace(',', '.')
+                        
+                        cantidad = float(cantidad_str)
+                        precio_unitario = float(precio_unit_str)
+                        
+                        # Buscar descripción adicional en línea siguiente
+                        if i + 1 < len(lines):
+                            next_line = lines[i+1].strip()
+                            if next_line and not re.match(r'^\d+\s', next_line):
+                                descripcion = f"{descripcion} {next_line}".strip()
+                        
+                        # Limpiar descripción
+                        descripcion = re.sub(r'\s+', ' ', descripcion)
+                        descripcion = descripcion[:250]
+                        
+                        # Buscar IVA y total
+                        valores = re.findall(r'([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?)', line)
+                        
+                        iva_porcentaje = 0.0
+                        total_item = None
+                        
+                        if len(valores) >= 4:
+                            # Formato: cantidad precio_unit iva_valor iva_% total
+                            try:
+                                iva_porcentaje = float(valores[-2].replace(',', '.'))
+                                total_str = valores[-1].replace('.', '').replace(',', '.')
+                                total_item = float(total_str)
+                            except:
+                                pass
+                        
+                        if not total_item:
+                            total_item = precio_unitario * cantidad
+                        
+                        productos.append({
+                            'codigo_producto': codigo,
+                            'descripcion': descripcion,
+                            'cantidad': cantidad,
+                            'unidad_medida': unidad,
+                            'precio_unitario': precio_unitario,
+                            'iva_porcentaje': iva_porcentaje,
+                            'total_item': total_item,
+                        })
+                        
+                        logger.info(f"Producto extraido (CUDE): {codigo} - {descripcion[:40]}...")
+                        
+                    except Exception as e:
+                        logger.warning(f"Error procesando producto CUDE linea {i}: {e}")
+            
+            i += 1
         
+        logger.info(f"Total productos extraidos: {len(productos)}")
         return productos
     
     @staticmethod

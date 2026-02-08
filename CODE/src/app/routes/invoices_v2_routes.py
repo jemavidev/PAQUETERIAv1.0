@@ -86,6 +86,17 @@ class ProductResponse(BaseModel):
     proveedor_nombre: Optional[str] = None
     numero_factura: Optional[str] = None
     
+    # Campos de trazabilidad
+    precio_anterior: Optional[float] = None
+    variacion_precio: Optional[float] = None
+    variacion_tipo: Optional[str] = None
+    precio_promedio: Optional[float] = None
+    precio_minimo_historico: Optional[float] = None
+    precio_maximo_historico: Optional[float] = None
+    total_compras_producto: Optional[int] = None
+    ultimo_proveedor: Optional[str] = None
+    dias_desde_ultima_compra: Optional[int] = None
+    
     class Config:
         from_attributes = True
 
