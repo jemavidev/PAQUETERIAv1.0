@@ -101,6 +101,14 @@ class ProductResponse(BaseModel):
         from_attributes = True
 
 
+class ProductListResponse(BaseModel):
+    items: List[ProductResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class StatisticsResponse(BaseModel):
     total_facturas: int
     facturas_completas: int
@@ -474,7 +482,7 @@ def get_cufe_full_data(cufe: str, db: Session = Depends(get_db)):
 
 # ===== TAB 3: PRODUCTOS =====
 
-@router.get("/productos", response_model=List[ProductResponse])
+@router.get("/productos")
 def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
@@ -486,47 +494,143 @@ def list_products(
     db: Session = Depends(get_db)
 ):
     """
-    TAB PRODUCTOS: Lista todos los productos con filtros avanzados
+    TAB PRODUCTOS: Lista todos los productos con filtros avanzados y paginación
     """
-    # Convertir strings vacías a None y parsear fechas
-    search = search if search and search.strip() else None
-    codigo_producto = codigo_producto if codigo_producto and codigo_producto.strip() else None
-    proveedor = proveedor if proveedor and proveedor.strip() else None
+    try:
+        from sqlalchemy import or_
+        from sqlalchemy.orm import joinedload
+        from ..models.invoice_v2 import InvoiceProductV2, InvoiceV2
+        from fastapi.responses import JSONResponse
+        
+        logger.info(f"📦 Listando productos: skip={skip}, limit={limit}, search={search}")
+        
+        # Convertir strings vacías a None y parsear fechas
+        search = search if search and search.strip() else None
+        codigo_producto = codigo_producto if codigo_producto and codigo_producto.strip() else None
+        proveedor = proveedor if proveedor and proveedor.strip() else None
+        
+        fecha_desde_parsed = None
+        if fecha_desde and fecha_desde.strip():
+            try:
+                fecha_desde_parsed = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        fecha_hasta_parsed = None
+        if fecha_hasta and fecha_hasta.strip():
+            try:
+                fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        fecha_hasta_parsed = None
+        if fecha_hasta and fecha_hasta.strip():
+            try:
+                fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        # Construir query base con eager loading de la relación factura
+        query = db.query(InvoiceProductV2).join(InvoiceV2, InvoiceProductV2.cufe == InvoiceV2.cufe).options(joinedload(InvoiceProductV2.factura))
+        
+        # Aplicar filtros
+        if search:
+            query = query.filter(
+                or_(
+                    InvoiceProductV2.descripcion.ilike(f'%{search}%'),
+                    InvoiceProductV2.codigo_producto.ilike(f'%{search}%'),
+                    InvoiceProductV2.codigo_interno.ilike(f'%{search}%')
+                )
+            )
+        
+        if codigo_producto:
+            query = query.filter(InvoiceProductV2.codigo_producto == codigo_producto)
+        
+        if fecha_desde_parsed:
+            query = query.filter(InvoiceProductV2.fecha_compra >= fecha_desde_parsed)
+        
+        if fecha_hasta_parsed:
+            query = query.filter(InvoiceProductV2.fecha_compra <= fecha_hasta_parsed)
+        
+        if proveedor:
+            query = query.filter(InvoiceV2.proveedor_nombre.ilike(f'%{proveedor}%'))
+        
+        # Contar total
+        total = query.count()
+        
+        # Obtener items paginados
+        productos = query.order_by(InvoiceProductV2.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Enriquecer con datos de la factura
+        result = []
+        for prod in productos:
+            try:
+                prod_dict = {
+                    "id": prod.id,
+                    "cufe": prod.cufe,
+                    "linea_numero": prod.linea_numero,
+                    "codigo_producto": prod.codigo_producto,
+                    "codigo_interno": prod.codigo_interno,
+                    "descripcion": prod.descripcion,
+                    "cantidad": float(prod.cantidad) if prod.cantidad else None,
+                    "unidad_medida": prod.unidad_medida,
+                    "precio_unitario": float(prod.precio_unitario) if prod.precio_unitario else None,
+                    "iva_porcentaje": float(prod.iva_porcentaje) if prod.iva_porcentaje else None,
+                    "iva_valor": float(prod.iva_valor) if prod.iva_valor else None,
+                    "subtotal": float(prod.subtotal) if prod.subtotal else None,
+                    "total_item": float(prod.total_item) if prod.total_item else None,
+                    "fecha_compra": prod.fecha_compra.isoformat() if prod.fecha_compra else None,
+                    "proveedor_nombre": prod.factura.proveedor_nombre if prod.factura else None,
+                    "numero_factura": prod.factura.numero_factura if prod.factura else None,
+                    # Campos de trazabilidad (usar getattr para evitar errores si no existen)
+                    "precio_anterior": float(getattr(prod, 'precio_anterior', None)) if getattr(prod, 'precio_anterior', None) else None,
+                    "variacion_precio": float(getattr(prod, 'variacion_precio', None)) if getattr(prod, 'variacion_precio', None) else None,
+                    "variacion_tipo": getattr(prod, 'variacion_tipo', None),
+                    "precio_promedio": float(getattr(prod, 'precio_promedio', None)) if getattr(prod, 'precio_promedio', None) else None,
+                    "precio_minimo_historico": float(getattr(prod, 'precio_minimo_historico', None)) if getattr(prod, 'precio_minimo_historico', None) else None,
+                    "precio_maximo_historico": float(getattr(prod, 'precio_maximo_historico', None)) if getattr(prod, 'precio_maximo_historico', None) else None,
+                    "total_compras_producto": getattr(prod, 'total_compras_producto', None),
+                    "ultimo_proveedor": getattr(prod, 'ultimo_proveedor', None),
+                    "dias_desde_ultima_compra": getattr(prod, 'dias_desde_ultima_compra', None),
+                }
+                result.append(prod_dict)
+            except Exception as e:
+                logger.error(f"❌ Error procesando producto {prod.id}: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                # Continuar con el siguiente producto
+                continue
+        
+        # Calcular páginas
+        page = (skip // limit) + 1
+        total_pages = (total + limit - 1) // limit
+        
+        # Retornar explícitamente como JSON
+        response_data = {
+            "items": result,
+            "total": total,
+            "page": page,
+            "page_size": limit,
+            "total_pages": total_pages
+        }
+        
+        logger.info(f"✅ Retornando {len(result)} productos (total: {total}, página: {page}/{total_pages})")
+        
+        return JSONResponse(
+            content=response_data,
+            headers={
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache, no-store, must-revalidate"
+            }
+        )
     
-    fecha_desde_parsed = None
-    if fecha_desde and fecha_desde.strip():
-        try:
-            fecha_desde_parsed = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
-        except ValueError:
-            pass
-    
-    fecha_hasta_parsed = None
-    if fecha_hasta and fecha_hasta.strip():
-        try:
-            fecha_hasta_parsed = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
-        except ValueError:
-            pass
-    
-    service = InvoiceV2Service(db)
-    productos = service.list_products(
-        skip=skip,
-        limit=limit,
-        search=search,
-        codigo_producto=codigo_producto,
-        fecha_desde=fecha_desde_parsed,
-        fecha_hasta=fecha_hasta_parsed,
-        proveedor=proveedor
-    )
-    
-    # Enriquecer con datos de la factura
-    result = []
-    for prod in productos:
-        prod_dict = prod.to_dict()
-        prod_dict['proveedor_nombre'] = prod.factura.proveedor_nombre
-        prod_dict['numero_factura'] = prod.factura.numero_factura
-        result.append(ProductResponse(**prod_dict))
-    
-    return result
+    except Exception as e:
+        logger.error(f"❌ Error en endpoint /productos: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al listar productos: {str(e)}"
+        )
 
 
 @router.get("/productos/{codigo_producto}/history")

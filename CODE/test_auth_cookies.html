@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth Cookies</title>
+</head>
+<body>
+    <h1>Test de Autenticación</h1>
+    <button onclick="testAuth()">Probar API Productos</button>
+    <button onclick="testAuthWithCredentials()">Probar con credentials</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAuth() {
+            const result = document.getElementById('result');
+            result.textContent = 'Probando sin credentials...';
+            
+            try {
+                const response = await fetch('/api/v2/invoices/productos?limit=5');
+                const data = await response.json();
+                result.textContent = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testAuthWithCredentials() {
+            const result = document.getElementById('result');
+            result.textContent = 'Probando CON credentials...';
+            
+            try {
+                const response = await fetch('/api/v2/invoices/productos?limit=5', {
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                result.textContent = `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Mostrar cookies (solo las no-httponly)
+        console.log('Cookies visibles:', document.cookie);
+    </script>
+</body>
+</html>
