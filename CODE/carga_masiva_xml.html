@@ -1,0 +1,302 @@
+# ✅ FIX APLICADO: Carga de Archivos XML
+
+## 🔧 PROBLEMA RESUELTO
+
+El error "No se pudo extraer CUFE" al cargar archivos XML ha sido corregido.
+
+**Causa**: El sistema intentaba extraer el CUFE del contenido del archivo XML, pero el CUFE está en el nombre del archivo.
+
+**Solución**: Ahora el sistema detecta automáticamente:
+- **XML**: Usa el nombre del archivo como CUFE
+- **PDF**: Extrae el CUFE del contenido
+
+---
+
+## 🚀 CÓMO CARGAR LOS ARCHIVOS XML
+
+### Opción 1: Desde el navegador (RECOMENDADO)
+
+1. **Recargar la página** para obtener el código actualizado:
+   ```
+   http://localhost:8000/invoices/cufe
+   ```
+   Presiona Ctrl+F5 para forzar recarga
+
+2. **Click en el botón de carga** (icono de nube ☁️)
+
+3. **Seleccionar archivos XML**:
+   - Navega a: `CUFE/CUFE-XML/`
+   - Selecciona todos los archivos .xml (Ctrl+A)
+   - Click en "Abrir"
+
+4. **Procesar**:
+   - Click en "Procesar archivos"
+   - Espera 10-15 minutos
+   - Revisa el resumen
+
+---
+
+### Opción 2: Interfaz de carga masiva
+
+He creado una interfaz similar a la de PDFs para los XMLs:
+
+<function_calls>
+<invoke name="fsWrite">
+<parameter name="path">CODE/carga_masiva_xml.html html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga Masiva de Archivos XML DIAN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Carga Masiva de Archivos XML DIAN</h1>
+            <p class="text-gray-600 mb-6">Selecciona múltiples archivos XML para asociar a las facturas</p>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <span class="text-blue-600 text-xl">ℹ️</span>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-semibold mb-1">Importante:</p>
+                        <p>El nombre del archivo XML debe ser el CUFE (96 caracteres hexadecimales).</p>
+                        <p>Ejemplo: <code class="bg-blue-100 px-1 rounded">a1b2c3d4...xyz.xml</code></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Zona de carga -->
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-6 hover:border-green-500 transition-colors">
+                <input type="file" id="fileInput" accept=".xml" multiple class="hidden">
+                <button onclick="document.getElementById('fileInput').click()" 
+                        class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    📁 Seleccionar archivos XML
+                </button>
+                <p class="text-sm text-gray-500 mt-4">Puedes seleccionar múltiples archivos a la vez</p>
+            </div>
+            
+            <!-- Lista de archivos -->
+            <div id="fileList" class="hidden mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-900">Archivos seleccionados: <span id="fileCount">0</span></h3>
+                    <button onclick="clearFiles()" class="text-sm text-red-600 hover:text-red-800">Limpiar</button>
+                </div>
+                <div id="fileContainer" class="max-h-64 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-2">
+                </div>
+            </div>
+            
+            <!-- Botón de carga -->
+            <button id="uploadBtn" onclick="uploadFiles()" disabled
+                    class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                ⬆️ Cargar <span id="uploadCount">0</span> archivos XML
+            </button>
+            
+            <!-- Progreso -->
+            <div id="progressContainer" class="hidden mt-6">
+                <div class="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Progreso</span>
+                    <span id="progressText">0 / 0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div id="progressBar" class="bg-green-500 h-4 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="progressDetails" class="mt-3 text-sm text-gray-600">
+                    <div class="flex justify-between">
+                        <span>✅ Exitosos: <span id="successCount">0</span></span>
+                        <span>❌ Fallidos: <span id="failCount">0</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resultados -->
+            <div id="resultsContainer" class="hidden mt-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Resultados</h3>
+                <div id="resultsContent" class="max-h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50 space-y-2">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            selectedFiles = Array.from(e.target.files);
+            displayFiles();
+        });
+        
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            const fileContainer = document.getElementById('fileContainer');
+            const fileCount = document.getElementById('fileCount');
+            const uploadCount = document.getElementById('uploadCount');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
+                uploadBtn.disabled = true;
+                return;
+            }
+            
+            fileList.classList.remove('hidden');
+            fileCount.textContent = selectedFiles.length;
+            uploadCount.textContent = selectedFiles.length;
+            uploadBtn.disabled = false;
+            
+            fileContainer.innerHTML = selectedFiles.map((file, index) => {
+                const cufe = file.name.replace(/\.xml$/i, '');
+                const isValid = cufe.length === 96 && /^[0-9a-fA-F]{96}$/.test(cufe);
+                const statusIcon = isValid ? '✅' : '⚠️';
+                const statusColor = isValid ? 'text-green-600' : 'text-orange-600';
+                
+                return `
+                    <div class="flex items-center justify-between p-2 bg-white rounded border">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="${statusColor}">${statusIcon}</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm text-gray-900 truncate">${file.name}</div>
+                                <div class="text-xs text-gray-500">CUFE: ${cufe.substring(0, 20)}...</div>
+                            </div>
+                            <span class="text-xs text-gray-500">${(file.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                        <button onclick="removeFile(${index})" class="ml-2 text-gray-400 hover:text-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+        }
+        
+        function clearFiles() {
+            selectedFiles = [];
+            document.getElementById('fileInput').value = '';
+            displayFiles();
+        }
+        
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const successCount = document.getElementById('successCount');
+            const failCount = document.getElementById('failCount');
+            
+            uploadBtn.disabled = true;
+            progressContainer.classList.remove('hidden');
+            resultsContainer.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+            
+            let completed = 0;
+            let successful = 0;
+            let failed = 0;
+            
+            for (const file of selectedFiles) {
+                // Extraer CUFE del nombre del archivo
+                const cufe = file.name.replace(/\.xml$/i, '');
+                
+                // Validar CUFE
+                if (cufe.length !== 96 || !/^[0-9a-fA-F]{96}$/.test(cufe)) {
+                    completed++;
+                    failed++;
+                    resultsContent.innerHTML += `
+                        <div class="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded">
+                            <span class="text-red-600 font-bold">✗</span>
+                            <div class="flex-1 text-sm">
+                                <div class="font-medium text-gray-900">${file.name}</div>
+                                <div class="text-red-600">Nombre de archivo no es un CUFE válido</div>
+                            </div>
+                        </div>
+                    `;
+                    continue;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch(`/api/v2/invoices/cufe/${cufe}/upload-dian`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    completed++;
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        successful++;
+                        
+                        const proveedor = data.dian_emisor_razon_social || 'N/A';
+                        const numero = data.numero_factura || 'N/A';
+                        
+                        resultsContent.innerHTML += `
+                            <div class="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                                <span class="text-green-600 font-bold">✓</span>
+                                <div class="flex-1 text-sm">
+                                    <div class="font-medium text-gray-900">${file.name}</div>
+                                    <div class="text-gray-600">${proveedor} | ${numero}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        failed++;
+                        const error = await response.json();
+                        const errorMsg = error.detail || `HTTP ${response.status}`;
+                        
+                        resultsContent.innerHTML += `
+                            <div class="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded">
+                                <span class="text-red-600 font-bold">✗</span>
+                                <div class="flex-1 text-sm">
+                                    <div class="font-medium text-gray-900">${file.name}</div>
+                                    <div class="text-red-600">${errorMsg}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    completed++;
+                    failed++;
+                    
+                    resultsContent.innerHTML += `
+                        <div class="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded">
+                            <span class="text-red-600 font-bold">✗</span>
+                            <div class="flex-1 text-sm">
+                                <div class="font-medium text-gray-900">${file.name}</div>
+                                <div class="text-red-600">${error.message}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Actualizar progreso
+                const progress = (completed / selectedFiles.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${completed} / ${selectedFiles.length}`;
+                successCount.textContent = successful;
+                failCount.textContent = failed;
+                
+                resultsContent.scrollTop = resultsContent.scrollHeight;
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '✅ Carga completada - Cargar más archivos';
+            
+            alert(`Carga completada!\n\n✅ Exitosos: ${successful}\n❌ Fallidos: ${failed}\n📊 Total: ${selectedFiles.length}`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+═══════════════════════════════════════════════════════════
+  CÓMO CARGAR LOS 183 PDFs - INSTRUCCIONES SIMPLES
+═══════════════════════════════════════════════════════════
+
+✅ ARCHIVOS LISTOS EN:
+   CODE/uploads/facturas_para_cargar/
+   (183 archivos PDF)
+
+───────────────────────────────────────────────────────────
+
+🚀 OPCIÓN MÁS FÁCIL:
+
+1. Abre en tu navegador:
+   
+   file:///home/stk/Documents/GIT/PAQUETEX v1.0/CODE/carga_masiva_facturas.html
+
+2. Click en "📁 Seleccionar PDFs"
+
+3. Navega a: CODE/uploads/facturas_para_cargar/
+
+4. Selecciona TODOS los archivos (Ctrl+A)
+
+5. Click en "Abrir"
+
+6. Click en "⬆️ Cargar 183 archivos"
+
+7. Espera 10-15 minutos
+
+8. ¡Listo! Revisa el resumen
+
+───────────────────────────────────────────────────────────
+
+🌐 ALTERNATIVA (Interfaz web):
+
+1. Abre: http://localhost:8000/invoices/facturas
+
+2. Click en botón "+" (Cargar factura)
+
+3. Selecciona múltiples PDFs de:
+   CODE/uploads/facturas_para_cargar/
+
+4. Carga en lotes de 10-20 archivos
+
+5. Repite hasta completar todos
+
+───────────────────────────────────────────────────────────
+
+⏱️  TIEMPO: 10-15 minutos
+
+📊 RESULTADO: 183 facturas en el sistema
+
+🎯 SIGUIENTE: Cargar archivos XML DIAN en tab CUFE
+
+───────────────────────────────────────────────────────────
+
+¿PROBLEMAS?
+- Ver: INSTRUCCIONES_CARGA_MANUAL.md
+- O: RESUMEN_CARGA_PDFS.md
+
+═══════════════════════════════════════════════════════════
