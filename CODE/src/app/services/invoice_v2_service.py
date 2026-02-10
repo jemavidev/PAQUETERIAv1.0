@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
 from datetime import datetime, date
 from decimal import Decimal
+from pathlib import Path
 import logging
 
 from ..models.invoice_v2 import InvoiceV2, InvoiceProductV2
@@ -279,6 +280,159 @@ class InvoiceV2Service:
     
     # ===== TAB CUFE =====
     
+    def process_xml_document(self, cufe: str, xml_path: str, file_obj=None) -> InvoiceV2:
+        """
+        Procesa archivo XML de la DIAN y actualiza la factura con TODOS los datos
+        XML es la fuente de verdad (100% confiable)
+        """
+        # Verificar que la factura existe
+        invoice = self.get_invoice_by_cufe(cufe)
+        if not invoice:
+            raise ValueError(f'Factura no encontrada: {cufe}')
+        
+        # Parsear documento XML usando XMLParserDIAN
+        from app.services.xml_parser_service import XMLParserDIAN
+        
+        data = XMLParserDIAN.parse_xml(xml_path)
+        
+        if not data:
+            raise ValueError('No se pudo parsear el archivo XML')
+        
+        # Validar que el CUFE coincide
+        if data.get('cufe') and data['cufe'] != cufe:
+            raise ValueError(f'El CUFE del archivo XML no coincide con la factura')
+        
+        # Subir archivo a S3 (opcional)
+        archivo_url = None
+        archivo_s3_key = None
+        if file_obj and self.s3_service:
+            try:
+                # Leer el contenido del archivo como bytes
+                file_content = file_obj.read()
+                file_obj.seek(0)  # Resetear el puntero por si se necesita después
+                
+                s3_key = f"invoices/dian/{cufe}.xml"
+                archivo_url = self.s3_service.upload_file(file_content, s3_key, content_type='application/xml')
+                archivo_s3_key = s3_key
+                logger.info(f"✅ Archivo XML subido a S3: {s3_key}")
+            except Exception as e:
+                logger.warning(f"No se pudo subir archivo XML a S3: {e}")
+        
+        # Actualizar factura con datos XML
+        invoice.archivo_dian_url = archivo_url
+        invoice.archivo_dian_s3_key = archivo_s3_key
+        invoice.dian_validado = True
+        invoice.dian_fecha_validacion = datetime.now()
+        invoice.dian_tipo_documento = data.get('tipo_factura')
+        invoice.dian_numero_documento = data.get('numero_factura')
+        
+        # Actualizar fecha de emisión desde XML (fuente de verdad)
+        if data.get('fecha_emision'):
+            # Convertir string a datetime si es necesario
+            fecha_str = data.get('fecha_emision')
+            if isinstance(fecha_str, str):
+                from datetime import datetime as dt
+                invoice.fecha_emision = dt.strptime(fecha_str, '%Y-%m-%d')
+            else:
+                invoice.fecha_emision = fecha_str
+            logger.info(f"✅ Fecha actualizada desde XML: {invoice.fecha_emision}")
+        
+        # Actualizar número de factura
+        if data.get('numero_factura'):
+            invoice.numero_factura = data.get('numero_factura')
+        
+        # Emisor
+        emisor = data.get('emisor', {})
+        invoice.dian_emisor_razon_social = emisor.get('razon_social')
+        invoice.dian_emisor_nit = emisor.get('nit')
+        invoice.dian_emisor_regimen_fiscal = emisor.get('regimen_fiscal')
+        invoice.dian_emisor_direccion = emisor.get('direccion')
+        invoice.dian_emisor_telefono = emisor.get('telefono')
+        invoice.dian_emisor_email = emisor.get('email')
+        
+        # Cliente/Adquiriente
+        cliente = data.get('cliente', {})
+        invoice.dian_adquiriente_razon_social = cliente.get('razon_social')
+        invoice.dian_adquiriente_nit = cliente.get('nit')
+        
+        # Condiciones comerciales
+        invoice.dian_forma_pago = data.get('forma_pago')
+        invoice.dian_moneda = data.get('moneda', 'COP')
+        
+        # Totales (estructura XML)
+        totales = data.get('totales', {})
+        invoice.dian_subtotal = totales.get('subtotal')
+        invoice.dian_total_iva = totales.get('total_impuestos')
+        invoice.dian_total_neto = totales.get('total_pagar')
+        
+        # Guardar metadata
+        invoice.dian_datos_raw = {
+            'fuente': 'XML',
+            'archivo_xml': Path(xml_path).name,
+            'fecha_procesamiento': datetime.now().isoformat()
+        }
+        
+        # Actualizar estado
+        invoice.estado = 'completo'
+        invoice.updated_at = datetime.now()
+        
+        # Eliminar productos anteriores (si existen)
+        self.db.query(InvoiceProductV2).filter_by(cufe=cufe).delete()
+        
+        # Insertar productos con trazabilidad
+        productos = data.get('productos', [])
+        fecha_compra = invoice.fecha_emision.date() if invoice.fecha_emision else None
+        
+        for i, prod_data in enumerate(productos):
+            # Calcular trazabilidad si tenemos código de producto y precio
+            traceability_data = {}
+            codigo_prod = prod_data.get('codigo_producto')
+            precio_unit = prod_data.get('precio_unitario')
+            
+            if codigo_prod and precio_unit and fecha_compra:
+                try:
+                    traceability_data = self.calculate_product_traceability(
+                        codigo_producto=codigo_prod,
+                        precio_actual=Decimal(str(precio_unit)),
+                        fecha_actual=fecha_compra,
+                        proveedor_actual=invoice.proveedor_nombre or invoice.dian_emisor_razon_social
+                    )
+                except Exception as e:
+                    logger.warning(f"No se pudo calcular trazabilidad para {codigo_prod}: {e}")
+            
+            # Crear producto
+            product = InvoiceProductV2(
+                cufe=cufe,
+                linea=i + 1,
+                codigo_producto=prod_data.get('codigo_producto'),
+                descripcion=prod_data.get('descripcion'),
+                cantidad=prod_data.get('cantidad'),
+                unidad_medida=prod_data.get('unidad_medida'),
+                precio_unitario=Decimal(str(prod_data.get('precio_unitario', 0))),
+                iva_porcentaje=Decimal(str(prod_data.get('iva_porcentaje', 0))),
+                iva_valor=Decimal(str(prod_data.get('iva_valor', 0))),
+                total_item=Decimal(str(prod_data.get('total_item', 0))),
+                # Trazabilidad
+                precio_promedio_historico=traceability_data.get('precio_promedio'),
+                precio_minimo_historico=traceability_data.get('precio_minimo'),
+                precio_maximo_historico=traceability_data.get('precio_maximo'),
+                variacion_precio_porcentaje=traceability_data.get('variacion_porcentaje'),
+                total_compras_historicas=traceability_data.get('total_compras'),
+                proveedores_alternativos=traceability_data.get('proveedores_alternativos'),
+                ultima_compra_fecha=traceability_data.get('ultima_compra_fecha'),
+                ultima_compra_precio=traceability_data.get('ultima_compra_precio'),
+                created_at=datetime.now()
+            )
+            self.db.add(product)
+        
+        # Commit
+        self.db.commit()
+        self.db.refresh(invoice)
+        
+        logger.info(f"✅ Factura actualizada desde XML: {cufe[:20]}... - {len(productos)} productos")
+        
+        return invoice
+    
     def process_dian_document(self, cufe: str, pdf_path: str, file_obj=None) -> InvoiceV2:
         """
         Procesa el archivo DIAN y actualiza la factura con TODOS los datos
@@ -351,12 +505,11 @@ class InvoiceV2Service:
         invoice.dian_medio_pago = data.get('medio_pago')
         invoice.dian_moneda = data.get('moneda', 'COP')
         
-        # Totales
+        # Totales (estructura actualizada)
         totales = data.get('totales', {})
         invoice.dian_subtotal = totales.get('subtotal')
-        invoice.dian_total_bruto = totales.get('total_bruto')
-        invoice.dian_total_iva = totales.get('total_iva')
-        invoice.dian_total_neto = totales.get('total_neto')
+        invoice.dian_total_iva = totales.get('total_impuestos')  # Actualizado
+        invoice.dian_total_neto = totales.get('total_pagar')     # Actualizado
         
         # Información técnica
         invoice.dian_proveedor_tecnologico = data.get('proveedor_tecnologico')
