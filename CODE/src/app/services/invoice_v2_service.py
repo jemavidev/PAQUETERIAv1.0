@@ -403,7 +403,7 @@ class InvoiceV2Service:
             # Crear producto
             product = InvoiceProductV2(
                 cufe=cufe,
-                linea=i + 1,
+                linea_numero=i + 1,
                 codigo_producto=prod_data.get('codigo_producto'),
                 descripcion=prod_data.get('descripcion'),
                 cantidad=prod_data.get('cantidad'),
