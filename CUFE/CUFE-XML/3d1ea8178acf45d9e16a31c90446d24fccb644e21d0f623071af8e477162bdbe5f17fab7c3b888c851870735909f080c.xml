@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:xades141="http://uri.etsi.org/01903/v1.4.1#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2     http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <sts:DianExtensions>
+          <sts:InvoiceControl>
+            <sts:InvoiceAuthorization>18764083719983</sts:InvoiceAuthorization>
+            <sts:AuthorizationPeriod>
+              <cbc:StartDate>2024-11-20</cbc:StartDate>
+              <cbc:EndDate>2026-11-20</cbc:EndDate>
+            </sts:AuthorizationPeriod>
+            <sts:AuthorizedInvoices>
+              <sts:Prefix>PF</sts:Prefix>
+              <sts:From>50001</sts:From>
+              <sts:To>100000</sts:To>
+            </sts:AuthorizedInvoices>
+          </sts:InvoiceControl>
+          <sts:InvoiceSource>
+            <cbc:IdentificationCode listAgencyID="6" listAgencyName="United Nations Economic Commission for Europe" listSchemeURI="urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1">CO</cbc:IdentificationCode>
+          </sts:InvoiceSource>
+          <sts:SoftwareProvider>
+            <sts:ProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</sts:ProviderID>
+            <sts:SoftwareID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">899aa7e4-9080-4f9f-aa98-b1d142630991</sts:SoftwareID>
+          </sts:SoftwareProvider>
+          <sts:SoftwareSecurityCode schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">d17e8306e0de01c22fe6743a9c567091473e7ded0f9affe3cb8e432775a8f7822bae9d35596b0bdb8e4e69648c687a65</sts:SoftwareSecurityCode>
+          <sts:AuthorizationProvider>
+            <sts:AuthorizationProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="4" schemeName="31">800197268</sts:AuthorizationProviderID>
+          </sts:AuthorizationProvider>
+          <sts:QRCode>NumFac: PF87432
+FecFac: 2025-12-06
+NitFac: 900278823
+DocAdq: 901210008
+ValFac: 141848.74
+ValIva: 26951.26
+ValOtroIm: 0.00
+ValTotal: 168800.00
+CUFE: 3d1ea8178acf45d9e16a31c90446d24fccb644e21d0f623071af8e477162bdbe5f17fab7c3b888c851870735909f080c
+https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=3d1ea8178acf45d9e16a31c90446d24fccb644e21d0f623071af8e477162bdbe5f17fab7c3b888c851870735909f080c</sts:QRCode>
+        </sts:DianExtensions>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+    <ext:UBLExtension>
+      <ext:ExtensionContent><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="TORRESOFTWARE-97964FD0E9FAAE8ED7EB16CF9CAFC8E58428DB04"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference Id="REF-58ABFC6AB8AA4EB27D76FD10701046FD2C972415" URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>MfWyx0Fr0jMjqdqhf0ZRn5sMV76Ulsi1VNsM0LL+BTw=</ds:DigestValue></ds:Reference><ds:Reference URI="#KEY-INFO-5CACE16BF1AB43E838B213146D6C62ECE2CF3CBE"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>EjDksf/sHIM8Jz9rIkdIFny3tfndNuN1W1rIjbSIhpA=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903#SignedProperties" URI="#SIGNED-PROPS-E6F743ACE3A5F64CCC52662CA9880C1EEB733C84"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>gWCfdS+fl4ixMmTSMWf3ASr+dnC9HpU/z2u4Q2OpTBY=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue Id="SIG-VALUE-8F0E6D2AA6DC86C9F5DEC7F23949DC4998F83360">hS7b+o3VfQ960T5nHslJvUNirCGhRfnqW8+C5PXSDCwLb0qYcsmjdYnLQbEXTCQEECRVd6PcKVumAcysV9v3C9odyvWJrGl0yORtUStxX7xLgdaoB+TH1doC9dDnJ4rYgqHCCyiUpUMKmwaKsvUSbhdaLuXhZfAySFbFxqNfHKBZEyF3ji91mEyHNVIijAsj7UsdOQjH/jovrWEoHT+0zsz0UaHQ7YjCUraMV2blAGRQK0JfFyCcNdt6OOYsmzfmgoB9dia4mX9kZ2WAyBP9QL/FgPtLXhnJAJZW1P+41tUs43ENAuzkhjVRuH1N4c4w2EzBbvlbCcM8CRYY1dYOjQ==</ds:SignatureValue><ds:KeyInfo Id="KEY-INFO-5CACE16BF1AB43E838B213146D6C62ECE2CF3CBE"><ds:X509Data><ds:X509Certificate>MIIHNTCCBh2gAwIBAgIILGRyLIXhY3IwDQYJKoZIhvcNAQELBQAwgcUxJjAkBgNVBAMMHVNVQkNBIENBTUVSRklSTUEgQ09MT01CSUEgU0FTMRQwEgYDVQQFEws5MDEzMTIxMTItNDFAMD4GA1UECww3Q2VydGlmaWNhZG9zIFBhcmEgRmlybWEgRWxlY3Ryb25pY2EgQ2FtZXJmaXJtYSBDb2xvbWJpYTEgMB4GA1UECgwXQ0FNRVJGSVJNQSBDT0xPTUJJQSBTQVMxFDASBgNVBAcMC0JPR09UQSBELkMuMQswCQYDVQQGEwJDTzAeFw0yNDEyMjcxNzU1MjZaFw0yNTEyMjcxNzU1MjVaMIH4MS0wKwYDVQQJDCRVUkJBIEFMTUlSQU5URSBDT0xPTiBFVCAyIE1aIFUgTFQgMTQxEzARBgNVBBQTCjYwNTY1NzI0MDExKTAnBgNVBAMMIFBBUEVMRVJJQSBGVVRVUk8gIENBUlRBR0VOQSBMVERBMRMwEQYDVQQFEwo5MDAyNzg4MjMzMRwwGgYDVQQLDBNGYWN0dXJhIEVsZWN0cm9uaWNhMSkwJwYDVQQKDCBQQVBFTEVSSUEgRlVUVVJPICBDQVJUQUdFTkEgTFREQTEcMBoGA1UECAwTQ2FydGFnZW5hIGRlIEluZGlhczELMAkGA1UEBhMCQ08wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7ad4aH1QixXf3Fj2YgTfspF8KFxkdn+Er6JaWXFzW2qw6RZ0SgMhgBIgHA6cXDtwEz6VAEmPiapXeUVceAcBXfbEgDA76/ryZlM+zeiX2PRFXzMtZjhIVnSb2k7g82U293jJbsmNXryonxvxojyqw9nn/LV7LIOq251iouTrMF7XOeLFYq0wZAfWOWWuscPpcoGfCVERMPbNHTC8NRst17L3GP55LeZMevDXaodFtN65y408KFl1J11naD8P7NsG5jEaRocK46wqlmm4xyKXk6M7zVLJsHlxvxhMNNgUZlEOkwm5c54sWDCJSoibHTB+iIUI0R1OVnjTlIV3KAiFpAgMBAAGjggLyMIIC7jAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFMCPn2uVGVZRNZ5UmMZ3l/0l2PbNMFsGCCsGAQUFBwEBBE8wTTBLBggrBgEFBQcwAYY/aHR0cDovL3BraWNvbC5jYW1lcmZpcm1hY29sb21iaWEuY28vZWpiY2EvcHVibGljd2ViL3N0YXR1cy9vY3NwMBUGA1UdEQQOMAyICisGAQQBgYcuHgswJwYDVR0lBCAwHgYIKwYBBQUHAwIGCCsGAQUFBwMEBggrBgEFBQcDATCCAe8GA1UdHwEB/wSCAeMwggHfMIIB26CCAQmgggEFhoIBAWh0dHA6Ly9wa2ljb2wuY2FtZXJmaXJtYWNvbG9tYmlhLmNvL2VqYmNhL3B1YmxpY3dlYi93ZWJkaXN0L2NlcnRkaXN0P2NtZD1jcmwmaXNzdWVyPUNOJTNEU1VCQ0ErQ0FNRVJGSVJNQStDT0xPTUJJQStTQVMlMkNTTiUzRDkwMTMxMjExMi00JTJDT1UlM0RDZXJ0aWZpY2Fkb3MrUGFyYStGaXJtYStFbGVjdHJvbmljYStDYW1lcmZpcm1hK0NvbG9tYmlhJTJDTyUzRENBTUVSRklSTUErQ09MT01CSUErU0FTJTJDTCUzREJPR09UQStELkMuJTJDQyUzRENPooHLpIHIMIHFMSYwJAYDVQQDDB1TVUJDQSBDQU1FUkZJUk1BIENPTE9NQklBIFNBUzELMAkGA1UEBhMCQ08xFDASBgNVBAcMC0JPR09UQSBELkMuMSAwHgYDVQQKDBdDQU1FUkZJUk1BIENPTE9NQklBIFNBUzFAMD4GA1UECww3Q2VydGlmaWNhZG9zIFBhcmEgRmlybWEgRWxlY3Ryb25pY2EgQ2FtZXJmaXJtYSBDb2xvbWJpYTEUMBIGA1UEBRMLOTAxMzEyMTEyLTQwHQYDVR0OBBYEFIpFYEZ5YV5AL6xpkDne2TaatO8FMA4GA1UdDwEB/wQEAwIF4DANBgkqhkiG9w0BAQsFAAOCAQEAPijw7AY0YFeak1hgFIwRRRRjiNubu8KHwo3JS2pvfbQmOV0hIH5cSQybESIS2wbrupXFA8Bq0XaA5wB1wl5p/C8FM9zMh/RSzjUITnnjXyfqCoe+qJyhOW3ESKZMwI7ClmCOo6WlFmMGo+an/VOaXMgXuSeNktt2sg9jECoCVciiBaWLOGHepRQ6TPDqH7Pdrg7elSCG/p0ZAYjtfo9tPnLohyV/P3s7BEowb1xvnZBqCPu30YWbV6rcoPlSNOmccD/6Y9zyfs8sjG2VKTh6vtIJc6kwHeWChZqwcZUYOgkOOFw5PCB41nOPSIswfPn3tjUoWvfJ1vHe8KkDPkGADQ==</ds:X509Certificate></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties Target="#TORRESOFTWARE-97964FD0E9FAAE8ED7EB16CF9CAFC8E58428DB04"><xades:SignedProperties Id="SIGNED-PROPS-E6F743ACE3A5F64CCC52662CA9880C1EEB733C84"><xades:SignedSignatureProperties><xades:SigningTime>2025-12-06T16:26:38.497-05:00</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>+l2gmqD+0gRuS+WN1KYleBmMBDHkvSsnBvRuEwiGC9Q=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=BOGOTA D.C.,O=CAMERFIRMA COLOMBIA SAS,OU=Certificados Para Firma Electronica Camerfirma Colombia,serialNumber=901312112-4,CN=SUBCA CAMERFIRMA COLOMBIA SAS</ds:X509IssuerName><ds:X509SerialNumber>3198807170890163058</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>1lnS9Dy2foOenePARwy7YAuV+V0r6x7qQLciIqoC+bw=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>972528782</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>JAYPAyAohTEMn6PQKRQ+HysaRSTbA4JQnDVTQ8rOAPk=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>1501523974</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate><xades:SignaturePolicyIdentifier><xades:SignaturePolicyId><xades:SigPolicyId><xades:Identifier>https://facturaelectronica.dian.gov.co/politicadefirma/v2/politicadefirmav2.pdf</xades:Identifier></xades:SigPolicyId><xades:SigPolicyHash><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=</ds:DigestValue></xades:SigPolicyHash></xades:SignaturePolicyId></xades:SignaturePolicyIdentifier><xades:SignerRole><xades:ClaimedRoles><xades:ClaimedRole>supplier</xades:ClaimedRole></xades:ClaimedRoles></xades:SignerRole></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>10</cbc:CustomizationID>
+  <cbc:ProfileID>DIAN 2.1: Factura Electrónica de Venta</cbc:ProfileID>
+  <cbc:ProfileExecutionID>1</cbc:ProfileExecutionID>
+  <cbc:ID>PF87432</cbc:ID>
+  <cbc:UUID schemeID="1" schemeName="CUFE-SHA384">3d1ea8178acf45d9e16a31c90446d24fccb644e21d0f623071af8e477162bdbe5f17fab7c3b888c851870735909f080c</cbc:UUID>
+  <cbc:IssueDate>2025-12-06</cbc:IssueDate>
+  <cbc:IssueTime>16:26:36-05:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>01</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>COP</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>6</cbc:LineCountNumeric>
+  <cac:AccountingSupplierParty>
+    <cbc:AdditionalAccountID schemeID="" schemeName="Sector Salud">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>PAPELERIA FUTURO CARTAGENA LTDA</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>MANZANA MZA U LOTE 14</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>PAPELERIA FUTURO CARTAGENA LTDA</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="48">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>MANZANA MZA U LOTE 14</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>PAPELERIA FUTURO CARTAGENA LTDA</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:ID>PF</cbc:ID>
+          <cbc:Name>00000000</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>0000000</cbc:Telephone>
+        <cbc:ElectronicMail>papeleriafuturo@hotmail.com</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cbc:AdditionalAccountID schemeID="01" schemeName="Salud_cobertura.gc">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CR 43 A 64 SUR 65 IN 1611 T 2 BLV DE ALCAZAR</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="48">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CR 43 A 64 SUR 65 IN 1611 T 2 BLV DE ALCAZAR</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:Name>0000000-00</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>3334004007</cbc:Telephone>
+        <cbc:ElectronicMail>contabilidad@papyrus.com.co</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:PaymentMeans>
+    <cbc:ID>1</cbc:ID>
+    <cbc:PaymentMeansCode>31</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2025-12-06</cbc:PaymentDueDate>
+    <cbc:PaymentID>1</cbc:PaymentID>
+  </cac:PaymentMeans>
+  <cac:PaymentTerms>
+    <cbc:ReferenceEventCode>1</cbc:ReferenceEventCode>
+    <cac:SettlementPeriod>
+      <cbc:DurationMeasure unitCode="DAY">0</cbc:DurationMeasure>
+    </cac:SettlementPeriod>
+  </cac:PaymentTerms>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="COP">26951.26</cbc:TaxAmount>
+    <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">141848.74</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">26951.26</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>19.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="COP">141848.74</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="COP">141848.74</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="COP">168800.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="COP">0.00</cbc:AllowanceTotalAmount>
+    <cbc:ChargeTotalAmount currencyID="COP">0.00</cbc:ChargeTotalAmount>
+    <cbc:PayableAmount currencyID="COP">168800.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">1.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4201.68</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">798.32</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4201.68</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">798.32</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>TARJETA ADHESIVA FIGURAS NAVIDAD REF 00107</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707898695419</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5000.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">1.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">12.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">64537.82</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">12262.19</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">64537.82</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">12262.19</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>BOLIGRAFO OFFIESCO SEMI GEL 0.7M OE-076 COLOR NEGRO CAJA POR 12 UNDS OFFIESCO</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7709990345568</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">6400.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">12.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">1.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">20168.07</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">3831.93</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">20168.07</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">3831.93</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>BOLIGRAFO OFFIESCO SEMI GEL 0.7M OE-076-50 COLOR NEGRO CAJA 50 UNDS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7708820918088</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">24000.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">1.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>4</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">2.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">7563.03</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1436.98</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">7563.03</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1436.98</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CHELINES METALIZADOS / GAMUZADOS PAQ X 100</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">561</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">4500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">2.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>5</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">5.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">30252.10</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">5747.90</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">30252.10</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">5747.90</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>BOLIGRAFO OFFI-ESCO OE-052F RET 0.7 MM NEGRO UND</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7709759032821</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">7200.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">5.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>6</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">1.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">15126.05</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2873.95</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">15126.05</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2873.95</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>PAPEL FOTOGRAFICO ADHESIVO TRANSPARENTE GRAFITOS SU-400</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">2024061802401</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">18000.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">1.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

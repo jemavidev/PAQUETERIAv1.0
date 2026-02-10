@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:xades141="http://uri.etsi.org/01903/v1.4.1#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2     http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <sts:DianExtensions>
+          <sts:InvoiceControl>
+            <sts:InvoiceAuthorization>18764083719983</sts:InvoiceAuthorization>
+            <sts:AuthorizationPeriod>
+              <cbc:StartDate>2024-11-20</cbc:StartDate>
+              <cbc:EndDate>2026-11-20</cbc:EndDate>
+            </sts:AuthorizationPeriod>
+            <sts:AuthorizedInvoices>
+              <sts:Prefix>PF</sts:Prefix>
+              <sts:From>50001</sts:From>
+              <sts:To>100000</sts:To>
+            </sts:AuthorizedInvoices>
+          </sts:InvoiceControl>
+          <sts:InvoiceSource>
+            <cbc:IdentificationCode listAgencyID="6" listAgencyName="United Nations Economic Commission for Europe" listSchemeURI="urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1">CO</cbc:IdentificationCode>
+          </sts:InvoiceSource>
+          <sts:SoftwareProvider>
+            <sts:ProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</sts:ProviderID>
+            <sts:SoftwareID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">899aa7e4-9080-4f9f-aa98-b1d142630991</sts:SoftwareID>
+          </sts:SoftwareProvider>
+          <sts:SoftwareSecurityCode schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">8c385e60f5bca87e28c71aabaf52c4ff4f6854e38876284b458d775b2cbc935d35a7dce95d0f5b9c7fa9a77d589b637d</sts:SoftwareSecurityCode>
+          <sts:AuthorizationProvider>
+            <sts:AuthorizationProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="4" schemeName="31">800197268</sts:AuthorizationProviderID>
+          </sts:AuthorizationProvider>
+          <sts:QRCode>NumFac: PF89771
+FecFac: 2026-01-07
+NitFac: 900278823
+DocAdq: 901210008
+ValFac: 358143.697
+ValIva: 5556.303
+ValOtroIm: 0.00
+ValTotal: 363700.000
+CUFE: 40caeae82c41c0007044bbcd5debf59704e8836863cd20421c35a7f41d2249561864693db30eb835cdd4606cd7379cc8
+https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=40caeae82c41c0007044bbcd5debf59704e8836863cd20421c35a7f41d2249561864693db30eb835cdd4606cd7379cc8</sts:QRCode>
+        </sts:DianExtensions>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+    <ext:UBLExtension>
+      <ext:ExtensionContent><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="TORRESOFTWARE-90F0D2CB9906250CFA03FD4538A81E6D50181693"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference Id="REF-44227B45B1CA28AA501A88276D40CB669A2BA570" URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>UqghoXf2XeaJvTI0lAq//p0NeG8liaeFfuhfz7oN9yk=</ds:DigestValue></ds:Reference><ds:Reference URI="#KEY-INFO-FEE0A6D25D1307FE4907992A0C56358F7BF1051E"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>DsysGIYd0MVZyjxZJL7Cq/TcDguFSE/vwmuwgw8JR+M=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903#SignedProperties" URI="#SIGNED-PROPS-BC9E46EDE783737661BA4B76AAD77C5FABE0AE8F"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>iuQOBrwBRcEI5Ooh30z+iDMOlEbrNJddB2o2+3425kY=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue Id="SIG-VALUE-FA32C491CEBAF2F51474B8F47101EC510BC35070">A2JpKfVk1cGHQ/I6LHJi7DcDxQ8tetOTRxDYaPCMbgiuHSv76Q+1EsfpDqjsIIWi3QFsccTAZ8M9WMzcdVCwme53JKIo3BuRwQOKPn1Oo2FLuTx1DVDwB0zhO/6HRBMMjXPBCZfhHkQDHnzmavGJlR432C5TcteJb4hBOF/0LUcAvhIWbtqhFUqeK+4wzcb7GUVKETODAqJ7i3d2WitRoEFwqXBaJdQV7bRkOc5rL5/FGA44KjHUfJD+Sjlo1tnpX602RRdQRHaMiIduki19F3uhJ1TyoYagXJGrcE7z4HJWe+J5Yh6g4fjROfA+lk/xDoPPMFuZh41/Mto/SV+J9w==</ds:SignatureValue><ds:KeyInfo Id="KEY-INFO-FEE0A6D25D1307FE4907992A0C56358F7BF1051E"><ds:X509Data><ds:X509Certificate>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</ds:X509Certificate></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties Target="#TORRESOFTWARE-90F0D2CB9906250CFA03FD4538A81E6D50181693"><xades:SignedProperties Id="SIGNED-PROPS-BC9E46EDE783737661BA4B76AAD77C5FABE0AE8F"><xades:SignedSignatureProperties><xades:SigningTime>2026-01-07T08:55:54.077-05:00</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>FH9/G2YI37PLrMLdkBfR4XX9Rctx9kxTMaJaseUePrc=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=BOGOTA D.C.,O=CAMERFIRMA COLOMBIA SAS,OU=Certificados Para Firma Electronica Camerfirma Colombia,serialNumber=901312112-4,CN=SUBCA CAMERFIRMA COLOMBIA SAS</ds:X509IssuerName><ds:X509SerialNumber>4684998847506732138</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>1lnS9Dy2foOenePARwy7YAuV+V0r6x7qQLciIqoC+bw=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>972528782</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>JAYPAyAohTEMn6PQKRQ+HysaRSTbA4JQnDVTQ8rOAPk=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>1501523974</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate><xades:SignaturePolicyIdentifier><xades:SignaturePolicyId><xades:SigPolicyId><xades:Identifier>https://facturaelectronica.dian.gov.co/politicadefirma/v2/politicadefirmav2.pdf</xades:Identifier></xades:SigPolicyId><xades:SigPolicyHash><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=</ds:DigestValue></xades:SigPolicyHash></xades:SignaturePolicyId></xades:SignaturePolicyIdentifier><xades:SignerRole><xades:ClaimedRoles><xades:ClaimedRole>supplier</xades:ClaimedRole></xades:ClaimedRoles></xades:SignerRole></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>10</cbc:CustomizationID>
+  <cbc:ProfileID>DIAN 2.1: Factura Electrónica de Venta</cbc:ProfileID>
+  <cbc:ProfileExecutionID>1</cbc:ProfileExecutionID>
+  <cbc:ID>PF89771</cbc:ID>
+  <cbc:UUID schemeID="1" schemeName="CUFE-SHA384">40caeae82c41c0007044bbcd5debf59704e8836863cd20421c35a7f41d2249561864693db30eb835cdd4606cd7379cc8</cbc:UUID>
+  <cbc:IssueDate>2026-01-07</cbc:IssueDate>
+  <cbc:IssueTime>08:55:51-05:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>01</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>COP</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>11</cbc:LineCountNumeric>
+  <cac:AccountingSupplierParty>
+    <cbc:AdditionalAccountID schemeID="" schemeName="Sector Salud">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>PAPELERIA FUTURO CARTAGENA LTDA</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>MANZANA MZA U LOTE 14</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>PAPELERIA FUTURO CARTAGENA LTDA</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="48">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>MANZANA MZA U LOTE 14</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>PAPELERIA FUTURO CARTAGENA LTDA</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="3" schemeName="31">900278823</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:ID>PF</cbc:ID>
+          <cbc:Name>00000000</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>0000000</cbc:Telephone>
+        <cbc:ElectronicMail>papeleriafuturo@hotmail.com</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cbc:AdditionalAccountID schemeID="01" schemeName="Salud_cobertura.gc">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CR 43 A 64 SUR 65 IN 1611 T 2 BLV DE ALCAZAR</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="48">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CR 43 A 64 SUR 65 IN 1611 T 2 BLV DE ALCAZAR</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>PAPYRUS SOLUCIONES INTEGRALES S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:Name>0000000-00</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>3334004007</cbc:Telephone>
+        <cbc:ElectronicMail>contabilidad@papyrus.com.co</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:PaymentMeans>
+    <cbc:ID>1</cbc:ID>
+    <cbc:PaymentMeansCode>31</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2026-01-07</cbc:PaymentDueDate>
+    <cbc:PaymentID>1</cbc:PaymentID>
+  </cac:PaymentMeans>
+  <cac:PaymentTerms>
+    <cbc:ReferenceEventCode>1</cbc:ReferenceEventCode>
+    <cac:SettlementPeriod>
+      <cbc:DurationMeasure unitCode="DAY">0</cbc:DurationMeasure>
+    </cac:SettlementPeriod>
+  </cac:PaymentTerms>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="COP">5556.30</cbc:TaxAmount>
+    <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">29243.70</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">5556.30</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>19.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">328900.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>0.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="COP">358143.70</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="COP">358143.70</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="COP">363700.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="COP">0.00</cbc:AllowanceTotalAmount>
+    <cbc:ChargeTotalAmount currencyID="COP">0.00</cbc:ChargeTotalAmount>
+    <cbc:PayableAmount currencyID="COP">363700.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">8.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4033.61</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">766.39</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4033.61</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">766.39</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>PUNZONES PLASTICOS REF 609022 OTROS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">1222</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">600.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">8.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">37.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">203500.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">203500.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO CROMOBOOK 100 H RAYAS  REF 01150 FE 16.32</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707188186191</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">37.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">3.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">8823.53</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1676.47</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">8823.53</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1676.47</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>BORRADOR NATA AH ROYAL 612 - CAJA X12 PA777</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7372148921374</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">3.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>4</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">3.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">8823.53</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1676.47</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">8823.53</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1676.47</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>BORRADOR NATA AH ROYAL -  CAJA X 24 UND.</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7372148921688</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">3.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>5</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">2.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">5400.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">5400.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO TORREON CAPIBARA 100H FERROCARRIL</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707188180878</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2700.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">2.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>6</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">4.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">14000.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">14000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO ART-EXPRESSION FEMENINO 50 HOJAS RAYAS COD 138401</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707294379906</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">4.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>7</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">2.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">7000.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">7000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO 50 H GM ART EXPRESSION RAYAS F MARFIL</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707294389929</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">2.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>8</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">2.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">11000.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">11000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO CROMOBOOK 100H CUADROS FEM 01151</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707188186184</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">2.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>9</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">9.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">49500.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">49500.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO CROMOBOOK 100 H CUADROS FEM REF 01151 FE 16.22</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707188186207</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">9.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>10</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">7.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">38500.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">38500.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CUADERNO COSIDO CROMOBOOK 100H CUADROS FEM 01151</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">7707188186184</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">7.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>11</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="94">6.000000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">7563.03</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1436.98</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">7563.03</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1436.98</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>ESCARCHA TUBITO PAQ. X 4</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="">2302</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">1500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="94">6.000000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

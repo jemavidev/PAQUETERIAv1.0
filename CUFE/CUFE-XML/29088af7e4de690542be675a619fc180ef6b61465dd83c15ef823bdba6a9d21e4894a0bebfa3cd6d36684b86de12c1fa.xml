@@ -1,0 +1,994 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Invoice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:xades141="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xsi:schemaLocation="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2     http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <sts:DianExtensions>
+          <sts:InvoiceControl xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">
+            <sts:InvoiceAuthorization>18764083003110</sts:InvoiceAuthorization>
+            <sts:AuthorizationPeriod>
+              <cbc:StartDate xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">2024-11-07</cbc:StartDate>
+              <cbc:EndDate xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">2026-11-07</cbc:EndDate>
+            </sts:AuthorizationPeriod>
+            <sts:AuthorizedInvoices>
+              <sts:Prefix>FE</sts:Prefix>
+              <sts:From>20001</sts:From>
+              <sts:To>50000</sts:To>
+            </sts:AuthorizedInvoices>
+          </sts:InvoiceControl>
+          <sts:InvoiceSource xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">
+            <cbc:IdentificationCode listAgencyID="6" listAgencyName="United Nations Economic Commission for Europe" listSchemeURI="urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">CO</cbc:IdentificationCode>
+          </sts:InvoiceSource>
+          <sts:SoftwareProvider xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">
+            <sts:ProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="2" schemeName="31">900378819</sts:ProviderID>
+            <sts:SoftwareID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">c24e15cf-8398-48e2-88e5-ca507e3b1f39</sts:SoftwareID>
+          </sts:SoftwareProvider>
+          <sts:SoftwareSecurityCode schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">30d4fb1ac2e70327d2c9741f88d20843f7628fbcd2950ef3f7fc757b24a6538cbd5c029acf2ba861e1a732e80235a679</sts:SoftwareSecurityCode>
+          <sts:AuthorizationProvider xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">
+            <sts:AuthorizationProviderID schemeID="4" schemeName="31" schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">800197268</sts:AuthorizationProviderID>
+          </sts:AuthorizationProvider>
+          <sts:QRCode xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1">https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=29088af7e4de690542be675a619fc180ef6b61465dd83c15ef823bdba6a9d21e4894a0bebfa3cd6d36684b86de12c1fa</sts:QRCode>
+        </sts:DianExtensions>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+    <ext:UBLExtension>
+      <ext:ExtensionContent><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" /><ds:Reference Id="Reference-ec757061-b47f-4846-ada0-8c43c70873da" URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><ds:DigestValue>bRALbJzD0LglVo4OvxNviscgu3K0fVO75i7HizNCB2U=</ds:DigestValue></ds:Reference><ds:Reference Id="ReferenceKeyInfo" URI="#Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8-KeyInfo"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><ds:DigestValue>5Sd4cjmTamDvHBJ5zlMbPXAOzQgSVApRoR/pd1TNiXs=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903#SignedProperties" URI="#xmldsig-Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8-signedprops"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><ds:DigestValue>UH8OV44nSXaaQl+Si0BduDvwhRf4YG18pAtRbxxVDa4=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue Id="SignatureValue-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8">UQL75U1/js8gU1Wp8lEYI45J9+9N/aoctTPnxSzQ4C3aPWZujMMfvg2U8nQjoR3WKUJ5dW1CCUpMPuCe8ZhZQ2UJaZQm/r8DBMNxFW78WodOWkQD5e8q2zog+Y8vqWjRtoRBFVhFCei05aRtEwWkvwU/ivT8wEvgruqwwcoUb6rjhQUo25BIvryGL16KweHp7dIXNN7Ji5nE88AfodzxRINqxZ4QPaZbLRjI811GTY5YJP9u7OrjkLmQrnyVqnFl76d5bsBilkycNkQh6YxyxhrEXZQD9PeigvIVgujoevfl7jMUgdcyyJ9y6xjtle9BwnjVkyZfLr1OEZHlTai8/A==</ds:SignatureValue><ds:KeyInfo Id="Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8-KeyInfo"><ds:X509Data><ds:X509Certificate>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</ds:X509Certificate></ds:X509Data><ds:KeyValue><ds:RSAKeyValue><ds:Modulus>0D6SuVGRDlnl+7WhsMtfu4+EOCotVoZnSiB0UXqpHXVjvVkC1oi23MXeUhibSP4aF3kjI0LFmqBOik27gaG2a1OGO9a7vFY/Cki6rAkhBlq/xd9XvVBP/rF4oY8uJzJQn234/mV3HgaTQMBj7Ftkjh+OR6/CdSBwdmstB+Nd+bHuAlH9HuncIUr3+d2Rgmd3n8GO8D6abnRI4JM+qY4WETZyBjg1LdoN5zH+8zUKzdzWD3TyTm/ZNQKoHfciJm3kTLW6hOYAQgdgGzWQj1Jcg0RoJucfuRxpcy7MVtQ7eernyJNiin6FuYxOn4K5WLYr7kNwfO56wK2IiSC3Qim1lw==</ds:Modulus><ds:Exponent>AQAB</ds:Exponent></ds:RSAKeyValue></ds:KeyValue></ds:KeyInfo><ds:Object Id="XadesObjectId-2dd6744a-4f1f-4663-8605-6b48da965272"><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="QualifyingProperties-e86a6a3f-af7c-44e5-91cb-913101e43ee0" Target="#Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8"><xades:SignedProperties Id="xmldsig-Signature-fc31f4ea-05bc-445a-a0b3-dc063ae7bcb8-signedprops"><xades:SignedSignatureProperties><xades:SigningTime>2025-05-24T00:00:00+00:00</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><ds:DigestValue>7bbykl40UI9k2f1Ct1Up48MtNL2NJmJZpy3n48e8tug=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>STREET=see current address at www.thomas-signe.com, CN=ECD Thomas Signe Colombia, O=Thomas Signe Soluciones Tecnológicas Globales S.A.S., L=Bogotá, S=Distrito Capital, C=CO, organizationIdentifier=900962071-5</ds:X509IssuerName><ds:X509SerialNumber>415442182555413332451363650368620257344164199800</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate><xades:SignaturePolicyIdentifier><xades:SignaturePolicyId><xades:SigPolicyId><xades:Identifier>https://facturaelectronica.dian.gov.co/politicadefirma/v2/politicadefirmav2.pdf</xades:Identifier><xades:Description /></xades:SigPolicyId><xades:SigPolicyHash><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><ds:DigestValue>dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=</ds:DigestValue></xades:SigPolicyHash></xades:SignaturePolicyId></xades:SignaturePolicyIdentifier><xades:SignerRole><xades:ClaimedRoles><xades:ClaimedRole>supplier</xades:ClaimedRole></xades:ClaimedRoles></xades:SignerRole></xades:SignedSignatureProperties><xades:SignedDataObjectProperties><xades:DataObjectFormat ObjectReference="#Reference-ec757061-b47f-4846-ada0-8c43c70873da"><xades:MimeType>text/xml</xades:MimeType><xades:Encoding>UTF-8</xades:Encoding></xades:DataObjectFormat></xades:SignedDataObjectProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>10</cbc:CustomizationID>
+  <cbc:ProfileID>DIAN 2.1: Factura Electrónica de Venta</cbc:ProfileID>
+  <cbc:ProfileExecutionID>1</cbc:ProfileExecutionID>
+  <cbc:ID>FE25426</cbc:ID>
+  <cbc:UUID schemeID="1" schemeName="CUFE-SHA384">29088af7e4de690542be675a619fc180ef6b61465dd83c15ef823bdba6a9d21e4894a0bebfa3cd6d36684b86de12c1fa</cbc:UUID>
+  <cbc:IssueDate>2025-05-24</cbc:IssueDate>
+  <cbc:IssueTime>00:00:00-05:00</cbc:IssueTime>
+  <cbc:DueDate>2025-05-24</cbc:DueDate>
+  <cbc:InvoiceTypeCode>01</cbc:InvoiceTypeCode>
+  <cbc:Note></cbc:Note>
+  <cbc:DocumentCurrencyCode>COP</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>26</cbc:LineCountNumeric>
+  <cac:InvoicePeriod>
+    <cbc:StartDate>2025-03-25</cbc:StartDate>
+    <cbc:StartTime>00:00:00-05:00</cbc:StartTime>
+    <cbc:EndDate>2025-05-24</cbc:EndDate>
+    <cbc:EndTime>00:00:00-05:00</cbc:EndTime>
+  </cac:InvoicePeriod>
+  <cac:AccountingSupplierParty>
+    <cbc:AdditionalAccountID schemeAgencyID="195">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>COMERCIALIZADORA RACOPI S.A.S.</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>08001</cbc:ID>
+          <cbc:CityName>BARRANQUILLA</cbc:CityName>
+          <cbc:CountrySubentity>Atlántico</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>08</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CL 31 42 11 P 1</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>COMERCIALIZADORA RACOPI S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="2" schemeName="31" schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">900378819</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="No aplica">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>08001</cbc:ID>
+          <cbc:CityName>BARRANQUILLA</cbc:CityName>
+          <cbc:CountrySubentity>Atlántico</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>08</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CL 31 42 11 P 1</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>COMERCIALIZADORA RACOPI S.A.S.</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="2" schemeName="31" schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">900378819</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:ID>FE</cbc:ID>
+          <cbc:Name></cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>3720903</cbc:Telephone>
+        <cbc:ElectronicMail>lapatria2000@hotmail.com</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cbc:AdditionalAccountID schemeAgencyID="195">1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>DISTRIBUIDORA PAPYRUS SAS</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>CARTAGENA DE INDIAS</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>CRA 91 # 54 -120 LOCAL 12</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>DISTRIBUIDORA PAPYRUS SAS</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="8" schemeName="31" schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">901210008</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="No aplica" />
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>DISTRIBUIDORA PAPYRUS SAS</cbc:RegistrationName>
+        <cbc:CompanyID schemeID="8" schemeName="31" schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">901210008</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:Name />
+        </cac:CorporateRegistrationScheme>
+        <cac:ShareholderParty>
+          <cbc:PartecipationPercent>100</cbc:PartecipationPercent>
+        </cac:ShareholderParty>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Telephone>3002596319</cbc:Telephone>
+        <cbc:ElectronicMail>contabilidad@papyrus.com.co</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:PaymentMeans>
+    <cbc:ID>1</cbc:ID>
+    <cbc:PaymentMeansCode>10</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2025-05-24</cbc:PaymentDueDate>
+    <cbc:PaymentID>NP638837048191251836</cbc:PaymentID>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="COP">85883.22</cbc:TaxAmount>
+    <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">452016.94</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">85883.22</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>19.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="COP">452016.94</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="COP">452016.94</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="COP">537900.16</cbc:TaxInclusiveAmount>
+    <cbc:PrepaidAmount currencyID="COP">0</cbc:PrepaidAmount>
+    <cbc:PayableAmount currencyID="COP">537900.16</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">26.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">55714.36</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">10585.73</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">55714.36</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">10585.73</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA DE PAPEL LINEA ECONOMICA N-04*50YDS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2142.86</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">26.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4579.83</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">870.17</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4579.83</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">870.17</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA PAPEL IRISADA TORNASOL R700/#4</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">4579.83</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">9.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">15126.03</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2873.95</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">15126.03</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2873.95</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA CORRUGADA*50YDS SENCILLA</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">1680.67</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">9.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>4</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">3.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">6731.10</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1278.91</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">6731.10</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1278.91</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA CORRUGADA *50YDS METALIZADA</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2243.70</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">3.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>5</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">15.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">51680.70</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">9819.33</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">51680.70</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">9819.33</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA DE PAPEL LINEA ECONOMICA N-09*50YDS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3445.38</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">15.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>6</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">4.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">29915.96</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">5684.03</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">29915.96</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">5684.03</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA METALIZADA #9 COLCINTEX TP8</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">7478.99</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">4.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>7</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">5.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">19327.75</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">3672.27</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">19327.75</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">3672.27</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA METALIZADA #4 COLCINTEX TP7</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3865.55</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">5.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>8</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">5.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">14033.60</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2666.38</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">14033.60</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2666.38</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA FLORESTEIN VERDE VERDE</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2806.72</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">5.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>9</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">2.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">5042.02</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">957.98</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">5042.02</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">957.98</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA FLORESTEIN BLANCA BLANCA/MAR</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2521.01</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">2.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>10</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">3.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">15504.21</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2945.80</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">15504.21</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2945.80</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>TARJETAS LLUVIA DE S/BRE ESCAR GALBIS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5168.07</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">3.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>11</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4033.61</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">766.39</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4033.61</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">766.39</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>TARJETAS ADHESIVAS GRANDE DE/P GALBIS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">4033.61</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>12</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">11.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">17563.04</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">3336.98</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">17563.04</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">3336.98</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA MONO PAPEL #6/18MM HOLOG HOLOGR/MET</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">1596.64</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">11.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>13</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">23.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">34790.03</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">6610.11</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">34790.03</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">6610.11</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA MONO DE PAPEL 30MM SILOD SOLIDA</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">1512.61</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">23.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>14</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">25.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">18907.50</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">3592.42</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">18907.50</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">3592.42</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA MONO PAPEL #6 LUREX/SOLI SOLIDA</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">756.30</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">25.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>15</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">21.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">53823.63</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">10226.49</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">53823.63</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">10226.49</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA MONO PAPEL*9 LUREX/METAL 30/9 LU/ME</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2563.03</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">21.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>16</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">6.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">54957.96</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">10442.01</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">54957.96</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">10442.01</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA RASO ECONO.1073/12M24117 N-3 *50MTS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">9159.66</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">6.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>17</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3559.68</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">676.34</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3559.68</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">676.34</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CORDON PLANO 090 0.90PLANO</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">296.64</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>18</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3670.56</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">697.41</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3670.56</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">697.41</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CORDON RED.TRENZ.BCO .NEDG 0.90</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">305.88</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>19</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">6.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">2016.78</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">383.19</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">2016.78</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">383.19</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CORDON PLANO 090 0.90PLANO</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">336.13</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">6.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>20</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4920.96</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">934.98</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4920.96</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">934.98</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CORDON REDON TRENZADO 1.20 0382</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">410.08</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>21</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">6722.69</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1277.31</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">6722.69</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1277.31</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>DIADEMA I CMS ECONOMICA 1CM*12</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">6722.69</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>22</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">11092.44</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2107.56</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">11092.44</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2107.56</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>DIADEMA ECONOMICA *12 2.4 CMS*12</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">11092.44</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>23</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4537.80</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">862.18</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4537.80</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">862.18</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CINTA INFANTIL REF-13 OSITOS REF-13</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">378.15</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>24</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4437.00</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">843.03</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4437.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">843.03</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>PINZA PICO LORO 8 PLANA 8.0 CMS</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">369.75</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>25</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">12.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3025.20</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">574.79</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3025.20</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">574.79</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>PINZA PLANA PARA GANCHO N-4.5</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">252.10</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">12.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>26</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">10.0000</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">6302.50</cbc:LineExtensionAmount>
+    <cbc:FreeOfChargeIndicator>false</cbc:FreeOfChargeIndicator>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1197.48</cbc:TaxAmount>
+      <cbc:RoundingAmount currencyID="COP">0.00</cbc:RoundingAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">6302.50</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1197.48</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19.00</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>VELCRO X METRO   R/1025 20 MM</cbc:Description>
+      <cac:StandardItemIdentification>
+        <cbc:ID schemeID="999" schemeName="Estándar de adopción del contribuyente" schemeAgencyID="" />
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">630.25</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">10.0000</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

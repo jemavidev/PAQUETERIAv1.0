@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:xades141="http://uri.etsi.org/01903/v1.4.1#" xmlns:sts="http://www.dian.gov.co/contratos/facturaelectronica/v1/Structures" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <sts:DianExtensions>
+          <sts:InvoiceControl>
+            <sts:InvoiceAuthorization>18764076398042</sts:InvoiceAuthorization>
+            <sts:AuthorizationPeriod>
+              <cbc:StartDate>2024-08-02</cbc:StartDate>
+              <cbc:EndDate>2025-08-02</cbc:EndDate>
+            </sts:AuthorizationPeriod>
+            <sts:AuthorizedInvoices>
+              <sts:Prefix>PA</sts:Prefix>
+              <sts:From>3608</sts:From>
+              <sts:To>100000</sts:To>
+            </sts:AuthorizedInvoices>
+          </sts:InvoiceControl>
+          <sts:InvoiceSource>
+            <cbc:IdentificationCode listAgencyID="6" listAgencyName="United Nations Economic Commission for Europe" listSchemeURI="urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1">CO</cbc:IdentificationCode>
+          </sts:InvoiceSource>
+          <sts:SoftwareProvider>
+            <sts:ProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901711260</sts:ProviderID>
+            <sts:SoftwareID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">2c265ce0-0ec4-443c-8e3e-d611a8e08919</sts:SoftwareID>
+          </sts:SoftwareProvider>
+          <sts:SoftwareSecurityCode schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)">cbff7e9f5119aa5c72eedd5b92980f938221a7cd404a2346ce26c2ae65d1390ffe997af0963920c7388e56b91243c726</sts:SoftwareSecurityCode>
+          <sts:AuthorizationProvider>
+            <sts:AuthorizationProviderID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="4" schemeName="31">800197268</sts:AuthorizationProviderID>
+          </sts:AuthorizationProvider>
+          <sts:QRCode>https://catalogo‐vpfe.dian.gov.co/document/searchqr?documentkey=9eb74ace1c70b28f897a47bf1563988968514c43f593b562ff9e24a21248cf26d9aac94c082fa66d9a2f33b9905ce161</sts:QRCode>
+        </sts:DianExtensions>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+    <ext:UBLExtension>
+      <ext:ExtensionContent><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SOENAC-7F4D07C51CE89B5C9FD1C44B091B9BF03EF27FD3"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference Id="REF-E2B28199D5B3CB5FFA67EC257C18AF04A6069043" URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>RCsLSVf6e7w1yjuBu+As8bqGgh7hSq8r1WAw2OIeMqY=</ds:DigestValue></ds:Reference><ds:Reference URI="#KEY-INFO-F10931A6CDDD35E9C8D92CA1300484CE73E7D1C6"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>Z+CiV9gSpaed8WTS04IGh/zvUI4tYL0bZqP3QBNj+LU=</ds:DigestValue></ds:Reference><ds:Reference Type="http://uri.etsi.org/01903#SignedProperties" URI="#SIGNED-PROPS-68399845FEFFE4C5BE87188F789FF9BA32135A43"><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>RrtQStFFuN4zcqfKD4V/Nf4Y092wQ3JQu/rlLKVoBcQ=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue Id="SIG-VALUE-20E116A20711BC6395691F8B64B5F196165118CC">h34VryMokWEv25mafsTjI+iG8sh9GFaqFv80k/80dONerFgmXDNk5Y9r4GZ4qg6q14qsJ7DkBXA7yIeMRCsGcVbnjSkd9gc2887q/jocCc48JqdtvJ0JT7K1a3w8rfBGM8XapIaoIxYn3dfPYQLsfKR1/ibzfWs+Oj8jTGyLXLma7vJ36NKx8bF+DKyd2l0JVh8phvbB5ibwUzK+OzAsUf4glMu7BX/ifJz2OwMRo+mr/ZrVcIAkqsoYgpRWrL3yb6NyheSLNb3xaliSqkMaOvtbXuafMCjgTTGQWPxGN4V4MBQ0f1OQZtQ2xnczVzhI2hTTyp8JKun+zndQeKThZQ==</ds:SignatureValue><ds:KeyInfo Id="KEY-INFO-F10931A6CDDD35E9C8D92CA1300484CE73E7D1C6"><ds:X509Data><ds:X509Certificate>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</ds:X509Certificate></ds:X509Data></ds:KeyInfo><ds:Object><xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Target="#SOENAC-7F4D07C51CE89B5C9FD1C44B091B9BF03EF27FD3"><xades:SignedProperties Id="SIGNED-PROPS-68399845FEFFE4C5BE87188F789FF9BA32135A43"><xades:SignedSignatureProperties><xades:SigningTime>2025-05-09T11:26:10.690-05:00</xades:SigningTime><xades:SigningCertificate><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>AKThvMslBSrIeZSDt2gehZEwezg6QhNFOeEf9g3oi7M=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=BOGOTA D.C.,O=CAMERFIRMA COLOMBIA SAS,OU=Certificados Para Firma Electronica Camerfirma Colombia,serialNumber=901312112-4,CN=SUBCA CAMERFIRMA COLOMBIA SAS</ds:X509IssuerName><ds:X509SerialNumber>3376341731790049762</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>1lnS9Dy2foOenePARwy7YAuV+V0r6x7qQLciIqoC+bw=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>972528782</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert><xades:Cert><xades:CertDigest><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>JAYPAyAohTEMn6PQKRQ+HysaRSTbA4JQnDVTQ8rOAPk=</ds:DigestValue></xades:CertDigest><xades:IssuerSerial><ds:X509IssuerName>C=CO,L=Bogota D.C,O=AC CAMERFIRMA COLOMBIA S.A.S,OU=Direccion actual https://camerfirma.co/address/,serialNumber=NIT-901312112-4,CN=ROOT CAMERFIRMA COLOMBIA</ds:X509IssuerName><ds:X509SerialNumber>1501523974</ds:X509SerialNumber></xades:IssuerSerial></xades:Cert></xades:SigningCertificate><xades:SignaturePolicyIdentifier><xades:SignaturePolicyId><xades:SigPolicyId><xades:Identifier>https://facturaelectronica.dian.gov.co/politicadefirma/v2/politicadefirmav2.pdf</xades:Identifier></xades:SigPolicyId><xades:SigPolicyHash><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=</ds:DigestValue></xades:SigPolicyHash></xades:SignaturePolicyId></xades:SignaturePolicyIdentifier><xades:SignerRole><xades:ClaimedRoles><xades:ClaimedRole>supplier</xades:ClaimedRole></xades:ClaimedRoles></xades:SignerRole></xades:SignedSignatureProperties></xades:SignedProperties></xades:QualifyingProperties></ds:Object></ds:Signature></ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>10</cbc:CustomizationID>
+  <cbc:ProfileID>DIAN 2.1: Factura Electrónica de Venta</cbc:ProfileID>
+  <cbc:ProfileExecutionID>1</cbc:ProfileExecutionID>
+  <cbc:ID>PA10188</cbc:ID>
+  <cbc:UUID schemeID="1" schemeName="CUFE-SHA384">9eb74ace1c70b28f897a47bf1563988968514c43f593b562ff9e24a21248cf26d9aac94c082fa66d9a2f33b9905ce161</cbc:UUID>
+  <cbc:IssueDate>2025-05-09</cbc:IssueDate>
+  <cbc:IssueTime>11:24:11-05:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>01</cbc:InvoiceTypeCode>
+  <cbc:Note/>
+  <cbc:DocumentCurrencyCode listAgencyID="6" listAgencyName="United Nations Economic Commission for Europe" listID="ISO 4217 Alpha">COP</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>17</cbc:LineCountNumeric>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>PA10188</cbc:ID>
+    <cbc:UUID schemeName="CUFE-SHA384">9eb74ace1c70b28f897a47bf1563988968514c43f593b562ff9e24a21248cf26d9aac94c082fa66d9a2f33b9905ce161</cbc:UUID>
+    <cbc:IssueDate>2025-05-09</cbc:IssueDate>
+    <cbc:DocumentTypeCode>01</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AccountingSupplierParty>
+    <cbc:AdditionalAccountID>1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyName>
+        <cbc:Name>EL PALACIO DE LOS ADORNOS</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>AV.PEDRO DE HEREDIA NO.26-170</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>T Y A DAVIMAR S.A.S</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901711260</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="05">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>AV.PEDRO DE HEREDIA NO.26-170</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>T Y A DAVIMAR S.A.S</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901711260</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:ID>PA</cbc:ID>
+          <cbc:Name>18764076398042</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Name>T Y A DAVIMAR S.A.S</cbc:Name>
+        <cbc:Telephone/>
+        <cbc:ElectronicMail>tya_davimar@live.com</cbc:ElectronicMail>
+        <cbc:Note/>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cbc:AdditionalAccountID>1</cbc:AdditionalAccountID>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>DISTRIBUIDORA  PAPYRUS</cbc:Name>
+      </cac:PartyName>
+      <cac:PhysicalLocation>
+        <cac:Address>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>AV.PEDRO DE HEREDIA NO.26-170</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:Address>
+      </cac:PhysicalLocation>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName>DISTRIBUIDORA  PAPYRUS</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cbc:TaxLevelCode listName="05">R-99-PN</cbc:TaxLevelCode>
+        <cac:RegistrationAddress>
+          <cbc:ID>13001</cbc:ID>
+          <cbc:CityName>Cartagena De Indias</cbc:CityName>
+          <cbc:CountrySubentity>Bolívar</cbc:CountrySubentity>
+          <cbc:CountrySubentityCode>13</cbc:CountrySubentityCode>
+          <cac:AddressLine>
+            <cbc:Line>AV.PEDRO DE HEREDIA NO.26-170</cbc:Line>
+          </cac:AddressLine>
+          <cac:Country>
+            <cbc:IdentificationCode>CO</cbc:IdentificationCode>
+            <cbc:Name languageID="es">Colombia</cbc:Name>
+          </cac:Country>
+        </cac:RegistrationAddress>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>DISTRIBUIDORA  PAPYRUS</cbc:RegistrationName>
+        <cbc:CompanyID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901210008</cbc:CompanyID>
+        <cac:CorporateRegistrationScheme>
+          <cbc:Name>18764076398042</cbc:Name>
+        </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+      <cac:Contact>
+        <cbc:Name>DISTRIBUIDORA  PAPYRUS</cbc:Name>
+        <cbc:Telephone>3167490432</cbc:Telephone>
+        <cbc:ElectronicMail>comtabilidad@papyrus.com.co</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:TaxRepresentativeParty>
+    <cac:PartyIdentification>
+      <cbc:ID schemeAgencyID="195" schemeAgencyName="CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)" schemeID="8" schemeName="31">901711260</cbc:ID>
+    </cac:PartyIdentification>
+    <cac:PartyName>
+      <cbc:Name>T Y A DAVIMAR S.A.S</cbc:Name>
+    </cac:PartyName>
+  </cac:TaxRepresentativeParty>
+  <cac:PaymentMeans>
+    <cbc:ID>1</cbc:ID>
+    <cbc:PaymentMeansCode>10</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2025-05-09</cbc:PaymentDueDate>
+    <cbc:PaymentID>10</cbc:PaymentID>
+  </cac:PaymentMeans>
+  <cac:PaymentExchangeRate>
+    <cbc:SourceCurrencyCode>COP</cbc:SourceCurrencyCode>
+    <cbc:SourceCurrencyBaseRate>4260.22</cbc:SourceCurrencyBaseRate>
+    <cbc:TargetCurrencyCode>COP</cbc:TargetCurrencyCode>
+    <cbc:TargetCurrencyBaseRate>1.00</cbc:TargetCurrencyBaseRate>
+    <cbc:CalculationRate>4260.22</cbc:CalculationRate>
+    <cbc:Date>2025-05-09</cbc:Date>
+  </cac:PaymentExchangeRate>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="COP">30012.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="COP">157961.20</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="COP">30012.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:Percent>19.00</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID>01</cbc:ID>
+          <cbc:Name>IVA</cbc:Name>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="COP">157961.20</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="COP">157961.20</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="COP">187973.20</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="COP">187973.20</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">7563.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1437.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">7563.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1437.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">9000.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">6555.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1245.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">6555.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1245.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">7800.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3353.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">637.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3353.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">637.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3990.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>4</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">6134.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1166.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">6134.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1166.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">7300.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>5</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">7479.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1421.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">7479.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1421.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">8900.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>6</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">8571.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1629.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">8571.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1629.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">10200.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>7</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">3</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">34034.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">6466.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">34034.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">6466.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">13500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">3</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>8</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">2</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">9244.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">1756.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">9244.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">1756.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">5500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">2</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>9</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">78.2</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">23066.20</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">4382.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">23066.20</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">4382.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">351.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">78.2</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>10</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">2</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">4538.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">862.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">4538.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">862.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">2700.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">2</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>11</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3571.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">679.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3571.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">679.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">4250.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>12</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">70</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">10588.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">2012.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">10588.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">2012.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">180.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">70</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>13</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">7</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">2382.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">453.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">2382.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">453.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">405.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">7</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>14</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">7</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">882.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">168.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">882.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">168.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">150.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">7</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>15</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">2941.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">559.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">2941.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">559.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">3500.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">1</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>16</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">3</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">3529.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">671.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">3529.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">671.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">1400.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">3</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>17</cbc:ID>
+    <cbc:Note/>
+    <cbc:InvoicedQuantity unitCode="EA">7</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="COP">23531.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="COP">4469.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="COP">23531.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="COP">4469.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:Percent>19</cbc:Percent>
+          <cac:TaxScheme>
+            <cbc:ID>01</cbc:ID>
+            <cbc:Name>IVA</cbc:Name>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description>CACHARRERIA</cbc:Description>
+      <cac:SellersItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:SellersItemIdentification>
+      <cac:StandardItemIdentification>
+        <cbc:ID>01</cbc:ID>
+      </cac:StandardItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="COP">4000.00</cbc:PriceAmount>
+      <cbc:BaseQuantity unitCode="EA">7</cbc:BaseQuantity>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

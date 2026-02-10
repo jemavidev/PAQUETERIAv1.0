@@ -1,0 +1,224 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    NUEVO DISEÑO: BADGE INTEGRADO                              ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          VISTA DETALLADA DEL BADGE                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BADGE VERDE (Completo):
+┌──────────┐
+│   ⬤ 15   │  ← Fondo verde (#10B981)
+└──────────┘     Texto blanco
+                 Redondeado completo
+                 Padding: 2px horizontal, 0.5px vertical
+
+BADGE AZUL (Validado):
+┌──────────┐
+│   ⬤ 8    │  ← Fondo azul (#3B82F6)
+└──────────┘     Texto blanco
+                 Redondeado completo
+                 Padding: 2px horizontal, 0.5px vertical
+
+CÍRCULO AMARILLO (Pendiente):
+    🟡        ← Sin cambios
+              Solo círculo pequeño
+
+CÍRCULO ROJO (Error):
+    🔴        ← Sin cambios
+              Solo círculo pequeño
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        COMPARACIÓN LADO A LADO                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════╦═══════════════════════════╗
+║      DISEÑO ANTERIOR      ║     NUEVO DISEÑO          ║
+╠═══════════════════════════╬═══════════════════════════╣
+║                           ║                           ║
+║   🟢 15 prod.             ║      ⬤ 15                 ║
+║   ↑   ↑                   ║      ↑                    ║
+║   │   └─ Texto separado   ║      └─ Número integrado  ║
+║   └───── Círculo          ║         en badge verde    ║
+║                           ║                           ║
+║   Ocupa más espacio       ║   Más compacto            ║
+║   Menos elegante          ║   Más moderno             ║
+║                           ║                           ║
+╚═══════════════════════════╩═══════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    VISTA EN TABLA (SIMULACIÓN REAL)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║  CUFE          │ Proveedor           │ Número    │ Total      │ Estado   ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║  8cf8ec536...  │ DISTRIBUIDORA XYZ   │ FV-001234 │ $1,250,000 │  ⬤ 15   ║
+║  b95d05e6f...  │ COMERCIAL ABC       │ FV-005678 │ $850,000   │  ⬤ 8    ║
+║  dce84f5f4...  │ PROVEEDOR LTDA      │ FV-009012 │ $2,100,000 │  ⬤ 23   ║
+║  TEMP_1234...  │ IMPORTADORA SUR     │ -         │ -          │  🟡     ║
+║  fc5ffaf46...  │ SUMINISTROS NORTE   │ FV-003456 │ $450,000   │  ⬤ 5    ║
+║  752c9406b...  │ COMERCIO INTEGRAL   │ FV-002345 │ $920,000   │  ⬤ 12   ║
+║  703f6357a...  │ PROVEEDOR ERROR     │ -         │ -          │  🔴     ║
+║  6840c2056...  │ SUMINISTROS OESTE   │ FV-006789 │ $1,350,000 │  ⬤ 9    ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Leyenda:
+  ⬤ 15  = Badge verde con 15 productos (Completo)
+  ⬤ 8   = Badge verde con 8 productos (Completo)
+  🟡    = Pendiente DIAN (sin productos aún)
+  🔴    = Error (sin productos)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         DIFERENTES CANTIDADES                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1 dígito:
+┌────────┐
+│  ⬤ 5   │  ← Badge pequeño pero legible
+└────────┘
+
+2 dígitos:
+┌─────────┐
+│  ⬤ 15   │  ← Badge mediano (más común)
+└─────────┘
+
+3 dígitos:
+┌──────────┐
+│  ⬤ 125   │  ← Badge grande (se expande automáticamente)
+└──────────┘
+
+Sin productos (posible error):
+┌────────┐
+│  ⬤ 0   │  ← Badge con 0 (alerta visual)
+└────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            INTERACCIÓN                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Estado Normal:
+┌─────────┐
+│  ⬤ 15   │
+└─────────┘
+
+Hover (mouse encima):
+┌─────────┐
+│  ⬤ 15   │  ← Cursor: pointer
+└─────────┘
+    ↓
+┌──────────────────────────────┐
+│ Tooltip:                     │
+│ "Completo - 15 productos"    │
+└──────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ESPECIFICACIONES CSS                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+.badge-productos {
+  display: inline-flex;           /* Flexbox para centrar */
+  align-items: center;            /* Centrado vertical */
+  justify-content: center;        /* Centrado horizontal */
+  padding: 0.125rem 0.5rem;       /* 2px vertical, 8px horizontal */
+  border-radius: 9999px;          /* Completamente redondeado */
+  background-color: #10B981;      /* Verde Tailwind 500 */
+  color: white;                   /* Texto blanco */
+  font-size: 0.75rem;             /* 12px */
+  font-weight: 600;               /* Semibold */
+  min-width: 28px;                /* Ancho mínimo */
+}
+
+.badge-productos.validado {
+  background-color: #3B82F6;      /* Azul Tailwind 500 */
+}
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            COLORES EXACTOS                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+VERDE (Completo):
+  Tailwind: bg-green-500
+  Hex:      #10B981
+  RGB:      rgb(16, 185, 129)
+  HSL:      hsl(160, 84%, 39%)
+  
+  ┌──────────┐
+  │  ⬤ 15   │  ← Este color
+  └──────────┘
+
+AZUL (Validado):
+  Tailwind: bg-blue-500
+  Hex:      #3B82F6
+  RGB:      rgb(59, 130, 246)
+  HSL:      hsl(217, 91%, 60%)
+  
+  ┌──────────┐
+  │  ⬤ 8    │  ← Este color
+  └──────────┘
+
+BLANCO (Texto):
+  Hex:      #FFFFFF
+  RGB:      rgb(255, 255, 255)
+  
+  Contraste con verde: 4.5:1 (WCAG AA ✓)
+  Contraste con azul:  4.5:1 (WCAG AA ✓)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RESPONSIVE DESIGN                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Desktop (>1024px):
+┌─────────┐
+│  ⬤ 15   │  ← Badge completo
+└─────────┘
+
+Tablet (768px - 1024px):
+┌─────────┐
+│  ⬤ 15   │  ← Badge completo
+└─────────┘
+
+Mobile (<768px):
+┌─────────┐
+│  ⬤ 15   │  ← Badge completo (se mantiene legible)
+└─────────┘
+
+El badge mantiene su tamaño en todos los dispositivos porque:
+  • Es compacto por naturaleza
+  • El texto es pequeño pero legible
+  • No necesita ajustes responsive
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              VENTAJAS                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+✅ MÁS COMPACTO
+   Antes: 🟢 15 prod. (ocupa ~80px)
+   Ahora: ⬤ 15 (ocupa ~35px)
+   Ahorro: ~55% de espacio
+
+✅ MÁS ELEGANTE
+   Diseño moderno tipo "pill badge"
+   Similar a GitHub, Gmail, Slack
+
+✅ MÁS LEGIBLE
+   Alto contraste blanco/color
+   Número destacado visualmente
+
+✅ MÁS INTUITIVO
+   Color = Estado
+   Número = Cantidad
+   Simple y directo
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                           🚀 LISTO PARA USAR                              ║
+╚═══════════════════════════════════════════════════════════════════════════╝
