@@ -39,6 +39,8 @@ class InvoiceResponse(BaseModel):
     notas: Optional[str]
     created_at: datetime
     updated_at: datetime
+    productos_count: Optional[int] = None  # ✅ Conteo de productos para estados completo/validado
+    validation_warnings: Optional[dict] = None  # ✅ Advertencias de validación para PDFs
     
     class Config:
         from_attributes = True
@@ -64,6 +66,17 @@ class InvoiceUpdateRequest(BaseModel):
     total_factura: Optional[float] = None
     notas: Optional[str] = None
     estado: Optional[str] = None
+
+
+class InvoiceCorrectionRequest(BaseModel):
+    """Request para corrección manual de campos problemáticos"""
+    dian_total_neto: Optional[float] = None
+    dian_subtotal: Optional[float] = None
+    dian_total_iva: Optional[float] = None
+    fecha_emision: Optional[datetime] = None
+    numero_factura: Optional[str] = None
+    dian_emisor_razon_social: Optional[str] = None
+    dian_emisor_nit: Optional[str] = None
 
 
 class ProductResponse(BaseModel):
@@ -231,6 +244,7 @@ def list_invoices(
     """
     TAB FACTURAS: Lista todas las facturas con filtros y paginación
     OPTIMIZADO: Usa una sola query para contar y obtener items
+    INCLUYE: Conteo de productos para estados 'completo' y 'validado'
     """
     # Convertir strings vacías a None y parsear fechas
     search = search if search and search.strip() else None
@@ -251,7 +265,7 @@ def list_invoices(
             pass
     
     # Construir query base UNA SOLA VEZ
-    from sqlalchemy import or_
+    from sqlalchemy import or_, func
     from ..models.invoice_v2 import InvoiceV2
     
     query = db.query(InvoiceV2)
@@ -280,6 +294,48 @@ def list_invoices(
     # Obtener items paginados con ordenamiento
     invoices = query.order_by(InvoiceV2.created_at.desc()).offset(skip).limit(limit).all()
     
+    # Obtener conteo de productos para facturas con estado 'completo' o 'validado'
+    # Solo para las facturas que se están mostrando en esta página
+    cufes_to_count = [inv.cufe for inv in invoices if inv.estado in ['completo', 'validado']]
+    
+    productos_count = {}
+    if cufes_to_count:
+        from sqlalchemy import func
+        counts = db.query(
+            InvoiceProductV2.cufe,
+            func.count(InvoiceProductV2.id).label('count')
+        ).filter(
+            InvoiceProductV2.cufe.in_(cufes_to_count)
+        ).group_by(InvoiceProductV2.cufe).all()
+        
+        productos_count = {cufe: count for cufe, count in counts}
+    
+    # Agregar el conteo de productos a cada factura
+    invoice_responses = []
+    for invoice in invoices:
+        invoice_dict = {
+            'cufe': invoice.cufe,
+            'archivo_proveedor_url': invoice.archivo_proveedor_url,
+            'archivo_proveedor_s3_key': invoice.archivo_proveedor_s3_key,
+            'archivo_dian_url': invoice.archivo_dian_url,
+            'archivo_dian_s3_key': invoice.archivo_dian_s3_key,
+            'proveedor_nombre': invoice.proveedor_nombre,
+            'proveedor_nit': invoice.proveedor_nit,
+            'fecha_emision': invoice.fecha_emision,
+            'numero_factura': invoice.numero_factura,
+            'total_factura': invoice.total_factura,
+            'dian_validado': invoice.dian_validado,
+            'dian_emisor_razon_social': invoice.dian_emisor_razon_social,
+            'dian_total_neto': invoice.dian_total_neto,
+            'estado': invoice.estado,
+            'notas': invoice.notas,
+            'created_at': invoice.created_at,
+            'updated_at': invoice.updated_at,
+            'productos_count': productos_count.get(invoice.cufe, 0) if invoice.estado in ['completo', 'validado'] else None,
+            'validation_warnings': None  # Se calcula bajo demanda en el frontend
+        }
+        invoice_responses.append(invoice_dict)
+    
     # NO generar URLs pre-firmadas aquí (se generan bajo demanda al descargar)
     # Esto ahorra MUCHO tiempo
     
@@ -287,13 +343,13 @@ def list_invoices(
     page = (skip // limit) + 1
     total_pages = (total + limit - 1) // limit  # Redondear hacia arriba
     
-    return InvoiceListResponse(
-        items=invoices,
-        total=total,
-        page=page,
-        page_size=limit,
-        total_pages=total_pages
-    )
+    return {
+        'items': invoice_responses,
+        'total': total,
+        'page': page,
+        'page_size': limit,
+        'total_pages': total_pages
+    }
 
 
 @router.get("/facturas/{cufe}/download-url")
@@ -401,30 +457,50 @@ async def upload_dian_document(
     db: Session = Depends(get_db)
 ):
     """
-    TAB CUFE: Sube el archivo DIAN y actualiza TODOS los datos
-    Esta es la fuente de verdad
+    TAB CUFE: Sube el archivo DIAN (XML o PDF) y actualiza TODOS los datos
+    Detecta automáticamente el tipo de archivo y lo procesa
     """
-    if not file.filename.endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF")
+    # Validar extensión
+    filename_lower = file.filename.lower()
+    if not (filename_lower.endswith('.pdf') or filename_lower.endswith('.xml')):
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF o XML")
+    
+    # Determinar extensión para archivo temporal
+    file_extension = '.xml' if filename_lower.endswith('.xml') else '.pdf'
     
     # Guardar temporalmente
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
         content = await file.read()
         tmp.write(content)
         tmp_path = tmp.name
     
     try:
+        # Detectar tipo de archivo
+        from app.services.file_detector_service import FileDetectorService
+        file_type = FileDetectorService.detect_file_type(tmp_path)
+        
+        logger.info(f"📄 Archivo detectado como: {file_type}")
+        
         service = InvoiceV2Service(db)
         
         # Resetear el file object para S3
         await file.seek(0)
         
-        invoice = service.process_dian_document(cufe, tmp_path, file_obj=file.file)
+        # Procesar según el tipo
+        if file_type == 'XML':
+            invoice = service.process_xml_document(cufe, tmp_path, file_obj=file.file)
+        elif file_type == 'PDF':
+            invoice = service.process_dian_document(cufe, tmp_path, file_obj=file.file)
+        else:
+            raise HTTPException(status_code=400, detail="Tipo de archivo no soportado")
         
         return invoice
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(f"Error procesando documento DIAN: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error procesando documento DIAN: {str(e)}")
     finally:
         # Limpiar archivo temporal
@@ -661,6 +737,83 @@ def get_statistics(db: Session = Depends(get_db)):
     service = InvoiceV2Service(db)
     stats = service.get_statistics()
     return stats
+
+
+@router.get("/cufe/{cufe}/validate")
+def validate_invoice(cufe: str, db: Session = Depends(get_db)):
+    """
+    Valida una factura y detecta inconsistencias en campos críticos
+    Solo aplica para facturas procesadas desde PDF
+    """
+    from ..services.validation_service import ValidationService
+    
+    service = InvoiceV2Service(db)
+    invoice = service.get_invoice_by_cufe(cufe)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Ejecutar validación
+    validation_result = ValidationService.validate_invoice(invoice)
+    
+    return validation_result
+
+
+@router.patch("/cufe/{cufe}/correct")
+def correct_invoice_fields(
+    cufe: str,
+    corrections: InvoiceCorrectionRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Corrige manualmente campos problemáticos de una factura
+    Solo permite corregir campos identificados como problemáticos en casos edge
+    """
+    service = InvoiceV2Service(db)
+    invoice = service.get_invoice_by_cufe(cufe)
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Aplicar correcciones
+    corrections_applied = []
+    corrections_dict = corrections.dict(exclude_unset=True)
+    
+    for field, value in corrections_dict.items():
+        if value is not None:
+            setattr(invoice, field, value)
+            corrections_applied.append(field)
+    
+    # Guardar registro de correcciones manuales en dian_datos_raw
+    if corrections_applied:
+        if not invoice.dian_datos_raw:
+            invoice.dian_datos_raw = {}
+        
+        if 'manual_corrections' not in invoice.dian_datos_raw:
+            invoice.dian_datos_raw['manual_corrections'] = []
+        
+        from datetime import datetime
+        invoice.dian_datos_raw['manual_corrections'].append({
+            'timestamp': datetime.now().isoformat(),
+            'fields': corrections_applied,
+            'values': corrections_dict
+        })
+        
+        # Marcar como modificado para que SQLAlchemy detecte el cambio en JSONB
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(invoice, 'dian_datos_raw')
+        
+        invoice.updated_at = datetime.now()
+        db.commit()
+        db.refresh(invoice)
+        
+        logger.info(f"✅ Correcciones aplicadas a {cufe[:20]}...: {corrections_applied}")
+    
+    return {
+        "message": "Correcciones aplicadas correctamente",
+        "fields_corrected": corrections_applied,
+        "invoice": InvoiceResponse.from_orm(invoice)
+    }
 
 
 @router.put("/facturas/{temp_cufe}/update-cufe")
