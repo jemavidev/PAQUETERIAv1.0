@@ -400,7 +400,7 @@ class InvoiceV2Service:
                 except Exception as e:
                     logger.warning(f"No se pudo calcular trazabilidad para {codigo_prod}: {e}")
             
-            # Crear producto
+            # Crear producto (sin campos de trazabilidad por ahora)
             product = InvoiceProductV2(
                 cufe=cufe,
                 linea_numero=i + 1,
@@ -408,19 +408,11 @@ class InvoiceV2Service:
                 descripcion=prod_data.get('descripcion'),
                 cantidad=prod_data.get('cantidad'),
                 unidad_medida=prod_data.get('unidad_medida'),
-                precio_unitario=Decimal(str(prod_data.get('precio_unitario', 0))),
-                iva_porcentaje=Decimal(str(prod_data.get('iva_porcentaje', 0))),
-                iva_valor=Decimal(str(prod_data.get('iva_valor', 0))),
-                total_item=Decimal(str(prod_data.get('total_item', 0))),
-                # Trazabilidad
-                precio_promedio_historico=traceability_data.get('precio_promedio'),
-                precio_minimo_historico=traceability_data.get('precio_minimo'),
-                precio_maximo_historico=traceability_data.get('precio_maximo'),
-                variacion_precio_porcentaje=traceability_data.get('variacion_porcentaje'),
-                total_compras_historicas=traceability_data.get('total_compras'),
-                proveedores_alternativos=traceability_data.get('proveedores_alternativos'),
-                ultima_compra_fecha=traceability_data.get('ultima_compra_fecha'),
-                ultima_compra_precio=traceability_data.get('ultima_compra_precio'),
+                precio_unitario=Decimal(str(prod_data.get('precio_unitario', 0))) if prod_data.get('precio_unitario') else None,
+                iva_porcentaje=Decimal(str(prod_data.get('iva_porcentaje', 0))) if prod_data.get('iva_porcentaje') else None,
+                iva_valor=Decimal(str(prod_data.get('iva_valor', 0))) if prod_data.get('iva_valor') else None,
+                total_item=Decimal(str(prod_data.get('total_item', 0))) if prod_data.get('total_item') else None,
+                fecha_compra=fecha_compra,
                 created_at=datetime.now()
             )
             self.db.add(product)
