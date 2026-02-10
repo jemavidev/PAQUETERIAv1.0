@@ -864,29 +864,51 @@
         let successful = 0;
         let failed = 0;
         
-        // Procesar archivos secuencialmente (DIAN requiere extraer CUFE primero)
+        // Procesar archivos secuencialmente
         for (const file of files) {
             const formData = new FormData();
             formData.append('file', file);
             
             try {
-                // Primero extraer CUFE del archivo
-                const tempResponse = await fetch('/api/v2/invoices/extract-cufe', {
-                    method: 'POST',
-                    body: formData
-                });
+                let cufe = null;
                 
-                if (!tempResponse.ok) {
-                    throw new Error('No se pudo extraer CUFE');
+                // Detectar tipo de archivo
+                const fileName = file.name.toLowerCase();
+                const isXML = fileName.endsWith('.xml');
+                const isPDF = fileName.endsWith('.pdf');
+                
+                if (isXML) {
+                    // Para XML: el nombre del archivo ES el CUFE (sin extensión)
+                    cufe = file.name.replace(/\.xml$/i, '');
+                    
+                    // Validar que sea un CUFE válido (96 caracteres hexadecimales)
+                    if (cufe.length !== 96 || !/^[0-9a-fA-F]{96}$/.test(cufe)) {
+                        throw new Error('Nombre de archivo XML no es un CUFE válido');
+                    }
+                } else if (isPDF) {
+                    // Para PDF: extraer CUFE del contenido
+                    const tempResponse = await fetch('/api/v2/invoices/extract-cufe', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!tempResponse.ok) {
+                        throw new Error('No se pudo extraer CUFE del PDF');
+                    }
+                    
+                    const data = await tempResponse.json();
+                    cufe = data.cufe;
+                } else {
+                    throw new Error('Tipo de archivo no soportado');
                 }
                 
-                const { cufe } = await tempResponse.json();
-                
                 // Ahora subir el archivo DIAN con el CUFE
-                formData.append('file', file);
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', file);
+                
                 const response = await fetch(`/api/v2/invoices/cufe/${cufe}/upload-dian`, {
                     method: 'POST',
-                    body: formData
+                    body: uploadFormData
                 });
                 
                 completed++;
