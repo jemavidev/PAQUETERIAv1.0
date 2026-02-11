@@ -283,61 +283,30 @@ function renderProductRow(product) {
     const totalConIva = totalBase + ivaValor;
     const total = formatCurrency(totalConIva);
     
-    // Estado: Badge circular verde con número (estilo minimalista)
-    // Prioridad: IVA > Descuentos/Recargos > Variación de Precio
+    // Estado: Badge circular más pequeño
+    // Mostrar "+IVA" solo si el producto tiene IVA
+    // Si el IVA ya está incluido en el precio, no mostrar nada
     
-    let badgeNumber = '';
-    let badgeColor = 'bg-green-500'; // Verde por defecto
-    let badgeTitle = '';
-    let badgeInfo = [];
+    let estadoHTML = '';
     
-    // 1. IVA (prioridad más alta)
     if (ivaPorc > 0) {
-        badgeNumber = Math.round(ivaPorc);
-        badgeTitle = `IVA ${ivaPorc}%`;
-        badgeInfo.push(`IVA ${ivaPorc}%`);
+        // Producto con IVA - mostrar badge "+IVA"
+        estadoHTML = `
+            <div class="flex items-center justify-center">
+                <span class="inline-flex items-center justify-center w-16 h-8 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                      title="Producto con IVA del ${ivaPorc}%">
+                    +IVA
+                </span>
+            </div>
+        `;
     } else {
-        badgeNumber = '0';
-        badgeTitle = 'Sin IVA';
-        badgeInfo.push('Sin IVA');
+        // Sin IVA o IVA ya incluido - no mostrar nada
+        estadoHTML = `
+            <div class="flex items-center justify-center">
+                <span class="text-gray-400 text-xs">-</span>
+            </div>
+        `;
     }
-    
-    // 2. Descuentos y Recargos
-    const descuento = parseFloat(product.descuento_valor) || 0;
-    const recargo = parseFloat(product.recargo_valor) || 0;
-    
-    if (descuento > 0) {
-        badgeInfo.push(`Descuento: $${formatNumber(descuento)}`);
-    }
-    if (recargo > 0) {
-        badgeInfo.push(`Recargo: $${formatNumber(recargo)}`);
-    }
-    
-    // 3. Variación de precio
-    if (product.variacion_precio !== null && product.variacion_precio !== undefined) {
-        const variacion = parseFloat(product.variacion_precio);
-        if (variacion > 0) {
-            badgeInfo.push(`↑ Precio subió ${variacion.toFixed(1)}%`);
-        } else if (variacion < 0) {
-            badgeInfo.push(`↓ Precio bajó ${Math.abs(variacion).toFixed(1)}%`);
-        } else {
-            badgeInfo.push(`= Precio igual`);
-        }
-    } else if (product.variacion_tipo === 'primera_compra') {
-        badgeInfo.push('Primera compra de este producto');
-    }
-    
-    // Construir tooltip con toda la información
-    const tooltipText = badgeInfo.join(' • ');
-    
-    const estadoHTML = `
-        <div class="flex items-center justify-center">
-            <span class="inline-flex items-center justify-center w-12 h-12 rounded-full ${badgeColor} text-white text-lg font-bold shadow-md hover:shadow-lg transition-shadow cursor-help" 
-                  title="${tooltipText}">
-                ${badgeNumber}
-            </span>
-        </div>
-    `;
     
     const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
