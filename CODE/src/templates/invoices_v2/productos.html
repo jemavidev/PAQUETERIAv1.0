@@ -283,61 +283,61 @@ function renderProductRow(product) {
     const totalConIva = totalBase + ivaValor;
     const total = formatCurrency(totalConIva);
     
-    // Estado: Variación de precio, descuentos/recargos, IVA
-    let estadoBadges = [];
+    // Estado: Badge circular verde con número (estilo minimalista)
+    // Prioridad: IVA > Descuentos/Recargos > Variación de Precio
     
-    // 1. Variación de precio (si existe trazabilidad)
+    let badgeNumber = '';
+    let badgeColor = 'bg-green-500'; // Verde por defecto
+    let badgeTitle = '';
+    let badgeInfo = [];
+    
+    // 1. IVA (prioridad más alta)
+    if (ivaPorc > 0) {
+        badgeNumber = Math.round(ivaPorc);
+        badgeTitle = `IVA ${ivaPorc}%`;
+        badgeInfo.push(`IVA ${ivaPorc}%`);
+    } else {
+        badgeNumber = '0';
+        badgeTitle = 'Sin IVA';
+        badgeInfo.push('Sin IVA');
+    }
+    
+    // 2. Descuentos y Recargos
+    const descuento = parseFloat(product.descuento_valor) || 0;
+    const recargo = parseFloat(product.recargo_valor) || 0;
+    
+    if (descuento > 0) {
+        badgeInfo.push(`Descuento: $${formatNumber(descuento)}`);
+    }
+    if (recargo > 0) {
+        badgeInfo.push(`Recargo: $${formatNumber(recargo)}`);
+    }
+    
+    // 3. Variación de precio
     if (product.variacion_precio !== null && product.variacion_precio !== undefined) {
         const variacion = parseFloat(product.variacion_precio);
         if (variacion > 0) {
-            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800" title="Precio subió ${variacion.toFixed(1)}%">
-                ↑ ${variacion.toFixed(1)}%
-            </span>`);
+            badgeInfo.push(`↑ Precio subió ${variacion.toFixed(1)}%`);
         } else if (variacion < 0) {
-            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800" title="Precio bajó ${Math.abs(variacion).toFixed(1)}%">
-                ↓ ${Math.abs(variacion).toFixed(1)}%
-            </span>`);
+            badgeInfo.push(`↓ Precio bajó ${Math.abs(variacion).toFixed(1)}%`);
         } else {
-            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800" title="Precio igual">
-                = 0%
-            </span>`);
+            badgeInfo.push(`= Precio igual`);
         }
     } else if (product.variacion_tipo === 'primera_compra') {
-        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800" title="Primera compra">
-            1ª
-        </span>`);
+        badgeInfo.push('Primera compra de este producto');
     }
     
-    // 2. Descuentos
-    const descuento = parseFloat(product.descuento_valor) || 0;
-    if (descuento > 0) {
-        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800" title="Descuento: $${formatNumber(descuento)}">
-            💰 Desc
-        </span>`);
-    }
+    // Construir tooltip con toda la información
+    const tooltipText = badgeInfo.join(' • ');
     
-    // 3. Recargos
-    const recargo = parseFloat(product.recargo_valor) || 0;
-    if (recargo > 0) {
-        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800" title="Recargo: $${formatNumber(recargo)}">
-            ⚠️ Rec
-        </span>`);
-    }
-    
-    // 4. IVA
-    if (ivaPorc > 0) {
-        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800" title="IVA ${ivaPorc}%">
-            IVA ${ivaPorc}%
-        </span>`);
-    } else {
-        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800" title="Sin IVA">
-            Sin IVA
-        </span>`);
-    }
-    
-    const estadoHTML = estadoBadges.length > 0 
-        ? `<div class="flex flex-wrap gap-1">${estadoBadges.join('')}</div>`
-        : '<span class="text-gray-400 text-xs">-</span>';
+    const estadoHTML = `
+        <div class="flex items-center justify-center">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-full ${badgeColor} text-white text-lg font-bold shadow-md hover:shadow-lg transition-shadow cursor-help" 
+                  title="${tooltipText}">
+                ${badgeNumber}
+            </span>
+        </div>
+    `;
     
     const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
