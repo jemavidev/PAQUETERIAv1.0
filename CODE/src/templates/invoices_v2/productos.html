@@ -322,6 +322,7 @@ function renderProductRow(product) {
     if (product.variacion_precio !== null && product.variacion_precio !== undefined) {
         const variacion = parseFloat(product.variacion_precio);
         if (variacion > 0.5) {
+            // Precio SUBIÓ
             estadoBadges.push(`
                 <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                       title="Precio subió ${variacion.toFixed(1)}%">
@@ -329,6 +330,7 @@ function renderProductRow(product) {
                 </span>
             `);
         } else if (variacion < -0.5) {
+            // Precio BAJÓ
             estadoBadges.push(`
                 <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-600 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                       title="Precio bajó ${Math.abs(variacion).toFixed(1)}%">
@@ -336,7 +338,9 @@ function renderProductRow(product) {
                 </span>
             `);
         }
+        // Si variación está entre -0.5% y 0.5%, NO mostrar badge (precio IGUAL)
     } else if (product.variacion_tipo === 'primera_compra') {
+        // PRIMERA COMPRA
         estadoBadges.push(`
             <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-purple-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Primera compra de este producto">
@@ -344,6 +348,7 @@ function renderProductRow(product) {
             </span>
         `);
     }
+    // Si variacion_tipo === 'igual', NO mostrar badge
     
     const estadoHTML = estadoBadges.length > 0 
         ? `<div class="flex flex-wrap gap-1">${estadoBadges.join('')}</div>`
