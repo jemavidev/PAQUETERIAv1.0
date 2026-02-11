@@ -1,7 +1,7 @@
 """add tipo_factura to invoices_v2
 
 Revision ID: 20260211_092552
-Revises: 
+Revises: 536e9b775d34, add_supplier_invoices, create_customer_prefs, create_cufe_records, add_incremental_sync, add_products_001
 Create Date: 2026-02-11 09:25:52
 
 """
@@ -11,7 +11,14 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '20260211_092552'
-down_revision = None  # Will be set to the latest revision
+down_revision = (
+    '536e9b775d34',           # merge traceability and invoice_v2
+    'add_supplier_invoices',  # supplier invoices table
+    'create_customer_prefs',  # customer preferences
+    'create_cufe_records',    # cufe records
+    'add_incremental_sync',   # incremental sync
+    'add_products_001',       # products table
+)
 branch_labels = None
 depends_on = None
 
