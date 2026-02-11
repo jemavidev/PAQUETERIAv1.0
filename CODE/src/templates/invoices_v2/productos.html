@@ -353,25 +353,25 @@ function renderProductRow(product) {
     
     return `
         <tr class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 align-middle">
                 <div class="text-sm font-medium text-gray-900 max-w-xs" title="${descripcion}">${descripcion}</div>
             </td>
-            <td class="px-6 py-4 hidden md:table-cell">
+            <td class="px-6 py-4 hidden md:table-cell align-middle">
                 <div class="text-sm text-gray-700 font-mono">${codigoProducto}</div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 align-middle">
                 <div class="text-sm text-gray-900 font-semibold">${cantidad}</div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 align-middle">
                 <div class="text-sm font-medium text-gray-900">${precio}</div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 align-middle">
                 <div class="text-sm font-bold text-gray-900">${total}</div>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-6 py-4 align-middle">
                 ${estadoHTML}
             </td>
-            <td class="px-6 py-4 text-right">
+            <td class="px-6 py-4 text-right align-middle">
                 <button onclick='viewProductDetail(${productJson})' 
                         class="text-papyrus-blue hover:text-blue-700 transition-colors p-2 rounded-lg hover:bg-blue-50" 
                         title="Ver detalle completo">
