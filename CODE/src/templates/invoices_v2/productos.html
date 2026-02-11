@@ -291,7 +291,7 @@ function renderProductRow(product) {
         estadoBadges.push(`
             <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Producto con IVA del ${ivaPorc}%">
-                +IVA
+                +
             </span>
         `);
     }
@@ -364,11 +364,9 @@ function renderProductRow(product) {
             </td>
             <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-900">${precio}</div>
-                ${ivaPorc > 0 ? `<div class="text-xs text-gray-500">IVA incl.</div>` : ''}
             </td>
             <td class="px-6 py-4">
                 <div class="text-sm font-bold text-gray-900">${total}</div>
-                ${ivaPorc > 0 ? `<div class="text-xs text-gray-500">IVA incl.</div>` : ''}
             </td>
             <td class="px-6 py-4">
                 ${estadoHTML}
