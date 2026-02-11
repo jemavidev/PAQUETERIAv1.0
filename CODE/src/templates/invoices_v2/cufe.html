@@ -64,11 +64,38 @@
                                    onchange="toggleSelectAll(this)">
                         </th>
                         <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">CUFE</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Número</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Fecha</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortBy('proveedor')">
+                            <div class="flex items-center gap-1">
+                                Proveedor
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortBy('fecha')">
+                            <div class="flex items-center gap-1">
+                                Fecha
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortBy('total')">
+                            <div class="flex items-center gap-1">
+                                Total
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortBy('productos')">
+                            <div class="flex items-center gap-1">
+                                Estado
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </div>
+                        </th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-40 md:w-48">
                             <span id="actions-header">Acciones</span>
                             <button id="delete-selected-btn" 
@@ -330,6 +357,10 @@
     // Variables para debounce
     let searchTimeout = null;
     let isSearching = false;
+    
+    // Variables para ordenamiento
+    let currentSortBy = '';
+    let currentSortOrder = 'asc';
 
     document.addEventListener('DOMContentLoaded', () => {
         loadCufeRecords();
@@ -415,6 +446,12 @@
             skip: skip,
             limit: itemsPerPage
         });
+        
+        // Agregar parámetros de ordenamiento si existen
+        if (currentSortBy) {
+            params.append('sort_by', currentSortBy);
+            params.append('sort_order', currentSortOrder);
+        }
         
         try {
             // Consultar el endpoint de facturas en lugar de CUFE
@@ -601,7 +638,6 @@
                     </button>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">${proveedor}</td>
-                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">${numero}</td>
                 <td class="px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">${fecha}</td>
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">${total}</td>
                 <td class="px-6 py-4 text-sm text-center">${dianBadge}</td>
@@ -650,12 +686,32 @@
 
     async function downloadInvoicePDF(cufe) {
         try {
+            // Primero verificar qué tipo de archivo DIAN tiene
+            const infoResponse = await fetch(`/api/v2/invoices/facturas/${cufe}`);
+            if (!infoResponse.ok) {
+                showToast('No se pudo obtener información de la factura', 'error');
+                return;
+            }
+            
+            const invoice = await infoResponse.json();
+            const s3Key = invoice.archivo_dian_s3_key;
+            
+            if (!s3Key) {
+                showToast('No hay archivo DIAN disponible', 'warning');
+                return;
+            }
+            
+            // Determinar el tipo de archivo por la extensión en el S3 key
+            const isXML = s3Key.toLowerCase().endsWith('.xml');
+            const fileType = isXML ? 'xml' : 'pdf';
+            const fileLabel = isXML ? 'XML' : 'PDF';
+            
             // Solicitar URL de descarga del archivo DIAN
             const response = await fetch(`/api/v2/invoices/facturas/${cufe}/download-url?file_type=dian`);
             
             if (!response.ok) {
                 const error = await response.json();
-                showToast(error.detail || 'No hay archivo PDF DIAN disponible', 'warning');
+                showToast(error.detail || `No hay archivo ${fileLabel} DIAN disponible`, 'warning');
                 return;
             }
             
@@ -664,7 +720,7 @@
             if (data.download_url) {
                 // Abrir en nueva pestaña para descargar
                 window.open(data.download_url, '_blank');
-                showToast('Descargando archivo DIAN...', 'success');
+                showToast(`Descargando archivo ${fileLabel} DIAN...`, 'success');
             } else {
                 showToast('No se pudo obtener la URL de descarga', 'error');
             }
@@ -672,6 +728,22 @@
             console.error('Error descargando archivo DIAN:', error);
             showToast('Error al descargar el archivo DIAN', 'error');
         }
+    }
+    
+    // Función para ordenar
+    function sortBy(field) {
+        // Si es el mismo campo, cambiar orden
+        if (currentSortBy === field) {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            // Nuevo campo, orden ascendente por defecto
+            currentSortBy = field;
+            currentSortOrder = 'asc';
+        }
+        
+        // Resetear a primera página y recargar
+        currentPage = 1;
+        loadCufeRecords();
     }
 
     function copyCufe(cufe) {

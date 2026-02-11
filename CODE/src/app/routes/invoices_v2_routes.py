@@ -239,12 +239,15 @@ def list_invoices(
     estado: Optional[str] = Query(None),
     fecha_desde: Optional[str] = Query(None),
     fecha_hasta: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query('asc'),
     db: Session = Depends(get_db)
 ):
     """
-    TAB FACTURAS: Lista todas las facturas con filtros y paginación
+    TAB FACTURAS: Lista todas las facturas con filtros, ordenamiento y paginación
     OPTIMIZADO: Usa una sola query para contar y obtener items
     INCLUYE: Conteo de productos para estados 'completo' y 'validado'
+    ORDENAMIENTO: Soporta ordenar por proveedor, fecha, total, productos
     """
     # Convertir strings vacías a None y parsear fechas
     search = search if search and search.strip() else None
@@ -291,8 +294,34 @@ def list_invoices(
     # Contar total (rápido con la misma query)
     total = query.count()
     
-    # Obtener items paginados con ordenamiento
-    invoices = query.order_by(InvoiceV2.created_at.desc()).offset(skip).limit(limit).all()
+    # Aplicar ordenamiento
+    if sort_by:
+        sort_order_lower = sort_order.lower() if sort_order else 'asc'
+        
+        if sort_by == 'proveedor':
+            # Ordenar por proveedor (usar dian_emisor_razon_social si está disponible, sino proveedor_nombre)
+            order_col = func.coalesce(InvoiceV2.dian_emisor_razon_social, InvoiceV2.proveedor_nombre)
+            query = query.order_by(order_col.desc() if sort_order_lower == 'desc' else order_col.asc())
+        elif sort_by == 'fecha':
+            # Ordenar por fecha de emisión
+            query = query.order_by(InvoiceV2.fecha_emision.desc() if sort_order_lower == 'desc' else InvoiceV2.fecha_emision.asc())
+        elif sort_by == 'total':
+            # Ordenar por total (usar dian_total_neto si está disponible, sino total_factura)
+            order_col = func.coalesce(InvoiceV2.dian_total_neto, InvoiceV2.total_factura)
+            query = query.order_by(order_col.desc() if sort_order_lower == 'desc' else order_col.asc())
+        elif sort_by == 'productos':
+            # Para ordenar por productos, necesitamos hacer un join con la tabla de productos
+            # Esto es más complejo, lo haremos en memoria después de obtener los resultados
+            pass
+        else:
+            # Por defecto, ordenar por fecha de creación
+            query = query.order_by(InvoiceV2.created_at.desc())
+    else:
+        # Sin ordenamiento especificado, usar fecha de creación descendente
+        query = query.order_by(InvoiceV2.created_at.desc())
+    
+    # Obtener items paginados
+    invoices = query.offset(skip).limit(limit).all()
     
     # Obtener conteo de productos para facturas con estado 'completo' o 'validado'
     # Solo para las facturas que se están mostrando en esta página
@@ -335,6 +364,14 @@ def list_invoices(
             'validation_warnings': None  # Se calcula bajo demanda en el frontend
         }
         invoice_responses.append(invoice_dict)
+    
+    # Si se ordenó por productos, ordenar en memoria
+    if sort_by == 'productos':
+        sort_order_lower = sort_order.lower() if sort_order else 'asc'
+        invoice_responses.sort(
+            key=lambda x: x['productos_count'] if x['productos_count'] is not None else -1,
+            reverse=(sort_order_lower == 'desc')
+        )
     
     # NO generar URLs pre-firmadas aquí (se generan bajo demanda al descargar)
     # Esto ahorra MUCHO tiempo
