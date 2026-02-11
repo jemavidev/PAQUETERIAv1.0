@@ -262,45 +262,111 @@ async function loadProducts() {
 }
 
 function renderProductRow(product) {
+    // Descripción
     const descripcion = product.descripcion || '-';
-    const codigoProducto = product.codigo_producto || product.codigo_interno || '-';
-    const cantidad = product.cantidad ? parseFloat(product.cantidad).toFixed(2) : '-';
-    const precioUnitario = product.precio_unitario ? formatCurrency(product.precio_unitario) : '-';
-    const totalItem = product.total_item ? formatCurrency(product.total_item) : '-';
-    const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
-    // Determinar estado basado en si tiene todos los datos
-    let estadoBadge = '';
-    if (product.total_item && product.precio_unitario && product.cantidad) {
-        estadoBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completo</span>';
-    } else if (product.descripcion && product.cantidad) {
-        estadoBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Parcial</span>';
-    } else {
-        estadoBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Incompleto</span>';
+    // Código
+    const codigoProducto = product.codigo_producto || product.codigo_interno || '-';
+    
+    // Cantidad (número entero, sin decimales)
+    const cantidad = product.cantidad ? Math.round(parseFloat(product.cantidad)) : 0;
+    
+    // Calcular precio con IVA incluido
+    const precioBase = parseFloat(product.precio_unitario) || 0;
+    const ivaPorc = parseFloat(product.iva_porcentaje) || 0;
+    const precioConIva = precioBase * (1 + ivaPorc / 100);
+    const precio = formatCurrency(precioConIva);
+    
+    // Calcular total con IVA incluido
+    const totalBase = parseFloat(product.total_item) || 0;
+    const ivaValor = parseFloat(product.iva_valor) || 0;
+    const totalConIva = totalBase + ivaValor;
+    const total = formatCurrency(totalConIva);
+    
+    // Estado: Variación de precio, descuentos/recargos, IVA
+    let estadoBadges = [];
+    
+    // 1. Variación de precio (si existe trazabilidad)
+    if (product.variacion_precio !== null && product.variacion_precio !== undefined) {
+        const variacion = parseFloat(product.variacion_precio);
+        if (variacion > 0) {
+            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800" title="Precio subió ${variacion.toFixed(1)}%">
+                ↑ ${variacion.toFixed(1)}%
+            </span>`);
+        } else if (variacion < 0) {
+            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800" title="Precio bajó ${Math.abs(variacion).toFixed(1)}%">
+                ↓ ${Math.abs(variacion).toFixed(1)}%
+            </span>`);
+        } else {
+            estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800" title="Precio igual">
+                = 0%
+            </span>`);
+        }
+    } else if (product.variacion_tipo === 'primera_compra') {
+        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800" title="Primera compra">
+            1ª
+        </span>`);
     }
+    
+    // 2. Descuentos
+    const descuento = parseFloat(product.descuento_valor) || 0;
+    if (descuento > 0) {
+        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800" title="Descuento: $${formatNumber(descuento)}">
+            💰 Desc
+        </span>`);
+    }
+    
+    // 3. Recargos
+    const recargo = parseFloat(product.recargo_valor) || 0;
+    if (recargo > 0) {
+        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800" title="Recargo: $${formatNumber(recargo)}">
+            ⚠️ Rec
+        </span>`);
+    }
+    
+    // 4. IVA
+    if (ivaPorc > 0) {
+        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800" title="IVA ${ivaPorc}%">
+            IVA ${ivaPorc}%
+        </span>`);
+    } else {
+        estadoBadges.push(`<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800" title="Sin IVA">
+            Sin IVA
+        </span>`);
+    }
+    
+    const estadoHTML = estadoBadges.length > 0 
+        ? `<div class="flex flex-wrap gap-1">${estadoBadges.join('')}</div>`
+        : '<span class="text-gray-400 text-xs">-</span>';
+    
+    const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
     return `
         <tr class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900 max-w-xs truncate" title="${descripcion}">${descripcion}</div>
+            <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900 max-w-xs" title="${descripcion}">${descripcion}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                <div class="text-sm text-gray-700">${codigoProducto}</div>
+            <td class="px-6 py-4 hidden md:table-cell">
+                <div class="text-sm text-gray-700 font-mono">${codigoProducto}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${cantidad}</div>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900 font-semibold">${cantidad}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">${precioUnitario}</div>
+            <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">${precio}</div>
+                ${ivaPorc > 0 ? `<div class="text-xs text-gray-500">IVA incl.</div>` : ''}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-bold text-gray-900">${totalItem}</div>
+            <td class="px-6 py-4">
+                <div class="text-sm font-bold text-gray-900">${total}</div>
+                ${ivaPorc > 0 ? `<div class="text-xs text-gray-500">IVA incl.</div>` : ''}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                ${estadoBadge}
+            <td class="px-6 py-4">
+                ${estadoHTML}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button onclick='viewProductDetail(${productJson})' class="text-papyrus-blue hover:text-blue-700 transition-colors p-2 rounded-lg hover:bg-blue-50" title="Ver detalle">
+            <td class="px-6 py-4 text-right">
+                <button onclick='viewProductDetail(${productJson})' 
+                        class="text-papyrus-blue hover:text-blue-700 transition-colors p-2 rounded-lg hover:bg-blue-50" 
+                        title="Ver detalle completo">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -309,6 +375,15 @@ function renderProductRow(product) {
             </td>
         </tr>
     `;
+}
+
+// Función auxiliar para formatear números sin símbolo de moneda
+function formatNumber(value) {
+    if (!value) return '0';
+    return parseFloat(value).toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
 }
 
 function updatePaginationControls(pageStart, pageEnd, total) {
