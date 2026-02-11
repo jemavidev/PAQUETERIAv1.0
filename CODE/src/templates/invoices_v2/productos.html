@@ -346,8 +346,8 @@ function renderProductRow(product) {
     }
     
     const estadoHTML = estadoBadges.length > 0 
-        ? `<div class="flex flex-wrap gap-1 justify-center">${estadoBadges.join('')}</div>`
-        : '<div class="flex items-center justify-center"><span class="text-gray-400 text-xs">-</span></div>';
+        ? `<div class="flex flex-wrap gap-1">${estadoBadges.join('')}</div>`
+        : '<div class="flex items-center"><span class="text-gray-400 text-xs">-</span></div>';
     
     const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
