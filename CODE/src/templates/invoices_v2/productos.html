@@ -283,30 +283,71 @@ function renderProductRow(product) {
     const totalConIva = totalBase + ivaValor;
     const total = formatCurrency(totalConIva);
     
-    // Estado: Badge circular más pequeño
-    // Mostrar "+IVA" solo si el producto tiene IVA
-    // Si el IVA ya está incluido en el precio, no mostrar nada
+    // Estado: Construir badges
+    let estadoBadges = [];
     
-    let estadoHTML = '';
-    
+    // 1. IVA - Badge principal
     if (ivaPorc > 0) {
-        // Producto con IVA - mostrar badge "+IVA"
-        estadoHTML = `
-            <div class="flex items-center justify-center">
-                <span class="inline-flex items-center justify-center w-16 h-8 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
-                      title="Producto con IVA del ${ivaPorc}%">
-                    +IVA
-                </span>
-            </div>
-        `;
-    } else {
-        // Sin IVA o IVA ya incluido - no mostrar nada
-        estadoHTML = `
-            <div class="flex items-center justify-center">
-                <span class="text-gray-400 text-xs">-</span>
-            </div>
-        `;
+        estadoBadges.push(`
+            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                  title="Producto con IVA del ${ivaPorc}%">
+                +IVA
+            </span>
+        `);
     }
+    
+    // 2. Descuentos
+    const descuento = parseFloat(product.descuento_valor) || 0;
+    if (descuento > 0) {
+        estadoBadges.push(`
+            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                  title="Descuento aplicado: ${formatCurrency(descuento)}">
+                -${formatNumber(descuento)}
+            </span>
+        `);
+    }
+    
+    // 3. Recargos
+    const recargo = parseFloat(product.recargo_valor) || 0;
+    if (recargo > 0) {
+        estadoBadges.push(`
+            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-orange-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                  title="Recargo aplicado: ${formatCurrency(recargo)}">
+                +${formatNumber(recargo)}
+            </span>
+        `);
+    }
+    
+    // 4. Variación de precio (si existe)
+    if (product.variacion_precio !== null && product.variacion_precio !== undefined) {
+        const variacion = parseFloat(product.variacion_precio);
+        if (variacion > 0.5) {
+            estadoBadges.push(`
+                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                      title="Precio subió ${variacion.toFixed(1)}%">
+                    ↑${variacion.toFixed(1)}%
+                </span>
+            `);
+        } else if (variacion < -0.5) {
+            estadoBadges.push(`
+                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-600 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                      title="Precio bajó ${Math.abs(variacion).toFixed(1)}%">
+                    ↓${Math.abs(variacion).toFixed(1)}%
+                </span>
+            `);
+        }
+    } else if (product.variacion_tipo === 'primera_compra') {
+        estadoBadges.push(`
+            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-purple-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                  title="Primera compra de este producto">
+                1ª
+            </span>
+        `);
+    }
+    
+    const estadoHTML = estadoBadges.length > 0 
+        ? `<div class="flex flex-wrap gap-1 justify-center">${estadoBadges.join('')}</div>`
+        : '<div class="flex items-center justify-center"><span class="text-gray-400 text-xs">-</span></div>';
     
     const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     

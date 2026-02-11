@@ -673,7 +673,7 @@ def list_products(
         # Obtener items paginados
         productos = query.order_by(InvoiceProductV2.created_at.desc()).offset(skip).limit(limit).all()
         
-        # Enriquecer con datos de la factura
+        # Enriquecer con datos de la factura y análisis de variación de precio
         result = []
         for prod in productos:
             try:
@@ -689,22 +689,51 @@ def list_products(
                     "precio_unitario": float(prod.precio_unitario) if prod.precio_unitario else None,
                     "iva_porcentaje": float(prod.iva_porcentaje) if prod.iva_porcentaje else None,
                     "iva_valor": float(prod.iva_valor) if prod.iva_valor else None,
+                    "descuento_valor": float(prod.descuento_valor) if prod.descuento_valor else None,
+                    "recargo_valor": float(prod.recargo_valor) if prod.recargo_valor else None,
                     "subtotal": float(prod.subtotal) if prod.subtotal else None,
                     "total_item": float(prod.total_item) if prod.total_item else None,
                     "fecha_compra": prod.fecha_compra.isoformat() if prod.fecha_compra else None,
                     "proveedor_nombre": prod.factura.proveedor_nombre if prod.factura else None,
                     "numero_factura": prod.factura.numero_factura if prod.factura else None,
-                    # Campos de trazabilidad (usar getattr para evitar errores si no existen)
-                    "precio_anterior": float(getattr(prod, 'precio_anterior', None)) if getattr(prod, 'precio_anterior', None) else None,
-                    "variacion_precio": float(getattr(prod, 'variacion_precio', None)) if getattr(prod, 'variacion_precio', None) else None,
-                    "variacion_tipo": getattr(prod, 'variacion_tipo', None),
-                    "precio_promedio": float(getattr(prod, 'precio_promedio', None)) if getattr(prod, 'precio_promedio', None) else None,
-                    "precio_minimo_historico": float(getattr(prod, 'precio_minimo_historico', None)) if getattr(prod, 'precio_minimo_historico', None) else None,
-                    "precio_maximo_historico": float(getattr(prod, 'precio_maximo_historico', None)) if getattr(prod, 'precio_maximo_historico', None) else None,
-                    "total_compras_producto": getattr(prod, 'total_compras_producto', None),
-                    "ultimo_proveedor": getattr(prod, 'ultimo_proveedor', None),
-                    "dias_desde_ultima_compra": getattr(prod, 'dias_desde_ultima_compra', None),
                 }
+                
+                # Calcular variación de precio en tiempo real (sin campos de trazabilidad en BD)
+                if prod.codigo_producto and prod.precio_unitario:
+                    try:
+                        # Buscar compra anterior del mismo producto
+                        compra_anterior = db.query(InvoiceProductV2).filter(
+                            InvoiceProductV2.codigo_producto == prod.codigo_producto,
+                            InvoiceProductV2.id != prod.id,
+                            InvoiceProductV2.fecha_compra < prod.fecha_compra,
+                            InvoiceProductV2.precio_unitario.isnot(None)
+                        ).order_by(InvoiceProductV2.fecha_compra.desc()).first()
+                        
+                        if compra_anterior and compra_anterior.precio_unitario:
+                            precio_actual = float(prod.precio_unitario)
+                            precio_anterior = float(compra_anterior.precio_unitario)
+                            
+                            if precio_anterior > 0:
+                                variacion_porcentaje = ((precio_actual - precio_anterior) / precio_anterior) * 100
+                                
+                                if variacion_porcentaje > 0.5:
+                                    prod_dict["variacion_precio"] = round(variacion_porcentaje, 1)
+                                    prod_dict["variacion_tipo"] = "subio"
+                                elif variacion_porcentaje < -0.5:
+                                    prod_dict["variacion_precio"] = round(variacion_porcentaje, 1)
+                                    prod_dict["variacion_tipo"] = "bajo"
+                                else:
+                                    prod_dict["variacion_precio"] = 0.0
+                                    prod_dict["variacion_tipo"] = "igual"
+                            else:
+                                prod_dict["variacion_tipo"] = "primera_compra"
+                        else:
+                            # No hay compra anterior
+                            prod_dict["variacion_tipo"] = "primera_compra"
+                    except Exception as e:
+                        logger.warning(f"Error calculando variación para producto {prod.id}: {e}")
+                        prod_dict["variacion_tipo"] = None
+                
                 result.append(prod_dict)
             except Exception as e:
                 logger.error(f"❌ Error procesando producto {prod.id}: {e}")
@@ -762,6 +791,137 @@ def get_product_history(codigo_producto: str, db: Session = Depends(get_db)):
         'total_compras': len(history),
         'historial': history
     }
+
+
+@router.get("/productos/{product_id}/analisis")
+def get_product_analysis(product_id: int, db: Session = Depends(get_db)):
+    """
+    TAB PRODUCTOS: Análisis detallado de un producto específico
+    
+    Calcula en tiempo real:
+    - Variación de precio vs última compra
+    - Descuentos aplicados
+    - Recargos aplicados
+    - Historial de precios
+    """
+    try:
+        from sqlalchemy import func, desc
+        from ..models.invoice_v2 import InvoiceProductV2, InvoiceV2
+        from decimal import Decimal
+        
+        # Obtener el producto actual
+        producto_actual = db.query(InvoiceProductV2).filter(
+            InvoiceProductV2.id == product_id
+        ).first()
+        
+        if not producto_actual:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        
+        codigo_producto = producto_actual.codigo_producto
+        precio_actual = float(producto_actual.precio_unitario) if producto_actual.precio_unitario else 0
+        fecha_actual = producto_actual.fecha_compra
+        
+        # Buscar historial del mismo producto (excluyendo el actual)
+        historial = db.query(InvoiceProductV2).join(
+            InvoiceV2, InvoiceProductV2.cufe == InvoiceV2.cufe
+        ).filter(
+            InvoiceProductV2.codigo_producto == codigo_producto,
+            InvoiceProductV2.id != product_id,
+            InvoiceProductV2.precio_unitario.isnot(None)
+        ).order_by(desc(InvoiceProductV2.fecha_compra)).all()
+        
+        # Análisis de variación de precio
+        variacion_precio = None
+        if historial:
+            # Obtener la compra anterior más reciente
+            compra_anterior = historial[0]
+            precio_anterior = float(compra_anterior.precio_unitario) if compra_anterior.precio_unitario else 0
+            
+            if precio_anterior > 0:
+                variacion_porcentaje = ((precio_actual - precio_anterior) / precio_anterior) * 100
+                
+                if variacion_porcentaje > 0.5:  # Subió más del 0.5%
+                    tipo = "subio"
+                elif variacion_porcentaje < -0.5:  # Bajó más del 0.5%
+                    tipo = "bajo"
+                else:
+                    tipo = "igual"
+                
+                variacion_precio = {
+                    "porcentaje": round(variacion_porcentaje, 1),
+                    "tipo": tipo,
+                    "precio_anterior": precio_anterior,
+                    "precio_actual": precio_actual,
+                    "fecha_anterior": compra_anterior.fecha_compra.isoformat() if compra_anterior.fecha_compra else None
+                }
+            else:
+                variacion_precio = {
+                    "tipo": "primera_compra",
+                    "precio_actual": precio_actual
+                }
+        else:
+            variacion_precio = {
+                "tipo": "primera_compra",
+                "precio_actual": precio_actual
+            }
+        
+        # Análisis de descuentos
+        descuento_valor = float(producto_actual.descuento_valor) if producto_actual.descuento_valor else 0
+        descuentos = {
+            "tiene_descuento": descuento_valor > 0,
+            "valor": descuento_valor,
+            "porcentaje": 0
+        }
+        
+        # Calcular porcentaje de descuento si existe
+        if descuento_valor > 0 and precio_actual > 0:
+            precio_sin_descuento = precio_actual + descuento_valor
+            descuentos["porcentaje"] = round((descuento_valor / precio_sin_descuento) * 100, 1)
+        
+        # Análisis de recargos
+        recargo_valor = float(producto_actual.recargo_valor) if producto_actual.recargo_valor else 0
+        recargos = {
+            "tiene_recargo": recargo_valor > 0,
+            "valor": recargo_valor,
+            "porcentaje": 0
+        }
+        
+        # Calcular porcentaje de recargo si existe
+        if recargo_valor > 0 and precio_actual > 0:
+            precio_sin_recargo = precio_actual - recargo_valor
+            if precio_sin_recargo > 0:
+                recargos["porcentaje"] = round((recargo_valor / precio_sin_recargo) * 100, 1)
+        
+        # Estadísticas adicionales
+        precios_historicos = [float(p.precio_unitario) for p in historial if p.precio_unitario]
+        estadisticas = {
+            "total_compras": len(historial) + 1,  # +1 por la compra actual
+            "precio_promedio": round(sum(precios_historicos) / len(precios_historicos), 2) if precios_historicos else precio_actual,
+            "precio_minimo": min(precios_historicos) if precios_historicos else precio_actual,
+            "precio_maximo": max(precios_historicos) if precios_historicos else precio_actual
+        }
+        
+        return {
+            "producto_id": product_id,
+            "codigo_producto": codigo_producto,
+            "descripcion": producto_actual.descripcion,
+            "variacion_precio": variacion_precio,
+            "descuentos": descuentos,
+            "recargos": recargos,
+            "estadisticas": estadisticas,
+            "iva_porcentaje": float(producto_actual.iva_porcentaje) if producto_actual.iva_porcentaje else 0
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error en análisis de producto {product_id}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al analizar producto: {str(e)}"
+        )
 
 
 # ===== ESTADÍSTICAS =====
