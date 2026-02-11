@@ -336,6 +336,15 @@
                         <option value="sin_dian">Sin DIAN</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Factura</label>
+                    <select id="edit-tipo-factura" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-2 focus:ring-papyrus-blue focus:ring-opacity-20 focus:outline-none transition-colors">
+                        <option value="reventa">Productos para reventa</option>
+                        <option value="consumo">Consumo interno</option>
+                        <option value="servicio">Servicios</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
@@ -1176,6 +1185,7 @@
             document.getElementById('edit-fecha').value = invoice.fecha_emision ? invoice.fecha_emision.substring(0, 16) : '';
             document.getElementById('edit-total').value = invoice.total_factura || '';
             document.getElementById('edit-estado').value = invoice.estado;
+            document.getElementById('edit-tipo-factura').value = invoice.tipo_factura || 'reventa';  // ✅ NUEVO
             document.getElementById('edit-notas').value = invoice.notas || '';
             
             document.getElementById('edit-modal').classList.remove('hidden');
@@ -1195,6 +1205,7 @@
             fecha_emision: document.getElementById('edit-fecha').value,
             total_factura: parseFloat(document.getElementById('edit-total').value),
             estado: document.getElementById('edit-estado').value,
+            tipo_factura: document.getElementById('edit-tipo-factura').value,  // ✅ NUEVO
             notas: document.getElementById('edit-notas').value,
         };
         

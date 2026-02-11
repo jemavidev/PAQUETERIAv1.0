@@ -36,6 +36,7 @@ class InvoiceResponse(BaseModel):
     dian_emisor_razon_social: Optional[str]
     dian_total_neto: Optional[float]
     estado: str
+    tipo_factura: Optional[str] = 'reventa'  # ✅ NUEVO
     notas: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -64,6 +65,7 @@ class InvoiceUpdateRequest(BaseModel):
     fecha_emision: Optional[datetime] = None
     numero_factura: Optional[str] = None
     total_factura: Optional[float] = None
+    tipo_factura: Optional[str] = None  # ✅ NUEVO
     notas: Optional[str] = None
     estado: Optional[str] = None
 
@@ -604,10 +606,12 @@ def list_products(
     fecha_desde: Optional[str] = Query(None),
     fecha_hasta: Optional[str] = Query(None),
     proveedor: Optional[str] = Query(None),
+    tipo_factura: Optional[str] = Query('reventa', description="Filtrar por tipo de factura: reventa, consumo, servicio, otro, all"),  # ✅ NUEVO
     db: Session = Depends(get_db)
 ):
     """
     TAB PRODUCTOS: Lista todos los productos con filtros avanzados y paginación
+    Por defecto muestra solo productos de facturas tipo 'reventa'
     """
     try:
         from sqlalchemy import or_
@@ -666,6 +670,10 @@ def list_products(
         
         if proveedor:
             query = query.filter(InvoiceV2.proveedor_nombre.ilike(f'%{proveedor}%'))
+        
+        # ✅ NUEVO: Filtrar por tipo de factura
+        if tipo_factura and tipo_factura != 'all':
+            query = query.filter(InvoiceV2.tipo_factura == tipo_factura)
         
         # Contar total
         total = query.count()

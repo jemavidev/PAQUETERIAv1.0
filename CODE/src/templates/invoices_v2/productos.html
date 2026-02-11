@@ -3,7 +3,7 @@
 {% block page_title %}PRODUCTOS{% endblock %}
 
 {% block search_bar %}
-<div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 flex-1 lg:max-w-2xl">
+<div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-3 lg:gap-4 flex-1 lg:max-w-4xl">
     <div class="relative flex-1">
         <input id="search" type="text" placeholder="Descripción, código, proveedor... (búsqueda automática)"
                 class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:border-papyrus-blue focus:ring-1 focus:ring-papyrus-blue bg-white transition-colors text-sm touch-manipulation" autocomplete="off">
@@ -13,6 +13,19 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </button>
+    </div>
+    
+    <!-- Filtro de tipo de factura -->
+    <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+        </svg>
+        <select id="tipo-factura-filter" onchange="loadProducts()" class="text-sm border-0 focus:ring-0 p-0 bg-transparent cursor-pointer">
+            <option value="reventa" selected>Solo reventa</option>
+            <option value="consumo">Solo consumo</option>
+            <option value="servicio">Solo servicios</option>
+            <option value="all">Todos los tipos</option>
+        </select>
     </div>
 </div>
 {% endblock %}
@@ -200,6 +213,7 @@ async function loadProducts() {
     const skip = (currentPage - 1) * itemsPerPage;
     const params = new URLSearchParams({
         search: document.getElementById('search').value || '',
+        tipo_factura: document.getElementById('tipo-factura-filter').value || 'reventa',  // ✅ NUEVO
         skip: skip,
         limit: itemsPerPage
     });

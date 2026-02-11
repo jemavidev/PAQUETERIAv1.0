@@ -92,6 +92,11 @@ class InvoiceV2(Base):
     # Estado y metadatos
     estado = Column(String(20), default='pendiente_dian', nullable=False)
     # Estados: pendiente_dian, completo, error, sin_dian
+    
+    # Tipo de factura (para filtrar productos de reventa vs consumo)
+    tipo_factura = Column(String(20), default='reventa', nullable=False, index=True)
+    # Tipos: reventa, consumo, servicio, otro
+    
     notas = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -117,6 +122,7 @@ class InvoiceV2(Base):
             'dian_emisor_razon_social': self.dian_emisor_razon_social,
             'dian_total_neto': float(self.dian_total_neto) if self.dian_total_neto else None,
             'estado': self.estado,
+            'tipo_factura': self.tipo_factura,
             'notas': self.notas,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
