@@ -1,0 +1,87 @@
+╔══════════════════════════════════════════════════════════════╗
+║  FIX SESIONES 24 HORAS - COMPLETADO ✅                       ║
+╚══════════════════════════════════════════════════════════════╝
+
+🔴 PROBLEMA IDENTIFICADO:
+   Sistema pedía autenticación cada 1-2 horas
+
+🔍 CAUSA RAÍZ:
+   Archivos .env tenían: ACCESS_TOKEN_EXPIRE_MINUTES=30
+   (Solo 30 minutos en lugar de 24 horas)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SOLUCIÓN APLICADA EN STAGING:
+
+   1. Actualizado .env.staging:
+      ACCESS_TOKEN_EXPIRE_MINUTES=1440  # 24 horas
+
+   2. Reiniciado contenedores
+
+   3. Verificado configuración:
+      ✅ Token expira en: 1440 minutos (24.0 horas)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 ESTADO ACTUAL:
+
+   Staging: ✅ Configurado para 24 horas
+   Producción: ⚠️  Pendiente de aplicar
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 PRÓXIMOS PASOS:
+
+   1. PROBAR EN STAGING:
+      - Hacer login en https://staging.jemavi.co
+      - Esperar 2 horas
+      - Verificar que NO pide login nuevamente
+      - ✅ Sesión debe durar 24 horas
+
+   2. APLICAR EN PRODUCCIÓN:
+      Conectar al servidor de producción:
+      
+      ssh ubuntu@papyrus
+      cd /ruta/al/proyecto
+      
+      # Editar .env
+      nano .env
+      
+      # Cambiar:
+      ACCESS_TOKEN_EXPIRE_MINUTES=30
+      # Por:
+      ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      
+      # Reiniciar
+      docker compose down
+      docker compose up -d
+      
+      # Verificar
+      docker compose exec app python -c "from app.config import settings; print(f'Token: {settings.access_token_expire_minutes} min')"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  IMPORTANTE:
+
+   - Usuarios con sesión activa deberán hacer logout/login
+   - Las sesiones viejas (30 min) seguirán expirando rápido
+   - Después del primer login post-cambio: 24 horas de sesión
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 ARCHIVOS MODIFICADOS LOCALMENTE:
+
+   ✅ .env (local)
+   ✅ .env.staging (local)
+   ✅ .env.production (local)
+   ✅ FIX_SESSION_24_HORAS.md (documentación)
+
+   Nota: Archivos .env no se suben a Git (por seguridad)
+         Cambios aplicados manualmente en servidores
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 RESULTADO ESPERADO:
+
+   Antes: Login cada 30 minutos ❌
+   Ahora:  Login cada 24 horas ✅
