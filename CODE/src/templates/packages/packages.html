@@ -3766,6 +3766,12 @@ async function sendPackageEmail() {
 }
 
 function closeModal() {
+    // 🔧 FIX: Resetear variables globales para permitir procesar múltiples paquetes
+    currentPackageId = null;
+    currentAction = null;
+    currentPackage = null;
+    log('🧹 Variables globales reseteadas en closeModal');
+    
     // Ocultar sección de email cuando se cierra el modal
     const emailSection = document.getElementById('emailNotificationSection');
     if (emailSection) {

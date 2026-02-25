@@ -293,12 +293,17 @@ async def list_packages(
             except ValueError:
                 logger.warning(f"⚠️ Formato de fecha inválido: {date_to}")
         
-        # Obtener paquetes ordenados por última actualización (más nuevo primero)
-        packages_query = query.order_by(Package.updated_at.desc()).all()
+        # OPTIMIZACIÓN: Contar total ANTES de paginar (más eficiente)
+        total_packages = query.count()
+        logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
         
-        # Contar total para paginación
-        total_packages = len(packages_query)
-        logger.info(f"📊 Paquetes encontrados: {total_packages}")
+        # OPTIMIZACIÓN: Aplicar paginación a nivel de BD (LIMIT/OFFSET)
+        packages_query = query.order_by(Package.updated_at.desc())\
+            .limit(limit)\
+            .offset(skip)\
+            .all()
+        
+        logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
     except Exception as e:
         logger.error(f"Error querying packages: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
@@ -509,14 +514,15 @@ async def list_packages(
     # Sort by creation date (most recent first)
     all_items.sort(key=lambda x: x['created_at'] or '', reverse=True)
 
-    # Calcular información de paginación
+    # OPTIMIZACIÓN: Calcular información de paginación con el total real
     total_items = total_packages + len(announcements_data)
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     current_page = (skip // limit) + 1
     has_prev = skip > 0
     has_next = skip + limit < total_items
 
-    # Aplicar paginación después de combinar y ordenar
+    # OPTIMIZACIÓN: Aplicar paginación después de combinar y ordenar
+    # NOTA: Esto aún se hace en memoria, pero ahora solo con los items de la página actual
     start_idx = skip
     end_idx = skip + limit
     paginated_items = all_items[start_idx:end_idx]
@@ -534,9 +540,9 @@ async def list_packages(
         }
     }
     
-    # OPTIMIZACIÓN: Guardar en caché por 15 segundos (reducido para mejor refresco)
-    cache_manager.cache_packages_list(result, cache_filters, ttl=15)
-    logger.info(f"📦 Datos guardados en caché - {len(paginated_items)} items")
+    # OPTIMIZACIÓN: Guardar en caché por 5 minutos (aumentado desde 15 segundos)
+    cache_manager.cache_packages_list(result, cache_filters, ttl=300)
+    logger.info(f"📦 Datos guardados en caché (5 min) - {len(paginated_items)} items")
     
     return result
 

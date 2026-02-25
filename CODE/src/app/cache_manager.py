@@ -99,8 +99,8 @@ class CacheManager:
     # MÉTODOS ESPECÍFICOS PARA PAQUETES
     # ========================================
     
-    def cache_packages_list(self, packages: List[Dict], filters: Dict, ttl: int = 60) -> bool:
-        """Cachear lista de paquetes con filtros específicos"""
+    def cache_packages_list(self, packages: List[Dict], filters: Dict, ttl: int = 300) -> bool:
+        """Cachear lista de paquetes con filtros específicos - OPTIMIZADO: TTL aumentado a 5 minutos"""
         filter_key = json.dumps(filters, sort_keys=True)
         cache_key = self._get_key("packages_list", filter_key)
         return self.set(cache_key, packages, ttl)
