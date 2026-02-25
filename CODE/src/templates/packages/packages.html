@@ -1448,8 +1448,8 @@ function createPackageElement(package) {
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex flex-col space-y-1">
-                ${package.announced_at ? (() => {
-                    const date = new Date(package.announced_at);
+                ${package.last_update_date ? (() => {
+                    const date = new Date(package.last_update_date);
                     const day = date.getDate().toString().padStart(2, '0');
                     const month = (date.getMonth() + 1).toString().padStart(2, '0');
                     const year = date.getFullYear();

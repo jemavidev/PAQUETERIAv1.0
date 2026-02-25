@@ -345,6 +345,15 @@ async def list_packages(
                     logger.warning(f"Error processing file upload {file_upload.id}: {str(e)}")
                     continue
             
+            # Calcular la fecha de última actualización (la más reciente entre announced_at, received_at, delivered_at, cancelled_at)
+            last_update_date = package.announced_at
+            if package.delivered_at:
+                last_update_date = package.delivered_at
+            elif package.cancelled_at:
+                last_update_date = package.cancelled_at
+            elif package.received_at:
+                last_update_date = package.received_at
+            
             packages_data.append({
                 'id': package.id,
                 'tracking_number': package.tracking_number,
@@ -362,6 +371,7 @@ async def list_packages(
                 'received_at': package.received_at.isoformat() if package.received_at else None,
                 'delivered_at': package.delivered_at.isoformat() if package.delivered_at else None,
                 'cancelled_at': package.cancelled_at.isoformat() if package.cancelled_at else None,
+                'last_update_date': last_update_date.isoformat() if last_update_date else None,
                 'base_fee': float(package.base_fee or 0),
                 'storage_fee': storage_fee,
                 'storage_days': storage_days,
@@ -482,6 +492,11 @@ async def list_packages(
 
     # Add announcements
     for row in announcements_data:
+        # Calcular last_update_date para anuncios
+        announced_at = row[8]
+        cancelled_at = row[11]
+        last_update_date = cancelled_at if cancelled_at else announced_at
+        
         item_dict = {
             'id': row[0],  # This will be 'announcement_uuid'
             'tracking_number': row[1],
@@ -494,7 +509,8 @@ async def list_packages(
             'announced_at': row[8].isoformat() if row[8] else None,
             'received_at': row[9],
             'delivered_at': row[10],
-            'cancelled_at': row[11],
+            'cancelled_at': row[11].isoformat() if row[11] else None,
+            'last_update_date': last_update_date.isoformat() if last_update_date else None,
             'base_fee': float(row[12]),
             'storage_fee': float(row[13]),
             'storage_days': 0,  # Los anuncios no tienen días de almacenamiento
@@ -511,8 +527,8 @@ async def list_packages(
         }
         all_items.append(normalize_package_item(item_dict))
 
-    # Sort by creation date (most recent first)
-    all_items.sort(key=lambda x: x['created_at'] or '', reverse=True)
+    # Sort by last_update_date (most recent first) - ORDENAR POR ÚLTIMA ACTUALIZACIÓN
+    all_items.sort(key=lambda x: x.get('last_update_date') or x.get('created_at') or '', reverse=True)
 
     # OPTIMIZACIÓN: Calcular información de paginación con el total real
     total_items = total_packages + len(announcements_data)
