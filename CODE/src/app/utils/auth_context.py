@@ -90,6 +90,9 @@ def get_auth_context_from_request(request: Request) -> Dict[str, Any]:
     try:
         # Obtener contexto básico
         context = get_auth_context(request)
+        
+        # Importar settings para obtener environment
+        from app.config import settings
 
         # Agregar información adicional para las plantillas
         context.update({
@@ -98,6 +101,7 @@ def get_auth_context_from_request(request: Request) -> Dict[str, Any]:
             "method": request.method,
             "headers": dict(request.headers),
             "client_host": getattr(request.client, 'host', None) if request.client else None,
+            "environment": settings.environment,  # ✨ Agregar environment
         })
 
         return context
@@ -114,6 +118,7 @@ def get_auth_context_from_request(request: Request) -> Dict[str, Any]:
             "method": request.method,
             "headers": dict(request.headers),
             "client_host": getattr(request.client, 'host', None) if request.client else None,
+            "environment": "production",  # Fallback seguro
         }
 
 

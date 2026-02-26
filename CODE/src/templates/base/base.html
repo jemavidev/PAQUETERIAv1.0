@@ -1457,6 +1457,11 @@
             showWarning('Advertencia', message, { autoClose: true, closeDelay: 5000 });
         }
     </script>
+    
+    <!-- Modal de Sincronización de BD (Solo Staging + Admin) -->
+    {% if current_user and current_user.role == 'admin' and environment == 'staging' %}
+    {% include 'components/sync-database-modal.html' %}
+    {% endif %}
 </body>
 
 </html>

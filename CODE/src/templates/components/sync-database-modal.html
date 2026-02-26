@@ -1,0 +1,293 @@
+<!-- ════════════════════════════════════════════════════════════════════════════
+     MODAL: SINCRONIZACIÓN DE BASE DE DATOS
+     Solo visible en staging para administradores
+     ════════════════════════════════════════════════════════════════════════════ -->
+
+<div id="syncDatabaseModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b">
+            <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Sincronizar Base de Datos
+            </h3>
+            <button onclick="closeSyncDatabaseModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Content -->
+        <div class="mt-4">
+            
+            <!-- Estado inicial -->
+            <div id="syncInitialState">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Advertencia</h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>La BD de staging será <strong>ELIMINADA COMPLETAMENTE</strong></li>
+                                    <li>Se restaurarán los datos de producción (PAQUETEX)</li>
+                                    <li>Las contraseñas serán sanitizadas por seguridad</li>
+                                    <li>Este proceso puede tardar varios minutos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Información</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>Esta funcionalidad solo está disponible en el entorno de staging para administradores.</p>
+                                <p class="mt-1">Podrás ver los logs en tiempo real durante el proceso.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeSyncDatabaseModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onclick="startDatabaseSync()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Iniciar Sincronización
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Estado de sincronización en progreso -->
+            <div id="syncProgressState" class="hidden">
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Sincronizando...</span>
+                        <span class="text-sm text-gray-500" id="syncProgressPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="syncProgressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Logs en tiempo real -->
+                <div class="bg-gray-900 text-gray-100 p-4 rounded-md h-96 overflow-y-auto font-mono text-sm" id="syncLogs">
+                    <div class="text-green-400">Iniciando sincronización...</div>
+                </div>
+                
+                <div class="flex justify-end mt-4">
+                    <button onclick="closeSyncDatabaseModal()" disabled id="syncCloseButton" class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">
+                        Cerrar (en progreso...)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Estado de finalización -->
+            <div id="syncCompleteState" class="hidden">
+                <div id="syncSuccessMessage" class="bg-green-50 border-l-4 border-green-400 p-4 mb-4 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Sincronización Completada</h3>
+                            <div class="mt-2 text-sm text-green-700">
+                                <p>La base de datos se ha sincronizado exitosamente.</p>
+                                <p class="mt-1">Recarga la página para ver los datos actualizados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="syncErrorMessage" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Error en la Sincronización</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>Ocurrió un error durante la sincronización.</p>
+                                <p class="mt-1">Revisa los logs para más detalles.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button onclick="closeSyncDatabaseModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                        Cerrar
+                    </button>
+                    <button onclick="location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Recargar Página
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// FUNCIONES DE SINCRONIZACIÓN DE BD
+// ════════════════════════════════════════════════════════════════════════════
+
+function openSyncDatabaseModal() {
+    document.getElementById('syncDatabaseModal').classList.remove('hidden');
+    document.getElementById('syncInitialState').classList.remove('hidden');
+    document.getElementById('syncProgressState').classList.add('hidden');
+    document.getElementById('syncCompleteState').classList.add('hidden');
+}
+
+function closeSyncDatabaseModal() {
+    document.getElementById('syncDatabaseModal').classList.add('hidden');
+}
+
+async function startDatabaseSync() {
+    // Cambiar a estado de progreso
+    document.getElementById('syncInitialState').classList.add('hidden');
+    document.getElementById('syncProgressState').classList.remove('hidden');
+    
+    const logsContainer = document.getElementById('syncLogs');
+    const progressBar = document.getElementById('syncProgressBar');
+    const progressPercent = document.getElementById('syncProgressPercent');
+    
+    logsContainer.innerHTML = '';
+    
+    try {
+        const response = await fetch('/api/admin/sync-database', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let progress = 0;
+        
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.substring(6));
+                        
+                        // Agregar log
+                        const logLine = document.createElement('div');
+                        logLine.className = getLogClass(data.type);
+                        logLine.textContent = data.message;
+                        logsContainer.appendChild(logLine);
+                        logsContainer.scrollTop = logsContainer.scrollHeight;
+                        
+                        // Actualizar progreso
+                        progress = Math.min(progress + 5, 95);
+                        progressBar.style.width = progress + '%';
+                        progressPercent.textContent = progress + '%';
+                        
+                        // Verificar si completó
+                        if (data.type === 'complete') {
+                            progressBar.style.width = '100%';
+                            progressPercent.textContent = '100%';
+                            
+                            setTimeout(() => {
+                                showSyncComplete(data.message === 'done');
+                            }, 500);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing SSE data:', e);
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error en sincronización:', error);
+        const logLine = document.createElement('div');
+        logLine.className = 'text-red-400';
+        logLine.textContent = '❌ Error: ' + error.message;
+        logsContainer.appendChild(logLine);
+        
+        setTimeout(() => {
+            showSyncComplete(false);
+        }, 1000);
+    }
+}
+
+function getLogClass(type) {
+    switch (type) {
+        case 'success':
+            return 'text-green-400';
+        case 'error':
+            return 'text-red-400';
+        case 'warning':
+            return 'text-yellow-400';
+        case 'info':
+        default:
+            return 'text-gray-300';
+    }
+}
+
+function showSyncComplete(success) {
+    document.getElementById('syncProgressState').classList.add('hidden');
+    document.getElementById('syncCompleteState').classList.remove('hidden');
+    
+    if (success) {
+        document.getElementById('syncSuccessMessage').classList.remove('hidden');
+        document.getElementById('syncErrorMessage').classList.add('hidden');
+    } else {
+        document.getElementById('syncSuccessMessage').classList.add('hidden');
+        document.getElementById('syncErrorMessage').classList.remove('hidden');
+    }
+    
+    document.getElementById('syncCloseButton').disabled = false;
+    document.getElementById('syncCloseButton').classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+    document.getElementById('syncCloseButton').classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('syncDatabaseModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            const closeButton = document.getElementById('syncCloseButton');
+            if (!closeButton.disabled) {
+                closeSyncDatabaseModal();
+            }
+        }
+    }
+});
+</script>
