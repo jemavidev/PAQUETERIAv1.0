@@ -1,0 +1,192 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPLOY CONFIGURATION - PAQUETEX
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ INFORMACIÓN DEL PROYECTO                                                  │
+# └───────────────────────────────────────────────────────────────────────────┘
+project:
+  name: "paquetex"
+  version: "1.0.0"
+  description: "Sistema de Gestión de Paquetería"
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: LOCALHOST                                                        │
+# └───────────────────────────────────────────────────────────────────────────┘
+localhost:
+  type: "local"
+  
+  paths:
+    project: "."
+    backup: "./backups/localhost"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.dev.yml"
+    services:
+      - "app"
+      - "redis"
+      - "postgres"
+    rebuild: false
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_commit: false
+    auto_push: false
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 30
+    retries: 10
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: false
+    command: "docker compose -f docker-compose.dev.yml exec -T app alembic upgrade heads"
+  
+  backup:
+    enabled: false
+    auto_before_deploy: false
+    command: ""
+    retention_days: 7
+  
+  env_file: ".env"
+  
+  hooks:
+    pre_deploy: ""
+    post_deploy: ""
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: STAGING                                                          │
+# └───────────────────────────────────────────────────────────────────────────┘
+staging:
+  type: "remote"
+  
+  ssh:
+    host: "staging"
+    user: "ubuntu"
+    port: 22
+    key: "~/.ssh/id_rsa"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/home/ubuntu/paqueteria-staging"
+    backup: "/home/ubuntu/backups"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.staging.yml"
+    services:
+      - "app"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "staging"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8001/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: true
+    command: "docker compose -f docker-compose.staging.yml exec -T app alembic upgrade head"
+  
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose -f docker-compose.staging.yml exec -T postgres pg_dump -U postgres paqueteria"
+    retention_days: 7
+  
+  env_file: ".env.staging"
+  
+  hooks:
+    pre_deploy: ""
+    post_deploy: ""
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: PRODUCTION (PAPYRUS)                                            │
+# └───────────────────────────────────────────────────────────────────────────┘
+production:
+  type: "remote"
+  
+  ssh:
+    host: "papyrus"
+    user: "ubuntu"
+    port: 22
+    key: "~/.ssh/id_rsa"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/home/ubuntu/paqueteria"
+    backup: "/home/ubuntu/backups"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.prod.yml"
+    services:
+      - "app"
+      - "redis"
+      - "nginx"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: false
+    command: "docker compose -f docker-compose.prod.yml exec -T app alembic upgrade heads"
+  
+  backup:
+    enabled: false
+    auto_before_deploy: false
+    command: "docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres paqueteria"
+    retention_days: 30
+  
+  env_file: ".env.production"
+  
+  hooks:
+    pre_deploy: ".deploy/hooks/pre-deploy-papyrus.sh"
+    post_deploy: ".deploy/hooks/post-deploy-papyrus.sh"
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ CONFIGURACIÓN GLOBAL                                                      │
+# └───────────────────────────────────────────────────────────────────────────┘
+global:
+  rollback:
+    enabled: true
+    keep_checkpoints: 5
+  
+  notifications:
+    slack:
+      enabled: false
+      webhook: ""
+    discord:
+      enabled: false
+      webhook: ""
+  
+  logging:
+    enabled: true
+    level: "INFO"
+    file: ".deploy/logs/deploy.log"

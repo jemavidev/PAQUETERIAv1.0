@@ -1,0 +1,13 @@
+# BetterAgentX - Configuración de Kiro
+# Generado automáticamente por init-betteragentx.sh
+
+# Activar memoria automáticamente
+memory.enabled=true
+memory.autoLoad=true
+
+# Archivos de memoria a cargar
+memory.files=.kiro/memory/active-context.md,.kiro/memory/decision-log.md,.kiro/memory/progress.md,.kiro/memory/patterns.md
+
+# Activar agentes
+agents.enabled=true
+agents.autoLoad=true

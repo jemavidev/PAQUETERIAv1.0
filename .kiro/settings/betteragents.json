@@ -1,0 +1,121 @@
+{
+  "name": "BetterAgentX",
+  "version": "3.1.0",
+  "description": "Sistema inteligente de agentes especializados con AgentX como orquestador central y sistema de memoria integrado",
+  "author": "jemavidev",
+  "repository": "https://github.com/jemavidev/BetterAgentX",
+  "agents": {
+    "agentx": {
+      "file": ".kiro/steering/agents/agentx.md",
+      "type": "orchestrator",
+      "description": "Orquestador central - Analiza, valida y enruta consultas a agentes especializados",
+      "isDefault": true
+    },
+    "architect": {
+      "file": ".kiro/steering/agents/architect.md",
+      "type": "core",
+      "description": "Diseño de sistemas y arquitectura"
+    },
+    "coder": {
+      "file": ".kiro/steering/agents/coder.md",
+      "type": "core",
+      "description": "Implementación de código limpio y refactorización"
+    },
+    "critic": {
+      "file": ".kiro/steering/agents/critic.md",
+      "type": "core",
+      "description": "Análisis crítico aplicando Tenth Man Rule"
+    },
+    "tester": {
+      "file": ".kiro/steering/agents/tester.md",
+      "type": "core",
+      "description": "Testing, QA y estrategia de pruebas"
+    },
+    "writer": {
+      "file": ".kiro/steering/agents/writer.md",
+      "type": "core",
+      "description": "Documentación técnica y tutoriales"
+    },
+    "researcher": {
+      "file": ".kiro/steering/agents/researcher.md",
+      "type": "core",
+      "description": "Investigación tecnológica y análisis comparativo"
+    },
+    "teacher": {
+      "file": ".kiro/steering/agents/teacher.md",
+      "type": "core",
+      "description": "Explicaciones didácticas y tutoriales educativos"
+    },
+    "devops": {
+      "file": ".kiro/steering/agents/devops.md",
+      "type": "specialized",
+      "description": "Infraestructura, CI/CD y deployment"
+    },
+    "security": {
+      "file": ".kiro/steering/agents/security.md",
+      "type": "specialized",
+      "description": "Auditoría de seguridad y análisis de vulnerabilidades"
+    },
+    "ux-designer": {
+      "file": ".kiro/steering/agents/ux-designer.md",
+      "type": "specialized",
+      "description": "Diseño UI/UX y accesibilidad"
+    },
+    "data-scientist": {
+      "file": ".kiro/steering/agents/data-scientist.md",
+      "type": "specialized",
+      "description": "Análisis de datos y machine learning"
+    },
+    "product-manager": {
+      "file": ".kiro/steering/agents/product-manager.md",
+      "type": "specialized",
+      "description": "Gestión de producto y priorización"
+    }
+  },
+  "features": {
+    "agentx": {
+      "enabled": true,
+      "description": "Orquestador inteligente con metodología 4-D",
+      "capabilities": [
+        "Análisis de intención",
+        "Validación de completitud",
+        "Enrutamiento inteligente",
+        "Workflows multi-agente",
+        "Gestión de memoria automática"
+      ]
+    },
+    "memory": {
+      "enabled": true,
+      "description": "Sistema de memoria persistente",
+      "files": {
+        "active-context": ".kiro/memory/active-context.md",
+        "progress": ".kiro/memory/progress.md",
+        "decision-log": ".kiro/memory/decision-log.md",
+        "patterns": ".kiro/memory/patterns.md"
+      },
+      "dashboard": ".kiro/memory/dashboard.html"
+    },
+    "skills": {
+      "enabled": true,
+      "directory": ".agents/skills",
+      "autoUpdate": false
+    }
+  },
+  "directories": {
+    "agents": ".kiro/steering/agents",
+    "memory": ".kiro/memory",
+    "skills": ".agents/skills",
+    "config": "config",
+    "docs": "docs",
+    "examples": "examples",
+    "scripts": "scripts",
+    "templates": "templates"
+  },
+  "metadata": {
+    "created": "2026-02-12",
+    "lastModified": "2026-02-12",
+    "totalAgents": 13,
+    "version": "3.1.0",
+    "features": ["AgentX Orchestrator", "Memory System", "Interactive Dashboard", "12 Specialized Agents"]
+  }
+}

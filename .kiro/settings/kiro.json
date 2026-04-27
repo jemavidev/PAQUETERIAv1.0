@@ -1,0 +1,16 @@
+{
+  "memory": {
+    "enabled": true,
+    "autoLoad": true,
+    "files": [
+      ".kiro/memory/active-context.md",
+      ".kiro/memory/decision-log.md",
+      ".kiro/memory/progress.md",
+      ".kiro/memory/patterns.md"
+    ]
+  },
+  "agents": {
+    "enabled": true,
+    "autoLoad": true
+  }
+}

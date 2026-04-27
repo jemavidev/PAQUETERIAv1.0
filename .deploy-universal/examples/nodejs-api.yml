@@ -1,0 +1,157 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# EJEMPLO: API Node.js + MongoDB
+# ═══════════════════════════════════════════════════════════════════════════
+
+project:
+  name: "api-nodejs"
+  version: "2.1.0"
+  description: "REST API con Node.js y MongoDB"
+
+localhost:
+  type: "local"
+  
+  paths:
+    project: "."
+    backup: "./backups"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.yml"
+    services:
+      - "api"
+      - "mongo"
+      - "redis"
+    rebuild: false
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "develop"
+    auto_commit: false
+    auto_push: false
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:3000/api/health"
+    timeout: 20
+    retries: 10
+    interval: 2
+  
+  migrations:
+    enabled: false  # MongoDB no usa migraciones tradicionales
+  
+  backup:
+    enabled: false
+  
+  env_file: ".env.local"
+
+staging:
+  type: "remote"
+  
+  ssh:
+    host: "staging-api.example.com"
+    user: "deploy"
+    port: 22
+    key: "~/.ssh/deploy_key"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/var/www/api"
+    backup: "/var/backups/api"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.staging.yml"
+    services:
+      - "api"
+      - "mongo"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "staging"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:3000/api/health"
+    timeout: 30
+    retries: 20
+    interval: 2
+  
+  migrations:
+    enabled: false
+  
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose exec -T mongo mongodump --archive=/backup/dump.gz --gzip"
+    retention_days: 7
+  
+  env_file: ".env.staging"
+
+production:
+  type: "remote"
+  
+  ssh:
+    host: "api.example.com"
+    user: "deploy"
+    port: 22
+    key: "~/.ssh/production_key"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/var/www/api"
+    backup: "/var/backups/api"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.prod.yml"
+    services:
+      - "api"
+      - "nginx"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:3000/api/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  migrations:
+    enabled: false
+  
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose exec -T mongo mongodump --archive=/backup/dump.gz --gzip"
+    retention_days: 30
+  
+  env_file: ".env.production"
+  
+  hooks:
+    pre_deploy: ".deploy/hooks/pre-deploy.sh"
+    post_deploy: ".deploy/hooks/post-deploy.sh"
+
+global:
+  rollback:
+    enabled: true
+    keep_checkpoints: 5
+  
+  notifications:
+    slack:
+      enabled: true
+      webhook: "${SLACK_WEBHOOK}"
+  
+  logging:
+    enabled: true
+    level: "INFO"
+    file: ".deploy/logs/deploy.log"

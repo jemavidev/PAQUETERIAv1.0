@@ -1,0 +1,168 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# EJEMPLO: Python FastAPI + PostgreSQL + Redis
+# ═══════════════════════════════════════════════════════════════════════════
+
+project:
+  name: "fastapi-app"
+  version: "1.5.2"
+  description: "API con FastAPI, PostgreSQL y Redis"
+
+localhost:
+  type: "local"
+  
+  paths:
+    project: "."
+    backup: "./backups"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.dev.yml"
+    services:
+      - "app"
+      - "postgres"
+      - "redis"
+    rebuild: false
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_commit: false
+    auto_push: false
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 30
+    retries: 10
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: false
+    command: "docker compose exec -T app alembic upgrade head"
+  
+  backup:
+    enabled: false
+  
+  env_file: ".env"
+
+staging:
+  type: "remote"
+  
+  ssh:
+    host: "staging.myapp.com"
+    user: "ubuntu"
+    port: 22
+    key: "~/.ssh/id_rsa"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/home/ubuntu/fastapi-app"
+    backup: "/home/ubuntu/backups"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.staging.yml"
+    services:
+      - "app"
+      - "redis"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "staging"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: true
+    command: "docker compose -f docker-compose.staging.yml exec -T app alembic upgrade head"
+  
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose -f docker-compose.staging.yml exec -T postgres pg_dump -U postgres mydb"
+    retention_days: 7
+  
+  env_file: ".env.staging"
+
+production:
+  type: "remote"
+  
+  ssh:
+    host: "prod.myapp.com"
+    user: "ubuntu"
+    port: 22
+    key: "~/.ssh/production.pem"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/var/www/fastapi-app"
+    backup: "/var/backups/fastapi-app"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.prod.yml"
+    services:
+      - "app"
+      - "redis"
+      - "nginx"
+      - "celery"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  migrations:
+    enabled: true
+    auto: false
+    command: "docker compose -f docker-compose.prod.yml exec -T app alembic upgrade head"
+  
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres mydb"
+    retention_days: 30
+  
+  env_file: ".env.production"
+  
+  hooks:
+    pre_deploy: ".deploy/hooks/pre-deploy-prod.sh"
+    post_deploy: ".deploy/hooks/post-deploy-prod.sh"
+
+global:
+  rollback:
+    enabled: true
+    keep_checkpoints: 5
+  
+  notifications:
+    slack:
+      enabled: true
+      webhook: "${SLACK_WEBHOOK}"
+    discord:
+      enabled: false
+      webhook: ""
+  
+  logging:
+    enabled: true
+    level: "INFO"
+    file: ".deploy/logs/deploy.log"

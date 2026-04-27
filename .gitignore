@@ -420,6 +420,14 @@ temp/
 *.gsheet
 
 # ========================================
+# BetterAgentX
+# ========================================
+.betteragentx-config
+.kiro/memory/*.backup.*
+.kiro/settings/*.backup.*
+.kiro/steering/*.backup.*
+
+# ========================================
 # Other
 # ========================================
 # PEP 582

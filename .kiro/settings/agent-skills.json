@@ -1,0 +1,152 @@
+{
+  "architect": {
+    "recommended": [
+      "architecture-patterns",
+      "api-design-principles",
+      "microservices-patterns",
+      "design-system-patterns",
+      "architecture-decision-records",
+      "monorepo-management"
+    ],
+    "count": 6,
+    "category": "architecture",
+    "description": "Architectural patterns, API design, and system design best practices"
+  },
+  "coder": {
+    "recommended": [
+      "vercel-react-best-practices",
+      "next-best-practices",
+      "typescript-advanced-types",
+      "python-performance-optimization",
+      "nodejs-backend-patterns",
+      "error-handling-patterns",
+      "async-python-patterns",
+      "modern-javascript-patterns",
+      "test-driven-development"
+    ],
+    "count": 9,
+    "category": "development",
+    "description": "Clean code, language-specific best practices, and development patterns"
+  },
+  "critic": {
+    "recommended": [
+      "systematic-debugging",
+      "verification-before-completion",
+      "requesting-code-review",
+      "receiving-code-review"
+    ],
+    "count": 4,
+    "category": "quality-assurance",
+    "description": "Critical analysis, debugging, and code review techniques"
+  },
+  "security": {
+    "recommended": [
+      "code-reviewer",
+      "auth-implementation-patterns"
+    ],
+    "count": 2,
+    "category": "security",
+    "description": "Security auditing, OWASP compliance, and secure coding practices"
+  },
+  "tester": {
+    "recommended": [
+      "webapp-testing",
+      "test-driven-development",
+      "e2e-testing-patterns",
+      "javascript-testing-patterns",
+      "python-testing-patterns"
+    ],
+    "count": 5,
+    "category": "testing",
+    "description": "Testing strategies, TDD, and test automation"
+  },
+  "ux-designer": {
+    "recommended": [
+      "frontend-design",
+      "web-design-guidelines",
+      "ui-ux-pro-max",
+      "canvas-design",
+      "tailwind-design-system",
+      "responsive-design",
+      "accessibility-compliance",
+      "interaction-design"
+    ],
+    "count": 8,
+    "category": "design",
+    "description": "UX/UI design, accessibility, and design systems"
+  },
+  "writer": {
+    "recommended": [
+      "doc-coauthoring",
+      "writing-skills",
+      "copy-editing",
+      "internal-comms"
+    ],
+    "count": 4,
+    "category": "documentation",
+    "description": "Technical writing, documentation, and communication"
+  },
+  "teacher": {
+    "recommended": [
+      "skill-creator",
+      "prompt-engineering-patterns"
+    ],
+    "count": 2,
+    "category": "education",
+    "description": "Teaching methodologies and learning path design"
+  },
+  "product-manager": {
+    "recommended": [
+      "writing-plans",
+      "executing-plans",
+      "brainstorming",
+      "marketing-ideas",
+      "product-marketing-context",
+      "kpi-dashboard-design"
+    ],
+    "count": 6,
+    "category": "product",
+    "description": "Product strategy, roadmapping, and stakeholder management"
+  },
+  "devops": {
+    "recommended": [
+      "docker-expert",
+      "deployment-pipeline-design",
+      "github-actions-templates",
+      "database-migration",
+      "changelog-automation"
+    ],
+    "count": 5,
+    "category": "operations",
+    "description": "CI/CD, infrastructure, and deployment automation"
+  },
+  "data-scientist": {
+    "recommended": [
+      "python-performance-optimization",
+      "sql-optimization-patterns",
+      "postgresql-table-design"
+    ],
+    "count": 3,
+    "category": "data-science",
+    "description": "Data analysis, machine learning, and statistical modeling"
+  },
+  "researcher": {
+    "recommended": [
+      "find-skills",
+      "competitor-alternatives",
+      "seo-audit",
+      "audit-websites"
+    ],
+    "count": 4,
+    "category": "research",
+    "description": "Technology research, competitive analysis, and trend analysis"
+  },
+  "meta": {
+    "version": "3.1.0",
+    "last_updated": "2026-02-12",
+    "total_agents": 12,
+    "total_skills": 61,
+    "skills_url": "https://skills.sh",
+    "installation_command": "npx skills add [owner]/[repo]/[skill-name]"
+  }
+}

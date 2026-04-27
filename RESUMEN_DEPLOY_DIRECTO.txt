@@ -1,0 +1,50 @@
+╔══════════════════════════════════════════════════════════════╗
+║  DEPLOY STAGING COMPLETADO DIRECTAMENTE EN SERVIDOR         ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ PROBLEMA RESUELTO
+   Error "DuplicateColumn" en migración tipo_factura
+
+✅ SOLUCIÓN APLICADA
+   1. Conectado a servidor staging vía SSH
+   2. Pull de últimos cambios (commit 72a3d9f)
+   3. Marcada migración como aplicada: alembic stamp
+   4. Reconstruidos contenedores con --build
+   5. Verificado health check: ✅ HEALTHY
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 ESTADO ACTUAL DEL SERVIDOR:
+
+   Servidor: staging.jemavi.co
+   Contenedores: ✅ Running (healthy)
+   Migraciones: ✅ 20260211_092552 (head)
+   Health Check: ✅ Respondiendo correctamente
+   Redis: ✅ Conectado
+   S3: ✅ Inicializado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 VERIFICAR AHORA EN NAVEGADOR:
+
+   1. Abrir: https://staging.jemavi.co/invoices/productos
+      → Verificar selector "Tipo de Factura"
+      → Por defecto debe mostrar solo "reventa"
+
+   2. Abrir: https://staging.jemavi.co/invoices/facturas
+      → Hacer clic en "Editar" en cualquier factura
+      → Verificar campo "Tipo de Factura"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 LO QUE SE HIZO:
+
+   ✅ Fix múltiples heads en Alembic
+   ✅ Migración idempotente implementada
+   ✅ Migración marcada como aplicada (stamp)
+   ✅ Contenedores reconstruidos
+   ✅ Servidor funcionando correctamente
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TODO LISTO - VERIFICA EN EL NAVEGADOR

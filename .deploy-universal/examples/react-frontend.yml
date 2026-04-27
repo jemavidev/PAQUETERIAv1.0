@@ -1,0 +1,142 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# EJEMPLO: Frontend React + Nginx
+# ═══════════════════════════════════════════════════════════════════════════
+
+project:
+  name: "react-frontend"
+  version: "3.2.1"
+  description: "Frontend React con Nginx"
+
+localhost:
+  type: "local"
+  
+  paths:
+    project: "."
+    backup: "./backups"
+  
+  docker:
+    enabled: false  # En local usa npm start
+  
+  git:
+    enabled: true
+    branch: "develop"
+    auto_commit: false
+    auto_push: false
+  
+  health_check:
+    enabled: false  # No health check en desarrollo
+  
+  migrations:
+    enabled: false
+  
+  backup:
+    enabled: false
+  
+  env_file: ".env.local"
+
+staging:
+  type: "remote"
+  
+  ssh:
+    host: "staging-web.example.com"
+    user: "deploy"
+    port: 22
+    key: "~/.ssh/deploy_key"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/var/www/react-app"
+    backup: "/var/backups/react-app"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.staging.yml"
+    services:
+      - "nginx"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "staging"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:80/"
+    timeout: 30
+    retries: 10
+    interval: 2
+  
+  migrations:
+    enabled: false
+  
+  backup:
+    enabled: false  # Frontend no necesita backup
+  
+  env_file: ".env.staging"
+  
+  hooks:
+    pre_deploy: ".deploy/hooks/build-staging.sh"  # npm run build
+    post_deploy: ""
+
+production:
+  type: "remote"
+  
+  ssh:
+    host: "web.example.com"
+    user: "deploy"
+    port: 22
+    key: "~/.ssh/production_key"
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  paths:
+    project: "/var/www/react-app"
+    backup: "/var/backups/react-app"
+  
+  docker:
+    enabled: true
+    compose_file: "docker-compose.prod.yml"
+    services:
+      - "nginx"
+    rebuild: true
+    pull: false
+  
+  git:
+    enabled: true
+    branch: "main"
+    auto_pull: true
+  
+  health_check:
+    enabled: true
+    url: "http://localhost:80/"
+    timeout: 30
+    retries: 10
+    interval: 2
+  
+  migrations:
+    enabled: false
+  
+  backup:
+    enabled: false
+  
+  env_file: ".env.production"
+  
+  hooks:
+    pre_deploy: ".deploy/hooks/build-production.sh"  # npm run build
+    post_deploy: ".deploy/hooks/clear-cdn-cache.sh"
+
+global:
+  rollback:
+    enabled: true
+    keep_checkpoints: 3
+  
+  notifications:
+    slack:
+      enabled: true
+      webhook: "${SLACK_WEBHOOK}"
+  
+  logging:
+    enabled: true
+    level: "INFO"
+    file: ".deploy/logs/deploy.log"

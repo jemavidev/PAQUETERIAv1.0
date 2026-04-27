@@ -106,6 +106,27 @@ Ver [Scripts README](./scripts/README.md) para lista completa.
 
 ---
 
+## 🤖 BetterAgentX - Sistema de Agentes IA
+
+El proyecto integra **BetterAgentX**, un sistema inteligente de 13 agentes especializados para desarrollo:
+
+```bash
+# Inicializar BetterAgentX
+./init-betteragentx.sh
+
+# Usar en Kiro
+@agentx "Ayúdame con el proyecto"
+```
+
+**Documentación:**
+- ⚡ [Inicio Rápido](QUICKSTART-BETTERAGENTX.md)
+- 📖 [Guía Completa](README-BETTERAGENTX.md)
+- 📚 [Índice](INDEX-BETTERAGENTX.md)
+
+**Agentes disponibles:** architect, coder, security, tester, devops, ux-designer, writer, y más.
+
+---
+
 ## 🛠️ Tecnologías
 
 - **Backend**: Python 3.11, FastAPI, SQLAlchemy
@@ -114,6 +135,7 @@ Ver [Scripts README](./scripts/README.md) para lista completa.
 - **Cache**: Redis
 - **Storage**: AWS S3
 - **Deployment**: Docker, Docker Compose
+- **AI Agents**: BetterAgentX (13 agentes especializados)
 
 ---
 

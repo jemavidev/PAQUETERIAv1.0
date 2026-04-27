@@ -40,16 +40,22 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full divide-y divide-gray-200 table-fixed">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Código</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Acciones</th>
+                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[30%]">Descripción</th>
+                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell w-[15%]">Código</th>
+                        <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">Cant.</th>
+                        <th scope="col" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                            <div>Precio</div>
+                            <div class="text-[10px] font-normal text-gray-400 normal-case">IVA incluido</div>
+                        </th>
+                        <th scope="col" class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                            <div>Total</div>
+                            <div class="text-[10px] font-normal text-gray-400 normal-case">IVA incluido</div>
+                        </th>
+                        <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Estado</th>
+                        <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="products-tbody" class="bg-white divide-y divide-gray-200"></tbody>
@@ -276,34 +282,56 @@ async function loadProducts() {
 }
 
 function renderProductRow(product) {
-    // Descripción
-    const descripcion = product.descripcion || '-';
+    // Descripción - TRUNCADA con ellipsis
+    const descripcionFull = product.descripcion || '-';
+    const descripcion = descripcionFull.length > 50 ? descripcionFull.substring(0, 50) + '...' : descripcionFull;
     
-    // Código
-    const codigoProducto = product.codigo_producto || product.codigo_interno || '-';
+    // Código - TRUNCADO
+    const codigoFull = product.codigo_producto || product.codigo_interno || '-';
+    const codigoProducto = codigoFull.length > 20 ? codigoFull.substring(0, 20) + '...' : codigoFull;
     
     // Cantidad (número entero, sin decimales)
     const cantidad = product.cantidad ? Math.round(parseFloat(product.cantidad)) : 0;
     
-    // Calcular precio con IVA incluido
+    // Detectar si los precios incluyen IVA basado en el análisis del backend
+    const ivaIncluidoEnPrecio = product.iva_incluido_en_precio || false;
     const precioBase = parseFloat(product.precio_unitario) || 0;
     const ivaPorc = parseFloat(product.iva_porcentaje) || 0;
-    const precioConIva = precioBase * (1 + ivaPorc / 100);
+    
+    // Calcular precio unitario para mostrar (CON IVA siempre)
+    let precioConIva;
+    if (ivaIncluidoEnPrecio) {
+        // El precio_unitario YA incluye IVA, mostrarlo tal cual
+        precioConIva = precioBase;
+    } else {
+        // El precio_unitario NO incluye IVA, calcularlo
+        precioConIva = precioBase * (1 + ivaPorc / 100);
+    }
     const precio = formatCurrency(precioConIva);
     
-    // Calcular total con IVA incluido
+    // Calcular total para mostrar (CON IVA siempre)
     const totalBase = parseFloat(product.total_item) || 0;
     const ivaValor = parseFloat(product.iva_valor) || 0;
-    const totalConIva = totalBase + ivaValor;
+    
+    let totalConIva;
+    if (ivaIncluidoEnPrecio) {
+        // El precio_unitario YA incluye IVA
+        // Calcular total como: precio_unitario × cantidad
+        totalConIva = precioBase * cantidad;
+    } else {
+        // El precio_unitario NO incluye IVA
+        // Calcular total como: total_item + iva_valor
+        totalConIva = totalBase + ivaValor;
+    }
     const total = formatCurrency(totalConIva);
     
-    // Estado: Construir badges
+    // Estado: Construir badges - COMPACTOS
     let estadoBadges = [];
     
     // 1. IVA - Badge principal
     if (ivaPorc > 0) {
         estadoBadges.push(`
-            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Producto con IVA del ${ivaPorc}%">
                 +
             </span>
@@ -314,9 +342,9 @@ function renderProductRow(product) {
     const descuento = parseFloat(product.descuento_valor) || 0;
     if (descuento > 0) {
         estadoBadges.push(`
-            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Descuento aplicado: ${formatCurrency(descuento)}">
-                -${formatNumber(descuento)}
+                -
             </span>
         `);
     }
@@ -325,9 +353,9 @@ function renderProductRow(product) {
     const recargo = parseFloat(product.recargo_valor) || 0;
     if (recargo > 0) {
         estadoBadges.push(`
-            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-orange-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Recargo aplicado: ${formatCurrency(recargo)}">
-                +${formatNumber(recargo)}
+                R
             </span>
         `);
     }
@@ -338,63 +366,61 @@ function renderProductRow(product) {
         if (variacion > 0.5) {
             // Precio SUBIÓ
             estadoBadges.push(`
-                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                       title="Precio subió ${variacion.toFixed(1)}%">
-                    ↑${variacion.toFixed(1)}%
+                    ↑
                 </span>
             `);
         } else if (variacion < -0.5) {
             // Precio BAJÓ
             estadoBadges.push(`
-                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-green-600 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                       title="Precio bajó ${Math.abs(variacion).toFixed(1)}%">
-                    ↓${Math.abs(variacion).toFixed(1)}%
+                    ↓
                 </span>
             `);
         }
-        // Si variación está entre -0.5% y 0.5%, NO mostrar badge (precio IGUAL)
     } else if (product.variacion_tipo === 'primera_compra') {
         // PRIMERA COMPRA
         estadoBadges.push(`
-            <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-purple-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-help" 
                   title="Primera compra de este producto">
                 1ª
             </span>
         `);
     }
-    // Si variacion_tipo === 'igual', NO mostrar badge
     
     const estadoHTML = estadoBadges.length > 0 
-        ? `<div class="flex flex-wrap gap-1">${estadoBadges.join('')}</div>`
-        : '<div class="flex items-center"><span class="text-gray-400 text-xs">-</span></div>';
+        ? `<div class="flex items-center justify-center gap-1">${estadoBadges.join('')}</div>`
+        : '<div class="flex items-center justify-center"><span class="text-gray-400 text-xs">-</span></div>';
     
     const productJson = JSON.stringify(product).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     
     return `
-        <tr class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 align-middle">
-                <div class="text-sm font-medium text-gray-900 max-w-xs" title="${descripcion}">${descripcion}</div>
+        <tr class="hover:bg-gray-50 transition-colors h-12">
+            <td class="px-4 py-2 align-middle">
+                <div class="text-sm font-medium text-gray-900 truncate" title="${descripcionFull}">${descripcion}</div>
             </td>
-            <td class="px-6 py-4 hidden md:table-cell align-middle">
-                <div class="text-sm text-gray-700 font-mono">${codigoProducto}</div>
+            <td class="px-4 py-2 hidden md:table-cell align-middle">
+                <div class="text-xs text-gray-700 font-mono truncate" title="${codigoFull}">${codigoProducto}</div>
             </td>
-            <td class="px-6 py-4 align-middle">
+            <td class="px-4 py-2 align-middle text-center">
                 <div class="text-sm text-gray-900 font-semibold">${cantidad}</div>
             </td>
-            <td class="px-6 py-4 align-middle">
-                <div class="text-sm font-medium text-gray-900">${precio}</div>
+            <td class="px-4 py-2 align-middle text-right">
+                <div class="text-sm font-medium text-gray-900 whitespace-nowrap">${precio}</div>
             </td>
-            <td class="px-6 py-4 align-middle">
-                <div class="text-sm font-bold text-gray-900">${total}</div>
+            <td class="px-4 py-2 align-middle text-right">
+                <div class="text-sm font-bold text-gray-900 whitespace-nowrap">${total}</div>
             </td>
-            <td class="px-6 py-4 align-middle">
+            <td class="px-4 py-2 align-middle">
                 ${estadoHTML}
             </td>
-            <td class="px-6 py-4 text-right align-middle">
+            <td class="px-4 py-2 text-center align-middle">
                 <button onclick='viewProductDetail(${productJson})' 
-                        class="text-papyrus-blue hover:text-blue-700 transition-colors p-2 rounded-lg hover:bg-blue-50" 
+                        class="text-papyrus-blue hover:text-blue-700 transition-colors p-1.5 rounded-lg hover:bg-blue-50 inline-flex items-center justify-center" 
                         title="Ver detalle completo">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>

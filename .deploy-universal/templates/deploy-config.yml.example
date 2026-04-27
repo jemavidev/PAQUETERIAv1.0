@@ -1,0 +1,255 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPLOY MANAGER UNIVERSAL - CONFIGURACIÓN
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Este archivo define TODOS los datos específicos de tu proyecto.
+# Copia este archivo a la raíz de tu proyecto como: .deploy-config.yml
+#
+# IMPORTANTE:
+# - Reemplaza todos los valores de ejemplo con los de tu proyecto
+# - NO commitees secrets (usa variables de entorno)
+# - Cada proyecto tiene su propio .deploy-config.yml
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ INFORMACIÓN DEL PROYECTO                                                  │
+# └───────────────────────────────────────────────────────────────────────────┘
+project:
+  name: "mi-proyecto"                    # Nombre del proyecto
+  version: "1.0.0"                       # Versión actual
+  description: "Descripción del proyecto"
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: LOCALHOST (Desarrollo Local)                                    │
+# └───────────────────────────────────────────────────────────────────────────┘
+localhost:
+  # Tipo de entorno
+  type: "local"                          # local = ejecuta comandos localmente
+  
+  # Rutas locales
+  paths:
+    project: "."                         # Directorio del proyecto (. = actual)
+    backup: "./backups"                  # Dónde guardar backups
+  
+  # Configuración Docker
+  docker:
+    enabled: true                        # ¿Usar Docker?
+    compose_file: "docker-compose.dev.yml"  # Archivo Docker Compose
+    services:                            # Servicios a gestionar
+      - "app"
+      - "redis"
+      - "postgres"
+    rebuild: false                       # ¿Rebuild en cada deploy?
+    pull: false                          # ¿Pull imágenes antes de deploy?
+  
+  # Configuración Git
+  git:
+    enabled: true                        # ¿Gestionar Git?
+    branch: "main"                       # Rama a usar
+    auto_commit: false                   # ¿Commit automático?
+    auto_push: false                     # ¿Push automático?
+  
+  # Health Check
+  health_check:
+    enabled: true                        # ¿Verificar salud después de deploy?
+    url: "http://localhost:8000/health"  # URL a verificar
+    timeout: 30                          # Timeout total en segundos
+    retries: 10                          # Número de reintentos
+    interval: 2                          # Intervalo entre reintentos (segundos)
+  
+  # Migraciones de Base de Datos
+  migrations:
+    enabled: true                        # ¿Ejecutar migraciones?
+    auto: false                          # ¿Automáticas o pedir confirmación?
+    command: "docker compose exec -T app alembic upgrade head"
+  
+  # Backups
+  backup:
+    enabled: false                       # ¿Hacer backups?
+    auto_before_deploy: false            # ¿Backup automático antes de deploy?
+    command: ""                          # Comando para crear backup
+    retention_days: 7                    # Días a mantener backups
+  
+  # Variables de Entorno
+  env_file: ".env.local"                 # Archivo .env a usar
+  
+  # Hooks (scripts personalizados)
+  hooks:
+    pre_deploy: ""                       # Script antes de deploy
+    post_deploy: ""                      # Script después de deploy
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: STAGING (Servidor de Pruebas)                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
+staging:
+  # Tipo de entorno
+  type: "remote"                         # remote = ejecuta vía SSH
+  
+  # Configuración SSH
+  ssh:
+    host: "staging.example.com"          # Hostname o IP del servidor
+    user: "ubuntu"                       # Usuario SSH
+    port: 22                             # Puerto SSH
+    key: "~/.ssh/id_rsa"                # Ruta a llave privada SSH
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  # Rutas en el servidor remoto
+  paths:
+    project: "/home/ubuntu/mi-proyecto"  # Ruta del proyecto en servidor
+    backup: "/home/ubuntu/backups"       # Ruta de backups en servidor
+  
+  # Configuración Docker
+  docker:
+    enabled: true
+    compose_file: "docker-compose.staging.yml"
+    services:
+      - "app"
+    rebuild: true                        # Rebuild en staging
+    pull: false
+  
+  # Configuración Git
+  git:
+    enabled: true
+    branch: "staging"                    # Rama específica de staging
+    auto_pull: true                      # Pull automático en deploy
+  
+  # Health Check
+  health_check:
+    enabled: true
+    url: "http://localhost:8001/health"  # URL interna del servidor
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  # Migraciones
+  migrations:
+    enabled: true
+    auto: true                           # Automáticas en staging
+    command: "docker compose -f docker-compose.staging.yml exec -T app alembic upgrade head"
+  
+  # Backups
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose -f docker-compose.staging.yml exec -T postgres pg_dump -U postgres dbname"
+    retention_days: 7
+  
+  # Variables de Entorno
+  env_file: ".env.staging"               # Archivo .env a copiar al servidor
+  
+  # Hooks
+  hooks:
+    pre_deploy: ""
+    post_deploy: ""
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ ENTORNO: PRODUCTION (Servidor de Producción)                             │
+# └───────────────────────────────────────────────────────────────────────────┘
+production:
+  # Tipo de entorno
+  type: "remote"
+  
+  # Configuración SSH
+  ssh:
+    host: "production.example.com"       # Servidor de producción
+    user: "ubuntu"
+    port: 22
+    key: "~/.ssh/id_rsa_production"     # Llave diferente para producción
+    options: "-o StrictHostKeyChecking=no -o ConnectTimeout=10"
+  
+  # Rutas en el servidor remoto
+  paths:
+    project: "/var/www/mi-proyecto"
+    backup: "/var/backups/mi-proyecto"
+  
+  # Configuración Docker
+  docker:
+    enabled: true
+    compose_file: "docker-compose.prod.yml"
+    services:
+      - "app"
+      - "redis"
+      - "nginx"
+    rebuild: true
+    pull: false
+  
+  # Configuración Git
+  git:
+    enabled: true
+    branch: "main"                       # Producción usa main
+    auto_pull: true
+  
+  # Health Check
+  health_check:
+    enabled: true
+    url: "http://localhost:8000/health"
+    timeout: 60
+    retries: 30
+    interval: 2
+  
+  # Migraciones
+  migrations:
+    enabled: true
+    auto: false                          # SIEMPRE pedir confirmación en producción
+    command: "docker compose -f docker-compose.prod.yml exec -T app alembic upgrade head"
+  
+  # Backups
+  backup:
+    enabled: true
+    auto_before_deploy: true
+    command: "docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres dbname"
+    retention_days: 30
+  
+  # Variables de Entorno
+  env_file: ".env.production"
+  
+  # Hooks
+  hooks:
+    pre_deploy: ".deploy/hooks/pre-deploy-production.sh"
+    post_deploy: ".deploy/hooks/post-deploy-production.sh"
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ CONFIGURACIÓN GLOBAL                                                      │
+# └───────────────────────────────────────────────────────────────────────────┘
+global:
+  # Rollback automático
+  rollback:
+    enabled: true                        # ¿Rollback automático si falla?
+    keep_checkpoints: 5                  # Número de checkpoints a mantener
+  
+  # Notificaciones (opcional)
+  notifications:
+    slack:
+      enabled: false
+      webhook: "${SLACK_WEBHOOK}"        # Variable de entorno
+    discord:
+      enabled: false
+      webhook: "${DISCORD_WEBHOOK}"
+  
+  # Logging
+  logging:
+    enabled: true
+    level: "INFO"                        # DEBUG, INFO, WARNING, ERROR
+    file: ".deploy/logs/deploy.log"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTAS:
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# VARIABLES DE ENTORNO:
+# Puedes usar ${VARIABLE} para leer de variables de entorno
+# Ejemplo: host: "${PROD_HOST}"
+#
+# SECRETS:
+# NO commitees este archivo con secrets. Opciones:
+# 1. Usa variables de entorno
+# 2. Crea .deploy-secrets.yml (agregado a .gitignore)
+# 3. Usa un gestor de secrets (Vault, AWS Secrets Manager)
+#
+# PERSONALIZACIÓN:
+# - Agrega más entornos copiando la estructura
+# - Modifica comandos según tu stack
+# - Ajusta timeouts según tu aplicación
+#
+# ═══════════════════════════════════════════════════════════════════════════

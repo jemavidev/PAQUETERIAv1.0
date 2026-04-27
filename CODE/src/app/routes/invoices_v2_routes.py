@@ -706,6 +706,55 @@ def list_products(
                     "numero_factura": prod.factura.numero_factura if prod.factura else None,
                 }
                 
+                # ===== DETECTAR SI PRECIOS INCLUYEN IVA =====
+                # Estrategia simplificada: Verificar si total_item coincide con el total mostrado en factura
+                # Si total_item × (1 + IVA%) ≈ total_item + iva_valor, entonces total_item NO incluye IVA
+                # Si total_item ≈ total_item + iva_valor, entonces total_item YA incluye IVA
+                
+                iva_incluido_en_precio = False
+                if prod.precio_unitario and prod.cantidad and prod.total_item:
+                    precio_unit = float(prod.precio_unitario)
+                    cantidad = float(prod.cantidad)
+                    total = float(prod.total_item)
+                    iva_pct = float(prod.iva_porcentaje) if prod.iva_porcentaje else 0
+                    iva_val = float(prod.iva_valor) if prod.iva_valor else 0
+                    
+                    # Tolerancia del 3% para errores de redondeo
+                    tolerancia = 0.03
+                    
+                    # Verificar si iva_valor es significativo (mayor al 1% del total)
+                    if iva_val > 0 and iva_val > (total * 0.01):
+                        # Hay un iva_valor significativo registrado
+                        # Verificar si total + iva_valor ≈ precio × cantidad × (1 + IVA%)
+                        total_con_iva_sumado = total + iva_val
+                        total_esperado_con_iva = precio_unit * cantidad * (1 + iva_pct / 100)
+                        
+                        diff = abs(total_con_iva_sumado - total_esperado_con_iva) / max(total_con_iva_sumado, 1)
+                        
+                        if diff < tolerancia:
+                            # total_item NO incluye IVA (iva_valor está separado)
+                            iva_incluido_en_precio = False
+                        else:
+                            # total_item YA incluye IVA (iva_valor es redundante o mal calculado)
+                            iva_incluido_en_precio = True
+                    else:
+                        # No hay iva_valor significativo, verificar directamente
+                        # Si total ≈ precio × cantidad × (1 + IVA%), entonces YA incluye IVA
+                        total_esperado_con_iva = precio_unit * cantidad * (1 + iva_pct / 100)
+                        total_esperado_sin_iva = precio_unit * cantidad
+                        
+                        diff_con_iva = abs(total - total_esperado_con_iva) / max(total, 1)
+                        diff_sin_iva = abs(total - total_esperado_sin_iva) / max(total, 1)
+                        
+                        if diff_con_iva < diff_sin_iva and diff_con_iva < tolerancia:
+                            # total se parece más a precio × cantidad × (1 + IVA%)
+                            iva_incluido_en_precio = True
+                        else:
+                            # total se parece más a precio × cantidad
+                            iva_incluido_en_precio = False
+                    
+                prod_dict["iva_incluido_en_precio"] = iva_incluido_en_precio
+                
                 # Calcular variación de precio en tiempo real (sin campos de trazabilidad en BD)
                 if prod.codigo_producto and prod.precio_unitario:
                     try:
