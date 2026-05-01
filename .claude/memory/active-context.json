@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "",
+  "project": {
+    "name": "[PROJECT NAME]",
+    "description": "[Brief project description]",
+    "phase": "1 — Initial setup",
+    "status": "active",
+    "startDate": ""
+  },
+  "currentFocus": {
+    "feature": "Getting started",
+    "objective": "[Define your first objective]",
+    "priority": "high"
+  },
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "databases": [],
+    "tools": []
+  },
+  "team": {
+    "size": 1,
+    "roles": [
+      "Developer"
+    ],
+    "activeAgents": []
+  },
+  "constraints": {
+    "technical": [],
+    "business": []
+  },
+  "nextSteps": [
+    "Define project context in active-context.json",
+    "Update MEMORY.md with project name and focus",
+    "Start your first session with Claude Code"
+  ],
+  "blockers": [],
+  "context": {
+    "stats": {
+      "completedTasks": 0,
+      "pendingTasks": 0,
+      "lastUpdate": ""
+    },
+    "recentDecisions": [],
+    "activePatterns": [],
+    "openTasks": [],
+    "recentChanges": [
+      {
+        "timestamp": "2026-05-01T14:05:11-05:00",
+        "file": "plan-mode",
+        "name": "EnterPlanMode triggered",
+        "category": "safety"
+      }
+    ]
+  },
+  "recentChanges": [],
+  "current": {
+    "focus": "Initial project setup",
+    "blockers": [],
+    "nextSteps": []
+  },
+  "_comments": {
+    "dateFormat": "Use ISO 8601 format with timezone for timestamps: YYYY-MM-DDTHH:MM:SS-05:00",
+    "example": "2026-02-16T09:00:00-05:00",
+    "note": "Dashboard will display date and time when timestamp includes 'T', otherwise only date",
+    "dashboardFields": "nextSteps and blockers must be TOP-LEVEL arrays, not nested under current.*"
+  }
+}

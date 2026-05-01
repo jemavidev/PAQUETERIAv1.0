@@ -1,0 +1,31 @@
+{
+  "lastCalculated": "2026-05-01T14:30:30-05:00",
+  "totalFiles": 10831,
+  "totalSizeKB": 289248,
+  "byCategory": {
+    "skills": {
+      "files": 83,
+      "lines": 26087
+    },
+    "scripts": {
+      "files": 31,
+      "lines": 4202
+    },
+    "protocols": {
+      "files": 7,
+      "lines": 789
+    },
+    "memory": {
+      "files": 12,
+      "sizeKB": 264
+    },
+    "templates": {
+      "files": 0,
+      "lines": 0
+    },
+    "config": {
+      "files": 0,
+      "lines": 0
+    }
+  }
+}

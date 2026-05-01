@@ -23,6 +23,7 @@ from .admin import router as admin
 from .announcements import router as announcements
 from .profile import router as profile
 from .settings_api import router as settings_api
+from .sync import router as sync
 # from .public import router as public  # Archivo no existe
 # from .protected import router as protected  # Archivo no existe
 
@@ -38,6 +39,7 @@ __all__ = [
     "announcements",
     "profile",
     "settings_api",
+    "sync",
     # "public",  # Archivo no existe
     # "protected"  # Archivo no existe
 ]

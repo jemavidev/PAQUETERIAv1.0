@@ -47,11 +47,18 @@
 
                     <!-- Botones de acción -->
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <!-- Botón para ir a anunciar paquetes -->
+                        <!-- Estrella dorada para ir a anunciar nuevo -->
+                        <a href="/announce-new"
+                           class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-400 hover:bg-yellow-500 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 active:scale-95 touch-manipulation flex-shrink-0 text-lg font-bold"
+                           title="Anunciar nuevo paquete">
+                            ⭐
+                        </a>
+
+                        <!-- Botón para ir a anunciar paquetes (versión clásica) -->
                         <button onclick="window.location.href='/announce-papyrus'"
-                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation"
-                                title="Anunciar nuevo paquete">
-                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation flex-shrink-0"
+                                title="Anunciar paquete (modo clásico)">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                         </button>
@@ -59,25 +66,25 @@
                         <!-- Botones de estado agrupados -->
                         <div class="flex items-center gap-1">
                             <!-- Anunciado -->
-                            <button id="filterAnnounced" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 active:scale-95 touch-manipulation" title="Anunciado">
+                            <button id="filterAnnounced" class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 active:scale-95 touch-manipulation" title="Anunciado">
                                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </button>
                             <!-- Recibido -->
-                            <button id="filterReceived" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation" title="Recibido">
+                            <button id="filterReceived" class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 touch-manipulation" title="Recibido">
                                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
                             </button>
                             <!-- Entregado -->
-                            <button id="filterDelivered" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation" title="Entregado">
+                            <button id="filterDelivered" class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-500 hover:bg-green-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation" title="Entregado">
                                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                                 </svg>
                             </button>
                             <!-- Cancelado -->
-                            <button id="filterCancelled" class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-red-500 hover:bg-red-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 active:scale-95 touch-manipulation" title="Cancelado">
+                            <button id="filterCancelled" class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-red-500 hover:bg-red-600 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 active:scale-95 touch-manipulation" title="Cancelado">
                                 <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
@@ -86,7 +93,7 @@
 
                         <!-- Botón de limpiar filtros -->
                         <button id="clearFilters"
-                                class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation"
+                                class="inline-flex items-center justify-center w-10 h-10 sm:w-10 sm:h-10 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-papyrus-blue active:scale-95 touch-manipulation"
                                 title="Limpiar filtros">
                             <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -1367,6 +1374,8 @@ function createPackageElement(package) {
 
     row.setAttribute('data-search', searchData);
     row.setAttribute('data-status', package.status || '');
+    row.setAttribute('data-tracking-code', package.tracking_number || package.tracking_code || '');
+    row.setAttribute('data-package-id', package.id || '');
 
     const statusColor = getStatusColor(package.status);
     const statusText = getStatusText(package.status);
@@ -1456,8 +1465,8 @@ function createPackageElement(package) {
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex flex-col space-y-1">
-                ${package.announced_at ? (() => {
-                    const date = new Date(package.announced_at);
+                ${package.last_update_date ? (() => {
+                    const date = new Date(package.last_update_date);
                     const day = date.getDate().toString().padStart(2, '0');
                     const month = (date.getMonth() + 1).toString().padStart(2, '0');
                     const year = date.getFullYear();
@@ -3774,6 +3783,12 @@ async function sendPackageEmail() {
 }
 
 function closeModal() {
+    // 🔧 FIX: Resetear variables globales para permitir procesar múltiples paquetes
+    currentPackageId = null;
+    currentAction = null;
+    currentPackage = null;
+    log('🧹 Variables globales reseteadas en closeModal');
+    
     // Ocultar sección de email cuando se cierra el modal
     const emailSection = document.getElementById('emailNotificationSection');
     if (emailSection) {
@@ -4307,6 +4322,49 @@ document.addEventListener('DOMContentLoaded', function() {
     log('🎨 TIP: Usa window.debugColoresEstado() para verificar colores de iconos');
     initializeDOMCache();
     loadPackages();
+
+    // 🆕 Detectar parámetro ?id= en URL y abrir modal automáticamente
+    const urlParams = new URLSearchParams(window.location.search);
+    const packageIdParam = urlParams.get('id');
+
+    if (packageIdParam) {
+        log(`🎯 Parámetro id detectado: ${packageIdParam}`);
+
+        // Esperar a que los paquetes se carguen y luego buscar el específico
+        setTimeout(() => {
+            // Buscar el paquete en todos los estados
+            let foundPackage = null;
+
+            for (const state in packagesByState) {
+                const package_ = packagesByState[state].find(p =>
+                    p.tracking_number === packageIdParam ||
+                    p.tracking_code === packageIdParam
+                );
+
+                if (package_) {
+                    foundPackage = package_;
+                    break;
+                }
+            }
+
+            if (foundPackage) {
+                log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
+                log(`📦 Abriendo modal para recibir paquete`);
+
+                // 🆕 IMPORTANTE: Asignar variables globales necesarias para confirmar la acción
+                currentPackageId = foundPackage.id;
+                currentAction = 'receive';
+                log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
+
+                // Abrir el modal con acción 'receive' para recibir el paquete
+                showPackageModal(foundPackage, 'receive');
+            } else {
+                warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
+                // Mostrar notificación al usuario
+                showInfoToast('Paquete no encontrado', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+            }
+        }, 800); // Esperar 800ms para que se carguen completamente los paquetes
+    }
 
     // Función debounce para evitar demasiadas peticiones al servidor
     function debounce(func, wait) {

@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "",
+  "tasks": [],
+  "milestones": [],
+  "summary": {
+    "totalTasks": 0,
+    "byStatus": {
+      "todo": 0,
+      "in-progress": 0,
+      "blocked": 0,
+      "completed": 0,
+      "cancelled": 0
+    },
+    "byPriority": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "byAgent": {},
+    "completionRate": 0,
+    "averageCompletionTime": 0
+  },
+  "timeline": {
+    "projectStart": "",
+    "currentPhase": "",
+    "nextMilestone": "",
+    "estimatedCompletion": ""
+  },
+  "_comments": {
+    "dateFormat": "Use ISO 8601 format with timezone for timestamps: YYYY-MM-DDTHH:MM:SS-05:00",
+    "example": "2026-02-16T09:30:00-05:00",
+    "note": "Dashboard will display date and time when timestamp includes 'T', otherwise only date"
+  },
+  "metadata": {
+    "totalTokens": 0,
+    "totalEntries": 0,
+    "avgTokensPerEntry": 0,
+    "lastUpdated": "",
+    "tokensByAgent": {}
+  }
+}

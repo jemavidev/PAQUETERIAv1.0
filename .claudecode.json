@@ -1,0 +1,375 @@
+{
+  "agentx": {
+    "enabled": true,
+    "orchestrator": "CLAUDE.md",
+    "philosophy": "Router, not executor — ensure right expert handles each task",
+    "version": "3.3.0"
+  },
+  "safety": {
+    "planModeThreshold": {
+      "filesAffected": 3,
+      "ambiguityScore": 30,
+      "complexityScore": 5,
+      "enforceOn": [
+        "Edit",
+        "Write",
+        "Task"
+      ],
+      "destructiveOperations": [
+        "rm",
+        "reset",
+        "delete",
+        "drop",
+        "truncate"
+      ],
+      "description": "Auto-trigger EnterPlanMode for complex changes"
+    },
+    "antiLoopDetection": {
+      "enabled": true,
+      "toolCallCheckpoint": 3,
+      "maxConsecutiveToolCalls": 5,
+      "pauseAfter": 5,
+      "checkEveryN": 3,
+      "patterns": [
+        "edit-test-edit",
+        "search-read-search",
+        "refactor-revert"
+      ],
+      "description": "Prevent recursive loops that waste tokens"
+    },
+    "postChangeVerification": {
+      "enabled": true,
+      "autoRun": true,
+      "failureAction": "escalate-to-critic",
+      "commands": {
+        "python": {
+          "syntax": "python -m py_compile {file}",
+          "types": "mypy {file} --ignore-missing-imports",
+          "lint": "pylint {file} --disable=all --enable=syntax-error",
+          "test": "pytest tests/test_{basename}.py -v"
+        },
+        "typescript": {
+          "syntax": "npx tsc --noEmit {file}",
+          "lint": "npx eslint {file}",
+          "format": "npx prettier --check {file}",
+          "test": "npm test -- --testPathPattern={file}"
+        },
+        "javascript": {
+          "lint": "npx eslint {file}",
+          "format": "npx prettier --check {file}",
+          "test": "npm test -- {file}"
+        },
+        "json": {
+          "syntax": "jq . < {file} > /dev/null"
+        },
+        "yaml": {
+          "syntax": "yamllint {file}"
+        },
+        "shell": {
+          "syntax": "bash -n {file}"
+        }
+      },
+      "timeout": 30,
+      "description": "Validate code after every Edit/Write"
+    }
+  },
+  "efficiency": {
+    "trivialityFilter": {
+      "enabled": true,
+      "scoreThreshold": 4,
+      "maxLinesForManual": 5,
+      "maxFilesForManual": 1,
+      "estimatedManualTimeSeconds": 120,
+      "tokenSavingsTarget": 0.2,
+      "description": "Suggest manual fixes instead of burning agent tokens"
+    },
+    "contextWindows": {
+      "default": 50000,
+      "coder": 50000,
+      "architect": 45000,
+      "researcher": 75000,
+      "data-scientist": 100000,
+      "devops": 55000,
+      "tester": 40000,
+      "security": 45000,
+      "warningThreshold": 0.8,
+      "description": "Max tokens per agent execution"
+    },
+    "skillInjection": {
+      "maxSkillsPerAgent": 3,
+      "onDemandOnly": true,
+      "tokenBudgetPerSkill": 1500,
+      "description": "Load skills dynamically, not pre-loaded"
+    },
+    "memoryInjection": {
+      "maxTokens": 150,
+      "includeDecisions": 2,
+      "includeTasks": 2,
+      "onlyTitles": true,
+      "description": "Concise context for sub-agents"
+    }
+  },
+  "governance": {
+    "criticGate": {
+      "enabled": true,
+      "mandatory_for": [
+        "architecture",
+        "security",
+        "breaking-changes"
+      ],
+      "description": "Architecture decisions require Critic review before integrating"
+    },
+    "planModeRequired": {
+      "conditions": [
+        "files_affected >= 3",
+        "complexity_score >= 5",
+        "ambiguity_score > 30",
+        "destructive_operation",
+        "breaking_changes"
+      ],
+      "description": "Force planning before major changes"
+    },
+    "humanInTheLoop": {
+      "required_for": [
+        "destructive-ops",
+        "breaking-changes",
+        "triviality-decision"
+      ],
+      "escalationGates": [
+        "plan-mode",
+        "anti-loop",
+        "verification-failure"
+      ],
+      "description": "Key decisions require human approval"
+    }
+  },
+  "monitoring": {
+    "logging": {
+      "enabled": true,
+      "logLevel": "info",
+      "trackTokens": true,
+      "trackTrivialityScores": true,
+      "trackLoopDetection": true
+    },
+    "metrics": {
+      "enabled": true,
+      "dashboardFile": ".claude/memory/dashboard.html",
+      "refreshInterval": 300,
+      "tracked": [
+        "tokens_per_session",
+        "tokens_saved_via_triviality",
+        "loops_detected_and_stopped",
+        "plan_mode_triggers",
+        "verification_failures"
+      ]
+    },
+    "memoryUpdates": {
+      "automatic": true,
+      "onTriggers": [
+        "task_completion",
+        "architecture_decision",
+        "pattern_identification",
+        "phase_change"
+      ],
+      "location": ".claude/memory/",
+      "description": "AgentX is sole memory writer"
+    }
+  },
+  "tools": {
+    "routing": {
+      "preferredOrder": [
+        "Glob (file discovery)",
+        "Grep (content search)",
+        "Read (file content)",
+        "Edit/Write (modifications)",
+        "Bash (execution)",
+        "Task (sub-agents)"
+      ],
+      "antiPatterns": [
+        "Bash find instead of Glob",
+        "Bash grep instead of Grep",
+        "Bash cat instead of Read",
+        "Bash echo instead of Write",
+        "Guessing file paths without search"
+      ]
+    },
+    "toolCallTracking": {
+      "enabled": true,
+      "countPerDispatch": true,
+      "resetPerTask": true,
+      "loopRiskColors": {
+        "green": "1-3 calls, forward progress",
+        "yellow": "4-6 calls, same file edited",
+        "red": "7+ calls OR repeat error"
+      }
+    }
+  },
+  "protocols": {
+    "memory": ".claude/protocols/memory-injection.md",
+    "feedback": ".claude/protocols/feedback-loop.md",
+    "skills": ".claude/protocols/skill-injection.md",
+    "antiLoop": ".claude/protocols/anti-loop-detection.md",
+    "planMode": ".claude/protocols/plan-mode-enforcement.md",
+    "verification": ".claude/protocols/post-change-verification.md",
+    "triviality": ".claude/protocols/triviality-filter.md"
+  },
+  "skills": {
+    "critical": [
+      "anti-loop-validator",
+      "plan-mode-enforcer",
+      "post-change-validator",
+      "triviality-detector"
+    ],
+    "registry": "config/agent-skills.json",
+    "directory": ".claude/commands/",
+    "autoLoad": false,
+    "onDemand": true,
+    "installed": [
+      "accessibility-compliance",
+      "anti-loop-validator",
+      "api-design-principles",
+      "architect",
+      "architecture-decision-records",
+      "architecture-patterns",
+      "async-python-patterns",
+      "audit-website",
+      "auth-implementation-patterns",
+      "backup-project",
+      "brainstorming",
+      "changelog-automation",
+      "checkpoint",
+      "coder",
+      "code-reviewer",
+      "competitor-alternatives",
+      "config",
+      "copy-editing",
+      "critic",
+      "database-migration",
+      "data-scientist",
+      "delete-project",
+      "deployment-pipeline-design",
+      "design-system-patterns",
+      "devops",
+      "doc-coauthoring",
+      "docker-expert",
+      "doc-parsing",
+      "e2e-testing-patterns",
+      "error-handling-patterns",
+      "executing-plans",
+      "find-skills",
+      "frontend-design",
+      "generate-docs",
+      "github-actions-templates",
+      "interaction-design",
+      "internal-comms",
+      "javascript-testing-patterns",
+      "kpi-dashboard-design",
+      "log-analysis",
+      "marketing-ideas",
+      "memory",
+      "metrics",
+      "microservices-patterns",
+      "modern-javascript-patterns",
+      "monorepo-management",
+      "next-best-practices",
+      "nodejs-backend-patterns",
+      "plan-mode-enforcer",
+      "post-change-validator",
+      "postgresql-table-design",
+      "product-manager",
+      "product-marketing-context",
+      "project-agent-creator",
+      "project-skill-creator",
+      "prompt-engineering-patterns",
+      "python-performance-optimization",
+      "python-testing-patterns",
+      "receiving-code-review",
+      "requesting-code-review",
+      "researcher",
+      "responsive-design",
+      "security",
+      "seo-audit",
+      "skill-creator",
+      "sql-optimization-patterns",
+      "systematic-debugging",
+      "tailwind-design-system",
+      "teacher",
+      "test-driven-development",
+      "tester",
+      "tool-selection-guide",
+      "triviality-detector",
+      "typescript-advanced-types",
+      "ui-ux-pro-max",
+      "ux-designer",
+      "vercel-react-best-practices",
+      "verification-before-completion",
+      "webapp-testing",
+      "web-design-guidelines",
+      "writer",
+      "writing-plans",
+      "writing-skills"
+    ]
+  },
+  "agents": {
+    "defaults": {
+      "inheritance": false,
+      "contextWindow": 50000,
+      "safetyGates": [
+        "plan-mode-enforcer",
+        "anti-loop-validator"
+      ],
+      "verificationGates": [
+        "post-change-validator"
+      ]
+    },
+    "architect": {
+      "enforceStrategy": true,
+      "enforceRisk": true,
+      "requiresCriticReview": true,
+      "safetyGates": [
+        "plan-mode-enforcer",
+        "anti-loop-validator"
+      ]
+    },
+    "coder": {
+      "verificationGates": [
+        "post-change-validator",
+        "anti-loop-validator"
+      ],
+      "trivialityFilter": true,
+      "loopDetection": true
+    },
+    "critic": {
+      "escalationGates": [
+        "anti-loop-validator",
+        "post-change-validator"
+      ],
+      "requiresHumanApproval": true
+    },
+    "devops": {
+      "verificationGates": [
+        "post-change-validator"
+      ],
+      "planModeRequired": true,
+      "requiresHumanApproval": true
+    },
+    "tester": {
+      "verificationGates": [
+        "post-change-validator"
+      ]
+    }
+  },
+  "version": "3.7.0",
+  "metadata": {
+    "created": "2026-02-22",
+    "lastModified": "2026-03-01",
+    "standards": [
+      "Control & Efficiency Framework (6 pillars)",
+      "Anti-Looping Prevention",
+      "Human-in-the-Loop Governance",
+      "Token Efficiency",
+      "Code Quality Assurance"
+    ],
+    "documentation": "CLAUDE.md + .claude/protocols/"
+  }
+}

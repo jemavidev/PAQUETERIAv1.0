@@ -15,6 +15,7 @@ from app.services.s3_service import S3Service
 import boto3
 from botocore.exceptions import ClientError
 import io
+import asyncio
 
 router = APIRouter(prefix="/api/images", tags=["images"])
 
@@ -335,14 +336,14 @@ async def get_image_improved(
                     if attempt < 2:  # Solo esperar si no es el último intento
                         wait_time = (2 ** attempt)  # Backoff exponencial: 1s, 2s, 4s
                         logger.info(f"⏳ Esperando {wait_time}s antes del siguiente intento")
-                        time.sleep(wait_time)
+                        await asyncio.sleep(wait_time)
                     
             except Exception as s3_error:
                 last_error = s3_error
                 logger.error(f"❌ Error inesperado S3 intento {attempt + 1}: {s3_error}")
                 if attempt < 2:
                     wait_time = (2 ** attempt)
-                    time.sleep(wait_time)
+                    await asyncio.sleep(wait_time)
         
         # Si llegamos aquí, todos los intentos fallaron
         logger.error(f"❌ Todos los intentos fallaron para imagen {file_id}")
@@ -628,16 +629,16 @@ async def get_image_fallback(
             except ClientError as e:
                 error_code = e.response['Error']['Code']
                 print(f"❌ Error fallback intento {attempt + 1}: {error_code}")
-                
+
                 if error_code == 'NoSuchKey':
                     break  # No reintentar para archivos que no existen
                 elif attempt < 2:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     
             except Exception as fallback_error:
                 print(f"❌ Error inesperado fallback intento {attempt + 1}: {fallback_error}")
                 if attempt < 2:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
         
         # Si llegamos aquí, el fallback falló
         print(f"❌ Fallback falló para: {filename}")

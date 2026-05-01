@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "",
+  "decisions": [],
+  "summary": {
+    "totalDecisions": 0,
+    "byStatus": {
+      "proposed": 0,
+      "approved": 0,
+      "implemented": 0,
+      "rejected": 0,
+      "superseded": 0
+    },
+    "byAgent": {}
+  },
+  "_comments": {
+    "dateFormat": "Use ISO 8601 format with timezone for timestamps: YYYY-MM-DDTHH:MM:SS-05:00",
+    "example": "2026-02-16T14:30:00-05:00",
+    "note": "Dashboard will display date and time when timestamp includes 'T', otherwise only date"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "totalTokensAllocated": 200000,
+    "totalTokensUsed": 0,
+    "totalTokensRemaining": 200000,
+    "utilizationPercent": 0
+  },
+  "byComponent": {
+    "memorySystem": {
+      "tokens": 0,
+      "percentage": 0
+    },
+    "protocols": {
+      "tokens": 0,
+      "percentage": 0
+    },
+    "skills": {
+      "tokens": 0,
+      "percentage": 0
+    },
+    "implementation": {
+      "tokens": 0,
+      "percentage": 0
+    },
+    "testing": {
+      "tokens": 0,
+      "percentage": 0
+    }
+  },
+  "byAgent": {},
+  "lastUpdated": "",
+  "projections": {
+    "estimatedRunwayDays": 0
+  }
+}

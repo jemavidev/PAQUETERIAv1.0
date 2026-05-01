@@ -14,6 +14,7 @@ Router de paquetes para PAQUETES EL CLUB
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
+import asyncio
 from app.database import get_db
 from app.dependencies import get_current_active_user, get_current_active_user_from_cookies
 from app.models.user import User
@@ -42,38 +43,6 @@ router = APIRouter(
     tags=["Paquetes"],
     responses={404: {"description": "Paquete no encontrado"}}
 )
-
-
-# ========================================
-# ENDPOINT DE DEBUG
-# ========================================
-
-@router.get("/debug/status")
-async def debug_packages_status(db: Session = Depends(get_db)):
-    """Endpoint de debug para verificar que el router de packages está funcionando"""
-    try:
-        # Contar paquetes en la base de datos
-        total_packages = db.query(Package).count()
-        
-        # Contar anuncios no procesados
-        from sqlalchemy import text
-        result = db.execute(text("SELECT COUNT(*) FROM package_announcements_new WHERE is_processed = false"))
-        total_announcements = result.scalar()
-        
-        return {
-            "status": "ok",
-            "router": "packages.py",
-            "endpoint": "/api/packages/debug/status",
-            "total_packages": total_packages,
-            "total_pending_announcements": total_announcements,
-            "message": "El router de packages está funcionando correctamente"
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "router": "packages.py",
-            "error": str(e)
-        }
 
 
 # ========================================
@@ -165,7 +134,7 @@ async def get_package(
         package_dict = {
             'id': package.id,
             'tracking_number': package.tracking_number,
-            'customer_name': package.display_name or (package.customer.full_name if package.customer else 'Sin cliente'),
+            'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
             'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
             'package_type': package.package_type.value,
             'status': package.status.value,
@@ -238,7 +207,6 @@ async def list_packages(
     search: Optional[str] = Query(None, description="Buscar por número de guía, cliente o teléfono"),
     date_from: Optional[str] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
-    no_cache: bool = Query(False, description="Bypass cache for debugging"),
     # Temporarily disabled for testing: current_user: dict = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -250,10 +218,7 @@ async def list_packages(
     
     logger = logging.getLogger(__name__)
     
-    # Log de entrada para debug
-    logger.info(f"📦 list_packages llamado: skip={skip}, limit={limit}, status_filter={status_filter}, search={search}, no_cache={no_cache}")
-    
-    # OPTIMIZACIÓN: Verificar caché primero (si no se solicita bypass)
+    # OPTIMIZACIÓN: Verificar caché primero
     cache_filters = {
         "skip": skip,
         "limit": limit,
@@ -264,13 +229,10 @@ async def list_packages(
         "date_to": date_to
     }
     
-    if not no_cache:
-        cached_result = cache_manager.get_cached_packages_list(cache_filters)
-        if cached_result:
-            logger.info("📦 Datos obtenidos del caché")
-            return cached_result
-    else:
-        logger.info("📦 Cache bypass solicitado")
+    cached_result = cache_manager.get_cached_packages_list(cache_filters)
+    if cached_result:
+        logger.info("📦 Datos obtenidos del caché")
+        return cached_result
 
     # Get packages with file uploads
     # Get packages with file uploads using ORM
@@ -332,12 +294,17 @@ async def list_packages(
             except ValueError:
                 logger.warning(f"⚠️ Formato de fecha inválido: {date_to}")
         
-        # Obtener paquetes ordenados por última actualización (más nuevo primero)
-        packages_query = query.order_by(Package.updated_at.desc()).all()
+        # OPTIMIZACIÓN: Contar total ANTES de paginar (más eficiente)
+        total_packages = query.count()
+        logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
         
-        # Contar total para paginación
-        total_packages = len(packages_query)
-        logger.info(f"📊 Paquetes encontrados: {total_packages}")
+        # OPTIMIZACIÓN: Aplicar paginación a nivel de BD (LIMIT/OFFSET)
+        packages_query = query.order_by(Package.updated_at.desc())\
+            .limit(limit)\
+            .offset(skip)\
+            .all()
+        
+        logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
     except Exception as e:
         logger.error(f"Error querying packages: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
@@ -379,11 +346,20 @@ async def list_packages(
                     logger.warning(f"Error processing file upload {file_upload.id}: {str(e)}")
                     continue
             
+            # Calcular la fecha de última actualización (la más reciente entre announced_at, received_at, delivered_at, cancelled_at)
+            last_update_date = package.announced_at
+            if package.delivered_at:
+                last_update_date = package.delivered_at
+            elif package.cancelled_at:
+                last_update_date = package.cancelled_at
+            elif package.received_at:
+                last_update_date = package.received_at
+            
             packages_data.append({
                 'id': package.id,
                 'tracking_number': package.tracking_number,
                 'guide_number': package.guide_number,
-                'customer_name': package.display_name or (package.customer.full_name if package.customer else 'Sin cliente'),
+                'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
                 'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
                 'customer_email': package.customer.email if package.customer else None,
                 'package_type': package.package_type.value if package.package_type else 'normal',
@@ -396,6 +372,7 @@ async def list_packages(
                 'received_at': package.received_at.isoformat() if package.received_at else None,
                 'delivered_at': package.delivered_at.isoformat() if package.delivered_at else None,
                 'cancelled_at': package.cancelled_at.isoformat() if package.cancelled_at else None,
+                'last_update_date': last_update_date.isoformat() if last_update_date else None,
                 'base_fee': float(package.base_fee or 0),
                 'storage_fee': storage_fee,
                 'storage_days': storage_days,
@@ -516,6 +493,11 @@ async def list_packages(
 
     # Add announcements
     for row in announcements_data:
+        # Calcular last_update_date para anuncios
+        announced_at = row[8]
+        cancelled_at = row[11]
+        last_update_date = cancelled_at if cancelled_at else announced_at
+        
         item_dict = {
             'id': row[0],  # This will be 'announcement_uuid'
             'tracking_number': row[1],
@@ -528,7 +510,8 @@ async def list_packages(
             'announced_at': row[8].isoformat() if row[8] else None,
             'received_at': row[9],
             'delivered_at': row[10],
-            'cancelled_at': row[11],
+            'cancelled_at': row[11].isoformat() if row[11] else None,
+            'last_update_date': last_update_date.isoformat() if last_update_date else None,
             'base_fee': float(row[12]),
             'storage_fee': float(row[13]),
             'storage_days': 0,  # Los anuncios no tienen días de almacenamiento
@@ -545,17 +528,18 @@ async def list_packages(
         }
         all_items.append(normalize_package_item(item_dict))
 
-    # Sort by creation date (most recent first)
-    all_items.sort(key=lambda x: x['created_at'] or '', reverse=True)
+    # Sort by last_update_date (most recent first) - ORDENAR POR ÚLTIMA ACTUALIZACIÓN
+    all_items.sort(key=lambda x: x.get('last_update_date') or x.get('created_at') or '', reverse=True)
 
-    # Calcular información de paginación
+    # OPTIMIZACIÓN: Calcular información de paginación con el total real
     total_items = total_packages + len(announcements_data)
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     current_page = (skip // limit) + 1
     has_prev = skip > 0
     has_next = skip + limit < total_items
 
-    # Aplicar paginación después de combinar y ordenar
+    # OPTIMIZACIÓN: Aplicar paginación después de combinar y ordenar
+    # NOTA: Esto aún se hace en memoria, pero ahora solo con los items de la página actual
     start_idx = skip
     end_idx = skip + limit
     paginated_items = all_items[start_idx:end_idx]
@@ -573,9 +557,9 @@ async def list_packages(
         }
     }
     
-    # OPTIMIZACIÓN: Guardar en caché por 60 segundos (optimizado para rendimiento)
-    cache_manager.cache_packages_list(result, cache_filters)  # Usa TTL por defecto del cache_manager
-    logger.info(f"📦 Datos guardados en caché - {len(paginated_items)} items")
+    # OPTIMIZACIÓN: Guardar en caché por 5 minutos (aumentado desde 15 segundos)
+    cache_manager.cache_packages_list(result, cache_filters, ttl=300)
+    logger.info(f"📦 Datos guardados en caché (5 min) - {len(paginated_items)} items")
     
     return result
 
@@ -729,7 +713,7 @@ async def update_package_status(
 
             # Determinar mensaje según el estado
             status_messages = {
-                'ENTREGADO': f'✅ Paquete entregado exitosamente a {db_package.display_name or (db_package.customer.full_name if db_package.customer else "cliente")}',
+                'ENTREGADO': f'✅ Paquete entregado exitosamente a {db_package.customer.full_name if db_package.customer else "cliente"}',
                 'RECIBIDO': f'✅ Paquete recibido exitosamente',
                 'ANUNCIADO': f'✅ Paquete anunciado exitosamente',
                 'CANCELADO': f'⚠️ Paquete cancelado'
@@ -746,7 +730,7 @@ async def update_package_status(
                 'message': success_message,
                 'id': db_package.id,
                 'tracking_number': db_package.tracking_number,
-                'customer_name': db_package.display_name or (db_package.customer.full_name if db_package.customer else 'Sin cliente'),
+                'customer_name': db_package.customer.full_name if db_package.customer else 'Sin cliente',
                 'customer_phone': db_package.customer.phone if db_package.customer else 'Sin teléfono',
                 'package_type': db_package.package_type.value if db_package.package_type else 'normal',
                 'status': db_package.status.value if db_package.status else 'announced',
@@ -1035,6 +1019,87 @@ async def cancel_package_with_reason(
         )
 
 
+async def _upload_image_async(s3_service: S3Service, content: bytes, key: str, content_type: str) -> str:
+    """
+    Offload blocking S3 upload to thread pool executor.
+    Prevents blocking FastAPI event loop during S3 operations.
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, s3_service.upload_file, content, key, content_type)
+
+
+async def _process_single_image_async(
+    i: int,
+    image_file: UploadFile,
+    tracking_code: str,
+    s3_service: S3Service
+) -> dict:
+    """
+    Process a single image: read file, upload to S3, return metadata.
+    Used for parallel processing of multiple images.
+
+    Returns dict with:
+    - index: image index
+    - image_file: original UploadFile
+    - image_content: bytes
+    - s3_url: S3 URL (None if failed)
+    - s3_key: S3 key (None if failed)
+    - content_type: MIME type
+    - file_extension: file extension
+    - error: exception if failed, None if successful
+    """
+    try:
+        from datetime import datetime
+
+        if not image_file.filename:
+            return {"index": i, "error": "No filename", "image_file": image_file}
+
+        # Leer contenido del archivo
+        image_content = await image_file.read()
+
+        # Detectar tipo MIME y extensión
+        content_type = image_file.content_type or 'image/jpeg'
+        if content_type == 'image/webp':
+            file_extension = 'webp'
+        elif content_type == 'image/jpeg':
+            file_extension = 'jpg'
+        elif content_type == 'image/png':
+            file_extension = 'png'
+        else:
+            file_extension = image_file.filename.split('.')[-1].lower() if '.' in image_file.filename else 'jpg'
+
+        # Generar estructura de S3
+        now = datetime.now()
+        year = now.year
+        month = now.month
+        day = now.day
+        timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+        filename = f"{tracking_code}_{timestamp_str}_{i+1:03d}.{file_extension}"
+        s3_key = f"{year}/{month:02d}/{day:02d}/packages/announcement_{tracking_code}/receive/{filename}"
+
+        # Upload a S3
+        s3_url = await _upload_image_async(s3_service, image_content, s3_key, content_type)
+
+        return {
+            "index": i,
+            "image_file": image_file,
+            "image_content": image_content,
+            "s3_url": s3_url,
+            "s3_key": s3_key,
+            "content_type": content_type,
+            "file_extension": file_extension,
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "index": i,
+            "image_file": image_file,
+            "error": str(e),
+            "s3_url": None,
+            "s3_key": None
+        }
+
+
 @router.post("/receive-with-images")
 async def receive_package_with_images(
     announcement_id: str = Form(...),
@@ -1156,67 +1221,53 @@ async def receive_package_with_images(
         #     db_package.observations = observations.strip()
         #     db.commit()
 
-        # Procesar imágenes si existen (método tradicional)
+        # Procesar imágenes si existen (método tradicional) - PARALELO
         uploaded_images = []
         if images and len(images) > 0:
             s3_service = S3Service()
 
-            for i, image_file in enumerate(images[:3]):  # Máximo 3 imágenes
-                if not image_file.filename:
+            # Crear tareas paralelas para procesar todas las imágenes
+            image_tasks = [
+                _process_single_image_async(i, image_file, tracking_code, s3_service)
+                for i, image_file in enumerate(images[:3])  # Máximo 3 imágenes
+            ]
+
+            # Ejecutar todas las tareas en paralelo
+            # return_exceptions=True: si una falla, no se propaga la excepción
+            image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
+
+            # Procesar resultados
+            for result in image_results:
+                # Saltar si gather retornó una excepción
+                if isinstance(result, Exception):
+                    print(f"❌ Error procesando imagen en paralelo: {result}")
                     continue
 
-                # Leer contenido del archivo
-                image_content = await image_file.read()
+                i = result.get("index")
+                error = result.get("error")
 
-                # Generar nombre único para S3 con estructura dinámica basada en fecha
-                import uuid
-                from datetime import datetime
-                
-                # Detectar tipo MIME y extensión correcta
-                content_type = image_file.content_type or 'image/jpeg'
-                if content_type == 'image/webp':
-                    file_extension = 'webp'
-                elif content_type == 'image/jpeg':
-                    file_extension = 'jpg'
-                elif content_type == 'image/png':
-                    file_extension = 'png'
-                else:
-                    # Fallback: usar extensión del filename o jpg por defecto
-                    file_extension = image_file.filename.split('.')[-1].lower() if '.' in image_file.filename else 'jpg'
-                
-                # Generar estructura dinámica basada en fecha (igual que el frontend)
-                now = datetime.now()
-                year = now.year
-                month = now.month
-                day = now.day
-                
-                # Generar nombre de archivo con timestamp
-                timestamp_str = now.strftime("%Y%m%d_%H%M%S")
-                filename = f"{tracking_code}_{timestamp_str}_{i+1:03d}.{file_extension}"
-                
-                # Estructura dinámica: YYYY/MM/DD/packages/announcement_{tracking_code}/receive/
-                s3_key = f"{year}/{month:02d}/{day:02d}/packages/announcement_{tracking_code}/receive/{filename}"
-
-                # Subir a S3
-                s3_url = None
-                s3_key_final = None
-                try:
-                    s3_url = s3_service.upload_file(image_content, s3_key, content_type)
-                    s3_key_final = s3_key  # Solo asignar si upload fue exitoso
-                    print(f"✅ Imagen {i+1} subida exitosamente a S3: {s3_url}")
-                    print(f"   📊 Formato: {content_type} | Extensión: {file_extension}")
-                except Exception as s3_error:
-                    print(f"❌ Error subiendo imagen {i+1} a S3: {str(s3_error)}")
-                    # No guardar en base de datos si S3 falla
+                # Si hubo error en procesamiento, loguear y continuar
+                if error:
+                    print(f"❌ Error procesando imagen {i+1}: {error}")
                     continue
 
-                # Solo guardar en base de datos si S3 fue exitoso
-                if s3_url and s3_key_final:
+                s3_url = result.get("s3_url")
+                s3_key = result.get("s3_key")
+                image_file = result.get("image_file")
+                image_content = result.get("image_content")
+                file_extension = result.get("file_extension")
+                content_type = result.get("content_type")
+
+                # Solo guardar en BD si S3 fue exitoso
+                if s3_url and s3_key:
                     try:
+                        print(f"✅ Imagen {i+1} subida exitosamente a S3: {s3_url}")
+                        print(f"   📊 Formato: {content_type} | Extensión: {file_extension}")
+
                         file_upload = FileUpload(
                             package_id=db_package.id,
                             filename=image_file.filename,
-                            s3_key=s3_key_final,
+                            s3_key=s3_key,
                             s3_url=s3_url,
                             file_type=FileType.IMAGEN,
                             file_size=len(image_content),
@@ -1226,14 +1277,13 @@ async def receive_package_with_images(
                         db.add(file_upload)
                         uploaded_images.append({
                             "filename": image_file.filename,
-                            "s3_key": s3_key_final,
+                            "s3_key": s3_key,
                             "s3_url": s3_url
                         })
                         print(f"✅ Archivo {image_file.filename} guardado en base de datos")
                     except Exception as db_error:
                         print(f"❌ Error guardando archivo en base de datos: {str(db_error)}")
-                        # Continuar con el siguiente archivo
-                        continue
+                        # Continuar con la siguiente imagen
 
             # Hacer commit de las imágenes después de agregarlas a la sesión
             if uploaded_images:
@@ -1787,7 +1837,7 @@ async def send_package_email_notification(
             )
         
         # Preparar variables para la plantilla unificada de estado
-        full_name = package.display_name or (package.customer.full_name if package.customer and package.customer.full_name else "Cliente")
+        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
         first_name = full_name.split(" ")[0]
 
         consult_code = package.tracking_number

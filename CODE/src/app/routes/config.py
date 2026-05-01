@@ -106,3 +106,21 @@ async def get_auth_config():
         "token_expiry_hours": 24,
         "remember_me_days": 30,
     }
+
+
+@router.get("/api/config/environment")
+async def get_environment():
+    """
+    Obtener el entorno actual (production, staging, development).
+    
+    Returns:
+        JSON con el entorno actual
+    
+    Example Response:
+        {
+            "environment": "staging"
+        }
+    """
+    return {
+        "environment": getattr(settings, "environment", "development")
+    }

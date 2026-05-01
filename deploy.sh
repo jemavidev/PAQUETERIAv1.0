@@ -603,49 +603,116 @@ deploy_full() {
             esac
         fi
         
-        # Para entornos remotos: pull (con manejo de cambios locales)
+        # Para entornos remotos: push desde local o pull desde GitHub
         if [ "$ENV_TYPE" = "remote" ]; then
-            log_step "Verificando cambios locales en servidor remoto..."
+            # Obtener rama actual local
+            local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
             
-            # Verificar si hay cambios locales
-            local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
-            
-            if [ "$has_changes" -gt 0 ]; then
-                log_warning "Hay cambios locales en el servidor remoto"
-                echo ""
-                ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
-                echo ""
-                log_warning "Los cambios locales serán sobrescritos con la versión de GitHub"
-            fi
-            
-            # Limpiar cualquier merge en progreso
-            execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
-            
-            # Preguntar si quiere último commit o commit específico
             echo ""
-            echo -e "${YELLOW}¿Qué versión deseas desplegar?${NC}"
-            echo -e "  ${CYAN}[1]${NC} Último commit de la rama ${GIT_BRANCH}"
-            echo -e "  ${CYAN}[2]${NC} Commit específico"
+            echo -e "${YELLOW}¿Cómo deseas desplegar en ${ENV_NAME}?${NC}"
+            echo -e "  ${CYAN}[1]${NC} Push rama actual local (${current_branch}) al servidor"
+            echo -e "  ${CYAN}[2]${NC} Pull desde GitHub (rama ${GIT_BRANCH})"
+            echo -e "  ${CYAN}[3]${NC} Commit específico desde GitHub"
             echo ""
-            read -p "Selecciona opción [1-2]: " commit_option
+            read -p "Selecciona opción [1-3]: " deploy_mode
             
-            local target_commit=""
-            
-            case $commit_option in
-                2)
-                    # Mostrar lista de commits
+            case $deploy_mode in
+                1)
+                    # MODO 1: Push desde local al servidor
+                    log_step "Desplegando rama local '${current_branch}' al servidor..."
+                    
+                    # Verificar si hay cambios sin commit
+                    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+                        log_warning "Hay cambios sin commit en tu rama local"
+                        echo ""
+                        git status --short
+                        echo ""
+                        read -p "¿Hacer commit antes de desplegar? [y/N]: " -n 1 -r
+                        echo ""
+                        if [[ $REPLY =~ ^[Yy]$ ]]; then
+                            read -p "Mensaje del commit: " commit_msg
+                            git add -A
+                            git commit -m "${commit_msg:-Deploy desde local $(date +%Y%m%d_%H%M%S)}"
+                            log_success "Commit creado"
+                        else
+                            log_warning "Desplegando con cambios sin commit (pueden no reflejarse)"
+                        fi
+                    fi
+                    
+                    # Mostrar commit actual local
                     echo ""
+                    log_info "Commit local a desplegar:"
+                    git log --oneline -1
+                    echo ""
+                    
+                    # Verificar cambios en servidor remoto
+                    local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
+                    if [ "$has_changes" -gt 0 ]; then
+                        log_warning "Hay cambios locales en el servidor que serán sobrescritos"
+                        echo ""
+                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
+                        echo ""
+                    fi
+                    
+                    # Limpiar estado de git en servidor
+                    execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git en servidor..."
+                    
+                    # Crear un bundle del código local y enviarlo al servidor
+                    log_step "Empaquetando código local..."
+                    local bundle_file="/tmp/deploy_bundle_$(date +%s).bundle"
+                    git bundle create "$bundle_file" HEAD
+                    
+                    log_step "Transfiriendo código al servidor..."
+                    scp $SSH_OPTIONS "$bundle_file" "$SSH_USER@$SSH_HOST:/tmp/"
+                    
+                    # Aplicar el bundle en el servidor
+                    local remote_bundle="/tmp/$(basename $bundle_file)"
+                    execute_command "git fetch $remote_bundle" "Recibiendo código local..."
+                    execute_command "git reset --hard FETCH_HEAD" "Aplicando código local..."
+                    execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+                    
+                    # Limpiar archivos temporales
+                    rm -f "$bundle_file"
+                    ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "rm -f $remote_bundle"
+                    
+                    # Mostrar commit desplegado
+                    echo ""
+                    log_success "Código local desplegado en servidor:"
+                    ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
+                    ;;
+                    
+                2)
+                    # MODO 2: Pull desde GitHub (último commit)
+                    log_step "Verificando cambios locales en servidor remoto..."
+                    
+                    local has_changes=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --porcelain" | wc -l)
+                    if [ "$has_changes" -gt 0 ]; then
+                        log_warning "Hay cambios locales en el servidor remoto"
+                        echo ""
+                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git status --short"
+                        echo ""
+                        log_warning "Los cambios locales serán sobrescritos con la versión de GitHub"
+                    fi
+                    
+                    execute_command "git merge --abort 2>/dev/null || true" "Limpiando estado de git..."
+                    execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
+                    execute_command "git reset --hard origin/${GIT_BRANCH}" "Sincronizando con GitHub..."
+                    execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+                    
+                    echo ""
+                    log_success "Código sincronizado con GitHub:"
+                    ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
+                    ;;
+                    
+                3)
+                    # MODO 3: Commit específico desde GitHub
                     log_step "Obteniendo lista de commits desde GitHub..."
                     execute_command "git fetch origin ${GIT_BRANCH}" "Actualizando referencias..."
                     
                     echo ""
-                    echo -e "${YELLOW}Últimos 20 commits disponibles:${NC}"
+                    echo -e "${YELLOW}Últimos 20 commits disponibles en GitHub:${NC}"
                     echo ""
-                    
-                    # Obtener y mostrar commits
-                    if [ "$ENV_TYPE" = "remote" ]; then
-                        ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20" | nl -w2 -s'. '
-                    fi
+                    ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20" | nl -w2 -s'. '
                     
                     echo ""
                     read -p "Selecciona commit [1-20] (0=cancelar): " commit_choice
@@ -656,8 +723,7 @@ deploy_full() {
                     fi
                     
                     if [ "$commit_choice" -ge 1 ] && [ "$commit_choice" -le 20 ] 2>/dev/null; then
-                        # Obtener el hash del commit seleccionado
-                        target_commit=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20 | sed -n '${commit_choice}p' | awk '{print \$1}'")
+                        local target_commit=$(ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log origin/${GIT_BRANCH} --oneline -20 | sed -n '${commit_choice}p' | awk '{print \$1}'")
                         
                         if [ -n "$target_commit" ]; then
                             log_info "Commit seleccionado: $target_commit"
@@ -670,6 +736,13 @@ deploy_full() {
                                 log_error "Deploy cancelado por el usuario"
                                 return 1
                             fi
+                            
+                            execute_command "git reset --hard $target_commit" "Aplicando commit seleccionado..."
+                            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
+                            
+                            echo ""
+                            log_success "Código sincronizado con commit:"
+                            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
                         else
                             log_error "No se pudo obtener el commit seleccionado"
                             return 1
@@ -679,22 +752,12 @@ deploy_full() {
                         return 1
                     fi
                     ;;
-                1|*)
-                    # Usar último commit de la rama
-                    target_commit="origin/${GIT_BRANCH}"
-                    log_info "Desplegando último commit de la rama ${GIT_BRANCH}"
+                    
+                *)
+                    log_error "Opción inválida"
+                    return 1
                     ;;
             esac
-            
-            # Fetch + Reset al commit seleccionado
-            execute_command "git fetch origin ${GIT_BRANCH}" "Obteniendo última versión desde GitHub..."
-            execute_command "git reset --hard $target_commit" "Sincronizando con commit seleccionado..."
-            execute_command "git clean -fd" "Limpiando archivos no rastreados..."
-            
-            # Mostrar commit actual
-            echo ""
-            log_success "Código sincronizado con commit:"
-            ssh $SSH_OPTIONS "$SSH_USER@$SSH_HOST" "cd $PROJECT_PATH && git log --oneline -1"
         fi
     fi
     

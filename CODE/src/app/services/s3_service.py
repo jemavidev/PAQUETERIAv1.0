@@ -248,11 +248,9 @@ class S3Service:
                     logger.error(f"❌ Error en intento {attempt + 1}: {retry_error}")
                     if attempt == 2:  # Último intento
                         break
-                    
-                    # Backoff exponencial
-                    wait_time = (2 ** attempt) * 0.5  # 0.5s, 1s, 2s
-                    logger.info(f"⏳ Esperando {wait_time}s antes del siguiente intento")
-                    time.sleep(wait_time)
+
+                    # Note: Removed time.sleep() blocking call from sync method
+                    # The caller (async images.py) handles retry backoff with asyncio.sleep()
             
             # Si llegamos aquí, todos los intentos fallaron
             raise Exception(f"Failed to generate presigned URL after 3 attempts. Last error: {last_error}")

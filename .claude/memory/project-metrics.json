@@ -1,0 +1,89 @@
+{
+  "lastUpdated": "2026-05-01T14:30:30-05:00",
+  "version": "4.0.0",
+  "summary": {
+    "phase": "1 — Initial setup",
+    "projectName": "[PROJECT NAME]",
+    "currentFocus": "Getting started",
+    "trend": "baseline",
+    "systemHealth": "needs_attention"
+  },
+  "tasks": {
+    "total": 0,
+    "completed": 0,
+    "inProgress": 0,
+    "pending": 0,
+    "totalTokens": 0,
+    "avgTokens": 0
+  },
+  "knowledge": {
+    "decisions": 0,
+    "patterns": 0,
+    "patternApplications": 0
+  },
+  "tokens": {
+    "allocated": 200000,
+    "used": 0,
+    "remaining": 200000,
+    "utilizationPct": 0,
+    "runwayDays": 0
+  },
+  "efficiency": {
+    "avgTokensPerTask": 0,
+    "tokenReductionPct": 0,
+    "codeVerificationRate": 0,
+    "trend": "baseline"
+  },
+  "safety": {
+    "loopDetections": 0,
+    "planModeTriggered": 1,
+    "verificationsPassed": 0,
+    "activeAlerts": 0,
+    "criticalAlerts": 0
+  },
+  "agentMetrics": {},
+  "codebase": {
+    "totalFiles": 10831,
+    "totalSizeKB": 289248,
+    "byCategory": {
+      "skills": {
+        "files": 83,
+        "lines": 26087
+      },
+      "scripts": {
+        "files": 31,
+        "lines": 4202
+      },
+      "protocols": {
+        "files": 7,
+        "lines": 789
+      },
+      "memory": {
+        "files": 12,
+        "sizeKB": 264
+      },
+      "templates": {
+        "files": 0,
+        "lines": 0
+      },
+      "config": {
+        "files": 0,
+        "lines": 0
+      }
+    },
+    "memoryFiles": {
+      "decisions": 0,
+      "tasks": 0,
+      "completedTasks": 0,
+      "patterns": 0
+    }
+  },
+  "recentChanges": [
+    {
+      "timestamp": "2026-05-01T14:05:11-05:00",
+      "file": "plan-mode",
+      "name": "EnterPlanMode triggered",
+      "category": "safety"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "alerts": [],
+  "alertRules": {
+    "tokenUsageHigh": {
+      "enabled": true,
+      "threshold": 85,
+      "level": "warning"
+    },
+    "loopDetected": {
+      "enabled": true,
+      "threshold": 3,
+      "level": "critical"
+    },
+    "verificationFailed": {
+      "enabled": true,
+      "threshold": 1,
+      "level": "critical"
+    },
+    "planModeTriggered": {
+      "enabled": true,
+      "threshold": 1,
+      "level": "info"
+    },
+    "memoryLow": {
+      "enabled": true,
+      "threshold": 90,
+      "level": "critical"
+    }
+  }
+}
