@@ -4344,6 +4344,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (foundPackage) {
                 log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
                 log(`📦 Abriendo modal para recibir paquete`);
+
+                // 🆕 IMPORTANTE: Asignar variables globales necesarias para confirmar la acción
+                currentPackageId = foundPackage.id;
+                currentAction = 'receive';
+                log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
+
                 // Abrir el modal con acción 'receive' para recibir el paquete
                 showPackageModal(foundPackage, 'receive');
             } else {
