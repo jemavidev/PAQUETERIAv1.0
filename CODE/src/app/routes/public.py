@@ -127,6 +127,28 @@ async def announce_papyrus_page(request: Request):
     context["current_path"] = str(request.url.path)
     return templates.TemplateResponse("announce/announce_quick.html", context)
 
+
+@router.get("/announce-new")
+async def announce_new_page(request: Request, db: Session = Depends(get_db)):
+    """Página de anuncio mejorada - Solo para usuarios autenticados
+    
+    Redirige a /packages para ver detalles y recibir paquetes anunciados
+    """
+    try:
+        # Obtener contexto con autenticación REQUERIDA
+        context = get_auth_context_from_request(request)
+        
+        # Si no está autenticado, redirigir a login
+        if not context.get("is_authenticated"):
+            return RedirectResponse(url="/auth/login?redirect=/announce-new", status_code=302)
+            
+    except Exception as auth_error:
+        logger.debug(f"Error de autenticación en /announce-new: {auth_error}")
+        return RedirectResponse(url="/auth/login?redirect=/announce-new", status_code=302)
+    
+    context["current_path"] = str(request.url.path)
+    return templates.TemplateResponse("announce/announce_new.html", context)
+
 @router.get("/search")
 async def search_page(request: Request):
     """Página de consulta de paquetes - Pública"""
