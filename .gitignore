@@ -457,3 +457,9 @@ RESUMEN_RAMA_PROD_STAGING.md
 VERIFICACION_SINCRONIZACION_*.md
 test_optimizacion.sh
 FEATURE_ORDENAMIENTO_ULTIMA_ACTUALIZACION.md
+.betteragents/memory/session-last.md
+.betteragents/memory/llm-usage.json
+.betteragents/memory/token-accounting.json
+.betteragents/memory/memory-stats.json
+.claude/cache/
+.claude/backups/
