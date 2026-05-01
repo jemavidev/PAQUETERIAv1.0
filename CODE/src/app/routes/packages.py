@@ -14,6 +14,7 @@ Router de paquetes para PAQUETES EL CLUB
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
+import asyncio
 from app.database import get_db
 from app.dependencies import get_current_active_user, get_current_active_user_from_cookies
 from app.models.user import User
@@ -1018,6 +1019,15 @@ async def cancel_package_with_reason(
         )
 
 
+async def _upload_image_async(s3_service: S3Service, content: bytes, key: str, content_type: str) -> str:
+    """
+    Offload blocking S3 upload to thread pool executor.
+    Prevents blocking FastAPI event loop during S3 operations.
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, s3_service.upload_file, content, key, content_type)
+
+
 @router.post("/receive-with-images")
 async def receive_package_with_images(
     announcement_id: str = Form(...),
@@ -1180,11 +1190,11 @@ async def receive_package_with_images(
                 # Estructura dinámica: YYYY/MM/DD/packages/announcement_{tracking_code}/receive/
                 s3_key = f"{year}/{month:02d}/{day:02d}/packages/announcement_{tracking_code}/receive/{filename}"
 
-                # Subir a S3
+                # Subir a S3 (offloaded to thread pool to not block event loop)
                 s3_url = None
                 s3_key_final = None
                 try:
-                    s3_url = s3_service.upload_file(image_content, s3_key, content_type)
+                    s3_url = await _upload_image_async(s3_service, image_content, s3_key, content_type)
                     s3_key_final = s3_key  # Solo asignar si upload fue exitoso
                     print(f"✅ Imagen {i+1} subida exitosamente a S3: {s3_url}")
                     print(f"   📊 Formato: {content_type} | Extensión: {file_extension}")
