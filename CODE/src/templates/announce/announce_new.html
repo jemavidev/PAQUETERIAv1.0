@@ -278,8 +278,7 @@ function mostrarCodigosConsulta(codes) {
     const codigosHTML = codes.map(code => {
         const packageUrl = `/packages?id=${code.tracking_code}`;
         return `
-            <a href="${packageUrl}" 
-               <!-- Abre en la misma ventana para ir a /packages -->
+            <a href="${packageUrl}"
                class="inline-flex items-center px-3 py-1.5 bg-white border-2 border-blue-400 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 hover:border-blue-600 transition-all duration-200 shadow-sm hover:shadow-md">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>

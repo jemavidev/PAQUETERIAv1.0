@@ -47,10 +47,19 @@
 
                     <!-- Botones de acción -->
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <!-- Botón para ir a anunciar paquetes -->
+                        <!-- Estrella dorada para ir a anunciar nuevo -->
+                        <a href="/announce-new"
+                           class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-yellow-400 hover:bg-yellow-500 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 active:scale-95 touch-manipulation"
+                           title="Anunciar nuevo paquete">
+                            <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                            </svg>
+                        </a>
+
+                        <!-- Botón para ir a anunciar paquetes (versión clásica) -->
                         <button onclick="window.location.href='/announce-papyrus'"
                                 class="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 touch-manipulation"
-                                title="Anunciar nuevo paquete">
+                                title="Anunciar paquete (modo clásico)">
                             <svg class="w-5 h-5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
@@ -1359,6 +1368,8 @@ function createPackageElement(package) {
 
     row.setAttribute('data-search', searchData);
     row.setAttribute('data-status', package.status || '');
+    row.setAttribute('data-tracking-code', package.tracking_number || package.tracking_code || '');
+    row.setAttribute('data-package-id', package.id || '');
 
     const statusColor = getStatusColor(package.status);
     const statusText = getStatusText(package.status);
@@ -4305,6 +4316,43 @@ document.addEventListener('DOMContentLoaded', function() {
     log('🎨 TIP: Usa window.debugColoresEstado() para verificar colores de iconos');
     initializeDOMCache();
     loadPackages();
+
+    // 🆕 Detectar parámetro ?id= en URL y abrir modal automáticamente
+    const urlParams = new URLSearchParams(window.location.search);
+    const packageIdParam = urlParams.get('id');
+
+    if (packageIdParam) {
+        log(`🎯 Parámetro id detectado: ${packageIdParam}`);
+
+        // Esperar a que los paquetes se carguen y luego buscar el específico
+        setTimeout(() => {
+            // Buscar el paquete en todos los estados
+            let foundPackage = null;
+
+            for (const state in packagesByState) {
+                const package_ = packagesByState[state].find(p =>
+                    p.tracking_number === packageIdParam ||
+                    p.tracking_code === packageIdParam
+                );
+
+                if (package_) {
+                    foundPackage = package_;
+                    break;
+                }
+            }
+
+            if (foundPackage) {
+                log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
+                log(`📦 Abriendo modal para recibir paquete`);
+                // Abrir el modal con acción 'receive' para recibir el paquete
+                showPackageModal(foundPackage, 'receive');
+            } else {
+                warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
+                // Mostrar notificación al usuario
+                showInfoToast('Paquete no encontrado', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+            }
+        }, 800); // Esperar 800ms para que se carguen completamente los paquetes
+    }
 
     // Función debounce para evitar demasiadas peticiones al servidor
     function debounce(func, wait) {
