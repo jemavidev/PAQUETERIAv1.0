@@ -1028,6 +1028,78 @@ async def _upload_image_async(s3_service: S3Service, content: bytes, key: str, c
     return await loop.run_in_executor(None, s3_service.upload_file, content, key, content_type)
 
 
+async def _process_single_image_async(
+    i: int,
+    image_file: UploadFile,
+    tracking_code: str,
+    s3_service: S3Service
+) -> dict:
+    """
+    Process a single image: read file, upload to S3, return metadata.
+    Used for parallel processing of multiple images.
+
+    Returns dict with:
+    - index: image index
+    - image_file: original UploadFile
+    - image_content: bytes
+    - s3_url: S3 URL (None if failed)
+    - s3_key: S3 key (None if failed)
+    - content_type: MIME type
+    - file_extension: file extension
+    - error: exception if failed, None if successful
+    """
+    try:
+        from datetime import datetime
+
+        if not image_file.filename:
+            return {"index": i, "error": "No filename", "image_file": image_file}
+
+        # Leer contenido del archivo
+        image_content = await image_file.read()
+
+        # Detectar tipo MIME y extensión
+        content_type = image_file.content_type or 'image/jpeg'
+        if content_type == 'image/webp':
+            file_extension = 'webp'
+        elif content_type == 'image/jpeg':
+            file_extension = 'jpg'
+        elif content_type == 'image/png':
+            file_extension = 'png'
+        else:
+            file_extension = image_file.filename.split('.')[-1].lower() if '.' in image_file.filename else 'jpg'
+
+        # Generar estructura de S3
+        now = datetime.now()
+        year = now.year
+        month = now.month
+        day = now.day
+        timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+        filename = f"{tracking_code}_{timestamp_str}_{i+1:03d}.{file_extension}"
+        s3_key = f"{year}/{month:02d}/{day:02d}/packages/announcement_{tracking_code}/receive/{filename}"
+
+        # Upload a S3
+        s3_url = await _upload_image_async(s3_service, image_content, s3_key, content_type)
+
+        return {
+            "index": i,
+            "image_file": image_file,
+            "image_content": image_content,
+            "s3_url": s3_url,
+            "s3_key": s3_key,
+            "content_type": content_type,
+            "file_extension": file_extension,
+            "error": None
+        }
+    except Exception as e:
+        return {
+            "index": i,
+            "image_file": image_file,
+            "error": str(e),
+            "s3_url": None,
+            "s3_key": None
+        }
+
+
 @router.post("/receive-with-images")
 async def receive_package_with_images(
     announcement_id: str = Form(...),
@@ -1149,67 +1221,53 @@ async def receive_package_with_images(
         #     db_package.observations = observations.strip()
         #     db.commit()
 
-        # Procesar imágenes si existen (método tradicional)
+        # Procesar imágenes si existen (método tradicional) - PARALELO
         uploaded_images = []
         if images and len(images) > 0:
             s3_service = S3Service()
 
-            for i, image_file in enumerate(images[:3]):  # Máximo 3 imágenes
-                if not image_file.filename:
+            # Crear tareas paralelas para procesar todas las imágenes
+            image_tasks = [
+                _process_single_image_async(i, image_file, tracking_code, s3_service)
+                for i, image_file in enumerate(images[:3])  # Máximo 3 imágenes
+            ]
+
+            # Ejecutar todas las tareas en paralelo
+            # return_exceptions=True: si una falla, no se propaga la excepción
+            image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
+
+            # Procesar resultados
+            for result in image_results:
+                # Saltar si gather retornó una excepción
+                if isinstance(result, Exception):
+                    print(f"❌ Error procesando imagen en paralelo: {result}")
                     continue
 
-                # Leer contenido del archivo
-                image_content = await image_file.read()
+                i = result.get("index")
+                error = result.get("error")
 
-                # Generar nombre único para S3 con estructura dinámica basada en fecha
-                import uuid
-                from datetime import datetime
-                
-                # Detectar tipo MIME y extensión correcta
-                content_type = image_file.content_type or 'image/jpeg'
-                if content_type == 'image/webp':
-                    file_extension = 'webp'
-                elif content_type == 'image/jpeg':
-                    file_extension = 'jpg'
-                elif content_type == 'image/png':
-                    file_extension = 'png'
-                else:
-                    # Fallback: usar extensión del filename o jpg por defecto
-                    file_extension = image_file.filename.split('.')[-1].lower() if '.' in image_file.filename else 'jpg'
-                
-                # Generar estructura dinámica basada en fecha (igual que el frontend)
-                now = datetime.now()
-                year = now.year
-                month = now.month
-                day = now.day
-                
-                # Generar nombre de archivo con timestamp
-                timestamp_str = now.strftime("%Y%m%d_%H%M%S")
-                filename = f"{tracking_code}_{timestamp_str}_{i+1:03d}.{file_extension}"
-                
-                # Estructura dinámica: YYYY/MM/DD/packages/announcement_{tracking_code}/receive/
-                s3_key = f"{year}/{month:02d}/{day:02d}/packages/announcement_{tracking_code}/receive/{filename}"
-
-                # Subir a S3 (offloaded to thread pool to not block event loop)
-                s3_url = None
-                s3_key_final = None
-                try:
-                    s3_url = await _upload_image_async(s3_service, image_content, s3_key, content_type)
-                    s3_key_final = s3_key  # Solo asignar si upload fue exitoso
-                    print(f"✅ Imagen {i+1} subida exitosamente a S3: {s3_url}")
-                    print(f"   📊 Formato: {content_type} | Extensión: {file_extension}")
-                except Exception as s3_error:
-                    print(f"❌ Error subiendo imagen {i+1} a S3: {str(s3_error)}")
-                    # No guardar en base de datos si S3 falla
+                # Si hubo error en procesamiento, loguear y continuar
+                if error:
+                    print(f"❌ Error procesando imagen {i+1}: {error}")
                     continue
 
-                # Solo guardar en base de datos si S3 fue exitoso
-                if s3_url and s3_key_final:
+                s3_url = result.get("s3_url")
+                s3_key = result.get("s3_key")
+                image_file = result.get("image_file")
+                image_content = result.get("image_content")
+                file_extension = result.get("file_extension")
+                content_type = result.get("content_type")
+
+                # Solo guardar en BD si S3 fue exitoso
+                if s3_url and s3_key:
                     try:
+                        print(f"✅ Imagen {i+1} subida exitosamente a S3: {s3_url}")
+                        print(f"   📊 Formato: {content_type} | Extensión: {file_extension}")
+
                         file_upload = FileUpload(
                             package_id=db_package.id,
                             filename=image_file.filename,
-                            s3_key=s3_key_final,
+                            s3_key=s3_key,
                             s3_url=s3_url,
                             file_type=FileType.IMAGEN,
                             file_size=len(image_content),
@@ -1219,14 +1277,13 @@ async def receive_package_with_images(
                         db.add(file_upload)
                         uploaded_images.append({
                             "filename": image_file.filename,
-                            "s3_key": s3_key_final,
+                            "s3_key": s3_key,
                             "s3_url": s3_url
                         })
                         print(f"✅ Archivo {image_file.filename} guardado en base de datos")
                     except Exception as db_error:
                         print(f"❌ Error guardando archivo en base de datos: {str(db_error)}")
-                        # Continuar con el siguiente archivo
-                        continue
+                        # Continuar con la siguiente imagen
 
             # Hacer commit de las imágenes después de agregarlas a la sesión
             if uploaded_images:
