@@ -1205,49 +1205,31 @@ class PackageStateService:
 
     @classmethod
     def _generate_baroti(cls, db: Session) -> str:
-        """Generar código BAROTI único (00-99)"""
+        """
+        Generar código BAROTI único (00-99) - Optimized.
+        Instead of random retry (O(200 queries)), compute available BAROTIs once (O(1 query)).
+        """
         import random
-        import time
-        
-        # Obtener TODOS los códigos BAROTI ocupados (sin importar el estado)
-        # La restricción de unicidad aplica a todos los paquetes
+
+        # Obtener TODOS los códigos BAROTI ocupados (sin importar el estado) - 1 query
         occupied_posiciones = db.query(Package.posicion).filter(
             Package.posicion.isnot(None)
         ).all()
-        
+
         occupied_set = {posicion[0] for posicion in occupied_posiciones if posicion[0]}
-        
+
         # Si todos los BAROTIs están ocupados (00-99), lanzar error
         if len(occupied_set) >= 100:
             raise ValueError(
                 "No hay códigos BAROTI disponibles. Todos los códigos (00-99) están ocupados. "
                 "Por favor, libere algunos BAROTIs de paquetes entregados o cancelados."
             )
-        
-        # Generar código único con reintentos limitados
-        max_attempts = 200  # Limitar reintentos para evitar loops infinitos
-        attempts = 0
-        
-        while attempts < max_attempts:
-            posicion = f"{random.randint(0, 99):02d}"
-            if posicion not in occupied_set:
-                # Verificar una vez más directamente en la BD antes de retornar (race condition)
-                exists = db.query(Package).filter(Package.posicion == posicion).first()
-                if not exists:
-                    return posicion
-                # Si existe, agregarlo al set y continuar
-                occupied_set.add(posicion)
-            
-            attempts += 1
-            # Pequeña pausa si hay muchos intentos (evitar carga excesiva)
-            if attempts % 50 == 0:
-                time.sleep(0.01)
-        
-        # Si llegamos aquí, algo salió mal
-        raise ValueError(
-            f"No se pudo generar un código BAROTI único después de {max_attempts} intentos. "
-            f"Códigos ocupados: {len(occupied_set)}/100"
-        )
+
+        # Calcular los códigos DISPONIBLES (lista)
+        available = [f"{i:02d}" for i in range(100) if f"{i:02d}" not in occupied_set]
+
+        # Elegir aleatoriamente de los disponibles - O(1)
+        return random.choice(available)
 
     @classmethod
     def _is_posicion_available(cls, db: Session, posicion: str) -> bool:
