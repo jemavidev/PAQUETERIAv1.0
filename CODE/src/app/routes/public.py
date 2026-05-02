@@ -1815,47 +1815,18 @@ async def create_quick_announcement(request: Request, db: Session = Depends(get_
         # Generar número de guía PAPYRUS único
         import string
         import random
-        
+        from sqlalchemy.exc import IntegrityError
+
         def generate_papyrus_guide():
             """Generar número de guía con formato PAPYRUS-XXXXXX"""
             allowed_chars = string.ascii_uppercase + string.digits
             return f"PAPYRUS-{''.join(random.choice(allowed_chars) for _ in range(6))}"
-        
-        # Intentar generar guía única (máximo 10 intentos)
-        guide_number = None
-        for _ in range(10):
-            papyrus_guide = generate_papyrus_guide()
-            existing = db.query(PackageAnnouncementNew).filter(
-                PackageAnnouncementNew.guide_number == papyrus_guide
-            ).first()
-            if not existing:
-                guide_number = papyrus_guide
-                break
-        
-        if not guide_number:
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "No se pudo generar un número de guía único. Intente nuevamente."}
-            )
+
+        guide_number = generate_papyrus_guide()
 
         # Generar código de tracking único
         allowed_chars = string.ascii_uppercase.replace('O', '') + string.digits.replace('0', '')
-        
-        tracking_code = None
-        for _ in range(10):
-            temp_tracking = ''.join(random.choice(allowed_chars) for _ in range(4))
-            existing = db.query(PackageAnnouncementNew).filter(
-                PackageAnnouncementNew.tracking_code == temp_tracking
-            ).first()
-            if not existing:
-                tracking_code = temp_tracking
-                break
-        
-        if not tracking_code:
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "No se pudo generar un código de tracking único. Intente nuevamente."}
-            )
+        tracking_code = ''.join(random.choice(allowed_chars) for _ in range(4))
 
         # Crear anuncio
         announcement = PackageAnnouncementNew(
@@ -1872,9 +1843,15 @@ async def create_quick_announcement(request: Request, db: Session = Depends(get_
             updated_at=get_colombia_now()
         )
 
-        db.add(announcement)
-        db.commit()
-        db.refresh(announcement)
+        try:
+            db.add(announcement)
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            announcement.guide_number = generate_papyrus_guide()
+            announcement.tracking_code = ''.join(random.choice(allowed_chars) for _ in range(4))
+            db.add(announcement)
+            db.commit()
 
         # ========================================
         # OPTIMIZACIÓN: Notificaciones en Background
