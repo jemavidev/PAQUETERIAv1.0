@@ -36,23 +36,15 @@ jobs:
 
       - name: 📤 Git Pull & Deploy
         run: |
-          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=accept-new ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} << 'EOF'
-          set -e
-          cd ${{ env.PROJECT_PATH }}
-          echo "🔄 Fetching latest changes..."
-          git fetch origin
-          git checkout staging
-          git reset --hard origin/staging
-          echo "✅ Git updated"
+          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=accept-new ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && git fetch origin && git checkout staging && git reset --hard origin/staging"
 
-          echo "🚀 Restarting Docker services..."
-          docker compose -f docker compose.staging.yml up -d --no-build
+      - name: 🚀 Restart Docker Services
+        run: |
+          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && docker compose -f docker-compose.staging.yml up -d --no-build"
 
-          echo "🗄️ Running database migrations..."
-          docker exec paqueteria_staging_app sh -c "cd /app && alembic upgrade head" || echo "⚠️  Migration skipped (app may not be ready yet)"
-
-          echo "✅ Deploy completed"
-          EOF
+      - name: 🗄️ Run Migrations
+        run: |
+          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "docker exec paqueteria_staging_app sh -c 'cd /app && alembic upgrade head'" || echo "Migration may have failed, continuing..."
 
       - name: ⏳ Wait for Service
         run: |
