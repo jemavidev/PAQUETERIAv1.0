@@ -46,8 +46,7 @@ jobs:
           echo "✅ Git updated"
 
           echo "🚀 Restarting Docker services..."
-          docker compose -f docker compose.staging.yml pull --quiet || true
-          docker compose -f docker compose.staging.yml up -d
+          docker compose -f docker compose.staging.yml up -d --no-build
 
           echo "🗄️ Running database migrations..."
           docker compose -f docker compose.staging.yml exec -T paqueteria_staging_app \
