@@ -46,11 +46,11 @@ jobs:
           echo "✅ Git updated"
 
           echo "🚀 Restarting Docker services..."
-          docker-compose -f docker-compose.staging.yml pull --quiet || true
-          docker-compose -f docker-compose.staging.yml up -d
+          docker compose -f docker compose.staging.yml pull --quiet || true
+          docker compose -f docker compose.staging.yml up -d
 
           echo "🗄️ Running database migrations..."
-          docker-compose -f docker-compose.staging.yml exec -T paqueteria_staging_app \
+          docker compose -f docker compose.staging.yml exec -T paqueteria_staging_app \
             sh -c "cd /app/CODE && alembic upgrade head" || echo "⚠️  Migration skipped (DB may not be ready)"
 
           echo "✅ Deploy completed"
