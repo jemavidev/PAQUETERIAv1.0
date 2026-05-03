@@ -49,7 +49,7 @@ jobs:
           docker compose -f docker compose.staging.yml up -d --no-build
 
           echo "🗄️ Running database migrations..."
-          docker exec paqueteria_staging_app sh -c "cd /app/CODE && alembic upgrade head" || echo "⚠️  Migration skipped (app may not be ready yet)"
+          docker exec paqueteria_staging_app sh -c "cd /app && alembic upgrade head" || echo "⚠️  Migration skipped (app may not be ready yet)"
 
           echo "✅ Deploy completed"
           EOF
