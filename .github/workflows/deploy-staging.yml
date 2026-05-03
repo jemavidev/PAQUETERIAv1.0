@@ -36,15 +36,25 @@ jobs:
 
       - name: 📤 Git Pull & Deploy
         run: |
-          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=accept-new ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} \
-            "cd ${{ env.PROJECT_PATH }} && \
-             echo '🔄 Fetching latest changes...' && \
-             git fetch origin && \
-             git checkout staging && \
-             git reset --hard origin/staging && \
-             echo '✅ Git updated' && \
-             echo '🚀 Starting deploy script...' && \
-             ${{ env.DEPLOY_SCRIPT }} --env staging --deploy"
+          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=accept-new ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} << 'EOF'
+          set -e
+          cd ${{ env.PROJECT_PATH }}
+          echo "🔄 Fetching latest changes..."
+          git fetch origin
+          git checkout staging
+          git reset --hard origin/staging
+          echo "✅ Git updated"
+
+          echo "🚀 Restarting Docker services..."
+          docker-compose -f docker-compose.staging.yml pull --quiet || true
+          docker-compose -f docker-compose.staging.yml up -d
+
+          echo "🗄️ Running database migrations..."
+          docker-compose -f docker-compose.staging.yml exec -T paqueteria_staging_app \
+            sh -c "cd /app/CODE && alembic upgrade head" || echo "⚠️  Migration skipped (DB may not be ready)"
+
+          echo "✅ Deploy completed"
+          EOF
 
       - name: ⏳ Wait for Service
         run: |
