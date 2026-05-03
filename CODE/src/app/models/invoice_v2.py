@@ -18,7 +18,18 @@ class InvoiceV2(Base):
     
     # Primary Key - CUFE es inmutable
     cufe = Column(String(96), primary_key=True, nullable=False)
-    
+
+    # ===== CONTROL DE CUFE (NUEVO) =====
+    # Origen del CUFE: automatico (del filename) | manual_usuario (ingresado por usuario)
+    cufe_origen = Column(String(20), default='automatico', nullable=False)
+
+    # Usuario confirma que el CUFE ingresado manualmente es correcto
+    cufe_validado_usuario = Column(Boolean, default=False, nullable=False)
+
+    # Código alternativo para archivos no estándar (CUDE, etc)
+    codigo_alternativo = Column(String(100), nullable=True)
+    codigo_alternativo_tipo = Column(String(20), nullable=True)  # 'CUDE' | 'OTRO'
+
     # Archivos
     archivo_proveedor_url = Column(Text, nullable=True)
     archivo_proveedor_s3_key = Column(String(500), nullable=True)
@@ -111,6 +122,10 @@ class InvoiceV2(Base):
         """Convierte el modelo a diccionario"""
         data = {
             'cufe': self.cufe,
+            'cufe_origen': self.cufe_origen,
+            'cufe_validado_usuario': self.cufe_validado_usuario,
+            'codigo_alternativo': self.codigo_alternativo,
+            'codigo_alternativo_tipo': self.codigo_alternativo_tipo,
             'archivo_proveedor_url': self.archivo_proveedor_url,
             'archivo_dian_url': self.archivo_dian_url,
             'proveedor_nombre': self.proveedor_nombre,
