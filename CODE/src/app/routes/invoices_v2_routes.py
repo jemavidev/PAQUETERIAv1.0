@@ -561,6 +561,39 @@ def delete_invoice(cufe: str, db: Session = Depends(get_db)):
 
 # ===== TAB 2: CUFE =====
 
+@router.get("/cufe/{cufe}/dian-search-url")
+def get_dian_search_url(
+    cufe: str,
+    db: Session = Depends(get_db)
+):
+    """
+    TAB CUFE: Obtiene la URL de búsqueda en la DIAN para descargar el documento
+    Valida que la factura existe y genera el enlace para que el usuario descargue manualmente
+    """
+    service = InvoiceV2Service(db)
+
+    # Verificar que la factura existe
+    invoice = service.get_invoice_by_cufe(cufe)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+    # Generar URL de búsqueda en DIAN
+    dian_base_url = "https://catalogo-vpfe.dian.gov.co/User/SearchDocument"
+    dian_url = f"{dian_base_url}?DocumentKey={cufe}"
+
+    return {
+        "cufe": cufe,
+        "dian_url": dian_url,
+        "instructions": [
+            "1. Haz clic en el enlace para abrir el portal de la DIAN",
+            "2. Resuelve el CAPTCHA si es necesario",
+            "3. Descarga el archivo PDF o XML",
+            "4. Regresa a esta página y sube el archivo descargado",
+            "5. Los datos se actualizarán automáticamente"
+        ]
+    }
+
+
 @router.post("/cufe/{cufe}/upload-dian", response_model=InvoiceResponse)
 async def upload_dian_document(
     cufe: str,
