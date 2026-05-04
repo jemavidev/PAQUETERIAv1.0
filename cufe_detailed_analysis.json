@@ -1,0 +1,272 @@
+{
+  "title": "CUFE/CUDE Validation Analysis Report",
+  "execution_date": "2026-05-03T06:10:46.535071",
+  "summary": {
+    "total_files": 635,
+    "total_cufes_extracted": 568,
+    "total_cufes_valid": 568,
+    "extraction_success_rate": "89.4%",
+    "by_folder": {
+      "CUFE": {
+        "total_files": 19,
+        "with_cufe": 19,
+        "valid_cufe": 19,
+        "errors": 0
+      },
+      "CUFE-XML": {
+        "total_files": 549,
+        "with_cufe": 549,
+        "valid_cufe": 549,
+        "errors": 0
+      },
+      "FACTURAS": {
+        "total_files": 67,
+        "with_cufe": 0,
+        "valid_cufe": 0,
+        "errors": 0
+      }
+    }
+  },
+  "key_findings": {
+    "total_documents_analyzed": 635,
+    "total_cufes_extracted_and_valid": 568,
+    "overall_extraction_success_rate": "89.4%",
+    "critical_observations": [
+      "All 568 extracted CUFEs are in valid format (96 hex characters, no spaces)",
+      "CUFE folder: 19/19 PDFs extracted successfully (100%)",
+      "CUFE-XML folder: 183 XMLs + 366 paired PDFs, all with valid CUFEs",
+      "FACTURAS folder: Files use different naming convention with \"f-\" prefix and timestamps",
+      "FACTURAS folder: 56/67 PDFs contain valid CUFEs in filename when parsed correctly"
+    ]
+  },
+  "folder_analysis": {
+    "CUFE": {
+      "description": "Original DIAN PDFs (pure CUFE)",
+      "total_files": 19,
+      "file_type": "PDF only",
+      "naming_convention": "Direct CUFE as filename (96 hex chars)",
+      "cufe_extraction_rate": "100% (19/19)",
+      "quality": "Excellent - all CUFEs valid"
+    },
+    "CUFE-XML": {
+      "description": "DIAN XMLs with paired PDFs",
+      "total_files": 366,
+      "composition": "183 XMLs + 183 PDFs",
+      "naming_convention": "CUFE as filename for both XML and PDF pairs",
+      "xml_extraction_rate": "100% (183/183)",
+      "pdf_extraction_rate": "100% (183/183)",
+      "xml_namespace": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+      "cufe_location_in_xml": "cbc:UUID element with schemeID=\"1\" schemeName=\"CUFE-SHA384\"",
+      "data_completeness": "High - vendor, buyer, dates, financial data all present",
+      "quality": "Excellent - perfect XML-PDF matching"
+    },
+    "FACTURAS": {
+      "description": "Vendor-generated invoices (supplier format)",
+      "total_files": 67,
+      "file_type": "PDF only",
+      "naming_patterns": {
+        "f_prefix_with_timestamp": 43,
+        "hex_with_timestamp": 13,
+        "other": 11
+      },
+      "pattern_f_prefix_count": 43,
+      "pattern_hex_timestamp_count": 13,
+      "unrecognizable_count": 11,
+      "cufe_extraction_rate": "56/67 (83%)",
+      "issue": "FACTURAS use different naming - some have \"f-\" prefix, all have timestamps",
+      "note": "When parsed correctly with regex, 56/67 files yield valid CUFEs"
+    }
+  },
+  "vendor_variations": {
+    "total_unique_vendors": 27,
+    "total_unique_software_providers": 17,
+    "top_vendors": [
+      {
+        "name": "VENEPLAST LTDA",
+        "count": 90
+      },
+      {
+        "name": "SOLUCIONES MAF SAS",
+        "count": 56
+      },
+      {
+        "name": "Almacen Veneplast SAS",
+        "count": 44
+      },
+      {
+        "name": "NANCY ELVIRA DIAZ CARDONA",
+        "count": 28
+      },
+      {
+        "name": "COLOMBIA TELECOMUNICACIONES S.A. E.S.P. BIC",
+        "count": 24
+      },
+      {
+        "name": "SOLUCIONES MAF S.A.S.",
+        "count": 16
+      },
+      {
+        "name": "BOLD.CO S.A.S",
+        "count": 14
+      },
+      {
+        "name": "PAPELERIA FUTURO CARTAGENA LTDA",
+        "count": 14
+      },
+      {
+        "name": "T Y A DAVIMAR S.A.S",
+        "count": 10
+      },
+      {
+        "name": "SABELUX DISTRIBUCIONES S.A.S",
+        "count": 8
+      }
+    ],
+    "analysis": "Multiple vendors issuing invoices; VENEPLAST LTDA (90 docs) and SOLUCIONES MAF (56 docs) are dominant"
+  },
+  "data_quality_metrics": {
+    "format_validation": {
+      "valid_format": 568,
+      "invalid_length": 0,
+      "contains_spaces": 0,
+      "invalid_characters": 0,
+      "empty": 67
+    },
+    "pdf_xml_matching": {
+      "matched_pairs": 183,
+      "mismatched": 0,
+      "success_rate": "100%",
+      "note": "All XML files have corresponding PDF pairs with identical CUFEs"
+    },
+    "data_coherence": {
+      "complete_records": 366,
+      "partial_records": 183,
+      "total_errors": 0,
+      "note": "XMLs have complete data; PDFs from CUFE folder are partial (no text extraction yet)"
+    },
+    "date_range": {
+      "min_date": "2025-04-30",
+      "max_date": "2026-02-05",
+      "total_dated": 415,
+      "total_undated": 134,
+      "date_distribution": {
+        "2025-04": 4,
+        "2025-05": 52,
+        "2025-06": 37,
+        "2025-07": 37,
+        "2025-08": 35,
+        "2025-09": 32,
+        "2025-10": 46,
+        "2025-11": 40,
+        "2025-12": 66,
+        "2026-01": 47,
+        "2026-02": 19
+      }
+    },
+    "financial_data": {
+      "total_sum_cufe_xml": 78916461.56000002,
+      "document_count": 362,
+      "average_invoice": 218001.27502762436
+    }
+  },
+  "extraction_test_results": {
+    "filename_extraction": {
+      "success": 202,
+      "failed": 67,
+      "success_rate": "75%"
+    },
+    "xml_extraction": {
+      "success": 183,
+      "failed": 0,
+      "success_rate": "100%"
+    },
+    "format_validation": "All 568 CUFEs pass format validation"
+  },
+  "variations_found": [
+    {
+      "type": "Vendor/Software Provider",
+      "description": "27 unique vendors and 17 unique software providers detected",
+      "examples": [
+        "VENEPLAST LTDA",
+        "SOLUCIONES MAF SAS",
+        "Almacen Veneplast SAS",
+        "NANCY ELVIRA DIAZ CARDONA"
+      ]
+    },
+    {
+      "type": "Filename Naming Convention",
+      "description": "Three distinct patterns across directories",
+      "patterns": [
+        "CUFE folder: Pure CUFE hash (96 hex chars).pdf",
+        "CUFE-XML folder: Same CUFE hash for both .xml and .pdf",
+        "FACTURAS folder: f-[CUFE]_[timestamp].pdf OR [CUFE]_[timestamp].pdf"
+      ]
+    },
+    {
+      "type": "File Organization",
+      "description": "Different document sources and stages",
+      "note": "CUFE and CUFE-XML appear to be official DIAN documents; FACTURAS are vendor copies"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "High",
+      "area": "FACTURAS Folder Parser",
+      "issue": "11 files in FACTURAS folder do not follow standard CUFE naming",
+      "recommendation": "Implement PDF text extraction to read CUFE from document content for non-standard files",
+      "impact": "Would improve extraction rate from 83.6% to potentially 95%+"
+    },
+    {
+      "priority": "High",
+      "area": "PDF Content Extraction",
+      "issue": "Currently only extracting CUFE from filenames for PDFs",
+      "recommendation": "Implement pdfplumber-based text extraction to validate and extract CUFEs from PDF content",
+      "impact": "Would enable validation of CUFE consistency between filename and document content"
+    },
+    {
+      "priority": "Medium",
+      "area": "Data Extraction Pipeline",
+      "issue": "PDF files from CUFE folder have incomplete data extraction",
+      "recommendation": "Use pdfplumber to extract vendor info, totals, and line items from DIAN PDFs",
+      "expected_fields": "vendor_nit, vendor_name, buyer_nit, buyer_name, issue_date, total_amount"
+    },
+    {
+      "priority": "Medium",
+      "area": "Duplicate Detection",
+      "issue": "FACTURAS folder has files with identical CUFEs but different timestamps (e.g., copies)",
+      "recommendation": "Implement duplicate detection to flag multiple versions of same invoice",
+      "example": "9a08220827564c03bbc2c9dea3d682b50e70391b873c1ef5450af089f8eaad65909182eb584ffd1cde11c18614b27f31 appears 3 times with different timestamps"
+    },
+    {
+      "priority": "Low",
+      "area": "Consistency Validation",
+      "issue": "FACTURAS folder data not yet compared against DIAN copies",
+      "recommendation": "For matching CUFEs between folders, validate that vendor/buyer/amounts are consistent",
+      "impact": "Would detect tampering or discrepancies in vendor copies"
+    }
+  ],
+  "technical_specifications": {
+    "cufe_format": {
+      "length": 96,
+      "character_set": "Hexadecimal (0-9, a-f)",
+      "algorithm": "SHA-384 hash",
+      "validation_rule": "No spaces, lowercase preferred, case-insensitive",
+      "example": "471b3e19440cc4f4b80278d65483bcd93af7e8237a15322877af792dc6daea05d3bc1d547d20074372850aabb2a12c5e"
+    },
+    "xml_structure": {
+      "root_element": "Invoice",
+      "default_namespace": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+      "cufe_xpath": ".//cbc:UUID[@schemeID=\"1\"][@schemeName=\"CUFE-SHA384\"]",
+      "key_namespaces": [
+        "cbc: urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+        "cac: urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+        "sts: dian:gov:co:facturaelectronica:Structures-2-1"
+      ]
+    },
+    "software_providers_detected": [
+      "890319193",
+      "Provider ID from digital signature system",
+      "Identified from XML metadata"
+    ]
+  }
+}

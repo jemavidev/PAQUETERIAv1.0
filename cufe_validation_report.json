@@ -1,0 +1,229 @@
+{
+  "summary": {
+    "total_files": 635,
+    "total_cufes_extracted": 568,
+    "total_cufes_valid": 568,
+    "extraction_success_rate": "89.4%",
+    "by_folder": {
+      "CUFE": {
+        "total_files": 19,
+        "with_cufe": 19,
+        "valid_cufe": 19,
+        "errors": 0
+      },
+      "CUFE-XML": {
+        "total_files": 549,
+        "with_cufe": 549,
+        "valid_cufe": 549,
+        "errors": 0
+      },
+      "FACTURAS": {
+        "total_files": 67,
+        "with_cufe": 0,
+        "valid_cufe": 0,
+        "errors": 0
+      }
+    }
+  },
+  "by_folder": {},
+  "test_details": {
+    "filename_extraction": {
+      "success": 202,
+      "failed": 67,
+      "samples": [
+        {
+          "file": "8a73ab009b4eb0933087c42f46d48309a1ea55b2432f5df449f1dad9c3d3e4cb026cb19f6a82285b0a50ea1c4c8f62d0.pdf",
+          "cufe": "8a73ab009b4eb0933087c42f46d48309a1ea55b2432f5df449f1dad9c3d3e4cb026cb19f6a82285b0a50ea1c4c8f62d0",
+          "folder": "CUFE"
+        },
+        {
+          "file": "8d4f3b4bbfd27479320718fa3212ede27b147eac958e4fa4897961d2e04f66273233775c7d1946454ee4aa15ba8b1b1b.pdf",
+          "cufe": "8d4f3b4bbfd27479320718fa3212ede27b147eac958e4fa4897961d2e04f66273233775c7d1946454ee4aa15ba8b1b1b",
+          "folder": "CUFE"
+        },
+        {
+          "file": "11923ccd02f0b975c4a5467f16e569ea48288825e415ba3c50d705fe34523fab86cfe7dccda5e8ed15f4de42f749df54.pdf",
+          "cufe": "11923ccd02f0b975c4a5467f16e569ea48288825e415ba3c50d705fe34523fab86cfe7dccda5e8ed15f4de42f749df54",
+          "folder": "CUFE"
+        }
+      ]
+    },
+    "xml_extraction": {
+      "success": 183,
+      "failed": 0,
+      "samples": [
+        {
+          "file": "471b3e19440cc4f4b80278d65483bcd93af7e8237a15322877af792dc6daea05d3bc1d547d20074372850aabb2a12c5e.xml",
+          "cufe": "471b3e19440cc4f4b80278d65483bcd93af7e8237a15322877af792dc6daea05d3bc1d547d20074372850aabb2a12c5e",
+          "vendor": "Almacen Veneplast SAS"
+        },
+        {
+          "file": "10a3631df7555b61aa7ad3b6a2a69ca204056ca1a0b8966d83d0c5bc385b62b88e2987f30db3e78ef8a72f5d07d18f2e.xml",
+          "cufe": "10a3631df7555b61aa7ad3b6a2a69ca204056ca1a0b8966d83d0c5bc385b62b88e2987f30db3e78ef8a72f5d07d18f2e",
+          "vendor": "COLOMBIA TELECOMUNICACIONES S.A. E.S.P. BIC"
+        },
+        {
+          "file": "2728882c132c092d7fb4920099de8bcc76925259ff8c46c0dd61e032b7868fb12837347f6273bce790b83350e8505905.xml",
+          "cufe": "2728882c132c092d7fb4920099de8bcc76925259ff8c46c0dd61e032b7868fb12837347f6273bce790b83350e8505905",
+          "vendor": "Almacen Veneplast SAS"
+        }
+      ]
+    },
+    "format_validation": {
+      "valid_format": 568,
+      "invalid_length": 0,
+      "contains_spaces": 0,
+      "invalid_characters": 0,
+      "empty": 67
+    },
+    "pdf_xml_matching": {
+      "matched": 183,
+      "mismatched": 0,
+      "xml_only": 0,
+      "pdf_only": 0,
+      "mismatches": []
+    },
+    "data_coherence": {
+      "complete": 366,
+      "partial": 183,
+      "errors": 0,
+      "sample_data": [
+        {
+          "file": "471b3e19440cc4f4b80278d65483bcd93af7e8237a15322877af792dc6daea05d3bc1d547d20074372850aabb2a12c5e.xml",
+          "vendor": "Almacen Veneplast SAS",
+          "buyer": "DISTRIBUIDORA PAPYRUS SAS",
+          "date": "2025-06-13"
+        },
+        {
+          "file": "10a3631df7555b61aa7ad3b6a2a69ca204056ca1a0b8966d83d0c5bc385b62b88e2987f30db3e78ef8a72f5d07d18f2e.xml",
+          "vendor": "COLOMBIA TELECOMUNICACIONES S.A. E.S.P. BIC",
+          "buyer": "PAPYRUS SAS DISTRIBUIDORA",
+          "date": "2025-08-18"
+        },
+        {
+          "file": "2728882c132c092d7fb4920099de8bcc76925259ff8c46c0dd61e032b7868fb12837347f6273bce790b83350e8505905.xml",
+          "vendor": "Almacen Veneplast SAS",
+          "buyer": "DISTRIBUIDORA PAPYRUS SAS",
+          "date": "2026-01-27"
+        }
+      ]
+    },
+    "vendor_variations": {
+      "unique_vendors": 27,
+      "unique_software_providers": 17,
+      "top_vendors": [
+        {
+          "name": "VENEPLAST LTDA",
+          "count": 90
+        },
+        {
+          "name": "SOLUCIONES MAF SAS",
+          "count": 56
+        },
+        {
+          "name": "Almacen Veneplast SAS",
+          "count": 44
+        },
+        {
+          "name": "NANCY ELVIRA DIAZ CARDONA",
+          "count": 28
+        },
+        {
+          "name": "COLOMBIA TELECOMUNICACIONES S.A. E.S.P. BIC",
+          "count": 24
+        },
+        {
+          "name": "SOLUCIONES MAF S.A.S.",
+          "count": 16
+        },
+        {
+          "name": "BOLD.CO S.A.S",
+          "count": 14
+        },
+        {
+          "name": "PAPELERIA FUTURO CARTAGENA LTDA",
+          "count": 14
+        },
+        {
+          "name": "T Y A DAVIMAR S.A.S",
+          "count": 10
+        },
+        {
+          "name": "SABELUX DISTRIBUCIONES S.A.S",
+          "count": 8
+        }
+      ]
+    },
+    "date_range": {
+      "min_date": "2025-04-30",
+      "max_date": "2026-02-05",
+      "total_dated": 415,
+      "total_undated": 134,
+      "date_distribution": {
+        "2025-04": 4,
+        "2025-05": 52,
+        "2025-06": 37,
+        "2025-07": 37,
+        "2025-08": 35,
+        "2025-09": 32,
+        "2025-10": 46,
+        "2025-11": 40,
+        "2025-12": 66,
+        "2026-01": 47,
+        "2026-02": 19
+      }
+    },
+    "totals": {
+      "total_by_folder": {
+        "CUFE-XML": {
+          "sum": 78916461.56000002,
+          "count": 362,
+          "avg": 218001.27502762436
+        },
+        "FACTURAS": {
+          "sum": 0,
+          "count": 0,
+          "avg": 0
+        }
+      },
+      "with_tax": 1,
+      "with_subtotal": 1,
+      "sample_amounts": [
+        {
+          "file": "471b3e19440cc4f4b80278d65483bcd93af7e8237a15322877af792dc6daea05d3bc1d547d20074372850aabb2a12c5e.xml",
+          "total": 200800.0,
+          "tax": 32060.5,
+          "subtotal": 168739.5
+        },
+        {
+          "file": "10a3631df7555b61aa7ad3b6a2a69ca204056ca1a0b8966d83d0c5bc385b62b88e2987f30db3e78ef8a72f5d07d18f2e.xml",
+          "total": 104765.05,
+          "tax": 14995.0,
+          "subtotal": 78921.05
+        },
+        {
+          "file": "2728882c132c092d7fb4920099de8bcc76925259ff8c46c0dd61e032b7868fb12837347f6273bce790b83350e8505905.xml",
+          "total": 159200.0,
+          "tax": null,
+          "subtotal": 0.0
+        },
+        {
+          "file": "9a08220827564c03bbc2c9dea3d682b50e70391b873c1ef5450af089f8eaad65909182eb584ffd1cde11c18614b27f31.xml",
+          "total": 42000.0,
+          "tax": 6705.88,
+          "subtotal": 35294.12
+        },
+        {
+          "file": "e3bfa6c55af1a1e47246a18a9b4bcead6de1891d59e9f867217e499ee3fa20609c1486e955769eca23a784982276c966.xml",
+          "total": 1902.3,
+          "tax": null,
+          "subtotal": 0.0
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "execution_date": "2026-05-03T06:10:46.535071",
+    "base_path": "/home/stk/Documents/GIT/PAQUETEX v1.0/CUFE"
+  }
+}

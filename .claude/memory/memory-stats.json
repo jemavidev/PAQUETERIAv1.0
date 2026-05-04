@@ -1,56 +1,60 @@
 {
-  "lastCalculated": "2026-05-01T14:30:30-05:00",
+  "lastCalculated": "2026-05-04T08:06:53-05:00",
   "summary": {
-    "totalTokens": 0,
+    "totalTokens": 912,
     "inputTokens": 0,
     "outputTokens": 0,
-    "totalEntries": 0,
-    "avgTokensPerEntry": 0,
-    "minTokens": 0,
-    "maxTokens": 0,
+    "totalEntries": 4,
+    "avgTokensPerEntry": 228,
+    "minTokens": 172,
+    "maxTokens": 272,
     "byCategory": {
-      "decisions": 0,
-      "tasks": 0,
+      "decisions": 222,
+      "tasks": 690,
       "patterns": 0
     },
-    "byAgent": {},
+    "byAgent": {
+      "agentx": 222,
+      "architect": 172,
+      "devops": 518
+    },
     "bySkill": {}
   },
   "cleanupRecommendations": {
     "threshold": 50000,
-    "currentUsage": 0,
-    "percentUsed": 0,
+    "currentUsage": 912,
+    "percentUsed": 1,
     "suggestedAction": "none"
   },
   "fileStats": {
-    "active-context.json": 421,
+    "active-context.json": 486,
     "alerts-registry.json": 137,
-    "decision-log.json": 131,
+    "decision-log.json": 407,
     "historical-data.json": 38,
-    "llm-usage.json": 2566,
+    "llm-usage.json": 14329,
     "metrics-analytics.json": 283,
     "patterns.json": 181,
-    "progress.json": 238,
-    "project-metrics.json": 394,
+    "progress.json": 1092,
+    "project-metrics.json": 458,
     "project-size.json": 123,
     "token-accounting.json": 150,
     "MEMORY.md": 469,
-    "session-last.md": 204,
+    "session-last.md": 215,
     "workflow-prefs.md": 306
   },
   "timeline": {},
   "entries": {
-    "decisions": 0,
-    "tasks": 0,
-    "completedTasks": 0,
+    "decisions": 1,
+    "tasks": 3,
+    "completedTasks": 3,
     "patterns": 0
   },
   "llmUsage": {
-    "sessions": 4,
-    "totalTokens": 9805
+    "sessions": 20,
+    "totalTokens": 354805
   },
   "storage": {
     "files": 15,
-    "totalBytes": 27276
+    "totalBytes": 79095
   }
 }

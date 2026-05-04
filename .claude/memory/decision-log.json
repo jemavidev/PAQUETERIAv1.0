@@ -1,17 +1,41 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "",
-  "decisions": [],
+  "lastUpdated": "2026-05-03T06:36:06-0500",
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "title": "Choose staging deployment strategy: remote auto-deploy with GitHub Actions vs local manual deploy",
+      "date": "2026-05-03T06:36:06-0500",
+      "timestamp": "2026-05-03T06:36:06-0500",
+      "agent": "agentx",
+      "status": "implemented",
+      "tags": [
+        "deploy",
+        "staging",
+        "ci-cd"
+      ],
+      "context": "User requested staging environment setup. Two options available: local (docker-compose.staging.yml) or remote (staging.jemavi.co with auto-deploy). Chose remote auto-deploy to ensure CI/CD pipeline validation and maintain staging server in sync with GitHub.",
+      "rationale": "User requested staging environment setup. Two options available: local (docker-compose.staging.yml) or remote (staging.jemavi.co with auto-deploy). Chose remote auto-deploy to ensure CI/CD pipeline validation and maintain staging server in sync with GitHub.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    }
+  ],
   "summary": {
-    "totalDecisions": 0,
+    "totalDecisions": 1,
     "byStatus": {
       "proposed": 0,
       "approved": 0,
-      "implemented": 0,
+      "implemented": 1,
       "rejected": 0,
       "superseded": 0
     },
-    "byAgent": {}
+    "byAgent": {
+      "agentx": 1
+    }
   },
   "_comments": {
     "dateFormat": "Use ISO 8601 format with timezone for timestamps: YYYY-MM-DDTHH:MM:SS-05:00",

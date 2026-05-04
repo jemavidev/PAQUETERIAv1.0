@@ -1,23 +1,23 @@
 {
-  "lastUpdated": "2026-05-01T14:30:30-05:00",
+  "lastUpdated": "2026-05-04T08:06:53-05:00",
   "version": "4.0.0",
   "summary": {
-    "phase": "1 — Initial setup",
+    "phase": "2.0 — GitHub Actions Staging Deploy Complete",
     "projectName": "[PROJECT NAME]",
-    "currentFocus": "Getting started",
+    "currentFocus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
     "trend": "baseline",
     "systemHealth": "needs_attention"
   },
   "tasks": {
-    "total": 0,
-    "completed": 0,
+    "total": 3,
+    "completed": 3,
     "inProgress": 0,
     "pending": 0,
     "totalTokens": 0,
     "avgTokens": 0
   },
   "knowledge": {
-    "decisions": 0,
+    "decisions": 1,
     "patterns": 0,
     "patternApplications": 0
   },
@@ -43,8 +43,8 @@
   },
   "agentMetrics": {},
   "codebase": {
-    "totalFiles": 10831,
-    "totalSizeKB": 289248,
+    "totalFiles": 11403,
+    "totalSizeKB": 316112,
     "byCategory": {
       "skills": {
         "files": 83,
@@ -60,7 +60,7 @@
       },
       "memory": {
         "files": 12,
-        "sizeKB": 264
+        "sizeKB": 320
       },
       "templates": {
         "files": 0,
@@ -72,9 +72,9 @@
       }
     },
     "memoryFiles": {
-      "decisions": 0,
-      "tasks": 0,
-      "completedTasks": 0,
+      "decisions": 1,
+      "tasks": 3,
+      "completedTasks": 3,
       "patterns": 0
     }
   },
