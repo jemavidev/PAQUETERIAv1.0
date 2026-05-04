@@ -446,6 +446,96 @@
     </div>
 </div>
 
+<!-- Modal de Visor de Archivos -->
+<div id="file-viewer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-papyrus-blue to-blue-600 px-6 py-4 flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-bold text-white">Ver Archivo Cargado</h3>
+                <p class="text-blue-100 text-sm" id="viewer-filename"></p>
+            </div>
+            <button onclick="closeFileViewerModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-200 bg-gray-50 px-6">
+            <button onclick="switchTab('archivo')"
+                    id="tab-archivo"
+                    class="px-4 py-3 font-medium text-gray-700 border-b-2 border-transparent hover:text-papyrus-blue hover:border-papyrus-blue transition-colors active-tab-archivo">
+                📄 Archivo
+            </button>
+            <button onclick="switchTab('datos')"
+                    id="tab-datos"
+                    class="px-4 py-3 font-medium text-gray-700 border-b-2 border-transparent hover:text-papyrus-blue hover:border-papyrus-blue transition-colors">
+                📊 Datos Extraídos
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+            <!-- Tab Archivo -->
+            <div id="tab-content-archivo" class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8 text-papyrus-blue" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
+                        </svg>
+                        <div id="archivo-info">
+                            <p class="font-medium text-gray-900">Archivo Cargado</p>
+                            <p class="text-sm text-gray-500" id="archivo-size"></p>
+                        </div>
+                    </div>
+                    <button onclick="downloadFileFromModal()" class="px-4 py-2 bg-papyrus-blue hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+                        ⬇️ Descargar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Datos -->
+            <div id="tab-content-datos" class="hidden space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 uppercase">CUFE</p>
+                        <p class="text-sm font-mono text-gray-900 break-all" id="datos-cufe">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 uppercase">Proveedor</p>
+                        <p class="text-sm text-gray-900" id="datos-proveedor">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 uppercase">Fecha Emisión</p>
+                        <p class="text-sm text-gray-900" id="datos-fecha">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 uppercase">Total</p>
+                        <p class="text-sm font-medium text-gray-900" id="datos-total">-</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 col-span-2">
+                        <p class="text-xs font-medium text-gray-500 uppercase">Número Factura</p>
+                        <p class="text-sm text-gray-900" id="datos-numero">-</p>
+                    </div>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="text-xs font-medium text-gray-500 uppercase mb-2">Notas</p>
+                    <p class="text-sm text-gray-900" id="datos-notas">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+            <button onclick="closeFileViewerModal()" class="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de asociar CUFE -->
 <div id="associate-cufe-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-2xl max-w-lg w-full">
@@ -888,11 +978,11 @@
                             </button>` : ''
                         }
                         ${invoice.archivo_proveedor_s3_key ? `
-                            <button onclick="downloadInvoice('${invoice.cufe}')" 
-                                    class="text-green-600 hover:text-green-800 transition-colors" 
-                                    title="Descargar factura PDF">
+                            <button onclick="openFileViewerModal('${invoice.cufe}', 'facturas')"
+                                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                                    title="Ver archivo cargado">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </button>
                         ` : ''}
@@ -1716,6 +1806,94 @@
         // Resetear a primera página y recargar
         currentPage = 1;
         loadInvoices();
+    }
+
+    // ===== File Viewer Modal =====
+    let currentViewerCufe = null;
+
+    async function openFileViewerModal(cufe, source) {
+        currentViewerCufe = cufe;
+        const modal = document.getElementById('file-viewer-modal');
+
+        try {
+            // Obtener datos de la factura
+            const response = await fetch(`/api/v2/invoices/facturas/${cufe}`);
+            if (!response.ok) {
+                showToast('No se pudo cargar la información de la factura', 'error');
+                return;
+            }
+
+            const invoice = await response.json();
+
+            // Actualizar información del archivo
+            const filename = invoice.archivo_proveedor_url ?
+                invoice.archivo_proveedor_url.split('/').pop() : 'documento.pdf';
+            document.getElementById('viewer-filename').textContent = filename;
+
+            const sizeKB = invoice.archivo_proveedor_s3_key ?
+                '(Archivo en S3)' : '(Archivo local)';
+            document.getElementById('archivo-size').textContent = sizeKB;
+
+            // Llenar datos extraídos
+            document.getElementById('datos-cufe').textContent = invoice.cufe || '-';
+            document.getElementById('datos-proveedor').textContent = invoice.proveedor_nombre || '-';
+            document.getElementById('datos-fecha').textContent = invoice.fecha_emision ?
+                new Date(invoice.fecha_emision).toLocaleDateString('es-CO') : '-';
+            document.getElementById('datos-total').textContent = invoice.total_factura ?
+                `$${invoice.total_factura.toLocaleString('es-CO')}` : '-';
+            document.getElementById('datos-numero').textContent = invoice.numero_factura || '-';
+            document.getElementById('datos-notas').textContent = invoice.notas || 'Sin notas';
+
+            // Mostrar modal
+            modal.classList.remove('hidden');
+
+            // Mostrar pestaña archivo por defecto
+            document.getElementById('tab-archivo').click();
+
+        } catch (error) {
+            console.error('Error abriendo visor:', error);
+            showToast('Error al cargar el archivo', 'error');
+        }
+    }
+
+    function closeFileViewerModal() {
+        document.getElementById('file-viewer-modal').classList.add('hidden');
+    }
+
+    function switchTab(tabName) {
+        // Ocultar todos los tabs
+        document.getElementById('tab-content-archivo').classList.add('hidden');
+        document.getElementById('tab-content-datos').classList.add('hidden');
+
+        // Remover clase active de todos los botones
+        document.getElementById('tab-archivo').classList.remove('active-tab-archivo');
+        document.getElementById('tab-datos').classList.remove('active-tab-datos');
+
+        // Mostrar tab seleccionado
+        document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+        document.getElementById(`tab-${tabName}`).classList.add(`active-tab-${tabName}`);
+    }
+
+    async function downloadFileFromModal() {
+        if (!currentViewerCufe) return;
+
+        try {
+            const response = await fetch(`/api/v2/invoices/facturas/${currentViewerCufe}`);
+            if (!response.ok) {
+                showToast('Error al obtener información del archivo', 'error');
+                return;
+            }
+
+            const invoice = await response.json();
+            if (invoice.archivo_proveedor_url) {
+                window.location.href = invoice.archivo_proveedor_url;
+            } else {
+                showToast('No hay archivo disponible para descargar', 'warning');
+            }
+        } catch (error) {
+            console.error('Error descargando archivo:', error);
+            showToast('Error al descargar archivo', 'error');
+        }
     }
 </script>
 
