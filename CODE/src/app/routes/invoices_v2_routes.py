@@ -81,6 +81,14 @@ class InvoiceCorrectionRequest(BaseModel):
     dian_emisor_nit: Optional[str] = None
 
 
+class ManualCufeEntryRequest(BaseModel):
+    """Request para entrada manual de CUFE cuando la extracción automática falla"""
+    cufe: str = Field(..., min_length=20, max_length=96, description="Código CUFE (96 hex chars) o CUDE corto")
+    supplier_name: Optional[str] = None
+    invoice_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class ProductResponse(BaseModel):
     id: int
     cufe: str
@@ -171,6 +179,70 @@ async def extract_cufe_from_pdf(
         # Limpiar archivo temporal
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+@router.post("/manual-cufe", response_model=InvoiceResponse)
+def enter_manual_cufe(
+    temp_cufe: str = Query(..., description="CUFE temporal de la factura"),
+    request: ManualCufeEntryRequest = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Ingresa manualmente un CUFE cuando la extracción automática falló
+    Modal/Form para usuario cuando extract_cufe no encuentra el código
+    """
+    if not request:
+        raise HTTPException(status_code=400, detail="Request body requerido")
+
+    import re
+    from app.services.pdf_parser_service import PDFParserService
+
+    # Validar que el CUFE tenga formato válido
+    if not PDFParserService.validate_cufe_format(request.cufe):
+        raise HTTPException(
+            status_code=400,
+            detail="CUFE debe ser 96 caracteres hexadecimales o código CUDE válido"
+        )
+
+    service = InvoiceV2Service(db)
+
+    # Obtener la factura
+    invoice = service.get_invoice_by_cufe(temp_cufe)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+
+    # Validar que no existe otro registro con este CUFE
+    cleaned_cufe = request.cufe.lower().strip()
+    existing = service.get_invoice_by_cufe(cleaned_cufe)
+    if existing and existing.id != invoice.id:
+        raise HTTPException(status_code=400, detail="Este CUFE ya existe en el sistema")
+
+    # Actualizar la factura con el CUFE manual
+    invoice.cufe = cleaned_cufe
+    invoice.cufe_origen = 'manual'
+    invoice.cufe_validado_usuario = True
+
+    # Actualizar metadata si se proporciona
+    if request.supplier_name:
+        invoice.proveedor_nombre = request.supplier_name
+
+    if request.invoice_number:
+        invoice.numero_factura = request.invoice_number
+
+    if request.notes:
+        invoice.notas = request.notes
+
+    # Cambiar estado a pendiente_dian para permitir validación
+    invoice.estado = 'pendiente_dian'
+    invoice.updated_at = datetime.now()
+
+    # Guardar
+    db.commit()
+    db.refresh(invoice)
+
+    logger.info(f"✅ CUFE manual ingresado: {cleaned_cufe[:20]}...")
+
+    return InvoiceResponse.from_orm(invoice)
 
 
 @router.post("/facturas/upload", response_model=InvoiceResponse)

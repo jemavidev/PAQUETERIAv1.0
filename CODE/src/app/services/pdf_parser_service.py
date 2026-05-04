@@ -1050,6 +1050,129 @@ class PDFParserService:
         return productos
     
     @staticmethod
+    def validate_cufe_format(cufe: Optional[str]) -> bool:
+        """
+        Valida que un CUFE sea un código válido (96 caracteres hexadecimales)
+        Soporta CUFE de 96 caracteres y CUDE de variable longitud
+        """
+        if not cufe:
+            return False
+
+        cleaned = re.sub(r'[^0-9a-fA-F]', '', cufe)
+
+        if len(cleaned) == 96:
+            return True
+
+        if len(cleaned) >= 20 and len(cleaned) <= 50:
+            logger.info(f"ℹ️ Código {len(cleaned)} caracteres (posible CUDE corto): {cleaned}")
+            return True
+
+        return False
+
+    @staticmethod
+    def extract_cufe_from_filename(filename: str) -> Optional[str]:
+        """
+        Extrae CUFE de nombres de archivo no-estándar
+
+        Maneja patrones:
+        1. f-[CUFE96]_timestamp.pdf → extrae CUFE96 después del "f-"
+        2. [CUFE96]_timestamp.pdf → estándar
+        3. [CUFE96]_(1).pdf / [CUFE96]_(2).pdf → duplicados
+        4. [CUFE_SHORT].pdf → CUDE corto (variable longitud)
+        5. FV[NUMERIC].pdf / AD[NUMERIC].pdf → códigos específicos
+        """
+        if not filename:
+            return None
+
+        base_name = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        base_name = base_name.strip()
+
+        logger.info(f"🔍 Extrayendo CUFE de filename: {filename}")
+
+        CUFE_STANDARD_PATTERN = r'[0-9a-fA-F]{96}'
+
+        try:
+            # Patrón 1: Prefijo "f-" seguido de CUFE96 (ej: f-a1b2c3...xyz_20250101120000.pdf)
+            if base_name.startswith('f-') or base_name.startswith('F-'):
+                remainder = base_name[2:]
+                matches = re.findall(CUFE_STANDARD_PATTERN, remainder, re.IGNORECASE)
+                if matches:
+                    cufe = matches[0].lower()
+                    logger.info(f"✅ CUFE extraído de prefijo 'f-': {cufe[:20]}...{cufe[-20:]}")
+                    return cufe
+
+            # Patrón 2: CUFE estándar directo (sin prefijo)
+            matches = re.findall(CUFE_STANDARD_PATTERN, base_name, re.IGNORECASE)
+            if matches:
+                cufe = matches[0].lower()
+                logger.info(f"✅ CUFE extraído (estándar): {cufe[:20]}...{cufe[-20:]}")
+                return cufe
+
+            # Patrón 3: Eliminar duplicados (1), (2) y reintentar
+            cleaned_base = re.sub(r'\s*\(\d\)\s*$', '', base_name).strip()
+            if cleaned_base != base_name:
+                matches = re.findall(CUFE_STANDARD_PATTERN, cleaned_base, re.IGNORECASE)
+                if matches:
+                    cufe = matches[0].lower()
+                    logger.info(f"✅ CUFE extraído (después de eliminar duplicado): {cufe[:20]}...{cufe[-20:]}")
+                    return cufe
+
+            # Patrón 4: CUDE corto (código numérico de 20-50 caracteres hex)
+            shorter_matches = re.findall(r'[0-9a-fA-F]{20,}', base_name, re.IGNORECASE)
+            if shorter_matches:
+                # Tomar el primero (más probable de ser el código)
+                cude = shorter_matches[0].lower()
+                if len(cude) <= 50:
+                    logger.info(f"ℹ️ CUDE corto encontrado ({len(cude)} caracteres): {cude}")
+                    return cude
+
+            # Patrón 5: Códigos específicos (FV, AD, GRM, POS, etc.)
+            specific_patterns = [
+                (r'^(?:FV|fv)(\d+)', 'FV'),
+                (r'^(?:AD|ad)(\d+)', 'AD'),
+                (r'^(?:GRM|grm)(\d+)', 'GRM'),
+                (r'^(?:POS|pos)(\d+)', 'POS'),
+                (r'^(?:FE|fe)(\d+)', 'FE'),
+            ]
+            for pattern, code_type in specific_patterns:
+                match = re.search(pattern, base_name)
+                if match:
+                    specific_code = match.group(0)
+                    logger.info(f"ℹ️ Código específico {code_type} encontrado: {specific_code}")
+                    return specific_code
+
+            logger.warning(f"⚠️ No se encontró CUFE válido en filename: {filename}")
+            return None
+
+        except Exception as e:
+            logger.error(f"❌ Error extrayendo CUFE de filename: {e}")
+            return None
+
+    @staticmethod
+    def extract_cufe_combined(filename: str, pdf_text: str) -> tuple[Optional[str], str]:
+        """
+        Estrategia combinada: intenta extraer CUFE primero del nombre de archivo,
+        luego del contenido del PDF.
+
+        Returns:
+            tuple: (cufe_extraído, estrategia_usada)
+            estrategia_usada puede ser: 'filename', 'pdf_text', o 'manual_required'
+        """
+        # Intento 1: Extraer del nombre de archivo
+        cufe_from_filename = PDFParserService.extract_cufe_from_filename(filename)
+        if cufe_from_filename and PDFParserService.validate_cufe_format(cufe_from_filename):
+            return cufe_from_filename, 'filename'
+
+        # Intento 2: Extraer del texto del PDF
+        cufe_from_pdf = PDFParserService.extract_cufe(pdf_text)
+        if cufe_from_pdf and PDFParserService.validate_cufe_format(cufe_from_pdf):
+            return cufe_from_pdf, 'pdf_text'
+
+        # Fallback: Requiere entrada manual
+        logger.warning(f"⚠️ CUFE no extraído automáticamente para: {filename}")
+        return None, 'manual_required'
+
+    @staticmethod
     def _extract_proveedor_tecnologico(text: str) -> Optional[str]:
         """Extrae proveedor tecnológico"""
         match = re.search(r'(?:Proveedor Tecnológico|Proveedor Tecnologico|Fabricante del Software)[\s:]+([^\n]+)', text, re.IGNORECASE)
