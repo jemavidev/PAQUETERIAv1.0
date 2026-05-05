@@ -40,7 +40,7 @@ jobs:
 
       - name: 🚀 Restart Docker Services
         run: |
-          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && docker compose -f docker-compose.staging.yml up -d --no-build"
+          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml up -d --build"
 
       - name: 🗄️ Run Migrations
         run: |
