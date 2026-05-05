@@ -560,7 +560,8 @@ async def list_packages(
             "total": total_items,
             "total_pages": total_pages,
             "has_prev": has_prev,
-            "has_next": has_next
+            "has_next": has_next,
+            "_pagination_fix_v2": "ACTIVO"
         }
     }
     
