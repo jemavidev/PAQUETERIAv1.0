@@ -298,9 +298,9 @@ async def list_packages(
         total_packages = query.count()
         logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
         
-        # OPTIMIZACIÓN: Obtener TODOS los paquetes filtrados (sin paginación en BD)
-        # La paginación se hace en memoria DESPUÉS de combinar con anuncios
-        packages_query = query.order_by(Package.updated_at.desc()).all()
+        # OPTIMIZACIÓN: Paginar en BD para eficiencia
+        # Obtener solo los items de esta página
+        packages_query = query.order_by(Package.updated_at.desc()).offset(skip).limit(limit).all()
         
         logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
     except Exception as e:
