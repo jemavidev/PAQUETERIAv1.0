@@ -298,11 +298,9 @@ async def list_packages(
         total_packages = query.count()
         logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
         
-        # OPTIMIZACIÓN: Aplicar paginación a nivel de BD (LIMIT/OFFSET)
-        packages_query = query.order_by(Package.updated_at.desc())\
-            .limit(limit)\
-            .offset(skip)\
-            .all()
+        # OPTIMIZACIÓN: Obtener TODOS los paquetes filtrados (sin paginación en BD)
+        # La paginación se hace en memoria DESPUÉS de combinar con anuncios
+        packages_query = query.order_by(Package.updated_at.desc()).all()
         
         logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
     except Exception as e:
@@ -480,9 +478,18 @@ async def list_packages(
         except ValueError:
             pass
     
+    # NUEVO: Obtener el TOTAL de anuncios (sin paginar) para paginación correcta
+    count_query = f"""
+        SELECT COUNT(*) FROM package_announcements_new a
+        LEFT JOIN customers c ON a.customer_id = c.id
+        WHERE {where_clause}
+    """
+    total_announcements = db.execute(text(count_query), announcement_params).scalar() or 0
+    logger.info(f"📊 Total de anuncios encontrados (filtrados): {total_announcements}")
+
     announcements_result = db.execute(text(announcements_query), announcement_params)
     announcements_data = announcements_result.fetchall()
-    logger.info(f"📢 Anuncios encontrados: {len(announcements_data)}")
+    logger.info(f"📢 Anuncios obtenidos en esta consulta: {len(announcements_data)}")
 
     # Combine packages and announcements
     all_items = []
@@ -532,7 +539,7 @@ async def list_packages(
     all_items.sort(key=lambda x: x.get('last_update_date') or x.get('created_at') or '', reverse=True)
 
     # OPTIMIZACIÓN: Calcular información de paginación con el total real
-    total_items = total_packages + len(announcements_data)
+    total_items = total_packages + total_announcements
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     current_page = (skip // limit) + 1
     has_prev = skip > 0
