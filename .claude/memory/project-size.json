@@ -1,7 +1,7 @@
 {
-  "lastCalculated": "2026-05-04T08:57:56-05:00",
+  "lastCalculated": "2026-05-05T07:13:58-05:00",
   "totalFiles": 11402,
-  "totalSizeKB": 316200,
+  "totalSizeKB": 316356,
   "byCategory": {
     "skills": {
       "files": 83,
@@ -17,7 +17,7 @@
     },
     "memory": {
       "files": 12,
-      "sizeKB": 332
+      "sizeKB": 336
     },
     "templates": {
       "files": 0,

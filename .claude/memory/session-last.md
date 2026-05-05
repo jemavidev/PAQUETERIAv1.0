@@ -1,4 +1,4 @@
-# Last session — 2026-05-04 08:57
+# Last session — 2026-05-05 07:13
 
 ## Modified files
 - .claude/memory/llm-usage.json
@@ -11,10 +11,10 @@
 - .claude/memory/.session-prompts-tmp
 
 ## Last commit
-ca8c11b .
+8247ad6 feat: Add file viewer modals with 2-tab interface for FACTURAS and CUFE
 
 ## Estimated input tokens (char-count ±20%)
-2387 tokens this session
+2486 tokens this session
 
 ## Status at session end
 - Current phase: see active-context.json → currentFocus
