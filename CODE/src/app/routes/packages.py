@@ -298,8 +298,7 @@ async def list_packages(
         total_packages = query.count()
         logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
         
-        # OPTIMIZACIÓN: Paginar en BD para eficiencia
-        # Obtener solo los items de esta página
+        # OPTIMIZACIÓN: Paginación en BD
         packages_query = query.order_by(Package.updated_at.desc()).offset(skip).limit(limit).all()
         
         logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
@@ -538,8 +537,8 @@ async def list_packages(
     # Sort by last_update_date (most recent first) - ORDENAR POR ÚLTIMA ACTUALIZACIÓN
     all_items.sort(key=lambda x: x.get('last_update_date') or x.get('created_at') or '', reverse=True)
 
-    # OPTIMIZACIÓN: Calcular información de paginación con el total real
-    total_items = total_packages + total_announcements
+    # OPTIMIZACIÓN: Usar total de packages como total (paginación simplificada)
+    total_items = total_packages
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     current_page = (skip // limit) + 1
     has_prev = skip > 0
