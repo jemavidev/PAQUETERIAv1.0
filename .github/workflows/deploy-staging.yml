@@ -42,12 +42,11 @@ jobs:
         run: |
           ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && bash .deploy/scripts/bg-deploy.sh"
 
-      - name: ✅ Health Check
+      - name: ✅ Health Check (via Nginx)
         run: |
           for attempt in {1..3}; do
             echo "🔍 Health check intento $attempt/3..."
-            if ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} \
-              "curl -s http://localhost:8001/health 2>/dev/null || curl -s http://localhost:8001/ 2>/dev/null" > /dev/null 2>&1; then
+            if curl -s https://staging.jemavi.co/health 2>/dev/null | grep -q healthy; then
               echo "✅ Service is healthy!"
               exit 0
             fi
@@ -56,14 +55,15 @@ jobs:
               sleep 10
             fi
           done
-          echo "⚠️  Service health check inconclusive (may still be starting)"
+          echo "⚠️  Service health check inconclusive"
           exit 0
 
       - name: 📊 Verify Database Migration
         run: |
           ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} \
-            "cd ${{ env.PROJECT_PATH }}/CODE && \
-             docker exec paqueteria_staging_app alembic current 2>&1 || echo '⚠️  Migration check skipped'"
+            "cd ${{ env.PROJECT_PATH }} && \
+             active_slot=\$(cat active-slot 2>/dev/null || echo 'blue') && \
+             docker exec paqueteria_staging_\${active_slot} sh -c 'cd /app && alembic current' 2>&1 || echo '⚠️  Migration check skipped'"
 
       - name: 🎉 Deployment Success
         if: success()
