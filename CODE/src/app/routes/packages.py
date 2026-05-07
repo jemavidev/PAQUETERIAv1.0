@@ -254,7 +254,7 @@ async def list_packages(
         # STEP 2: BUILD DYNAMIC FILTER CONDITIONS
         pkg_conds = ["1=1"]
         ann_conds = []
-        params = {"limit": limit, "skip": skip, "base_rate": float(settings.base_delivery_rate_normal)}
+        params = {"base_rate": float(settings.base_delivery_rate_normal)}
 
         # Status filter
         if status_filter:
@@ -366,7 +366,7 @@ async def list_packages(
                     NULL::timestamptz              AS col_10_delivered_at,
                     CASE WHEN a.is_active=false THEN a.updated_at ELSE NULL END AS col_11_cancelled_at,
                     COALESCE(CASE WHEN a.is_active=false THEN a.updated_at ELSE NULL END, a.announced_at) AS col_12_last_update_date,
-                    :base_rate::numeric            AS col_13_base_fee,
+                    CAST(:base_rate AS numeric)    AS col_13_base_fee,
                     NULL::timestamptz              AS col_14_storage_days_raw,
                     CAST(a.customer_id AS TEXT)    AS col_15_customer_id,
                     a.announced_at                 AS col_16_created_at,
@@ -381,8 +381,8 @@ async def list_packages(
                 WHERE {ann_where}
             ) combined
             ORDER BY col_12_last_update_date DESC NULLS LAST
-            LIMIT :limit
-            OFFSET :skip
+            LIMIT {limit}
+            OFFSET {skip}
         """)
 
         rows = db.execute(data_sql, params).fetchall()
