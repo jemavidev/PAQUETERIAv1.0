@@ -1,5 +1,5 @@
 {
-  "lastCalculated": "2026-05-07T08:13:31-05:00",
+  "lastCalculated": "2026-05-07T08:21:09-05:00",
   "summary": {
     "totalTokens": 912,
     "inputTokens": 0,
@@ -31,15 +31,15 @@
     "alerts-registry.json": 137,
     "decision-log.json": 407,
     "historical-data.json": 38,
-    "llm-usage.json": 36367,
+    "llm-usage.json": 37257,
     "metrics-analytics.json": 283,
     "patterns.json": 181,
     "progress.json": 1092,
-    "project-metrics.json": 536,
+    "project-metrics.json": 575,
     "project-size.json": 123,
     "token-accounting.json": 150,
     "MEMORY.md": 469,
-    "session-last.md": 200,
+    "session-last.md": 179,
     "workflow-prefs.md": 306
   },
   "timeline": {},
@@ -50,11 +50,11 @@
     "patterns": 0
   },
   "llmUsage": {
-    "sessions": 63,
-    "totalTokens": 1208199
+    "sessions": 65,
+    "totalTokens": 1214888
   },
   "storage": {
     "files": 15,
-    "totalBytes": 167242
+    "totalBytes": 170314
   }
 }
