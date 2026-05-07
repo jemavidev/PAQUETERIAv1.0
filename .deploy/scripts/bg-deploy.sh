@@ -18,11 +18,11 @@ cd "$PROJECT_PATH"
 
 # 1. Construir imagen del slot inactivo
 echo "🔨 Build: app_$inactive"
-docker compose -f docker-compose.staging.yml --profile "$inactive" build "app_$inactive"
+docker compose -f docker-compose.staging.yml --profile blue --profile green build "app_$inactive"
 
 # 2. Levantar slot inactivo (sin tocar el activo)
 echo "⬆️  Levantar: app_$inactive"
-docker compose -f docker-compose.staging.yml --profile "$inactive" up -d "app_$inactive"
+docker compose -f docker-compose.staging.yml --profile blue --profile green up -d "app_$inactive"
 
 # 3. Migraciones en slot inactivo
 echo "🗄️  Migraciones: alembic upgrade head"
@@ -35,13 +35,23 @@ docker exec "paqueteria_staging_$inactive" sh -c 'cd /app && alembic upgrade hea
 # 4. Health check (max 30 segundos)
 echo "⏳ Health check en puerto $inactive_port..."
 for i in $(seq 1 10); do
-    code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$inactive_port/health" 2>/dev/null || echo "000")
-    if [ "$code" = "200" ]; then
-        echo "✅ Health check OK (intento $i)"
+    response=$(curl -s -w "\n%{http_code}" "http://localhost:$inactive_port/health" 2>&1)
+    http_code=$(echo "$response" | tail -n 1)
+    body=$(echo "$response" | head -n -1)
+
+    echo "  Intento $i: HTTP $http_code"
+
+    if [ "$http_code" = "200" ]; then
+        echo "✅ Health check OK"
         break
     fi
+
     if [ "$i" -eq 10 ]; then
-        echo "❌ Health check falló tras 30s - rollback automático"
+        echo "❌ Health check falló tras 30s"
+        echo "   Último response HTTP $http_code: $body"
+        echo "   Container logs:"
+        docker logs "paqueteria_staging_$inactive" 2>&1 | tail -10
+        echo "   Deteniendo $inactive..."
         docker compose -f docker-compose.staging.yml stop "app_$inactive"
         exit 1
     fi
@@ -63,7 +73,7 @@ echo "✅ Tráfico → $inactive (puerto $inactive_port)"
 # 6. Detener slot antiguo (delay para requests en vuelo)
 echo "⏹️  Detener: app_$active (delay 5s para requests en vuelo)"
 sleep 5
-docker compose -f docker-compose.staging.yml stop "app_$active"
+docker compose -f docker-compose.staging.yml --profile blue --profile green stop "app_$active"
 
 echo ""
 echo "🎉 Blue-Green deploy completo: $active → $inactive"

@@ -18,7 +18,7 @@ echo "🔙 Rollback: $active → $prev (puerto $prev_port)"
 # Verificar que el slot anterior sigue corriendo
 if ! docker ps -q -f "name=paqueteria_staging_$prev" | grep -q .; then
     echo "❌ Slot $prev no está corriendo — no se puede hacer rollback automático"
-    echo "   Arrancar manualmente: docker compose --profile $prev up -d app_$prev"
+    echo "   Arrancar manualmente: docker compose -f docker-compose.staging.yml --profile blue --profile green up -d app_$prev"
     exit 1
 fi
 
