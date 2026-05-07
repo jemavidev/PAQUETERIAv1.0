@@ -42,14 +42,14 @@ services:
         max-file: "2"
 
   # ========================================
-  # APP - FastAPI (Puerto 8001 para evitar conflicto)
+  # APP_BLUE - FastAPI (Puerto 8001)
   # ========================================
-  app:
+  app_blue:
     build:
       context: ./CODE
       dockerfile: Dockerfile
-    image: paqueteria_staging_app:latest
-    container_name: paqueteria_staging_app
+    image: paqueteria_staging_app:blue
+    container_name: paqueteria_staging_blue
     depends_on:
       redis:
         condition: service_healthy
@@ -69,7 +69,7 @@ services:
       retries: 3
       start_period: 40s
     ports:
-      - "0.0.0.0:8001:8000"
+      - "127.0.0.1:8001:8000"
     volumes:
       # Código Python (read-only para seguridad) - COMENTADO TEMPORALMENTE PARA USAR CÓDIGO DE LA IMAGEN
       # - ./CODE/src/app:/app/src/app:ro
@@ -80,15 +80,15 @@ services:
       - ./CODE/src/static:/app/src/static
       # Templates HTML editables sin rebuild
       - ./CODE/src/templates:/app/src/templates
-      # Datos persistentes
+      # Datos persistentes (compartidos con green)
       - uploads_staging_data:/app/uploads
       - logs_staging_data:/app/logs
       # Socket de Docker para sincronización
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
     command: >
-      sh -c "mkdir -p /app/uploads && 
-             cd /app && 
+      sh -c "mkdir -p /app/uploads &&
+             cd /app &&
              python -c 'from src.uvicorn_config import *; import uvicorn; uvicorn.run(\"src.main:app\", host=HOST, port=PORT, workers=WORKERS, limit_concurrency=LIMIT_CONCURRENCY, timeout_keep_alive=TIMEOUT_KEEP_ALIVE, log_level=LOG_LEVEL)'"
     networks:
       - paqueteria_staging_network
@@ -97,6 +97,67 @@ services:
       options:
         max-size: "20m"
         max-file: "3"
+    profiles:
+      - blue
+
+  # ========================================
+  # APP_GREEN - FastAPI (Puerto 8002)
+  # ========================================
+  app_green:
+    build:
+      context: ./CODE
+      dockerfile: Dockerfile
+    image: paqueteria_staging_app:green
+    container_name: paqueteria_staging_green
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./.env.staging
+    environment:
+      - TZ=America/Bogota
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - ENVIRONMENT=staging
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-Redis2025!Secure}@redis:6380/0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    ports:
+      - "127.0.0.1:8002:8000"
+    volumes:
+      # Código Python (read-only para seguridad) - COMENTADO TEMPORALMENTE PARA USAR CÓDIGO DE LA IMAGEN
+      # - ./CODE/src/app:/app/src/app:ro
+      # - ./CODE/src/scripts:/app/src/scripts:ro
+      # - ./CODE/src/main.py:/app/src/main.py:ro
+      # - ./CODE/src/__init__.py:/app/src/__init__.py:ro
+      # Archivos estáticos editables sin rebuild (CSS, JS, imágenes, PDFs)
+      - ./CODE/src/static:/app/src/static
+      # Templates HTML editables sin rebuild
+      - ./CODE/src/templates:/app/src/templates
+      # Datos persistentes (compartidos con blue)
+      - uploads_staging_data:/app/uploads
+      - logs_staging_data:/app/logs
+      # Socket de Docker para sincronización
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
+    command: >
+      sh -c "mkdir -p /app/uploads &&
+             cd /app &&
+             python -c 'from src.uvicorn_config import *; import uvicorn; uvicorn.run(\"src.main:app\", host=HOST, port=PORT, workers=WORKERS, limit_concurrency=LIMIT_CONCURRENCY, timeout_keep_alive=TIMEOUT_KEEP_ALIVE, log_level=LOG_LEVEL)'"
+    networks:
+      - paqueteria_staging_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    profiles:
+      - green
 
 # ========================================
 # VOLÚMENES - Separados de producción

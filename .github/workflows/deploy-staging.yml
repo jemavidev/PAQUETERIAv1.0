@@ -38,18 +38,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=accept-new ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && git fetch origin && git checkout staging && git reset --hard origin/staging"
 
-      - name: 🚀 Restart Docker Services
+      - name: 🔵🟢 Blue-Green Deploy
         run: |
-          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && docker compose -f docker-compose.staging.yml down && docker compose -f docker-compose.staging.yml up -d --build"
-
-      - name: 🗄️ Run Migrations
-        run: |
-          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "docker exec paqueteria_staging_app sh -c 'cd /app && alembic upgrade head'" || echo "Migration may have failed, continuing..."
-
-      - name: ⏳ Wait for Service
-        run: |
-          echo "⏳ Waiting 15 seconds for services to stabilize..."
-          sleep 15
+          ssh -i ~/.ssh/staging_key ${{ env.STAGING_USER }}@${{ env.STAGING_HOST }} "cd ${{ env.PROJECT_PATH }} && bash .deploy/scripts/bg-deploy.sh"
 
       - name: ✅ Health Check
         run: |
