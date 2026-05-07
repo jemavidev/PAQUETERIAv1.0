@@ -282,14 +282,14 @@ async def list_packages(
             params["search"] = f"%{search}%"
             logger.info(f"🔍 Filtro búsqueda: {search}")
 
-        # Date filters
+        # Date filters (announced_at for both tables - semantic consistency)
         if date_from_obj:
-            pkg_conds.append("p.created_at >= :date_from")
+            pkg_conds.append("p.announced_at >= :date_from")
             ann_conds.append("a.announced_at >= :date_from")
             params["date_from"] = date_from_obj
             logger.info(f"📅 Filtro date_from: {date_from}")
         if date_to_obj:
-            pkg_conds.append("p.created_at < :date_to")
+            pkg_conds.append("p.announced_at < :date_to")
             ann_conds.append("a.announced_at < :date_to")
             params["date_to"] = date_to_obj
             logger.info(f"📅 Filtro date_to: {date_to}")
