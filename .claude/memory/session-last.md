@@ -1,8 +1,10 @@
-# Last session — 2026-05-05 07:13
+# Last session — 2026-05-07 08:13
 
 ## Modified files
+- .claude/memory/active-context.json
 - .claude/memory/llm-usage.json
 - .claude/memory/memory-stats.json
+- .claude/memory/metrics-analytics.json
 - .claude/memory/patterns.json
 - .claude/memory/project-metrics.json
 - .claude/memory/project-size.json
@@ -11,10 +13,10 @@
 - .claude/memory/.session-prompts-tmp
 
 ## Last commit
-8247ad6 feat: Add file viewer modals with 2-tab interface for FACTURAS and CUFE
+953cbc1 docs: Guía de setup y operación para Blue-Green deployment
 
 ## Estimated input tokens (char-count ±20%)
-2486 tokens this session
+2510 tokens this session
 
 ## Status at session end
 - Current phase: see active-context.json → currentFocus

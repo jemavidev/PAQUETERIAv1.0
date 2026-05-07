@@ -37,10 +37,10 @@
   "lastUpdated": "",
   "safetyMetrics": {
     "loopDetections": 0,
-    "planModeTriggered": 1,
+    "planModeTriggered": 4,
     "verificationsPassed": 0,
     "verificationsFailed": 0,
-    "lastUpdated": "2026-05-01T14:05:11-05:00"
+    "lastUpdated": "2026-05-07T08:07:46-05:00"
   },
   "projectStats": {
     "totalDecisions": 0,
