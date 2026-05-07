@@ -59,6 +59,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import asyncio
     logger.info("Iniciando PAQUETES EL CLUB v1.0...")
     try:
         init_db()
@@ -68,18 +69,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Error al inicializar la base de datos: {e}")
     
-    # Validar configuración SMTP al iniciar (solo si está configurada)
+    # Validar SMTP con timeout (no bloquear startup)
     try:
         from app.services.email_service import EmailService
         email_service = EmailService()
-        smtp_test = await email_service.test_smtp_connection()
+        smtp_test = await asyncio.wait_for(email_service.test_smtp_connection(), timeout=3.0)
         if smtp_test.get("success"):
             logger.info(f"✅ Conexión SMTP validada: {smtp_test.get('server')}:{smtp_test.get('port')}")
         else:
-            logger.warning(f"⚠️ Configuración SMTP no disponible o inválida: {smtp_test.get('message')}")
-            logger.warning("   Los emails no funcionarán hasta que se configure SMTP correctamente")
+            logger.warning(f"⚠️ Configuración SMTP no disponible: {smtp_test.get('message')}")
+    except asyncio.TimeoutError:
+        logger.warning("⚠️ SMTP test timeout (3s) - continuando sin validar")
     except Exception as e:
-        logger.warning(f"⚠️ No se pudo validar configuración SMTP: {str(e)}")
+        logger.warning(f"⚠️ SMTP: {str(e)}")
     
     # Iniciar tareas programadas (limpieza de anuncios antiguos, etc.)
     try:
