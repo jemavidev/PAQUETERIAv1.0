@@ -33,8 +33,8 @@ docker exec "paqueteria_staging_$inactive" sh -c 'cd /app && alembic upgrade hea
 }
 
 # 4. Health check (max 30 segundos) con pre-warmup
-echo "⏳ Pre-warmup del contenedor (5s)..."
-sleep 5
+echo "⏳ Pre-warmup del contenedor (15s)..."
+sleep 15
 
 echo "⏳ Health check en puerto $inactive_port..."
 for i in $(seq 1 10); do
@@ -76,7 +76,7 @@ echo "✅ Tráfico → $inactive (puerto $inactive_port)"
 
 # 6. Detener slot antiguo (delay para requests en vuelo)
 echo "⏹️  Detener: app_$active (delay 5s para requests en vuelo)"
-sleep 5
+sleep 15
 docker compose -f docker-compose.staging.yml --profile blue --profile green stop "app_$active"
 
 echo ""
