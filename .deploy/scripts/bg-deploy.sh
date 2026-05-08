@@ -32,10 +32,14 @@ docker exec "paqueteria_staging_$inactive" sh -c 'cd /app && alembic upgrade hea
     exit 1
 }
 
-# 4. Health check (max 30 segundos)
+# 4. Health check (max 30 segundos) con pre-warmup
+echo "⏳ Pre-warmup del contenedor (5s)..."
+sleep 5
+
 echo "⏳ Health check en puerto $inactive_port..."
 for i in $(seq 1 10); do
-    response=$(curl -s -w "\n%{http_code}" "http://localhost:$inactive_port/health" 2>&1)
+    response=$(curl -s -w "
+%{http_code}" "http://localhost:$inactive_port/health" 2>&1)
     http_code=$(echo "$response" | tail -n 1)
     body=$(echo "$response" | head -n -1)
 
@@ -48,11 +52,11 @@ for i in $(seq 1 10); do
 
     if [ "$i" -eq 10 ]; then
         echo "❌ Health check falló tras 30s"
-        echo "   Último response HTTP $http_code: $body"
+        echo "   Últim response HTTP $http_code"
         echo "   Container logs:"
         docker logs "paqueteria_staging_$inactive" 2>&1 | tail -10
         echo "   Deteniendo $inactive..."
-        docker compose -f docker-compose.staging.yml stop "app_$inactive"
+        docker compose -f docker-compose.staging.yml --profile blue --profile green stop "app_$inactive"
         exit 1
     fi
     sleep 3
