@@ -37,6 +37,7 @@ echo "⏳ Pre-warmup del contenedor (30s)..."
 sleep 30
 
 echo "⏳ Health check en puerto $inactive_port..."
+health_check_passed=false
 for i in $(seq 1 10); do
     response=$(curl --max-time 3 -s -w "\n%{http_code}" "http://localhost:$inactive_port/health" 2>&1)
     http_code=$(echo "$response" | tail -n 1)
@@ -46,6 +47,7 @@ for i in $(seq 1 10); do
 
     if [ "$http_code" = "200" ]; then
         echo "✅ Health check OK"
+        health_check_passed=true
         break
     fi
 
@@ -61,16 +63,32 @@ for i in $(seq 1 10); do
     sleep 3
 done
 
+echo "🔧 [DEBUG] Health check passed: $health_check_passed"
+echo "🔧 [DEBUG] inactive=$inactive, inactive_port=$inactive_port, active=$active"
+
 # 5. Escribir upstream y reload Nginx (zero downtime)
 echo "🔄 Nginx: escribir upstream → reload"
+echo "🔧 [DEBUG] Escribiendo a: $UPSTREAM_CONF"
 cat > "$UPSTREAM_CONF" << EOF
 upstream fastapi_staging {
     server 127.0.0.1:$inactive_port max_fails=3 fail_timeout=30s;
     keepalive 32;
 }
 EOF
-sudo nginx -t && sudo nginx -s reload
+echo "🔧 [DEBUG] Contenido escrito:"
+cat "$UPSTREAM_CONF"
+
+echo "🔧 [DEBUG] Ejecutando nginx -t..."
+sudo nginx -t
+echo "🔧 [DEBUG] nginx -t completado, ahora nginx -s reload..."
+sudo nginx -s reload
+echo "🔧 [DEBUG] nginx -s reload completado"
+
+echo "🔧 [DEBUG] Escribiendo slot file: $SLOT_FILE con valor: $inactive"
 echo "$inactive" > "$SLOT_FILE"
+echo "🔧 [DEBUG] Leyendo slot file para verificar:"
+cat "$SLOT_FILE"
+
 echo "✅ Tráfico → $inactive (puerto $inactive_port)"
 
 # 6. Detener slot antiguo (delay para requests en vuelo)
