@@ -33,8 +33,8 @@ docker exec "paqueteria_staging_$inactive" sh -c 'cd /app && alembic upgrade hea
 }
 
 # 4. Health check (max 30 segundos) con pre-warmup
-echo "⏳ Pre-warmup del contenedor (30s)..."
-sleep 30
+echo "⏳ Pre-warmup del contenedor (180s - FastAPI app tarda ~3min para iniciar)..."
+sleep 180
 
 echo "⏳ Health check en puerto $inactive_port..."
 health_check_passed=false
