@@ -38,7 +38,7 @@ sleep 15
 
 echo "⏳ Health check en puerto $inactive_port..."
 for i in $(seq 1 10); do
-    response=$(curl -s -w "
+    response=$(curl --max-time 3 -s -w "
 %{http_code}" "http://localhost:$inactive_port/health" 2>&1)
     http_code=$(echo "$response" | tail -n 1)
     body=$(echo "$response" | head -n -1)
