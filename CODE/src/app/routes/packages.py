@@ -80,18 +80,20 @@ async def get_package(
     # Check if this is an announcement ID
     if package_id.startswith('announcement_'):
         tracking_code = package_id.replace('announcement_', '')
-        
-        # Get announcement data
+
+        # Get announcement data - búsqueda flexible (case-insensitive, sin restricción is_processed)
         announcement_query = text("""
             SELECT customer_name, customer_phone, guide_number, tracking_code, announced_at
             FROM package_announcements_new
-            WHERE tracking_code = :tracking_code AND is_processed = false
+            WHERE UPPER(tracking_code) = UPPER(:tracking_code)
+            ORDER BY announced_at DESC
+            LIMIT 1
         """)
         result = db.execute(announcement_query, {"tracking_code": tracking_code})
         announcement = result.fetchone()
-        
+
         if not announcement:
-            raise HTTPException(status_code=404, detail="Anuncio no encontrado o ya procesado")
+            raise HTTPException(status_code=404, detail=f"Anuncio no encontrado: {tracking_code}")
         
         # Return announcement data in package format
         return {
