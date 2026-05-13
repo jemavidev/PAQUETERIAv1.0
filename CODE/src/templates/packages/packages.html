@@ -4332,36 +4332,79 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Esperar a que los paquetes se carguen y luego buscar el específico
         setTimeout(() => {
-            // Buscar el paquete en todos los estados
-            let foundPackage = null;
+            // Verificar si es un paquete anunciado (tiene prefijo 'announcement_')
+            if (packageIdParam.startsWith('announcement_')) {
+                log(`📣 Detectado paquete anunciado: ${packageIdParam}`);
 
-            for (const state in packagesByState) {
-                const package_ = packagesByState[state].find(p =>
-                    p.tracking_number === packageIdParam ||
-                    p.tracking_code === packageIdParam
-                );
+                // Hacer fetch a la API para obtener los detalles del anuncio
+                fetch(`/api/packages/${packageIdParam}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(announcement => {
+                    log(`✅ Anuncio obtenido de la API:`, announcement);
 
-                if (package_) {
-                    foundPackage = package_;
-                    break;
-                }
-            }
+                    // Crear un objeto de paquete a partir del anuncio
+                    const announcementPackage = {
+                        id: packageIdParam,
+                        tracking_code: announcement.tracking_code,
+                        tracking_number: announcement.tracking_code,
+                        customer_name: announcement.customer_name,
+                        customer_phone: announcement.customer_phone,
+                        guide_number: announcement.guide_number,
+                        status: 'ANUNCIADO',
+                        is_announcement: true
+                    };
 
-            if (foundPackage) {
-                log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
-                log(`📦 Abriendo modal para recibir paquete`);
+                    currentPackageId = packageIdParam;
+                    currentAction = 'receive';
+                    log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
 
-                // 🆕 IMPORTANTE: Asignar variables globales necesarias para confirmar la acción
-                currentPackageId = foundPackage.id;
-                currentAction = 'receive';
-                log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
-
-                // Abrir el modal con acción 'receive' para recibir el paquete
-                showPackageModal(foundPackage, 'receive');
+                    showPackageModal(announcementPackage, 'receive');
+                })
+                .catch(err => {
+                    error(`❌ Error al obtener anuncio: ${err.message}`);
+                    showInfoToast('Error', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+                });
             } else {
-                warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
-                // Mostrar notificación al usuario
-                showInfoToast('Paquete no encontrado', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+                // Búsqueda normal para paquetes en los estados
+                let foundPackage = null;
+
+                for (const state in packagesByState) {
+                    const package_ = packagesByState[state].find(p =>
+                        p.tracking_number === packageIdParam ||
+                        p.tracking_code === packageIdParam
+                    );
+
+                    if (package_) {
+                        foundPackage = package_;
+                        break;
+                    }
+                }
+
+                if (foundPackage) {
+                    log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
+                    log(`📦 Abriendo modal para recibir paquete`);
+
+                    // 🆕 IMPORTANTE: Asignar variables globales necesarias para confirmar la acción
+                    currentPackageId = foundPackage.id;
+                    currentAction = 'receive';
+                    log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
+
+                    // Abrir el modal con acción 'receive' para recibir el paquete
+                    showPackageModal(foundPackage, 'receive');
+                } else {
+                    warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
+                    // Mostrar notificación al usuario
+                    showInfoToast('Paquete no encontrado', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+                }
             }
         }, 800); // Esperar 800ms para que se carguen completamente los paquetes
     }

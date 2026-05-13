@@ -4965,11 +4965,488 @@
         "categories": "safety",
         "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
       }
+    },
+    {
+      "timestamp": "2026-05-12T20:25:58-05:00",
+      "input": 2403,
+      "output": 260,
+      "total": 2663,
+      "description": "Session: +3/-10 lines, 1 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 1,
+        "files": [
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 10
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "sigue sin funcionar y el deployment fallando, identifica el problema ",
+        "prompts": [
+          "sigue sin funcionar y el deployment fallando, identifica el problema "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-12T21:06:51-05:00",
+      "input": 2399,
+      "output": 1540,
+      "total": 3939,
+      "description": "Session: +54/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 34,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "peor no se que paso ahora que el gitflow aparece asi ",
+        "prompts": [
+          "peor no se que paso ahora que el gitflow aparece asi "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-12T21:29:29-05:00",
+      "input": 2388,
+      "output": 2680,
+      "total": 5068,
+      "description": "Session: +110/-24 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 90,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 4
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "",
+        "prompts": [],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-12T21:43:23-05:00",
+      "input": 2412,
+      "output": 3740,
+      "total": 6152,
+      "description": "Session: +164/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 144,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "ya actualice el servidor y lo reinicie, puedes intentar nuevamene conectar con el servidor  ssh staging  ? ",
+        "prompts": [
+          "ya actualice el servidor y lo reinicie, puedes intentar nuevamene conectar con el servidor  ssh staging  ? "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-12T21:52:15-05:00",
+      "input": 2399,
+      "output": 4860,
+      "total": 7259,
+      "description": "Session: +220/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 200,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "hace algunos minutos el servidor esta en este estado ",
+        "prompts": [
+          "hace algunos minutos el servidor esta en este estado "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-13T00:01:41-05:00",
+      "input": 2485,
+      "output": 6060,
+      "total": 8545,
+      "description": "Session: +278/-25 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 256,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 5,
+            "removed": 5
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 5,
+            "removed": 5
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "88fa413 fix: Usar prefijo 'announcement_' en enlaces de paquetes anunciados",
+        "firstPrompt": "       ",
+        "prompts": [
+          "       "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-13T04:15:36-05:00",
+      "input": 2484,
+      "output": 7100,
+      "total": 9584,
+      "description": "Session: +332/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 312,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "5f504ae chore: trigger redeploy after server recovery",
+        "firstPrompt": "       ",
+        "prompts": [
+          "       "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-13T04:25:24-05:00",
+      "input": 2409,
+      "output": 8220,
+      "total": 10629,
+      "description": "Session: +388/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 368,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "c322a18 fix: Búsqueda case-insensitive de paquetes anunciados y sin restricción is_processed",
+        "firstPrompt": "nada, sigue apareciendo este mensaje  No se encontró el paquete con código: announcement_F1LY ",
+        "prompts": [
+          "nada, sigue apareciendo este mensaje  No se encontró el paquete con código: announcement_F1LY "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
+    },
+    {
+      "timestamp": "2026-05-13T06:52:28-05:00",
+      "input": 2422,
+      "output": 9340,
+      "total": 11762,
+      "description": "Session: +444/-23 lines, 7 files | areas: safety | focus: Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
+      "estimated": true,
+      "estimationSource": "char_count_div4_plus_2386_overhead",
+      "activity": {
+        "filesChanged": 7,
+        "files": [
+          {
+            "path": ".claude/memory/.session-prompt-count",
+            "added": 1,
+            "removed": 1
+          },
+          {
+            "path": ".claude/memory/llm-usage.json",
+            "added": 424,
+            "removed": 3
+          },
+          {
+            "path": ".claude/memory/memory-stats.json",
+            "added": 6,
+            "removed": 6
+          },
+          {
+            "path": ".claude/memory/patterns.json",
+            "added": 2,
+            "removed": 2
+          },
+          {
+            "path": ".claude/memory/project-metrics.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/project-size.json",
+            "added": 4,
+            "removed": 4
+          },
+          {
+            "path": ".claude/memory/session-last.md",
+            "added": 3,
+            "removed": 3
+          }
+        ],
+        "lastCommit": "c322a18 fix: Búsqueda case-insensitive de paquetes anunciados y sin restricción is_processed",
+        "firstPrompt": "sigue sin funcionar, aparece este mensaje,   No se encontró el paquete con código: announcement_F1LY  confirmame que si estas trabajando en staging ",
+        "prompts": [
+          "sigue sin funcionar, aparece este mensaje,   No se encontró el paquete con código: announcement_F1LY  confirmame que si estas trabajando en staging "
+        ],
+        "categories": "safety",
+        "focus": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)"
+      }
     }
   ],
   "totals": {
-    "input": 167236,
-    "output": 1059460,
-    "total": 1226696
+    "input": 189037,
+    "output": 1103260,
+    "total": 1292297
   }
 }

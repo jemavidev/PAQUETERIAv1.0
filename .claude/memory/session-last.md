@@ -1,4 +1,4 @@
-# Last session — 2026-05-07 08:29
+# Last session — 2026-05-13 06:52
 
 ## Modified files
 - .claude/memory/llm-usage.json
@@ -11,10 +11,10 @@
 - .claude/memory/.session-prompts-tmp
 
 ## Last commit
-d542d00 .
+c322a18 fix: Búsqueda case-insensitive de paquetes anunciados y sin restricción is_processed
 
 ## Estimated input tokens (char-count ±20%)
-2396 tokens this session
+2422 tokens this session
 
 ## Status at session end
 - Current phase: see active-context.json → currentFocus
