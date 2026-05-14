@@ -4405,9 +4405,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     showPackageModal(foundPackage, actionParam);
                 } else {
                     // Si no está en la página actual, buscar en toda la BD via API
+                    // Usar endpoint de búsqueda sin límite de paginación para encontrar el paquete
                     log(`🔍 Paquete no encontrado en página actual. Buscando en BD...`);
 
-                    fetch(`/api/packages/tracking/${packageIdParam}`, {
+                    fetch(`/api/packages/?search=${encodeURIComponent(packageIdParam)}&limit=1000&skip=0`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'same-origin'
@@ -4418,15 +4419,31 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         return response.json();
                     })
-                    .then(packageData => {
-                        log(`✅ Paquete encontrado en BD:`, packageData);
-                        log(`📦 Abriendo modal para acción: ${actionParam}`);
+                    .then(apiData => {
+                        // Buscar el paquete en los resultados (puede venir de packages o announcements)
+                        let foundPackageData = null;
 
-                        currentPackageId = packageData.id;
-                        currentAction = actionParam;
-                        log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
+                        // Buscar en packages normales
+                        if (apiData.packages && Array.isArray(apiData.packages)) {
+                            foundPackageData = apiData.packages.find(p =>
+                                p.tracking_number === packageIdParam ||
+                                p.tracking_code === packageIdParam
+                            );
+                        }
 
-                        showPackageModal(packageData, actionParam);
+                        if (foundPackageData) {
+                            log(`✅ Paquete encontrado en BD:`, foundPackageData);
+                            log(`📦 Abriendo modal para acción: ${actionParam}`);
+
+                            currentPackageId = foundPackageData.id;
+                            currentAction = actionParam;
+                            log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
+
+                            showPackageModal(foundPackageData, actionParam);
+                        } else {
+                            warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
+                            showInfoToast('Paquete no encontrado', `No se encontró el paquete con código: ${packageIdParam}`, 3000);
+                        }
                     })
                     .catch(err => {
                         error(`❌ Error al obtener paquete: ${err.message}`);
