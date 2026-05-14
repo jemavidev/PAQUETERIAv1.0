@@ -762,9 +762,9 @@ class PackageStateService:
             guide_number=announcement.guide_number,      # Número de guía del transportador
             customer_id=customer.id if customer else None,
             display_name=announcement.customer_name,     # Guardar nombre personalizado del anuncio
-            status=PackageStatus.RECIBIDO.value,
-            package_type=request.package_type.value,
-            package_condition=request.package_condition.value,
+            status=PackageStatus.RECIBIDO,
+            package_type=request.package_type,
+            package_condition=request.package_condition,
             access_code=access_code,
             posicion=posicion,
             announced_at=announcement.announced_at,
