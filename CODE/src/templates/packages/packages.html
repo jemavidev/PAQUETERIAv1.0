@@ -2855,7 +2855,7 @@ async function confirmReceiveAction() {
         }
         
     } catch (error) {
-        error('Error en recepción del paquete:', error);
+        log('Error en recepción del paquete:', error);
         showErrorToast('Error', error.message || 'No se pudo recibir el paquete.', 5000);
     } finally {
         // Restore button state en ambos botones
