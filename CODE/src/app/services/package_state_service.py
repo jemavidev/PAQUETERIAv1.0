@@ -844,7 +844,7 @@ class PackageStateService:
                 observations=request.observations,
                 additional_data={
                     "received_from": "anuncio",
-                    "baroti_generated": baroti
+                    "baroti_generated": posicion
                 }
             )
             db.add(package_event)
