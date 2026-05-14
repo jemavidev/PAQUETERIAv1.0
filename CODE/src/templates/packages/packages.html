@@ -1075,16 +1075,24 @@ function loadPackages(page = 1) {
     })
     .then(response => {
         if (!response.ok) {
+            // Manejar errores específicos
+            if (response.status === 401) {
+                console.error('❌ Error 401: No autenticado - redirigiendo a login');
+                window.location.href = '/auth/login?redirect=/packages';
+                throw new Error('No autenticado');
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
-        log('Datos recibidos desde API:', data);
+        console.log('📦 Datos recibidos desde API:', data);
         
         // La API ahora retorna un objeto con packages y pagination
         const packages = Array.isArray(data) ? data : (data.packages || []);
         const pagination = data.pagination || null;
+        
+        console.log(`📦 Paquetes recibidos: ${packages.length}, Paginación:`, pagination);
 
         // Usar información de paginación del backend
         if (pagination) {
@@ -1122,8 +1130,8 @@ function loadPackages(page = 1) {
         displayPackagesByState(packages);
         displayPaginationControls(pagination);
     })
-    .catch(error => {
-        error('Error cargando paquetes:', error);
+    .catch(err => {
+        console.error('❌ Error cargando paquetes:', err);
         showLoadingStates(false);
         showErrorState();
     });
@@ -4318,9 +4326,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // 🆕 Detectar parámetro ?id= en URL y abrir modal automáticamente
     const urlParams = new URLSearchParams(window.location.search);
     const packageIdParam = urlParams.get('id');
+    const actionParam = urlParams.get('action') || 'receive'; // Detectar acción (receive o deliver)
 
     if (packageIdParam) {
         log(`🎯 Parámetro id detectado: ${packageIdParam}`);
+        log(`🎯 Acción detectada: ${actionParam}`);
 
         // Esperar a que los paquetes se carguen y luego buscar el específico
         setTimeout(() => {
@@ -4356,10 +4366,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
 
                     currentPackageId = packageIdParam;
-                    currentAction = 'receive';
+                    currentAction = actionParam; // Usar la acción del parámetro URL
                     log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
 
-                    showPackageModal(announcementPackage, 'receive');
+                    showPackageModal(announcementPackage, actionParam);
                 })
                 .catch(err => {
                     error(`❌ Error al obtener anuncio: ${err.message}`);
@@ -4383,15 +4393,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (foundPackage) {
                     log(`✅ Paquete encontrado: ${packageIdParam}`, foundPackage);
-                    log(`📦 Abriendo modal para recibir paquete`);
+                    log(`📦 Abriendo modal para acción: ${actionParam}`);
 
                     // 🆕 IMPORTANTE: Asignar variables globales necesarias para confirmar la acción
                     currentPackageId = foundPackage.id;
-                    currentAction = 'receive';
+                    currentAction = actionParam; // Usar la acción del parámetro URL
                     log(`✅ Variables globales configuradas: currentPackageId=${currentPackageId}, currentAction=${currentAction}`);
 
-                    // Abrir el modal con acción 'receive' para recibir el paquete
-                    showPackageModal(foundPackage, 'receive');
+                    // Abrir el modal con la acción especificada (receive o deliver)
+                    showPackageModal(foundPackage, actionParam);
                 } else {
                     warn(`⚠️ No se encontró paquete con código: ${packageIdParam}`);
                     // Mostrar notificación al usuario

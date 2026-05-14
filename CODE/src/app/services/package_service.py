@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 PAQUETES EL CLUB v1.0 - Servicio de Paquetes
-Versión: 1.0.0 (Optimizado con Cache)
-Fecha: 2025-01-24
+Versión: 2.0.0 (Optimizado con Cache y Eager Loading)
+Fecha: 2026-01-08
 Autor: Equipo de Desarrollo
+
+OPTIMIZACIONES v2.0:
+- Eager loading consistente para evitar N+1
+- Cache con TTLs optimizados
+- Commits consolidados
+- Invalidación de caché inteligente
 """
 
 import secrets
 import string
 from typing import Optional, List, Dict, Any
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import and_, or_, func
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -21,7 +27,6 @@ from app.models.package_history import PackageHistory
 from app.models.message import Message
 from app.models.notification import Notification
 from app.models.file_upload import FileUpload
-# from app.models.announcement_new import PackageAnnouncementNew  # Archivo eliminado
 from app.schemas.package import (
     PackageCreate, PackageUpdate, PackageResponse,
     PackageStatusUpdate, PackageSearch, PackageAnnouncement
@@ -37,12 +42,29 @@ logger = logging.getLogger(__name__)
 
 class PackageService(BaseService[Package, PackageCreate, PackageUpdate]):
     """
-    Servicio para gestión de paquetes (Optimizado con Cache)
+    Servicio para gestión de paquetes (Optimizado con Cache y Eager Loading)
+    
+    OPTIMIZACIONES:
+    - Usa joinedload/selectinload para evitar N+1 queries
+    - Cache con TTLs apropiados
+    - Invalidación de caché inteligente
     """
+
+    # Opciones de eager loading estándar para evitar N+1
+    EAGER_LOAD_OPTIONS = [
+        joinedload(Package.customer),
+        selectinload(Package.file_uploads)
+    ]
 
     def __init__(self):
         super().__init__(Package)
         self.customer_service = CustomerService()
+
+    def get_by_id(self, db: Session, id: int) -> Optional[Package]:
+        """Obtener paquete por ID con eager loading"""
+        return db.query(Package).options(
+            *self.EAGER_LOAD_OPTIONS
+        ).filter(Package.id == id).first()
 
     def create_package(self, db: Session, package_in: PackageCreate, user_id: int) -> Package:
         """Crear nuevo paquete con cliente y tracking number"""

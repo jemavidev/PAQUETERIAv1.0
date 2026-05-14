@@ -80,18 +80,20 @@ async def get_package(
     # Check if this is an announcement ID
     if package_id.startswith('announcement_'):
         tracking_code = package_id.replace('announcement_', '')
-        
-        # Get announcement data
+
+        # Get announcement data - búsqueda flexible (case-insensitive, sin restricción is_processed)
         announcement_query = text("""
             SELECT customer_name, customer_phone, guide_number, tracking_code, announced_at
             FROM package_announcements_new
-            WHERE tracking_code = :tracking_code AND is_processed = false
+            WHERE UPPER(tracking_code) = UPPER(:tracking_code)
+            ORDER BY announced_at DESC
+            LIMIT 1
         """)
         result = db.execute(announcement_query, {"tracking_code": tracking_code})
         announcement = result.fetchone()
-        
+
         if not announcement:
-            raise HTTPException(status_code=404, detail="Anuncio no encontrado o ya procesado")
+            raise HTTPException(status_code=404, detail=f"Anuncio no encontrado: {tracking_code}")
         
         # Return announcement data in package format
         return {
@@ -210,15 +212,15 @@ async def list_packages(
     # Temporarily disabled for testing: current_user: dict = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Listar paquetes con filtros opcionales y paginación (10 por página) - OPTIMIZADO"""
-    from sqlalchemy import text, or_, and_
+    """Listar paquetes con filtros opcionales y paginación - UNION ALL (BD-paginado)"""
+    from sqlalchemy import text
     import logging
     from app.cache_manager import cache_manager
-    from datetime import datetime
-    
+    from datetime import datetime, timezone, timedelta
+
     logger = logging.getLogger(__name__)
-    
-    # OPTIMIZACIÓN: Verificar caché primero
+
+    # CACHE CHECK
     cache_filters = {
         "skip": skip,
         "limit": limit,
@@ -228,340 +230,242 @@ async def list_packages(
         "date_from": date_from,
         "date_to": date_to
     }
-    
+
     cached_result = cache_manager.get_cached_packages_list(cache_filters)
     if cached_result:
         logger.info("📦 Datos obtenidos del caché")
         return cached_result
 
-    # Get packages with file uploads
-    # Get packages with file uploads using ORM
-    from datetime import datetime, timezone
-    
     try:
-        # Construir query base
-        query = db.query(Package).options(
-            joinedload(Package.customer),
-            joinedload(Package.file_uploads)
-        )
-        
-        # Aplicar filtro de estado si se proporciona
-        if status_filter:
-            logger.info(f"🔍 Aplicando filtro de estado: {status_filter}")
-            # Normalizar el estado para comparación
-            from app.utils.normalization import normalize_status
-            normalized_status = normalize_status(status_filter)
-            if normalized_status:
-                query = query.filter(Package.status == normalized_status)
-                logger.info(f"✅ Filtro aplicado: {normalized_status}")
-        
-        # Aplicar filtro de cliente si se proporciona
-        if customer_id:
-            query = query.filter(Package.customer_id == customer_id)
-        
-        # Aplicar filtro de búsqueda por texto
-        if search:
-            search_term = f"%{search}%"
-            from app.models.customer import Customer
-            query = query.join(Package.customer, isouter=True).filter(
-                or_(
-                    Package.tracking_number.ilike(search_term),
-                    Package.guide_number.ilike(search_term),
-                    Customer.full_name.ilike(search_term),
-                    Customer.phone.ilike(search_term)
-                )
-            )
-            logger.info(f"🔍 Aplicando filtro de búsqueda: {search}")
-        
-        # Aplicar filtro de fecha desde
+        from app.utils.normalization import normalize_status
+
+        # STEP 1: NORMALIZE DATE PARAMETERS
+        date_from_obj = None
+        date_to_obj = None
         if date_from:
             try:
                 date_from_obj = datetime.strptime(date_from, "%Y-%m-%d")
-                query = query.filter(Package.created_at >= date_from_obj)
-                logger.info(f"📅 Aplicando filtro fecha desde: {date_from}")
             except ValueError:
-                logger.warning(f"⚠️ Formato de fecha inválido: {date_from}")
-        
-        # Aplicar filtro de fecha hasta
+                logger.warning(f"⚠️ Formato fecha_from inválido: {date_from}")
         if date_to:
             try:
-                date_to_obj = datetime.strptime(date_to, "%Y-%m-%d")
-                # Agregar 1 día para incluir todo el día seleccionado
-                from datetime import timedelta
-                date_to_obj = date_to_obj + timedelta(days=1)
-                query = query.filter(Package.created_at < date_to_obj)
-                logger.info(f"📅 Aplicando filtro fecha hasta: {date_to}")
+                date_to_obj = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
             except ValueError:
-                logger.warning(f"⚠️ Formato de fecha inválido: {date_to}")
-        
-        # OPTIMIZACIÓN: Contar total ANTES de paginar (más eficiente)
-        total_packages = query.count()
-        logger.info(f"📊 Total de paquetes encontrados: {total_packages}")
-        
-        # OPTIMIZACIÓN: Aplicar paginación a nivel de BD (LIMIT/OFFSET)
-        packages_query = query.order_by(Package.updated_at.desc())\
-            .limit(limit)\
-            .offset(skip)\
-            .all()
-        
-        logger.info(f"📦 Paquetes cargados en esta página: {len(packages_query)}")
-    except Exception as e:
-        logger.error(f"Error querying packages: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
-    
-    packages_data = []
-    # OPTIMIZACIÓN: Calcular storage_days una sola vez
-    now_utc = datetime.now(timezone.utc)
-    
-    for package in packages_query:
-        try:
-            # Calculate storage days (optimizado)
-            storage_days = 0
-            storage_fee = 0.0
-            if package.received_at:
-                received_at = package.received_at
-                if received_at.tzinfo is None:
-                    received_at = received_at.replace(tzinfo=timezone.utc)
-                delta = now_utc - received_at
-                storage_days = max(0, delta.days)
-                storage_fee = float(storage_days * settings.base_storage_rate)
-            
-            total_amount = float(package.base_fee or 0) + storage_fee
-            
-            # Get file uploads
-            file_uploads_data = []
-            for file_upload in package.file_uploads:
-                try:
-                    file_uploads_data.append({
-                        'id': file_upload.id,
-                        'filename': file_upload.filename,
-                        's3_key': file_upload.s3_key,
-                        's3_url': file_upload.s3_url,
-                        'file_type': file_upload.file_type.value if file_upload.file_type else None,
-                        'file_size': file_upload.file_size,
-                        'content_type': file_upload.content_type,
-                        'created_at': file_upload.created_at.isoformat() if file_upload.created_at else None
-                    })
-                except Exception as e:
-                    logger.warning(f"Error processing file upload {file_upload.id}: {str(e)}")
-                    continue
-            
-            # Calcular la fecha de última actualización (la más reciente entre announced_at, received_at, delivered_at, cancelled_at)
-            last_update_date = package.announced_at
-            if package.delivered_at:
-                last_update_date = package.delivered_at
-            elif package.cancelled_at:
-                last_update_date = package.cancelled_at
-            elif package.received_at:
-                last_update_date = package.received_at
-            
-            packages_data.append({
-                'id': package.id,
-                'tracking_number': package.tracking_number,
-                'guide_number': package.guide_number,
-                'customer_name': package.customer.full_name if package.customer else 'Sin cliente',
-                'customer_phone': package.customer.phone if package.customer else 'Sin teléfono',
-                'customer_email': package.customer.email if package.customer else None,
-                'package_type': package.package_type.value if package.package_type else 'normal',
-                'status': package.status.value if package.status else 'ANUNCIADO',
-                'package_condition': package.package_condition.value if package.package_condition else 'BUENO',
-                'access_code': package.access_code or '',
-                'baroti': package.posicion,
+                logger.warning(f"⚠️ Formato fecha_to inválido: {date_to}")
+
+        # STEP 2: BUILD DYNAMIC FILTER CONDITIONS
+        pkg_conds = ["1=1"]
+        ann_conds = []
+        params = {"base_rate": float(settings.base_delivery_rate_normal)}
+
+        # Status filter
+        if status_filter:
+            norm_status = normalize_status(status_filter)
+            if norm_status:
+                pkg_conds.append("p.status::text = :status_val")
+                params["status_val"] = norm_status
+                if norm_status == "ANUNCIADO":
+                    ann_conds.append("a.is_active = true")
+                elif norm_status == "CANCELADO":
+                    ann_conds.append("a.is_active = false")
+                else:
+                    ann_conds.append("1=0")  # RECIBIDO/ENTREGADO → no announcements
+
+        # Customer filter
+        if customer_id:
+            pkg_conds.append("p.customer_id = CAST(:customer_id AS UUID)")
+            ann_conds.append("a.customer_id = CAST(:customer_id AS UUID)")
+            params["customer_id"] = str(customer_id)
+
+        # Search filter
+        if search:
+            pkg_conds.append("(p.tracking_number ILIKE :search OR p.guide_number ILIKE :search OR c.full_name ILIKE :search OR c.phone ILIKE :search)")
+            ann_conds.append("(a.tracking_code ILIKE :search OR a.guide_number ILIKE :search OR a.customer_name ILIKE :search OR a.customer_phone ILIKE :search OR c.full_name ILIKE :search OR c.phone ILIKE :search)")
+            params["search"] = f"%{search}%"
+            logger.info(f"🔍 Filtro búsqueda: {search}")
+
+        # Date filters (announced_at for both tables - semantic consistency)
+        if date_from_obj:
+            pkg_conds.append("p.announced_at >= :date_from")
+            ann_conds.append("a.announced_at >= :date_from")
+            params["date_from"] = date_from_obj
+            logger.info(f"📅 Filtro date_from: {date_from}")
+        if date_to_obj:
+            pkg_conds.append("p.announced_at < :date_to")
+            ann_conds.append("a.announced_at < :date_to")
+            params["date_to"] = date_to_obj
+            logger.info(f"📅 Filtro date_to: {date_to}")
+
+        pkg_where = " AND ".join(pkg_conds)
+        ann_where = "a.is_processed = false" + (" AND " + " AND ".join(ann_conds) if ann_conds else "")
+
+        logger.info(f"🔧 pkg_where: {pkg_where[:80]}...")
+        logger.info(f"🔧 ann_where: {ann_where[:80]}...")
+
+        # STEP 3: COUNT QUERY
+        count_sql = text(f"""
+            SELECT COUNT(*) FROM (
+                SELECT 1 FROM packages p
+                LEFT JOIN customers c ON p.customer_id = c.id
+                WHERE {pkg_where}
+
+                UNION ALL
+
+                SELECT 1 FROM package_announcements_new a
+                LEFT JOIN customers c ON a.customer_id = c.id
+                WHERE {ann_where}
+            ) _count
+        """)
+        total_count = db.execute(count_sql, params).scalar() or 0
+        logger.info(f"📊 Total items (packages + announcements): {total_count}")
+
+        # STEP 4: DATA QUERY (UNION ALL WITH LIMIT + OFFSET)
+        data_sql = text(f"""
+            SELECT * FROM (
+                -- Packages branch
+                SELECT
+                    CAST(p.id AS TEXT)             AS col_0_id,
+                    p.tracking_number              AS col_1_tracking_number,
+                    p.guide_number                 AS col_2_guide_number,
+                    p.package_type::text           AS col_3_package_type,
+                    p.status::text                 AS col_4_status,
+                    p.package_condition::text      AS col_5_package_condition,
+                    p.access_code                  AS col_6_access_code,
+                    p.posicion                     AS col_7_baroti,
+                    p.announced_at                 AS col_8_announced_at,
+                    p.received_at                  AS col_9_received_at,
+                    p.delivered_at                 AS col_10_delivered_at,
+                    p.cancelled_at                 AS col_11_cancelled_at,
+                    COALESCE(p.delivered_at, p.cancelled_at, p.received_at, p.announced_at) AS col_12_last_update_date,
+                    p.base_fee                     AS col_13_base_fee,
+                    p.received_at                  AS col_14_storage_days_raw,
+                    CAST(p.customer_id AS TEXT)    AS col_15_customer_id,
+                    p.created_at                   AS col_16_created_at,
+                    p.updated_at                   AS col_17_updated_at,
+                    COALESCE(c.full_name, 'Sin cliente')  AS col_18_customer_name,
+                    COALESCE(c.phone, 'Sin teléfono')     AS col_19_customer_phone,
+                    c.email                        AS col_20_customer_email,
+                    false                          AS col_21_is_announcement,
+                    p.id                           AS col_22_package_id_int
+                FROM packages p
+                LEFT JOIN customers c ON p.customer_id = c.id
+                WHERE {pkg_where}
+
+                UNION ALL
+
+                -- Announcements branch
+                SELECT
+                    CONCAT('announcement_', a.tracking_code) AS col_0_id,
+                    a.tracking_code                AS col_1_tracking_number,
+                    a.guide_number                 AS col_2_guide_number,
+                    'normal'                       AS col_3_package_type,
+                    CASE WHEN a.is_active=false THEN 'cancelado' ELSE 'announced' END AS col_4_status,
+                    'ok'                           AS col_5_package_condition,
+                    ''                             AS col_6_access_code,
+                    NULL                           AS col_7_baroti,
+                    a.announced_at                 AS col_8_announced_at,
+                    NULL::timestamptz              AS col_9_received_at,
+                    NULL::timestamptz              AS col_10_delivered_at,
+                    CASE WHEN a.is_active=false THEN a.updated_at ELSE NULL END AS col_11_cancelled_at,
+                    COALESCE(CASE WHEN a.is_active=false THEN a.updated_at ELSE NULL END, a.announced_at) AS col_12_last_update_date,
+                    CAST(:base_rate AS numeric)    AS col_13_base_fee,
+                    NULL::timestamptz              AS col_14_storage_days_raw,
+                    CAST(a.customer_id AS TEXT)    AS col_15_customer_id,
+                    a.announced_at                 AS col_16_created_at,
+                    a.announced_at                 AS col_17_updated_at,
+                    COALESCE(a.customer_name, c.full_name, 'Sin cliente') AS col_18_customer_name,
+                    COALESCE(a.customer_phone, c.phone, 'Sin teléfono') AS col_19_customer_phone,
+                    c.email                        AS col_20_customer_email,
+                    true                           AS col_21_is_announcement,
+                    NULL::integer                  AS col_22_package_id_int
+                FROM package_announcements_new a
+                LEFT JOIN customers c ON a.customer_id = c.id
+                WHERE {ann_where}
+            ) combined
+            ORDER BY col_12_last_update_date DESC NULLS LAST
+            LIMIT {limit}
+            OFFSET {skip}
+        """)
+
+        rows = db.execute(data_sql, params).fetchall()
+        logger.info(f"📦 Filas obtenidas en esta página: {len(rows)}")
+
+        # STEP 5: BATCH FILE UPLOADS
+        pkg_ids = [row[22] for row in rows if row[22] is not None]
+        file_uploads_by_pkg = {}
+        if pkg_ids:
+            fu_sql = text("SELECT id, package_id, filename, s3_key, s3_url, file_type::text, file_size, content_type, created_at FROM file_uploads WHERE package_id = ANY(:ids)")
+            fu_rows = db.execute(fu_sql, {"ids": pkg_ids}).fetchall()
+            for fu in fu_rows:
+                file_uploads_by_pkg.setdefault(fu[1], []).append({
+                    'id': fu[0], 'filename': fu[2], 's3_key': fu[3],
+                    's3_url': fu[4], 'file_type': fu[5], 'file_size': fu[6],
+                    'content_type': fu[7], 'created_at': fu[8].isoformat() if fu[8] else None
+                })
+            logger.info(f"📎 File uploads batch: {len(fu_rows)} archivos para {len(pkg_ids)} paquetes")
+
+        # STEP 6: ASSEMBLE ITEMS + CALCULATE STORAGE
+        now_utc = datetime.now(timezone.utc)
+        items = []
+
+        for row in rows:
+            storage_days, storage_fee = 0, 0.0
+            if not row[21]:  # is_announcement=false
+                raw_ts = row[14]  # storage_days_raw
+                if raw_ts:
+                    ts = raw_ts.replace(tzinfo=timezone.utc) if raw_ts.tzinfo is None else raw_ts
+                    storage_days = max(0, (now_utc - ts).days)
+                    storage_fee = float(storage_days * settings.base_storage_rate)
+
+            item_dict = {
+                'id': row[0], 'tracking_number': row[1], 'guide_number': row[2],
+                'package_type': row[3], 'status': row[4], 'package_condition': row[5],
+                'access_code': row[6], 'baroti': row[7],
+                'announced_at': row[8].isoformat() if row[8] else None,
+                'received_at': row[9].isoformat() if row[9] else None,
+                'delivered_at': row[10].isoformat() if row[10] else None,
+                'cancelled_at': row[11].isoformat() if row[11] else None,
+                'last_update_date': row[12].isoformat() if row[12] else None,
+                'base_fee': float(row[13] or 0),
+                'storage_fee': storage_fee, 'storage_days': storage_days,
+                'total_amount': float(row[13] or 0) + storage_fee,
+                'customer_id': row[15],
+                'created_at': row[16].isoformat() if row[16] else None,
+                'updated_at': row[17].isoformat() if row[17] else None,
+                'customer_name': row[18], 'customer_phone': row[19],
+                'customer_email': row[20],
+                'is_announcement': row[21],
+                'file_uploads': file_uploads_by_pkg.get(row[22], []),
                 'observations': None,
-                'announced_at': package.announced_at.isoformat() if package.announced_at else None,
-                'received_at': package.received_at.isoformat() if package.received_at else None,
-                'delivered_at': package.delivered_at.isoformat() if package.delivered_at else None,
-                'cancelled_at': package.cancelled_at.isoformat() if package.cancelled_at else None,
-                'last_update_date': last_update_date.isoformat() if last_update_date else None,
-                'base_fee': float(package.base_fee or 0),
-                'storage_fee': storage_fee,
-                'storage_days': storage_days,
-                'total_amount': total_amount,
-                'customer_id': package.customer_id,
-                'created_at': package.created_at.isoformat() if package.created_at else None,
-                'updated_at': package.updated_at.isoformat() if package.updated_at else None,
-                'is_announcement': False,
-                'file_uploads': file_uploads_data
-            })
-        except Exception as e:
-            logger.error(f"Error processing package {package.id}: {str(e)}")
-            continue
+            }
+            items.append(normalize_package_item(item_dict))
 
-    # Obtener anuncios no procesados (aplicar filtros si existen)
-    # Construir WHERE clause dinámicamente
-    where_clauses = ["a.is_processed = false"]
-    
-    # Aplicar filtro de estado a anuncios si se proporciona
-    if status_filter:
-        normalized_status = normalize_status(status_filter)
-        if normalized_status == "ANUNCIADO":
-            where_clauses.append("a.is_active = true")
-        elif normalized_status == "CANCELADO":
-            where_clauses.append("a.is_active = false")
-        else:
-            # Si el filtro es RECIBIDO o ENTREGADO, no mostrar anuncios
-            where_clauses.append("1=0")  # Condición que siempre es falsa
-    
-    # Aplicar filtro de búsqueda a anuncios si se proporciona
-    if search:
-        search_term = f"%{search}%"
-        where_clauses.append(f"""(
-            a.tracking_code ILIKE :search_term OR
-            a.guide_number ILIKE :search_term OR
-            a.customer_name ILIKE :search_term OR
-            a.customer_phone ILIKE :search_term OR
-            c.full_name ILIKE :search_term OR
-            c.phone ILIKE :search_term
-        )""")
-        logger.info(f"🔍 Aplicando filtro de búsqueda a anuncios: {search}")
-    
-    # Aplicar filtro de fecha desde a anuncios
-    if date_from:
-        where_clauses.append(f"a.announced_at >= :date_from")
-        logger.info(f"📅 Aplicando filtro fecha desde a anuncios: {date_from}")
-    
-    # Aplicar filtro de fecha hasta a anuncios
-    if date_to:
-        where_clauses.append(f"a.announced_at < :date_to")
-        logger.info(f"📅 Aplicando filtro fecha hasta a anuncios: {date_to}")
-    
-    where_clause = " AND ".join(where_clauses)
-    
-    announcements_query = f"""
-        SELECT
-            CONCAT('announcement_', a.tracking_code) as id,
-            a.tracking_code as tracking_number,
-            'normal' as package_type,
-            CASE 
-                WHEN a.is_active = false THEN 'cancelado'
-                ELSE 'announced'
-            END as status,
-            'ok' as package_condition,
-            '' as access_code,
-            NULL as posicion,
-            NULL as observations,
-            a.announced_at,
-            NULL as received_at,
-            NULL as delivered_at,
-            CASE 
-                WHEN a.is_active = false THEN a.updated_at
-                ELSE NULL
-            END as cancelled_at,
-            {settings.base_delivery_rate_normal} as base_fee,
-            0.00 as storage_fee,
-            {settings.base_delivery_rate_normal} as total_amount,
-            a.customer_id,
-            a.announced_at as created_at,
-            a.announced_at as updated_at,
-            COALESCE(a.customer_name, c.full_name, 'Sin cliente') as customer_name,
-            COALESCE(a.customer_phone, c.phone, 'Sin teléfono') as customer_phone,
-            c.email as customer_email,
-            a.guide_number
-        FROM package_announcements_new a
-        LEFT JOIN customers c ON a.customer_id = c.id
-        WHERE {where_clause}
-        ORDER BY a.announced_at DESC
-    """
+        # STEP 7: PAGINATION MATH + RESPONSE
+        total_pages = (total_count + limit - 1) // limit if total_count > 0 else 1
+        current_page = (skip // limit) + 1
 
-    # Preparar parámetros para la query de anuncios
-    announcement_params = {}
-    if search:
-        announcement_params['search_term'] = f"%{search}%"
-    if date_from:
-        try:
-            announcement_params['date_from'] = datetime.strptime(date_from, "%Y-%m-%d")
-        except ValueError:
-            pass
-    if date_to:
-        try:
-            from datetime import timedelta
-            date_to_obj = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
-            announcement_params['date_to'] = date_to_obj
-        except ValueError:
-            pass
-    
-    announcements_result = db.execute(text(announcements_query), announcement_params)
-    announcements_data = announcements_result.fetchall()
-    logger.info(f"📢 Anuncios encontrados: {len(announcements_data)}")
-
-    # Combine packages and announcements
-    all_items = []
-
-    # Add packages (now they are already dictionaries with file_uploads)
-    for package_dict in packages_data:
-        all_items.append(normalize_package_item(package_dict))
-
-    # Add announcements
-    for row in announcements_data:
-        # Calcular last_update_date para anuncios
-        announced_at = row[8]
-        cancelled_at = row[11]
-        last_update_date = cancelled_at if cancelled_at else announced_at
-        
-        item_dict = {
-            'id': row[0],  # This will be 'announcement_uuid'
-            'tracking_number': row[1],
-            'package_type': row[2],  # normalized later
-            'status': row[3],        # normalized later
-            'package_condition': row[4],
-            'access_code': row[5],
-            'baroti': row[6],
-            'observations': row[7],
-            'announced_at': row[8].isoformat() if row[8] else None,
-            'received_at': row[9],
-            'delivered_at': row[10],
-            'cancelled_at': row[11].isoformat() if row[11] else None,
-            'last_update_date': last_update_date.isoformat() if last_update_date else None,
-            'base_fee': float(row[12]),
-            'storage_fee': float(row[13]),
-            'storage_days': 0,  # Los anuncios no tienen días de almacenamiento
-            'total_amount': float(row[14]),
-            'customer_id': row[15],
-            'created_at': row[16].isoformat() if row[16] else None,
-            'updated_at': row[17].isoformat() if row[17] else None,
-            'customer_name': row[18],  # ✅ Ahora viene de customers.full_name si existe
-            'customer_phone': row[19],  # ✅ Ahora viene de customers.phone si existe
-            'customer_email': row[20],  # ✅ Email del cliente (puede ser None)
-            'guide_number': row[21],  # Guide number from announcement
-            'is_announcement': True,  # Flag to identify if it's an announcement
-            'file_uploads': []  # Los anuncios no tienen archivos adjuntos
+        result = {
+            "packages": items,
+            "pagination": {
+                "page": current_page,
+                "limit": limit,
+                "total": total_count,
+                "total_pages": total_pages,
+                "has_prev": skip > 0,
+                "has_next": (skip + limit) < total_count,
+                "_pagination_fix_v3": "UNION_ALL"
+            }
         }
-        all_items.append(normalize_package_item(item_dict))
 
-    # Sort by last_update_date (most recent first) - ORDENAR POR ÚLTIMA ACTUALIZACIÓN
-    all_items.sort(key=lambda x: x.get('last_update_date') or x.get('created_at') or '', reverse=True)
+        # STEP 8: CACHE
+        cache_manager.cache_packages_list(result, cache_filters, ttl=300)
+        logger.info(f"✅ Respuesta ensamblada: {len(items)} items, página {current_page}/{total_pages}, cached")
 
-    # OPTIMIZACIÓN: Calcular información de paginación con el total real
-    total_items = total_packages + len(announcements_data)
-    total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
-    current_page = (skip // limit) + 1
-    has_prev = skip > 0
-    has_next = skip + limit < total_items
+        return result
 
-    # OPTIMIZACIÓN: Aplicar paginación después de combinar y ordenar
-    # NOTA: Esto aún se hace en memoria, pero ahora solo con los items de la página actual
-    start_idx = skip
-    end_idx = skip + limit
-    paginated_items = all_items[start_idx:end_idx]
-
-    # Preparar respuesta
-    result = {
-        "packages": paginated_items,
-        "pagination": {
-            "page": current_page,
-            "limit": limit,
-            "total": total_items,
-            "total_pages": total_pages,
-            "has_prev": has_prev,
-            "has_next": has_next
-        }
-    }
-    
-    # OPTIMIZACIÓN: Guardar en caché por 5 minutos (aumentado desde 15 segundos)
-    cache_manager.cache_packages_list(result, cache_filters, ttl=300)
-    logger.info(f"📦 Datos guardados en caché (5 min) - {len(paginated_items)} items")
-    
-    return result
+    except Exception as e:
+        logger.error(f"❌ Error en list_packages UNION ALL: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error al consultar paquetes: {str(e)}")
 
 
 @router.post("/search", response_model=List[PackageResponse])

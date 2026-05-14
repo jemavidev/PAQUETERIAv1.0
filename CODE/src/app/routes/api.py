@@ -1014,36 +1014,29 @@ async def create_announcement_direct(request: Request, db: Session = Depends(get
         db.refresh(announcement)
         
         # ========================================
-        # ENVIAR SMS DE CONFIRMACIÓN AUTOMÁTICAMENTE
+        # OPTIMIZACIÓN: Notificaciones en Background
         # ========================================
         try:
-            from app.services.sms_service import SMSService
-            from app.models.notification import NotificationEvent, NotificationPriority
-            from app.schemas.notification import SMSByEventRequest
-
-            sms_service = SMSService()
-            event_request = SMSByEventRequest(
-                event_type=NotificationEvent.PACKAGE_ANNOUNCED,
-                announcement_id=announcement.id,
-                custom_variables={
-                    "guide_number": announcement.guide_number,
-                    "tracking_code": announcement.tracking_code,
-                    "customer_name": announcement.customer_name
-                },
-                priority=NotificationPriority.ALTA,
-                is_test=False
-            )
-            sms_result = await sms_service.send_sms_by_event(db=db, event_request=event_request)
+            from app.services.background_tasks_service import BackgroundTasksService
             
-            if sms_result.status == "sent":
-                print(f"✅ SMS de anuncio enviado exitosamente para anuncio {announcement.id} al {announcement.customer_phone}")
-            else:
-                print(f"⚠️ SMS de anuncio falló para anuncio {announcement.id}: {sms_result.message}")
-                
-        except Exception as sms_error:
-            print(f"❌ Error al enviar SMS para anuncio {announcement.id}: {sms_error}")
-            import traceback
-            traceback.print_exc()
+            # Obtener email del cliente si existe
+            customer_email = None
+            if existing_customer and hasattr(existing_customer, 'email'):
+                customer_email = existing_customer.email
+            
+            BackgroundTasksService.schedule_announcement_notification(
+                announcement_id=str(announcement.id),
+                customer_id=customer_id,
+                customer_phone=customer_phone,
+                customer_email=customer_email,
+                guide_number=guide_number,
+                tracking_code=tracking_code,
+                customer_name=customer_name
+            )
+            print(f"📤 Notificaciones programadas en background para anuncio {announcement.id}")
+            
+        except Exception as bg_error:
+            print(f"⚠️ Error programando notificaciones en background: {bg_error}")
         
         return {
             "success": True,
@@ -1472,68 +1465,10 @@ async def get_package_history(tracking_number: str, db: Session = Depends(get_db
             "history": []
         }
 
-@router.get("/packages")
-async def get_packages(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """Obtener paquetes de la base de datos con paginación"""
-    try:
-        # Obtener total de paquetes
-        total_packages = db.query(Package).count()
-
-        # Obtener paquetes con paginación e incluir información del cliente
-        packages = db.query(Package).join(Package.customer, isouter=True).offset(skip).limit(limit).all()
-
-        # Calcular información de paginación
-        current_page = (skip // limit) + 1
-        total_pages = (total_packages + limit - 1) // limit  # Ceiling division
-
-        return {
-            "success": True,
-            "packages": [
-                {
-                    "id": str(pkg.id),
-                    "tracking_number": pkg.tracking_number,
-                    "customer_name": pkg.customer.full_name if pkg.customer else None,
-                    "customer_phone": pkg.customer.phone if pkg.customer else None,
-                    "status": pkg.status.value if pkg.status else None,
-                    "package_type": pkg.package_type.value if pkg.package_type else None,
-                    "package_condition": pkg.package_condition.value if pkg.package_condition else None,
-                    # "observations": pkg.observations,  # Campo eliminado del modelo Package
-                    "announced_at": pkg.announced_at.isoformat() if pkg.announced_at else None,
-                    "received_at": pkg.received_at.isoformat() if pkg.received_at else None,
-                    "delivered_at": pkg.delivered_at.isoformat() if pkg.delivered_at else None,
-                    "guide_number": pkg.guide_number,
-                    "baroti": pkg.posicion,
-                    "access_code": pkg.access_code
-                }
-                for pkg in packages
-            ],
-            "pagination": {
-                "total": total_packages,
-                "page": current_page,
-                "limit": limit,
-                "pages": total_pages,
-                "has_next": current_page < total_pages,
-                "has_prev": current_page > 1
-            }
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "packages": [],
-            "pagination": {
-                "total": 0,
-                "page": 1,
-                "limit": limit,
-                "pages": 0,
-                "has_next": False,
-                "has_prev": False
-            }
-        }
+# NOTA: Endpoint /packages ELIMINADO - Usar /api/packages/ del router packages.py
+# El endpoint duplicado aquí no soportaba filtros (search, status_filter) y causaba
+# que la vista /packages no cargara datos correctamente.
+# El endpoint correcto está en: CODE/src/app/routes/packages.py -> GET /
 
 @router.get("/health")
 async def api_health_check():
