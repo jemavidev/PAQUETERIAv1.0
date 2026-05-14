@@ -64,9 +64,19 @@ class PackageStateService:
         new_status: PackageStatus,
         changed_by: str = "system",
         additional_data: Optional[Dict[str, Any]] = None,
-        observations: Optional[str] = None
+        observations: Optional[str] = None,
+        send_notifications: bool = True
     ) -> PackageHistory:
-        """Actualizar el estado de un paquete y registrar el cambio en el historial"""
+        """
+        Actualizar el estado de un paquete y registrar el cambio en el historial.
+        
+        OPTIMIZADO v3.0:
+        - Commit único al final de la transacción
+        - Notificaciones enviadas en background (no bloquean)
+        - Invalidación de caché optimizada
+        """
+        import logging
+        logger = logging.getLogger("package_state_service")
 
         # Verificar si la transición está permitida
         if not cls.is_transition_allowed(package.status, new_status):
@@ -91,7 +101,7 @@ class PackageStateService:
         # Crear entrada en el historial
         history_entry = PackageHistory(
             id=uuid.uuid4(),
-            package_id=package.id,  # Usar Integer directamente
+            package_id=package.id,
             previous_status=previous_status.value if previous_status else None,
             new_status=new_status.value,
             changed_at=now,
@@ -100,7 +110,7 @@ class PackageStateService:
             observations=observations
         )
 
-        # Guardar en la base de datos
+        # OPTIMIZACIÓN: Un solo commit para toda la transacción
         db.add(history_entry)
         db.commit()
         db.refresh(history_entry)
@@ -113,30 +123,22 @@ class PackageStateService:
                 package_id=str(package.id),
                 customer_id=str(package.customer_id) if package.customer_id else None
             )
-            import logging
-            logger = logging.getLogger("package_state_service")
             logger.info(f"✅ Caché invalidado para paquete {package.id} después de cambio a {new_status.value}")
         except Exception as e:
-            import logging
-            logger = logging.getLogger("package_state_service")
             logger.warning(f"⚠️ Error invalidando caché para paquete {package.id}: {str(e)}")
 
-        # Enviar notificación SMS automáticamente si hay un cliente asociado
-        try:
-            await cls._send_sms_notification(db, package, new_status, changed_by)
-        except Exception as e:
-            # Log error but don't fail the package update
-            import logging
-            logger = logging.getLogger("package_state_service")
-            logger.warning(f"Error enviando SMS para paquete {package.id}: {str(e)}")
-
-        # Enviar notificación por email automáticamente si hay un cliente con email
-        try:
-            await cls._send_email_notification(db, package, new_status, changed_by)
-        except Exception as e:
-            import logging
-            logger = logging.getLogger("package_state_service")
-            logger.warning(f"Error enviando email para paquete {package.id}: {str(e)}")
+        # OPTIMIZACIÓN: Enviar notificaciones en background (no bloquea la operación)
+        if send_notifications and package.customer_id:
+            try:
+                from app.services.background_tasks_service import BackgroundTasksService
+                BackgroundTasksService.schedule_notification(
+                    package_id=package.id,
+                    new_status=new_status,
+                    changed_by=changed_by
+                )
+                logger.debug(f"📤 Notificaciones programadas en background para paquete {package.id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Error programando notificaciones para paquete {package.id}: {str(e)}")
 
         return history_entry
 
@@ -414,7 +416,7 @@ class PackageStateService:
         variables = {
             "guide_number": package.tracking_number,
             "tracking_code": getattr(package, 'tracking_code', 'N/A'),
-            "customer_name": package.customer.full_name if package.customer else "Sin cliente",
+            "customer_name": package.display_name or (package.customer.full_name if package.customer else "Sin cliente"),
             "package_type": package.package_type.value if package.package_type else "normal",
             "package_condition": package.package_condition.value if package.package_condition else "ok"
         }
@@ -492,7 +494,7 @@ class PackageStateService:
             return  # No hay evento definido para este estado
 
         # Construir variables unificadas para la plantilla de estado
-        full_name = package.customer.full_name if package.customer and package.customer.full_name else "Cliente"
+        full_name = package.display_name or (package.customer.full_name if package.customer and package.customer.full_name else "Cliente")
         first_name = full_name.split(" ")[0]
 
         # Código de consulta que se usará en la URL de búsqueda
@@ -647,6 +649,10 @@ class PackageStateService:
                 existing_package.package_type = request.package_type.value
                 existing_package.package_condition = request.package_condition.value
                 
+                # Guardar nombre personalizado del anuncio si no existe
+                if not existing_package.display_name and announcement.customer_name:
+                    existing_package.display_name = announcement.customer_name
+                
                 # Solo cambiar estado si aún no está recibido
                 new_status_value = PackageStatus.RECIBIDO.value
                 if previous_status_value != new_status_value:
@@ -755,6 +761,7 @@ class PackageStateService:
             tracking_number=announcement.tracking_code,  # Código único del paquete
             guide_number=announcement.guide_number,      # Número de guía del transportador
             customer_id=customer.id if customer else None,
+            display_name=announcement.customer_name,     # Guardar nombre personalizado del anuncio
             status=PackageStatus.RECIBIDO.value,
             package_type=request.package_type.value,
             package_condition=request.package_condition.value,

@@ -268,6 +268,7 @@ function mostrarCodigosConsulta(codes) {
     
     // Construir badges de códigos
     const codigosHTML = codes.map(code => {
+        // 🆕 Usar prefijo 'announcement_' para que la API reconozca que es un anuncio
         const packageUrl = `/packages?id=announcement_${code.tracking_code}`;
         return `
             <a href="${packageUrl}"
