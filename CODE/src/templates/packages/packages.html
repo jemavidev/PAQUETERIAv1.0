@@ -4407,7 +4407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Si no está en la página actual, buscar en toda la BD via API
                     log(`🔍 Paquete no encontrado en página actual. Buscando en BD...`);
 
-                    fetch(`/api/packages/${packageIdParam}`, {
+                    fetch(`/api/packages/tracking/${packageIdParam}`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'same-origin'
