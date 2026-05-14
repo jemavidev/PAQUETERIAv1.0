@@ -4408,7 +4408,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Usar endpoint de búsqueda sin límite de paginación para encontrar el paquete
                     log(`🔍 Paquete no encontrado en página actual. Buscando en BD...`);
 
-                    fetch(`/api/packages/?search=${encodeURIComponent(packageIdParam)}&limit=1000&skip=0`, {
+                    fetch(`/api/packages/?search=${encodeURIComponent(packageIdParam)}&limit=100&skip=0`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'same-origin'
