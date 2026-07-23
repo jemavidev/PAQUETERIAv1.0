@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review — PAQUETEX (CODE/)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .badge-strong { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+      .badge-worth { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+      .tag-dep { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+      .adr-box { background: #fffbeb; border: 1px solid #fde68a; }
+      .mono { font-variant-ligatures: none; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-16">
+
+      <header class="space-y-4 border-b border-slate-200 pb-8">
+        <div class="flex items-baseline justify-between flex-wrap gap-2">
+          <h1 class="font-serif text-3xl">Architecture review — PAQUETEX <span class="text-slate-400 font-sans text-lg">CODE/</span></h1>
+          <span class="text-sm text-slate-500 mono">2026-07-20 · staging @ 3223cab (= LIVE-PROD)</span>
+        </div>
+        <p class="text-sm text-slate-500 max-w-2xl">Alcance: backend Python/FastAPI + Alembic en <code class="mono">CODE/</code> únicamente. 13 oportunidades de deepening, ordenadas por impacto.</p>
+        <div class="flex flex-wrap gap-6 text-xs uppercase tracking-wider text-slate-500 pt-2">
+          <span class="flex items-center gap-2"><span class="inline-block w-6 h-4 border-2 border-slate-700"></span>module</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-6 border-t-2 border-dashed border-slate-500"></span>seam</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-6 border-t-2 border-red-600"></span>leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-6 h-4 deep"></span>deep module</span>
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-16">
+
+        <!-- Candidate 1 -->
+        <article id="c1" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">1. Colapsar el módulo de ciclo de vida de Package</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/package_service.py (830 líneas)</li>
+            <li>services/package_state_service.py (1247 líneas)</li>
+            <li>services/package_event_service.py (432 líneas)</li>
+            <li>models/package_history.py</li>
+            <li>routes/packages.py:580-611</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Antes</p>
+              <pre class="mermaid">
+                flowchart TD
+                  R[packages.py route] --> A[package_service]
+                  R --> B[package_state_service]
+                  R --> C[package_event_service]
+                  A -.leak.-> D[(DB directa)]
+                  B -.leak.-> D
+                  C -.leak.-> D
+                  A -.-> B
+                  B -.-> C
+                  classDef leak stroke:#dc2626,stroke-width:2px;
+                  class A,B,C,D leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-white p-4">
+              <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Después</p>
+              <pre class="mermaid">
+                flowchart TD
+                  R[packages.py route] --> P[PackageLifecycle module]
+                  P --> D[(DB)]
+                  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+                  class P deep
+              </pre>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problema:</span> tres módulos gestionan el mismo ciclo de vida de Package sin un seam compartido — cada uno escribe su propio historial, ninguno es la fuente de verdad.</p>
+          <p><span class="font-semibold">Solución:</span> un único módulo <code class="mono">PackageLifecycle</code> con una interfaz de transición de estado; los tres colapsan detrás de ella.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>locality: los bugs de estado se concentran en un módulo</li>
+            <li>leverage: una interfaz, todos los call sites</li>
+            <li>interfaz se achica; la implementación absorbe los tres services</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 2 -->
+        <article id="c2" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">2. Un PackageQueryService — dejar de reinventar la paginación</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>routes/packages.py:203-468, 295-332, 471+, 1573-1672</li>
+            <li>routes/api.py:38-75</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Interfaz vs implementación (mass diagram)</p>
+            <div class="flex items-end gap-10 justify-center py-4">
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">Antes — 4 copias</p>
+                <div class="flex gap-2 items-end">
+                  <div class="w-10 bg-slate-300" style="height:70px" title="interfaz"></div>
+                  <div class="w-10 bg-slate-700" style="height:80px" title="implementación"></div>
+                </div>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">Después — 1 módulo</p>
+                <div class="flex gap-2 items-end">
+                  <div class="w-10 bg-slate-300" style="height:20px" title="interfaz"></div>
+                  <div class="w-10 deep" style="height:120px" title="implementación"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problema:</span> cuatro implementaciones distintas de paginación/filtrado de paquetes, cada una con su propio criterio de límites y ordenamiento.</p>
+          <p><span class="font-semibold">Solución:</span> <code class="mono">PackageQueryService</code> como interfaz única de consulta; las cuatro rutas la llaman.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: un lugar para arreglar límites/paginación</li>
+            <li>locality: bugs de búsqueda dejan de duplicarse</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 3 -->
+        <article id="c3" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">3. Deepen de la clasificación de variación de precio — una copia rota en silencio</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">in-process</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/invoice_v2_service.py:654-742, 386-417</li>
+            <li>routes/invoices_v2_routes.py:863-897, 995-1028</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+              sequenceDiagram
+                participant Route as invoices_v2_routes
+                participant SvcA as invoice_v2_service (copia A)
+                participant SvcB as invoice_v2_service (copia B)
+                Route->>SvcA: clasificar variación
+                SvcA-->>Route: resultado correcto
+                Route->>SvcB: clasificar variación (otro call site)
+                SvcB--xRoute: AttributeError (silenciado por except desnudo)
+            </pre>
+          </div>
+          <div class="adr-box rounded px-4 py-2 text-sm">⚠️ Bug de producción activo: la segunda copia lanza <code class="mono">AttributeError</code>, capturado por un <code class="mono">except</code> desnudo — la clasificación de reventa/consumo cae siempre al mismo valor por defecto sin que nadie lo note.</div>
+          <p><span class="font-semibold">Problema:</span> la regla de clasificación de variación de precio está triplicada; una copia está rota y el error se traga.</p>
+          <p><span class="font-semibold">Solución:</span> una única función de clasificación, testeada, sin duplicados.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>locality: la regla vive en un solo lugar</li>
+            <li>quick win: candidato pequeño, aislado, corrige un bug activo</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 4 -->
+        <article id="c4" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">4. Darle a la composición de routers un seam real</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">in-process</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>main.py:262-292</li>
+            <li>routes/protected.py:1690, 1380</li>
+            <li>routes/admin.py:100</li>
+            <li>routes/api.py:1298</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Patrón encontrado dos veces, en subsistemas distintos</p>
+            <pre class="mermaid">
+              flowchart LR
+                subgraph Caso1["GET /api/admin/users"]
+                  P1["protected.py:1380 (registrado primero)"] -->|gana siempre| X1((match))
+                  A1["admin.py:100 (idéntica ruta)"] -.leak.-> Y1((nunca se ejecuta))
+                end
+                subgraph Caso2["GET /api/packages/tracking/history"]
+                  A2["api.py:1298 (registrado primero)"] -->|gana siempre| X2((match))
+                  P2["protected.py:1690 (idéntica ruta)"] -.leak.-> Y2((nunca se ejecuta))
+                end
+                classDef leak stroke:#dc2626,stroke-width:2px;
+                class Y1,Y2 leak
+            </pre>
+          </div>
+          <p><span class="font-semibold">Problema:</span> FastAPI/Starlette resuelve por orden de registro; dos pares de rutas idénticas quedan permanentemente sombreadas — descubierto de forma independiente en dos subsistemas distintos.</p>
+          <p><span class="font-semibold">Solución:</span> un módulo de composición de rutas con una interfaz que rechace colisiones al registrar, en vez de dejarlas en <code class="mono">main.py</code> implícitas por orden.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: un seam de registro, colisiones imposibles</li>
+            <li>patrón sistémico: mismo defecto en dos módulos no relacionados</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 5 -->
+        <article id="c5" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">5. Que "no bloqueante" sea una propiedad de la interfaz de S3Service</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">mock</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/s3_service.py</li>
+            <li>routes/images.py</li>
+            <li>routes/packages.py:926-1141</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+              flowchart LR
+                I[images.py] -->|try/except manual| S1[s3_service]
+                Pk[packages.py] -->|try/except manual, otra forma| S2[s3_service]
+                classDef leak stroke:#dc2626,stroke-width:2px;
+                class I,Pk leak
+            </pre>
+          </div>
+          <p><span class="font-semibold">Problema:</span> cada call site decide por su cuenta cómo tolerar fallos de S3 — la propiedad "no bloqueante" vive fuera del módulo, repetida de forma inconsistente.</p>
+          <p><span class="font-semibold">Solución:</span> S3Service expone una interfaz que ya es no bloqueante por diseño; puerto inyectado, adapter real en producción, adapter en memoria en tests.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>dos adapters justifican el seam: S3 real en prod, in-memory en tests</li>
+            <li>leverage: la tolerancia a fallos deja de repetirse</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 6 -->
+        <article id="c6" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">6. Retirar la superficie admin fantasma de protected.py</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>routes/protected.py:512-1040, 1607-1679</li>
+            <li>services/admin_service.py:650-855</li>
+            <li>utils/auth_context.py:265-287</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Cross-section — capas que atraviesa una request admin</p>
+            <div class="space-y-1">
+              <div class="h-10 border-l-4 border-slate-300 bg-slate-50 flex items-center px-3 text-xs">protected.py — rutas admin duplicadas</div>
+              <div class="h-10 border-l-4 border-slate-300 bg-slate-50 flex items-center px-3 text-xs">auth_context.py — chequeo de rol inline</div>
+              <div class="h-10 border-l-4 border-red-400 bg-red-50 flex items-center px-3 text-xs">admin_service.py — lógica duplicada de admin.py</div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problema:</span> <code class="mono">protected.py</code> mantiene su propia superficie admin paralela a <code class="mono">admin.py</code>, con lógica de permisos repetida.</p>
+          <p><span class="font-semibold">Solución:</span> retirar la superficie duplicada; una sola interfaz admin.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>interfaz se achica: protected.py deja de ser también admin</li>
+            <li>locality: permisos de admin en un solo lugar</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 7 -->
+        <article id="c7" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">7. Colapsar el stack OTP/JWT del portal de clientes</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>routes/customer_preferences_otp.py:65-368</li>
+            <li>services/customer_portal_service.py:74-495</li>
+            <li>routes/customer_preferences.py:36-190</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+              flowchart TD
+                subgraph Antes
+                  R1[customer_preferences_otp.py] --> S1[lógica OTP inline]
+                  R2[customer_portal_service.py] --> S2[lógica JWT propia]
+                  R3[customer_preferences.py] --> S3[valida OTP otra vez]
+                end
+            </pre>
+          </div>
+          <p><span class="font-semibold">Problema:</span> tres módulos implementan su propia variante de autenticación OTP/JWT para el portal de clientes.</p>
+          <p><span class="font-semibold">Solución:</span> un módulo <code class="mono">CustomerAuth</code> con una interfaz de verificación; los tres pasan a ser call sites.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: una interfaz de auth, N call sites</li>
+            <li>locality: bugs de sesión se concentran en un módulo</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 8 -->
+        <article id="c8" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">8. Empujar borrado de clientes + reglas de calidad de datos hacia CustomerService</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>routes/customers.py:179-284, 580-723, 725-956</li>
+            <li>services/customer_service.py:467-494</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Interfaz vs implementación</p>
+            <div class="flex items-end gap-10 justify-center py-4">
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">Antes</p>
+                <div class="flex gap-2 items-end">
+                  <div class="w-10 bg-slate-300" style="height:90px" title="route con lógica inline"></div>
+                  <div class="w-10 bg-slate-700" style="height:40px" title="customer_service delgado"></div>
+                </div>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-slate-500 mb-1">Después</p>
+                <div class="flex gap-2 items-end">
+                  <div class="w-10 bg-slate-300" style="height:20px" title="route delgada"></div>
+                  <div class="w-10 deep" style="height:110px" title="CustomerService profundo"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problema:</span> <code class="mono">routes/customers.py</code> concentra reglas de borrado y validación de calidad de datos que deberían vivir detrás de la interfaz de <code class="mono">CustomerService</code>.</p>
+          <p><span class="font-semibold">Solución:</span> mover las reglas al service; la ruta llama a una interfaz de negocio, no ejecuta SQL/validación inline.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>interfaz de la ruta se achica</li>
+            <li>locality: reglas de negocio de cliente en un módulo</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 9 -->
+        <article id="c9" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">9. Compartir el gate de preferencias de notificación entre canales</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">in-process</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/sms_service.py:132-224</li>
+            <li>services/email_service.py:178-273</li>
+            <li>routes/customer_preferences.py:50-93</li>
+            <li>models/user_preferences.py (should_send_notification, líneas 50-100)</li>
+          </ul>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+              flowchart LR
+                SMS[sms_service] -.leak.-> G1[chequeo propio de preferencias]
+                Email[email_service] -.leak.-> G2[chequeo propio de preferencias]
+                classDef leak stroke:#dc2626,stroke-width:2px;
+                class G1,G2 leak
+            </pre>
+          </div>
+          <p><span class="font-semibold">Problema:</span> <code class="mono">should_send_notification</code> existe en <code class="mono">models/user_preferences.py</code>, pero SMS y email reimplementan su propio chequeo de preferencias en vez de pasar por el seam.</p>
+          <p><span class="font-semibold">Solución:</span> los dos canales consultan la misma interfaz de gate antes de enviar.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: una regla de preferencias, todos los canales</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 10 -->
+        <article id="c10" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">10. Borrar la flota fantasma</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-strong">Strong</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">in-process</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-600">8+ módulos confirmados sin importadores, ~2.300 líneas: parser PDF <code class="mono">_new</code> abandonado, subsistema de descarga de CUFE muerto, modelos de invoice v1 huérfanos, wrapper S3 duplicado.</p>
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Call-graph collapse</p>
+            <pre class="mermaid">
+              flowchart TD
+                Live[Código vivo] -.-> Dead1["*_new.py (parser PDF)"]
+                Live -.-> Dead2["cufe_download (subsistema muerto)"]
+                Live -.-> Dead3["modelos invoice v1 huérfanos"]
+                Live -.-> Dead4["s3_service duplicado"]
+                classDef leak stroke:#dc2626,stroke-width:2px,stroke-dasharray: 4 4;
+                class Dead1,Dead2,Dead3,Dead4 leak
+            </pre>
+          </div>
+          <p><span class="font-semibold">Problema:</span> reescrituras abandonadas nunca se borraron; sin importadores, cero riesgo de romper nada al borrarlas, pero siguen confundiendo cualquier lectura del árbol de módulos.</p>
+          <p><span class="font-semibold">Solución:</span> borrar los 8+ módulos confirmados muertos.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>locality: el árbol de módulos deja de mentir</li>
+            <li>~2.300 líneas menos, cero riesgo</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 11 -->
+        <article id="c11" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">11. Reconciliar los dos stacks de almacenamiento de archivos desconectados</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-worth">Worth exploring</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/file_management_service.py</li>
+            <li>routes/files.py</li>
+            <li>services/s3_service.py</li>
+          </ul>
+          <p><span class="font-semibold">Problema:</span> <code class="mono">file_management_service.py</code> y <code class="mono">s3_service.py</code> resuelven almacenamiento de archivos sin compartir un seam — cada uno con su propio criterio de rutas y validación.</p>
+          <p><span class="font-semibold">Solución:</span> un módulo de almacenamiento único detrás de una interfaz.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: un criterio de almacenamiento</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 12 -->
+        <article id="c12" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">12. Darle a la capa de rutas una interfaz por donde testear</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-worth">Worth exploring</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>routes/public.py:502-678</li>
+            <li>routes/invoices_v2_routes.py:163, 168, 198, 814-861</li>
+            <li>cero archivos de test bajo src/</li>
+          </ul>
+          <div class="adr-box rounded px-4 py-2 text-sm">⚠️ No hay ningún archivo de test bajo <code class="mono">src/</code> — cualquier deepening en este repo carece hoy de una interfaz estable para testear a través de ella.</div>
+          <p><span class="font-semibold">Problema:</span> rutas de 1900+ líneas mezclan HTTP, SQL y lógica de negocio inline; no existe una interfaz de módulo contra la cual escribir tests.</p>
+          <p><span class="font-semibold">Solución:</span> extraer una interfaz de negocio por subsistema y testear contra ella, no contra la ruta HTTP.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>interfaz es la superficie de test</li>
+          </ul>
+        </article>
+
+        <!-- Candidate 13 -->
+        <article id="c13" class="space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <h2 class="font-serif text-2xl">13. Delegar los contadores de badges de header a MessageService</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs px-2 py-1 rounded badge-worth">Worth exploring</span>
+              <span class="text-xs px-2 py-1 rounded tag-dep">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="mono text-sm text-slate-600 space-y-0.5">
+            <li>services/header_notification_service.py:27-214</li>
+            <li>services/message_service.py:202-209</li>
+          </ul>
+          <p><span class="font-semibold">Problema:</span> <code class="mono">header_notification_service.py</code> recalcula conteos que <code class="mono">message_service.py</code> ya conoce.</p>
+          <p><span class="font-semibold">Solución:</span> header delega el conteo a la interfaz de MessageService.</p>
+          <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+            <li>leverage: un solo lugar que sabe contar mensajes</li>
+          </ul>
+        </article>
+
+      </section>
+
+      <section id="top-recommendation" class="border-t border-slate-200 pt-10">
+        <div class="rounded-xl deep text-white p-8 space-y-3">
+          <p class="text-xs uppercase tracking-wider text-slate-300">Top recommendation</p>
+          <h2 class="font-serif text-2xl">1. Colapsar el módulo de ciclo de vida de Package</h2>
+          <p class="text-slate-200 text-sm max-w-2xl">Es simultáneamente el enredo más grande y el que tiene el rastro de evidencia más claro: los últimos tres commits en <code class="mono">staging</code>/<code class="mono">3223cab</code> (<code class="mono">3223cab</code>, <code class="mono">6889048</code>, <code class="mono">71ce5c8</code>) son bugs que se rastrean directamente a esta falta de profundidad. Resolverlo despeja el terreno para el candidato 2, porque ambos viven en <code class="mono">packages.py</code>.</p>
+          <a href="#c1" class="inline-block text-sm underline decoration-slate-400 underline-offset-4">Ver candidato 1 ↑</a>
+        </div>
+        <p class="text-sm text-slate-600 mt-4">Segundo lugar: <a href="#c3" class="underline underline-offset-2">candidato 3</a> (clasificación de variación de precio) — es el único candidato que representa un comportamiento de producción activamente incorrecto en vez de deuda pura, y es lo bastante chico para arreglarse de forma aislada como quick win.</p>
+      </section>
+
+    </main>
+  </body>
+</html>
