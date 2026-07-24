@@ -66,3 +66,25 @@ def receive(
 
     session.flush()
     return paquete
+
+
+def deliver(session: Session, paquete: Paquete, actor: Usuario) -> Paquete:
+    """Entrega un paquete `RECIBIDO` → `ENTREGADO` (terminal).
+
+    Registra `delivered_at` (ahora) y `delivered_by_usuario_id` = el actor. El
+    destinatario snapshot del Paquete (nombre/apartamento congelados al anunciar)
+    sigue intacto para confirmar quién retira.
+
+    Raises:
+        TransicionInvalida: si el paquete no está `RECIBIDO` (queda intacto) —
+            todavía `ANUNCIADO`, o ya `ENTREGADO`/`CANCELADO`.
+    """
+    if paquete.estado is not EstadoPaquete.RECIBIDO:
+        raise TransicionInvalida(paquete.estado, "entregar")
+
+    paquete.estado = EstadoPaquete.ENTREGADO
+    paquete.delivered_at = _now()
+    paquete.delivered_by_usuario_id = actor.id
+
+    session.flush()
+    return paquete
