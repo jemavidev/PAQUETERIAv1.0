@@ -43,6 +43,8 @@ Una Persona tiene **un** Apartamento *actual*. Es **mutable**: puede **mudarse**
 ### Herencia de apartamento
 Cuando a un Teléfono de un grupo "**misma unidad**" se le asigna un Apartamento, los demás Teléfonos del grupo lo **heredan** automáticamente. El grupo se forma solo al **declarar la unidad a propósito** (staff en `/announce-new`, o el cliente en `/customer/verify`) — **nunca** por un "a nombre de" casual en `/announce`. Como mudarse/desvincular está siempre disponible, cualquier herencia errónea es **corregible**.
 
+El **grupo "misma unidad" no es una entidad persistente**: es el conjunto emergente de Personas que comparten el mismo Apartamento actual, no una lista almacenada aparte. Declarar la unidad es el **acto** que asigna ese Apartamento a varios Teléfonos a la vez — ese acto *es* la herencia.
+
 ### Anunciante y Destinatario
 Cada Paquete guarda **dos referencias independientes** (pueden coincidir o no):
 - **Anunciante** (`anunciado_por`) — la Persona (Teléfono) que anuncia el paquete.
@@ -50,6 +52,8 @@ Cada Paquete guarda **dos referencias independientes** (pueden coincidir o no):
 
 ### Nombre sin teléfono
 Un Destinatario que no tiene (o no da) su propio Teléfono se representa como un **nombre bajo el Teléfono del Anunciante** — no es una Persona sin llave. Así el Teléfono nunca falta como identidad.
+
+No tiene **existencia propia** fuera del Paquete: vive **solo dentro del snapshot** del paquete que lo nombra, no como registro independiente. (Un padrón persistente de nombres-sin-teléfono por Apartamento sería otra entidad —un *Ocupante*— y está fuera de este modelo hasta que se decida explícitamente.)
 
 ### Contexto de entrega (snapshot)
 Al **anunciar**, el Paquete **congela** una foto inmutable de `{anunciado_por (teléfono), nombre_destinatario, teléfono_destinatario (si hay), apartamento}`. Si la Persona se muda **después**, los paquetes viejos **siguen mostrando el apartamento de entonces** — mudarse **nunca reescribe la historia**. "Los datos permanecen de principio a fin en cada paquete."
