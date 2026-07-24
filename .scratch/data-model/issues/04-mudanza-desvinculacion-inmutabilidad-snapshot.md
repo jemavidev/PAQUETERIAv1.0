@@ -6,8 +6,8 @@
 
 **Blocked by:** 03 — Anunciar Paquete con snapshot congelado.
 
-**Status:** ready-for-agent
+**Status:** done · 66 tests verdes
 
-- [ ] `move_resident(telefono, apartamento)` cambia el `apartamento_actual` de la Persona; con `apartamento = None` la **desvincula** (deja el actual nulo).
-- [ ] **Invariante corona (ADR-0001):** tras anunciar un Paquete y luego mudar/desvincular a la Persona, el **snapshot de apartamento** del Paquete viejo permanece **idéntico** al del instante del anuncio.
-- [ ] Tests: mudar cambia el apartamento actual; desvincular lo pone nulo; **ninguno** altera el snapshot de un paquete ya anunciado.
+- [x] `move_resident(telefono, apartamento)` cambia el `apartamento_actual` de la Persona; con `apartamento = None` la **desvincula** (deja el actual nulo).
+- [x] **Invariante corona (ADR-0001):** tras anunciar un Paquete y luego mudar/desvincular a la Persona, el **snapshot de apartamento** del Paquete viejo permanece **idéntico** al del instante del anuncio.
+- [x] Tests: mudar cambia el apartamento actual; desvincular lo pone nulo; **ninguno** altera el snapshot de un paquete ya anunciado.

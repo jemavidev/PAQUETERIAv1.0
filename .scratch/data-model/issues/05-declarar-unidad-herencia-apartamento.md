@@ -6,11 +6,11 @@
 
 **Blocked by:** 03 — Anunciar Paquete con snapshot congelado.
 
-**Status:** ready-for-agent
+**Status:** done · 66 tests verdes
 
-- [ ] `declare_unit(apartamento, [telefonos])` asigna ese Apartamento como **actual** a **todos los teléfonos declarados a la vez** (la herencia). Get-or-create del Apartamento si hace falta.
-- [ ] Un `announce` con un Destinatario "a nombre de" **casual** NO modifica el `apartamento_actual` de nadie más allá del contexto del propio paquete (**no agrupa**).
-- [ ] La herencia es **corregible**: tras declarar la unidad, `move_resident` sobre un teléfono lo saca del grupo **sin afectar a los demás**.
-- [ ] Tests: declarar unidad agrupa (todos comparten apartamento actual); announce casual no agrupa; corrección vía `move_resident`.
+- [x] `declare_unit(apartamento, [telefonos])` asigna ese Apartamento como **actual** a **todos los teléfonos declarados a la vez** (la herencia). Get-or-create del Apartamento si hace falta.
+- [x] Un `announce` con un Destinatario "a nombre de" **casual** NO modifica el `apartamento_actual` de nadie más allá del contexto del propio paquete (**no agrupa**).
+- [x] La herencia es **corregible**: tras declarar la unidad, `move_resident` sobre un teléfono lo saca del grupo **sin afectar a los demás**.
+- [x] Tests: declarar unidad agrupa (todos comparten apartamento actual); announce casual no agrupa; corrección vía `move_resident`.
 
 > El "grupo misma unidad" **no es una entidad persistente** — es el conjunto de Personas que comparten Apartamento actual (ver `CONTEXT.md`). No se crea tabla de grupo.

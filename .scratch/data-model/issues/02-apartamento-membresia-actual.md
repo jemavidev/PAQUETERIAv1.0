@@ -6,10 +6,10 @@
 
 **Blocked by:** 01 — Persona + árbol Alembic limpio + arnés de CI.
 
-**Status:** ready-for-agent
+**Status:** done — commit 695e74f · 44 tests verdes
 
-- [ ] Migración (descendiente de la raíz de 01) añade `apartamentos` (`conjunto`, `torre`, `apartamento`) con **restricción única sobre la terna normalizada**, y la FK nullable `apartamento_actual_id` en `personas`.
-- [ ] `get_or_create_apartamento(conjunto, torre, apartamento)`: normaliza casing/espacios y **reutiliza el existente por la terna**; lo crea si no existe (entidad ligera, creable sobre la marcha).
-- [ ] `set_apartamento_actual(telefono, apartamento)` asigna el Apartamento actual de una Persona.
-- [ ] Una Persona **sin** Apartamento es válida (`apartamento_actual_id` nulo).
-- [ ] Tests: dedup por terna (misma terna → un solo Apartamento); asignar apartamento actual; Persona sin apartamento.
+- [x] Migración (descendiente de la raíz de 01) añade `apartamentos` (`conjunto`, `torre`, `apartamento`) con **restricción única sobre la terna normalizada**, y la FK nullable `apartamento_actual_id` en `personas`.
+- [x] `get_or_create_apartamento(conjunto, torre, apartamento)`: normaliza casing/espacios y **reutiliza el existente por la terna**; lo crea si no existe (entidad ligera, creable sobre la marcha).
+- [x] `set_apartamento_actual(telefono, apartamento)` asigna el Apartamento actual de una Persona.
+- [x] Una Persona **sin** Apartamento es válida (`apartamento_actual_id` nulo).
+- [x] Tests: dedup por terna (misma terna → un solo Apartamento); asignar apartamento actual; Persona sin apartamento.
