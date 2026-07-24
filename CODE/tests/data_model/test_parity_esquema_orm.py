@@ -10,7 +10,8 @@ migración (o al revés), este test lo atrapa antes de que aterricen más rebana
 sobre el mismo árbol.
 
 Cada rebanada nueva importa aquí su modelo para que quede registrado en
-`Base.metadata` y el guard cubra su tabla (hoy: `personas`, `apartamentos`).
+`Base.metadata` y el guard cubra su tabla (hoy: `personas`, `apartamentos`,
+`usuarios`, `paquetes`).
 """
 
 import pytest
@@ -21,6 +22,8 @@ from sqlalchemy import create_engine
 from app.domain.base import Base
 from app.domain import persona  # noqa: F401  (registra 'personas' en Base.metadata)
 from app.domain import apartamento  # noqa: F401  (registra 'apartamentos' en Base.metadata)
+from app.domain import usuario  # noqa: F401  (registra 'usuarios' en Base.metadata)
+from app.domain import paquete  # noqa: F401  (registra 'paquetes' en Base.metadata)
 
 pytestmark = pytest.mark.integration
 

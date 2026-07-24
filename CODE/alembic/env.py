@@ -34,6 +34,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 from app.domain.base import Base  # noqa: E402
 from app.domain import persona  # noqa: E402,F401  (registra 'personas' en Base.metadata)
 from app.domain import apartamento  # noqa: E402,F401  (registra 'apartamentos' en Base.metadata)
+from app.domain import usuario  # noqa: E402,F401  (registra 'usuarios' en Base.metadata)
+from app.domain import paquete  # noqa: E402,F401  (registra 'paquetes' en Base.metadata)
 
 config = context.config
 
