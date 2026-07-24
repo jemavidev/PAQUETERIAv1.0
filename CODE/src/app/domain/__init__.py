@@ -8,3 +8,8 @@ viejos y el subsistema fuera de alcance de facturas/productos/CUFE) ni
 esquema nuevo se construye SOLO con sus propias entidades y los tests corren
 en CI sin arrastrar el mundo viejo.
 """
+
+# Registrar TODAS las entidades en `Base.metadata` al importar el paquete, de modo
+# que las FK entre tablas (p.ej. paquetes -> usuarios/personas) resuelvan sin
+# depender del orden en que cada capa (dominio, web, alembic) importe los modelos.
+from . import apartamento, paquete, persona, usuario  # noqa: E402,F401

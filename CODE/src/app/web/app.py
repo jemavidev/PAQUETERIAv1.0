@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from .routes.announce import router as announce_router
 from .routes.health import router as health_router
 
 _WEB_DIR = Path(__file__).resolve().parent
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="PAQUETEX — rebuild PaqueteXv.2")
     app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
     app.include_router(health_router)
+    app.include_router(announce_router)
     return app
 
 
