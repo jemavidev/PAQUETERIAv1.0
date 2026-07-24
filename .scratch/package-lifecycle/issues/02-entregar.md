@@ -6,10 +6,10 @@
 
 **Blocked by:** 01 — Recibir (+ infraestructura de transiciones). Reutiliza `TransicionInvalida` y usa `receive` para llevar un paquete a `RECIBIDO` en los tests.
 
-**Status:** ready-for-agent
+**Status:** done · 80 tests verdes
 
-- [ ] `deliver(session, paquete, actor)`: `RECIBIDO → ENTREGADO`; escribe `delivered_at` (now), `delivered_by_usuario_id = actor.id`.
-- [ ] **Rechaza** (`TransicionInvalida`, sin efecto) si el paquete no está `RECIBIDO`: todavía `ANUNCIADO`, o ya `ENTREGADO`/`CANCELADO`.
-- [ ] `actor` es un `Usuario` **obligatorio**.
-- [ ] El **destinatario snapshot** (`recipient_name` + snapshot de apartamento) sigue legible en el paquete entregado (no se toca; ADR-0001) — el test lo verifica para confirmar quién retira.
-- [ ] Tests: entregar un paquete llevado a `RECIBIDO` vía `receive`; el actor/`delivered_at` quedan registrados; rechazo desde `ANUNCIADO`/`ENTREGADO`/`CANCELADO` sin efecto.
+- [x] `deliver(session, paquete, actor)`: `RECIBIDO → ENTREGADO`; escribe `delivered_at` (now), `delivered_by_usuario_id = actor.id`.
+- [x] **Rechaza** (`TransicionInvalida`, sin efecto) si el paquete no está `RECIBIDO`: todavía `ANUNCIADO`, o ya `ENTREGADO`/`CANCELADO`.
+- [x] `actor` es un `Usuario` **obligatorio**.
+- [x] El **destinatario snapshot** (`recipient_name` + snapshot de apartamento) sigue legible en el paquete entregado (no se toca; ADR-0001) — el test lo verifica para confirmar quién retira.
+- [x] Tests: entregar un paquete llevado a `RECIBIDO` vía `receive`; el actor/`delivered_at` quedan registrados; rechazo desde `ANUNCIADO`/`ENTREGADO`/`CANCELADO` sin efecto.
