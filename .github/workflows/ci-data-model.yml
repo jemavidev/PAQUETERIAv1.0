@@ -1,25 +1,25 @@
-name: CI — data-model
+name: CI — rebuild (dominio + web)
 
-# Arnés de CI de la rebanada data-model: construye la BD con `alembic upgrade
-# head` sobre un Postgres efímero y corre los tests de integración del dominio.
-# No toca deploy-staging.yml.
+# Arnés de CI del rebuild PaqueteXv.2: construye la BD con `alembic upgrade head`
+# sobre un Postgres efímero y corre los tests de integración del dominio y de la
+# capa web (`pytest` usa testpaths de pytest.ini). No toca deploy-staging.yml.
 
 on:
   push:
     branches: [ "PaqueteXv.2" ]
     paths:
-      - "CODE/src/app/domain/**"
+      - "CODE/src/app/**"
       - "CODE/alembic/**"
-      - "CODE/tests/data_model/**"
+      - "CODE/tests/**"
       - "CODE/requirements-ci.txt"
       - "CODE/pytest.ini"
       - ".github/workflows/ci-data-model.yml"
   pull_request:
     branches: [ "PaqueteXv.2", "main" ]
     paths:
-      - "CODE/src/app/domain/**"
+      - "CODE/src/app/**"
       - "CODE/alembic/**"
-      - "CODE/tests/data_model/**"
+      - "CODE/tests/**"
       - "CODE/requirements-ci.txt"
       - "CODE/pytest.ini"
       - ".github/workflows/ci-data-model.yml"

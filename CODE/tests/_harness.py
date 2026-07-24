@@ -17,8 +17,8 @@ from pathlib import Path
 
 import psycopg2
 
-HARNESS_DIR = Path(__file__).resolve().parent          # CODE/tests/data_model
-CODE_DIR = HARNESS_DIR.parent.parent                    # CODE
+HARNESS_DIR = Path(__file__).resolve().parent          # CODE/tests
+CODE_DIR = HARNESS_DIR.parent                           # CODE
 ALEMBIC_INI = CODE_DIR / "alembic.ini"
 POSTGRES_IMAGE = os.getenv("TEST_POSTGRES_IMAGE", "postgres:16")
 

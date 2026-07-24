@@ -12,3 +12,9 @@ alembic==1.12.1
 psycopg2-binary==2.9.9
 pytest==8.3.4
 python-dotenv==1.0.0
+
+# Capa web del rebuild (clean-room) + su arnés de test HTTP.
+fastapi==0.104.1
+httpx==0.25.2
+jinja2==3.1.2
+python-multipart==0.0.6
