@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from .paquete import EstadoPaquete, Paquete
+from .paquete import EstadoPaquete, MotivoCancelacion, Paquete
 from .usuario import Usuario
 
 
@@ -85,6 +85,40 @@ def deliver(session: Session, paquete: Paquete, actor: Usuario) -> Paquete:
     paquete.estado = EstadoPaquete.ENTREGADO
     paquete.delivered_at = _now()
     paquete.delivered_by_usuario_id = actor.id
+
+    session.flush()
+    return paquete
+
+
+def cancel(session: Session, paquete: Paquete, actor: Usuario, motivo) -> Paquete:
+    """Cancela un paquete `ANUNCIADO` o `RECIBIDO` → `CANCELADO` (terminal).
+
+    El motivo es OBLIGATORIO (trazabilidad): un `MotivoCancelacion` o un string no
+    vacío. Registra `cancelled_at` (ahora), `cancelled_by_usuario_id` = el actor y
+    `cancel_reason` = el motivo. Cancelar es irreversible.
+
+    Raises:
+        TransicionInvalida: si el paquete está en un estado terminal
+            (`ENTREGADO`/`CANCELADO`) — queda intacto.
+        ValueError: si `motivo` es ``None`` o vacío — el paquete queda intacto
+            (se valida antes de mutar).
+    """
+    if paquete.estado not in (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO):
+        raise TransicionInvalida(paquete.estado, "cancelar")
+
+    if motivo is None:
+        raise ValueError("El motivo de cancelación es obligatorio.")
+    if isinstance(motivo, MotivoCancelacion):
+        reason = motivo.value
+    else:
+        reason = str(motivo).strip()
+        if not reason:
+            raise ValueError("El motivo de cancelación es obligatorio.")
+
+    paquete.estado = EstadoPaquete.CANCELADO
+    paquete.cancelled_at = _now()
+    paquete.cancelled_by_usuario_id = actor.id
+    paquete.cancel_reason = reason
 
     session.flush()
     return paquete
