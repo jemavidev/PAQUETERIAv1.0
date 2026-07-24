@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento, normalizar_terna
 from .persona import Persona
+from .persona_service import get_or_create_persona
 from .telefono import normalizar_telefono
 
 
@@ -115,3 +116,49 @@ def set_apartamento_actual(
     persona.apartamento_actual_id = apartamento.id if apartamento is not None else None
     session.flush()
     return persona
+
+
+def move_resident(
+    session: Session, telefono: str, apartamento: Apartamento | None
+) -> Persona:
+    """Muda —o desvincula si ``apartamento`` es ``None``— a una Persona.
+
+    Es la cara MUTABLE de la membresía (glosario: mudarse / desvincularse) y el
+    mecanismo que hace CORREGIBLE una herencia errónea (spec §Herencia). Mudar o
+    desvincular NUNCA reescribe el snapshot de paquetes ya anunciados (ADR-0001):
+    el snapshot es texto copiado, no un FK que siga a la Persona. Equivale a
+    `set_apartamento_actual`, expuesto con el verbo de dominio de la mudanza.
+    """
+    return set_apartamento_actual(session, telefono, apartamento)
+
+
+def declare_unit(
+    session: Session, apartamento: Apartamento, miembros
+) -> list[Persona]:
+    """Declara una unidad a propósito: asigna `apartamento` como Apartamento
+    actual a TODOS los miembros declarados a la vez — eso ES la herencia.
+
+    `miembros` es un iterable de tuplas ``(telefono, nombre)``: cada uno se
+    registra (get_or_create_persona) si no existía y hereda el Apartamento. El
+    "grupo misma unidad" no es una entidad persistente: es justo este conjunto de
+    Personas compartiendo `apartamento_actual` (ver CONTEXT.md). La herencia es
+    CORREGIBLE después con `move_resident` sobre cualquier teléfono, sin afectar a
+    los demás. Un "a nombre de" casual en `announce` NO pasa por aquí y por tanto
+    NO agrupa a nadie.
+
+    Args:
+        session: sesión de SQLAlchemy activa.
+        apartamento: el Apartamento de la unidad (usa `get_or_create_apartamento`
+            para crearlo sobre la marcha).
+        miembros: iterable de tuplas ``(telefono, nombre)``.
+
+    Returns:
+        La lista de Personas del grupo, con su `apartamento_actual` asignado.
+    """
+    personas: list[Persona] = []
+    for telefono, nombre in miembros:
+        persona = get_or_create_persona(session, telefono, nombre)
+        persona.apartamento_actual_id = apartamento.id
+        personas.append(persona)
+    session.flush()
+    return personas
