@@ -12,7 +12,13 @@ posteriores.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, String, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKeyConstraint,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 
 from .base import Base
@@ -25,10 +31,17 @@ def _utcnow() -> datetime:
 class Persona(Base):
     __tablename__ = "personas"
 
-    # Unicidad del Teléfono declarada con nombre explícito, IDÉNTICO al de la
-    # migración baseline (`uq_personas_telefono`), para que el guard de paridad
-    # esquema↔ORM (test_parity_esquema_orm) no reporte drift.
-    __table_args__ = (UniqueConstraint("telefono", name="uq_personas_telefono"),)
+    # Constraints con nombre explícito, IDÉNTICOS a los de las migraciones
+    # (`uq_personas_telefono`, `fk_personas_apartamento_actual`), para que el
+    # guard de paridad esquema↔ORM (test_parity_esquema_orm) no reporte drift.
+    __table_args__ = (
+        UniqueConstraint("telefono", name="uq_personas_telefono"),
+        ForeignKeyConstraint(
+            ["apartamento_actual_id"],
+            ["apartamentos.id"],
+            name="fk_personas_apartamento_actual",
+        ),
+    )
 
     # Surrogate key propia (UUID por portabilidad del D/R basado en dump/restore).
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -37,6 +50,11 @@ class Persona(Base):
     telefono = Column(String(20), nullable=False)
 
     nombre = Column(String(120), nullable=False)
+
+    # Apartamento actual: opcional (nullable) y mutable. Nulo = sin unidad o
+    # desvinculado. La membresía (asignar/mudar/desvincular) vive en
+    # apartamento_service; la FK se resuelve por su constraint nombrada arriba.
+    apartamento_actual_id = Column(UUID(as_uuid=True), nullable=True)
 
     # Campos ampliables (registro implícito ahora, se completan luego).
     email = Column(String(120), nullable=True)
