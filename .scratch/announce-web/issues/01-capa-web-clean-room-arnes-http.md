@@ -6,10 +6,10 @@
 
 **Blocked by:** None — el dominio (`app/domain/`, servicio `announce`) y el arnés de Postgres efímero ya están.
 
-**Status:** ready-for-agent
+**Status:** done · commit 9490a60 · 83 tests verdes
 
-- [ ] App factory FastAPI **nuevo** (paquete web propio del rebuild) que **arranca sin credenciales AWS/S3** y **sin importar** `app/config.py` / `app/main.py` / rutas legacy (ADR-0004). Lee la conexión desde `DATABASE_URL` (o un settings mínimo del rebuild).
-- [ ] **Dependencia de sesión de BD propia**: entrega una `Session` por request con **commit al éxito / rollback al error**, sobre un engine desde `DATABASE_URL`. NO reutiliza el `get_db` viejo (atado al config con AWS).
-- [ ] Setup de **templates server-rendered** (Jinja2) + estáticos, listo para Tailwind + Alpine/HTMX (cero Node en runtime).
-- [ ] Ruta trivial `GET /health` → 200 (smoke de que el app monta y responde).
-- [ ] **Arnés de test HTTP**: `TestClient` de FastAPI sobre el app nuevo, con la BD = Postgres efímero construido con `alembic upgrade head` (reutiliza `tests/data_model`/conftest). Tests: `GET /health` → 200; el app **importa y arranca sin** variables AWS en el entorno.
+- [x] App factory FastAPI **nuevo** (paquete web propio del rebuild) que **arranca sin credenciales AWS/S3** y **sin importar** `app/config.py` / `app/main.py` / rutas legacy (ADR-0004). Lee la conexión desde `DATABASE_URL` (o un settings mínimo del rebuild).
+- [x] **Dependencia de sesión de BD propia**: entrega una `Session` por request con **commit al éxito / rollback al error**, sobre un engine desde `DATABASE_URL`. NO reutiliza el `get_db` viejo (atado al config con AWS).
+- [x] Setup de **templates server-rendered** (Jinja2) + estáticos, listo para Tailwind + Alpine/HTMX (cero Node en runtime).
+- [x] Ruta trivial `GET /health` → 200 (smoke de que el app monta y responde).
+- [x] **Arnés de test HTTP**: `TestClient` de FastAPI sobre el app nuevo, con la BD = Postgres efímero construido con `alembic upgrade head` (reutiliza `tests/data_model`/conftest). Tests: `GET /health` → 200; el app **importa y arranca sin** variables AWS en el entorno.
