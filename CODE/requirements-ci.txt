@@ -1,0 +1,14 @@
+# Dependencias de CI / arnés de test — rebanada data-model (PaqueteXv.2)
+#
+# (Nombre `requirements-ci.txt` porque el repo ignora `requirements-dev.txt`,
+#  `requirements-local.txt` y `requirements-test.txt` en .gitignore.)
+#
+# El arnés levanta un Postgres efímero (docker local, o `services: postgres` en
+# CI) y construye el esquema con `alembic upgrade head` (NO create_all).
+# Instalar con:  pip install -r requirements-ci.txt
+
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+pytest==8.3.4
+python-dotenv==1.0.0

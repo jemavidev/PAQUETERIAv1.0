@@ -1,108 +1,87 @@
 # ========================================
-# PAQUETES EL CLUB v1.0 - Entorno de Alembic
+# PaqueteXv.2 — Entorno de Alembic (árbol de raíz única)
 # ========================================
+#
+# Apunta SOLO a la metadata del modelo nuevo (`app.domain.base.Base`). No importa
+# los modelos viejos ni el subsistema fuera de alcance (facturas/productos/CUFE),
+# de modo que `alembic upgrade head` construya únicamente el esquema nuevo.
+#
+# URL de base de datos (en orden de prioridad):
+#   1. `-x db_url=...`      (lo usa el arnés de test → Postgres efímero)
+#   2. TEST_DATABASE_URL    (env, p.ej. el service:postgres de CI)
+#   3. DATABASE_URL         (env, deploy)
+# NUNCA se usa la URL de producción para los tests: el arnés siempre pasa
+# `-x db_url=` apuntando al Postgres desechable.
 
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from alembic import context
 import os
 import sys
-from dotenv import load_dotenv
 
-# Cargar variables de entorno desde .env
-load_dotenv()
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 
-# Agregar el directorio src al path para importar módulos
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Cargar .env si existe (no sobreescribe variables ya presentes en el entorno).
+try:
+    from dotenv import load_dotenv
 
-# Importar todos los modelos para que Alembic los detecte
-from app.models.user import User
-from app.models.customer import Customer
-from app.models.package import Package
-from app.models.message import Message
-from app.models.file_upload import FileUpload
-from app.models.notification import Notification
-from app.models.announcement_new import PackageAnnouncementNew
-from app.models.product import Product, ProductColumnConfig, ProductSyncLog
+    load_dotenv()
+except Exception:
+    pass
 
-# Importar Base desde el módulo database
-from app.models.base import Base
+# src al path para poder importar el paquete de dominio nuevo.
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+from app.domain.base import Base  # noqa: E402
+from app.domain import persona  # noqa: E402,F401  (registra 'personas' en Base.metadata)
+
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def _resolve_url() -> str:
+    x_args = context.get_x_argument(as_dictionary=True)
+    url = (
+        x_args.get("db_url")
+        or os.getenv("TEST_DATABASE_URL")
+        or os.getenv("DATABASE_URL")
+    )
+    if not url:
+        raise ValueError(
+            "No hay URL de base de datos. Pase `-x db_url=...` o defina "
+            "TEST_DATABASE_URL / DATABASE_URL."
+        )
+    return url
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
-    # Always use DATABASE_URL from environment (AWS RDS)
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        raise ValueError("DATABASE_URL environment variable is required for AWS RDS connection")
+    """Migraciones en modo offline (emite SQL, no requiere DBAPI)."""
     context.configure(
-        url=url,
+        url=_resolve_url(),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-    # Get configuration section
-    config_section = config.get_section(config.config_ini_section) or {}
-
-    # Always use DATABASE_URL from environment
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable is required")
-    
-    config_section["sqlalchemy.url"] = database_url
+    """Migraciones en modo online (crea Engine y conecta)."""
+    section = config.get_section(config.config_ini_section) or {}
+    section["sqlalchemy.url"] = _resolve_url()
 
     connectable = engine_from_config(
-        config_section,
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
