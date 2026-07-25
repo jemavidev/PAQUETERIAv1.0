@@ -1,27 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Capa web — autenticación de staff (login / sesión / current_staff / require_admin).
+Capa web — autenticación de staff (login / sesión / current_staff).
 
 Comportamiento observable por HTTP: login válido abre sesión, inválido no (mensaje
-genérico), las rutas con privilegios se abren solo con sesión, logout cierra, y
-require_admin distingue ADMIN de OPERADOR.
+genérico), las rutas con privilegios se abren solo con sesión, logout cierra.
+
+`require_admin` (ADMIN vs OPERADOR) se prueba sobre una ruta real en
+`test_admin_staff.py` (`/admin/staff`) — el placeholder `/auth/admin/check` que
+antes probaba esto aquí fue retirado (rebanada admin-staff).
 """
 
-from app.domain.staff_service import create_initial_admin, create_staff
-from app.domain.usuario import RolUsuario
+from app.domain.staff_service import create_initial_admin
 
 _PW = "Contrasena1"
 
 
 def _seed_admin(client, email="admin@club.com"):
     create_initial_admin(client.db, email, "Admin", _PW)
-    client.db.commit()
-    return email
-
-
-def _seed_operador(client, email="op@club.com"):
-    admin = create_initial_admin(client.db, "admin@club.com", "Admin", _PW)
-    create_staff(client.db, admin, email, "Opa", _PW, RolUsuario.OPERADOR)
     client.db.commit()
     return email
 
@@ -67,18 +62,3 @@ def test_logout_cierra_la_sesion(client):
     # tras logout, vuelve a redirigir al login
     r = client.get("/auth/me", follow_redirects=False)
     assert r.status_code == 303
-
-
-def test_require_admin_admite_a_un_admin(client):
-    email = _seed_admin(client)
-    client.post("/auth/login", data={"email": email, "password": _PW})
-    r = client.get("/auth/admin/check")
-    assert r.status_code == 200
-    assert r.json()["admin"] is True
-
-
-def test_require_admin_rechaza_a_un_operador(client):
-    email = _seed_operador(client)
-    client.post("/auth/login", data={"email": email, "password": _PW})
-    r = client.get("/auth/admin/check")
-    assert r.status_code == 403
