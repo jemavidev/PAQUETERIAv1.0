@@ -6,11 +6,11 @@
 
 **Blocked by:** None — `package-lifecycle` (transiciones) y `staff-auth` (`current_staff`) ya están.
 
-**Status:** ready-for-agent
+**Status:** done · 126 tests verdes
 
-- [ ] `GET /packages` protegido por `current_staff`: **sin** sesión → redirige a `/auth/login`; **con** sesión → 200 con la lista (estado + `recipient_name` + apartamento snapshot), orden `announced_at` desc. **Sin** columna de Guía/Código (brief §7).
-- [ ] **Componente de modal compartido** (bottom-sheet en móvil, título/botones/cierre consistentes) con **Recibir** como primer consumidor; el botón de submit se **re-habilita con `finally`** (bug a no heredar).
-- [ ] `POST /packages/{id}/receive`: `guide_number` **opcional** del form → `receive(session, paquete, current_staff, guide_number)`; paquete inexistente → **404**; **PRG** (redirige a `/packages`).
-- [ ] Recibir un paquete **no** `Anunciado` (`TransicionInvalida`) → **mensaje de error, sin efecto**; la lista se re-muestra.
-- [ ] El actor registrado (`received_by_usuario`) = **el staff de la sesión** (nunca un id enviado por el cliente).
-- [ ] Tests HTTP (`TestClient`, staff sembrado como en `test_auth.py`): `/packages` sin sesión → redirige; con sesión → 200 y muestra el estado; `receive` → `Recibido` con actor correcto y guía si se pasa; recibir inválido → sin efecto; `id` inexistente → 404.
+- [x] `GET /packages` protegido por `current_staff`: **sin** sesión → redirige a `/auth/login`; **con** sesión → 200 con la lista (estado + `recipient_name` + apartamento snapshot), orden `announced_at` desc. **Sin** columna de Guía/Código (brief §7).
+- [x] **Componente de modal compartido** (bottom-sheet en móvil, título/botones/cierre consistentes) con **Recibir** como primer consumidor; el botón de submit se **re-habilita con `finally`** (bug a no heredar).
+- [x] `POST /packages/{id}/receive`: `guide_number` **opcional** del form → `receive(session, paquete, current_staff, guide_number)`; paquete inexistente → **404**; **PRG** (redirige a `/packages`).
+- [x] Recibir un paquete **no** `Anunciado` (`TransicionInvalida`) → **mensaje de error, sin efecto**; la lista se re-muestra.
+- [x] El actor registrado (`received_by_usuario`) = **el staff de la sesión** (nunca un id enviado por el cliente).
+- [x] Tests HTTP (`TestClient`, staff sembrado como en `test_auth.py`): `/packages` sin sesión → redirige; con sesión → 200 y muestra el estado; `receive` → `Recibido` con actor correcto y guía si se pasa; recibir inválido → sin efecto; `id` inexistente → 404.

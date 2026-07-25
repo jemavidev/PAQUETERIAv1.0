@@ -6,10 +6,10 @@
 
 **Blocked by:** 01 — Lista de paquetes + Recibir (reutiliza el modal compartido y la lista).
 
-**Status:** ready-for-agent
+**Status:** done · 126 tests verdes
 
-- [ ] Modal **Entregar** (componente compartido) que muestra el **destinatario snapshot** (`recipient_name` + apartamento snapshot) en **solo lectura**, para confirmar quién retira.
-- [ ] `POST /packages/{id}/deliver` → `deliver(session, paquete, current_staff)`; **PRG** a `/packages`; **404** si no existe.
-- [ ] Entregar un paquete **no** `Recibido` (`TransicionInvalida`) → **error, sin efecto**.
-- [ ] El actor registrado (`delivered_by_usuario`) = el staff de la sesión.
-- [ ] Tests HTTP: entregar un `Recibido` → `Entregado` con actor correcto; entregar inválido → sin efecto; la acción exige sesión.
+- [x] Modal **Entregar** (componente compartido) que muestra el **destinatario snapshot** (`recipient_name` + apartamento snapshot) en **solo lectura**, para confirmar quién retira.
+- [x] `POST /packages/{id}/deliver` → `deliver(session, paquete, current_staff)`; **PRG** a `/packages`; **404** si no existe.
+- [x] Entregar un paquete **no** `Recibido` (`TransicionInvalida`) → **error, sin efecto**.
+- [x] El actor registrado (`delivered_by_usuario`) = el staff de la sesión.
+- [x] Tests HTTP: entregar un `Recibido` → `Entregado` con actor correcto; entregar inválido → sin efecto; la acción exige sesión.
