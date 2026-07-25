@@ -11,7 +11,7 @@ sobre el mismo árbol.
 
 Cada rebanada nueva importa aquí su modelo para que quede registrado en
 `Base.metadata` y el guard cubra su tabla (hoy: `personas`, `apartamentos`,
-`usuarios`, `paquetes`).
+`usuarios`, `paquetes`, `otps_cliente`).
 """
 
 import pytest
@@ -24,6 +24,7 @@ from app.domain import persona  # noqa: F401  (registra 'personas' en Base.metad
 from app.domain import apartamento  # noqa: F401  (registra 'apartamentos' en Base.metadata)
 from app.domain import usuario  # noqa: F401  (registra 'usuarios' en Base.metadata)
 from app.domain import paquete  # noqa: F401  (registra 'paquetes' en Base.metadata)
+from app.domain import otp_cliente  # noqa: F401  (registra 'otps_cliente' en Base.metadata)
 
 pytestmark = pytest.mark.integration
 
