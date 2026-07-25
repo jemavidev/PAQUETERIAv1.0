@@ -8,6 +8,8 @@ formato— resuelva a UNA sola Persona (registro implícito, sin duplicados).
 """
 
 import re
+import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,6 +18,8 @@ from .persona import Persona
 from .telefono import normalizar_telefono
 
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+_ANONIMIZADO_PREFIJO = "DEL-"  # nunca colisiona con un teléfono real (+57…)
+_NOMBRE_ANONIMIZADO = "Cliente eliminado"
 
 
 def _buscar_por_telefono(session: Session, telefono_canonico: str):
@@ -98,6 +102,35 @@ def update_datos_personales(
         persona.tipo_documento = tipo_documento
     if segundo_contacto is not None:
         persona.segundo_contacto = segundo_contacto
+
+    session.flush()
+    return persona
+
+
+def anonimizar_persona(session: Session, persona: Persona) -> Persona:
+    """Anonimiza una Persona (ADR-0005): limpia sus datos personales y
+    reemplaza su Teléfono por un valor sintético no reutilizable — sin borrar
+    la fila (la FK real `fk_paquetes_anunciante` desde `paquetes` nunca se
+    rompe). Idempotente: si ya estaba anonimizada, no hace nada.
+
+    Desvincula del Apartamento asignando `apartamento_actual_id = None`
+    directamente (no a través de `move_resident`, que la re-buscaría por
+    teléfono de forma redundante ya que aquí se tiene la instancia en mano; la
+    garantía de que esto no reescribe el snapshot de paquetes ya anunciados
+    vive en el esquema — columnas de texto copiadas, no un FK — no en la
+    función que se use para desvincular).
+    """
+    if persona.eliminado_en is not None:
+        return persona
+
+    persona.apartamento_actual_id = None
+    persona.nombre = _NOMBRE_ANONIMIZADO
+    persona.email = None
+    persona.documento = None
+    persona.tipo_documento = None
+    persona.segundo_contacto = None
+    persona.telefono = _ANONIMIZADO_PREFIJO + uuid.uuid4().hex[:16]
+    persona.eliminado_en = datetime.now(timezone.utc)
 
     session.flush()
     return persona

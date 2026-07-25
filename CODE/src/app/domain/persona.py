@@ -62,6 +62,11 @@ class Persona(Base):
     tipo_documento = Column(String(10), nullable=True)
     segundo_contacto = Column(String(120), nullable=True)
 
+    # Marca de anonimización (ADR-0005). No nulo = la Persona fue "eliminada":
+    # sus datos personales quedan limpios y su teléfono es sintético. La fila
+    # NUNCA se borra (FK real fk_paquetes_anunciante desde paquetes).
+    eliminado_en = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(
         DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
