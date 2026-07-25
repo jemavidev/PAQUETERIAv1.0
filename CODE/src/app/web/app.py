@@ -19,6 +19,7 @@ from .config import secret_key
 from .routes.announce import router as announce_router
 from .routes.auth import router as auth_router
 from .routes.health import router as health_router
+from .routes.customer_auth import router as customer_auth_router
 from .routes.packages import router as packages_router
 from .routes.search import router as search_router
 
@@ -27,9 +28,16 @@ _STATIC_DIR = _WEB_DIR / "static"
 
 
 async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPException):
-    """Un 401 en una ruta con privilegios manda al login; el resto usa el default."""
+    """Un 401 en una ruta con privilegios manda al login correspondiente — de
+    cliente si la ruta es `/auth/customer/*`, de staff en el resto (dos audiencias
+    con sesiones y logins independientes)."""
     if exc.status_code == 401:
-        return RedirectResponse("/auth/login", status_code=303)
+        destino = (
+            "/auth/customer/login"
+            if request.url.path.startswith("/auth/customer")
+            else "/auth/login"
+        )
+        return RedirectResponse(destino, status_code=303)
     return await http_exception_handler(request, exc)
 
 
@@ -43,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(announce_router)
     app.include_router(auth_router)
+    app.include_router(customer_auth_router)
     app.include_router(packages_router)
     app.include_router(search_router)
     return app

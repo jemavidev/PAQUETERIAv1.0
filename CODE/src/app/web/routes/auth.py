@@ -57,7 +57,9 @@ def login_submit(
 
 @router.post("/auth/logout")
 def logout(request: Request):
-    request.session.clear()
+    # pop, no clear: la sesión de cliente (persona_id) es independiente y no debe
+    # cerrarse al cerrar la de staff.
+    request.session.pop(SESSION_KEY, None)
     return RedirectResponse("/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
