@@ -15,8 +15,11 @@ from app.domain.staff_service import verify_credentials
 from app.domain.usuario import Usuario
 
 from ..db import get_db
+from ..rate_limit import rate_limit
 from ..security import SESSION_KEY, current_staff
 from ..templating import templates
+
+_MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
 router = APIRouter()
 
@@ -30,6 +33,7 @@ def login_form(request: Request):
 def login_submit(
     request: Request,
     db: Session = Depends(get_db),
+    permitido: bool = Depends(rate_limit("auth_login", 10, 60)),
     email: str = Form(None),
     password: str = Form(None),
 ):
@@ -42,6 +46,13 @@ def login_submit(
                 "email": email or "",
             },
             status_code=400,
+        )
+
+    if not permitido:
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {"request": request, "error": _MENSAJE_RATE_LIMIT, "email": email or ""},
+            status_code=429,
         )
 
     if not (email or "").strip() or not (password or ""):

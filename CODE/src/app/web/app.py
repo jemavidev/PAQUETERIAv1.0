@@ -16,6 +16,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import RedirectResponse
 
 from .config import secret_key
+from .rate_limit import InMemoryRateLimiter
 from .routes.announce import router as announce_router
 from .routes.auth import router as auth_router
 from .routes.health import router as health_router
@@ -51,6 +52,9 @@ async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPExceptio
 
 def create_app() -> FastAPI:
     app = FastAPI(title="PAQUETEX — rebuild PaqueteXv.2")
+    # Contador de rate-limit por app (no un singleton de módulo): cada app —
+    # cada test vía create_app() — arranca con su propio contador limpio.
+    app.state.rate_limiter = InMemoryRateLimiter()
     # Sesión por cookie firmada (el actor de las acciones sale de aquí).
     app.add_middleware(SessionMiddleware, secret_key=secret_key())
     app.add_exception_handler(StarletteHTTPException, _redirigir_no_autenticado)

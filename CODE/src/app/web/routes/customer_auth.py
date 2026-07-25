@@ -16,6 +16,7 @@ from app.domain.otp_service import request_otp, verify_otp
 from app.domain.persona import Persona
 
 from ..db import get_db
+from ..rate_limit import rate_limit
 from ..security import CUSTOMER_SESSION_KEY, current_customer
 from ..templating import templates
 
@@ -24,6 +25,8 @@ router = APIRouter()
 # Envío real de SMS = rebanada de notificaciones (brief §10, override fail-closed
 # de staging). Aquí el puerto ya existe; esta es la implementación de desarrollo.
 _sender = DevOtpSender()
+
+_MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
 
 @router.get("/auth/customer/login", response_class=HTMLResponse)
@@ -35,8 +38,16 @@ def customer_login_form(request: Request):
 def customer_request_otp(
     request: Request,
     db: Session = Depends(get_db),
+    permitido: bool = Depends(rate_limit("customer_request_otp", 5, 60)),
     telefono: str = Form(None),
 ):
+    if not permitido:
+        return templates.TemplateResponse(
+            "auth/customer_login.html",
+            {"request": request, "error": _MENSAJE_RATE_LIMIT},
+            status_code=429,
+        )
+
     if not (telefono or "").strip():
         return templates.TemplateResponse(
             "auth/customer_login.html",
