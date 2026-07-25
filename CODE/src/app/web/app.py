@@ -20,6 +20,7 @@ from .routes.announce import router as announce_router
 from .routes.auth import router as auth_router
 from .routes.health import router as health_router
 from .routes.admin import router as admin_router
+from .routes.announce_new import router as announce_new_router
 from .routes.customer_auth import router as customer_auth_router
 from .routes.customer_verify import router as customer_verify_router
 from .routes.packages import router as packages_router
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(announce_router)
     app.include_router(auth_router)
     app.include_router(admin_router)
+    app.include_router(announce_new_router)
     app.include_router(customer_auth_router)
     app.include_router(customer_verify_router)
     app.include_router(packages_router)
