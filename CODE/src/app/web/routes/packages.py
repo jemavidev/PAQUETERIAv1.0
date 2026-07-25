@@ -14,11 +14,14 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.domain.paquete import MotivoCancelacion, Paquete
+from app.domain.notification_sender import NotificationSender
+from app.domain.notificacion_service import notificar_evento
+from app.domain.paquete import EstadoPaquete, MotivoCancelacion, Paquete
 from app.domain.paquete_lifecycle import TransicionInvalida, cancel, deliver, receive
 from app.domain.usuario import Usuario
 
 from ..db import get_db
+from ..notifications import get_notification_sender
 from ..security import current_staff
 from ..templating import templates
 
@@ -69,6 +72,7 @@ def receive_action(
     request: Request,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
+    sender: NotificationSender = Depends(get_notification_sender),
     guide_number: str = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
@@ -77,6 +81,7 @@ def receive_action(
         receive(db, paquete, staff, guia)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
+    notificar_evento(paquete, EstadoPaquete.RECIBIDO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -86,12 +91,14 @@ def deliver_action(
     request: Request,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
+    sender: NotificationSender = Depends(get_notification_sender),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     try:
         deliver(db, paquete, staff)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
+    notificar_evento(paquete, EstadoPaquete.ENTREGADO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -101,6 +108,7 @@ def cancel_action(
     request: Request,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
+    sender: NotificationSender = Depends(get_notification_sender),
     motivo: str = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
@@ -108,4 +116,5 @@ def cancel_action(
         cancel(db, paquete, staff, motivo)
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
+    notificar_evento(paquete, EstadoPaquete.CANCELADO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
