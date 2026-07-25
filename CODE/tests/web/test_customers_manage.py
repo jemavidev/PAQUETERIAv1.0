@@ -93,3 +93,57 @@ def test_persona_inexistente_da_404(client):
 
     r = client.get(f"/customers/manage/{uuid.uuid4()}")
     assert r.status_code == 404
+
+
+# --------------------------------------------------------------------------- #
+# Eliminar cliente (ticket 03) — solo ADMIN.
+# --------------------------------------------------------------------------- #
+def _login_admin(client, email="admin@club.com"):
+    create_initial_admin(client.db, email, "Admin", _PW)
+    client.db.commit()
+    client.post("/auth/login", data={"email": email, "password": _PW})
+
+
+def test_admin_elimina_anonimiza_al_cliente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_admin(client)
+
+    r = client.post(f"/customers/manage/{p.id}/delete", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Persona, p.id)
+    assert p2.nombre == "Cliente eliminado"
+    assert p2.telefono.startswith("DEL-")
+    assert p2.eliminado_en is not None
+
+
+def test_operador_no_puede_eliminar(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/customers/manage/{p.id}/delete")
+    assert r.status_code == 403
+
+    client.db.expire_all()
+    p2 = client.db.get(Persona, p.id)
+    assert p2.nombre == "Ana"  # sin cambios
+
+
+def test_eliminar_sin_sesion_redirige_a_login_de_staff(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+
+    r = client.post(f"/customers/manage/{p.id}/delete", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/auth/login")
+
+
+def test_eliminar_id_inexistente_da_404(client):
+    _login_admin(client)
+    import uuid
+
+    r = client.post(f"/customers/manage/{uuid.uuid4()}/delete")
+    assert r.status_code == 404

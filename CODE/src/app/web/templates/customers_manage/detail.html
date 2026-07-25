@@ -14,6 +14,8 @@
   button[type=submit] { width:100%; margin-top:18px; padding:14px; background:var(--brand); color:#fff; border:0; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; }
   .error { background:#fdecea; color:var(--err); border-radius:8px; padding:12px; margin-bottom:12px; }
   .ok { background:#e3f7e8; color:var(--ok); border-radius:8px; padding:12px; margin-bottom:12px; }
+  .warn { background:#fff8e6; border-radius:8px; padding:10px 12px; margin:0 0 10px; font-size:.9rem; }
+  .btn-danger-solid { width:100%; padding:12px; background:var(--err); color:#fff; border:0; border-radius:8px; font-weight:600; cursor:pointer; }
 </style>
 {% endblock %}
 {% block content %}
@@ -39,5 +41,16 @@
     </div>
     <button type="submit">Guardar</button>
   </form>
+
+  {% if staff.rol.value == "ADMIN" %}
+  <div class="card">
+    <h2>Zona de peligro</h2>
+    <p class="warn">⚠️ Eliminar es <strong>irreversible</strong>: limpia los datos personales y el teléfono deja de ser el suyo.</p>
+    <form method="post" action="/customers/manage/{{ persona.id }}/delete"
+          onsubmit="return confirm('¿Seguro que quieres eliminar a {{ persona.nombre }}? Esta acción es irreversible.');">
+      <button type="submit" class="btn-danger-solid">Eliminar cliente</button>
+    </form>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

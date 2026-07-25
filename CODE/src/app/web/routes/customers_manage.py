@@ -11,17 +11,17 @@ OTRO (no la propia sesión, a diferencia de `/customer/verify`).
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
 from app.domain.persona import Persona
-from app.domain.persona_service import update_datos_personales
+from app.domain.persona_service import anonimizar_persona, update_datos_personales
 from app.domain.telefono import normalizar_telefono
 from app.domain.usuario import Usuario
 
 from ..db import get_db
-from ..security import current_staff
+from ..security import current_staff, require_admin
 from ..templating import templates
 
 router = APIRouter()
@@ -141,4 +141,19 @@ def customers_manage_update(
             "apartamento": _apartamento_actual(db, persona),
             "guardado": True,
         },
+    )
+
+
+@router.post("/customers/manage/{persona_id}/delete")
+def customers_manage_delete(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    """Elimina (anonimiza) un cliente. **Solo ADMIN** — acción destructiva
+    (ADR-0005); la ruta se protege server-side, la UI no es la única barrera."""
+    persona = _get_persona_o_404(db, persona_id)
+    anonimizar_persona(db, persona)
+    return RedirectResponse(
+        "/customers/manage?eliminado=1", status_code=status.HTTP_303_SEE_OTHER
     )
