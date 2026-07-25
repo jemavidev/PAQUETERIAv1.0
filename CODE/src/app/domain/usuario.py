@@ -15,7 +15,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, String
+from sqlalchemy import Column, DateTime, Enum, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 
 from .base import Base
@@ -35,10 +35,21 @@ class RolUsuario(str, enum.Enum):
 class Usuario(Base):
     __tablename__ = "usuarios"
 
+    # Unicidad del email con nombre explícito, IDÉNTICO al de la migración 0005
+    # (`uq_usuarios_email`), para que el guard de paridad no reporte drift.
+    __table_args__ = (UniqueConstraint("email", name="uq_usuarios_email"),)
+
     # Surrogate key propia (UUID por portabilidad del D/R basado en dump/restore).
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     nombre = Column(String(120), nullable=False)
+
+    # Credenciales de acceso (rebanada staff-auth). NULLABLE: un Usuario puede
+    # existir como actor sin credenciales (p.ej. en tests de lifecycle); en
+    # producción todo staff real tiene ambos. El email único es la llave de acceso;
+    # la contraseña se guarda SOLO hasheada (nunca en claro).
+    email = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
 
     # VARCHAR-backed (`native_enum=False`): se persiste como VARCHAR(20) sin tipo
     # ENUM nativo de Postgres (alembic compara mal los ENUM nativos y rompería el
