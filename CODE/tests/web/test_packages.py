@@ -212,3 +212,22 @@ def test_cancelar_sin_sesion_redirige_a_login(client):
     )
     assert r.status_code == 303
     assert r.headers["location"].endswith("/auth/login")
+
+
+# --------------------------------------------------------------------------- #
+# Escáner ZXing (ticket 04) — cobertura automatizable: asset servido + disparador.
+# El decode por cámara es client-side y se verifica manual/e2e (no hay cámara en CI).
+# --------------------------------------------------------------------------- #
+def test_el_asset_zxing_se_sirve(client):
+    r = client.get("/static/vendor/zxing.min.js")
+    assert r.status_code == 200
+    assert "BrowserMultiFormatReader" in r.text
+
+
+def test_el_modal_recibir_incluye_el_disparador_de_escaneo(client):
+    _login_staff(client)
+    _anunciar(client)
+    r = client.get("/packages")
+    assert r.status_code == 200
+    assert "scan-btn" in r.text  # el botón "Escanear" vive en el modal Recibir
+    assert "zxing.min.js" in r.text  # el bundle se carga (lazy) desde /static

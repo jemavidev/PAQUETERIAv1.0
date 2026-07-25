@@ -29,6 +29,9 @@
   .warn { background:#fff8e6; border-radius:8px; padding:10px 12px; margin:0 0 8px; }
   .confirm { margin:0 0 8px; }
   .modal-form select { width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:1rem; background:#fff; }
+  .scan-btn { margin-top:10px; }
+  .scan-video { width:100%; max-height:240px; background:#000; border-radius:8px; margin:10px 0 0; object-fit:cover; }
+  .scan-msg { font-size:.85rem; color:#9a6b00; margin:8px 0 0; }
   .empty { color:#777; text-align:center; padding:32px; }
   /* modal / bottom-sheet */
   .modal[hidden] { display:none; }
@@ -78,6 +81,9 @@
         <form method="post" action="/packages/{{ p.id }}/receive" class="modal-form">
           <label for="guia-{{ p.id }}">Guía del transportador (opcional)</label>
           <input type="text" id="guia-{{ p.id }}" name="guide_number" autocomplete="off" inputmode="text">
+          <button type="button" class="btn scan-btn" data-target="guia-{{ p.id }}" data-video="video-{{ p.id }}">📷 Escanear con cámara</button>
+          <video id="video-{{ p.id }}" class="scan-video" hidden playsinline muted></video>
+          <p class="scan-msg" hidden></p>
           <button type="submit" class="btn btn-primary">Confirmar recibo</button>
         </form>
       {% endcall %}
@@ -130,6 +136,58 @@
         try { if (btn) btn.disabled = true; }
         finally { setTimeout(function () { if (btn) btn.disabled = false; }, 5000); }
       });
+    });
+
+    // Escáner ZXing (cámara): carga el bundle de forma perezosa, decodifica
+    // multi-formato y rellena la Guía. Degrada con gracia a entrada manual.
+    var _readers = {};
+    function ensureZXing(cb) {
+      if (window.ZXing) { cb(); return; }
+      var s = document.createElement('script');
+      s.src = '/static/vendor/zxing.min.js';
+      s.onload = cb;
+      s.onerror = function () {};
+      document.head.appendChild(s);
+    }
+    function stopReaders() {
+      Object.keys(_readers).forEach(function (k) {
+        try { _readers[k].reset(); } catch (e) {}
+        var v = document.getElementById(k);
+        if (v) v.hidden = true;
+      });
+    }
+    document.querySelectorAll('.scan-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.dataset.target);
+        var video = document.getElementById(btn.dataset.video);
+        var msg = btn.parentNode.querySelector('.scan-msg');
+        function fail(t) { if (msg) { msg.hidden = false; msg.textContent = t; } }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          fail('Cámara no disponible; escribe la guía a mano.');
+          return;
+        }
+        ensureZXing(function () {
+          if (!window.ZXing) { fail('No se pudo cargar el escáner; escribe la guía a mano.'); return; }
+          try {
+            var reader = new ZXing.BrowserMultiFormatReader();
+            _readers[btn.dataset.video] = reader;
+            video.hidden = false;
+            reader.decodeFromVideoDevice(null, video, function (result) {
+              if (result) {
+                input.value = result.getText();
+                try { reader.reset(); } catch (e) {}
+                video.hidden = true;
+              }
+            });
+          } catch (e) {
+            fail('No se pudo iniciar la cámara; escribe la guía a mano.');
+          }
+        });
+      });
+    });
+    // Liberar la cámara al cerrar cualquier modal.
+    document.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', stopReaders);
     });
   })();
 </script>
