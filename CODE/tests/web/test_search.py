@@ -83,3 +83,36 @@ def test_termino_sin_coincidencia_da_sin_resultados_sin_error(client):
     r = client.get("/search", params={"q": "NO-EXISTE-999"})
     assert r.status_code == 200
     assert "no encontramos" in r.text.lower()
+
+
+# --------------------------------------------------------------------------- #
+# Buscar por teléfono (ticket 02)
+# --------------------------------------------------------------------------- #
+def test_buscar_por_telefono_lista_lo_anunciado_y_lo_destinado(client):
+    ana = _anunciar(client, tel="3001234567", nombre="Ana")
+    # Un segundo anuncio a nombre de Ana (destinataria registrada), anunciado por Beto.
+    beto_pkg = announce(
+        client.db,
+        anunciante_telefono="3019999999",
+        anunciante_nombre="Beto",
+        destinatario=Destinatario.persona_registrada("3001234567"),
+    )
+    client.db.commit()
+
+    r = client.get("/search", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert ana.tracking_number in r.text
+    assert beto_pkg.tracking_number in r.text
+
+
+def test_buscar_por_telefono_en_otro_formato_encuentra_lo_mismo(client):
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+    r = client.get("/search", params={"q": "+57 300 123 4567"})
+    assert r.status_code == 200
+    assert p.tracking_number in r.text
+
+
+def test_telefono_sin_paquetes_da_sin_resultados(client):
+    r = client.get("/search", params={"q": "3009999999"})
+    assert r.status_code == 200
+    assert "no encontramos" in r.text.lower()

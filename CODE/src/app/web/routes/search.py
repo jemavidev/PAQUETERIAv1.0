@@ -12,7 +12,10 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from sqlalchemy import or_
+
 from app.domain.paquete import Paquete
+from app.domain.telefono import normalizar_telefono
 
 from ..db import get_db
 from ..templating import templates
@@ -54,6 +57,30 @@ def search(request: Request, q: str = None, db: Session = Depends(get_db)):
                 "timeline": _timeline(paquete),
             },
         )
+
+    # No coincide con ningún tracking: se interpreta como teléfono.
+    try:
+        telefono = normalizar_telefono(termino)
+    except ValueError:
+        telefono = None
+
+    if telefono is not None:
+        paquetes = (
+            db.query(Paquete)
+            .filter(
+                or_(
+                    Paquete.announced_by_phone == telefono,
+                    Paquete.recipient_phone == telefono,
+                )
+            )
+            .order_by(Paquete.announced_at.desc())
+            .all()
+        )
+        if paquetes:
+            return templates.TemplateResponse(
+                "search/form.html",
+                {"request": request, "q": termino, "paquetes": paquetes},
+            )
 
     return templates.TemplateResponse(
         "search/form.html", {"request": request, "q": termino, "sin_resultados": True}
