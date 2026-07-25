@@ -20,6 +20,7 @@ from .routes.announce import router as announce_router
 from .routes.auth import router as auth_router
 from .routes.health import router as health_router
 from .routes.packages import router as packages_router
+from .routes.search import router as search_router
 
 _WEB_DIR = Path(__file__).resolve().parent
 _STATIC_DIR = _WEB_DIR / "static"
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(announce_router)
     app.include_router(auth_router)
     app.include_router(packages_router)
+    app.include_router(search_router)
     return app
 
 
