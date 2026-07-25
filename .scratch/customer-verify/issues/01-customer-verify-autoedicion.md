@@ -6,12 +6,12 @@
 
 **Blocked by:** None — `current_customer` (customer-otp-auth) y `declare_unit`/`get_or_create_apartamento` (data-model) ya están.
 
-**Status:** ready-for-agent
+**Status:** done · 157 tests verdes
 
-- [ ] `update_datos_personales(session, persona, *, nombre=None, email=None, documento=None, tipo_documento=None, segundo_contacto=None) -> Persona` en dominio: **actualización parcial** — los campos `None` (no enviados) **no** tocan el valor existente; validación básica de forma (p.ej. email con `@`, si se manda).
-- [ ] `GET /customer/verify` **gated por `current_customer`** (sin sesión → redirige a `/auth/customer/login`, handler ya existente): muestra el formulario **prellenado** con los datos actuales, incluido el Apartamento actual si tiene.
-- [ ] `POST /customer/verify`: guarda los datos personales vía `update_datos_personales`; si vienen Conjunto/Torre/Apartamento (**opcionales**), llama `get_or_create_apartamento(...)` + `declare_unit(apartamento, [(persona.telefono, persona.nombre)])` — **un solo miembro** (el propio cliente); **PRG** de vuelta a `/customer/verify` con confirmación.
-- [ ] Declarar un Apartamento **existente** lo **reutiliza** (no duplica) y **no afecta** a ninguna otra Persona ya asignada a ese Apartamento (el test lo prueba explícitamente, no lo asume).
-- [ ] Guardar datos / cambiar de Apartamento **no reescribe** el snapshot de paquetes ya anunciados por esa Persona (ADR-0001).
-- [ ] Email con forma inválida → error claro, **sin persistir** el cambio inválido (el resto de campos válidos del mismo envío tampoco se guarda — todo o nada por request).
-- [ ] Tests HTTP (`TestClient`, sesión de cliente vía OTP como en `test_customer_auth.py`): sin sesión → redirige; con sesión → 200 con datos prellenados; `POST` guarda parcialmente (campos no enviados quedan igual); `POST` con Apartamento nuevo lo crea y asigna; `POST` con Apartamento existente lo reutiliza y **no muta** a otra Persona ya en él; email inválido → error sin persistir; snapshot de un paquete anunciado antes se mantiene tras cambiar de Apartamento.
+- [x] `update_datos_personales(session, persona, *, nombre=None, email=None, documento=None, tipo_documento=None, segundo_contacto=None) -> Persona` en dominio: **actualización parcial** — los campos `None` (no enviados) **no** tocan el valor existente; validación básica de forma (p.ej. email con `@`, si se manda).
+- [x] `GET /customer/verify` **gated por `current_customer`** (sin sesión → redirige a `/auth/customer/login`, handler ya existente): muestra el formulario **prellenado** con los datos actuales, incluido el Apartamento actual si tiene.
+- [x] `POST /customer/verify`: guarda los datos personales vía `update_datos_personales`; si vienen Conjunto/Torre/Apartamento (**opcionales**), llama `get_or_create_apartamento(...)` + `declare_unit(apartamento, [(persona.telefono, persona.nombre)])` — **un solo miembro** (el propio cliente); **PRG** de vuelta a `/customer/verify` con confirmación.
+- [x] Declarar un Apartamento **existente** lo **reutiliza** (no duplica) y **no afecta** a ninguna otra Persona ya asignada a ese Apartamento (el test lo prueba explícitamente, no lo asume).
+- [x] Guardar datos / cambiar de Apartamento **no reescribe** el snapshot de paquetes ya anunciados por esa Persona (ADR-0001).
+- [x] Email con forma inválida → error claro, **sin persistir** el cambio inválido (el resto de campos válidos del mismo envío tampoco se guarda — todo o nada por request).
+- [x] Tests HTTP (`TestClient`, sesión de cliente vía OTP como en `test_customer_auth.py`): sin sesión → redirige; con sesión → 200 con datos prellenados; `POST` guarda parcialmente (campos no enviados quedan igual); `POST` con Apartamento nuevo lo crea y asigna; `POST` con Apartamento existente lo reutiliza y **no muta** a otra Persona ya en él; email inválido → error sin persistir; snapshot de un paquete anunciado antes se mantiene tras cambiar de Apartamento.
