@@ -1,0 +1,95 @@
+# -*- coding: utf-8 -*-
+"""
+Capa web — `/customers/manage` (buscar + ver/editar cliente, ticket 02).
+
+Comportamiento observable por HTTP: exige sesión de staff (CUALQUIER rol);
+buscar por teléfono o nombre encuentra al cliente correcto; editar es parcial y
+opera sobre la Persona de OTRO (no la propia sesión); email inválido rechaza
+sin persistir; id inexistente -> 404.
+"""
+
+from app.domain.persona import Persona
+from app.domain.persona_service import get_or_create_persona
+from app.domain.staff_service import create_initial_admin, create_staff
+from app.domain.usuario import RolUsuario
+
+_PW = "Contrasena1"
+
+
+def _login_operador(client, email="op@club.com"):
+    admin = create_initial_admin(client.db, "admin@club.com", "Admin", _PW)
+    create_staff(client.db, admin, email, "Opa", _PW, RolUsuario.OPERADOR)
+    client.db.commit()
+    client.post("/auth/login", data={"email": email, "password": _PW})
+
+
+def test_sin_sesion_redirige_al_login_de_staff_no_al_de_cliente(client):
+    # Confirma el gate correcto: /customers/manage es STAFF, no cliente, pese a
+    # empezar con "/customer" como substring de "/customers".
+    r = client.get("/customers/manage", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/auth/login")
+    assert "customer/login" not in r.headers["location"]
+
+
+def test_buscar_por_telefono_encuentra_al_cliente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.get("/customers/manage", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert "Ana" in r.text
+    assert str(p.id) in r.text
+
+
+def test_buscar_por_nombre_encuentra_al_cliente(client):
+    get_or_create_persona(client.db, "3001234567", "Ana Gómez")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.get("/customers/manage", params={"q": "gómez"})
+    assert r.status_code == 200
+    assert "Ana Gómez" in r.text
+
+
+def test_operador_ve_y_edita_la_ficha_de_otra_persona(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.get(f"/customers/manage/{p.id}")
+    assert r.status_code == 200
+    assert "Ana" in r.text
+
+
+def test_editar_guarda_parcialmente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(f"/customers/manage/{p.id}", data={"email": "ana@x.com"})
+    client.db.expire_all()
+    p2 = client.db.get(Persona, p.id)
+    assert p2.nombre == "Ana"  # no enviado, sigue igual
+    assert p2.email == "ana@x.com"
+
+
+def test_email_invalido_rechaza_sin_persistir(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/customers/manage/{p.id}", data={"email": "no-es-email"})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).email is None
+
+
+def test_persona_inexistente_da_404(client):
+    _login_operador(client)
+    import uuid
+
+    r = client.get(f"/customers/manage/{uuid.uuid4()}")
+    assert r.status_code == 404

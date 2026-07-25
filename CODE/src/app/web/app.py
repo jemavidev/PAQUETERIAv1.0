@@ -24,6 +24,7 @@ from .routes.admin import router as admin_router
 from .routes.announce_new import router as announce_new_router
 from .routes.customer_auth import router as customer_auth_router
 from .routes.customer_verify import router as customer_verify_router
+from .routes.customers_manage import router as customers_manage_router
 from .routes.packages import router as packages_router
 from .routes.search import router as search_router
 
@@ -33,7 +34,10 @@ _STATIC_DIR = _WEB_DIR / "static"
 
 # Prefijos de ruta que pertenecen a la audiencia CLIENTE (current_customer);
 # cualquier otro 401 se asume de la audiencia STAFF (current_staff/require_admin).
-_RUTAS_CLIENTE = ("/auth/customer", "/customer")
+# OJO: "/customer/verify" (singular, exacto), NO un genérico "/customer" — ese
+# genérico sería también prefijo de "/customers/manage" (staff, plural) por
+# simple coincidencia de substring y mandaría su 401 al login equivocado.
+_RUTAS_CLIENTE = ("/auth/customer", "/customer/verify")
 
 
 async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPException):
@@ -66,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_router)
     app.include_router(announce_new_router)
     app.include_router(customer_auth_router)
+    app.include_router(customers_manage_router)
     app.include_router(customer_verify_router)
     app.include_router(packages_router)
     app.include_router(search_router)
