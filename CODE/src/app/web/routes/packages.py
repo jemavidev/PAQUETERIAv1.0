@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.domain.paquete import Paquete
-from app.domain.paquete_lifecycle import TransicionInvalida, receive
+from app.domain.paquete_lifecycle import TransicionInvalida, deliver, receive
 from app.domain.usuario import Usuario
 
 from ..db import get_db
@@ -69,6 +69,21 @@ def receive_action(
     guia = (guide_number or "").strip() or None
     try:
         receive(db, paquete, staff, guia)
+    except TransicionInvalida as exc:
+        return _render_lista(request, db, staff, error=str(exc), status_code=400)
+    return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/packages/{paquete_id}/deliver")
+def deliver_action(
+    paquete_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    paquete = _get_paquete_o_404(db, paquete_id)
+    try:
+        deliver(db, paquete, staff)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)

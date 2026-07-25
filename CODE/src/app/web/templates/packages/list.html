@@ -57,15 +57,31 @@
       <div class="pkg-sub">
         {% if p.snapshot_apartamento %}{{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% else %}Sin apartamento{% endif %}
       </div>
-      {% if p.estado.value == "ANUNCIADO" %}
+      {% if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
       <div class="pkg-actions">
+        {% if p.estado.value == "ANUNCIADO" %}
         <button type="button" class="btn" data-open="modal-receive-{{ p.id }}">Recibir</button>
+        {% elif p.estado.value == "RECIBIDO" %}
+        <button type="button" class="btn" data-open="modal-deliver-{{ p.id }}">Entregar</button>
+        {% endif %}
       </div>
+      {% endif %}
+
+      {% if p.estado.value == "ANUNCIADO" %}
       {% call modal("receive-" ~ p.id, "Recibir paquete") %}
         <form method="post" action="/packages/{{ p.id }}/receive" class="modal-form">
           <label for="guia-{{ p.id }}">Guía del transportador (opcional)</label>
           <input type="text" id="guia-{{ p.id }}" name="guide_number" autocomplete="off" inputmode="text">
           <button type="submit" class="btn btn-primary">Confirmar recibo</button>
+        </form>
+      {% endcall %}
+      {% endif %}
+
+      {% if p.estado.value == "RECIBIDO" %}
+      {% call modal("deliver-" ~ p.id, "Entregar paquete") %}
+        <p class="confirm">Entregar a <strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
+        <form method="post" action="/packages/{{ p.id }}/deliver" class="modal-form">
+          <button type="submit" class="btn btn-primary">Confirmar entrega</button>
         </form>
       {% endcall %}
       {% endif %}

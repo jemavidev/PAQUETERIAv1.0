@@ -104,3 +104,42 @@ def test_recibir_sin_sesion_redirige_a_login(client):
     r = client.post(f"/packages/{p.id}/receive", data={}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"].endswith("/auth/login")
+
+
+# --------------------------------------------------------------------------- #
+# Entregar (ticket 02)
+# --------------------------------------------------------------------------- #
+def _recibir(client, staff, p):
+    dom_receive(client.db, p, staff)
+    client.db.commit()
+
+
+def test_entregar_un_recibido_transiciona_y_registra_al_actor(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    _recibir(client, staff, p)
+
+    r = client.post(f"/packages/{p.id}/deliver", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.ENTREGADO
+    assert p2.delivered_by_usuario_id == staff.id
+
+
+def test_entregar_un_no_recibido_se_rechaza_sin_efecto(client):
+    _login_staff(client)
+    p = _anunciar(client)  # sigue ANUNCIADO
+
+    r = client.post(f"/packages/{p.id}/deliver")
+    assert r.status_code == 400
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_entregar_sin_sesion_redirige_a_login(client):
+    p = _anunciar(client)
+    r = client.post(f"/packages/{p.id}/deliver", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/auth/login")
