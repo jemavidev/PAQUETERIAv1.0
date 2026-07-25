@@ -6,9 +6,9 @@
 
 **Blocked by:** 01 — Anonimizar Persona (dominio); 02 — Buscar + ver/editar cliente (la ficha donde vive el botón "Eliminar").
 
-**Status:** ready-for-agent
+**Status:** done · 210 tests verdes
 
-- [ ] En la ficha (`GET /customers/manage/{persona_id}`), botón **"Eliminar"** visible solo si el `staff` actual es ADMIN, con **paso de confirmación explícita** en la UI (mismo espíritu que el aviso de irreversibilidad de Cancelar en `/packages`) antes de enviar.
-- [ ] `POST /customers/manage/{persona_id}/delete` **gated por `require_admin`**: llama `anonimizar_persona(db, persona)`; éxito → redirige a `/customers/manage` con confirmación. Operador (no admin) → **403** (la ruta se protege server-side; la UI no es la única barrera).
-- [ ] `persona_id` inexistente → 404.
-- [ ] Tests HTTP: ADMIN elimina → Persona queda anonimizada (verificado en `client.db`: nombre/email/documento/teléfono cambiados, `eliminado_en` seteado); OPERADOR intentando eliminar → 403, Persona **sin cambios**; sin sesión → redirige; id inexistente → 404.
+- [x] En la ficha (`GET /customers/manage/{persona_id}`), botón **"Eliminar"** visible solo si el `staff` actual es ADMIN, con **paso de confirmación explícita** en la UI (mismo espíritu que el aviso de irreversibilidad de Cancelar en `/packages`) antes de enviar.
+- [x] `POST /customers/manage/{persona_id}/delete` **gated por `require_admin`**: llama `anonimizar_persona(db, persona)`; éxito → redirige a `/customers/manage` con confirmación. Operador (no admin) → **403** (la ruta se protege server-side; la UI no es la única barrera).
+- [x] `persona_id` inexistente → 404.
+- [x] Tests HTTP: ADMIN elimina → Persona queda anonimizada (verificado en `client.db`: nombre/email/documento/teléfono cambiados, `eliminado_en` seteado); OPERADOR intentando eliminar → 403, Persona **sin cambios**; sin sesión → redirige; id inexistente → 404.
