@@ -24,6 +24,11 @@
   .pkg-actions { margin-top:12px; display:flex; gap:8px; }
   .btn { padding:10px 14px; border:1px solid #ccc; border-radius:8px; background:#fff; font-weight:600; cursor:pointer; }
   .btn-primary { background:var(--brand); color:#fff; border-color:var(--brand); width:100%; }
+  .btn-danger { color:var(--err); border-color:#e5b4ae; }
+  .btn-danger-solid { background:var(--err); color:#fff; border-color:var(--err); width:100%; }
+  .warn { background:#fff8e6; border-radius:8px; padding:10px 12px; margin:0 0 8px; }
+  .confirm { margin:0 0 8px; }
+  .modal-form select { width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:1rem; background:#fff; }
   .empty { color:#777; text-align:center; padding:32px; }
   /* modal / bottom-sheet */
   .modal[hidden] { display:none; }
@@ -64,6 +69,7 @@
         {% elif p.estado.value == "RECIBIDO" %}
         <button type="button" class="btn" data-open="modal-deliver-{{ p.id }}">Entregar</button>
         {% endif %}
+        <button type="button" class="btn btn-danger" data-open="modal-cancel-{{ p.id }}">Cancelar</button>
       </div>
       {% endif %}
 
@@ -82,6 +88,22 @@
         <p class="confirm">Entregar a <strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
         <form method="post" action="/packages/{{ p.id }}/deliver" class="modal-form">
           <button type="submit" class="btn btn-primary">Confirmar entrega</button>
+        </form>
+      {% endcall %}
+      {% endif %}
+
+      {% if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
+      {% call modal("cancel-" ~ p.id, "Cancelar paquete") %}
+        <p class="warn">⚠️ Esta acción es <strong>irreversible</strong>.</p>
+        <form method="post" action="/packages/{{ p.id }}/cancel" class="modal-form">
+          <label for="motivo-{{ p.id }}">Motivo de cancelación</label>
+          <select id="motivo-{{ p.id }}" name="motivo" required>
+            <option value="" disabled selected>Selecciona un motivo…</option>
+            {% for m in motivos %}
+            <option value="{{ m.value }}">{{ m.value.replace('_', ' ')|capitalize }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-danger-solid">Confirmar cancelación</button>
         </form>
       {% endcall %}
       {% endif %}

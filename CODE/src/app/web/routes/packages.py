@@ -14,8 +14,8 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.domain.paquete import Paquete
-from app.domain.paquete_lifecycle import TransicionInvalida, deliver, receive
+from app.domain.paquete import MotivoCancelacion, Paquete
+from app.domain.paquete_lifecycle import TransicionInvalida, cancel, deliver, receive
 from app.domain.usuario import Usuario
 
 from ..db import get_db
@@ -32,7 +32,13 @@ def _listar(db: Session):
 def _render_lista(request, db, staff, error=None, status_code=200):
     return templates.TemplateResponse(
         "packages/list.html",
-        {"request": request, "paquetes": _listar(db), "staff": staff, "error": error},
+        {
+            "request": request,
+            "paquetes": _listar(db),
+            "staff": staff,
+            "error": error,
+            "motivos": list(MotivoCancelacion),
+        },
         status_code=status_code,
     )
 
@@ -85,5 +91,21 @@ def deliver_action(
     try:
         deliver(db, paquete, staff)
     except TransicionInvalida as exc:
+        return _render_lista(request, db, staff, error=str(exc), status_code=400)
+    return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/packages/{paquete_id}/cancel")
+def cancel_action(
+    paquete_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    motivo: str = Form(None),
+):
+    paquete = _get_paquete_o_404(db, paquete_id)
+    try:
+        cancel(db, paquete, staff, motivo)
+    except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)

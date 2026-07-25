@@ -10,6 +10,7 @@ estado inválido no tiene efecto; un id inexistente da 404.
 import uuid
 
 from app.domain.paquete import EstadoPaquete, Paquete
+from app.domain.paquete_lifecycle import deliver as dom_deliver
 from app.domain.paquete_lifecycle import receive as dom_receive
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.staff_service import create_initial_admin
@@ -141,5 +142,73 @@ def test_entregar_un_no_recibido_se_rechaza_sin_efecto(client):
 def test_entregar_sin_sesion_redirige_a_login(client):
     p = _anunciar(client)
     r = client.post(f"/packages/{p.id}/deliver", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/auth/login")
+
+
+# --------------------------------------------------------------------------- #
+# Cancelar (ticket 03)
+# --------------------------------------------------------------------------- #
+def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/packages/{p.id}/cancel",
+        data={"motivo": "ANUNCIO_ERRONEO"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.CANCELADO
+    assert p2.cancelled_by_usuario_id == staff.id
+    assert p2.cancel_reason == "ANUNCIO_ERRONEO"
+
+
+def test_cancelar_desde_recibido(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    _recibir(client, staff, p)
+
+    r = client.post(
+        f"/packages/{p.id}/cancel",
+        data={"motivo": "DEVUELTO_AL_TRANSPORTADOR"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.CANCELADO
+
+
+def test_cancelar_sin_motivo_se_rechaza_sin_efecto(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(f"/packages/{p.id}/cancel", data={})
+    assert r.status_code == 400
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_cancelar_un_terminal_se_rechaza_sin_efecto(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    dom_receive(client.db, p, staff)
+    dom_deliver(client.db, p, staff)  # ENTREGADO (terminal)
+    client.db.commit()
+
+    r = client.post(f"/packages/{p.id}/cancel", data={"motivo": "OTRO"})
+    assert r.status_code == 400
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
+
+
+def test_cancelar_sin_sesion_redirige_a_login(client):
+    p = _anunciar(client)
+    r = client.post(
+        f"/packages/{p.id}/cancel", data={"motivo": "OTRO"}, follow_redirects=False
+    )
     assert r.status_code == 303
     assert r.headers["location"].endswith("/auth/login")
