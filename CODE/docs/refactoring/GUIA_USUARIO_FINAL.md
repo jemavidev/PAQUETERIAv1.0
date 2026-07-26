@@ -1,0 +1,162 @@
+# Guía de usuario — PAQUETEX (rebuild PaqueteXv.2)
+
+> Entregable final del rebuild (brief [`SYSTEM_REBUILD_BRIEF.md`](SYSTEM_REBUILD_BRIEF.md) §13). Explica cómo usar el sistema hoy — sin jerga técnica — distinguiendo qué ve un **residente** y qué ve el **staff** de portería/administración.
+
+---
+
+## 1. ¿Qué es PAQUETEX?
+
+Un sistema para gestionar los paquetes que llegan a un conjunto residencial. Cuando un transportador (Servientrega, Coordinadora, Amazon, etc.) deja un paquete en portería, el **staff** lo recibe y lo guarda; cuando el residente pasa a recogerlo, el staff lo entrega. PAQUETEX es el registro de todo ese recorrido, para que:
+
+- El residente sepa que su paquete **ya llegó** y en qué estado está, sin tener que preguntar en portería.
+- El staff sepa **qué hay guardado**, de quién es y desde cuándo, sin depender de un cuaderno.
+
+Diseñado **mobile-first**: la mayoría de la gente lo va a usar desde el celular, tanto residentes como el staff en portería.
+
+---
+
+## 2. Las dos "puertas" de entrada
+
+PAQUETEX tiene dos audiencias completamente separadas, cada una con su propio login:
+
+| | Residente | Staff |
+|---|---|---|
+| ¿Quién es? | Vive en el conjunto, sin privilegios especiales | Trabaja en portería/administración (rol `ADMIN` u `OPERADOR`) |
+| ¿Cómo entra? | Con su **teléfono** (código de verificación por SMS) | Con **email + contraseña** |
+| ¿Qué puede hacer? | Anunciar que espera un paquete, consultar su estado, ver/editar sus propios datos | Recibir, entregar y cancelar paquetes; declarar unidades; gestionar residentes y otras cuentas de staff |
+
+No hace falta "ser alguien" en el sistema para anunciar un paquete — con el teléfono basta. El registro del residente se crea automáticamente la primera vez que anuncia.
+
+---
+
+## 3. Vista del residente (sin privilegios)
+
+### 3.1 Anunciar un paquete — `/anunciar`
+
+El residente llena un formulario corto:
+
+1. **Su nombre y su teléfono.**
+2. **¿A nombre de quién llega el paquete?** — tres opciones:
+   - **A mi nombre** — el paquete es para quien está anunciando.
+   - **Otra persona registrada** — se indica el teléfono de otro residente ya conocido por el sistema.
+   - **Solo un nombre** — para un paquete que llega a nombre de alguien que no tiene (o no quiere dar) su propio teléfono. Ese nombre queda guardado *dentro de ese paquete*, no crea una persona nueva en el sistema.
+3. Aceptar los Términos y Condiciones.
+
+Al enviar, el sistema muestra una pantalla de confirmación con un **número de seguimiento** y un **código de acceso** — el residente puede guardarlos para consultar el estado más adelante sin necesidad de dar su teléfono otra vez.
+
+> **Nota importante:** anunciar **no** pide el número de guía del transportador — eso lo captura el staff cuando el paquete físico llega a portería (ver §4.2).
+
+### 3.2 Consultar el estado — `/consultar`
+
+Sin necesidad de iniciar sesión. Se busca por:
+- El **número de seguimiento** que se dio al anunciar, o
+- El **teléfono** con el que se anunció o al que llega el paquete.
+
+Se muestra la línea de tiempo del paquete: cuándo fue anunciado, recibido, entregado o (si aplica) cancelado — sin mostrar quién del staff hizo cada acción, ese dato es solo para auditoría interna.
+
+### 3.3 Iniciar sesión como residente — `/otp`
+
+Para acceder a **Mis Datos**, el residente entra a `/otp`, escribe su teléfono y recibe un **código de 6 dígitos por SMS** que debe ingresar para verificarse. No usa contraseña — el teléfono ya es su identidad.
+
+### 3.4 Mis Datos — `/mis-datos`
+
+Una vez verificado por OTP, el residente puede:
+- Completar o corregir su nombre, email, documento y un segundo contacto.
+- Activar o desactivar el interruptor de **"Recibir notificaciones por SMS"** — si lo apaga, deja de recibir avisos automáticos de sus paquetes (el sistema sigue funcionando igual, solo no le escribe).
+
+> Si alguien intenta entrar a `/mis-datos` sin haberse verificado antes, el sistema lo manda automáticamente a `/otp` para que primero confirme su teléfono.
+
+---
+
+## 4. Vista del staff (con privilegios)
+
+### 4.1 Iniciar sesión — `/ingresar`
+
+El staff entra con **email y contraseña** (nunca con OTP — no depende del proveedor de SMS para poder trabajar). Solo un `ADMIN` puede crear cuentas nuevas de staff (ver §4.4).
+
+### 4.2 Paquetes — `/paquetes`
+
+La pantalla principal del staff: la lista de todos los paquetes, con su estado marcado con una etiqueta de color:
+
+- 🔵 **Anunciado** — el residente avisó que lo espera, pero aún no ha llegado a portería.
+- 🟡 **Recibido** — ya está físicamente en portería, esperando que el residente lo recoja.
+- 🟢 **Entregado** — el residente ya lo recogió (estado final).
+- ⚪ **Cancelado** — se dio de baja sin entregar (estado final).
+
+Cada paquete **Anunciado** o **Recibido** tiene botones de acción que abren una ventana (modal) sin salir de la pantalla:
+
+- **Recibir** (solo si está Anunciado) — registra que el paquete llegó físicamente. Pide la **guía del transportador**, que es **opcional**:
+  - Se puede escribir a mano, o
+  - Tocar **"📷 Escanear con cámara"** para activar la cámara del celular y leer el código de barras/QR automáticamente (funciona con casi cualquier formato de guía). Si la cámara falla o no está disponible, el botón avisa y el staff simplemente escribe la guía a mano — nunca bloquea el flujo.
+- **Entregar** (solo si está Recibido) — confirma que el residente se lo llevó.
+- **Cancelar** (Anunciado o Recibido) — da de baja el paquete. Pide un **motivo obligatorio** (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro) para dejar trazabilidad. Es **irreversible**.
+
+Cada acción queda registrada con quién del staff la hizo y cuándo — nunca de forma anónima.
+
+### 4.3 Declarar unidad — `/announce`
+
+Cuando el staff sabe que varios residentes viven en el mismo apartamento (por ejemplo, al hacer el registro inicial de un edificio), puede declarar la unidad de una vez:
+
+1. Escribe **Conjunto, Torre y Apartamento**.
+2. Agrega los teléfonos (y nombres) de los residentes de esa unidad — se pueden agregar varias filas con "+ Agregar residente".
+3. Al confirmar, **todos** esos teléfonos quedan asociados a ese apartamento (herencia de apartamento).
+
+Esta es la única forma en que varios teléfonos comparten apartamento automáticamente — anunciar un paquete "a nombre de otra persona" (§3.1) **nunca** hace esto por sí solo. Si alguien se muda, se corrige individualmente desde su ficha (§4.4).
+
+### 4.4 Clientes (residentes) — `/residentes`
+
+Buscador de residentes por teléfono o nombre. Al entrar a la ficha de un residente, el staff puede:
+
+- Editar sus datos (nombre, email, documento, segundo contacto).
+- Activar/desactivar sus notificaciones por SMS (el mismo interruptor que el residente ve en `/mis-datos`).
+- **Eliminar cliente** (solo `ADMIN`) — no borra el historial de paquetes, pero **anonimiza** a la persona: sus datos personales se limpian y su teléfono deja de estar "tomado", por si alguien nuevo lo usa en el futuro. Pide confirmación porque es irreversible.
+
+### 4.5 Alta de personal — `/administracion/personal`
+
+Solo visible para `ADMIN`. Crea nuevas cuentas de staff (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Es la única puerta para crear staff nuevo — no hay otra forma de conseguir acceso.
+
+---
+
+## 5. El paquete, de principio a fin
+
+```
+Anunciado ──► Recibido ──► Entregado
+    │             │
+    └───────► Cancelado
+```
+
+Un dato importante para entender por qué la información de un paquete **nunca cambia después de anunciado**: al momento de anunciar, el sistema toma una "foto" (snapshot) de a quién llega, con qué teléfono y en qué apartamento. Si esa persona se muda **después**, los paquetes viejos siguen mostrando el apartamento de cuando fueron anunciados — mudarse no reescribe el historial. Los paquetes nuevos sí usarán el apartamento actualizado.
+
+---
+
+## 6. Preguntas frecuentes
+
+**¿Qué pasa si el paquete no tiene número de guía?**
+No pasa nada — es opcional. El emparejamiento entre el anuncio y el paquete físico se hace por nombre/teléfono del destinatario, no por la guía.
+
+**¿Un residente puede anunciar un paquete para alguien que no tiene teléfono?**
+Sí — la opción "Solo un nombre" al anunciar. Ese nombre vive únicamente dentro de ese paquete, no como una persona nueva en el sistema.
+
+**Si desactivo mis notificaciones, ¿dejo de poder anunciar o consultar paquetes?**
+No — solo deja de llegar el aviso por SMS. El resto del sistema funciona exactamente igual.
+
+**¿Qué significa que "eliminar" a un residente no borra sus paquetes?**
+El historial de paquetes se conserva siempre (es la trazabilidad del conjunto), pero los datos personales de esa persona se anonimizan y su teléfono queda libre.
+
+---
+
+## 7. Referencia rápida de rutas
+
+| Ruta | Quién la usa | Qué hace |
+|---|---|---|
+| `/anunciar` | Residente | Anunciar un paquete nuevo |
+| `/consultar` | Residente (público) | Ver el estado de un paquete |
+| `/otp` | Residente | Verificar el teléfono para entrar |
+| `/mis-datos` | Residente (verificado) | Ver/editar sus propios datos y notificaciones |
+| `/ingresar` | Staff | Iniciar sesión |
+| `/paquetes` | Staff | Recibir, entregar, cancelar |
+| `/announce` | Staff | Declarar una unidad (Conjunto/Torre/Apto) con sus residentes |
+| `/residentes` | Staff | Buscar y editar clientes; eliminar (solo ADMIN) |
+| `/administracion/personal` | Staff (solo ADMIN) | Crear cuentas de staff |
+
+*(Nombres de ruta en español, vigentes desde el rename de 2026-07-26 — ver `CONTEXT.md` §"Vistas por audiencia".)*
