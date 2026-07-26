@@ -7,7 +7,7 @@
   <style>
     :root { --site-brand:#1f6feb; --site-ink:#1a1a1a; --site-line:#e5e7eb; }
     .site-header { background:#fff; border-bottom:1px solid var(--site-line); font-family: system-ui, -apple-system, sans-serif; }
-    .site-header-inner { max-width:960px; margin:0 auto; padding:0 16px; display:flex; align-items:center; justify-content:space-between; height:56px; gap:16px; }
+    .site-header-inner { max-width:960px; margin:0 auto; padding:8px 16px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; min-height:56px; gap:8px 16px; }
     .site-brand { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--site-ink); flex-shrink:0; }
     .site-brand svg { width:28px; height:28px; }
     .site-brand-name { font-weight:700; font-size:1.05rem; letter-spacing:.02em; }
@@ -29,7 +29,7 @@
     .site-footer-mobile { display:none; }
     @media (max-width: 640px) {
       body { padding-bottom:64px; }
-      .site-header-inner { height:52px; }
+      .site-header-inner { min-height:52px; }
       .site-nav { display:none; }
       .site-footer-mobile { display:flex; position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--site-line); z-index:50; }
       .site-footer-mobile nav { display:flex; width:100%; }
@@ -48,7 +48,7 @@
   {% endmacro %}
   <header class="site-header">
     <div class="site-header-inner">
-      {% set destino_marca = '/mis-datos' if tiene_persona else '/anunciar' %}
+      {% set destino_marca = '/paquetes' if tiene_staff else ('/mis-datos' if tiene_persona else '/anunciar') %}
       <a class="site-brand" href="{{ destino_marca }}" aria-label="PAQUETEX">
         <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
           <path d="M20 8C16 8 12 10 10 14C8 18 10 22 14 24C18 26 22 28 26 26C30 24 32 20 30 16C28 12 24 8 20 8Z" fill="#3B82F6"/>
@@ -84,6 +84,24 @@
         </form>
       </div>
       {% endif %}
+      {% if tiene_staff %}
+      {% set es_admin = request.session.get(ROLE_SESSION_KEY) == 'ADMIN' %}
+      <nav class="site-nav" aria-label="Navegación principal">
+        {{ enlace_nav('/paquetes', 'Paquetes') }}
+        {{ enlace_nav('/announce', 'Declarar unidad') }}
+        {{ enlace_nav('/residentes', 'Residentes') }}
+        {{ enlace_nav('/consultar', 'Consultar') }}
+        {% if es_admin %}
+        {{ enlace_nav('/administracion/personal', 'Personal') }}
+        {{ enlace_nav('/administracion/notificaciones', 'Notificaciones') }}
+        {% endif %}
+      </nav>
+      <div class="site-actions">
+        <form method="post" action="/salir">
+          <button type="submit">Cerrar sesión</button>
+        </form>
+      </div>
+      {% endif %}
     </div>
   </header>
   {% block content %}{% endblock %}
@@ -98,6 +116,13 @@
       {{ enlace_nav('/anunciar', 'Anunciar') }}
       {{ enlace_nav('/consultar', 'Consultar') }}
       {{ enlace_nav('/mis-datos', 'Mis datos') }}
+    </nav>
+    {% endif %}
+    {% if tiene_staff %}
+    <nav aria-label="Navegación móvil">
+      {{ enlace_nav('/paquetes', 'Paquetes') }}
+      {{ enlace_nav('/residentes', 'Residentes') }}
+      {{ enlace_nav('/consultar', 'Consultar') }}
     </nav>
     {% endif %}
   </footer>

@@ -12,12 +12,33 @@ clean-room, aislada del stack legacy.
 Ticket 02 (`.scratch/header-footer/issues/02-nav-cliente-autenticado.md`):
 con sesión de `Persona` (`persona_id`, vía `/otp`), el header muestra el
 conjunto de enlaces de cliente en vez del público, y NO enlaces de staff.
+
+Ticket 03 (`.scratch/header-footer/issues/03-nav-staff-rol-y-sesiones-coexistentes.md`):
+con sesión de `Usuario` (`usuario_id`, vía `/ingresar`), el header muestra el
+conjunto de enlaces de staff; Administración solo si el rol es ADMIN. Con
+sesiones de cliente Y staff coexistiendo, se muestran ambos conjuntos juntos.
 """
 
 from app.domain.otp_sender import DevOtpSender
+from app.domain.staff_service import create_initial_admin, create_staff
+from app.domain.usuario import RolUsuario
 from app.web.otp import get_otp_sender
 
 _CANON = "+573001234567"
+_PW = "Contrasena1"
+
+
+def _login_staff_admin(client, email="admin@club.com"):
+    create_initial_admin(client.db, email, "Admin", _PW)
+    client.db.commit()
+    client.post("/ingresar", data={"email": email, "password": _PW})
+
+
+def _login_staff_operador(client, email="opera@club.com"):
+    admin = create_initial_admin(client.db, "admin-seed@club.com", "AdminSeed", _PW)
+    create_staff(client.db, admin, email, "Opera", _PW, RolUsuario.OPERADOR)
+    client.db.commit()
+    client.post("/ingresar", data={"email": email, "password": _PW})
 
 
 def _login_cliente(client, telefono="3001234567"):
@@ -163,6 +184,79 @@ def test_cliente_logueado_ve_su_nav_en_cualquier_pantalla_que_alcance_su_sesion(
     assert 'action="/otp/salir"' in html
     assert 'href="/otp"' not in html
     assert 'href="/ingresar"' not in html
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 03 — nav de staff con rol (OPERADOR/ADMIN) y sesiones coexistentes
+# --------------------------------------------------------------------------- #
+def test_staff_operador_ve_su_conjunto_de_enlaces_sin_administracion(client):
+    _login_staff_operador(client)
+    r = client.get("/mi-sesion")
+    html = r.text
+
+    assert 'href="/paquetes"' in html
+    assert 'href="/announce"' in html
+    assert 'href="/residentes"' in html
+    assert 'href="/consultar"' in html
+    assert 'action="/salir"' in html
+    assert "Cerrar sesión" in html
+
+    assert 'href="/administracion/personal"' not in html
+    assert 'href="/administracion/notificaciones"' not in html
+    assert 'href="/mis-datos"' not in html
+    assert 'href="/otp"' not in html
+    assert 'href="/ingresar"' not in html
+
+
+def test_staff_admin_ve_ademas_los_enlaces_de_administracion(client):
+    _login_staff_admin(client)
+    r = client.get("/mi-sesion")
+    html = r.text
+
+    assert 'href="/paquetes"' in html
+    assert 'href="/administracion/personal"' in html
+    assert 'href="/administracion/notificaciones"' in html
+
+
+def test_require_admin_sigue_siendo_la_puerta_real_para_operador(client):
+    """El menú no debe insinuar acceso que no existe: `require_admin` sigue
+    siendo la única fuente de autorización, no el rol guardado en sesión."""
+    _login_staff_operador(client)
+    r = client.get("/administracion/personal", follow_redirects=False)
+    assert r.status_code == 403
+
+
+def test_enlace_activo_de_staff_en_paquetes(client):
+    _login_staff_operador(client)
+    r = client.get("/paquetes")
+    html = r.text
+    desde_nav = html.index('class="site-nav"')
+    assert "aria-current" in _etiqueta_ancla(html, "/paquetes", desde_nav)
+    assert "aria-current" not in _etiqueta_ancla(html, "/residentes", desde_nav)
+
+
+def test_footer_movil_de_staff_repite_sus_enlaces(client):
+    _login_staff_operador(client)
+    r = client.get("/paquetes")
+    html = r.text
+    footer_idx = html.index("site-footer-mobile")
+    footer_html = html[footer_idx:]
+    assert 'href="/paquetes"' in footer_html
+
+
+def test_sesiones_coexistentes_muestran_ambos_conjuntos_de_enlaces(client):
+    _login_cliente(client)
+    _login_staff_operador(client)
+
+    r = client.get("/mi-sesion")
+    html = r.text
+
+    # Cliente (ticket 02) + staff (este ticket), ninguno oculta al otro.
+    assert 'href="/mis-datos"' in html
+    assert 'action="/otp/salir"' in html
+    assert 'href="/paquetes"' in html
+    assert 'href="/residentes"' in html
+    assert 'action="/salir"' in html
 
 
 def test_visitante_sin_sesion_sigue_viendo_solo_el_header_publico(client):

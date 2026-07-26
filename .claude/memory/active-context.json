@@ -1,17 +1,17 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-25T20:40:10-05:00",
+  "lastUpdated": "2026-07-26T18:15:48-05:00",
   "project": {
     "name": "[PROJECT NAME]",
     "description": "[Brief project description]",
-    "phase": "Rebuild PaqueteXv.2 — rutas renombradas a español amigable",
+    "phase": "3.9 — Roadmap de ajustes post-revisión funcional completo (9/9 grupos)",
     "status": "active",
     "startDate": ""
   },
   "currentFocus": {
-    "feature": "Verificación completa en navegador real finalizada; listo para redactar la guía de usuario final",
-    "objective": "Guía de usuario final (brief §13): flujo anunciar -> recibir -> entregar -> consultar, distinguiendo vista cliente vs staff",
-    "priority": "high"
+    "feature": "Header/footer transversal (Grupo 9) implementado -- ultimo grupo del roadmap",
+    "objective": "Header/footer real en base.html con nav por audiencia (publico/cliente/staff+rol) y sesiones coexistentes, verificado visual y funcionalmente",
+    "priority": "medium"
   },
   "techStack": {
     "languages": [],
@@ -31,15 +31,16 @@
     "business": []
   },
   "nextSteps": [
-    "Redactar guía de usuario final (.md) cubriendo ambas audiencias con los nombres de ruta en español ya renombrados",
-    "Opcional: considerar /run-skill-generator para capturar el procedimiento de levantar la app (uvicorn + Postgres real + seed admin) como skill reutilizable"
+    "Desplegar a staging y recoger feedback visual del usuario sobre el header/footer (colores, espaciado, logo) -- ya avisó que ajustará detalles al verlo",
+    "Seguimiento LIWA: esperar que el usuario contacte a LIWA para whitelistear 52.6.204.211 (cuenta 00486396309), luego re-verificar el envio real",
+    "Decision pendiente (no resuelta por el usuario): S3 real vs LocalFotoStorage para fotos de paquetes (Grupo 2)"
   ],
   "blockers": [],
   "context": {
     "stats": {
-      "completedTasks": 3,
+      "completedTasks": 9,
       "pendingTasks": 1,
-      "lastUpdate": "2026-07-25"
+      "lastUpdate": "2026-07-26"
     },
     "recentDecisions": [],
     "activePatterns": [],
@@ -72,6 +73,13 @@
     ]
   },
   "recentChanges": [
+    {
+      "name": "Header/footer transversal (Grupo 9)",
+      "file": "CODE/src/app/web/templates/base.html",
+      "category": "feature",
+      "timestamp": "2026-07-26T18:15:48-05:00",
+      "summary": "base.html vacio -> header+footer real con 3 variantes de nav por audiencia (publico/cliente/staff+rol ADMIN-OPERADOR) y sesiones coexistentes; DEC-09 (rol en sesion); 12 tests nuevos en test_layout.py; 305/305 tests pasan"
+    },
     {
       "name": "Verificación navegador real post-rename",
       "file": "N/A (solo verificación, sin cambios de código)",
