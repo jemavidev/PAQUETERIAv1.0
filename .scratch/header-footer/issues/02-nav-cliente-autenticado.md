@@ -19,17 +19,17 @@ muestra, en TODA pantalla donde esa sesión esté presente (`/mis-datos`,
 **Blocked by:** 01 (reutiliza el esqueleto de `base.html`, el mecanismo de
 enlace-activo y el breakpoint responsive ya construidos ahí).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Con `persona_id` en sesión, el header muestra Anunciar/Consultar/Mis
+- [x] Con `persona_id` en sesión, el header muestra Anunciar/Consultar/Mis
       datos + el form de `POST /otp/salir`, en `/mis-datos` y en cualquier
       otra pantalla que la sesión de cliente alcance.
-- [ ] Con esa sesión activa, el header NO muestra ningún enlace de staff
+- [x] Con esa sesión activa, el header NO muestra ningún enlace de staff
       (Paquetes, Declarar unidad, Residentes, Administración).
-- [ ] El footer móvil (barra inferior) también refleja el conjunto de
+- [x] El footer móvil (barra inferior) también refleja el conjunto de
       enlaces de cliente cuando aplica.
-- [ ] `tests/web/test_layout.py`: cliente logueado (usar el helper
+- [x] `tests/web/test_layout.py`: cliente logueado (usar el helper
       `_login_cliente` ya establecido en otros tests del proyecto) ve sus
       enlaces + el form de logout correcto; un visitante sin sesión en la
       misma pantalla pública sigue viendo solo el header de 01.
-- [ ] Suite completa sigue en verde.
+- [x] Suite completa sigue en verde.

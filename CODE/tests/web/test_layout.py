@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-Capa web — header/footer transversales (Grupo 9, ticket 01:
-`.scratch/header-footer/issues/01-header-footer-publicos.md`).
+Capa web — header/footer transversales (Grupo 9).
 
-Comportamiento observable por HTTP para un visitante SIN ninguna sesión: el
+Ticket 01 (`.scratch/header-footer/issues/01-header-footer-publicos.md`):
+comportamiento observable por HTTP para un visitante SIN ninguna sesión — el
 header con marca + enlaces públicos + botones de login, el enlace de la
 pantalla actual marcado como activo, y el footer móvil con los mismos
 enlaces. Sin Tailwind ni Alpine.js (ADR-0004) — la app del rebuild es
 clean-room, aislada del stack legacy.
+
+Ticket 02 (`.scratch/header-footer/issues/02-nav-cliente-autenticado.md`):
+con sesión de `Persona` (`persona_id`, vía `/otp`), el header muestra el
+conjunto de enlaces de cliente en vez del público, y NO enlaces de staff.
 """
+
+from app.domain.otp_sender import DevOtpSender
+from app.web.otp import get_otp_sender
+
+_CANON = "+573001234567"
+
+
+def _login_cliente(client, telefono="3001234567"):
+    sender = DevOtpSender()
+    client.app.dependency_overrides[get_otp_sender] = lambda: sender
+    client.post("/otp/solicitar", data={"telefono": telefono})
+    codigo = sender.enviados[_CANON]
+    client.post("/otp/verificar", data={"telefono": telefono, "codigo": codigo})
 
 
 def test_visitante_publico_ve_header_con_marca_enlaces_y_botones_login(client):
@@ -83,3 +100,75 @@ def test_pantalla_publica_conserva_su_contenido_propio(client):
     assert 'name="nombre"' in html
     assert 'name="telefono"' in html
     assert 'name="acepta_tyc"' in html
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 02 — nav de cliente autenticado
+# --------------------------------------------------------------------------- #
+def test_cliente_logueado_ve_su_conjunto_de_enlaces_y_boton_de_salida(client):
+    _login_cliente(client)
+    r = client.get("/mis-datos")
+    html = r.text
+
+    assert 'href="/anunciar"' in html
+    assert 'href="/consultar"' in html
+    assert 'href="/mis-datos"' in html
+    assert 'action="/otp/salir"' in html
+    assert "Cerrar sesión" in html
+
+
+def test_cliente_logueado_no_ve_el_header_publico_ni_enlaces_de_staff(client):
+    _login_cliente(client)
+    r = client.get("/mis-datos")
+    html = r.text
+
+    assert 'href="/otp"' not in html
+    assert 'href="/ingresar"' not in html
+    assert 'href="/paquetes"' not in html
+    assert 'href="/announce"' not in html
+    assert 'href="/residentes"' not in html
+    assert 'href="/administracion/personal"' not in html
+    assert 'href="/administracion/notificaciones"' not in html
+
+
+def test_cliente_logueado_enlace_activo_en_mis_datos(client):
+    _login_cliente(client)
+    r = client.get("/mis-datos")
+    html = r.text
+    desde_nav = html.index('class="site-nav"')
+    assert "aria-current" in _etiqueta_ancla(html, "/mis-datos", desde_nav)
+    assert "aria-current" not in _etiqueta_ancla(html, "/anunciar", desde_nav)
+
+
+def test_footer_movil_del_cliente_repite_sus_enlaces(client):
+    _login_cliente(client)
+    r = client.get("/mis-datos")
+    html = r.text
+    footer_idx = html.index("site-footer-mobile")
+    footer_html = html[footer_idx:]
+    assert 'href="/anunciar"' in footer_html
+    assert 'href="/consultar"' in footer_html
+    assert 'href="/mis-datos"' in footer_html
+
+
+def test_cliente_logueado_ve_su_nav_en_cualquier_pantalla_que_alcance_su_sesion(client):
+    """El header es global vía base.html — no debe depender de qué plantilla
+    específica se esté renderizando (ver ticket 02: 'en /mis-datos y en
+    cualquier otra pantalla que la sesión de cliente alcance')."""
+    _login_cliente(client)
+    r = client.get("/anunciar")
+    html = r.text
+
+    assert 'href="/mis-datos"' in html
+    assert 'action="/otp/salir"' in html
+    assert 'href="/otp"' not in html
+    assert 'href="/ingresar"' not in html
+
+
+def test_visitante_sin_sesion_sigue_viendo_solo_el_header_publico(client):
+    r = client.get("/anunciar")
+    html = r.text
+    assert 'href="/otp"' in html
+    assert 'href="/ingresar"' in html
+    assert 'href="/mis-datos"' not in html
+    assert 'action="/otp/salir"' not in html

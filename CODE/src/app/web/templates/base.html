@@ -18,6 +18,14 @@
     .site-actions { display:flex; align-items:center; gap:4px; }
     .site-actions .site-actions-primary { background:var(--site-brand); color:#fff; }
     .site-actions .site-actions-primary:hover { background:#1a5fc9; color:#fff; }
+    .site-actions form { margin:0; }
+    /* Casi toda pantalla existente define su propio botón con un selector
+       `button { ... }` SIN scope (asumiendo que es el único botón de la
+       página) -- `all:revert` aísla el botón de logout de cualquier estilo
+       de página ajeno, presente o futuro, en vez de listar a mano cada
+       propiedad que esas reglas puedan tocar. */
+    .site-actions button { all:revert; display:inline-block; padding:8px 12px; border:0; border-radius:8px; background:none; color:#444; font:inherit; font-size:.9rem; font-weight:600; cursor:pointer; }
+    .site-actions button:hover { background:#f3f4f6; color:var(--site-brand); }
     .site-footer-mobile { display:none; }
     @media (max-width: 640px) {
       body { padding-bottom:64px; }
@@ -40,7 +48,8 @@
   {% endmacro %}
   <header class="site-header">
     <div class="site-header-inner">
-      <a class="site-brand" href="/anunciar" aria-label="PAQUETEX">
+      {% set destino_marca = '/mis-datos' if tiene_persona else '/anunciar' %}
+      <a class="site-brand" href="{{ destino_marca }}" aria-label="PAQUETEX">
         <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
           <path d="M20 8C16 8 12 10 10 14C8 18 10 22 14 24C18 26 22 28 26 26C30 24 32 20 30 16C28 12 24 8 20 8Z" fill="#3B82F6"/>
           <path d="M8 16C6 14 4 12 6 10C8 8 10 10 12 12C10 14 8 16 8 16Z" fill="#10B981"/>
@@ -63,6 +72,17 @@
         <a href="/otp">Iniciar sesión</a>
         <a href="/ingresar" class="site-actions-primary">Staff</a>
       </div>
+      {% elif tiene_persona %}
+      <nav class="site-nav" aria-label="Navegación principal">
+        {{ enlace_nav('/anunciar', 'Anunciar') }}
+        {{ enlace_nav('/consultar', 'Consultar') }}
+        {{ enlace_nav('/mis-datos', 'Mis datos') }}
+      </nav>
+      <div class="site-actions">
+        <form method="post" action="/otp/salir">
+          <button type="submit">Cerrar sesión</button>
+        </form>
+      </div>
       {% endif %}
     </div>
   </header>
@@ -72,6 +92,12 @@
     <nav aria-label="Navegación móvil">
       {{ enlace_nav('/anunciar', 'Anunciar') }}
       {{ enlace_nav('/consultar', 'Consultar') }}
+    </nav>
+    {% elif tiene_persona %}
+    <nav aria-label="Navegación móvil">
+      {{ enlace_nav('/anunciar', 'Anunciar') }}
+      {{ enlace_nav('/consultar', 'Consultar') }}
+      {{ enlace_nav('/mis-datos', 'Mis datos') }}
     </nav>
     {% endif %}
   </footer>
