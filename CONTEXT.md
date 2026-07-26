@@ -45,6 +45,8 @@ Cuando a un Teléfono de un grupo "**misma unidad**" se le asigna un Apartamento
 
 El **grupo "misma unidad" no es una entidad persistente**: es el conjunto emergente de Personas que comparten el mismo Apartamento actual, no una lista almacenada aparte. Declarar la unidad es el **acto** que asigna ese Apartamento a varios Teléfonos a la vez — ese acto *es* la herencia.
 
+Declarar la unidad es también, hoy, la forma de registrar **Ocupantes** de un Apartamento (con o sin Teléfono) — ver más abajo.
+
 ### Anunciante y Destinatario
 Cada Paquete guarda **dos referencias independientes** (pueden coincidir o no):
 - **Anunciante** (`anunciado_por`) — la Persona (Teléfono) que anuncia el paquete.
@@ -53,7 +55,15 @@ Cada Paquete guarda **dos referencias independientes** (pueden coincidir o no):
 ### Nombre sin teléfono
 Un Destinatario que no tiene (o no da) su propio Teléfono se representa como un **nombre bajo el Teléfono del Anunciante** — no es una Persona sin llave. Así el Teléfono nunca falta como identidad.
 
-No tiene **existencia propia** fuera del Paquete: vive **solo dentro del snapshot** del paquete que lo nombra, no como registro independiente. (Un padrón persistente de nombres-sin-teléfono por Apartamento sería otra entidad —un *Ocupante*— y está fuera de este modelo hasta que se decida explícitamente.)
+No tiene **existencia propia** fuera del Paquete: vive **solo dentro del snapshot** del paquete que lo nombra, no como registro independiente. Distinto de **Ocupante** (abajo), que sí persiste — un "nombre sin teléfono" es un caso puntual y no planeado (alguien anunció sin dar el teléfono del destinatario); un Ocupante es un residente reconocido a propósito como parte del padrón de un Apartamento.
+
+### Ocupante
+Un residente reconocido de un **Apartamento**, con nombre y **Teléfono opcional** — la decisión que ADR-0003 dejaba pendiente (ver [ADR-0006](docs/adr/0006-ocupante-residentes-sin-persona-propia.md)). Cada Apartamento exige exactamente **un** Ocupante **principal**, con Teléfono **obligatorio** (ese Teléfono es una Persona real — ADR-0003 no cambia para Persona). Los demás Ocupantes del mismo Apartamento pueden o no tener Teléfono; si lo tienen, ese Teléfono también es su propia Persona (con su propio acceso vía OTP, editando solo sus propios datos).
+
+- El principal es **intercambiable**: cualquier Ocupante con Teléfono puede **promoverse** a principal, degradando al anterior (que sigue siendo Ocupante, solo deja de ser el principal).
+- Un Ocupante **sin** Teléfono no puede loguearse ni anunciar por sí mismo — sirve para que un Paquete se le anuncie a su nombre de forma reconocible y persistente (a diferencia de "Nombre sin teléfono", que no persiste).
+- Si alguien anuncia con el Teléfono del principal o el de otro Ocupante-con-Teléfono, la notificación llega a ese mismo Teléfono que anunció.
+- Término evitado: "segundo contacto" (nombre coloquial usado antes de resolver el modelo) — el término del glosario es **Ocupante**.
 
 ### Contexto de entrega (snapshot)
 Al **anunciar**, el Paquete **congela** una foto inmutable de `{anunciado_por (teléfono), nombre_destinatario, teléfono_destinatario (si hay), apartamento}`. Si la Persona se muda **después**, los paquetes viejos **siguen mostrando el apartamento de entonces** — mudarse **nunca reescribe la historia**. "Los datos permanecen de principio a fin en cada paquete."
