@@ -134,3 +134,12 @@ def anonimizar_persona(session: Session, persona: Persona) -> Persona:
 
     session.flush()
     return persona
+
+
+def set_notificaciones_activas(session: Session, persona: Persona, activas: bool) -> Persona:
+    """Activa o desactiva las notificaciones de evento (Recibido/Entregado/
+    Cancelado) de una Persona. NUNCA afecta el envío del OTP — es el mecanismo
+    de login, no una notificación opcional."""
+    persona.notificaciones_activas = activas
+    session.flush()
+    return persona

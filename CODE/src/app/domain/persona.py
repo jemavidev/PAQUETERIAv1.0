@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     ForeignKeyConstraint,
@@ -66,6 +67,11 @@ class Persona(Base):
     # sus datos personales quedan limpios y su teléfono es sintético. La fila
     # NUNCA se borra (FK real fk_paquetes_anunciante desde paquetes).
     eliminado_en = Column(DateTime(timezone=True), nullable=True)
+
+    # Preferencia de notificaciones de evento (Recibido/Entregado/Cancelado).
+    # Activada por defecto (preserva el comportamiento existente). NUNCA
+    # afecta el envío del OTP (mecanismo de login, no una notificación opcional).
+    notificaciones_activas = Column(Boolean, nullable=False, default=True)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(

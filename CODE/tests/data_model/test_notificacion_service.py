@@ -14,10 +14,12 @@ from app.domain.notificacion_service import (
     construir_mensaje,
     notificar_evento,
     resolver_destino,
+    resolver_destino_notificable,
 )
 from app.domain.paquete import EstadoPaquete
 from app.domain.paquete_lifecycle import cancel, deliver, receive
 from app.domain.paquete_service import Destinatario, announce
+from app.domain.persona_service import anonimizar_persona, get_or_create_persona
 from app.domain.usuario import RolUsuario, Usuario
 
 pytestmark = pytest.mark.integration
@@ -87,7 +89,7 @@ def test_notificar_evento_llama_al_sender_con_destino_y_mensaje(db_session):
     p = _anunciar(db_session)
     sender = ConsoleNotificationSender()
 
-    notificar_evento(p, EstadoPaquete.RECIBIDO, sender)
+    notificar_evento(db_session, p, EstadoPaquete.RECIBIDO, sender)
 
     assert len(sender.enviados) == 1
     destino, mensaje = sender.enviados[0]
@@ -102,4 +104,72 @@ def test_notificar_evento_no_propaga_si_el_sender_falla(db_session):
         def enviar(self, destino, mensaje):
             raise RuntimeError("proveedor caído")
 
-    notificar_evento(p, EstadoPaquete.ENTREGADO, _SenderQueFalla())  # no debe lanzar
+    notificar_evento(db_session, p, EstadoPaquete.ENTREGADO, _SenderQueFalla())  # no debe lanzar
+
+
+# --------------------------------------------------------------------------- #
+# resolver_destino_notificable — regla unificada de fallback al Anunciante
+# (nombre-sin-teléfono Y destinatario-anonimizado-después, misma función).
+# --------------------------------------------------------------------------- #
+def test_resolver_destino_notificable_destinatario_vivo_con_telefono(db_session):
+    get_or_create_persona(db_session, "3019999999", "Beto")
+    p = _anunciar(db_session, Destinatario.persona_registrada("3019999999"))
+
+    persona = resolver_destino_notificable(db_session, p)
+
+    assert persona.telefono == "+573019999999"
+
+
+def test_resolver_destino_notificable_nombre_sin_telefono_cae_al_anunciante(db_session):
+    p = _anunciar(db_session, Destinatario.solo_nombre("Carlos"))
+
+    persona = resolver_destino_notificable(db_session, p)
+
+    assert persona.telefono == "+573001234567"  # Ana, la anunciante
+
+
+def test_resolver_destino_notificable_destinatario_anonimizado_cae_al_anunciante(db_session):
+    beto = get_or_create_persona(db_session, "3019999999", "Beto")
+    p = _anunciar(db_session, Destinatario.persona_registrada("3019999999"))
+
+    anonimizar_persona(db_session, beto)  # Beto ya no tiene ese teléfono
+
+    persona = resolver_destino_notificable(db_session, p)
+
+    assert persona.telefono == "+573001234567"  # cae a Ana, MISMO resultado que sin-teléfono
+
+
+def test_resolver_destino_notificable_anunciante_tambien_anonimizado_da_none(db_session):
+    ana = get_or_create_persona(db_session, "3001234567", "Ana")
+    p = _anunciar(db_session, Destinatario.solo_nombre("Carlos"))
+
+    anonimizar_persona(db_session, ana)
+
+    assert resolver_destino_notificable(db_session, p) is None
+
+
+# --------------------------------------------------------------------------- #
+# notificar_evento respeta notificaciones_activas.
+# --------------------------------------------------------------------------- #
+def test_notificaciones_desactivadas_no_envia_nada(db_session):
+    from app.domain.persona_service import set_notificaciones_activas
+
+    ana = get_or_create_persona(db_session, "3001234567", "Ana")
+    set_notificaciones_activas(db_session, ana, False)
+    p = _anunciar(db_session)
+    sender = ConsoleNotificationSender()
+
+    notificar_evento(db_session, p, EstadoPaquete.RECIBIDO, sender)
+
+    assert sender.enviados == []
+
+
+def test_sin_destino_alcanzable_no_envia_nada(db_session):
+    ana = get_or_create_persona(db_session, "3001234567", "Ana")
+    p = _anunciar(db_session, Destinatario.solo_nombre("Carlos"))
+    anonimizar_persona(db_session, ana)  # nadie queda alcanzable
+    sender = ConsoleNotificationSender()
+
+    notificar_evento(db_session, p, EstadoPaquete.RECIBIDO, sender)
+
+    assert sender.enviados == []

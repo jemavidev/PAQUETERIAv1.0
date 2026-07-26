@@ -81,7 +81,7 @@ def receive_action(
         receive(db, paquete, staff, guia)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
-    notificar_evento(paquete, EstadoPaquete.RECIBIDO, sender)
+    notificar_evento(db, paquete, EstadoPaquete.RECIBIDO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -98,7 +98,7 @@ def deliver_action(
         deliver(db, paquete, staff)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
-    notificar_evento(paquete, EstadoPaquete.ENTREGADO, sender)
+    notificar_evento(db, paquete, EstadoPaquete.ENTREGADO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -116,5 +116,5 @@ def cancel_action(
         cancel(db, paquete, staff, motivo)
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
-    notificar_evento(paquete, EstadoPaquete.CANCELADO, sender)
+    notificar_evento(db, paquete, EstadoPaquete.CANCELADO, sender)
     return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
