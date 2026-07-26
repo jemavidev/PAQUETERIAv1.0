@@ -28,26 +28,26 @@ ni `usuario_id`), en cualquier pantalla pública (`/anunciar`, `/consultar`):
 
 **Blocked by:** Ninguno — puede empezar de inmediato.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `base.html` renderiza un `<header>` con logo+wordmark, enlaces a
+- [x] `base.html` renderiza un `<header>` con logo+wordmark, enlaces a
       `/anunciar` y `/consultar`, y botones a `/otp` y `/ingresar`, visible en
       TODAS las pantallas públicas existentes (heredado vía `{% extends %}`,
       sin copiar HTML en cada plantilla hija).
-- [ ] El enlace correspondiente a la pantalla actual lleva una marca visual
+- [x] El enlace correspondiente a la pantalla actual lleva una marca visual
       distinta (clase CSS + `aria-current="page"`) y ningún otro enlace la
       lleva.
-- [ ] `base.html` renderiza un `<footer>` que en viewport de escritorio no se
+- [x] `base.html` renderiza un `<footer>` que en viewport de escritorio no se
       muestra, y en viewport móvil se muestra como barra fija inferior con
       los mismos enlaces públicos.
-- [ ] No se usa Tailwind, Alpine.js, ni ninguna dependencia nueva (CDN o
+- [x] No se usa Tailwind, Alpine.js, ni ninguna dependencia nueva (CDN o
       `static/vendor/`); no hay detección de dispositivo por JavaScript.
-- [ ] El `<h1>` y el contenido interno de cada pantalla pública existente
+- [x] El `<h1>` y el contenido interno de cada pantalla pública existente
       (`announce/form.html`, `search/form.html`) no cambian.
-- [ ] Nuevo `tests/web/test_layout.py`: un visitante sin sesión en
+- [x] Nuevo `tests/web/test_layout.py`: un visitante sin sesión en
       `/anunciar` y en `/consultar` ve los enlaces públicos y los botones de
       login, marcados como activo/inactivo correctamente; NO ve ningún
       enlace de cliente ni de staff.
-- [ ] Suite completa (287 tests existentes) sigue en verde; cualquier
+- [x] Suite completa (287 tests existentes) sigue en verde; cualquier
       aserción frágil sobre el contenido total de `r.text` que choque con el
       nuevo header/footer se ajusta puntualmente.

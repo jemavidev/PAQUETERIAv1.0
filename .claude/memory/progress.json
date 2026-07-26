@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T17:25:52-0500",
+  "lastUpdated": "2026-07-26T17:42:12-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1692,29 +1692,53 @@
       },
       "outcome": "Publicados 3 tickets via /to-tickets en .scratch/header-footer/issues/: 01-header-footer-publicos (sin bloqueos, prefactor: chrome de base.html + mecanismo de enlace-activo + breakpoint responsive), 02-nav-cliente-autenticado (bloqueado por 01), 03-nav-staff-rol-y-sesiones-coexistentes (bloqueado por 01, incluye DEC-09: rol en sesion al hacer login). Usuario aprobo la granularidad sin cambios. Frontier actual: ticket 01 listo para /implement.",
       "description": "Publicados 3 tickets via /to-tickets en .scratch/header-footer/issues/: 01-header-footer-publicos (sin bloqueos, prefactor: chrome de base.html + mecanismo de enlace-activo + breakpoint responsive), 02-nav-cliente-autenticado (bloqueado por 01), 03-nav-staff-rol-y-sesiones-coexistentes (bloqueado por 01, incluye DEC-09: rol en sesion al hacer login). Usuario aprobo la granularidad sin cambios. Frontier actual: ticket 01 listo para /implement."
+    },
+    {
+      "id": "TASK-75",
+      "title": "Implementa ticket 01 (header/footer publico)",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "medium",
+      "date": "2026-07-26T17:42:12-0500",
+      "createdAt": "2026-07-26T17:42:12-0500",
+      "updatedAt": "2026-07-26T17:42:12-0500",
+      "duration": 35,
+      "tags": [
+        "implementacion",
+        "ui",
+        "navegacion",
+        "grupo-9",
+        "ticket-01"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "base.html (antes vacio) gana header+footer para visitante sin sesion: logo colibri inline + wordmark PAQUETEX, nav a /anunciar y /consultar con aria-current en el enlace activo, botones a /otp e /ingresar, footer=barra fija solo en movil via breakpoint CSS (sin JS de deteccion). TDD: 6 tests nuevos en tests/web/test_layout.py primero, luego implementacion. Verificado visualmente con Playwright+Chrome (screenshots desktop/movil) contra Postgres efimero real. /code-review (2 sub-agentes paralelos, Standards+Spec): Spec sin hallazgos; Standards encontro 1 violacion dura (base.html leia session['persona_id']/['usuario_id'] con strings literales en vez de las constantes SESSION_KEY/CUSTOMER_SESSION_KEY de security.py) -- corregida exponiendolas como Jinja globals en templating.py; tambien corregidos naming de macros (_enlace -> enlace_nav, sin guion bajo, consistente con paginacion()/modal()) y condicion de sesion duplicada (hoisted a mostrar_nav_publico). 293/293 tests pasan tras las correcciones.",
+      "description": "base.html (antes vacio) gana header+footer para visitante sin sesion: logo colibri inline + wordmark PAQUETEX, nav a /anunciar y /consultar con aria-current en el enlace activo, botones a /otp e /ingresar, footer=barra fija solo en movil via breakpoint CSS (sin JS de deteccion). TDD: 6 tests nuevos en tests/web/test_layout.py primero, luego implementacion. Verificado visualmente con Playwright+Chrome (screenshots desktop/movil) contra Postgres efimero real. /code-review (2 sub-agentes paralelos, Standards+Spec): Spec sin hallazgos; Standards encontro 1 violacion dura (base.html leia session['persona_id']/['usuario_id'] con strings literales en vez de las constantes SESSION_KEY/CUSTOMER_SESSION_KEY de security.py) -- corregida exponiendolas como Jinja globals en templating.py; tambien corregidos naming de macros (_enlace -> enlace_nav, sin guion bajo, consistente con paginacion()/modal()) y condicion de sesion duplicada (hoisted a mostrar_nav_publico). 293/293 tests pasan tras las correcciones."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 74,
+    "totalTasks": 75,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 74,
+      "completed": 75,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 64,
-      "medium": 9,
+      "medium": 10,
       "low": 1
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 39
+      "agentx": 40
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1732,9 +1756,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 74,
+    "totalEntries": 75,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T17:25:52-0500",
+    "lastUpdated": "2026-07-26T17:42:12-0500",
     "tokensByAgent": {}
   }
 }
