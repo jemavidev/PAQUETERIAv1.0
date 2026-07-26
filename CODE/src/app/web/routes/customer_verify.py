@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import declare_unit, get_or_create_apartamento
 from app.domain.persona import Persona
-from app.domain.persona_service import update_datos_personales
+from app.domain.persona_service import set_notificaciones_activas, update_datos_personales
 
 from ..db import get_db
 from ..security import current_customer
@@ -70,6 +70,7 @@ def customer_verify_submit(
     conjunto: str = Form(None),
     torre: str = Form(None),
     apartamento: str = Form(None),
+    notificaciones_activas: str = Form(None),
 ):
     def _error(mensaje: str):
         db.rollback()  # "todo o nada": deshace cualquier mutación de este request
@@ -104,6 +105,11 @@ def customer_verify_submit(
         )
     except ValueError as exc:
         return _error(str(exc))
+
+    # Checkbox: presente (marcado) = True; ausente (desmarcado, HTML no lo
+    # envía) = False. Distinto del resto de campos, cuya ausencia significa
+    # "no tocar" — un checkbox siempre representa su estado actual.
+    set_notificaciones_activas(db, persona, notificaciones_activas is not None)
 
     if all(partes_apto):
         apto = get_or_create_apartamento(db, conjunto_v, torre_v, apartamento_v)

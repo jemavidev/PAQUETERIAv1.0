@@ -16,7 +16,11 @@ from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
 from app.domain.persona import Persona
-from app.domain.persona_service import anonimizar_persona, update_datos_personales
+from app.domain.persona_service import (
+    anonimizar_persona,
+    set_notificaciones_activas,
+    update_datos_personales,
+)
 from app.domain.telefono import normalizar_telefono
 from app.domain.usuario import Usuario
 
@@ -105,6 +109,7 @@ def customers_manage_update(
     documento: str = Form(None),
     tipo_documento: str = Form(None),
     segundo_contacto: str = Form(None),
+    notificaciones_activas: str = Form(None),
 ):
     persona = _get_persona_o_404(db, persona_id)
 
@@ -131,6 +136,10 @@ def customers_manage_update(
             },
             status_code=400,
         )
+
+    # Checkbox: presente (marcado) = True; ausente (desmarcado) = False —
+    # distinto del resto de campos, cuya ausencia significa "no tocar".
+    set_notificaciones_activas(db, persona, notificaciones_activas is not None)
 
     return templates.TemplateResponse(
         "customers_manage/detail.html",

@@ -147,3 +147,32 @@ def test_eliminar_id_inexistente_da_404(client):
 
     r = client.post(f"/customers/manage/{uuid.uuid4()}/delete")
     assert r.status_code == 404
+
+
+# --------------------------------------------------------------------------- #
+# Preferencia de notificaciones desde la ficha de staff (ticket 02 de
+# notification-preferences).
+# --------------------------------------------------------------------------- #
+def test_staff_desactiva_la_preferencia_del_cliente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(f"/customers/manage/{p.id}", data={})  # checkbox ausente
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).notificaciones_activas is False
+
+
+def test_staff_reactiva_la_preferencia_del_cliente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(f"/customers/manage/{p.id}", data={})  # desactiva
+    client.post(
+        f"/customers/manage/{p.id}", data={"notificaciones_activas": "on"}
+    )  # reactiva
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).notificaciones_activas is True

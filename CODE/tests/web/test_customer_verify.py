@@ -162,3 +162,74 @@ def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(cl
         "A",
         "101",
     )
+
+
+# --------------------------------------------------------------------------- #
+# Preferencia de notificaciones (ticket 02 de notification-preferences)
+# --------------------------------------------------------------------------- #
+def test_checkbox_marcado_activa_notificaciones(client):
+    persona = _login_cliente(client)
+    client.post("/customer/verify", data={"notificaciones_activas": "on"})
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).notificaciones_activas is True
+
+
+def test_checkbox_ausente_desactiva_notificaciones(client):
+    persona = _login_cliente(client)
+    client.post("/customer/verify", data={})  # sin el campo: desmarcado
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).notificaciones_activas is False
+
+
+def test_reactivar_restaura_la_preferencia(client):
+    persona = _login_cliente(client)
+    client.post("/customer/verify", data={})  # desactiva
+    client.post("/customer/verify", data={"notificaciones_activas": "on"})  # reactiva
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).notificaciones_activas is True
+
+
+def test_checkbox_desmarcado_no_rompe_el_resto_del_guardado(client):
+    persona = _login_cliente(client)
+    client.post("/customer/verify", data={"nombre": "Ana Actualizada"})
+    client.db.expire_all()
+    p = client.db.get(Persona, persona.id)
+    assert p.nombre == "Ana Actualizada"
+    assert p.notificaciones_activas is False  # checkbox ausente = False
+
+
+def test_desactivar_detiene_una_notificacion_posterior(client):
+    from app.domain.staff_service import create_initial_admin
+    from app.domain.paquete_lifecycle import receive
+    from app.web.notifications import get_notification_sender
+
+    _login_cliente(client)  # Ana, +573001234567, activa por defecto
+
+    class _SenderEspia:
+        def __init__(self):
+            self.enviados = []
+
+        def enviar(self, destino, mensaje):
+            self.enviados.append((destino, mensaje))
+
+    espia = _SenderEspia()
+    client.app.dependency_overrides[get_notification_sender] = lambda: espia
+
+    # Desactivar SIN cerrar la sesión de cliente (coexiste con la de staff).
+    client.post("/customer/verify", data={})
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    client.db.commit()
+
+    admin = create_initial_admin(client.db, "admin@club.com", "Admin", "Contrasena1")
+    client.db.commit()
+    client.post("/auth/login", data={"email": "admin@club.com", "password": "Contrasena1"})
+
+    client.post(f"/packages/{p.id}/receive", data={})
+
+    assert espia.enviados == []

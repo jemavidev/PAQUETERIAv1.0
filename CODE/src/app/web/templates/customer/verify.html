@@ -12,6 +12,9 @@
   .card h2 { font-size:1rem; margin:0 0 12px; }
   label { display:block; font-weight:600; margin:12px 0 6px; }
   input { width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:1rem; }
+  .checkbox-row { display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .checkbox-row input { width:auto; }
+  .checkbox-row label { margin:0; font-weight:400; }
   button { width:100%; margin-top:18px; padding:14px; background:var(--brand); color:#fff; border:0; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; }
   .error { background:#fdecea; color:var(--err); border-radius:8px; padding:12px; margin-bottom:12px; }
   .ok { background:#e3f7e8; color:var(--ok); border-radius:8px; padding:12px; margin-bottom:12px; }
@@ -43,6 +46,12 @@
 
       <label for="segundo_contacto">Segundo contacto</label>
       <input type="text" id="segundo_contacto" name="segundo_contacto" value="{{ persona.segundo_contacto or '' }}">
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="notificaciones_activas" name="notificaciones_activas"
+               {{ 'checked' if persona.notificaciones_activas else '' }}>
+        <label for="notificaciones_activas">Recibir notificaciones por SMS</label>
+      </div>
     </div>
 
     <div class="card">
