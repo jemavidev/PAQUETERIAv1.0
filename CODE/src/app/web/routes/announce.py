@@ -94,7 +94,6 @@ def announce_submit(
         "announce/confirmacion.html",
         {
             "request": request,
-            "tracking_number": paquete.tracking_number,
             "access_code": paquete.access_code,
             "recipient_name": paquete.recipient_name,
         },

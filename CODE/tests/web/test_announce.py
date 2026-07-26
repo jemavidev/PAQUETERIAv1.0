@@ -49,8 +49,8 @@ def test_post_para_si_mismo_crea_paquete_anunciado(client):
     assert p.estado == EstadoPaquete.ANUNCIADO
     assert p.recipient_name == "Ana"
     assert p.recipient_phone == "+573001234567"
-    # La confirmación muestra el número de seguimiento.
-    assert p.tracking_number in r.text
+    # La confirmación muestra el código de acceso.
+    assert p.access_code in r.text
 
 
 def test_post_a_nombre_de_persona_registrada(client):
