@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T16:26:13-0500",
+  "lastUpdated": "2026-07-26T17:25:52-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1669,29 +1669,52 @@
       },
       "outcome": "Publicado .scratch/header-footer/spec.md via /to-spec: header+footer reales en base.html (hoy vacio), 3 variantes de nav (publico/cliente/staff+rol), logo colibri + wordmark PAQUETEX tomados del legacy pero reimplementados en CSS plano/JS vanilla (sin Tailwind/Alpine, respeta ADR-0004). Explorado: 16 rutas mapeadas por audiencia, RolUsuario(ADMIN/OPERADOR), patron logout POST /salir y /otp/salir ya existente en auth/me.html y customer_me.html. Decision clave: guardar rol en la sesion firmada en login (routes/auth.py) en vez de tocar ~10 archivos de rutas para resolver permisos de menu -- ver DEC-09.",
       "description": "Publicado .scratch/header-footer/spec.md via /to-spec: header+footer reales en base.html (hoy vacio), 3 variantes de nav (publico/cliente/staff+rol), logo colibri + wordmark PAQUETEX tomados del legacy pero reimplementados en CSS plano/JS vanilla (sin Tailwind/Alpine, respeta ADR-0004). Explorado: 16 rutas mapeadas por audiencia, RolUsuario(ADMIN/OPERADOR), patron logout POST /salir y /otp/salir ya existente en auth/me.html y customer_me.html. Decision clave: guardar rol en la sesion firmada en login (routes/auth.py) en vez de tocar ~10 archivos de rutas para resolver permisos de menu -- ver DEC-09."
+    },
+    {
+      "id": "TASK-74",
+      "title": "Tickets Grupo 9 (header/footer transversal)",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "medium",
+      "date": "2026-07-26T17:25:52-0500",
+      "createdAt": "2026-07-26T17:25:52-0500",
+      "updatedAt": "2026-07-26T17:25:52-0500",
+      "duration": 10,
+      "tags": [
+        "tickets",
+        "ui",
+        "navegacion",
+        "grupo-9"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Publicados 3 tickets via /to-tickets en .scratch/header-footer/issues/: 01-header-footer-publicos (sin bloqueos, prefactor: chrome de base.html + mecanismo de enlace-activo + breakpoint responsive), 02-nav-cliente-autenticado (bloqueado por 01), 03-nav-staff-rol-y-sesiones-coexistentes (bloqueado por 01, incluye DEC-09: rol en sesion al hacer login). Usuario aprobo la granularidad sin cambios. Frontier actual: ticket 01 listo para /implement.",
+      "description": "Publicados 3 tickets via /to-tickets en .scratch/header-footer/issues/: 01-header-footer-publicos (sin bloqueos, prefactor: chrome de base.html + mecanismo de enlace-activo + breakpoint responsive), 02-nav-cliente-autenticado (bloqueado por 01), 03-nav-staff-rol-y-sesiones-coexistentes (bloqueado por 01, incluye DEC-09: rol en sesion al hacer login). Usuario aprobo la granularidad sin cambios. Frontier actual: ticket 01 listo para /implement."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 73,
+    "totalTasks": 74,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 73,
+      "completed": 74,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 64,
-      "medium": 8,
+      "medium": 9,
       "low": 1
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 38
+      "agentx": 39
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1709,9 +1732,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 73,
+    "totalEntries": 74,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T16:26:13-0500",
+    "lastUpdated": "2026-07-26T17:25:52-0500",
     "tokensByAgent": {}
   }
 }
