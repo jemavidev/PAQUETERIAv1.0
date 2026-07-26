@@ -1,16 +1,16 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-05-03T07:07:25-05:00",
+  "lastUpdated": "2026-07-25T20:40:10-05:00",
   "project": {
     "name": "[PROJECT NAME]",
     "description": "[Brief project description]",
-    "phase": "2.0 — GitHub Actions Staging Deploy Complete",
+    "phase": "Rebuild PaqueteXv.2 — rutas renombradas a español amigable",
     "status": "active",
     "startDate": ""
   },
   "currentFocus": {
-    "feature": "Begin Paso 3: Parser Mejorado (detect non-standard FACTURAS files + manual CUFE entry)",
-    "objective": "Implement enhanced PDF parser to handle file format variations and manual CUFE input modal",
+    "feature": "Verificación completa en navegador real finalizada; listo para redactar la guía de usuario final",
+    "objective": "Guía de usuario final (brief §13): flujo anunciar -> recibir -> entregar -> consultar, distinguiendo vista cliente vs staff",
     "priority": "high"
   },
   "techStack": {
@@ -31,16 +31,15 @@
     "business": []
   },
   "nextSteps": [
-    "Analyze FACTURAS folder structure and identify parsing patterns",
-    "Create parser enhancement for non-standard files (11 files needing special handling)",
-    "Implement frontend modal for manual CUFE/CUDE entry"
+    "Redactar guía de usuario final (.md) cubriendo ambas audiencias con los nombres de ruta en español ya renombrados",
+    "Opcional: considerar /run-skill-generator para capturar el procedimiento de levantar la app (uvicorn + Postgres real + seed admin) como skill reutilizable"
   ],
   "blockers": [],
   "context": {
     "stats": {
       "completedTasks": 3,
       "pendingTasks": 1,
-      "lastUpdate": "2026-05-03"
+      "lastUpdate": "2026-07-25"
     },
     "recentDecisions": [],
     "activePatterns": [],
@@ -72,7 +71,29 @@
       }
     ]
   },
-  "recentChanges": [],
+  "recentChanges": [
+    {
+      "name": "Verificación navegador real post-rename",
+      "file": "N/A (solo verificación, sin cambios de código)",
+      "category": "verification",
+      "timestamp": "2026-07-25T20:40:10-05:00",
+      "summary": "Recorrido end-to-end en Chrome real vía Playwright de las 10 rutas renombradas + flujo completo anunciar/recibir/entregar/cancelar + escáner ZXing + checkbox notificaciones; cero bugs reales encontrados"
+    },
+    {
+      "name": "Ticket 01 data-model",
+      "file": "CODE/src/app/domain/",
+      "category": "feature",
+      "timestamp": "2026-07-23T20:01:42-05:00",
+      "summary": "Persona + arbol Alembic raiz unica + arnes CI, commit ac78245, 22 tests verdes"
+    },
+    {
+      "name": "Domain-modeling data-model",
+      "file": "docs/adr/",
+      "category": "refactor",
+      "timestamp": "2026-07-23T08:39:38-05:00",
+      "summary": "3 ADRs (snapshot inmutable, Alembic raíz única, teléfono llave) + CONTEXT.md afilado"
+    }
+  ],
   "current": {
     "focus": "Initial project setup",
     "blockers": [],

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-05-03T06:36:06-0500",
+  "lastUpdated": "2026-07-26T12:33:05-0500",
   "decisions": [
     {
       "id": "DEC-001",
@@ -22,19 +22,166 @@
         "negative": [],
         "risks": []
       }
+    },
+    {
+      "id": "DEC-02",
+      "title": "ADR-0001: Paquete = snapshot inmutable",
+      "date": "2026-07-23T08:24:16-0500",
+      "timestamp": "2026-07-23T08:24:16-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "data-model",
+        "snapshot",
+        "adr"
+      ],
+      "context": "El modelo viejo colgaba el paquete de un customer_id vivo; mudar al cliente reescribia la direccion en todos sus paquetes historicos. Habia que decidir como congelar el contexto de entrega.",
+      "rationale": "El modelo viejo colgaba el paquete de un customer_id vivo; mudar al cliente reescribia la direccion en todos sus paquetes historicos. Habia que decidir como congelar el contexto de entrega.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-03",
+      "title": "ADR-0002: Arbol Alembic de raiz unica",
+      "date": "2026-07-23T08:24:16-0500",
+      "timestamp": "2026-07-23T08:24:16-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "data-model",
+        "alembic",
+        "migrations",
+        "adr"
+      ],
+      "context": "38 migraciones con 3 raices desconectadas y estados que no coinciden entre RDS/prod/repo; alembic upgrade head no reconstruye el estado real. Habia que decidir si continuar el historial o partir de cero.",
+      "rationale": "38 migraciones con 3 raices desconectadas y estados que no coinciden entre RDS/prod/repo; alembic upgrade head no reconstruye el estado real. Habia que decidir si continuar el historial o partir de cero.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-04",
+      "title": "ADR-0003: Telefono = llave universal de la Persona",
+      "date": "2026-07-23T08:24:16-0500",
+      "timestamp": "2026-07-23T08:24:16-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "data-model",
+        "identity",
+        "adr"
+      ],
+      "context": "El modelo viejo hacia cliente=telefono rigido y guardaba display_name huerfano. Habia que decidir el ancla de identidad: telefono-como-llave vs surrogate-id con telefono nullable.",
+      "rationale": "El modelo viejo hacia cliente=telefono rigido y guardaba display_name huerfano. Habia que decidir el ancla de identidad: telefono-como-llave vs surrogate-id con telefono nullable.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-05",
+      "title": "ADR-0004: rebuild aislado (strangler fig)",
+      "date": "2026-07-24T07:26:39-0500",
+      "timestamp": "2026-07-24T07:26:39-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "architecture",
+        "web",
+        "strangler",
+        "adr"
+      ],
+      "context": "El config.py viejo lanza al arrancar sin credenciales AWS S3 y el app factory viejo importa todo el mundo fuera de alcance (facturas/CUFE); habia que decidir como montar la capa HTTP nueva sin acoplarse a ese import-graph roto.",
+      "rationale": "El config.py viejo lanza al arrancar sin credenciales AWS S3 y el app factory viejo importa todo el mundo fuera de alcance (facturas/CUFE); habia que decidir como montar la capa HTTP nueva sin acoplarse a ese import-graph roto.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-06",
+      "title": "ADR-0005: eliminar Persona es anonimizacion",
+      "date": "2026-07-25T15:41:50-0500",
+      "timestamp": "2026-07-25T15:41:50-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "customers-manage",
+        "persona",
+        "adr",
+        "privacy"
+      ],
+      "context": "paquetes.announced_by_persona_id es FK real NOT NULL hacia personas.id; un DELETE real de una Persona que anuncio algun paquete rompe la integridad referencial o exige cascada que destruye historia (contra ADR-0001). Habia que decidir que significa 'eliminar cliente' del brief S7.",
+      "rationale": "paquetes.announced_by_persona_id es FK real NOT NULL hacia personas.id; un DELETE real de una Persona que anuncio algun paquete rompe la integridad referencial o exige cascada que destruye historia (contra ADR-0001). Habia que decidir que significa 'eliminar cliente' del brief S7.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-07",
+      "title": "Preferencia de notificaciones: interruptor global + regla unificada de fallback",
+      "date": "2026-07-25T19:39:33-0500",
+      "timestamp": "2026-07-25T19:39:33-0500",
+      "agent": "architect",
+      "status": "implemented",
+      "tags": [
+        "notification-preferences",
+        "privacy",
+        "adr"
+      ],
+      "context": "Ningun cliente podia desactivar notificaciones; ademas resolver_destino (funcion pura) no podia distinguir un destinatario anonimizado (ADR-0005) de uno vivo, dejando un hueco: notificar a un telefono historico que ya no representa a nadie.",
+      "rationale": "Ningun cliente podia desactivar notificaciones; ademas resolver_destino (funcion pura) no podia distinguir un destinatario anonimizado (ADR-0005) de uno vivo, dejando un hueco: notificar a un telefono historico que ya no representa a nadie.",
+      "decision": "",
+      "consequences": {
+        "positive": [],
+        "negative": [],
+        "risks": []
+      }
+    },
+    {
+      "id": "DEC-08",
+      "title": "Ocupante: residentes de un Apartamento sin Persona propia",
+      "date": "2026-07-26T12:33:05-0500",
+      "timestamp": "2026-07-26T12:33:05-0500",
+      "agent": "agentx",
+      "status": "implemented",
+      "tags": [
+        "domain-modeling",
+        "adr",
+        "ocupante"
+      ],
+      "context": "El rebuild solo permitia nombres sin telefono de forma efimera (dentro del snapshot de un Paquete puntual, ADR-0003). El usuario necesitaba reconocer de forma persistente a residentes de un Apartamento que no tienen telefono propio (ej. un apartamento con 3 personas, solo 1 con celular), sin re-escribir el nombre en cada anuncio -- el Grupo 4 del intake de requerimientos.",
+      "rationale": "El rebuild solo permitia nombres sin telefono de forma efimera (dentro del snapshot de un Paquete puntual, ADR-0003). El usuario necesitaba reconocer de forma persistente a residentes de un Apartamento que no tienen telefono propio (ej. un apartamento con 3 personas, solo 1 con celular), sin re-escribir el nombre en cada anuncio -- el Grupo 4 del intake de requerimientos.",
+      "decision": "Nueva entidad Ocupante, separada de Persona, ligada a un Apartamento con Telefono OPCIONAL. Cada Apartamento exige exactamente 1 Ocupante principal con Telefono obligatorio (esa persona sigue siendo Persona real, ADR-0003 intacto). El principal es intercambiable entre Ocupantes-con-telefono (promover/degradar). Ocupante-sin-telefono no puede loguearse ni anunciar por si mismo, solo permite que un Paquete se le anuncie a su nombre de forma persistente.",
+      "consequences": "ADR-0003 no se reabre (Persona sigue exigiendo telefono siempre). Se rechazo la alternativa de volver nullable el telefono de Persona, exactamente lo que ADR-0003 ya habia descartado. CONTEXT.md actualizado (seccion Ocupante + cross-refs). docs/adr/0006 escrito. Bloquea/habilita los Grupos 6 (announce integra gestion de Ocupantes) y 7 (residentes muestra telefono de Ocupante) del intake de requerimientos."
     }
   ],
   "summary": {
-    "totalDecisions": 1,
+    "totalDecisions": 8,
     "byStatus": {
       "proposed": 0,
       "approved": 0,
-      "implemented": 1,
+      "implemented": 8,
       "rejected": 0,
       "superseded": 0
     },
     "byAgent": {
-      "agentx": 1
+      "agentx": 2,
+      "architect": 6
     }
   },
   "_comments": {
