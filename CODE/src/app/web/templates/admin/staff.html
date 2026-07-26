@@ -21,7 +21,7 @@
   <div class="card">
     {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
     {% if creado %}<div class="ok">Cuenta creada: {{ creado.email }} ({{ creado.rol.value }}).</div>{% endif %}
-    <form method="post" action="/admin/staff">
+    <form method="post" action="/administracion/personal">
       <label for="email">Email</label>
       <input type="email" id="email" name="email" value="{{ email|default('') }}" autocomplete="off">
 

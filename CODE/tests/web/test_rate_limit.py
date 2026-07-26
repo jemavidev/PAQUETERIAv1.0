@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Rate limiting en `/auth/login` y `/otp/solicitar` (ticket único).
+Rate limiting en `/ingresar` y `/otp/solicitar` (ticket único).
 
 Comportamiento observable por HTTP: por debajo del límite, ambas rutas funcionan
 igual que antes; al excederlo, 429 con mensaje claro; y si el `RateLimiter`
@@ -18,9 +18,9 @@ def test_login_por_debajo_del_limite_funciona_normal(client):
     client.db.commit()
 
     r = client.post(
-        "/auth/login", data={"email": "admin@club.com", "password": _PW}
+        "/ingresar", data={"email": "admin@club.com", "password": _PW}
     )
-    assert r.status_code == 200  # siguió el redirect a /auth/me
+    assert r.status_code == 200  # siguió el redirect a /mi-sesion
 
 
 def test_login_excede_el_limite_da_429(client):
@@ -30,12 +30,12 @@ def test_login_excede_el_limite_da_429(client):
     # Límite es 10/60s; la 11ª solicitud debe rechazarse.
     for _ in range(10):
         r = client.post(
-            "/auth/login", data={"email": "admin@club.com", "password": "mala1234"}
+            "/ingresar", data={"email": "admin@club.com", "password": "mala1234"}
         )
         assert r.status_code == 400  # credenciales inválidas, pero permitido
 
     r = client.post(
-        "/auth/login", data={"email": "admin@club.com", "password": "mala1234"}
+        "/ingresar", data={"email": "admin@club.com", "password": "mala1234"}
     )
     assert r.status_code == 429
     assert "demasiados intentos" in r.text.lower()
@@ -63,6 +63,6 @@ def test_rate_limiter_que_falla_no_bloquea_el_login_fail_open(client):
     client.app.dependency_overrides[get_rate_limiter] = lambda: _LimiterQueFalla()
 
     r = client.post(
-        "/auth/login", data={"email": "admin@club.com", "password": _PW}
+        "/ingresar", data={"email": "admin@club.com", "password": _PW}
     )
     assert r.status_code == 200  # fail-open: la solicitud pasó igual

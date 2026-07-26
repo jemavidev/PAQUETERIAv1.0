@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Vista de staff `/packages` — lista + acciones del ciclo de vida.
+Vista de staff `/paquetes` — lista + acciones del ciclo de vida.
 
 Protegida por `current_staff`: el `Usuario` de la sesión es el **actor** de cada
 transición (recibir/entregar/cancelar), nunca un id enviado por el cliente. Las
-acciones exitosas redirigen a `/packages` (PRG); las transiciones inválidas
+acciones exitosas redirigen a `/paquetes` (PRG); las transiciones inválidas
 re-muestran la lista con un aviso, sin efecto.
 """
 
@@ -57,7 +57,7 @@ def _get_paquete_o_404(db: Session, paquete_id: str) -> Paquete:
     return paquete
 
 
-@router.get("/packages", response_class=HTMLResponse)
+@router.get("/paquetes", response_class=HTMLResponse)
 def packages_list(
     request: Request,
     db: Session = Depends(get_db),
@@ -66,7 +66,7 @@ def packages_list(
     return _render_lista(request, db, staff)
 
 
-@router.post("/packages/{paquete_id}/receive")
+@router.post("/paquetes/{paquete_id}/recibir")
 def receive_action(
     paquete_id: str,
     request: Request,
@@ -82,10 +82,10 @@ def receive_action(
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     notificar_evento(db, paquete, EstadoPaquete.RECIBIDO, sender)
-    return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/packages/{paquete_id}/deliver")
+@router.post("/paquetes/{paquete_id}/entregar")
 def deliver_action(
     paquete_id: str,
     request: Request,
@@ -99,10 +99,10 @@ def deliver_action(
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     notificar_evento(db, paquete, EstadoPaquete.ENTREGADO, sender)
-    return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/packages/{paquete_id}/cancel")
+@router.post("/paquetes/{paquete_id}/cancelar")
 def cancel_action(
     paquete_id: str,
     request: Request,
@@ -117,4 +117,4 @@ def cancel_action(
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     notificar_evento(db, paquete, EstadoPaquete.CANCELADO, sender)
-    return RedirectResponse("/packages", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)

@@ -22,43 +22,43 @@ def _seed_admin(client, email="admin@club.com"):
 
 
 def test_get_login_renderiza_el_formulario(client):
-    r = client.get("/auth/login")
+    r = client.get("/ingresar")
     assert r.status_code == 200
     assert 'name="email"' in r.text and 'name="password"' in r.text
 
 
 def test_login_valido_abre_sesion_y_me_muestra_al_staff(client):
     email = _seed_admin(client)
-    r = client.post("/auth/login", data={"email": email, "password": _PW})
-    assert r.status_code == 200  # siguió el redirect a /auth/me
+    r = client.post("/ingresar", data={"email": email, "password": _PW})
+    assert r.status_code == 200  # siguió el redirect a /mi-sesion
     assert email in r.text  # la página de sesión muestra al staff
 
 
 def test_login_invalido_no_abre_sesion_y_mensaje_generico(client):
     _seed_admin(client)
     r = client.post(
-        "/auth/login", data={"email": "admin@club.com", "password": "mala12345"}
+        "/ingresar", data={"email": "admin@club.com", "password": "mala12345"}
     )
     assert r.status_code == 400
     assert "incorrect" in r.text.lower()  # "Email o contraseña incorrectos."
     # Sin sesión: una ruta con privilegios manda al login.
-    r2 = client.get("/auth/me", follow_redirects=False)
+    r2 = client.get("/mi-sesion", follow_redirects=False)
     assert r2.status_code == 303
-    assert r2.headers["location"].endswith("/auth/login")
+    assert r2.headers["location"].endswith("/ingresar")
 
 
 def test_me_sin_sesion_redirige_a_login(client):
-    r = client.get("/auth/me", follow_redirects=False)
+    r = client.get("/mi-sesion", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 def test_logout_cierra_la_sesion(client):
     email = _seed_admin(client)
-    client.post("/auth/login", data={"email": email, "password": _PW})
-    # con sesión, /auth/me responde 200
-    assert client.get("/auth/me").status_code == 200
-    client.post("/auth/logout")
+    client.post("/ingresar", data={"email": email, "password": _PW})
+    # con sesión, /mi-sesion responde 200
+    assert client.get("/mi-sesion").status_code == 200
+    client.post("/salir")
     # tras logout, vuelve a redirigir al login
-    r = client.get("/auth/me", follow_redirects=False)
+    r = client.get("/mi-sesion", follow_redirects=False)
     assert r.status_code == 303

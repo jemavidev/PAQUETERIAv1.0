@@ -48,7 +48,7 @@ async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPExceptio
         destino = (
             "/otp"
             if request.url.path.startswith(_RUTAS_CLIENTE)
-            else "/auth/login"
+            else "/ingresar"
         )
         return RedirectResponse(destino, status_code=303)
     return await http_exception_handler(request, exc)

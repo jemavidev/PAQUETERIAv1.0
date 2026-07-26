@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Rutas de autenticación de staff — `/auth/login`, `/auth/logout`, `/auth/me`.
+Rutas de autenticación de staff — `/ingresar`, `/salir`, `/mi-sesion`.
 
 Login con email + contraseña (server-rendered). La sesión guarda el `usuario_id`;
 `current_staff` la lee para producir el actor de las acciones. Mensajes de error
@@ -24,12 +24,12 @@ _MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nu
 router = APIRouter()
 
 
-@router.get("/auth/login", response_class=HTMLResponse)
+@router.get("/ingresar", response_class=HTMLResponse)
 def login_form(request: Request):
     return templates.TemplateResponse("auth/login.html", {"request": request})
 
 
-@router.post("/auth/login")
+@router.post("/ingresar")
 def login_submit(
     request: Request,
     db: Session = Depends(get_db),
@@ -63,18 +63,18 @@ def login_submit(
         return _error()
 
     request.session[SESSION_KEY] = str(usuario.id)
-    return RedirectResponse("/auth/me", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/mi-sesion", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/auth/logout")
+@router.post("/salir")
 def logout(request: Request):
     # pop, no clear: la sesión de cliente (persona_id) es independiente y no debe
     # cerrarse al cerrar la de staff.
     request.session.pop(SESSION_KEY, None)
-    return RedirectResponse("/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.get("/auth/me", response_class=HTMLResponse)
+@router.get("/mi-sesion", response_class=HTMLResponse)
 def me(request: Request, usuario: Usuario = Depends(current_staff)):
     return templates.TemplateResponse(
         "auth/me.html", {"request": request, "usuario": usuario}

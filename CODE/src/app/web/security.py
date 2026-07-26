@@ -28,7 +28,7 @@ CUSTOMER_SESSION_KEY = "persona_id"
 def current_staff(request: Request, db: Session = Depends(get_db)) -> Usuario:
     """El `Usuario` de la sesión actual. Sin sesión válida → 401.
 
-    Un 401 lo convierte el app en un redirect a `/auth/login` (ver app factory).
+    Un 401 lo convierte el app en un redirect a `/ingresar` (ver app factory).
     """
     raw = request.session.get(SESSION_KEY)
     if not raw:

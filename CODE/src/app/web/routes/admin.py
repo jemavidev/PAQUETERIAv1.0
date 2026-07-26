@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Ruta `/admin/staff` — alta de cuentas de staff.
+Ruta `/administracion/personal` — alta de cuentas de staff.
 
 Protegida por `require_admin`: la única puerta real a `create_staff` (dominio,
 ya probado). El actor de la creación sale de la sesión (`require_admin`), nunca
@@ -21,14 +21,14 @@ from ..templating import templates
 router = APIRouter()
 
 
-@router.get("/admin/staff", response_class=HTMLResponse)
+@router.get("/administracion/personal", response_class=HTMLResponse)
 def admin_staff_form(request: Request, admin: Usuario = Depends(require_admin)):
     return templates.TemplateResponse(
         "admin/staff.html", {"request": request, "admin": admin, "roles": list(RolUsuario)}
     )
 
 
-@router.post("/admin/staff", response_class=HTMLResponse)
+@router.post("/administracion/personal", response_class=HTMLResponse)
 def admin_staff_submit(
     request: Request,
     db: Session = Depends(get_db),

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Capa web — vista de staff `/packages` (lista + Recibir).
+Capa web — vista de staff `/paquetes` (lista + Recibir).
 
 Comportamiento observable por HTTP: la lista exige sesión y muestra el estado;
 recibir transiciona el paquete y registra al actor de la sesión; recibir en un
@@ -22,7 +22,7 @@ _PW = "Contrasena1"
 def _login_staff(client, email="staff@club.com"):
     create_initial_admin(client.db, email, "Operador", _PW)
     client.db.commit()
-    r = client.post("/auth/login", data={"email": email, "password": _PW})
+    r = client.post("/ingresar", data={"email": email, "password": _PW})
     assert r.status_code == 200
     return client.db.query(Usuario).filter(Usuario.email == email).one()
 
@@ -39,15 +39,15 @@ def _anunciar(client, tel="3001234567", nombre="Ana"):
 
 
 def test_packages_sin_sesion_redirige_a_login(client):
-    r = client.get("/packages", follow_redirects=False)
+    r = client.get("/paquetes", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 def test_packages_con_sesion_lista_y_muestra_estado(client):
     _login_staff(client)
     p = _anunciar(client, nombre="Ana")
-    r = client.get("/packages")
+    r = client.get("/paquetes")
     assert r.status_code == 200
     assert "Ana" in r.text
     assert "ANUNCIADO" in r.text
@@ -60,7 +60,7 @@ def test_recibir_transiciona_a_recibido_y_registra_al_actor(client):
     p = _anunciar(client)
 
     r = client.post(
-        f"/packages/{p.id}/receive", data={"guide_number": "1Z-ABC-9"}, follow_redirects=False
+        f"/paquetes/{p.id}/recibir", data={"guide_number": "1Z-ABC-9"}, follow_redirects=False
     )
     assert r.status_code == 303  # PRG
 
@@ -74,7 +74,7 @@ def test_recibir_transiciona_a_recibido_y_registra_al_actor(client):
 def test_recibir_sin_guia_es_valido(client):
     _login_staff(client)
     p = _anunciar(client)
-    r = client.post(f"/packages/{p.id}/receive", data={}, follow_redirects=False)
+    r = client.post(f"/paquetes/{p.id}/recibir", data={}, follow_redirects=False)
     assert r.status_code == 303
     client.db.expire_all()
     p2 = client.db.get(Paquete, p.id)
@@ -88,7 +88,7 @@ def test_recibir_un_no_anunciado_se_rechaza_sin_efecto(client):
     dom_receive(client.db, p, staff)  # ya RECIBIDO por el dominio
     client.db.commit()
 
-    r = client.post(f"/packages/{p.id}/receive", data={})
+    r = client.post(f"/paquetes/{p.id}/recibir", data={})
     assert r.status_code == 400
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
@@ -96,15 +96,15 @@ def test_recibir_un_no_anunciado_se_rechaza_sin_efecto(client):
 
 def test_recibir_id_inexistente_da_404(client):
     _login_staff(client)
-    r = client.post(f"/packages/{uuid.uuid4()}/receive", data={})
+    r = client.post(f"/paquetes/{uuid.uuid4()}/recibir", data={})
     assert r.status_code == 404
 
 
 def test_recibir_sin_sesion_redirige_a_login(client):
     p = _anunciar(client)
-    r = client.post(f"/packages/{p.id}/receive", data={}, follow_redirects=False)
+    r = client.post(f"/paquetes/{p.id}/recibir", data={}, follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 # --------------------------------------------------------------------------- #
@@ -120,7 +120,7 @@ def test_entregar_un_recibido_transiciona_y_registra_al_actor(client):
     p = _anunciar(client)
     _recibir(client, staff, p)
 
-    r = client.post(f"/packages/{p.id}/deliver", follow_redirects=False)
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
     assert r.status_code == 303
 
     client.db.expire_all()
@@ -133,7 +133,7 @@ def test_entregar_un_no_recibido_se_rechaza_sin_efecto(client):
     _login_staff(client)
     p = _anunciar(client)  # sigue ANUNCIADO
 
-    r = client.post(f"/packages/{p.id}/deliver")
+    r = client.post(f"/paquetes/{p.id}/entregar")
     assert r.status_code == 400
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
@@ -141,9 +141,9 @@ def test_entregar_un_no_recibido_se_rechaza_sin_efecto(client):
 
 def test_entregar_sin_sesion_redirige_a_login(client):
     p = _anunciar(client)
-    r = client.post(f"/packages/{p.id}/deliver", follow_redirects=False)
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 # --------------------------------------------------------------------------- #
@@ -154,7 +154,7 @@ def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):
     p = _anunciar(client)
 
     r = client.post(
-        f"/packages/{p.id}/cancel",
+        f"/paquetes/{p.id}/cancelar",
         data={"motivo": "ANUNCIO_ERRONEO"},
         follow_redirects=False,
     )
@@ -173,7 +173,7 @@ def test_cancelar_desde_recibido(client):
     _recibir(client, staff, p)
 
     r = client.post(
-        f"/packages/{p.id}/cancel",
+        f"/paquetes/{p.id}/cancelar",
         data={"motivo": "DEVUELTO_AL_TRANSPORTADOR"},
         follow_redirects=False,
     )
@@ -186,7 +186,7 @@ def test_cancelar_sin_motivo_se_rechaza_sin_efecto(client):
     _login_staff(client)
     p = _anunciar(client)
 
-    r = client.post(f"/packages/{p.id}/cancel", data={})
+    r = client.post(f"/paquetes/{p.id}/cancelar", data={})
     assert r.status_code == 400
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
@@ -199,7 +199,7 @@ def test_cancelar_un_terminal_se_rechaza_sin_efecto(client):
     dom_deliver(client.db, p, staff)  # ENTREGADO (terminal)
     client.db.commit()
 
-    r = client.post(f"/packages/{p.id}/cancel", data={"motivo": "OTRO"})
+    r = client.post(f"/paquetes/{p.id}/cancelar", data={"motivo": "OTRO"})
     assert r.status_code == 400
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
@@ -208,10 +208,10 @@ def test_cancelar_un_terminal_se_rechaza_sin_efecto(client):
 def test_cancelar_sin_sesion_redirige_a_login(client):
     p = _anunciar(client)
     r = client.post(
-        f"/packages/{p.id}/cancel", data={"motivo": "OTRO"}, follow_redirects=False
+        f"/paquetes/{p.id}/cancelar", data={"motivo": "OTRO"}, follow_redirects=False
     )
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 # --------------------------------------------------------------------------- #
@@ -227,7 +227,7 @@ def test_el_asset_zxing_se_sirve(client):
 def test_el_modal_recibir_incluye_el_disparador_de_escaneo(client):
     _login_staff(client)
     _anunciar(client)
-    r = client.get("/packages")
+    r = client.get("/paquetes")
     assert r.status_code == 200
     assert "scan-btn" in r.text  # el botón "Escanear" vive en el modal Recibir
     assert "zxing.min.js" in r.text  # el bundle se carga (lazy) desde /static

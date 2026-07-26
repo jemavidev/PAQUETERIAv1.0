@@ -51,7 +51,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Paquetes</h1>
-    <span class="who">{{ staff.nombre }} · <a href="/auth/me">sesión</a></span>
+    <span class="who">{{ staff.nombre }} · <a href="/mi-sesion">sesión</a></span>
   </div>
   {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
 
@@ -78,7 +78,7 @@
 
       {% if p.estado.value == "ANUNCIADO" %}
       {% call modal("receive-" ~ p.id, "Recibir paquete") %}
-        <form method="post" action="/packages/{{ p.id }}/receive" class="modal-form">
+        <form method="post" action="/paquetes/{{ p.id }}/recibir" class="modal-form">
           <label for="guia-{{ p.id }}">Guía del transportador (opcional)</label>
           <input type="text" id="guia-{{ p.id }}" name="guide_number" autocomplete="off" inputmode="text">
           <button type="button" class="btn scan-btn" data-target="guia-{{ p.id }}" data-video="video-{{ p.id }}">📷 Escanear con cámara</button>
@@ -92,7 +92,7 @@
       {% if p.estado.value == "RECIBIDO" %}
       {% call modal("deliver-" ~ p.id, "Entregar paquete") %}
         <p class="confirm">Entregar a <strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
-        <form method="post" action="/packages/{{ p.id }}/deliver" class="modal-form">
+        <form method="post" action="/paquetes/{{ p.id }}/entregar" class="modal-form">
           <button type="submit" class="btn btn-primary">Confirmar entrega</button>
         </form>
       {% endcall %}
@@ -101,7 +101,7 @@
       {% if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
       {% call modal("cancel-" ~ p.id, "Cancelar paquete") %}
         <p class="warn">⚠️ Esta acción es <strong>irreversible</strong>.</p>
-        <form method="post" action="/packages/{{ p.id }}/cancel" class="modal-form">
+        <form method="post" action="/paquetes/{{ p.id }}/cancelar" class="modal-form">
           <label for="motivo-{{ p.id }}">Motivo de cancelación</label>
           <select id="motivo-{{ p.id }}" name="motivo" required>
             <option value="" disabled selected>Selecciona un motivo…</option>

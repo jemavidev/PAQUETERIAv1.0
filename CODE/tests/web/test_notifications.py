@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Override fail-closed de staging + wiring en las rutas de `/packages` (ticket 02).
+Override fail-closed de staging + wiring en las rutas de `/paquetes` (ticket 02).
 
 El test más importante de esta rebanada: en `WEB_ENV=staging` SIN
 `SMS_OVERRIDE_NUMBER`, una transición real (recibir) no debe disparar NINGUNA
@@ -19,7 +19,7 @@ _PW = "Contrasena1"
 def _login_staff(client, email="staff@club.com"):
     create_initial_admin(client.db, email, "Operador", _PW)
     client.db.commit()
-    client.post("/auth/login", data={"email": email, "password": _PW})
+    client.post("/ingresar", data={"email": email, "password": _PW})
 
 
 def _anunciar(client, tel="3001234567", nombre="Ana"):
@@ -87,7 +87,7 @@ def test_receive_notifica_al_destinatario(client):
     espia = _SenderEspia()
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
 
-    client.post(f"/packages/{p.id}/receive", data={})
+    client.post(f"/paquetes/{p.id}/recibir", data={})
 
     assert len(espia.enviados) == 1
     destino, mensaje = espia.enviados[0]
@@ -98,11 +98,11 @@ def test_receive_notifica_al_destinatario(client):
 def test_deliver_notifica(client):
     _login_staff(client)
     p = _anunciar(client)
-    client.post(f"/packages/{p.id}/receive", data={})
+    client.post(f"/paquetes/{p.id}/recibir", data={})
 
     espia = _SenderEspia()
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
-    client.post(f"/packages/{p.id}/deliver")
+    client.post(f"/paquetes/{p.id}/entregar")
 
     assert len(espia.enviados) == 1
     assert "entregado" in espia.enviados[0][1].lower()
@@ -114,7 +114,7 @@ def test_cancel_notifica_con_motivo(client):
 
     espia = _SenderEspia()
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
-    client.post(f"/packages/{p.id}/cancel", data={"motivo": "NO_RECLAMADO"})
+    client.post(f"/paquetes/{p.id}/cancelar", data={"motivo": "NO_RECLAMADO"})
 
     assert len(espia.enviados) == 1
     assert "no reclamado" in espia.enviados[0][1].lower()
@@ -123,11 +123,11 @@ def test_cancel_notifica_con_motivo(client):
 def test_transicion_rechazada_no_notifica(client):
     _login_staff(client)
     p = _anunciar(client)
-    client.post(f"/packages/{p.id}/receive", data={})  # ya RECIBIDO
+    client.post(f"/paquetes/{p.id}/recibir", data={})  # ya RECIBIDO
 
     espia = _SenderEspia()
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
-    r = client.post(f"/packages/{p.id}/receive", data={})  # inválido: ya recibido
+    r = client.post(f"/paquetes/{p.id}/recibir", data={})  # inválido: ya recibido
 
     assert r.status_code == 400
     assert espia.enviados == []
@@ -153,7 +153,7 @@ def test_staging_sin_override_number_cero_llamadas_tras_transicion_real(
     _login_staff(client)
     p = _anunciar(client)
 
-    r = client.post(f"/packages/{p.id}/receive", data={}, follow_redirects=False)
+    r = client.post(f"/paquetes/{p.id}/recibir", data={}, follow_redirects=False)
     assert r.status_code == 303
 
     assert llamadas == []  # fail-closed: CERO llamadas al sender envuelto
@@ -173,7 +173,7 @@ def test_staging_con_override_number_redirige_al_numero_de_prueba(client, monkey
     _login_staff(client)
     p = _anunciar(client, tel="3001234567")
 
-    client.post(f"/packages/{p.id}/receive", data={})
+    client.post(f"/paquetes/{p.id}/recibir", data={})
 
     assert len(llamadas) == 1
     destino, _mensaje = llamadas[0]

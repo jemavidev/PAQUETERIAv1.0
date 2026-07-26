@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Ruta `/customers/manage` — buscar + ver/editar cliente (staff).
+Ruta `/residentes` — buscar + ver/editar cliente (staff).
 
 Buscar y editar son operativos, abiertos a CUALQUIER rol de staff (a diferencia
 de eliminar, gated por `require_admin` en el módulo de la acción destructiva).
@@ -53,7 +53,7 @@ def _get_persona_o_404(db: Session, persona_id: str) -> Persona:
     return persona
 
 
-@router.get("/customers/manage", response_class=HTMLResponse)
+@router.get("/residentes", response_class=HTMLResponse)
 def customers_manage_search(
     request: Request,
     db: Session = Depends(get_db),
@@ -79,7 +79,7 @@ def customers_manage_search(
     )
 
 
-@router.get("/customers/manage/{persona_id}", response_class=HTMLResponse)
+@router.get("/residentes/{persona_id}", response_class=HTMLResponse)
 def customers_manage_detail(
     persona_id: str,
     request: Request,
@@ -98,7 +98,7 @@ def customers_manage_detail(
     )
 
 
-@router.post("/customers/manage/{persona_id}", response_class=HTMLResponse)
+@router.post("/residentes/{persona_id}", response_class=HTMLResponse)
 def customers_manage_update(
     persona_id: str,
     request: Request,
@@ -153,7 +153,7 @@ def customers_manage_update(
     )
 
 
-@router.post("/customers/manage/{persona_id}/delete")
+@router.post("/residentes/{persona_id}/eliminar")
 def customers_manage_delete(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -164,5 +164,5 @@ def customers_manage_delete(
     persona = _get_persona_o_404(db, persona_id)
     anonimizar_persona(db, persona)
     return RedirectResponse(
-        "/customers/manage?eliminado=1", status_code=status.HTTP_303_SEE_OTHER
+        "/residentes?eliminado=1", status_code=status.HTTP_303_SEE_OTHER
     )

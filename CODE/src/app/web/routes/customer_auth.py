@@ -112,7 +112,7 @@ def customer_logout(request: Request):
 
 @router.get("/otp/perfil", response_class=HTMLResponse)
 def customer_me(request: Request, persona: Persona = Depends(current_customer)):
-    """Ruta protegida de prueba (paralela a `/auth/me` de staff)."""
+    """Ruta protegida de prueba (paralela a `/mi-sesion` de staff)."""
     return templates.TemplateResponse(
         "auth/customer_me.html", {"request": request, "persona": persona}
     )

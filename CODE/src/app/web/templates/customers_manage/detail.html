@@ -29,7 +29,7 @@
   {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
   {% if guardado %}<div class="ok">Datos guardados.</div>{% endif %}
 
-  <form method="post" action="/customers/manage/{{ persona.id }}">
+  <form method="post" action="/residentes/{{ persona.id }}">
     <div class="card">
       <label for="nombre">Nombre</label>
       <input type="text" id="nombre" name="nombre" value="{{ persona.nombre or '' }}">
@@ -55,7 +55,7 @@
   <div class="card">
     <h2>Zona de peligro</h2>
     <p class="warn">⚠️ Eliminar es <strong>irreversible</strong>: limpia los datos personales y el teléfono deja de ser el suyo.</p>
-    <form method="post" action="/customers/manage/{{ persona.id }}/delete"
+    <form method="post" action="/residentes/{{ persona.id }}/eliminar"
           onsubmit="return confirm('¿Seguro que quieres eliminar a {{ persona.nombre }}? Esta acción es irreversible.');">
       <button type="submit" class="btn-danger-solid">Eliminar cliente</button>
     </form>

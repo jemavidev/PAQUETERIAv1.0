@@ -24,7 +24,7 @@ Término evitado: no llamar "usuario" al cliente ni "cliente" al staff. **Usuari
 Definido pregunta a pregunta en el grilling. Es el corazón del rebuild.
 
 ### Persona
-Un residente. **Su llave universal e identidad estable es el Teléfono** — siempre existe. Tiene nombre, un **Apartamento actual** (opcional, mutable) y datos de registro ampliables (email, documento, segundo contacto…). Se crea implícitamente al anunciar (teléfono + nombre) y amplía sus datos desde `/customer/verify`.
+Un residente. **Su llave universal e identidad estable es el Teléfono** — siempre existe. Tiene nombre, un **Apartamento actual** (opcional, mutable) y datos de registro ampliables (email, documento, segundo contacto…). Se crea implícitamente al anunciar (teléfono + nombre) y amplía sus datos desde `/mis-datos`.
 
 - Término evitado: **`display_name` huérfano** — el modelo viejo guardaba un nombre de texto libre suelto en el paquete, sin identidad. Ya no existe: todo nombre vive bajo un Teléfono real.
 - Término evitado: "cliente = teléfono único e inmutable" (modelo viejo, phone-céntrico rígido). Aquí el Teléfono es la llave, pero la Persona es la entidad.
@@ -41,7 +41,7 @@ La unidad de vivienda: **Conjunto → Torre → Apartamento**. Entidad **ligera*
 Una Persona tiene **un** Apartamento *actual*. Es **mutable**: puede **mudarse** a otro Apartamento o **desvincularse** en cualquier momento. La relación es **1↔1 en el tiempo (secuencial)**, no varios apartamentos a la vez.
 
 ### Herencia de apartamento
-Cuando a un Teléfono de un grupo "**misma unidad**" se le asigna un Apartamento, los demás Teléfonos del grupo lo **heredan** automáticamente. El grupo se forma solo al **declarar la unidad a propósito** (staff en `/announce-new`, o el cliente en `/customer/verify`) — **nunca** por un "a nombre de" casual en `/announce`. Como mudarse/desvincular está siempre disponible, cualquier herencia errónea es **corregible**.
+Cuando a un Teléfono de un grupo "**misma unidad**" se le asigna un Apartamento, los demás Teléfonos del grupo lo **heredan** automáticamente. El grupo se forma solo al **declarar la unidad a propósito** (staff en `/announce`, o el cliente en `/mis-datos`) — **nunca** por un "a nombre de" casual en `/anunciar`. Como mudarse/desvincular está siempre disponible, cualquier herencia errónea es **corregible**.
 
 El **grupo "misma unidad" no es una entidad persistente**: es el conjunto emergente de Personas que comparten el mismo Apartamento actual, no una lista almacenada aparte. Declarar la unidad es el **acto** que asigna ese Apartamento a varios Teléfonos a la vez — ese acto *es* la herencia.
 
@@ -98,8 +98,10 @@ Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. *
 
 ## Vistas por audiencia
 
-- **Sin privilegios**: `/announce`, `/search`, `/help`, `/terms`, `/privacy`, `/cookies`, `/customer/verify`, `/auth/login`, `/auth/forgot-password`.
-- **Con privilegios**: `/packages` (principal), `/announce-new`, `/customers/manage`, `/admin`.
+Nombres de ruta en español amigable (decidido 2026-07-26, ver `docs/adr/` si aplica) — el resto del glosario de este documento no cambia, solo el path visible en el navegador.
+
+- **Sin privilegios**: `/anunciar`, `/consultar`, `/help`, `/terms`, `/privacy`, `/cookies`, `/mis-datos`, `/otp` (login OTP de cliente), `/auth/forgot-password`.
+- **Con privilegios**: `/paquetes` (principal), `/announce` (declarar unidad en lote — sin sufijo "-new"), `/residentes`, `/administracion/personal`, `/ingresar` (login de staff).
 - **Eliminadas**: `/messages` y toda la mensajería cliente↔staff.
 
 ---

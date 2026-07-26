@@ -19,7 +19,7 @@
 <div class="wrap">
   <h1>Clientes</h1>
   <div class="card">
-    <form method="get" action="/customers/manage">
+    <form method="get" action="/residentes">
       <input type="text" name="q" value="{{ q }}" placeholder="Teléfono o nombre">
       <button type="submit">Buscar</button>
     </form>
@@ -28,7 +28,7 @@
   <ul class="res-list">
     {% for p in resultados %}
     <li class="card res-item">
-      <a href="/customers/manage/{{ p.id }}">
+      <a href="/residentes/{{ p.id }}">
         <strong>{{ p.nombre }}</strong>
         <div class="res-sub">{{ p.telefono }}</div>
       </a>

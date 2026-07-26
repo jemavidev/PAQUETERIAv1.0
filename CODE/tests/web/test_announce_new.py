@@ -23,7 +23,7 @@ def _login_operador(client, email="op@club.com"):
     admin = create_initial_admin(client.db, "admin@club.com", "Admin", _PW)
     create_staff(client.db, admin, email, "Opa", _PW, RolUsuario.OPERADOR)
     client.db.commit()
-    client.post("/auth/login", data={"email": email, "password": _PW})
+    client.post("/ingresar", data={"email": email, "password": _PW})
 
 
 def _payload(conjunto, torre, apartamento, *pares_nombre_telefono):
@@ -47,7 +47,7 @@ def _payload(conjunto, torre, apartamento, *pares_nombre_telefono):
 def test_sin_sesion_redirige_a_login(client):
     r = client.get("/announce", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/login")
+    assert r.headers["location"].endswith("/ingresar")
 
 
 def test_operador_ve_el_formulario(client):

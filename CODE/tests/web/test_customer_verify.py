@@ -228,8 +228,8 @@ def test_desactivar_detiene_una_notificacion_posterior(client):
 
     admin = create_initial_admin(client.db, "admin@club.com", "Admin", "Contrasena1")
     client.db.commit()
-    client.post("/auth/login", data={"email": "admin@club.com", "password": "Contrasena1"})
+    client.post("/ingresar", data={"email": "admin@club.com", "password": "Contrasena1"})
 
-    client.post(f"/packages/{p.id}/receive", data={})
+    client.post(f"/paquetes/{p.id}/recibir", data={})
 
     assert espia.enviados == []

@@ -84,9 +84,9 @@ def test_sesion_de_staff_y_cliente_coexisten_sin_pisarse(client):
 
     # Abrir sesión de staff.
     client.post(
-        "/auth/login", data={"email": "admin@club.com", "password": "Contrasena1"}
+        "/ingresar", data={"email": "admin@club.com", "password": "Contrasena1"}
     )
-    assert client.get("/auth/me").status_code == 200
+    assert client.get("/mi-sesion").status_code == 200
     # La sesión de cliente NO existe todavía: la ruta de cliente sigue rechazando.
     assert client.get("/otp/perfil", follow_redirects=False).status_code == 303
 
@@ -98,11 +98,11 @@ def test_sesion_de_staff_y_cliente_coexisten_sin_pisarse(client):
     )
 
     # Ambas sesiones responden 200 a la vez: no se pisaron.
-    assert client.get("/auth/me").status_code == 200
+    assert client.get("/mi-sesion").status_code == 200
     assert client.get("/otp/perfil").status_code == 200
 
     # Cerrar la sesión de STAFF no debe afectar la de cliente.
-    client.post("/auth/logout")
+    client.post("/salir")
     assert client.get("/otp/perfil").status_code == 200
-    r = client.get("/auth/me", follow_redirects=False)
+    r = client.get("/mi-sesion", follow_redirects=False)
     assert r.status_code == 303  # staff sí cerró
