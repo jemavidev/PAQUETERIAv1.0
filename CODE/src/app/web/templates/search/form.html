@@ -23,6 +23,9 @@
   .timeline .t { font-weight:600; }
   .timeline .cuando { color:#777; font-size:.82rem; }
   .timeline .motivo { color:#9a3b30; font-size:.85rem; margin-top:2px; }
+  .timeline .detalle { color:#555; font-size:.82rem; margin-top:2px; }
+  .fotos { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .foto-paquete { width:calc(50% - 4px); border-radius:8px; object-fit:cover; max-height:160px; }
   .empty { color:#777; text-align:center; padding:20px; }
   .actualizar-link { display:inline-block; margin-top:10px; color:var(--brand); font-weight:600; text-decoration:none; }
 </style>
@@ -55,9 +58,18 @@
         <div class="t">{{ h.titulo }}</div>
         <div class="cuando">{{ h.cuando.strftime('%d/%m/%Y %H:%M') }}</div>
         {% if h.motivo %}<div class="motivo">Motivo: {{ h.motivo.replace('_', ' ')|capitalize }}</div>{% endif %}
+        {% if h.tipo %}<div class="detalle">Tipo: {{ h.tipo.value.replace('_', ' ')|capitalize }}</div>{% endif %}
+        {% if h.condicion %}<div class="detalle">Condición: {{ h.condicion.value|capitalize }}</div>{% endif %}
       </li>
       {% endfor %}
     </ol>
+    {% if fotos %}
+    <div class="fotos">
+      {% for f in fotos %}
+      <img src="{{ f.url }}" alt="Foto del paquete recibido" class="foto-paquete">
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
   {% elif sin_resultados %}
   <div class="card empty">No encontramos ningún paquete con ese dato.</div>

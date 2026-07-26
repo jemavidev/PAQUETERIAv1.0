@@ -18,6 +18,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import or_
 
 from app.domain.paquete import Paquete
+from app.domain.paquete_foto_service import listar_fotos
 
 from ..db import get_db
 from ..templating import templates
@@ -29,15 +30,34 @@ def _timeline(paquete: Paquete) -> list[dict]:
     """Los hitos OCURRIDOS del Paquete, en orden, sin exponer al operador."""
     hitos = [
         ("Anunciado", paquete.announced_at, None),
-        ("Recibido", paquete.received_at, None),
+        (
+            "Recibido",
+            paquete.received_at,
+            None,
+            paquete.package_type,
+            paquete.package_condition,
+        ),
         ("Entregado", paquete.delivered_at, None),
         ("Cancelado", paquete.cancelled_at, paquete.cancel_reason),
     ]
-    return [
-        {"titulo": titulo, "cuando": cuando, "motivo": motivo}
-        for titulo, cuando, motivo in hitos
-        if cuando is not None
-    ]
+    resultado = []
+    for hito in hitos:
+        titulo, cuando = hito[0], hito[1]
+        if cuando is None:
+            continue
+        motivo = hito[2]
+        tipo = hito[3] if len(hito) > 3 else None
+        condicion = hito[4] if len(hito) > 4 else None
+        resultado.append(
+            {
+                "titulo": titulo,
+                "cuando": cuando,
+                "motivo": motivo,
+                "tipo": tipo,
+                "condicion": condicion,
+            }
+        )
+    return resultado
 
 
 @router.get("/consultar", response_class=HTMLResponse)
@@ -63,6 +83,7 @@ def search(request: Request, q: str = None, db: Session = Depends(get_db)):
                 "q": termino,
                 "paquete": paquete,
                 "timeline": _timeline(paquete),
+                "fotos": listar_fotos(db, paquete),
             },
         )
 

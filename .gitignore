@@ -158,6 +158,7 @@ CODE/src/uploads/*
 CODE/static/uploads/
 static/uploads/
 media/uploads/
+CODE/src/app/web/static/fotos-recibidas/
 
 # ========================================
 # Backups

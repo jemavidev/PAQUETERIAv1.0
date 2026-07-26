@@ -117,3 +117,28 @@ def test_muestra_telefono_y_enlace_para_actualizar_si_falta_apartamento(client):
     assert r.status_code == 200
     assert "+573001234567" in r.text
     assert 'href="/otp"' in r.text
+
+
+def test_timeline_muestra_tipo_condicion_y_foto(client):
+    from app.domain.foto_storage import LocalFotoStorage
+    from app.domain.paquete_foto_service import agregar_foto
+    from app.domain.paquete import CondicionPaquete, TipoPaquete
+    import tempfile
+    from pathlib import Path
+
+    staff = _staff(client)
+    p = _anunciar(client)
+    receive(
+        client.db, p, staff,
+        package_type=TipoPaquete.EXTRA_DIMENSIONADO,
+        package_condition=CondicionPaquete.ABIERTO,
+    )
+    storage = LocalFotoStorage(Path(tempfile.mkdtemp()))
+    agregar_foto(client.db, p, storage, "recibo.jpg", b"contenido")
+    client.db.commit()
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Extra dimensionado" in r.text
+    assert "Abierto" in r.text
+    assert "foto-paquete" in r.text
