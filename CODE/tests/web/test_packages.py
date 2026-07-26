@@ -284,3 +284,62 @@ def test_advertencia_no_bloquea_las_acciones_normales(client):
         f"/paquetes/{p.id}/recibir", data={}, follow_redirects=False
     )
     assert r.status_code == 303
+
+
+# --------------------------------------------------------------------------- #
+# Corregir destinatario (Grupo 6, ticket 02) — solo mientras ANUNCIADO.
+# --------------------------------------------------------------------------- #
+def test_boton_corregir_aparece_solo_en_anunciado(client):
+    staff = _login_staff(client)
+    anunciado = _anunciar(client, tel="3001234567", nombre="Ana")
+    recibido = _anunciar(client, tel="3019999999", nombre="Beto")
+    dom_receive(client.db, recibido, staff)
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert f'modal-correct-{anunciado.id}' in r.text
+    assert f'modal-correct-{recibido.id}' not in r.text
+
+
+def test_corregir_actualiza_nombre_y_quita_la_advertencia(client):
+    _login_staff(client)
+    from app.domain.persona_service import get_or_create_persona
+
+    get_or_create_persona(client.db, "3001234567", "Ana Perez")
+    client.db.commit()
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana Perez",
+        destinatario=Destinatario.declarado_por_cliente("Ana Peres"),
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={"recipient_name": "Ana Perez"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).recipient_name == "Ana Perez"
+    r2 = client.get("/paquetes")
+    assert "no coincide" not in r2.text.lower()
+
+
+def test_corregir_un_recibido_se_rechaza_sin_efecto(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    dom_receive(client.db, p, staff)
+    client.db.commit()
+    nombre_original = p.recipient_name
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir", data={"recipient_name": "Otro Nombre"}
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).recipient_name == nombre_original

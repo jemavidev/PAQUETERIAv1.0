@@ -73,6 +73,7 @@
       <div class="pkg-actions">
         {% if p.estado.value == "ANUNCIADO" %}
         <button type="button" class="btn" data-open="modal-receive-{{ p.id }}">Recibir</button>
+        <button type="button" class="btn" data-open="modal-correct-{{ p.id }}">Corregir</button>
         {% elif p.estado.value == "RECIBIDO" %}
         <button type="button" class="btn" data-open="modal-deliver-{{ p.id }}">Entregar</button>
         {% endif %}
@@ -89,6 +90,18 @@
           <video id="video-{{ p.id }}" class="scan-video" hidden playsinline muted></video>
           <p class="scan-msg" hidden></p>
           <button type="submit" class="btn btn-primary">Confirmar recibo</button>
+        </form>
+      {% endcall %}
+      {% endif %}
+
+      {% if p.estado.value == "ANUNCIADO" %}
+      {% call modal("correct-" ~ p.id, "Corregir destinatario") %}
+        <form method="post" action="/paquetes/{{ p.id }}/corregir" class="modal-form">
+          <label for="nombre-corregir-{{ p.id }}">Nombre</label>
+          <input type="text" id="nombre-corregir-{{ p.id }}" name="recipient_name" value="{{ p.recipient_name }}" required>
+          <label for="telefono-corregir-{{ p.id }}">Teléfono de notificación (opcional)</label>
+          <input type="tel" id="telefono-corregir-{{ p.id }}" name="recipient_phone" value="{{ p.recipient_phone or '' }}">
+          <button type="submit" class="btn btn-primary">Guardar corrección</button>
         </form>
       {% endcall %}
       {% endif %}

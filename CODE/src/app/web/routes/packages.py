@@ -17,7 +17,13 @@ from sqlalchemy.orm import Session
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import notificar_evento
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion, Paquete
-from app.domain.paquete_lifecycle import TransicionInvalida, cancel, deliver, receive
+from app.domain.paquete_lifecycle import (
+    TransicionInvalida,
+    cancel,
+    corregir_destinatario,
+    deliver,
+    receive,
+)
 from app.domain.persona import Persona
 from app.domain.usuario import Usuario
 
@@ -132,4 +138,23 @@ def cancel_action(
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     notificar_evento(db, paquete, EstadoPaquete.CANCELADO, sender)
+    return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/paquetes/{paquete_id}/corregir")
+def correct_recipient_action(
+    paquete_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    recipient_name: str = Form(None),
+    recipient_phone: str = Form(None),
+):
+    """Corrige destinatario de un Paquete `ANUNCIADO` — excepción acotada a
+    ADR-0001 (ver `paquete_lifecycle.corregir_destinatario`)."""
+    paquete = _get_paquete_o_404(db, paquete_id)
+    try:
+        corregir_destinatario(db, paquete, staff, recipient_name, recipient_phone)
+    except (TransicionInvalida, ValueError) as exc:
+        return _render_lista(request, db, staff, error=str(exc), status_code=400)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
