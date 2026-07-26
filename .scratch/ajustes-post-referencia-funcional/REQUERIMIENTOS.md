@@ -20,15 +20,17 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 
 | # | Grupo | Toca | Estado |
 |---|---|---|---|
-| 1 | [Anunciar + resolución de destinatario por staff](#grupo-1--anunciar--resolución-de-destinatario-por-staff) | `/anunciar`, `/paquetes` (nuevo botón) | 🟢 Listo para `/to-spec` |
-| 2 | [Consultar — auditoría + alcance de búsqueda](#grupo-2--consultar--auditoría--alcance-de-búsqueda) | `/consultar` | 🟢 Listo para `/to-spec` |
-| 3 | [OTP — unificación de perfil](#grupo-3--otp--unificación-de-perfil) | `/otp*`, `/mis-datos` | 🟢 Listo para `/to-spec` (2 dígitos ya **implementado**, ver nota) |
-| 4 | [Segundo contacto / Ocupante — modelo de dominio](#grupo-4--segundo-contacto--ocupante--modelo-de-dominio) | `/mis-datos`, `/residentes`, dominio (Persona) | 🟢 Listo para `/to-spec` |
-| 5 | [Paquetes — colores, filtros, paginación, anunciar staff](#grupo-5--paquetes--colores-filtros-paginación-anunciar-staff) | `/paquetes` | 🟢 Listo para `/to-spec` |
-| 6 | [Declarar unidad — propósito de `/announce`](#grupo-6--declarar-unidad--propósito-de-announce) | `/announce` | 🟢 Listo para `/to-spec` |
-| 7 | [Residentes — segundo contacto + nivel de acceso](#grupo-7--residentes--segundo-contacto--nivel-de-acceso) | `/residentes` | 🟢 Listo para `/to-spec` |
-| 8 | [Notificaciones — evento Anunciado, plantillas, LIWA](#grupo-8--notificaciones--evento-anunciado-plantillas-liwa) | dominio `notificacion_service` | 🟢 Listo para `/to-spec` |
-| 9 | [Transversales — navegación, teléfono internacional](#grupo-9--transversales--navegación-teléfono-internacional) | `base.html`, `telefono.py` | 🟢 Listo para `/to-spec` |
+| 1 | [Anunciar + resolución de destinatario por staff](#grupo-1--anunciar--resolución-de-destinatario-por-staff) | `/anunciar`, `/paquetes` (nuevo botón) | ✅ Implementado — `.scratch/anunciar-resolucion-destinatario-staff/` |
+| 2 | [Consultar — auditoría + alcance de búsqueda](#grupo-2--consultar--auditoría--alcance-de-búsqueda) | `/consultar` | ✅ Implementado — `.scratch/consultar-rediseno/` |
+| 3 | [OTP — unificación de perfil](#grupo-3--otp--unificación-de-perfil) | `/otp*`, `/mis-datos` | ✅ Implementado (código de 2 dígitos) |
+| 4 | [Segundo contacto / Ocupante — modelo de dominio](#grupo-4--segundo-contacto--ocupante--modelo-de-dominio) | `/mis-datos`, `/residentes`, dominio (Persona) | ✅ Implementado — `.scratch/ocupante-entidad/` |
+| 5 | [Paquetes — colores, filtros, paginación, anunciar staff](#grupo-5--paquetes--colores-filtros-paginación-anunciar-staff) | `/paquetes` | ✅ Implementado — `.scratch/paquetes-filtros-paginacion/` |
+| 6 | [Declarar unidad — propósito de `/announce`](#grupo-6--declarar-unidad--propósito-de-announce) | `/announce` | ✅ Implementado — `.scratch/announce-staff-completo/` |
+| 7 | [Residentes — segundo contacto + nivel de acceso](#grupo-7--residentes--segundo-contacto--nivel-de-acceso) | `/residentes` | ✅ Implementado — `.scratch/residentes-ocupantes/` |
+| 8 | [Notificaciones — evento Anunciado, plantillas, LIWA](#grupo-8--notificaciones--evento-anunciado-plantillas-liwa) | dominio `notificacion_service` | ✅ Implementado (LIWA real bloqueado por credenciales) — `.scratch/notificaciones-anunciado-plantillas/` |
+| 9 | [Transversales — navegación, teléfono internacional](#grupo-9--transversales--navegación-teléfono-internacional) | `base.html`, `telefono.py` | 🟡 Teléfono ✅ implementado. Header/footer sin empezar (cosmético, a propósito para el final) |
+
+**Roadmap completo — 287/287 tests pasan.** LIWA implementado y desplegado con credenciales reales; verificación en vivo bloqueada por whitelist de IP pendiente del lado de LIWA (ver Grupo 8). Único pendiente visual: header/footer (deliberadamente dejado para el final, según lo acordado).
 
 ---
 
@@ -199,6 +201,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
      - **Credenciales** (env vars ya usadas en legacy, mismos nombres recomendados para el rebuild): `LIWA_API_KEY`, `LIWA_ACCOUNT`, `LIWA_PASSWORD`, `LIWA_AUTH_URL`, `LIWA_FROM_NAME`. Los valores reales no están en el código (correctamente, vía entorno) — hace falta que los proveas cuando se implemente (igual que hicimos con `STAGING_SSH_KEY`).
      - El legacy solo lo usa para notificaciones de paquete, no para OTP — para el rebuild, reemplazaría tanto `ConsoleNotificationSender` como (si se quiere SMS real también ahí) `DevOtpSender`, cada uno como su propia implementación del puerto ya existente (mismo patrón `Protocol` que ya tiene el código).
      - **Estado: 🟢 listo para spec** (falta que proveas las credenciales reales al momento de desplegar, no de especificar).
+   - **Implementado (AgentX):** `LiwaNotificationSender`/`LiwaOtpSender` (`app/domain/liwa_sender.py`), credenciales reales encontradas en `CODE/scripts/testing/sms/README_SMS.md` y configuradas en el servidor de staging. `get_notification_sender()`/`get_otp_sender()` (nuevo `app/web/otp.py`) usan LIWA real automáticamente si `LIWA_API_KEY` está presente. Probado con API simulada (7 tests). **Verificación real BLOQUEADA:** desde `52.6.204.211`, `api.liwa.co` no conecta por TCP 443 (timeout consistente, con internet general funcionando normal) — LIWA probablemente restringe su API por IP y este servidor no está en esa whitelist. El usuario va a contactar a LIWA para autorizar `52.6.204.211` en la cuenta `00486396309`. Código y despliegue 100% listos, solo pendiente de la autorización de red.
 
 ---
 
