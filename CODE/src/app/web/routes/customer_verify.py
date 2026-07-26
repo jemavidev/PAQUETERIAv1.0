@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Ruta `/customer/verify` — tablero de autoedición del cliente.
+Ruta `/mis-datos` — tablero de autoedición del cliente.
 
 Protegida por `current_customer`. El residente edita sus datos ampliables
 (`update_datos_personales`, actualización parcial) y puede **declarar su
@@ -40,7 +40,7 @@ def _apartamento_actual(db: Session, persona: Persona):
     return db.get(Apartamento, persona.apartamento_actual_id)
 
 
-@router.get("/customer/verify", response_class=HTMLResponse)
+@router.get("/mis-datos", response_class=HTMLResponse)
 def customer_verify_form(
     request: Request,
     persona: Persona = Depends(current_customer),
@@ -57,7 +57,7 @@ def customer_verify_form(
     )
 
 
-@router.post("/customer/verify", response_class=HTMLResponse)
+@router.post("/mis-datos", response_class=HTMLResponse)
 def customer_verify_submit(
     request: Request,
     persona: Persona = Depends(current_customer),
@@ -117,4 +117,4 @@ def customer_verify_submit(
         # a nadie más que a sí mismo.
         declare_unit(db, apto, [(persona.telefono, persona.nombre)])
 
-    return RedirectResponse("/customer/verify?guardado=1", status_code=303)
+    return RedirectResponse("/mis-datos?guardado=1", status_code=303)

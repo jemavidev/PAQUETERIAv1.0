@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Rate limiting en `/auth/login` y `/auth/customer/request-otp` (ticket único).
+Rate limiting en `/auth/login` y `/otp/solicitar` (ticket único).
 
 Comportamiento observable por HTTP: por debajo del límite, ambas rutas funcionan
 igual que antes; al excederlo, 429 con mensaje claro; y si el `RateLimiter`
@@ -44,10 +44,10 @@ def test_login_excede_el_limite_da_429(client):
 def test_request_otp_excede_su_limite_mas_estricto_da_429(client):
     # Límite es 5/60s (más estricto que login).
     for _ in range(5):
-        r = client.post("/auth/customer/request-otp", data={"telefono": "3001234567"})
+        r = client.post("/otp/solicitar", data={"telefono": "3001234567"})
         assert r.status_code == 200
 
-    r = client.post("/auth/customer/request-otp", data={"telefono": "3001234567"})
+    r = client.post("/otp/solicitar", data={"telefono": "3001234567"})
     assert r.status_code == 429
     assert "demasiados intentos" in r.text.lower()
 

@@ -2,7 +2,7 @@
 """
 Rutas de autenticación de cliente — OTP por teléfono.
 
-`/auth/customer/login` (pedir OTP) → `/auth/customer/verify-otp` (confirmar) abre
+`/otp` (pedir OTP) → `/otp/verificar` (confirmar) abre
 una **sesión de cliente independiente** de la de staff (`CUSTOMER_SESSION_KEY`).
 Mensajes de error GENÉRICOS (no distingue causa del rechazo).
 """
@@ -29,12 +29,12 @@ _sender = DevOtpSender()
 _MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
 
-@router.get("/auth/customer/login", response_class=HTMLResponse)
+@router.get("/otp", response_class=HTMLResponse)
 def customer_login_form(request: Request):
     return templates.TemplateResponse("auth/customer_login.html", {"request": request})
 
 
-@router.post("/auth/customer/request-otp", response_class=HTMLResponse)
+@router.post("/otp/solicitar", response_class=HTMLResponse)
 def customer_request_otp(
     request: Request,
     db: Session = Depends(get_db),
@@ -69,7 +69,7 @@ def customer_request_otp(
     )
 
 
-@router.post("/auth/customer/verify-otp")
+@router.post("/otp/verificar")
 def customer_verify_otp(
     request: Request,
     db: Session = Depends(get_db),
@@ -97,20 +97,20 @@ def customer_verify_otp(
 
     request.session[CUSTOMER_SESSION_KEY] = str(persona.id)
     return RedirectResponse(
-        "/auth/customer/me", status_code=status.HTTP_303_SEE_OTHER
+        "/otp/perfil", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
-@router.post("/auth/customer/logout")
+@router.post("/otp/salir")
 def customer_logout(request: Request):
     # pop, no clear: no debe cerrar la sesión de staff si coexiste.
     request.session.pop(CUSTOMER_SESSION_KEY, None)
     return RedirectResponse(
-        "/auth/customer/login", status_code=status.HTTP_303_SEE_OTHER
+        "/otp", status_code=status.HTTP_303_SEE_OTHER
     )
 
 
-@router.get("/auth/customer/me", response_class=HTMLResponse)
+@router.get("/otp/perfil", response_class=HTMLResponse)
 def customer_me(request: Request, persona: Persona = Depends(current_customer)):
     """Ruta protegida de prueba (paralela a `/auth/me` de staff)."""
     return templates.TemplateResponse(

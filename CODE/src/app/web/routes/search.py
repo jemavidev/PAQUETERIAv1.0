@@ -38,7 +38,7 @@ def _timeline(paquete: Paquete) -> list[dict]:
     ]
 
 
-@router.get("/search", response_class=HTMLResponse)
+@router.get("/consultar", response_class=HTMLResponse)
 def search(request: Request, q: str = None, db: Session = Depends(get_db)):
     termino = (q or "").strip()
     if not termino:

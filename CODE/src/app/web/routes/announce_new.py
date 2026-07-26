@@ -34,14 +34,14 @@ def _blank_to_none(valor):
     return valor or None
 
 
-@router.get("/announce-new", response_class=HTMLResponse)
+@router.get("/announce", response_class=HTMLResponse)
 def announce_new_form(request: Request, staff: Usuario = Depends(current_staff)):
     return templates.TemplateResponse(
         "announce_new/form.html", {"request": request, "staff": staff}
     )
 
 
-@router.post("/announce-new", response_class=HTMLResponse)
+@router.post("/announce", response_class=HTMLResponse)
 async def announce_new_submit(
     request: Request,
     db: Session = Depends(get_db),

@@ -21,7 +21,7 @@
   <p class="hint">Enviamos un código de 6 dígitos a tu teléfono.</p>
   <div class="card">
     {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
-    <form method="post" action="/auth/customer/verify-otp" id="otp-verify-form">
+    <form method="post" action="/otp/verificar" id="otp-verify-form">
       <input type="hidden" name="telefono" value="{{ telefono|default('') }}">
       <label for="codigo">Código</label>
       <input type="text" id="codigo" name="codigo" inputmode="numeric" maxlength="6" autofocus>

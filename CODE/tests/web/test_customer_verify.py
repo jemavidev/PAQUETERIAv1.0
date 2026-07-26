@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Capa web — `/customer/verify` (autoedición del cliente, ticket único).
+Capa web — `/mis-datos` (autoedición del cliente, ticket único).
 
 Comportamiento observable por HTTP: exige sesión de cliente; guarda datos
 personales de forma PARCIAL; declarar Apartamento crea/reutiliza sin mutar a
@@ -19,23 +19,23 @@ _CANON = "+573001234567"
 
 
 def _login_cliente(client, telefono="3001234567"):
-    client.post("/auth/customer/request-otp", data={"telefono": telefono})
+    client.post("/otp/solicitar", data={"telefono": telefono})
     codigo = dev_sender.enviados[_CANON]
     client.post(
-        "/auth/customer/verify-otp", data={"telefono": telefono, "codigo": codigo}
+        "/otp/verificar", data={"telefono": telefono, "codigo": codigo}
     )
     return client.db.query(Persona).filter(Persona.telefono == _CANON).one()
 
 
 def test_sin_sesion_redirige_a_login_de_cliente(client):
-    r = client.get("/customer/verify", follow_redirects=False)
+    r = client.get("/mis-datos", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"].endswith("/auth/customer/login")
+    assert r.headers["location"].endswith("/otp")
 
 
 def test_con_sesion_muestra_el_formulario(client):
     _login_cliente(client)
-    r = client.get("/customer/verify")
+    r = client.get("/mis-datos")
     assert r.status_code == 200
     assert 'name="nombre"' in r.text and 'name="conjunto"' in r.text
 
@@ -44,7 +44,7 @@ def test_guardar_datos_personales_es_parcial(client):
     persona = _login_cliente(client)
 
     r = client.post(
-        "/customer/verify",
+        "/mis-datos",
         data={"nombre": "Ana", "email": "ana@example.com"},
         follow_redirects=False,
     )
@@ -57,7 +57,7 @@ def test_guardar_datos_personales_es_parcial(client):
 
     # Segunda vez: solo documento/tipo, sin nombre/email -> éstos NO se pierden.
     client.post(
-        "/customer/verify", data={"documento": "123", "tipo_documento": "CC"}
+        "/mis-datos", data={"documento": "123", "tipo_documento": "CC"}
     )
     client.db.expire_all()
     p2 = client.db.get(Persona, persona.id)
@@ -69,7 +69,7 @@ def test_declarar_apartamento_nuevo_lo_crea_y_asigna(client):
     persona = _login_cliente(client)
 
     r = client.post(
-        "/customer/verify",
+        "/mis-datos",
         data={"conjunto": "Las Flores", "torre": "A", "apartamento": "101"},
         follow_redirects=False,
     )
@@ -90,7 +90,7 @@ def test_declarar_apartamento_existente_lo_reutiliza_sin_mutar_a_otros(client):
 
     persona = _login_cliente(client)
     r = client.post(
-        "/customer/verify",
+        "/mis-datos",
         data={"conjunto": "Las Flores", "torre": "A", "apartamento": "101"},
         follow_redirects=False,
     )
@@ -107,10 +107,10 @@ def test_declarar_apartamento_existente_lo_reutiliza_sin_mutar_a_otros(client):
 
 def test_email_invalido_rechaza_todo_el_request_sin_persistir_nada(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={"nombre": "Ana"})  # estado base conocido
+    client.post("/mis-datos", data={"nombre": "Ana"})  # estado base conocido
 
     r = client.post(
-        "/customer/verify", data={"nombre": "Otro Nombre", "email": "no-es-un-email"}
+        "/mis-datos", data={"nombre": "Otro Nombre", "email": "no-es-un-email"}
     )
     assert r.status_code == 400
 
@@ -121,10 +121,10 @@ def test_email_invalido_rechaza_todo_el_request_sin_persistir_nada(client):
 
 def test_apartamento_incompleto_rechaza_todo_el_request(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={"nombre": "Ana"})
+    client.post("/mis-datos", data={"nombre": "Ana"})
 
     r = client.post(
-        "/customer/verify", data={"nombre": "Cambiado", "conjunto": "Las Flores"}
+        "/mis-datos", data={"nombre": "Cambiado", "conjunto": "Las Flores"}
     )
     assert r.status_code == 400
 
@@ -137,7 +137,7 @@ def test_apartamento_incompleto_rechaza_todo_el_request(client):
 def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(client):
     _login_cliente(client)
     client.post(
-        "/customer/verify",
+        "/mis-datos",
         data={"conjunto": "Las Flores", "torre": "A", "apartamento": "101"},
     )
 
@@ -151,7 +151,7 @@ def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(cl
     paquete_id = paquete.id
 
     client.post(
-        "/customer/verify",
+        "/mis-datos",
         data={"conjunto": "Las Flores", "torre": "B", "apartamento": "202"},
     )
 
@@ -169,29 +169,29 @@ def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(cl
 # --------------------------------------------------------------------------- #
 def test_checkbox_marcado_activa_notificaciones(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={"notificaciones_activas": "on"})
+    client.post("/mis-datos", data={"notificaciones_activas": "on"})
     client.db.expire_all()
     assert client.db.get(Persona, persona.id).notificaciones_activas is True
 
 
 def test_checkbox_ausente_desactiva_notificaciones(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={})  # sin el campo: desmarcado
+    client.post("/mis-datos", data={})  # sin el campo: desmarcado
     client.db.expire_all()
     assert client.db.get(Persona, persona.id).notificaciones_activas is False
 
 
 def test_reactivar_restaura_la_preferencia(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={})  # desactiva
-    client.post("/customer/verify", data={"notificaciones_activas": "on"})  # reactiva
+    client.post("/mis-datos", data={})  # desactiva
+    client.post("/mis-datos", data={"notificaciones_activas": "on"})  # reactiva
     client.db.expire_all()
     assert client.db.get(Persona, persona.id).notificaciones_activas is True
 
 
 def test_checkbox_desmarcado_no_rompe_el_resto_del_guardado(client):
     persona = _login_cliente(client)
-    client.post("/customer/verify", data={"nombre": "Ana Actualizada"})
+    client.post("/mis-datos", data={"nombre": "Ana Actualizada"})
     client.db.expire_all()
     p = client.db.get(Persona, persona.id)
     assert p.nombre == "Ana Actualizada"
@@ -216,7 +216,7 @@ def test_desactivar_detiene_una_notificacion_posterior(client):
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
 
     # Desactivar SIN cerrar la sesión de cliente (coexiste con la de staff).
-    client.post("/customer/verify", data={})
+    client.post("/mis-datos", data={})
 
     p = announce(
         client.db,

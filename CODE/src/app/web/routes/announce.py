@@ -22,14 +22,14 @@ router = APIRouter()
 _OPCIONES_A_NOMBRE = ("yo_mismo", "registrada", "solo_nombre")
 
 
-@router.get("/announce", response_class=HTMLResponse)
+@router.get("/anunciar", response_class=HTMLResponse)
 def announce_form(request: Request):
     return templates.TemplateResponse(
         "announce/form.html", {"request": request, "a_nombre_de": "yo_mismo"}
     )
 
 
-@router.post("/announce", response_class=HTMLResponse)
+@router.post("/anunciar", response_class=HTMLResponse)
 def announce_submit(
     request: Request,
     db: Session = Depends(get_db),

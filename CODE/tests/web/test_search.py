@@ -32,20 +32,20 @@ def _staff(client):
 
 
 def test_get_search_sin_termino_muestra_el_formulario(client):
-    r = client.get("/search")
+    r = client.get("/consultar")
     assert r.status_code == 200
     assert 'name="q"' in r.text
 
 
 def test_search_no_requiere_sesion(client):
     # A diferencia de /packages, /search es pública.
-    r = client.get("/search", follow_redirects=False)
+    r = client.get("/consultar", follow_redirects=False)
     assert r.status_code == 200
 
 
 def test_buscar_por_tracking_muestra_estado_anunciado(client):
     p = _anunciar(client, nombre="Ana")
-    r = client.get("/search", params={"q": p.tracking_number})
+    r = client.get("/consultar", params={"q": p.tracking_number})
     assert r.status_code == 200
     assert "Ana" in r.text
     assert "ANUNCIADO" in r.text
@@ -59,7 +59,7 @@ def test_timeline_muestra_recibido_y_entregado_tras_transiciones(client):
     deliver(client.db, p, staff)
     client.db.commit()
 
-    r = client.get("/search", params={"q": p.tracking_number})
+    r = client.get("/consultar", params={"q": p.tracking_number})
     assert r.status_code == 200
     assert "ENTREGADO" in r.text
     assert "Recibido" in r.text and "Entregado" in r.text
@@ -73,14 +73,14 @@ def test_paquete_cancelado_muestra_el_motivo(client):
     cancel(client.db, p, staff, "NO_RECLAMADO")
     client.db.commit()
 
-    r = client.get("/search", params={"q": p.tracking_number})
+    r = client.get("/consultar", params={"q": p.tracking_number})
     assert r.status_code == 200
     assert "CANCELADO" in r.text
     assert "reclamado" in r.text.lower()  # "No reclamado" (motivo formateado)
 
 
 def test_termino_sin_coincidencia_da_sin_resultados_sin_error(client):
-    r = client.get("/search", params={"q": "NO-EXISTE-999"})
+    r = client.get("/consultar", params={"q": "NO-EXISTE-999"})
     assert r.status_code == 200
     assert "no encontramos" in r.text.lower()
 
@@ -99,7 +99,7 @@ def test_buscar_por_telefono_lista_lo_anunciado_y_lo_destinado(client):
     )
     client.db.commit()
 
-    r = client.get("/search", params={"q": "3001234567"})
+    r = client.get("/consultar", params={"q": "3001234567"})
     assert r.status_code == 200
     assert ana.tracking_number in r.text
     assert beto_pkg.tracking_number in r.text
@@ -107,12 +107,12 @@ def test_buscar_por_telefono_lista_lo_anunciado_y_lo_destinado(client):
 
 def test_buscar_por_telefono_en_otro_formato_encuentra_lo_mismo(client):
     p = _anunciar(client, tel="3001234567", nombre="Ana")
-    r = client.get("/search", params={"q": "+57 300 123 4567"})
+    r = client.get("/consultar", params={"q": "+57 300 123 4567"})
     assert r.status_code == 200
     assert p.tracking_number in r.text
 
 
 def test_telefono_sin_paquetes_da_sin_resultados(client):
-    r = client.get("/search", params={"q": "3009999999"})
+    r = client.get("/consultar", params={"q": "3009999999"})
     assert r.status_code == 200
     assert "no encontramos" in r.text.lower()

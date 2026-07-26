@@ -34,10 +34,10 @@ _STATIC_DIR = _WEB_DIR / "static"
 
 # Prefijos de ruta que pertenecen a la audiencia CLIENTE (current_customer);
 # cualquier otro 401 se asume de la audiencia STAFF (current_staff/require_admin).
-# OJO: "/customer/verify" (singular, exacto), NO un genérico "/customer" — ese
-# genérico sería también prefijo de "/customers/manage" (staff, plural) por
-# simple coincidencia de substring y mandaría su 401 al login equivocado.
-_RUTAS_CLIENTE = ("/auth/customer", "/customer/verify")
+# OJO al añadir/renombrar rutas: verificar que ningún prefijo aquí sea también
+# prefijo (por coincidencia de substring) de una ruta STAFF — ya pasó una vez
+# con "/customer" vs "/customers/manage" (ver historial de commits).
+_RUTAS_CLIENTE = ("/otp", "/mis-datos")
 
 
 async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPException):
@@ -46,7 +46,7 @@ async def _redirigir_no_autenticado(request: Request, exc: StarletteHTTPExceptio
     audiencias con sesiones y logins independientes)."""
     if exc.status_code == 401:
         destino = (
-            "/auth/customer/login"
+            "/otp"
             if request.url.path.startswith(_RUTAS_CLIENTE)
             else "/auth/login"
         )

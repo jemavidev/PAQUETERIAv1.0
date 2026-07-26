@@ -23,7 +23,7 @@
   <h1>Anunciar un paquete</h1>
   <div class="card">
     {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
-    <form method="post" action="/announce" id="announce-form">
+    <form method="post" action="/anunciar" id="announce-form">
       <label for="nombre">Tu nombre</label>
       <input type="text" id="nombre" name="nombre" value="{{ nombre|default('') }}" autocomplete="name">
 

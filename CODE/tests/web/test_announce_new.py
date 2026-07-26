@@ -45,7 +45,7 @@ def _payload(conjunto, torre, apartamento, *pares_nombre_telefono):
 
 
 def test_sin_sesion_redirige_a_login(client):
-    r = client.get("/announce-new", follow_redirects=False)
+    r = client.get("/announce", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"].endswith("/auth/login")
 
@@ -53,7 +53,7 @@ def test_sin_sesion_redirige_a_login(client):
 def test_operador_ve_el_formulario(client):
     # A diferencia de /admin/staff, CUALQUIER rol de staff entra aquí.
     _login_operador(client)
-    r = client.get("/announce-new")
+    r = client.get("/announce")
     assert r.status_code == 200
     assert 'name="conjunto"' in r.text and 'name="nombre"' in r.text
 
@@ -66,7 +66,7 @@ def test_declarar_unidad_une_a_todos_los_miembros_a_la_vez(client):
         ("Ana", "3001234567"), ("Beto", "3019999999"), ("Cira", "3025555555"),
     )
 
-    r = client.post("/announce-new", data=data)
+    r = client.post("/announce", data=data)
     assert r.status_code == 200
 
     client.db.expire_all()
@@ -83,7 +83,7 @@ def test_apartamento_existente_se_reutiliza(client):
 
     _login_operador(client)
     data = _payload("Las Flores", "A", "101", ("Ana", "3001234567"))
-    client.post("/announce-new", data=data)
+    client.post("/announce", data=data)
 
     client.db.expire_all()
     assert client.db.query(Apartamento).count() == 1  # no duplicado
@@ -95,7 +95,7 @@ def test_telefono_existente_reutiliza_la_persona(client):
 
     _login_operador(client)
     data = _payload("Las Flores", "A", "101", ("Ana", "3001234567"))
-    client.post("/announce-new", data=data)
+    client.post("/announce", data=data)
 
     client.db.expire_all()
     assert (
@@ -110,7 +110,7 @@ def test_fila_con_nombre_sin_telefono_rechaza_todo_sin_persistir(client):
         "Las Flores", "A", "101", ("Ana", "3001234567"), ("SoloNombre", "")
     )
 
-    r = client.post("/announce-new", data=data)
+    r = client.post("/announce", data=data)
     assert r.status_code == 400
 
     client.db.expire_all()
@@ -121,7 +121,7 @@ def test_apartamento_incompleto_rechaza(client):
     _login_operador(client)
     data = _payload("Las Flores", "", "101", ("Ana", "3001234567"))
 
-    r = client.post("/announce-new", data=data)
+    r = client.post("/announce", data=data)
     assert r.status_code == 400
     client.db.expire_all()
     assert client.db.query(Persona).count() == 0
@@ -132,5 +132,5 @@ def test_cero_miembros_rechaza(client):
     # filas en blanco, como llegan del form cuando no se completan.
     data = _payload("Las Flores", "A", "101", ("", ""), ("", ""))
 
-    r = client.post("/announce-new", data=data)
+    r = client.post("/announce", data=data)
     assert r.status_code == 400

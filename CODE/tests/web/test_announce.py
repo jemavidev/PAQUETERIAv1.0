@@ -21,7 +21,7 @@ def _cuenta_paquetes(client) -> int:
 
 
 def test_get_announce_renderiza_el_formulario_sin_guia(client):
-    r = client.get("/announce")
+    r = client.get("/anunciar")
     assert r.status_code == 200
     html = r.text.lower()
     assert 'name="nombre"' in html
@@ -34,7 +34,7 @@ def test_get_announce_renderiza_el_formulario_sin_guia(client):
 
 def test_post_para_si_mismo_crea_paquete_anunciado(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={
             "nombre": "Ana",
             "telefono": "3001234567",
@@ -58,7 +58,7 @@ def test_post_a_nombre_de_persona_registrada(client):
     client.db.commit()
 
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={
             "nombre": "Ana",
             "telefono": "3001234567",
@@ -75,7 +75,7 @@ def test_post_a_nombre_de_persona_registrada(client):
 
 def test_post_solo_nombre_sin_telefono_no_crea_persona_sin_llave(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={
             "nombre": "Ana",
             "telefono": "3001234567",
@@ -94,7 +94,7 @@ def test_post_solo_nombre_sin_telefono_no_crea_persona_sin_llave(client):
 
 def test_post_sin_tyc_no_crea_paquete(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={"nombre": "Ana", "telefono": "3001234567", "a_nombre_de": "yo_mismo"},
     )
     assert r.status_code == 400
@@ -103,7 +103,7 @@ def test_post_sin_tyc_no_crea_paquete(client):
 
 def test_post_sin_telefono_no_crea_paquete(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={"nombre": "Ana", "acepta_tyc": "on", "a_nombre_de": "yo_mismo"},
     )
     assert r.status_code == 400
@@ -112,7 +112,7 @@ def test_post_sin_telefono_no_crea_paquete(client):
 
 def test_post_sin_nombre_no_crea_paquete(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={"telefono": "3001234567", "acepta_tyc": "on", "a_nombre_de": "yo_mismo"},
     )
     assert r.status_code == 400
@@ -121,7 +121,7 @@ def test_post_sin_nombre_no_crea_paquete(client):
 
 def test_post_registrada_no_existente_da_error_y_no_registra_al_anunciante(client):
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={
             "nombre": "Ana",
             "telefono": "3001234567",
@@ -147,7 +147,7 @@ def test_a_nombre_de_casual_no_agrupa_apartamento(client):
     client.db.commit()
 
     r = client.post(
-        "/announce",
+        "/anunciar",
         data={
             "nombre": "Ana",
             "telefono": "3001234567",
