@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T12:33:05-0500",
+  "lastUpdated": "2026-07-26T16:26:13-0500",
   "decisions": [
     {
       "id": "DEC-001",
@@ -168,19 +168,36 @@
       "rationale": "El rebuild solo permitia nombres sin telefono de forma efimera (dentro del snapshot de un Paquete puntual, ADR-0003). El usuario necesitaba reconocer de forma persistente a residentes de un Apartamento que no tienen telefono propio (ej. un apartamento con 3 personas, solo 1 con celular), sin re-escribir el nombre en cada anuncio -- el Grupo 4 del intake de requerimientos.",
       "decision": "Nueva entidad Ocupante, separada de Persona, ligada a un Apartamento con Telefono OPCIONAL. Cada Apartamento exige exactamente 1 Ocupante principal con Telefono obligatorio (esa persona sigue siendo Persona real, ADR-0003 intacto). El principal es intercambiable entre Ocupantes-con-telefono (promover/degradar). Ocupante-sin-telefono no puede loguearse ni anunciar por si mismo, solo permite que un Paquete se le anuncie a su nombre de forma persistente.",
       "consequences": "ADR-0003 no se reabre (Persona sigue exigiendo telefono siempre). Se rechazo la alternativa de volver nullable el telefono de Persona, exactamente lo que ADR-0003 ya habia descartado. CONTEXT.md actualizado (seccion Ocupante + cross-refs). docs/adr/0006 escrito. Bloquea/habilita los Grupos 6 (announce integra gestion de Ocupantes) y 7 (residentes muestra telefono de Ocupante) del intake de requerimientos."
+    },
+    {
+      "id": "DEC-09",
+      "title": "Rol de staff embebido en la sesion para pintar el menu",
+      "date": "2026-07-26T16:26:13-0500",
+      "timestamp": "2026-07-26T16:26:13-0500",
+      "agent": "agentx",
+      "status": "implemented",
+      "tags": [
+        "auth",
+        "ui",
+        "sesion"
+      ],
+      "context": "El header necesita saber si el staff logueado es ADMIN (para mostrar Administracion) sin agregar una dependencia de FastAPI nueva a las ~10 rutas que ya renderizan paginas completas (shotgun surgery solo para pintar un menu). La sesion de staff hoy solo guarda usuario_id.",
+      "rationale": "El header necesita saber si el staff logueado es ADMIN (para mostrar Administracion) sin agregar una dependencia de FastAPI nueva a las ~10 rutas que ya renderizan paginas completas (shotgun surgery solo para pintar un menu). La sesion de staff hoy solo guarda usuario_id.",
+      "decision": "routes/auth.py (login_submit) escribe request.session[\"rol\"] = usuario.rol.value junto a usuario_id en el momento del login. base.html lee request.session.get(\"rol\") directamente (Jinja ya recibe request en todo TemplateResponse) para decidir si mostrar los enlaces de Administracion. require_admin sigue siendo la UNICA puerta real de esas rutas -- el rol en sesion es solo un dato derivado para pintar el menu, nunca una fuente de autorizacion.",
+      "consequences": "Si el rol de un Usuario cambia en BD, el menu no se actualiza hasta su proximo login (igual que ya pasa con usuario_id si el Usuario se borra a mitad de sesion -- current_staff ya maneja ese caso con un 401). Evita agregar una dependencia de DB a las ~10 rutas que renderizan paginas completas solo para resolver un menu."
     }
   ],
   "summary": {
-    "totalDecisions": 8,
+    "totalDecisions": 9,
     "byStatus": {
       "proposed": 0,
       "approved": 0,
-      "implemented": 8,
+      "implemented": 9,
       "rejected": 0,
       "superseded": 0
     },
     "byAgent": {
-      "agentx": 2,
+      "agentx": 3,
       "architect": 6
     }
   },

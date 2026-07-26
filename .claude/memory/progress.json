@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T15:53:11-0500",
+  "lastUpdated": "2026-07-26T16:26:13-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1646,29 +1646,52 @@
       },
       "outcome": "Implementados LiwaNotificationSender y LiwaOtpSender (mismo proveedor detras de notificaciones de paquete y OTP), usando las credenciales reales encontradas en CODE/scripts/testing/sms/README_SMS.md (LIWA_API_KEY, LIWA_ACCOUNT=00486396309, LIWA_PASSWORD, LIWA_AUTH_URL, LIWA_FROM_NAME). get_notification_sender()/get_otp_sender() (nuevo app/web/otp.py) seleccionan LIWA real automaticamente si LIWA_API_KEY esta presente, cayendo a Console/DevOtpSender si no (asi la suite de tests nunca manda SMS real). OTP no pasa por StagingOverrideSender a proposito (es autodirigido); notificaciones de paquete si, preservando el fail-closed. 7 tests nuevos con API simulada via monkeypatch (auth, envio, reintento en 401, fallo, sin credenciales). Refactorizados 2 tests existentes (test_customer_auth.py, test_customer_verify.py) que dependian de un singleton de modulo _sender, migrados al patron dependency_overrides ya usado para notificaciones. 287/287 tests pasan. Desplegado a staging (credenciales en .env + docker-compose.yml del servidor). Verificacion real BLOQUEADA: desde el servidor 52.6.204.211, DNS de api.liwa.co resuelve bien y hay salida general a internet (github.com responde 200), pero TCP 443 hacia api.liwa.co nunca conecta (timeout consistente, dentro y fuera de docker) -- probablemente LIWA restringe su API por IP y el servidor nuevo no esta en esa whitelist (solo el de produccion original lo estaria). Usuario decidio contactar a LIWA para whitelistear 52.6.204.211 en la cuenta 00486396309. Pendiente: verificacion real una vez se autorice la IP.",
       "description": "Implementados LiwaNotificationSender y LiwaOtpSender (mismo proveedor detras de notificaciones de paquete y OTP), usando las credenciales reales encontradas en CODE/scripts/testing/sms/README_SMS.md (LIWA_API_KEY, LIWA_ACCOUNT=00486396309, LIWA_PASSWORD, LIWA_AUTH_URL, LIWA_FROM_NAME). get_notification_sender()/get_otp_sender() (nuevo app/web/otp.py) seleccionan LIWA real automaticamente si LIWA_API_KEY esta presente, cayendo a Console/DevOtpSender si no (asi la suite de tests nunca manda SMS real). OTP no pasa por StagingOverrideSender a proposito (es autodirigido); notificaciones de paquete si, preservando el fail-closed. 7 tests nuevos con API simulada via monkeypatch (auth, envio, reintento en 401, fallo, sin credenciales). Refactorizados 2 tests existentes (test_customer_auth.py, test_customer_verify.py) que dependian de un singleton de modulo _sender, migrados al patron dependency_overrides ya usado para notificaciones. 287/287 tests pasan. Desplegado a staging (credenciales en .env + docker-compose.yml del servidor). Verificacion real BLOQUEADA: desde el servidor 52.6.204.211, DNS de api.liwa.co resuelve bien y hay salida general a internet (github.com responde 200), pero TCP 443 hacia api.liwa.co nunca conecta (timeout consistente, dentro y fuera de docker) -- probablemente LIWA restringe su API por IP y el servidor nuevo no esta en esa whitelist (solo el de produccion original lo estaria). Usuario decidio contactar a LIWA para whitelistear 52.6.204.211 en la cuenta 00486396309. Pendiente: verificacion real una vez se autorice la IP."
+    },
+    {
+      "id": "TASK-73",
+      "title": "Spec Grupo 9 (header/footer transversal)",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "medium",
+      "date": "2026-07-26T16:26:13-0500",
+      "createdAt": "2026-07-26T16:26:13-0500",
+      "updatedAt": "2026-07-26T16:26:13-0500",
+      "duration": 15,
+      "tags": [
+        "spec",
+        "ui",
+        "navegacion",
+        "grupo-9"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Publicado .scratch/header-footer/spec.md via /to-spec: header+footer reales en base.html (hoy vacio), 3 variantes de nav (publico/cliente/staff+rol), logo colibri + wordmark PAQUETEX tomados del legacy pero reimplementados en CSS plano/JS vanilla (sin Tailwind/Alpine, respeta ADR-0004). Explorado: 16 rutas mapeadas por audiencia, RolUsuario(ADMIN/OPERADOR), patron logout POST /salir y /otp/salir ya existente en auth/me.html y customer_me.html. Decision clave: guardar rol en la sesion firmada en login (routes/auth.py) en vez de tocar ~10 archivos de rutas para resolver permisos de menu -- ver DEC-09.",
+      "description": "Publicado .scratch/header-footer/spec.md via /to-spec: header+footer reales en base.html (hoy vacio), 3 variantes de nav (publico/cliente/staff+rol), logo colibri + wordmark PAQUETEX tomados del legacy pero reimplementados en CSS plano/JS vanilla (sin Tailwind/Alpine, respeta ADR-0004). Explorado: 16 rutas mapeadas por audiencia, RolUsuario(ADMIN/OPERADOR), patron logout POST /salir y /otp/salir ya existente en auth/me.html y customer_me.html. Decision clave: guardar rol en la sesion firmada en login (routes/auth.py) en vez de tocar ~10 archivos de rutas para resolver permisos de menu -- ver DEC-09."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 72,
+    "totalTasks": 73,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 72,
+      "completed": 73,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 64,
-      "medium": 7,
+      "medium": 8,
       "low": 1
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 37
+      "agentx": 38
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1686,9 +1709,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 72,
+    "totalEntries": 73,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T15:53:11-0500",
+    "lastUpdated": "2026-07-26T16:26:13-0500",
     "tokensByAgent": {}
   }
 }
