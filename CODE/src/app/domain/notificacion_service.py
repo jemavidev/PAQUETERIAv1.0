@@ -2,8 +2,9 @@
 """
 Notificación de eventos del Paquete (Seam A) — mensaje + destino, sin infra.
 
-Solo tres eventos notifican: `RECIBIDO`, `ENTREGADO`, `CANCELADO`. `ANUNCIADO` NO
-notifica — el cliente ya lo sabe, acaba de hacerlo él mismo (cabo brief §15.1).
+Cuatro eventos notifican: `ANUNCIADO`, `RECIBIDO`, `ENTREGADO`, `CANCELADO`
+(Grupo 8 de `ajustes-post-referencia-funcional/REQUERIMIENTOS.md` — decisión
+revertida sobre la original del brief §15.1, que excluía `ANUNCIADO`).
 
 El envío es **best-effort**: si el `NotificationSender` falla, `notificar_evento`
 NO propaga — la transición del Paquete ya se completó y no debe bloquearse por
@@ -15,6 +16,11 @@ que debe recibir el aviso, y `notificar_evento` respeta su preferencia
 siempre que no haya un Destinatario con teléfono propio y alcanzable — cubre
 tanto "nombre sin teléfono" (nunca tuvo) como "fue anonimizado después" (ya no
 lo tiene), con la MISMA función, no dos reglas separadas.
+
+`construir_mensaje` busca primero una `PlantillaNotificacion` personalizada
+para `(evento, motivo si CANCELADO)`; si no existe, usa el texto por defecto
+de abajo (comportamiento histórico, intacto) — la tabla es un OVERRIDE, nunca
+la única fuente de verdad.
 """
 
 from sqlalchemy.orm import Session
@@ -22,21 +28,22 @@ from sqlalchemy.orm import Session
 from .notification_sender import NotificationSender
 from .paquete import EstadoPaquete, Paquete
 from .persona import Persona
+from .plantilla_notificacion import PlantillaNotificacion
 
 _EVENTOS_QUE_NOTIFICAN = (
+    EstadoPaquete.ANUNCIADO,
     EstadoPaquete.RECIBIDO,
     EstadoPaquete.ENTREGADO,
     EstadoPaquete.CANCELADO,
 )
 
 
-def construir_mensaje(evento: EstadoPaquete, paquete: Paquete) -> str:
-    """El texto del mensaje para `evento`, claro y sin jerga técnica.
-
-    Raises:
-        ValueError: si `evento` no es uno de los que notifican
-            (`RECIBIDO`/`ENTREGADO`/`CANCELADO`).
-    """
+def _mensaje_por_defecto(evento: EstadoPaquete, paquete: Paquete) -> str:
+    if evento is EstadoPaquete.ANUNCIADO:
+        return (
+            f"Anunciaste un paquete ({paquete.recipient_name}). "
+            f"Tu código de acceso: {paquete.access_code}. — PAQUETEX"
+        )
     if evento is EstadoPaquete.RECIBIDO:
         return (
             f"Tu paquete ({paquete.recipient_name}) ya está en portería. "
@@ -51,6 +58,34 @@ def construir_mensaje(evento: EstadoPaquete, paquete: Paquete) -> str:
             f"Motivo: {motivo}. — PAQUETEX"
         )
     raise ValueError(f"El evento {evento!r} no dispara notificación.")
+
+
+def construir_mensaje(session: Session, evento: EstadoPaquete, paquete: Paquete) -> str:
+    """El texto del mensaje para `evento` — personalizado si hay una
+    `PlantillaNotificacion` para `(evento, motivo)`, si no el default.
+
+    Raises:
+        ValueError: si `evento` no es uno de los que notifican.
+    """
+    if evento not in _EVENTOS_QUE_NOTIFICAN:
+        raise ValueError(f"El evento {evento!r} no dispara notificación.")
+
+    motivo_buscado = paquete.cancel_reason if evento is EstadoPaquete.CANCELADO else None
+    plantilla = (
+        session.query(PlantillaNotificacion)
+        .filter(
+            PlantillaNotificacion.evento == evento.value,
+            PlantillaNotificacion.motivo == motivo_buscado,
+        )
+        .one_or_none()
+    )
+    if plantilla is not None:
+        motivo_fmt = (paquete.cancel_reason or "").replace("_", " ").capitalize()
+        return plantilla.texto.format(
+            recipient_name=paquete.recipient_name, motivo=motivo_fmt
+        )
+
+    return _mensaje_por_defecto(evento, paquete)
 
 
 def resolver_destino(paquete: Paquete) -> str:
@@ -97,10 +132,10 @@ def notificar_evento(
     Sin destino alcanzable, o con `notificaciones_activas=False` → no envía
     nada, sin error. Best-effort en el envío: si `sender.enviar` lanza, la
     excepción se ignora aquí — la transición del Paquete ya se completó y no
-    debe bloquearse por esto. Un `evento` que no dispara notificación (p.ej.
-    `ANUNCIADO`) SÍ propaga su `ValueError` (error de uso, no fallo de infra).
+    debe bloquearse por esto. Un `evento` que no dispara notificación SÍ
+    propaga su `ValueError` (error de uso, no fallo de infra).
     """
-    mensaje = construir_mensaje(evento, paquete)
+    mensaje = construir_mensaje(session, evento, paquete)
 
     persona = resolver_destino_notificable(session, paquete)
     if persona is None or not persona.notificaciones_activas:
