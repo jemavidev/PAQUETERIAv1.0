@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-27T07:50:18-0500",
+  "lastUpdated": "2026-07-27T08:11:38-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1859,29 +1859,52 @@
       },
       "outcome": "Encontrado probando visualmente en vivo (Playwright, login real como admin@paquetex.test tras resetear su password por SSH): en /announce, /administracion/notificaciones y /residentes/{id} el boton 'Cerrar sesion' del header se veia como el boton 'Guardar' de la propia pagina (grande, azul, en su propia linea). Causa raiz: esas 3 pantallas usan el selector button[type=submit], MISMA especificidad (0,1,1) que mi regla .site-actions button del ticket 02 -- a especificidad empatada gana quien aparece despues en el documento (la pantalla, no el header), por eso el fix anterior (all:revert) no alcanzaba ahi (solo goleaba paginas con bare button{} de menor especificidad, que fue lo unico que verifique visualmente en su momento). Corregido ancland ola regla al id unico del header (#site-header .site-actions button), especificidad (1,1,1), inmune a cualquier combinacion de clases/atributos que cualquier pantalla presente o futura pueda usar. Agregado test de regresion (verifica que el id y el selector escalado sigan presentes) y verificado visualmente las 3 pantallas antes y despues del fix. 310/310 tests pasan. Ademas: reseteada la contrasena de admin@paquetex.test en el servidor de staging via SSH+docker exec (usando el mismo _hash_password de la app) porque no estaba guardada; login verificado en vivo.",
       "description": "Encontrado probando visualmente en vivo (Playwright, login real como admin@paquetex.test tras resetear su password por SSH): en /announce, /administracion/notificaciones y /residentes/{id} el boton 'Cerrar sesion' del header se veia como el boton 'Guardar' de la propia pagina (grande, azul, en su propia linea). Causa raiz: esas 3 pantallas usan el selector button[type=submit], MISMA especificidad (0,1,1) que mi regla .site-actions button del ticket 02 -- a especificidad empatada gana quien aparece despues en el documento (la pantalla, no el header), por eso el fix anterior (all:revert) no alcanzaba ahi (solo goleaba paginas con bare button{} de menor especificidad, que fue lo unico que verifique visualmente en su momento). Corregido ancland ola regla al id unico del header (#site-header .site-actions button), especificidad (1,1,1), inmune a cualquier combinacion de clases/atributos que cualquier pantalla presente o futura pueda usar. Agregado test de regresion (verifica que el id y el selector escalado sigan presentes) y verificado visualmente las 3 pantallas antes y despues del fix. 310/310 tests pasan. Ademas: reseteada la contrasena de admin@paquetex.test en el servidor de staging via SSH+docker exec (usando el mismo _hash_password de la app) porque no estaba guardada; login verificado en vivo."
+    },
+    {
+      "id": "TASK-82",
+      "title": "Ajuste visual: footer visible tambien en desktop (a pedido del usuario)",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "low",
+      "date": "2026-07-27T08:11:38-0500",
+      "createdAt": "2026-07-27T08:11:38-0500",
+      "updatedAt": "2026-07-27T08:11:38-0500",
+      "duration": 20,
+      "tags": [
+        "ui",
+        "css",
+        "grupo-9",
+        "ajuste-visual"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Cambio de diseno pedido explicitamente por el usuario tras revisar en vivo: el footer (barra con Anunciar/Consultar o el subconjunto por audiencia) ya no se oculta en pantallas anchas -- antes solo aparecia con @media max-width:640px, ahora se muestra siempre, con el mismo max-width:960px del header para que no quede pegado a los bordes en pantallas grandes. El top-nav (.site-nav) se sigue ocultando en movil (<=640px) para no duplicar la navegacion en ese ancho -- eso no cambio. body padding-bottom:64px paso de estar dentro del media query a ser siempre-activo, ya que el footer fijo ahora siempre reserva ese espacio. Verificado visualmente en 1280px y 390px. 310/310 tests pasan (sin tests nuevos, es un cambio puramente de CSS de visibilidad, la presencia de contenido en el footer ya estaba cubierta por tests existentes).",
+      "description": "Cambio de diseno pedido explicitamente por el usuario tras revisar en vivo: el footer (barra con Anunciar/Consultar o el subconjunto por audiencia) ya no se oculta en pantallas anchas -- antes solo aparecia con @media max-width:640px, ahora se muestra siempre, con el mismo max-width:960px del header para que no quede pegado a los bordes en pantallas grandes. El top-nav (.site-nav) se sigue ocultando en movil (<=640px) para no duplicar la navegacion en ese ancho -- eso no cambio. body padding-bottom:64px paso de estar dentro del media query a ser siempre-activo, ya que el footer fijo ahora siempre reserva ese espacio. Verificado visualmente en 1280px y 390px. 310/310 tests pasan (sin tests nuevos, es un cambio puramente de CSS de visibilidad, la presencia de contenido en el footer ya estaba cubierta por tests existentes)."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 81,
+    "totalTasks": 82,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 81,
+      "completed": 82,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 67,
       "medium": 12,
-      "low": 2
+      "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 46
+      "agentx": 47
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1899,9 +1922,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 81,
+    "totalEntries": 82,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-27T07:50:18-0500",
+    "lastUpdated": "2026-07-27T08:11:38-0500",
     "tokensByAgent": {}
   }
 }
