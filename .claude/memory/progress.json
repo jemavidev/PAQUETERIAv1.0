@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T18:15:32-0500",
+  "lastUpdated": "2026-07-26T19:40:39-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1765,29 +1765,53 @@
       },
       "outcome": "DEC-09 implementada: routes/auth.py guarda request.session['rol']=usuario.rol.value al hacer login (pop simetrico en logout), nueva constante ROLE_SESSION_KEY en security.py junto a SESSION_KEY/CUSTOMER_SESSION_KEY, expuesta como Jinja global en templating.py. base.html: bloque nav staff (Paquetes/Declarar unidad/Residentes/Consultar + Personal/Notificaciones solo si rol=ADMIN) + form POST /salir, como bloque independiente (no elif) para que coexista con el nav de cliente del ticket 02 sin ocultarse. require_admin sin tocar -- sigue siendo la unica puerta real. TDD: 6 tests nuevos (bug de test detectado y corregido: faltaba client.db.commit() tras crear usuarios via la sesion inspectora antes del login, siguiendo el patron ya usado en test_admin_staff.py). Verificado visualmente con Playwright (OPERADOR, ADMIN, sesiones coexistentes) -- encontrado y corregido un problema real de layout: el header con altura fija (height:56px) recortaba el segundo nav al combinarse ambas sesiones, cambiado a min-height+flex-wrap. /code-review (Standards+Spec paralelo, 2 rondas): 0 hallazgos accionables, solo juicios de valor (duplicacion nav/staff aceptada por ser consistente con 01/02, comparacion de rol como string aceptada). 305/305 tests pasan. Cierra el roadmap completo de 9 grupos -- unico pendiente restante en todo el proyecto es externo (LIWA whitelist de IP, TASK-72).",
       "description": "DEC-09 implementada: routes/auth.py guarda request.session['rol']=usuario.rol.value al hacer login (pop simetrico en logout), nueva constante ROLE_SESSION_KEY en security.py junto a SESSION_KEY/CUSTOMER_SESSION_KEY, expuesta como Jinja global en templating.py. base.html: bloque nav staff (Paquetes/Declarar unidad/Residentes/Consultar + Personal/Notificaciones solo si rol=ADMIN) + form POST /salir, como bloque independiente (no elif) para que coexista con el nav de cliente del ticket 02 sin ocultarse. require_admin sin tocar -- sigue siendo la unica puerta real. TDD: 6 tests nuevos (bug de test detectado y corregido: faltaba client.db.commit() tras crear usuarios via la sesion inspectora antes del login, siguiendo el patron ya usado en test_admin_staff.py). Verificado visualmente con Playwright (OPERADOR, ADMIN, sesiones coexistentes) -- encontrado y corregido un problema real de layout: el header con altura fija (height:56px) recortaba el segundo nav al combinarse ambas sesiones, cambiado a min-height+flex-wrap. /code-review (Standards+Spec paralelo, 2 rondas): 0 hallazgos accionables, solo juicios de valor (duplicacion nav/staff aceptada por ser consistente con 01/02, comparacion de rol como string aceptada). 305/305 tests pasan. Cierra el roadmap completo de 9 grupos -- unico pendiente restante en todo el proyecto es externo (LIWA whitelist de IP, TASK-72)."
+    },
+    {
+      "id": "TASK-78",
+      "title": "Fix: / redirige a /anunciar + deploy a staging del Grupo 9 completo",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "medium",
+      "date": "2026-07-26T19:40:39-0500",
+      "createdAt": "2026-07-26T19:40:39-0500",
+      "updatedAt": "2026-07-26T19:40:39-0500",
+      "duration": 25,
+      "tags": [
+        "deploy",
+        "staging",
+        "ui",
+        "grupo-9",
+        "roadmap-completo"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "app.py: nueva ruta GET / (redirect 302 a /anunciar) -- antes la raiz devolvia 404, no habia handler. TDD: test_raiz_redirige_a_anunciar en test_health.py. 306/306 tests pasan. Sincronizado el repo de despliegue (jemavidev/PaqueteX): copiados los 5 archivos runtime del Grupo 9 (base.html, templating.py, security.py, routes/auth.py, app.py) + 2 archivos de test, smoke-testeado en venv aislado (306/306), confirmada la aprobacion del usuario via AskUserQuestion antes de pushear. Push a main -> CI y Deploy to Staging verdes (monitoreados via GitHub API) -> verificado en vivo con curl: https://test.papyrus.com.co/ redirige 302 a /anunciar y el HTML servido contiene el header/footer nuevo (site-header, site-footer-mobile, PAQUETEX). Cierra visualmente el Grupo 9 en el entorno real.",
+      "description": "app.py: nueva ruta GET / (redirect 302 a /anunciar) -- antes la raiz devolvia 404, no habia handler. TDD: test_raiz_redirige_a_anunciar en test_health.py. 306/306 tests pasan. Sincronizado el repo de despliegue (jemavidev/PaqueteX): copiados los 5 archivos runtime del Grupo 9 (base.html, templating.py, security.py, routes/auth.py, app.py) + 2 archivos de test, smoke-testeado en venv aislado (306/306), confirmada la aprobacion del usuario via AskUserQuestion antes de pushear. Push a main -> CI y Deploy to Staging verdes (monitoreados via GitHub API) -> verificado en vivo con curl: https://test.papyrus.com.co/ redirige 302 a /anunciar y el HTML servido contiene el header/footer nuevo (site-header, site-footer-mobile, PAQUETEX). Cierra visualmente el Grupo 9 en el entorno real."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 77,
+    "totalTasks": 78,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 77,
+      "completed": 78,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 65,
-      "medium": 11,
+      "medium": 12,
       "low": 1
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 42
+      "agentx": 43
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1805,9 +1829,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 77,
+    "totalEntries": 78,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T18:15:32-0500",
+    "lastUpdated": "2026-07-26T19:40:39-0500",
     "tokensByAgent": {}
   }
 }
