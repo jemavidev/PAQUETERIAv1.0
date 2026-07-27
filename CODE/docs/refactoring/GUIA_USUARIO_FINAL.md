@@ -1,6 +1,28 @@
 # Guía de usuario — PAQUETEX (rebuild PaqueteXv.2)
 
-> Entregable final del rebuild (brief [`SYSTEM_REBUILD_BRIEF.md`](SYSTEM_REBUILD_BRIEF.md) §13). Explica cómo usar el sistema hoy — sin jerga técnica — distinguiendo qué ve un **residente** y qué ve el **staff** de portería/administración.
+> Entregable final del rebuild (brief [`SYSTEM_REBUILD_BRIEF.md`](SYSTEM_REBUILD_BRIEF.md) §13). Explica cómo usar el sistema **tal como está hoy desplegado en staging** (`https://test.papyrus.com.co`) — sin jerga técnica — distinguiendo qué ve un **residente** y qué ve el **staff** de portería/administración.
+>
+> Actualizada al cierre del roadmap de 9 grupos de ajustes post-revisión funcional (ver `.scratch/ajustes-post-referencia-funcional/REQUERIMIENTOS.md`).
+
+---
+
+## 0. Qué probar si vienes del roadmap reciente
+
+Si ya conocías una versión anterior de esta guía, esto es lo que cambió y vale la pena probar primero:
+
+| Cambio | Dónde probarlo |
+|---|---|
+| **Header y footer** — ya no hay pantallas "isla": arriba (o abajo, en celular) siempre hay navegación a las pantallas de tu propia audiencia | Cualquier pantalla, en escritorio y en celular |
+| **`https://test.papyrus.com.co/` (sin ruta) ya no da error** — redirige a Anunciar | Abrir el dominio pelado |
+| **Anunciar simplificado** — el residente solo da nombre + teléfono, ya no elige "a nombre de quién" | `/anunciar` |
+| **Corregir destinatario** — el staff puede arreglar nombre/teléfono de un paquete Anunciado antes de recibirlo | `/paquetes`, botón "Corregir" |
+| **Filtros, paginación y colores correctos** en la lista de paquetes | `/paquetes` |
+| **Tipo, condición y foto** del paquete al recibirlo | `/paquetes`, modal "Recibir" |
+| **Declarar unidad + anunciar en un solo flujo**, con Ocupantes (residentes sin teléfono propio incluidos) | `/announce` |
+| **Ocupantes** visibles en la ficha del residente | `/residentes/{id}` |
+| **Plantillas de notificación editables** | `/administracion/notificaciones` (solo ADMIN) |
+| **Código OTP de 2 dígitos** (antes 6), válido 5 minutos | `/otp` |
+| **SMS reales vía LIWA** (antes solo quedaban en consola) | Cualquier notificación — ver nota en §6 |
 
 ---
 
@@ -15,17 +37,28 @@ Diseñado **mobile-first**: la mayoría de la gente lo va a usar desde el celula
 
 ---
 
-## 2. Las dos "puertas" de entrada
+## 2. Cómo entrar y moverte por la app
 
-PAQUETEX tiene dos audiencias completamente separadas, cada una con su propio login:
+### 2.1 El punto de entrada
 
-| | Residente | Staff |
-|---|---|---|
-| ¿Quién es? | Vive en el conjunto, sin privilegios especiales | Trabaja en portería/administración (rol `ADMIN` u `OPERADOR`) |
-| ¿Cómo entra? | Con su **teléfono** (código de verificación por SMS) | Con **email + contraseña** |
-| ¿Qué puede hacer? | Anunciar que espera un paquete, consultar su estado, ver/editar sus propios datos | Recibir, entregar y cancelar paquetes; declarar unidades; gestionar residentes y otras cuentas de staff |
+`https://test.papyrus.com.co/` (el dominio solo, sin nada más) te manda directo a **Anunciar** — es la puerta pública por defecto.
 
-No hace falta "ser alguien" en el sistema para anunciar un paquete — con el teléfono basta. El registro del residente se crea automáticamente la primera vez que anuncia.
+### 2.2 El header (arriba) y el footer (abajo, en celular)
+
+Toda pantalla comparte el mismo encabezado: el logo + "PAQUETEX" a la izquierda (haz clic para volver a tu pantalla principal), y a la derecha los enlaces que te corresponden **según quién eres en ese momento**:
+
+| Quién sos | Qué ves en el header |
+|---|---|
+| Nadie ha iniciado sesión | Anunciar · Consultar · botón "Iniciar sesión" (residente) · botón "Staff" |
+| Residente con sesión verificada | Anunciar · Consultar · Mis datos · "Cerrar sesión" |
+| Staff (`OPERADOR`) | Paquetes · Declarar unidad · Residentes · Consultar · "Cerrar sesión" |
+| Staff (`ADMIN`) | Lo mismo que `OPERADOR`, más Personal · Notificaciones |
+
+En **celular**, los mismos enlaces (los 2-3 más usados) se repiten como una barra fija abajo, para no tener que estirar el pulgar hasta arriba.
+
+**Caso particular:** si en el mismo navegador tenés sesión de residente **y** de staff a la vez (por ejemplo, un portero que también anunció un paquete propio), el header muestra **ambos** conjuntos de enlaces juntos, cada uno con su propio botón de cerrar sesión — cerrar una sesión nunca cierra la otra.
+
+El enlace de la pantalla en la que estás siempre queda resaltado, para que sepas dónde estás parado.
 
 ---
 
@@ -33,35 +66,37 @@ No hace falta "ser alguien" en el sistema para anunciar un paquete — con el te
 
 ### 3.1 Anunciar un paquete — `/anunciar`
 
-El residente llena un formulario corto:
+Sin sesión, sin login. El residente llena un formulario de **tres campos**:
 
-1. **Su nombre y su teléfono.**
-2. **¿A nombre de quién llega el paquete?** — tres opciones:
-   - **A mi nombre** — el paquete es para quien está anunciando.
-   - **Otra persona registrada** — se indica el teléfono de otro residente ya conocido por el sistema.
-   - **Solo un nombre** — para un paquete que llega a nombre de alguien que no tiene (o no quiere dar) su propio teléfono. Ese nombre queda guardado *dentro de ese paquete*, no crea una persona nueva en el sistema.
+1. **Nombre.**
+2. **Teléfono.**
 3. Aceptar los Términos y Condiciones.
 
-Al enviar, el sistema muestra una pantalla de confirmación con un **número de seguimiento** y un **código de acceso** — el residente puede guardarlos para consultar el estado más adelante sin necesidad de dar su teléfono otra vez.
+Ya no se elige "a nombre de quién llega" — eso ahora lo resuelve el staff si hace falta corregirlo (ver §4.2, "Corregir"). La idea es que anunciar sea lo más simple posible: cualquier nombre + cualquier teléfono, y listo.
 
-> **Nota importante:** anunciar **no** pide el número de guía del transportador — eso lo captura el staff cuando el paquete físico llega a portería (ver §4.2).
+Al enviar, se muestra una pantalla de confirmación con un **código de acceso** (4 caracteres, sin los caracteres que se confunden entre sí: `0`, `1`, `O`, `I`, `L`) y los datos anunciados (nombre, teléfono y apartamento, si ya tenía uno asignado). Desde ahí hay enlaces directos a "Consultar mi paquete" y "Actualizar mis datos" — el residente debe guardar el código para consultar el estado más adelante.
+
+> **Nota:** anunciar **no** pide el número de guía del transportador — eso lo captura el staff cuando el paquete físico llega a portería.
 
 ### 3.2 Consultar el estado — `/consultar`
 
-Sin necesidad de iniciar sesión. Se busca por:
-- El **número de seguimiento** que se dio al anunciar, o
-- El **teléfono** con el que se anunció o al que llega el paquete.
+Sin necesidad de iniciar sesión. Se busca **solo** por:
+- El **código de acceso** que se dio al anunciar, o
+- El **número de guía** del transportador (si el staff ya lo capturó al recibir).
 
-Se muestra la línea de tiempo del paquete: cuándo fue anunciado, recibido, entregado o (si aplica) cancelado — sin mostrar quién del staff hizo cada acción, ese dato es solo para auditoría interna.
+**Ya no se puede consultar por teléfono** — es una medida de seguridad: el código de acceso solo lo conoce quien anunció, así que es la única llave pública de consulta.
+
+Si hay resultado, se muestra la ficha completa: nombre del destinatario, estado actual, y la **línea de tiempo** completa (Anunciado → Recibido → Entregado, o Cancelado con su motivo), incluyendo — cuando aplica — el **tipo de paquete**, la **condición** en que llegó y la **foto** que el staff tomó al recibirlo. No se muestra qué miembro del staff hizo cada acción; ese dato es solo para auditoría interna.
 
 ### 3.3 Iniciar sesión como residente — `/otp`
 
-Para acceder a **Mis Datos**, el residente entra a `/otp`, escribe su teléfono y recibe un **código de 6 dígitos por SMS** que debe ingresar para verificarse. No usa contraseña — el teléfono ya es su identidad.
+Para acceder a **Mis Datos**, el residente entra a `/otp`, escribe su teléfono y recibe un **código de 2 dígitos por SMS**, válido durante **5 minutos** (5 intentos como máximo). No usa contraseña — el teléfono ya es su identidad.
 
 ### 3.4 Mis Datos — `/mis-datos`
 
 Una vez verificado por OTP, el residente puede:
-- Completar o corregir su nombre, email, documento y un segundo contacto.
+- Completar o corregir su nombre, email, documento y un **segundo contacto**.
+- Declarar o actualizar su apartamento (Conjunto/Torre/Apartamento).
 - Activar o desactivar el interruptor de **"Recibir notificaciones por SMS"** — si lo apaga, deja de recibir avisos automáticos de sus paquetes (el sistema sigue funcionando igual, solo no le escribe).
 
 > Si alguien intenta entrar a `/mis-datos` sin haberse verificado antes, el sistema lo manda automáticamente a `/otp` para que primero confirme su teléfono.
@@ -72,48 +107,57 @@ Una vez verificado por OTP, el residente puede:
 
 ### 4.1 Iniciar sesión — `/ingresar`
 
-El staff entra con **email y contraseña** (nunca con OTP — no depende del proveedor de SMS para poder trabajar). Solo un `ADMIN` puede crear cuentas nuevas de staff (ver §4.4).
+El staff entra con **email y contraseña** (nunca con OTP — no depende del proveedor de SMS para poder trabajar). Solo un `ADMIN` puede crear cuentas nuevas de staff (ver §4.5).
 
 ### 4.2 Paquetes — `/paquetes`
 
-La pantalla principal del staff: la lista de todos los paquetes, con su estado marcado con una etiqueta de color:
+La pantalla principal del staff: la lista de paquetes, con su estado marcado con una etiqueta de color:
 
-- 🔵 **Anunciado** — el residente avisó que lo espera, pero aún no ha llegado a portería.
-- 🟡 **Recibido** — ya está físicamente en portería, esperando que el residente lo recoja.
+- 🟠 **Anunciado** — el residente avisó que lo espera, pero aún no ha llegado a portería.
+- 🔵 **Recibido** — ya está físicamente en portería, esperando que el residente lo recoja.
 - 🟢 **Entregado** — el residente ya lo recogió (estado final).
-- ⚪ **Cancelado** — se dio de baja sin entregar (estado final).
+- 🔴 **Cancelado** — se dio de baja sin entregar (estado final).
+
+**Filtros y paginación:** se puede filtrar por estado, por texto libre (busca a la vez en código de acceso, guía, nombre y teléfono), por torre y por apartamento — todos combinables. La lista pagina de a 20 paquetes, con navegación "Anterior / números / Siguiente" arriba y abajo de la lista.
 
 Cada paquete **Anunciado** o **Recibido** tiene botones de acción que abren una ventana (modal) sin salir de la pantalla:
 
-- **Recibir** (solo si está Anunciado) — registra que el paquete llegó físicamente. Pide la **guía del transportador**, que es **opcional**:
-  - Se puede escribir a mano, o
-  - Tocar **"📷 Escanear con cámara"** para activar la cámara del celular y leer el código de barras/QR automáticamente (funciona con casi cualquier formato de guía). Si la cámara falla o no está disponible, el botón avisa y el staff simplemente escribe la guía a mano — nunca bloquea el flujo.
-- **Entregar** (solo si está Recibido) — confirma que el residente se lo llevó.
-- **Cancelar** (Anunciado o Recibido) — da de baja el paquete. Pide un **motivo obligatorio** (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro) para dejar trazabilidad. Es **irreversible**.
+- **Recibir** (solo si está Anunciado) — registra que el paquete llegó físicamente:
+  - **Guía del transportador** — opcional, a mano o tocando **"📷 Escanear con cámara"** para leer el código de barras/QR automáticamente. Si la cámara falla, se escribe a mano — nunca bloquea el flujo.
+  - **Tipo de paquete** (Normal / Extra dimensionado) y **Condición** (Bueno / Abierto / Regular) — ambos opcionales.
+  - **Foto** — opcional, se puede adjuntar una imagen del paquete recibido; queda visible después en la línea de tiempo de `/consultar`.
+- **Corregir** (solo si está Anunciado) — permite ajustar el **nombre** y el **teléfono de notificación** del destinatario antes de recibirlo, por si el residente anunció con un dato incompleto o equivocado. Deja de estar disponible una vez el paquete pasa a Recibido.
+- **Entregar** (solo si está Recibido) — confirma que el residente se lo llevó. Muestra a quién se entrega como recordatorio visual.
+- **Cancelar** (Anunciado o Recibido) — pide un **motivo obligatorio** (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Es **irreversible**.
 
-Cada acción queda registrada con quién del staff la hizo y cuándo — nunca de forma anónima.
+Cada acción queda registrada con quién del staff la hizo y cuándo — nunca de forma anónima. Si el nombre anunciado no coincide con el nombre ya registrado para ese teléfono, aparece una advertencia visual en la tarjeta del paquete (no bloquea nada, es solo un aviso).
 
-### 4.3 Declarar unidad — `/announce`
+### 4.3 Declarar unidad y anunciar — `/announce`
 
-Cuando el staff sabe que varios residentes viven en el mismo apartamento (por ejemplo, al hacer el registro inicial de un edificio), puede declarar la unidad de una vez:
+Un solo formulario con **tres bloques**, todos opcionales salvo su propia regla interna — se puede usar solo el primero, solo el tercero, o los tres juntos:
 
-1. Escribe **Conjunto, Torre y Apartamento**.
-2. Agrega los teléfonos (y nombres) de los residentes de esa unidad — se pueden agregar varias filas con "+ Agregar residente".
-3. Al confirmar, **todos** esos teléfonos quedan asociados a ese apartamento (herencia de apartamento).
+1. **Apartamento** — Conjunto, Torre y Apartamento: los tres vacíos o los tres llenos.
+2. **Residentes de esa unidad (Ocupantes)** — filas de nombre + teléfono; el **teléfono es opcional por fila** (a diferencia de antes). El primer residente de una unidad nueva sí necesita teléfono obligatoriamente (es quien queda como "principal" de esa unidad); los siguientes pueden agregarse solo con nombre, sin teléfono propio — por ejemplo, para un hijo menor o alguien que no tiene celular propio, pero que igual puede recibir paquetes a su nombre.
+3. **Anunciar un paquete** (opcional) — el mismo anuncio simple de `/anunciar`, pero con un campo extra: un teléfono de notificación distinto al del anunciante, por si el paquete es para otra persona de la unidad.
 
-Esta es la única forma en que varios teléfonos comparten apartamento automáticamente — anunciar un paquete "a nombre de otra persona" (§3.1) **nunca** hace esto por sí solo. Si alguien se muda, se corrige individualmente desde su ficha (§4.4).
+Es la única forma en que varios teléfonos quedan asociados a un apartamento **de una sola vez** — anunciar un paquete normal (§3.1) nunca hace esto por sí solo.
 
-### 4.4 Clientes (residentes) — `/residentes`
+### 4.4 Residentes — `/residentes`
 
 Buscador de residentes por teléfono o nombre. Al entrar a la ficha de un residente, el staff puede:
 
 - Editar sus datos (nombre, email, documento, segundo contacto).
-- Activar/desactivar sus notificaciones por SMS (el mismo interruptor que el residente ve en `/mis-datos`).
-- **Eliminar cliente** (solo `ADMIN`) — no borra el historial de paquetes, pero **anonimiza** a la persona: sus datos personales se limpian y su teléfono deja de estar "tomado", por si alguien nuevo lo usa en el futuro. Pide confirmación porque es irreversible.
+- Ver la lista de **Ocupantes** de su misma unidad (los residentes registrados vía `/announce`, con o sin teléfono propio).
+- Activar/desactivar sus notificaciones por SMS.
+- **Eliminar cliente** (solo `ADMIN`) — no borra el historial de paquetes, pero **anonimiza** a la persona: sus datos personales se limpian y su teléfono queda libre para uso futuro. Pide confirmación porque es irreversible.
 
-### 4.5 Alta de personal — `/administracion/personal`
+### 4.5 Administración › Personal — `/administracion/personal`
 
-Solo visible para `ADMIN`. Crea nuevas cuentas de staff (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Es la única puerta para crear staff nuevo — no hay otra forma de conseguir acceso.
+Solo visible para `ADMIN`. Crea nuevas cuentas de staff (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Es la única puerta para crear staff nuevo.
+
+### 4.6 Administración › Notificaciones — `/administracion/notificaciones`
+
+Solo visible para `ADMIN`. Una fila editable por cada evento que notifica (Anunciado, Recibido, Entregado) más una fila por cada motivo de cancelación (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Cada texto se puede personalizar; si no se toca, se usa el mensaje por defecto del sistema.
 
 ---
 
@@ -125,17 +169,27 @@ Anunciado ──► Recibido ──► Entregado
     └───────► Cancelado
 ```
 
-Un dato importante para entender por qué la información de un paquete **nunca cambia después de anunciado**: al momento de anunciar, el sistema toma una "foto" (snapshot) de a quién llega, con qué teléfono y en qué apartamento. Si esa persona se muda **después**, los paquetes viejos siguen mostrando el apartamento de cuando fueron anunciados — mudarse no reescribe el historial. Los paquetes nuevos sí usarán el apartamento actualizado.
+Un dato importante para entender por qué la información de un paquete **nunca cambia después de anunciado** (salvo por "Corregir", ver §4.2, mientras siga Anunciado): al momento de anunciar, el sistema toma una "foto" (snapshot) de a quién llega, con qué teléfono y en qué apartamento. Si esa persona se muda **después**, los paquetes viejos siguen mostrando el apartamento de cuando fueron anunciados — mudarse no reescribe el historial. Los paquetes nuevos sí usarán el apartamento actualizado.
 
 ---
 
-## 6. Preguntas frecuentes
+## 6. Notificaciones por SMS
+
+Cada cambio de estado (Anunciado, Recibido, Entregado, Cancelado) le avisa por SMS a quien corresponda — el destinatario si tiene teléfono propio, o si no, quien anunció. Si la persona desactivó sus notificaciones (§3.4), no se le envía nada.
+
+**Los SMS ya son reales**, enviados a través de LIWA — dejaron de ser solo un mensaje en consola. En el ambiente de staging (`test.papyrus.com.co`), por seguridad, **todo** SMS se redirige a un único número de prueba en vez de llegar al residente real — así se puede probar el flujo completo sin mandarle mensajes a nadie de verdad.
+
+> Si al probar no llega ningún SMS, puede ser que la verificación de conectividad con LIWA siga pendiente del lado del proveedor (whitelist de IP) — no es necesariamente un error del sistema. Pregunta si tenés dudas sobre si ya está resuelto.
+
+---
+
+## 7. Preguntas frecuentes
 
 **¿Qué pasa si el paquete no tiene número de guía?**
 No pasa nada — es opcional. El emparejamiento entre el anuncio y el paquete físico se hace por nombre/teléfono del destinatario, no por la guía.
 
-**¿Un residente puede anunciar un paquete para alguien que no tiene teléfono?**
-Sí — la opción "Solo un nombre" al anunciar. Ese nombre vive únicamente dentro de ese paquete, no como una persona nueva en el sistema.
+**¿Puedo anunciar un paquete para alguien que no tiene teléfono?**
+Sí, de dos formas: al anunciar en `/anunciar` cualquiera puede poner el nombre que quiera (no se valida contra nada); o el staff puede registrar a esa persona como Ocupante sin teléfono desde `/announce` (§4.3), para que quede como residente permanente de la unidad, no solo dentro de un paquete puntual.
 
 **Si desactivo mis notificaciones, ¿dejo de poder anunciar o consultar paquetes?**
 No — solo deja de llegar el aviso por SMS. El resto del sistema funciona exactamente igual.
@@ -143,20 +197,29 @@ No — solo deja de llegar el aviso por SMS. El resto del sistema funciona exact
 **¿Qué significa que "eliminar" a un residente no borra sus paquetes?**
 El historial de paquetes se conserva siempre (es la trazabilidad del conjunto), pero los datos personales de esa persona se anonimizan y su teléfono queda libre.
 
+**Si me equivoco anunciando, ¿puedo corregirlo yo mismo?**
+No — el residente no puede editar un paquete ya anunciado. Debe pedirle al staff que use "Corregir" (§4.2), disponible mientras el paquete siga en estado Anunciado.
+
+**¿Por qué a veces veo enlaces de residente Y de staff al mismo tiempo en el header?**
+Porque tenés las dos sesiones abiertas a la vez en el mismo navegador (por ejemplo, entraste como staff y también anunciaste un paquete propio). Son independientes: cerrar una no cierra la otra.
+
 ---
 
-## 7. Referencia rápida de rutas
+## 8. Referencia rápida de rutas
 
 | Ruta | Quién la usa | Qué hace |
 |---|---|---|
-| `/anunciar` | Residente | Anunciar un paquete nuevo |
-| `/consultar` | Residente (público) | Ver el estado de un paquete |
-| `/otp` | Residente | Verificar el teléfono para entrar |
-| `/mis-datos` | Residente (verificado) | Ver/editar sus propios datos y notificaciones |
-| `/ingresar` | Staff | Iniciar sesión |
-| `/paquetes` | Staff | Recibir, entregar, cancelar |
-| `/announce` | Staff | Declarar una unidad (Conjunto/Torre/Apto) con sus residentes |
-| `/residentes` | Staff | Buscar y editar clientes; eliminar (solo ADMIN) |
+| `/` | Cualquiera | Redirige a `/anunciar` |
+| `/anunciar` | Residente (público) | Anunciar un paquete nuevo (nombre + teléfono) |
+| `/consultar` | Residente (público) | Ver el estado de un paquete por código de acceso o guía |
+| `/otp` | Residente | Verificar el teléfono para entrar (código de 2 dígitos, 5 min) |
+| `/mis-datos` | Residente (verificado) | Ver/editar sus propios datos, apartamento y notificaciones |
+| `/ingresar` | Staff | Iniciar sesión (email + contraseña) |
+| `/mi-sesion` | Staff | Ver su propia sesión y cerrar sesión |
+| `/paquetes` | Staff | Recibir, corregir, entregar, cancelar — con filtros y paginación |
+| `/announce` | Staff | Declarar unidad + Ocupantes + anunciar, en un solo flujo |
+| `/residentes` | Staff | Buscar y editar clientes, ver sus Ocupantes; eliminar (solo ADMIN) |
 | `/administracion/personal` | Staff (solo ADMIN) | Crear cuentas de staff |
+| `/administracion/notificaciones` | Staff (solo ADMIN) | Editar los textos de los SMS por evento/motivo |
 
-*(Nombres de ruta en español, vigentes desde el rename de 2026-07-26 — ver `CONTEXT.md` §"Vistas por audiencia".)*
+*(Nombres de ruta en español. Header y footer transversales — Grupo 9 del roadmap post-revisión funcional — implementados y verificados en staging.)*

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T19:40:39-0500",
+  "lastUpdated": "2026-07-26T19:46:34-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1789,29 +1789,51 @@
       },
       "outcome": "app.py: nueva ruta GET / (redirect 302 a /anunciar) -- antes la raiz devolvia 404, no habia handler. TDD: test_raiz_redirige_a_anunciar en test_health.py. 306/306 tests pasan. Sincronizado el repo de despliegue (jemavidev/PaqueteX): copiados los 5 archivos runtime del Grupo 9 (base.html, templating.py, security.py, routes/auth.py, app.py) + 2 archivos de test, smoke-testeado en venv aislado (306/306), confirmada la aprobacion del usuario via AskUserQuestion antes de pushear. Push a main -> CI y Deploy to Staging verdes (monitoreados via GitHub API) -> verificado en vivo con curl: https://test.papyrus.com.co/ redirige 302 a /anunciar y el HTML servido contiene el header/footer nuevo (site-header, site-footer-mobile, PAQUETEX). Cierra visualmente el Grupo 9 en el entorno real.",
       "description": "app.py: nueva ruta GET / (redirect 302 a /anunciar) -- antes la raiz devolvia 404, no habia handler. TDD: test_raiz_redirige_a_anunciar en test_health.py. 306/306 tests pasan. Sincronizado el repo de despliegue (jemavidev/PaqueteX): copiados los 5 archivos runtime del Grupo 9 (base.html, templating.py, security.py, routes/auth.py, app.py) + 2 archivos de test, smoke-testeado en venv aislado (306/306), confirmada la aprobacion del usuario via AskUserQuestion antes de pushear. Push a main -> CI y Deploy to Staging verdes (monitoreados via GitHub API) -> verificado en vivo con curl: https://test.papyrus.com.co/ redirige 302 a /anunciar y el HTML servido contiene el header/footer nuevo (site-header, site-footer-mobile, PAQUETEX). Cierra visualmente el Grupo 9 en el entorno real."
+    },
+    {
+      "id": "TASK-79",
+      "title": "Actualiza GUIA_USUARIO_FINAL.md al estado real post-roadmap",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "low",
+      "date": "2026-07-26T19:46:34-0500",
+      "createdAt": "2026-07-26T19:46:34-0500",
+      "updatedAt": "2026-07-26T19:46:34-0500",
+      "duration": 20,
+      "tags": [
+        "documentacion",
+        "guia-usuario",
+        "grupo-9"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Reescritura completa de docs/refactoring/GUIA_USUARIO_FINAL.md -- estaba congelada en el estado pre-roadmap (anunciar con 3 opciones a_nombre_de, OTP de 6 digitos, consultar por telefono, /paquetes sin filtros/colores, /announce viejo sin Ocupantes, sin plantillas de notificacion, sin header/footer). Verificados contra el codigo real (no supuestos): paquete.py (TipoPaquete/CondicionPaquete), otp_service.py (2 digitos, 5 min, 5 intentos), packages.py (filtros q/estado/torre/apartamento, 20/pagina, accion corregir), search.py (solo access_code/guide_number, nunca telefono), announce_new.py (3 bloques + Ocupante), admin.py (plantillas por evento+motivo), colores CSS reales de list.html. Agregada seccion 0 'que probar' con tabla de cambios recientes y seccion 2 nueva de header/footer + sesiones coexistentes. NO se toco REFERENCIA_FUNCIONAL_APLICATIVO.md (documento de intake explicitamente marcado como 'no autogenerado', su staleness es esperada). Guia queda solo en el repo de desarrollo -- no se sincroniza al repo de despliegue (solo codigo runtime, segun instruccion explicita del usuario).",
+      "description": "Reescritura completa de docs/refactoring/GUIA_USUARIO_FINAL.md -- estaba congelada en el estado pre-roadmap (anunciar con 3 opciones a_nombre_de, OTP de 6 digitos, consultar por telefono, /paquetes sin filtros/colores, /announce viejo sin Ocupantes, sin plantillas de notificacion, sin header/footer). Verificados contra el codigo real (no supuestos): paquete.py (TipoPaquete/CondicionPaquete), otp_service.py (2 digitos, 5 min, 5 intentos), packages.py (filtros q/estado/torre/apartamento, 20/pagina, accion corregir), search.py (solo access_code/guide_number, nunca telefono), announce_new.py (3 bloques + Ocupante), admin.py (plantillas por evento+motivo), colores CSS reales de list.html. Agregada seccion 0 'que probar' con tabla de cambios recientes y seccion 2 nueva de header/footer + sesiones coexistentes. NO se toco REFERENCIA_FUNCIONAL_APLICATIVO.md (documento de intake explicitamente marcado como 'no autogenerado', su staleness es esperada). Guia queda solo en el repo de desarrollo -- no se sincroniza al repo de despliegue (solo codigo runtime, segun instruccion explicita del usuario)."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 78,
+    "totalTasks": 79,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 78,
+      "completed": 79,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 65,
       "medium": 12,
-      "low": 1
+      "low": 2
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 43
+      "agentx": 44
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1829,9 +1851,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 78,
+    "totalEntries": 79,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T19:40:39-0500",
+    "lastUpdated": "2026-07-26T19:46:34-0500",
     "tokensByAgent": {}
   }
 }
