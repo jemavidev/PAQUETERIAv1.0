@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T19:46:34-0500",
+  "lastUpdated": "2026-07-27T07:30:19-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1811,21 +1811,45 @@
       },
       "outcome": "Reescritura completa de docs/refactoring/GUIA_USUARIO_FINAL.md -- estaba congelada en el estado pre-roadmap (anunciar con 3 opciones a_nombre_de, OTP de 6 digitos, consultar por telefono, /paquetes sin filtros/colores, /announce viejo sin Ocupantes, sin plantillas de notificacion, sin header/footer). Verificados contra el codigo real (no supuestos): paquete.py (TipoPaquete/CondicionPaquete), otp_service.py (2 digitos, 5 min, 5 intentos), packages.py (filtros q/estado/torre/apartamento, 20/pagina, accion corregir), search.py (solo access_code/guide_number, nunca telefono), announce_new.py (3 bloques + Ocupante), admin.py (plantillas por evento+motivo), colores CSS reales de list.html. Agregada seccion 0 'que probar' con tabla de cambios recientes y seccion 2 nueva de header/footer + sesiones coexistentes. NO se toco REFERENCIA_FUNCIONAL_APLICATIVO.md (documento de intake explicitamente marcado como 'no autogenerado', su staleness es esperada). Guia queda solo en el repo de desarrollo -- no se sincroniza al repo de despliegue (solo codigo runtime, segun instruccion explicita del usuario).",
       "description": "Reescritura completa de docs/refactoring/GUIA_USUARIO_FINAL.md -- estaba congelada en el estado pre-roadmap (anunciar con 3 opciones a_nombre_de, OTP de 6 digitos, consultar por telefono, /paquetes sin filtros/colores, /announce viejo sin Ocupantes, sin plantillas de notificacion, sin header/footer). Verificados contra el codigo real (no supuestos): paquete.py (TipoPaquete/CondicionPaquete), otp_service.py (2 digitos, 5 min, 5 intentos), packages.py (filtros q/estado/torre/apartamento, 20/pagina, accion corregir), search.py (solo access_code/guide_number, nunca telefono), announce_new.py (3 bloques + Ocupante), admin.py (plantillas por evento+motivo), colores CSS reales de list.html. Agregada seccion 0 'que probar' con tabla de cambios recientes y seccion 2 nueva de header/footer + sesiones coexistentes. NO se toco REFERENCIA_FUNCIONAL_APLICATIVO.md (documento de intake explicitamente marcado como 'no autogenerado', su staleness es esperada). Guia queda solo en el repo de desarrollo -- no se sincroniza al repo de despliegue (solo codigo runtime, segun instruccion explicita del usuario)."
+    },
+    {
+      "id": "TASK-80",
+      "title": "Fix: /otp/solicitar devolvia 500 crudo cuando LIWA no responde",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "high",
+      "date": "2026-07-27T07:30:19-0500",
+      "createdAt": "2026-07-27T07:30:19-0500",
+      "updatedAt": "2026-07-27T07:30:19-0500",
+      "duration": 50,
+      "tags": [
+        "bugfix",
+        "liwa",
+        "otp",
+        "resiliencia",
+        "testing-en-vivo"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Encontrado probando en vivo test.papyrus.com.co a pedido del usuario: POST /otp/solicitar devolvia 500 -- request_otp no atrapaba la excepcion de sender.enviar() cuando LIWA es inalcanzable (blocker de red ya documentado en TASK-72), a diferencia de notificar_evento (paquetes) que ya es best-effort. Verificado con curl real contra staging antes y despues del fix. Nueva OtpEnvioFallido en otp_service.py (distinta de ValueError=uso invalido); customer_auth.py la atrapa, hace db.rollback() explicito (el OTP ya estaba flush() pero nunca se entrego -- sin el rollback get_db lo comitearia igual al no propagar la excepcion) y muestra 502 con mensaje claro. TDD: 3 tests nuevos (1 dominio, 2 web). De paso encontrado y corregido otro gap de aislamiento de tests: otps_cliente no se truncaba entre tests en tests/web/conftest.py (mismo patron que plantillas_notificacion antes en la sesion), causaba un falso positivo en mi propio test nuevo. /code-review (solo eje Standards, sin ticket/spec previo -- bug encontrado en vivo): 0 violaciones duras, agregado un mensaje default a OtpEnvioFallido para grep-abilidad en logs. Verificado visualmente con Playwright el mensaje de error. 309/309 tests pasan.",
+      "description": "Encontrado probando en vivo test.papyrus.com.co a pedido del usuario: POST /otp/solicitar devolvia 500 -- request_otp no atrapaba la excepcion de sender.enviar() cuando LIWA es inalcanzable (blocker de red ya documentado en TASK-72), a diferencia de notificar_evento (paquetes) que ya es best-effort. Verificado con curl real contra staging antes y despues del fix. Nueva OtpEnvioFallido en otp_service.py (distinta de ValueError=uso invalido); customer_auth.py la atrapa, hace db.rollback() explicito (el OTP ya estaba flush() pero nunca se entrego -- sin el rollback get_db lo comitearia igual al no propagar la excepcion) y muestra 502 con mensaje claro. TDD: 3 tests nuevos (1 dominio, 2 web). De paso encontrado y corregido otro gap de aislamiento de tests: otps_cliente no se truncaba entre tests en tests/web/conftest.py (mismo patron que plantillas_notificacion antes en la sesion), causaba un falso positivo en mi propio test nuevo. /code-review (solo eje Standards, sin ticket/spec previo -- bug encontrado en vivo): 0 violaciones duras, agregado un mensaje default a OtpEnvioFallido para grep-abilidad en logs. Verificado visualmente con Playwright el mensaje de error. 309/309 tests pasan."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 79,
+    "totalTasks": 80,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 79,
+      "completed": 80,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
-      "high": 65,
+      "high": 66,
       "medium": 12,
       "low": 2
     },
@@ -1833,7 +1857,7 @@
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 44
+      "agentx": 45
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1851,9 +1875,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 79,
+    "totalEntries": 80,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-26T19:46:34-0500",
+    "lastUpdated": "2026-07-27T07:30:19-0500",
     "tokensByAgent": {}
   }
 }
