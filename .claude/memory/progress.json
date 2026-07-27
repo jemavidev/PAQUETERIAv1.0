@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-27T07:30:19-0500",
+  "lastUpdated": "2026-07-27T07:50:18-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1835,21 +1835,45 @@
       },
       "outcome": "Encontrado probando en vivo test.papyrus.com.co a pedido del usuario: POST /otp/solicitar devolvia 500 -- request_otp no atrapaba la excepcion de sender.enviar() cuando LIWA es inalcanzable (blocker de red ya documentado en TASK-72), a diferencia de notificar_evento (paquetes) que ya es best-effort. Verificado con curl real contra staging antes y despues del fix. Nueva OtpEnvioFallido en otp_service.py (distinta de ValueError=uso invalido); customer_auth.py la atrapa, hace db.rollback() explicito (el OTP ya estaba flush() pero nunca se entrego -- sin el rollback get_db lo comitearia igual al no propagar la excepcion) y muestra 502 con mensaje claro. TDD: 3 tests nuevos (1 dominio, 2 web). De paso encontrado y corregido otro gap de aislamiento de tests: otps_cliente no se truncaba entre tests en tests/web/conftest.py (mismo patron que plantillas_notificacion antes en la sesion), causaba un falso positivo en mi propio test nuevo. /code-review (solo eje Standards, sin ticket/spec previo -- bug encontrado en vivo): 0 violaciones duras, agregado un mensaje default a OtpEnvioFallido para grep-abilidad en logs. Verificado visualmente con Playwright el mensaje de error. 309/309 tests pasan.",
       "description": "Encontrado probando en vivo test.papyrus.com.co a pedido del usuario: POST /otp/solicitar devolvia 500 -- request_otp no atrapaba la excepcion de sender.enviar() cuando LIWA es inalcanzable (blocker de red ya documentado en TASK-72), a diferencia de notificar_evento (paquetes) que ya es best-effort. Verificado con curl real contra staging antes y despues del fix. Nueva OtpEnvioFallido en otp_service.py (distinta de ValueError=uso invalido); customer_auth.py la atrapa, hace db.rollback() explicito (el OTP ya estaba flush() pero nunca se entrego -- sin el rollback get_db lo comitearia igual al no propagar la excepcion) y muestra 502 con mensaje claro. TDD: 3 tests nuevos (1 dominio, 2 web). De paso encontrado y corregido otro gap de aislamiento de tests: otps_cliente no se truncaba entre tests en tests/web/conftest.py (mismo patron que plantillas_notificacion antes en la sesion), causaba un falso positivo en mi propio test nuevo. /code-review (solo eje Standards, sin ticket/spec previo -- bug encontrado en vivo): 0 violaciones duras, agregado un mensaje default a OtpEnvioFallido para grep-abilidad en logs. Verificado visualmente con Playwright el mensaje de error. 309/309 tests pasan."
+    },
+    {
+      "id": "TASK-81",
+      "title": "Fix: boton de logout del header heredaba estilo en 3 pantallas de staff",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "high",
+      "date": "2026-07-27T07:50:18-0500",
+      "createdAt": "2026-07-27T07:50:18-0500",
+      "updatedAt": "2026-07-27T07:50:18-0500",
+      "duration": 55,
+      "tags": [
+        "bugfix",
+        "css",
+        "ui",
+        "grupo-9",
+        "testing-en-vivo"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Encontrado probando visualmente en vivo (Playwright, login real como admin@paquetex.test tras resetear su password por SSH): en /announce, /administracion/notificaciones y /residentes/{id} el boton 'Cerrar sesion' del header se veia como el boton 'Guardar' de la propia pagina (grande, azul, en su propia linea). Causa raiz: esas 3 pantallas usan el selector button[type=submit], MISMA especificidad (0,1,1) que mi regla .site-actions button del ticket 02 -- a especificidad empatada gana quien aparece despues en el documento (la pantalla, no el header), por eso el fix anterior (all:revert) no alcanzaba ahi (solo goleaba paginas con bare button{} de menor especificidad, que fue lo unico que verifique visualmente en su momento). Corregido ancland ola regla al id unico del header (#site-header .site-actions button), especificidad (1,1,1), inmune a cualquier combinacion de clases/atributos que cualquier pantalla presente o futura pueda usar. Agregado test de regresion (verifica que el id y el selector escalado sigan presentes) y verificado visualmente las 3 pantallas antes y despues del fix. 310/310 tests pasan. Ademas: reseteada la contrasena de admin@paquetex.test en el servidor de staging via SSH+docker exec (usando el mismo _hash_password de la app) porque no estaba guardada; login verificado en vivo.",
+      "description": "Encontrado probando visualmente en vivo (Playwright, login real como admin@paquetex.test tras resetear su password por SSH): en /announce, /administracion/notificaciones y /residentes/{id} el boton 'Cerrar sesion' del header se veia como el boton 'Guardar' de la propia pagina (grande, azul, en su propia linea). Causa raiz: esas 3 pantallas usan el selector button[type=submit], MISMA especificidad (0,1,1) que mi regla .site-actions button del ticket 02 -- a especificidad empatada gana quien aparece despues en el documento (la pantalla, no el header), por eso el fix anterior (all:revert) no alcanzaba ahi (solo goleaba paginas con bare button{} de menor especificidad, que fue lo unico que verifique visualmente en su momento). Corregido ancland ola regla al id unico del header (#site-header .site-actions button), especificidad (1,1,1), inmune a cualquier combinacion de clases/atributos que cualquier pantalla presente o futura pueda usar. Agregado test de regresion (verifica que el id y el selector escalado sigan presentes) y verificado visualmente las 3 pantallas antes y despues del fix. 310/310 tests pasan. Ademas: reseteada la contrasena de admin@paquetex.test en el servidor de staging via SSH+docker exec (usando el mismo _hash_password de la app) porque no estaba guardada; login verificado en vivo."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 80,
+    "totalTasks": 81,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 80,
+      "completed": 81,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
-      "high": 66,
+      "high": 67,
       "medium": 12,
       "low": 2
     },
@@ -1857,7 +1881,7 @@
       "architect": 31,
       "devops": 2,
       "coder": 2,
-      "agentx": 45
+      "agentx": 46
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1875,9 +1899,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 80,
+    "totalEntries": 81,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-27T07:30:19-0500",
+    "lastUpdated": "2026-07-27T07:50:18-0500",
     "tokensByAgent": {}
   }
 }
