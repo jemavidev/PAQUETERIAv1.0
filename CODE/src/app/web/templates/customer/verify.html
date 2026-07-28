@@ -38,12 +38,6 @@
       <label for="email">Email</label>
       <input type="email" id="email" name="email" value="{{ persona.email or '' }}">
 
-      <label for="tipo_documento">Tipo de documento</label>
-      <input type="text" id="tipo_documento" name="tipo_documento" value="{{ persona.tipo_documento or '' }}">
-
-      <label for="documento">Documento</label>
-      <input type="text" id="documento" name="documento" value="{{ persona.documento or '' }}">
-
       <label for="segundo_contacto">Segundo contacto</label>
       <input type="text" id="segundo_contacto" name="segundo_contacto" value="{{ persona.segundo_contacto or '' }}">
 
@@ -56,15 +50,19 @@
 
     <div class="card">
       <h2>Mi apartamento</h2>
-      <p class="hint">Declarar tu apartamento te une a esa unidad (si ya hay otros residentes ahí, se mantienen como están).</p>
+      {% if apartamento %}
+      <p class="hint">El Conjunto lo asigna el staff — vos podés actualizar Torre y Apartamento dentro de tu mismo Conjunto.</p>
       <label for="conjunto">Conjunto</label>
-      <input type="text" id="conjunto" name="conjunto" value="{{ apartamento.conjunto if apartamento else '' }}">
+      <input type="text" id="conjunto" value="{{ apartamento.conjunto }}" disabled>
 
       <label for="torre">Torre</label>
-      <input type="text" id="torre" name="torre" value="{{ apartamento.torre if apartamento else '' }}">
+      <input type="text" id="torre" name="torre" value="{{ apartamento.torre }}">
 
       <label for="apartamento">Apartamento</label>
-      <input type="text" id="apartamento" name="apartamento" value="{{ apartamento.apartamento if apartamento else '' }}">
+      <input type="text" id="apartamento" name="apartamento" value="{{ apartamento.apartamento }}">
+      {% else %}
+      <p class="hint">Tu Conjunto todavía no ha sido asignado por el staff — avísales en portería para poder declarar tu Torre y Apartamento.</p>
+      {% endif %}
     </div>
 
     <button type="submit" id="btn-guardar">Guardar</button>

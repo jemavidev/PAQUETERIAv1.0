@@ -59,6 +59,12 @@ En **celular**, los mismos enlaces (los 2-3 más usados) se repiten como una bar
 **Caso particular:** si en el mismo navegador tenés sesión de residente **y** de staff a la vez (por ejemplo, un portero que también anunció un paquete propio), el header muestra **ambos** conjuntos de enlaces juntos, cada uno con su propio botón de cerrar sesión — cerrar una sesión nunca cierra la otra.
 
 El enlace de la pantalla en la que estás siempre queda resaltado, para que sepas dónde estás parado.
+**NOTA:** Necesito que "Iniciar sesión" (residente) y el botón "Staff" sean el mismo, internamente deberías poder diferenciar entre uno y el otro por medio de una selección en un formulario unico que cambiara según el caso de (Cliente o Usuarios).
+Los Residente con sesión verificada deben tener una opción para ver sus paquetes, en teoría los paquetes que han manejado en el aplicativo, con enlace a cada uno de su historial, entonces quedaría algo como (Anunciar · Consultar · Mis paquetes · Mis datos · "Cerrar sesión").
+El menu para Staff (`OPERADOR`) deberia ser (Paquetes · Clientes · Consultar · "Cerrar sesión"), "Declarar unidad" lo incluiremos mas adelante en un boton, y su nombre deberia ser "Anunciar" y no "Declarar unidad".
+En la seccion de Staff (`ADMIN`), deberia ser igual a Staff (`OPERADOR`), mas "Personal · Notificaciones".
+Desde el celular deberían aparecer las opciones para clientes (Anunciar, Buscar, Ayuda y Whatsapp) y solo login en la parte del header, para Staff (Anunciar, Buscar, Paquetes y Clientes).
+Solo debe aparecer un solo botón de cerrar sección, al presionarlo se cerraran todas las secciones abiertas en el navegador de paquetex, ya sea cliente o staff.
 
 ---
 
@@ -87,6 +93,7 @@ Sin necesidad de iniciar sesión. Se busca **solo** por:
 **Ya no se puede consultar por teléfono** — es una medida de seguridad: el código de acceso solo lo conoce quien anunció, así que es la única llave pública de consulta.
 
 Si hay resultado, se muestra la ficha completa: nombre del destinatario, estado actual, y la **línea de tiempo** completa (Anunciado → Recibido → Entregado, o Cancelado con su motivo), incluyendo — cuando aplica — el **tipo de paquete**, la **condición** en que llegó y la **foto** que el staff tomó al recibirlo. No se muestra qué miembro del staff hizo cada acción; ese dato es solo para auditoría interna.
+**NOTA:** Si se debe mostrar que usuario realizo el anuncio (cliente/nombre del staff), recepcion (staff que recibio), Entrega (staff que entrego), cancelacion (staff que cancelo).
 
 ### 3.3 Iniciar sesión como residente — `/otp`
 
@@ -95,9 +102,11 @@ Para acceder a **Mis Datos**, el residente entra a `/otp`, escribe su teléfono 
 ### 3.4 Mis Datos — `/mis-datos`
 
 Una vez verificado por OTP, el residente puede:
-- Completar o corregir su nombre, email, documento y un **segundo contacto**.
-- Declarar o actualizar su apartamento (Conjunto/Torre/Apartamento).
+- Completar o corregir su nombre, email y un **segundo contacto** (ya no se pide "documento" — se sacó de este y de todos los demás flujos del sistema).
+- Actualizar Torre y Apartamento de su unidad — el **Conjunto** ya no lo puede cambiar el residente, solo el staff lo asigna (vía `/administración` o `/announce`). Mientras no tenga Conjunto asignado, tampoco puede declarar Torre/Apartamento (no tendría sentido sin saber en cuál Conjunto).
 - Activar o desactivar el interruptor de **"Recibir notificaciones por SMS"** — si lo apaga, deja de recibir avisos automáticos de sus paquetes (el sistema sigue funcionando igual, solo no le escribe).
+
+  **NOTA:** Para las notificaciones sera posible activar o desactivar las notificaciones de SMS, Email, Llamadas, Whatsapp, y estas aplican para cada estado de los paquetes, por ejemplo el cliente solo quiere recibir notificaciones por whatsapp y solo del estado anunciado, esto sera posible en la tabla de activar o desactivar notificaciones (algunas funciones aquí descritas no existen, pero serán implementadas mas adelante, como la de llamadas o whatsapp, por defecto estarán desactivadas).
 
 > Si alguien intenta entrar a `/mis-datos` sin haberse verificado antes, el sistema lo manda automáticamente a `/otp` para que primero confirme su teléfono.
 
@@ -131,6 +140,9 @@ Cada paquete **Anunciado** o **Recibido** tiene botones de acción que abren una
 - **Cancelar** (Anunciado o Recibido) — pide un **motivo obligatorio** (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Es **irreversible**.
 
 Cada acción queda registrada con quién del staff la hizo y cuándo — nunca de forma anónima. Si el nombre anunciado no coincide con el nombre ya registrado para ese teléfono, aparece una advertencia visual en la tarjeta del paquete (no bloquea nada, es solo un aviso).
+**NOTA:** La idea de la "guia del transportador" es que se escanee al recibir el paquete (modal recibir) y también al momento de entregar el paquete (modal de entregar) se pueda escanear esta misma guía para confirmar que se estará entregando el mismo paquete que se recibió, haciendo una doble confirmación de que ese es el paquete que se recibió para ese cliente, esto disminuye la posibilidad de cometer errores al momento de entregar un paquete, por ahora toda esta funcionalidad debería ser opcional y no bloque ante para recibir/entregar paquetes.
+La idea de las fotos es que se puedan capturar hasta 3 imágenes de cada paquete, en diferentes ángulos, esto permitirá tener una confirmación de como se ve el paquete y su estado, así poder identificarlo entro todos los que existan (actualmente ya hay una implementacion de las imágenes y están guardadas en AWS S3, analiza el como se hace en la solución corriendo en producción).
+La opción de corrección aplica para los casos en que quien anuncio a ese numero de teléfono, en caso de tener discrepancias con las personas registrada en la base de datos asociadas a esa torre y apartamento, se pueda de forma fácil seleccionar una de ellas que sera el nombre correcto, por ejemplo: Se anuncia con el nombre de "Jesu Villalobos", pero en la base de datos el nombre correcto es "Jesus Villalobos", el sistema permita seleccionar de entre una lista las personas que viven en este apartamento o que están registradas bajo uno de estos números de teléfono y simplemente se seleccione el nombre correcto, esta es la forma mas segura ya que cada cliente es quien ajustara sus datos personales en caso que tengan discrepancias con los que se anuncien, los staff solo seleccionaran de la lista de nombre que ya haya sido validad por el cliente, en otras palabras SOLO se podrá en la corrección seleccionar el nombre correcto de la persona.
 
 ### 4.3 Declarar unidad y anunciar — `/announce`
 
@@ -146,18 +158,24 @@ Es la única forma en que varios teléfonos quedan asociados a un apartamento **
 
 Buscador de residentes por teléfono o nombre. Al entrar a la ficha de un residente, el staff puede:
 
-- Editar sus datos (nombre, email, documento, segundo contacto).
+- Editar sus datos (nombre, email, segundo contacto — ya no "documento", se sacó de todos los flujos).
 - Ver la lista de **Ocupantes** de su misma unidad (los residentes registrados vía `/announce`, con o sin teléfono propio).
 - Activar/desactivar sus notificaciones por SMS.
 - **Eliminar cliente** (solo `ADMIN`) — no borra el historial de paquetes, pero **anonimiza** a la persona: sus datos personales se limpian y su teléfono queda libre para uso futuro. Pide confirmación porque es irreversible.
 
+**NOTA:** La búsqueda de residentes podrá ser también por numero de torre o apartamento.
+También se podrá buscar por nombre o telefono de segundo contacto.
+La búsqueda por teléfono debería incluir principales y ocupantes (en general de cualquier persona que viva en un apartamento).
+
 ### 4.5 Administración › Personal — `/administracion/personal`
 
 Solo visible para `ADMIN`. Crea nuevas cuentas de staff (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Es la única puerta para crear staff nuevo.
+**NOTA:** En esta sección se debería tener también una sección (tabla) donde se pueda gestionar usuarios existentes (se podrá hacer CRUD a cada uno de ellos).
 
 ### 4.6 Administración › Notificaciones — `/administracion/notificaciones`
 
 Solo visible para `ADMIN`. Una fila editable por cada evento que notifica (Anunciado, Recibido, Entregado) más una fila por cada motivo de cancelación (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Cada texto se puede personalizar; si no se toca, se usa el mensaje por defecto del sistema.
+Así mismo como existen motivos de cancelación, debería existir 2 tipos de anuncios (ANUNCIADO · Cliente y ANUNCIADO · Staff) con su mensaje para cada caso.
 
 ---
 
@@ -189,7 +207,7 @@ Cada cambio de estado (Anunciado, Recibido, Entregado, Cancelado) le avisa por S
 No pasa nada — es opcional. El emparejamiento entre el anuncio y el paquete físico se hace por nombre/teléfono del destinatario, no por la guía.
 
 **¿Puedo anunciar un paquete para alguien que no tiene teléfono?**
-Sí, de dos formas: al anunciar en `/anunciar` cualquiera puede poner el nombre que quiera (no se valida contra nada); o el staff puede registrar a esa persona como Ocupante sin teléfono desde `/announce` (§4.3), para que quede como residente permanente de la unidad, no solo dentro de un paquete puntual.
+En `/anunciar` (público) **no** — siempre se exige un teléfono válido de quien anuncia. Pero si esa persona ya es un Ocupante conocido de un apartamento que tiene un teléfono principal asociado (registrado antes vía `/announce`, §4.3), el staff sí puede anunciarle un paquete a su nombre sin que tenga teléfono propio: la notificación llega al teléfono principal de esa unidad.
 
 **Si desactivo mis notificaciones, ¿dejo de poder anunciar o consultar paquetes?**
 No — solo deja de llegar el aviso por SMS. El resto del sistema funciona exactamente igual.
@@ -202,6 +220,7 @@ No — el residente no puede editar un paquete ya anunciado. Debe pedirle al sta
 
 **¿Por qué a veces veo enlaces de residente Y de staff al mismo tiempo en el header?**
 Porque tenés las dos sesiones abiertas a la vez en el mismo navegador (por ejemplo, entraste como staff y también anunciaste un paquete propio). Son independientes: cerrar una no cierra la otra.
+**NOTA:** Esto deberia quedar corregido con mis comentarios anteriores.
 
 ---
 

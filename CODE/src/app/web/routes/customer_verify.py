@@ -64,10 +64,7 @@ def customer_verify_submit(
     db: Session = Depends(get_db),
     nombre: str = Form(None),
     email: str = Form(None),
-    documento: str = Form(None),
-    tipo_documento: str = Form(None),
     segundo_contacto: str = Form(None),
-    conjunto: str = Form(None),
     torre: str = Form(None),
     apartamento: str = Form(None),
     notificaciones_activas: str = Form(None),
@@ -85,13 +82,23 @@ def customer_verify_submit(
             status_code=400,
         )
 
-    conjunto_v = _blank_to_none(conjunto)
+    # El Conjunto NUNCA lo escribe el cliente (Grupo 12, Ronda 2) — solo el
+    # staff lo asigna. Se toma tal cual del apartamento ya asignado, si hay
+    # alguno; nunca de lo que venga en el formulario.
+    apartamento_existente = _apartamento_actual(db, persona)
+    conjunto_v = apartamento_existente.conjunto if apartamento_existente else None
     torre_v = _blank_to_none(torre)
     apartamento_v = _blank_to_none(apartamento)
-    partes_apto = [conjunto_v, torre_v, apartamento_v]
 
+    if (torre_v or apartamento_v) and conjunto_v is None:
+        return _error(
+            "Tu conjunto todavía no ha sido asignado por el staff — "
+            "avísales en portería antes de declarar torre y apartamento."
+        )
+
+    partes_apto = [conjunto_v, torre_v, apartamento_v]
     if any(partes_apto) and not all(partes_apto):
-        return _error("Completa Conjunto, Torre y Apartamento, o deja los tres vacíos.")
+        return _error("Completa Torre y Apartamento, o deja los dos vacíos.")
 
     try:
         update_datos_personales(
@@ -99,8 +106,6 @@ def customer_verify_submit(
             persona,
             nombre=_blank_to_none(nombre),
             email=_blank_to_none(email),
-            documento=_blank_to_none(documento),
-            tipo_documento=_blank_to_none(tipo_documento),
             segundo_contacto=_blank_to_none(segundo_contacto),
         )
     except ValueError as exc:

@@ -119,8 +119,6 @@ def customers_manage_update(
     staff: Usuario = Depends(current_staff),
     nombre: str = Form(None),
     email: str = Form(None),
-    documento: str = Form(None),
-    tipo_documento: str = Form(None),
     segundo_contacto: str = Form(None),
     notificaciones_activas: str = Form(None),
 ):
@@ -132,8 +130,6 @@ def customers_manage_update(
             persona,
             nombre=_blank_to_none(nombre),
             email=_blank_to_none(email),
-            documento=_blank_to_none(documento),
-            tipo_documento=_blank_to_none(tipo_documento),
             segundo_contacto=_blank_to_none(segundo_contacto),
         )
     except ValueError as exc:
