@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T15:25:15-0500",
+  "lastUpdated": "2026-07-28T15:31:40-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -2064,28 +2064,50 @@
       },
       "outcome": "Nueva columna usuarios.activo (migracion 0015). staff_service gano listar_staff/editar_staff/resetear_password/set_activo_staff, todas ADMIN-only, con auto-proteccion (no degradarse/desactivarse a si mismo). Desactivar nunca borra (FK de auditoria del Grupo 11 dependen de la fila). /administracion/personal gano tabla de gestion con modales reutilizando packages/_modal.html. 20 tests nuevos (dominio + web). 377/377 tests pasan. Commit cf22d55.",
       "description": "Nueva columna usuarios.activo (migracion 0015). staff_service gano listar_staff/editar_staff/resetear_password/set_activo_staff, todas ADMIN-only, con auto-proteccion (no degradarse/desactivarse a si mismo). Desactivar nunca borra (FK de auditoria del Grupo 11 dependen de la fila). /administracion/personal gano tabla de gestion con modales reutilizando packages/_modal.html. 20 tests nuevos (dominio + web). 377/377 tests pasan. Commit cf22d55."
+    },
+    {
+      "id": "TASK-91",
+      "title": "Grupo 19 (Ronda 2): plantilla Anunciado dividida Cliente/Staff",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T15:31:40-0500",
+      "createdAt": "2026-07-28T15:31:40-0500",
+      "updatedAt": "2026-07-28T15:31:40-0500",
+      "duration": 30,
+      "tags": [
+        "notificaciones",
+        "plantillas",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Reutiliza la columna motivo de PlantillaNotificacion (ya usada por CANCELADO) como llave de sub-variante para ANUNCIADO: ORIGEN_ANUNCIO_CLIENTE/STAFF via notificacion_service.origen_anuncio(paquete) -- mismo dato announced_by_usuario_id que ya usa la auditoria del Grupo 11. Cero migracion. plantilla_por_defecto/construir_mensaje actualizados para requerir motivo en ANUNCIADO. admin.py::_filas_plantillas gano 2 filas explicitas. 6 tests nuevos. 382/382 tests pasan. Commit e046d1e.",
+      "description": "Reutiliza la columna motivo de PlantillaNotificacion (ya usada por CANCELADO) como llave de sub-variante para ANUNCIADO: ORIGEN_ANUNCIO_CLIENTE/STAFF via notificacion_service.origen_anuncio(paquete) -- mismo dato announced_by_usuario_id que ya usa la auditoria del Grupo 11. Cero migracion. plantilla_por_defecto/construir_mensaje actualizados para requerir motivo en ANUNCIADO. admin.py::_filas_plantillas gano 2 filas explicitas. 6 tests nuevos. 382/382 tests pasan. Commit e046d1e."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 90,
+    "totalTasks": 91,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 90,
+      "completed": 91,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 68,
-      "medium": 19,
+      "medium": 20,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 9,
+      "coder": 10,
       "agentx": 48
     },
     "completionRate": 100,
@@ -2104,9 +2126,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 90,
+    "totalEntries": 91,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T15:25:15-0500",
+    "lastUpdated": "2026-07-28T15:31:40-0500",
     "tokensByAgent": {}
   }
 }
