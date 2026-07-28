@@ -179,8 +179,7 @@ Buscador de residentes por teléfono, nombre, torre, apartamento, o nombre/telé
 
 ### 4.5 Administración › Personal — `/administracion/personal`
 
-Solo visible para `ADMIN`. Crea nuevas cuentas de staff (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Es la única puerta para crear staff nuevo.
-**NOTA:** En esta sección se debería tener también una sección (tabla) donde se pueda gestionar usuarios existentes (se podrá hacer CRUD a cada uno de ellos).
+Solo visible para `ADMIN`. Muestra una tabla con todo el personal existente (nombre, rol, activo/inactivo) además del formulario para dar de alta cuentas nuevas (email, nombre, contraseña, rol `ADMIN` u `OPERADOR`). Sobre cada cuenta de la tabla se puede: editar nombre/rol, resetear su contraseña, y activar/desactivar. **Desactivar nunca borra la cuenta** — una cuenta desactivada no puede iniciar sesión, pero su historial de acciones (quién recibió/entregó/canceló cada paquete) se conserva intacto. Un `ADMIN` no puede desactivarse ni degradarse a sí mismo a `OPERADOR`, para no dejar el sistema sin ningún admin activo por accidente.
 
 ### 4.6 Administración › Notificaciones — `/administracion/notificaciones`
 
