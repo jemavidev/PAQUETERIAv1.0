@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-27T08:11:38-0500",
+  "lastUpdated": "2026-07-28T14:28:55-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1882,29 +1882,97 @@
       },
       "outcome": "Cambio de diseno pedido explicitamente por el usuario tras revisar en vivo: el footer (barra con Anunciar/Consultar o el subconjunto por audiencia) ya no se oculta en pantallas anchas -- antes solo aparecia con @media max-width:640px, ahora se muestra siempre, con el mismo max-width:960px del header para que no quede pegado a los bordes en pantallas grandes. El top-nav (.site-nav) se sigue ocultando en movil (<=640px) para no duplicar la navegacion en ese ancho -- eso no cambio. body padding-bottom:64px paso de estar dentro del media query a ser siempre-activo, ya que el footer fijo ahora siempre reserva ese espacio. Verificado visualmente en 1280px y 390px. 310/310 tests pasan (sin tests nuevos, es un cambio puramente de CSS de visibilidad, la presencia de contenido en el footer ya estaba cubierta por tests existentes).",
       "description": "Cambio de diseno pedido explicitamente por el usuario tras revisar en vivo: el footer (barra con Anunciar/Consultar o el subconjunto por audiencia) ya no se oculta en pantallas anchas -- antes solo aparecia con @media max-width:640px, ahora se muestra siempre, con el mismo max-width:960px del header para que no quede pegado a los bordes en pantallas grandes. El top-nav (.site-nav) se sigue ocultando en movil (<=640px) para no duplicar la navegacion en ese ancho -- eso no cambio. body padding-bottom:64px paso de estar dentro del media query a ser siempre-activo, ya que el footer fijo ahora siempre reserva ese espacio. Verificado visualmente en 1280px y 390px. 310/310 tests pasan (sin tests nuevos, es un cambio puramente de CSS de visibilidad, la presencia de contenido en el footer ya estaba cubierta por tests existentes)."
+    },
+    {
+      "id": "TASK-83",
+      "title": "Análisis Ronda 2: 10 grupos nuevos desde NOTA en guía de usuario",
+      "status": "completed",
+      "agent": "agentx",
+      "priority": "medium",
+      "date": "2026-07-28T14:08:35-0500",
+      "createdAt": "2026-07-28T14:08:35-0500",
+      "updatedAt": "2026-07-28T14:08:35-0500",
+      "duration": 20,
+      "tags": [
+        "requerimientos",
+        "intake",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Leída la guía completa con los 8 comentarios NOTA del usuario. Investigado el código real antes de escribir el intake (paquete.py ya tiene FKs de actor por transición, paquete_foto ya es 1:N, s3_storage_service.py legacy analizado para el patrón S3, announce() confirma que anunciar siempre exige telefono). Agregados Grupos 10-19 a REQUERIMIENTOS.md (mismo formato que Ronda 1: fuente/lo que ya esta claro/preguntas abiertas resueltas), con orden de ejecución sugerido. Grupo 15 (fotos S3) queda igual que LIWA en su momento: código listo, despliegue real bloqueado por bucket/credenciales pendientes del usuario. Corregida directo la respuesta desactualizada del FAQ (§7) sobre anunciar sin telefono, sin pasar por /to-spec por ser solo redacción.",
+      "description": "Leída la guía completa con los 8 comentarios NOTA del usuario. Investigado el código real antes de escribir el intake (paquete.py ya tiene FKs de actor por transición, paquete_foto ya es 1:N, s3_storage_service.py legacy analizado para el patrón S3, announce() confirma que anunciar siempre exige telefono). Agregados Grupos 10-19 a REQUERIMIENTOS.md (mismo formato que Ronda 1: fuente/lo que ya esta claro/preguntas abiertas resueltas), con orden de ejecución sugerido. Grupo 15 (fotos S3) queda igual que LIWA en su momento: código listo, despliegue real bloqueado por bucket/credenciales pendientes del usuario. Corregida directo la respuesta desactualizada del FAQ (§7) sobre anunciar sin telefono, sin pasar por /to-spec por ser solo redacción."
+    },
+    {
+      "id": "TASK-84",
+      "title": "Grupo 11 (Ronda 2): auditoria de actor visible en Consultar y Paquetes",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T14:19:07-0500",
+      "createdAt": "2026-07-28T14:19:07-0500",
+      "updatedAt": "2026-07-28T14:19:07-0500",
+      "duration": 25,
+      "tags": [
+        "auditoria",
+        "consultar",
+        "paquetes",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "TDD: nueva app/domain/actor_service.py (nombre_usuario). announce() gano parametro opcional staff_actor para estampar announced_by_usuario_id cuando el staff anuncia via /announce (antes nunca se seteaba). search.py::_timeline ahora incluye actor por hito (cliente vs staff). packages.py::_listar gano p.actor_ultima_accion (prioridad Cancelado>Entregado>Recibido>Anunciado). Revierte a proposito la decision de Ronda 1 Grupo 2 de ocultar el actor en /consultar. 315/315 tests pasan (5 nuevos). Commit 984b734.",
+      "description": "TDD: nueva app/domain/actor_service.py (nombre_usuario). announce() gano parametro opcional staff_actor para estampar announced_by_usuario_id cuando el staff anuncia via /announce (antes nunca se seteaba). search.py::_timeline ahora incluye actor por hito (cliente vs staff). packages.py::_listar gano p.actor_ultima_accion (prioridad Cancelado>Entregado>Recibido>Anunciado). Revierte a proposito la decision de Ronda 1 Grupo 2 de ocultar el actor en /consultar. 315/315 tests pasan (5 nuevos). Commit 984b734."
+    },
+    {
+      "id": "TASK-85",
+      "title": "Grupo 12 (Ronda 2): quitar documento, bloquear Conjunto en Mis Datos",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T14:28:55-0500",
+      "createdAt": "2026-07-28T14:28:55-0500",
+      "updatedAt": "2026-07-28T14:28:55-0500",
+      "duration": 30,
+      "tags": [
+        "mis-datos",
+        "documento",
+        "conjunto",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "TDD. update_datos_personales() pierde documento/tipo_documento (columnas de Persona se conservan, dato historico neutral). customer_verify.py ya no lee 'conjunto' del form del cliente -- se deriva siempre del apartamento_actual ya asignado por staff; sin Conjunto asignado el formulario oculta Torre/Apartamento con mensaje pidiendo que el staff lo asigne. customers_manage.py (staff) solo pierde documento, nunca tuvo edicion de apartamento. Reescritos 9 tests de test_customer_verify.py que asumian auto-declaracion de Conjunto por el cliente. Guia de usuario actualizada, NOTA correspondiente removida (las de Grupo 13/17 quedan intactas, aun pendientes). 319/319 tests pasan. Commit ad5b588.",
+      "description": "TDD. update_datos_personales() pierde documento/tipo_documento (columnas de Persona se conservan, dato historico neutral). customer_verify.py ya no lee 'conjunto' del form del cliente -- se deriva siempre del apartamento_actual ya asignado por staff; sin Conjunto asignado el formulario oculta Torre/Apartamento con mensaje pidiendo que el staff lo asigne. customers_manage.py (staff) solo pierde documento, nunca tuvo edicion de apartamento. Reescritos 9 tests de test_customer_verify.py que asumian auto-declaracion de Conjunto por el cliente. Guia de usuario actualizada, NOTA correspondiente removida (las de Grupo 13/17 quedan intactas, aun pendientes). 319/319 tests pasan. Commit ad5b588."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 82,
+    "totalTasks": 85,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 82,
+      "completed": 85,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 67,
-      "medium": 12,
+      "medium": 15,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 2,
-      "agentx": 47
+      "coder": 4,
+      "agentx": 48
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -1922,9 +1990,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 82,
+    "totalEntries": 85,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-27T08:11:38-0500",
+    "lastUpdated": "2026-07-28T14:28:55-0500",
     "tokensByAgent": {}
   }
 }

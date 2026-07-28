@@ -30,7 +30,24 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 | 8 | [Notificaciones — evento Anunciado, plantillas, LIWA](#grupo-8--notificaciones--evento-anunciado-plantillas-liwa) | dominio `notificacion_service` | ✅ Implementado (LIWA real bloqueado por credenciales) — `.scratch/notificaciones-anunciado-plantillas/` |
 | 9 | [Transversales — navegación, teléfono internacional](#grupo-9--transversales--navegación-teléfono-internacional) | `base.html`, `telefono.py` | 🟡 Teléfono ✅ implementado. Header/footer sin empezar (cosmético, a propósito para el final) |
 
-**Roadmap completo — los 9 grupos implementados. 305/305 tests pasan.** LIWA implementado y desplegado con credenciales reales; verificación en vivo bloqueada por whitelist de IP pendiente del lado de LIWA (ver Grupo 8) — único pendiente externo del roadmap. Header/footer (Grupo 9, `.scratch/header-footer/`): los 3 tickets implementados y revisados.
+**Roadmap Ronda 1 completo — los 9 grupos implementados. 310/310 tests pasan.** LIWA implementado y desplegado con credenciales reales; verificación en vivo bloqueada por whitelist de IP pendiente del lado de LIWA (ver Grupo 8) — único pendiente externo de la Ronda 1. Header/footer (Grupo 9, `.scratch/header-footer/`): los 3 tickets implementados y revisados, footer visible también en desktop a pedido posterior del usuario.
+
+**Ronda 2** (este documento continúa más abajo, Grupos 10-19): fuente = comentarios `**NOTA:**` que el usuario dejó directamente dentro de `GUIA_USUARIO_FINAL.md` al revisar el estado real desplegado. Mismo formato, misma disciplina — cada grupo pasa a 🟢 solo cuando sus preguntas están resueltas.
+
+| # | Grupo | Toca | Estado |
+|---|---|---|---|
+| 10 | [Header unificado — login combinado, menús, "Mis paquetes", logout único](#grupo-10--header-unificado--login-combinado-menús-mis-paquetes-logout-único) | `base.html`, nueva ruta `/entrar`, nueva ruta `/mis-paquetes` | 🟢 Listo para `/to-spec` |
+| 11 | [Consultar — mostrar auditoría de actor por transición](#grupo-11--consultar--mostrar-auditoría-de-actor-por-transición) | `/consultar`, `/paquetes` | ✅ Implementado — `.scratch/consultar-auditoria-actor/` |
+| 12 | [Mis Datos — eliminar documento, bloquear Conjunto](#grupo-12--mis-datos--eliminar-documento-bloquear-conjunto) | `/mis-datos`, `/residentes/{id}` | ✅ Implementado — `.scratch/mis-datos-documento-conjunto/` |
+| 13 | [Preferencias de notificación por canal × evento](#grupo-13--preferencias-de-notificación-por-canal--evento) | dominio `Persona`, `/mis-datos` | 🟢 Listo para `/to-spec` (el más grande de la ronda) |
+| 14 | [Paquetes — doble escaneo de guía al entregar](#grupo-14--paquetes--doble-escaneo-de-guía-al-entregar) | `/paquetes` (modal Entregar) | 🟢 Listo para `/to-spec` |
+| 15 | [Paquetes — fotos múltiples + S3 real](#grupo-15--paquetes--fotos-múltiples--s3-real) | `/paquetes` (modal Recibir), `foto_storage.py` | 🟡 Código listo para spec; despliegue real bloqueado por bucket/credenciales S3 (misma categoría que LIWA, Grupo 8) |
+| 16 | [Corregir — selección desde Ocupantes conocidos](#grupo-16--corregir--selección-desde-ocupantes-conocidos) | `/paquetes` (modal Corregir) | 🟢 Listo para `/to-spec` |
+| 17 | [Residentes — búsqueda extendida](#grupo-17--residentes--búsqueda-extendida) | `/residentes` | 🟢 Listo para `/to-spec` |
+| 18 | [Personal — CRUD completo de cuentas de staff](#grupo-18--personal--crud-completo-de-cuentas-de-staff) | `/administracion/personal` | 🟢 Listo para `/to-spec` |
+| 19 | [Notificaciones — plantilla Anunciado dividida Cliente/Staff](#grupo-19--notificaciones--plantilla-anunciado-dividida-clientestaff) | `/administracion/notificaciones` | 🟢 Listo para `/to-spec` |
+
+**Orden de ejecución sugerido (Ronda 2):** 11 → 12 → 13 (cluster residente: consultar + mis-datos, se tocan cerca en el tiempo) → 16 → 17 (cluster staff: paquetes/residentes) → 10 (header, cruza todas las pantallas — conviene que las rutas nuevas como `/mis-paquetes` ya existan antes de enlazarlas desde el nav) → 18 → 19 (pantallas de administración) → 14 → 15 (fotos, cierra con el ítem parcialmente bloqueado). No es una dependencia dura salvo 10 después de 11/13 (que crean rutas que el header enlaza) — es la secuencia que minimiza retrabajo.
 
 ---
 
@@ -227,6 +244,166 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
      6. Si tenía `+` pero menos de 10 dígitos → error (evita basura obvia).
      Esto es exactamente tu regla, con el "mínimo 10" acotado también por arriba (15, el máximo real de un número de teléfono) para no aceptar cualquier cosa. **Estado: 🟢 listo para spec** si esto te sirve tal cual — si no, ajusto.
      → **Implementado (AgentX):** `telefono.py` reescrito con esta regla exacta. Encontré y actualicé un test viejo (`test_no_corrompe_nacional_que_empieza_por_57`) cuya expectativa contradecía la regla nueva (aceptaba cualquier nacional de 10 dígitos sin exigir que empiece en 3) — ahora ese caso lanza `ValueError` a propósito. Agregados tests para el rango internacional (10-15 dígitos con `+`, incluyendo el ejemplo `+13002596319` de tu pregunta original). 229/229 tests pasan (6 nuevos). **Estado: 🟢 hecho.**
+
+---
+
+## Grupo 10 — Header unificado — login combinado, menús, "Mis paquetes", logout único
+
+**Fuente:** `NOTA` en §2.2 de `GUIA_USUARIO_FINAL.md`.
+
+**Lo que ya está claro:**
+- **Login combinado:** "Iniciar sesión" (residente) y "Staff" dejan de ser 2 botones — se unifican en un único punto de entrada con un selector (Cliente/Usuario) que cambia los campos del formulario según el caso. Diseño propuesto (AgentX): nueva ruta pública `/entrar` con un *toggle* de dos pestañas — "Soy residente" (campo teléfono → dispara el flujo OTP existente, `POST /otp/solicitar`) y "Soy del staff" (email + contraseña → `POST /ingresar`, sin cambios). Las rutas `/otp` y `/ingresar` **no desaparecen** (siguen siendo los *targets* reales de cada sub-formulario, y quedan accesibles por URL directa si algo las enlaza); `/entrar` es la nueva puerta visual que las envuelve. El header pasa a mostrar un solo botón "Iniciar sesión" apuntando a `/entrar`.
+- **Menú de staff renombrado y reducido:** `Paquetes · Clientes · Consultar` (`Residentes` se renombra a `Clientes` solo como etiqueta del link — la ruta sigue siendo `/residentes`). `Declarar unidad` **sale del nav de escritorio** — la nota dice explícitamente "lo incluiremos más adelante en un botón", así que la ruta `/announce` sigue funcionando pero deja de estar en el header hasta que se diseñe ese botón (fuera de alcance de este grupo). `ADMIN` conserva `Personal · Notificaciones` además de lo anterior.
+- **"Mis paquetes" para el residente:** nuevo ítem de nav entre "Consultar" y "Mis datos", nueva ruta protegida `/mis-paquetes` (requiere sesión de cliente) que lista los paquetes donde el teléfono de la sesión aparece como `announced_by_phone` **o** `recipient_phone` (cubre tanto "lo que anuncié" como "lo que me anunciaron a mí"), cada fila con enlace a su detalle en `/consultar`.
+- **Logout único:** hoy (DEC-09) cada sesión (cliente/staff) tiene su propio botón y cerrar una no afecta la otra — la nota pide invertir esto: **un solo botón visible**, que si hay ambas sesiones coexistiendo, cierra **las dos a la vez**. Esto es un cambio de comportamiento explícito sobre una decisión ya tomada (DEC-09) — se implementa tal como se pide (nueva ruta `POST /salir-todo` o el mismo botón dispara ambos `POST` en secuencia), y se registra como decisión nueva (referencia a DEC-09, no la anula del todo: las sesiones siguen siendo cookies/keys independientes internamente, solo cambia que *un* botón las cierra ambas).
+- **Footer móvil, dos variantes según audiencia:**
+  - Público/cliente: **Anunciar · Buscar · Ayuda · Whatsapp** (login queda solo arriba en el header, no en el footer).
+  - Staff: **Anunciar · Buscar · Paquetes · Clientes** ("Anunciar" aquí es `/announce`; a diferencia del nav de escritorio, en el footer móvil sí se incluye ya, porque no hay otro lugar equivalente al "botón" que se planea agregar más adelante para escritorio — es la única superficie donde el staff puede llegar rápido a declarar/anunciar desde el celular hasta que exista ese botón).
+
+**Pregunta que resuelvo yo (no bloqueante — tiene salida sin detener el grupo):**
+
+1. "Ayuda" y "Whatsapp" son ítems nuevos que no existen en ningún lado de la app hoy — no puedo inventar un número de WhatsApp real ni contenido de ayuda sin más información, pero tampoco hace falta bloquear el grupo por esto:
+   - **"Ayuda"** → nueva ruta estática `/ayuda`, generada a partir del contenido de la sección "Preguntas frecuentes" (§7) de esta misma guía — un solo lugar que mantener.
+   - **"Whatsapp"** → enlace `https://wa.me/<numero>`, con el número tomado de una variable de entorno nueva `WHATSAPP_SOPORTE_NUMERO`. Si no está configurada, el ítem del footer simplemente no se muestra (nunca se publica un enlace roto). Se configura en el servidor como cualquier otro secreto de despliegue, mismo patrón que `LIWA_API_KEY` — dime el número cuando lo tengas a mano y lo activamos con un `docker compose` restart, sin tocar código.
+
+**Estado: 🟢 listo para `/to-spec`** con las resoluciones de arriba.
+
+---
+
+## Grupo 11 — Consultar — mostrar auditoría de actor por transición
+
+**Fuente:** `NOTA` en §3.2.
+
+**El contexto:** en la Ronda 1 (Grupo 2, pregunta 1) ya se discutió esto y se resolvió explícitamente **no** mostrarlo ("no se revierte, solo que se pueda auditar... que ya es el caso"). La nueva nota pide lo contrario en términos claros — la trato como una reversión intencional de esa decisión anterior, no como una contradicción a aclarar.
+
+**Lo que ya está claro:**
+- El esquema **ya tiene** todo lo necesario: `announced_by_usuario_id`, `received_by_usuario_id`, `delivered_by_usuario_id`, `cancelled_by_usuario_id` en `Paquete` (ver `paquete.py`) — este grupo es 100% de presentación, cero cambios de esquema.
+- `/consultar` (vista del residente) agrega a la línea de tiempo, por cada evento, quién lo hizo: cuando el anuncio lo hizo el propio cliente (`announced_by_usuario_id` es `NULL`, caso normal de `/anunciar`), se muestra el nombre del cliente que anunció; cuando lo hizo el staff (vía `/announce`, Grupo 6 de la Ronda 1), se muestra el nombre del `Usuario` staff. Recibido/Entregado/Cancelado siempre muestran el nombre del `Usuario` staff que actuó (esas transiciones son siempre de staff).
+- Alcance: aplica también a `/paquetes` (vista de staff), no solo a `/consultar` — pediste "que se pueda auditar" en general, y el staff se beneficia igual de verlo sin tener que ir a otra pantalla.
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 12 — Mis Datos — eliminar documento, bloquear Conjunto
+
+**Fuente:** `NOTA` en §3.4.
+
+**Lo que ya está claro:**
+- El campo "documento" (y "tipo de documento") deja de capturarse/mostrarse/validarse en **todos** los flujos: `/mis-datos` (el propio residente), `/residentes/{id}` (edición por staff), y cualquier otro formulario donde aparezca hoy.
+- Decisión de esquema (AgentX): **no se elimina** la columna `documento`/`tipo_documento` de la tabla `personas` — dato histórico neutral sin impacto, evita una migración destructiva innecesaria ahora mismo. Si más adelante se quiere limpiar el esquema, es un ticket aparte y explícito, no parte de esto.
+- El residente ya **no** puede editar "Conjunto" en `/mis-datos` (queda de solo lectura si ya tiene uno asignado, u oculto si no) — solo Torre y Apartamento. Corregir/asignar el Conjunto sigue siendo tarea del staff (`/residentes/{id}` o `/announce`).
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 13 — Preferencias de notificación por canal × evento
+
+**Fuente:** `NOTA` en §3.4 (segundo párrafo).
+
+**El problema:** hoy `Persona.notificaciones_activas` es un único booleano (todo o nada, todos los eventos, un solo canal implícito: SMS). La nota pide una matriz **Canal × Evento**.
+
+**Lo que ya está claro:**
+- Canales: SMS, Email, Llamadas, Whatsapp. Eventos: Anunciado, Recibido, Entregado, Cancelado. Los 4 canales aplican a los 4 eventos por igual — no hay combinaciones prohibidas, es una grilla completa 4×4.
+- Solo **SMS** está conectado a un proveedor real (LIWA) hoy. Email/Llamadas/Whatsapp quedan como preferencias que se guardan y se muestran en la UI, pero no disparan ningún envío real todavía (no hay proveedor integrado para esos canales) — **desactivados por defecto**, tal como pediste explícitamente.
+- Diseño de datos (AgentX): tabla nueva `persona_preferencia_notificacion` (`persona_id`, `canal`, `evento`, `activo`) en vez de columnas fijas en `Persona` — así conectar un canal nuevo el día de mañana no vuelve a tocar el esquema, solo agrega filas.
+- Migración de datos: toda `Persona` existente con `notificaciones_activas=True` (el default actual) se traduce a "SMS activo en los 4 eventos, resto de canales apagado" — preserva el comportamiento de hoy exactamente, nadie deja de recibir lo que ya recibía.
+- UI en `/mis-datos`: una tabla 4×4 (canales como columnas, eventos como filas), un checkbox por celda.
+
+**Estado: 🟢 listo para `/to-spec`** — el grupo más grande de esta ronda (nueva tabla + servicio de resolución de destino que hoy solo mira `notificaciones_activas` + UI de matriz).
+
+---
+
+## Grupo 14 — Paquetes — doble escaneo de guía al entregar
+
+**Fuente:** `NOTA` en §4.2 (primer párrafo).
+
+**Lo que ya está claro:**
+- El modal "Entregar" gana el mismo componente de escaneo (ZXing + cámara) que ya existe en "Recibir". Al escanear, compara el valor leído contra el `guide_number` ya guardado en ese paquete: coincide → confirmación visual; no coincide → advertencia visual, **no bloquea la entrega** (pediste explícitamente "opcional y no bloqueante").
+- Si el paquete no tiene `guide_number` guardado (se recibió sin capturar guía — es opcional, ver §3.1), el escaneo en Entregar no tiene contra qué comparar y simplemente se omite el chequeo, sin error.
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 15 — Paquetes — fotos múltiples + S3 real
+
+**Fuente:** `NOTA` en §4.2 (segundo párrafo).
+
+**Lo que ya está claro:**
+- El dominio **ya soporta** varias fotos por paquete — `paquete_foto_service.agregar_foto` puede llamarse varias veces, `paquete_fotos` ya es una tabla 1:N (`paquete_foto.py`, comentario propio: *"Un Paquete puede tener varias fotos"*). Lo único que falta es (a) permitir subir hasta 3 en el modal "Recibir" de la UI, con el tope de 3 validado también en el servicio (defensa en profundidad), y (b) reemplazar el storage.
+- **S3 real:** investigado en el legacy (`s3_storage_service.py`, `file_upload_service.py`) — usa `boto3`, credenciales por variables de entorno (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME` + prefijo). Para el rebuild: nueva clase `S3FotoStorage` que implementa el mismo `Protocol FotoStorage` que ya existe (`foto_storage.py`) — mismo patrón que `LiwaNotificationSender` vs `ConsoleNotificationSender`, cero cambios en dominio o rutas, solo el *wiring* en `app/web/fotos.py`.
+
+**Pregunta abierta — bloqueo real (misma categoría que LIWA/Grupo 8):**
+
+1. Falta que confirmes/proveas: ¿el bucket S3 es el **mismo** que usa hoy el sistema legacy en producción, o uno **nuevo y dedicado** a PaqueteXv.2? Y las credenciales (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/nombre del bucket/región) cuando estén listas.
+   → _Sin respuesta aún._ Mientras tanto, el código y el spec quedan 100% listos con `LocalFotoStorage` como implementación activa (igual que hoy) — el día que confirmes el bucket, es el mismo tipo de cambio de una sola función que fue conectar LIWA.
+
+**Estado: 🟡 listo para `/to-spec` del lado de código (UI + tope de 3 + `S3FotoStorage`); el *despliegue* real a S3 queda bloqueado hasta que confirmes el bucket, igual que LIWA quedó bloqueado por el whitelist de IP.**
+
+---
+
+## Grupo 16 — Corregir — selección desde Ocupantes conocidos
+
+**Fuente:** `NOTA` en §4.2 (tercer párrafo).
+
+**Lo que ya está claro:**
+- El modal "Corregir" (hoy: texto libre para nombre/teléfono, ver `packages.py` `POST /paquetes/{id}/corregir`) cambia a una lista de candidatos: Personas/Ocupantes ya asociados al `snapshot_torre`/`snapshot_apartamento` del paquete, o que comparten el `announced_by_phone`. El staff **solo** puede elegir un nombre de esa lista — no digitar uno nuevo — tal como pediste explícitamente ("SOLO se podrá... seleccionar el nombre correcto"), porque el dato correcto ya lo validó el propio cliente en algún momento (`/mis-datos` o `/announce`), no el staff.
+
+**Pregunta que resuelvo yo (default explícito, ajustable si no te sirve):**
+
+1. Si el paquete no tiene apartamento asociado (se anunció sin declarar unidad, sin candidatos posibles), forzar "solo selección" dejaría el botón inútil. Propuesta: si hay candidatos, selección obligatoria de la lista; si no hay ninguno, se mantiene el texto libre actual como único fallback — la única forma de que "Corregir" siga sirviendo para ese caso.
+
+**Estado: 🟢 listo para `/to-spec`** con esa resolución por defecto.
+
+---
+
+## Grupo 17 — Residentes — búsqueda extendida
+
+**Fuente:** `NOTA` en §4.4.
+
+**Lo que ya está claro:**
+- `/residentes` amplía su búsqueda para incluir, además de nombre/teléfono de la Persona principal: torre, apartamento, y nombre/teléfono de **segundo contacto** (Ocupante). La búsqueda por teléfono deja de mirar solo a la Persona principal — incluye el teléfono de cualquier Ocupante del apartamento.
+- Un resultado que coincide por el teléfono de un Ocupante lleva a la ficha del apartamento/Persona principal correspondiente (los Ocupantes sin teléfono propio no tienen ficha propia — ver Grupo 4 de la Ronda 1).
+- El campo "documento" desaparece de esta pantalla también (ver Grupo 12, misma nota lo reitera acá).
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 18 — Personal — CRUD completo de cuentas de staff
+
+**Fuente:** `NOTA` en §4.5.
+
+**Lo que ya está claro:**
+- `/administracion/personal` gana una tabla de cuentas existentes (email, nombre, rol, activo/inactivo) además del formulario de creación que ya existe. Acciones: editar nombre/rol, resetear contraseña, activar/desactivar.
+- **Desactivar, no borrar** (AgentX, por consistencia con el patrón de anonimización ya usado para clientes, ADR-0005): un `Usuario` desactivado no puede iniciar sesión, pero la fila permanece — así nunca se rompen las FK de auditoría (`received_by_usuario_id` y las demás del Grupo 11 dependen de que el `Usuario` siga existiendo).
+- Regla de sentido común que agrego salvo que digas lo contrario: un `ADMIN` no puede desactivarse ni degradarse a sí mismo a `OPERADOR` — evita dejar el sistema sin ningún admin activo por accidente.
+- Solo visible para `ADMIN` (como hoy).
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 19 — Notificaciones — plantilla Anunciado dividida Cliente/Staff
+
+**Fuente:** `NOTA` en §4.6.
+
+**Lo que ya está claro:**
+- `/administracion/notificaciones` separa la fila única "Anunciado" en dos: **"Anunciado · Cliente"** (cuando el propio residente anuncia vía `/anunciar`) y **"Anunciado · Staff"** (cuando el staff anuncia vía `/announce`, Grupo 6 de la Ronda 1) — mismo patrón que ya existe para los 4 motivos de cancelación (cada uno con su propio texto editable/default).
+
+**Estado: 🟢 listo para `/to-spec`.**
+
+---
+
+## Grupo 20 (documentación, no desarrollo) — FAQ desactualizada sobre anunciar sin teléfono
+
+**Fuente:** `NOTA` en §7.
+
+La respuesta del FAQ ("¿Puedo anunciar un paquete para alguien que no tiene teléfono?") describe un comportamiento **anterior** a la Ronda 1: antes de que el Grupo 1 simplificara `/anunciar` a 3 campos fijos, existía un radio `a_nombre_de` que permitía poner cualquier nombre libremente. Hoy `/anunciar` **siempre** exige un teléfono válido (`announce()` en `paquete_service.py` no tiene forma de saltarse `anunciante_telefono`) — la respuesta vieja quedó desactualizada al escribir la guía. No es un cambio de código, es un error de redacción mío. Corregido directamente en `GUIA_USUARIO_FINAL.md` en el mismo cierre de esta ronda.
+
+**Estado: ✅ corregido directo, no pasa por `/to-spec`.**
 
 ---
 

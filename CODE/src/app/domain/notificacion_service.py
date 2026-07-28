@@ -11,11 +11,14 @@ NO propaga — la transición del Paquete ya se completó y no debe bloquearse p
 un proveedor caído.
 
 `resolver_destino_notificable` resuelve la Persona VIVA (no anonimizada, ADR-0005)
-que debe recibir el aviso, y `notificar_evento` respeta su preferencia
-(`notificaciones_activas`). Regla unificada: el **Anunciante** recibe el aviso
-siempre que no haya un Destinatario con teléfono propio y alcanzable — cubre
-tanto "nombre sin teléfono" (nunca tuvo) como "fue anonimizado después" (ya no
-lo tiene), con la MISMA función, no dos reglas separadas.
+que debe recibir el aviso, y `notificar_evento` respeta su preferencia de canal
+SMS para ese evento (`preferencia_notificacion_service.preferencia_activa` —
+Grupo 13, Ronda 2 — reemplaza el booleano único `notificaciones_activas` por
+una matriz Canal × Evento; el envío real hoy solo existe para SMS). Regla
+unificada: el **Anunciante** recibe el aviso siempre que no haya un
+Destinatario con teléfono propio y alcanzable — cubre tanto "nombre sin
+teléfono" (nunca tuvo) como "fue anonimizado después" (ya no lo tiene), con
+la MISMA función, no dos reglas separadas.
 
 `construir_mensaje` busca primero una `PlantillaNotificacion` personalizada
 para `(evento, motivo si CANCELADO)`; si no existe, usa el texto por defecto
@@ -29,6 +32,8 @@ from .notification_sender import NotificationSender
 from .paquete import EstadoPaquete, Paquete
 from .persona import Persona
 from .plantilla_notificacion import PlantillaNotificacion
+from .preferencia_notificacion import CanalNotificacion
+from .preferencia_notificacion_service import preferencia_activa
 
 _EVENTOS_QUE_NOTIFICAN = (
     EstadoPaquete.ANUNCIADO,
@@ -137,16 +142,19 @@ def notificar_evento(
     """Notifica `evento` para `paquete` a través de `sender`, respetando la
     preferencia de quien de verdad recibiría el mensaje.
 
-    Sin destino alcanzable, o con `notificaciones_activas=False` → no envía
-    nada, sin error. Best-effort en el envío: si `sender.enviar` lanza, la
-    excepción se ignora aquí — la transición del Paquete ya se completó y no
-    debe bloquearse por esto. Un `evento` que no dispara notificación SÍ
-    propaga su `ValueError` (error de uso, no fallo de infra).
+    Sin destino alcanzable, o con el canal SMS desactivado para este evento
+    (Grupo 13, matriz Canal × Evento) → no envía nada, sin error. Best-effort
+    en el envío: si `sender.enviar` lanza, la excepción se ignora aquí — la
+    transición del Paquete ya se completó y no debe bloquearse por esto. Un
+    `evento` que no dispara notificación SÍ propaga su `ValueError` (error de
+    uso, no fallo de infra).
     """
     mensaje = construir_mensaje(session, evento, paquete)
 
     persona = resolver_destino_notificable(session, paquete)
-    if persona is None or not persona.notificaciones_activas:
+    if persona is None:
+        return
+    if not preferencia_activa(session, persona.id, CanalNotificacion.SMS, evento):
         return
 
     try:

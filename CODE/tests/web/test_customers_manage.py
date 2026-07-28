@@ -154,6 +154,10 @@ def test_eliminar_id_inexistente_da_404(client):
 # notification-preferences).
 # --------------------------------------------------------------------------- #
 def test_staff_desactiva_la_preferencia_del_cliente(client):
+    from app.domain.paquete import EstadoPaquete
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import preferencia_activa
+
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
     _login_operador(client)
@@ -161,10 +165,16 @@ def test_staff_desactiva_la_preferencia_del_cliente(client):
     client.post(f"/residentes/{p.id}", data={})  # checkbox ausente
 
     client.db.expire_all()
-    assert client.db.get(Persona, p.id).notificaciones_activas is False
+    assert preferencia_activa(
+        client.db, p.id, CanalNotificacion.SMS, EstadoPaquete.ANUNCIADO
+    ) is False
 
 
 def test_staff_reactiva_la_preferencia_del_cliente(client):
+    from app.domain.paquete import EstadoPaquete
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import preferencia_activa
+
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
     _login_operador(client)
@@ -175,7 +185,9 @@ def test_staff_reactiva_la_preferencia_del_cliente(client):
     )  # reactiva
 
     client.db.expire_all()
-    assert client.db.get(Persona, p.id).notificaciones_activas is True
+    assert preferencia_activa(
+        client.db, p.id, CanalNotificacion.SMS, EstadoPaquete.ANUNCIADO
+    ) is True
 
 
 # --------------------------------------------------------------------------- #

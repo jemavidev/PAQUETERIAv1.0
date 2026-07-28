@@ -104,9 +104,7 @@ Para acceder a **Mis Datos**, el residente entra a `/otp`, escribe su teléfono 
 Una vez verificado por OTP, el residente puede:
 - Completar o corregir su nombre, email y un **segundo contacto** (ya no se pide "documento" — se sacó de este y de todos los demás flujos del sistema).
 - Actualizar Torre y Apartamento de su unidad — el **Conjunto** ya no lo puede cambiar el residente, solo el staff lo asigna (vía `/administración` o `/announce`). Mientras no tenga Conjunto asignado, tampoco puede declarar Torre/Apartamento (no tendría sentido sin saber en cuál Conjunto).
-- Activar o desactivar el interruptor de **"Recibir notificaciones por SMS"** — si lo apaga, deja de recibir avisos automáticos de sus paquetes (el sistema sigue funcionando igual, solo no le escribe).
-
-  **NOTA:** Para las notificaciones sera posible activar o desactivar las notificaciones de SMS, Email, Llamadas, Whatsapp, y estas aplican para cada estado de los paquetes, por ejemplo el cliente solo quiere recibir notificaciones por whatsapp y solo del estado anunciado, esto sera posible en la tabla de activar o desactivar notificaciones (algunas funciones aquí descritas no existen, pero serán implementadas mas adelante, como la de llamadas o whatsapp, por defecto estarán desactivadas).
+- Elegir sus **notificaciones** en una tabla de Canal × Momento: una fila por cada momento del paquete (Anunciado, Recibido, Entregado, Cancelado) y una columna por canal (SMS, Email, Llamada, WhatsApp) — cada casilla se activa o desactiva por separado. Por ejemplo, se puede querer solo WhatsApp y solo para "Anunciado", sin tocar el resto. **Hoy solo SMS envía de verdad** (viene marcado por defecto en los 4 momentos); Email, Llamada y WhatsApp se guardan igual, pero todavía no hay ningún proveedor conectado para ellos — se activarán más adelante sin que el residente tenga que volver a configurar nada.
 
 > Si alguien intenta entrar a `/mis-datos` sin haberse verificado antes, el sistema lo manda automáticamente a `/otp` para que primero confirme su teléfono.
 

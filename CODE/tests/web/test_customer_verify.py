@@ -19,7 +19,7 @@ tampoco se aceptan ya en este formulario (mismo grupo).
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import declare_unit, get_or_create_apartamento
 from app.domain.otp_sender import DevOtpSender
-from app.domain.paquete import Paquete
+from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.persona import Persona
 from app.web.otp import get_otp_sender
@@ -238,35 +238,64 @@ def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(cl
 # --------------------------------------------------------------------------- #
 # Preferencia de notificaciones (ticket 02 de notification-preferences)
 # --------------------------------------------------------------------------- #
-def test_checkbox_marcado_activa_notificaciones(client):
+def test_get_muestra_la_matriz_con_sms_activo_por_default(client):
+    _login_cliente(client)
+    r = client.get("/mis-datos")
+    assert r.status_code == 200
+    assert 'name="pref_SMS_ANUNCIADO"' in r.text
+    # SMS por default viene marcado (checked) para los 4 eventos.
+    idx = r.text.index('name="pref_SMS_ANUNCIADO"')
+    assert "checked" in r.text[idx : idx + 60]
+
+
+def test_marcar_un_canal_lo_activa_para_ese_evento(client):
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import preferencia_activa
+
     persona = _login_cliente(client)
-    client.post("/mis-datos", data={"notificaciones_activas": "on"})
+    client.post("/mis-datos", data={"pref_WHATSAPP_RECIBIDO": "on"})
     client.db.expire_all()
-    assert client.db.get(Persona, persona.id).notificaciones_activas is True
+
+    assert preferencia_activa(
+        client.db, persona.id, CanalNotificacion.WHATSAPP, EstadoPaquete.RECIBIDO
+    ) is True
 
 
-def test_checkbox_ausente_desactiva_notificaciones(client):
+def test_no_marcar_sms_lo_desactiva_para_ese_evento(client):
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import preferencia_activa
+
     persona = _login_cliente(client)
-    client.post("/mis-datos", data={})  # sin el campo: desmarcado
+    # Ningún pref_* en el POST: toda la matriz queda desmarcada (mismo
+    # comportamiento que cualquier checkbox HTML ausente).
+    client.post("/mis-datos", data={})
     client.db.expire_all()
-    assert client.db.get(Persona, persona.id).notificaciones_activas is False
+
+    assert preferencia_activa(
+        client.db, persona.id, CanalNotificacion.SMS, EstadoPaquete.ANUNCIADO
+    ) is False
 
 
-def test_reactivar_restaura_la_preferencia(client):
+def test_reenviar_la_matriz_marcada_restaura_la_preferencia(client):
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import preferencia_activa
+
     persona = _login_cliente(client)
-    client.post("/mis-datos", data={})  # desactiva
-    client.post("/mis-datos", data={"notificaciones_activas": "on"})  # reactiva
+    client.post("/mis-datos", data={})  # desactiva todo
+    client.post("/mis-datos", data={"pref_SMS_ANUNCIADO": "on"})  # reactiva solo este
+
     client.db.expire_all()
-    assert client.db.get(Persona, persona.id).notificaciones_activas is True
+    assert preferencia_activa(
+        client.db, persona.id, CanalNotificacion.SMS, EstadoPaquete.ANUNCIADO
+    ) is True
 
 
-def test_checkbox_desmarcado_no_rompe_el_resto_del_guardado(client):
+def test_matriz_vacia_no_rompe_el_resto_del_guardado(client):
     persona = _login_cliente(client)
     client.post("/mis-datos", data={"nombre": "Ana Actualizada"})
     client.db.expire_all()
     p = client.db.get(Persona, persona.id)
-    assert p.nombre == "Ana Actualizada"
-    assert p.notificaciones_activas is False  # checkbox ausente = False
+    assert p.nombre == "Ana Actualizada"  # el resto del formulario se guardó igual
 
 
 def test_desactivar_detiene_una_notificacion_posterior(client):

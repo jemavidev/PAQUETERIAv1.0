@@ -19,6 +19,12 @@
   .error { background:#fdecea; color:var(--err); border-radius:8px; padding:12px; margin-bottom:12px; }
   .ok { background:#e3f7e8; color:var(--ok); border-radius:8px; padding:12px; margin-bottom:12px; }
   .hint { color:#777; font-size:.8rem; margin:6px 0 0; }
+  .pref-matrix-wrap { overflow-x:auto; margin-top:10px; }
+  .pref-matrix { border-collapse:collapse; width:100%; font-size:.85rem; }
+  .pref-matrix th, .pref-matrix td { padding:8px 6px; text-align:center; border-bottom:1px solid #eee; }
+  .pref-matrix thead th { color:#555; font-weight:600; }
+  .pref-matrix tbody th { text-align:left; font-weight:600; white-space:nowrap; }
+  .pref-matrix input[type=checkbox] { width:auto; }
 </style>
 {% endblock %}
 {% block content %}
@@ -40,11 +46,33 @@
 
       <label for="segundo_contacto">Segundo contacto</label>
       <input type="text" id="segundo_contacto" name="segundo_contacto" value="{{ persona.segundo_contacto or '' }}">
+    </div>
 
-      <div class="checkbox-row">
-        <input type="checkbox" id="notificaciones_activas" name="notificaciones_activas"
-               {{ 'checked' if persona.notificaciones_activas else '' }}>
-        <label for="notificaciones_activas">Recibir notificaciones por SMS</label>
+    <div class="card">
+      <h2>Notificaciones</h2>
+      <p class="hint">Elegí por cuáles canales querés que te avisemos, para cada momento del paquete. Hoy solo SMS envía de verdad — el resto se guarda para cuando se conecten.</p>
+      <div class="pref-matrix-wrap">
+        <table class="pref-matrix">
+          <thead>
+            <tr>
+              <th></th>
+              {% for canal in canales %}<th>{{ etiqueta_canal[canal] }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for evento in eventos %}
+            <tr>
+              <th>{{ evento.value.capitalize() }}</th>
+              {% for canal in canales %}
+              <td>
+                <input type="checkbox" name="pref_{{ canal.value }}_{{ evento.value }}"
+                       {{ 'checked' if matriz[(canal.value, evento.value)] else '' }}>
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
 

@@ -17,10 +17,12 @@ from sqlalchemy.orm import Session
 from app.domain.apartamento import Apartamento
 from app.domain.ocupante_service import listar_ocupantes
 from app.domain.persona import Persona
-from app.domain.persona_service import (
-    anonimizar_persona,
-    set_notificaciones_activas,
-    update_datos_personales,
+from app.domain.persona_service import anonimizar_persona, update_datos_personales
+from app.domain.preferencia_notificacion import CanalNotificacion
+from app.domain.preferencia_notificacion_service import (
+    EVENTOS,
+    activar_canal_en_todos_los_eventos,
+    preferencia_activa,
 )
 from app.domain.telefono import normalizar_telefono
 from app.domain.usuario import Usuario
@@ -41,6 +43,18 @@ def _apartamento_actual(db: Session, persona: Persona):
     if persona.apartamento_actual_id is None:
         return None
     return db.get(Apartamento, persona.apartamento_actual_id)
+
+
+def _sms_activo_en_todos_los_eventos(db: Session, persona: Persona) -> bool:
+    """Estado del toggle simplificado de staff (Grupo 13, Ronda 2): SMS
+    activo para los 4 eventos a la vez. Si el cliente ya personalizó su
+    matriz de forma desigual desde `/mis-datos`, se ve como "desactivado"
+    aquí (representación honesta de un control binario para un estado que ya
+    no es binario) — el detalle fino solo se edita desde `/mis-datos`."""
+    return all(
+        preferencia_activa(db, persona.id, CanalNotificacion.SMS, evento)
+        for evento in EVENTOS
+    )
 
 
 def _ocupantes_de(db: Session, apartamento):
@@ -107,6 +121,7 @@ def customers_manage_detail(
             "persona": persona,
             "apartamento": _apartamento_actual(db, persona),
             "ocupantes": _ocupantes_de(db, _apartamento_actual(db, persona)),
+            "sms_activo": _sms_activo_en_todos_los_eventos(db, persona),
         },
     )
 
@@ -149,7 +164,10 @@ def customers_manage_update(
 
     # Checkbox: presente (marcado) = True; ausente (desmarcado) = False —
     # distinto del resto de campos, cuya ausencia significa "no tocar".
-    set_notificaciones_activas(db, persona, notificaciones_activas is not None)
+    # Ver docstring de `_sms_activo_en_todos_los_eventos`.
+    activar_canal_en_todos_los_eventos(
+        db, persona.id, CanalNotificacion.SMS, notificaciones_activas is not None
+    )
 
     return templates.TemplateResponse(
         "customers_manage/detail.html",
@@ -159,6 +177,7 @@ def customers_manage_update(
             "persona": persona,
             "apartamento": _apartamento_actual(db, persona),
             "ocupantes": _ocupantes_de(db, _apartamento_actual(db, persona)),
+            "sms_activo": _sms_activo_en_todos_los_eventos(db, persona),
             "guardado": True,
         },
     )
