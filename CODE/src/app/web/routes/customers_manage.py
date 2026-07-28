@@ -12,9 +12,11 @@ import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
+from app.domain.ocupante import Ocupante
 from app.domain.ocupante_service import listar_ocupantes
 from app.domain.persona import Persona
 from app.domain.persona_service import anonimizar_persona, update_datos_personales
@@ -79,6 +81,67 @@ def _get_persona_o_404(db: Session, persona_id: str) -> Persona:
     return persona
 
 
+def _buscar_residentes(db: Session, termino: str) -> list[Persona]:
+    """Búsqueda extendida (Grupo 17, Ronda 2): teléfono o nombre de la
+    Persona principal, torre/apartamento de su unidad, nombre/teléfono de su
+    segundo contacto, o nombre de cualquier Ocupante (con o sin teléfono
+    propio) de su misma unidad — un match por Ocupante resuelve a la Persona
+    **principal** de ese Apartamento (los Ocupantes sin teléfono no tienen
+    ficha propia). Resultados únicos, sin duplicar si varios criterios
+    coinciden con la misma Persona."""
+    encontradas: dict = {}  # id -> Persona, dedup preservando orden de hallazgo
+
+    def _agregar_todas(personas):
+        for p in personas:
+            encontradas.setdefault(p.id, p)
+
+    try:
+        telefono = normalizar_telefono(termino)
+    except ValueError:
+        telefono = None
+
+    filtros_persona = [
+        Persona.nombre.ilike(f"%{termino}%"),
+        Persona.segundo_contacto.ilike(f"%{termino}%"),
+    ]
+    if telefono is not None:
+        filtros_persona.append(Persona.telefono == telefono)
+    _agregar_todas(db.query(Persona).filter(or_(*filtros_persona)).all())
+
+    apartamentos_match = (
+        db.query(Apartamento)
+        .filter(
+            or_(
+                Apartamento.torre.ilike(f"%{termino}%"),
+                Apartamento.apartamento.ilike(f"%{termino}%"),
+            )
+        )
+        .all()
+    )
+    if apartamentos_match:
+        apto_ids = [a.id for a in apartamentos_match]
+        _agregar_todas(
+            db.query(Persona).filter(Persona.apartamento_actual_id.in_(apto_ids)).all()
+        )
+
+    ocupantes_match = db.query(Ocupante).filter(Ocupante.nombre.ilike(f"%{termino}%")).all()
+    if ocupantes_match:
+        apto_ids_de_ocupantes = {o.apartamento_id for o in ocupantes_match}
+        principales = (
+            db.query(Ocupante)
+            .filter(
+                Ocupante.apartamento_id.in_(apto_ids_de_ocupantes),
+                Ocupante.es_principal.is_(True),
+            )
+            .all()
+        )
+        persona_ids = [o.persona_id for o in principales if o.persona_id is not None]
+        if persona_ids:
+            _agregar_todas(db.query(Persona).filter(Persona.id.in_(persona_ids)).all())
+
+    return sorted(encontradas.values(), key=lambda p: p.nombre or "")
+
+
 @router.get("/residentes", response_class=HTMLResponse)
 def customers_manage_search(
     request: Request,
@@ -87,18 +150,7 @@ def customers_manage_search(
     q: str = None,
 ):
     termino = _blank_to_none(q)
-    resultados = []
-    if termino:
-        try:
-            telefono = normalizar_telefono(termino)
-        except ValueError:
-            telefono = None
-        if telefono is not None:
-            resultados = db.query(Persona).filter(Persona.telefono == telefono).all()
-        else:
-            resultados = (
-                db.query(Persona).filter(Persona.nombre.ilike(f"%{termino}%")).all()
-            )
+    resultados = _buscar_residentes(db, termino) if termino else []
     return templates.TemplateResponse(
         "customers_manage/search.html",
         {"request": request, "staff": staff, "q": termino or "", "resultados": resultados},

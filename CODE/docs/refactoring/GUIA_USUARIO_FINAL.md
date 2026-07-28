@@ -153,16 +153,12 @@ Es la única forma en que varios teléfonos quedan asociados a un apartamento **
 
 ### 4.4 Residentes — `/residentes`
 
-Buscador de residentes por teléfono o nombre. Al entrar a la ficha de un residente, el staff puede:
+Buscador de residentes por teléfono, nombre, torre, apartamento, o nombre/teléfono del segundo contacto — un match por el nombre de un Ocupante (con o sin teléfono propio) lleva a la ficha de la Persona principal de esa misma unidad. Al entrar a la ficha de un residente, el staff puede:
 
 - Editar sus datos (nombre, email, segundo contacto — ya no "documento", se sacó de todos los flujos).
 - Ver la lista de **Ocupantes** de su misma unidad (los residentes registrados vía `/announce`, con o sin teléfono propio).
 - Activar/desactivar sus notificaciones por SMS.
 - **Eliminar cliente** (solo `ADMIN`) — no borra el historial de paquetes, pero **anonimiza** a la persona: sus datos personales se limpian y su teléfono queda libre para uso futuro. Pide confirmación porque es irreversible.
-
-**NOTA:** La búsqueda de residentes podrá ser también por numero de torre o apartamento.
-También se podrá buscar por nombre o telefono de segundo contacto.
-La búsqueda por teléfono debería incluir principales y ocupantes (en general de cualquier persona que viva en un apartamento).
 
 ### 4.5 Administración › Personal — `/administracion/personal`
 
