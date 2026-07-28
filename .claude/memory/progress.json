@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T14:28:55-0500",
+  "lastUpdated": "2026-07-28T14:43:44-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1950,28 +1950,50 @@
       },
       "outcome": "TDD. update_datos_personales() pierde documento/tipo_documento (columnas de Persona se conservan, dato historico neutral). customer_verify.py ya no lee 'conjunto' del form del cliente -- se deriva siempre del apartamento_actual ya asignado por staff; sin Conjunto asignado el formulario oculta Torre/Apartamento con mensaje pidiendo que el staff lo asigne. customers_manage.py (staff) solo pierde documento, nunca tuvo edicion de apartamento. Reescritos 9 tests de test_customer_verify.py que asumian auto-declaracion de Conjunto por el cliente. Guia de usuario actualizada, NOTA correspondiente removida (las de Grupo 13/17 quedan intactas, aun pendientes). 319/319 tests pasan. Commit ad5b588.",
       "description": "TDD. update_datos_personales() pierde documento/tipo_documento (columnas de Persona se conservan, dato historico neutral). customer_verify.py ya no lee 'conjunto' del form del cliente -- se deriva siempre del apartamento_actual ya asignado por staff; sin Conjunto asignado el formulario oculta Torre/Apartamento con mensaje pidiendo que el staff lo asigne. customers_manage.py (staff) solo pierde documento, nunca tuvo edicion de apartamento. Reescritos 9 tests de test_customer_verify.py que asumian auto-declaracion de Conjunto por el cliente. Guia de usuario actualizada, NOTA correspondiente removida (las de Grupo 13/17 quedan intactas, aun pendientes). 319/319 tests pasan. Commit ad5b588."
+    },
+    {
+      "id": "TASK-86",
+      "title": "Grupo 13 (Ronda 2): matriz de preferencias de notificacion canal x evento",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T14:43:44-0500",
+      "createdAt": "2026-07-28T14:43:44-0500",
+      "updatedAt": "2026-07-28T14:43:44-0500",
+      "duration": 50,
+      "tags": [
+        "notificaciones",
+        "preferencias",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Nueva tabla persona_preferencia_notificacion (migracion 0014, dispersa a proposito -- sin backfill, default por lectura). Reemplaza Persona.notificaciones_activas (se conserva la columna sin uso). notificar_evento ahora usa preferencia_activa(SMS, evento). /mis-datos gano matriz 4x4 de checkboxes (16 combinaciones). /residentes/{id} conserva su toggle simplificado, ahora actua sobre los 4 eventos a la vez via activar_canal_en_todos_los_eventos. Reescritos 3 tests que dependian del booleano viejo. 329/329 tests pasan. Commit 4ef25d8.",
+      "description": "Nueva tabla persona_preferencia_notificacion (migracion 0014, dispersa a proposito -- sin backfill, default por lectura). Reemplaza Persona.notificaciones_activas (se conserva la columna sin uso). notificar_evento ahora usa preferencia_activa(SMS, evento). /mis-datos gano matriz 4x4 de checkboxes (16 combinaciones). /residentes/{id} conserva su toggle simplificado, ahora actua sobre los 4 eventos a la vez via activar_canal_en_todos_los_eventos. Reescritos 3 tests que dependian del booleano viejo. 329/329 tests pasan. Commit 4ef25d8."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 85,
+    "totalTasks": 86,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 85,
+      "completed": 86,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 67,
-      "medium": 15,
+      "medium": 16,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 4,
+      "coder": 5,
       "agentx": 48
     },
     "completionRate": 100,
@@ -1990,9 +2012,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 85,
+    "totalEntries": 86,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T14:28:55-0500",
+    "lastUpdated": "2026-07-28T14:43:44-0500",
     "tokensByAgent": {}
   }
 }
