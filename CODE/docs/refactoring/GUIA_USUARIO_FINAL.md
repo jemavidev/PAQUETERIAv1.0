@@ -2,13 +2,13 @@
 
 > Entregable final del rebuild (brief [`SYSTEM_REBUILD_BRIEF.md`](SYSTEM_REBUILD_BRIEF.md) §13). Explica cómo usar el sistema **tal como está hoy desplegado en staging** (`https://test.papyrus.com.co`) — sin jerga técnica — distinguiendo qué ve un **residente** y qué ve el **staff** de portería/administración.
 >
-> Actualizada al cierre del roadmap de 9 grupos de ajustes post-revisión funcional (ver `.scratch/ajustes-post-referencia-funcional/REQUERIMIENTOS.md`).
+> Actualizada al cierre de la **Ronda 2** de ajustes post-revisión funcional — 9 grupos de la Ronda 1 + 10 grupos de la Ronda 2, los 19 implementados y desplegados (ver `.scratch/ajustes-post-referencia-funcional/REQUERIMIENTOS.md`). Único pendiente de código: fotos de paquete en AWS S3 real (Grupo 15), a la espera de que se confirme el bucket.
 
 ---
 
-## 0. Qué probar si vienes del roadmap reciente
+## 0. Qué probar si vienes de una versión anterior de esta guía
 
-Si ya conocías una versión anterior de esta guía, esto es lo que cambió y vale la pena probar primero:
+Si ya conocías una versión anterior, esto es lo que cambió y vale la pena probar primero:
 
 | Cambio | Dónde probarlo |
 |---|---|
@@ -24,7 +24,7 @@ Si ya conocías una versión anterior de esta guía, esto es lo que cambió y va
 | **Código OTP de 2 dígitos** (antes 6), válido 5 minutos | `/otp` |
 | **SMS reales vía LIWA** (antes solo quedaban en consola) | Cualquier notificación — ver nota en §6 |
 
-**Ronda 2 (en curso)** — ajustes adicionales sobre lo ya desplegado:
+**Ronda 2** — ajustes adicionales sobre lo ya desplegado:
 
 | Cambio | Dónde probarlo |
 |---|---|
@@ -109,8 +109,7 @@ Sin necesidad de iniciar sesión. Se busca **solo** por:
 
 **Ya no se puede consultar por teléfono** — es una medida de seguridad: el código de acceso solo lo conoce quien anunció, así que es la única llave pública de consulta.
 
-Si hay resultado, se muestra la ficha completa: nombre del destinatario, estado actual, y la **línea de tiempo** completa (Anunciado → Recibido → Entregado, o Cancelado con su motivo), incluyendo — cuando aplica — el **tipo de paquete**, la **condición** en que llegó y la **foto** que el staff tomó al recibirlo. No se muestra qué miembro del staff hizo cada acción; ese dato es solo para auditoría interna.
-**NOTA:** Si se debe mostrar que usuario realizo el anuncio (cliente/nombre del staff), recepcion (staff que recibio), Entrega (staff que entrego), cancelacion (staff que cancelo).
+Si hay resultado, se muestra la ficha completa: nombre del destinatario, estado actual, y la **línea de tiempo** completa (Anunciado → Recibido → Entregado, o Cancelado con su motivo), incluyendo — cuando aplica — el **tipo de paquete**, la **condición** en que llegó y las **fotos** que el staff tomó al recibirlo. Cada hito de la línea de tiempo muestra además **quién lo hizo**: el nombre del residente si anunció él mismo, o el nombre del staff que anunció, recibió, entregó o canceló — el registro es siempre nominal, nunca anónimo.
 
 ### 3.3 Iniciar sesión como residente — `/otp`
 
