@@ -20,6 +20,7 @@ from app.domain.foto_storage import FotoStorage
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import notificar_evento
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, MotivoCancelacion, Paquete, TipoPaquete
+from app.domain.paquete_correccion_service import candidatos_correccion
 from app.domain.paquete_foto_service import agregar_foto, listar_fotos
 from app.domain.paquete_lifecycle import (
     TransicionInvalida,
@@ -125,6 +126,9 @@ def _listar(
         # Atributos transitorios (no persistidos), solo para la plantilla.
         p.advertencia_nombre = _nombre_no_coincide(db, p)
         p.actor_ultima_accion = _actor_ultima_accion(db, p)
+        p.candidatos_correccion = (
+            candidatos_correccion(db, p) if p.estado is EstadoPaquete.ANUNCIADO else []
+        )
 
     return paquetes, pagina, total_paginas
 
@@ -264,14 +268,39 @@ def correct_recipient_action(
     request: Request,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
+    candidato_idx: str = Form(None),
     recipient_name: str = Form(None),
     recipient_phone: str = Form(None),
 ):
     """Corrige destinatario de un Paquete `ANUNCIADO` — excepción acotada a
-    ADR-0001 (ver `paquete_lifecycle.corregir_destinatario`)."""
+    ADR-0001 (ver `paquete_lifecycle.corregir_destinatario`).
+
+    Grupo 16 (Ronda 2): si hay candidatos conocidos (Ocupantes del
+    Apartamento del snapshot, o el propio Anunciante), la corrección SOLO
+    puede seleccionar uno de ellos — nunca texto libre. Los candidatos se
+    recalculan aquí mismo (nunca se confía en lo que mandó el cliente) para
+    que la restricción sea real, no solo una ayuda de UI. Sin candidatos, se
+    conserva el texto libre de siempre (única forma de que "Corregir" siga
+    sirviendo para un paquete sin Apartamento resuelto)."""
     paquete = _get_paquete_o_404(db, paquete_id)
+    candidatos = candidatos_correccion(db, paquete)
+
+    if candidatos:
+        try:
+            idx = int(candidato_idx)
+            candidato = candidatos[idx]
+        except (TypeError, ValueError, IndexError):
+            return _render_lista(
+                request, db, staff,
+                error="Seleccioná uno de los nombres de la lista.",
+                status_code=400,
+            )
+        nombre, telefono = candidato["nombre"], candidato["telefono"]
+    else:
+        nombre, telefono = recipient_name, recipient_phone
+
     try:
-        corregir_destinatario(db, paquete, staff, recipient_name, recipient_phone)
+        corregir_destinatario(db, paquete, staff, nombre, telefono)
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)

@@ -171,10 +171,20 @@
       {% if p.estado.value == "ANUNCIADO" %}
       {% call modal("correct-" ~ p.id, "Corregir destinatario") %}
         <form method="post" action="/paquetes/{{ p.id }}/corregir" class="modal-form">
+          {% if p.candidatos_correccion %}
+          <label for="candidato-{{ p.id }}">Nombre correcto (elegí de la lista)</label>
+          <select id="candidato-{{ p.id }}" name="candidato_idx" required>
+            <option value="" disabled selected>Seleccioná un nombre…</option>
+            {% for c in p.candidatos_correccion %}
+            <option value="{{ loop.index0 }}">{{ c.nombre }}{% if c.telefono %} — {{ c.telefono }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          {% else %}
           <label for="nombre-corregir-{{ p.id }}">Nombre</label>
           <input type="text" id="nombre-corregir-{{ p.id }}" name="recipient_name" value="{{ p.recipient_name }}" required>
           <label for="telefono-corregir-{{ p.id }}">Teléfono de notificación (opcional)</label>
           <input type="tel" id="telefono-corregir-{{ p.id }}" name="recipient_phone" value="{{ p.recipient_phone or '' }}">
+          {% endif %}
           <button type="submit" class="btn btn-primary">Guardar corrección</button>
         </form>
       {% endcall %}

@@ -42,7 +42,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 | 13 | [Preferencias de notificación por canal × evento](#grupo-13--preferencias-de-notificación-por-canal--evento) | dominio `Persona`, `/mis-datos` | ✅ Implementado — `.scratch/preferencia-notificacion-matriz/` |
 | 14 | [Paquetes — doble escaneo de guía al entregar](#grupo-14--paquetes--doble-escaneo-de-guía-al-entregar) | `/paquetes` (modal Entregar) | 🟢 Listo para `/to-spec` |
 | 15 | [Paquetes — fotos múltiples + S3 real](#grupo-15--paquetes--fotos-múltiples--s3-real) | `/paquetes` (modal Recibir), `foto_storage.py` | 🟡 Código listo para spec; despliegue real bloqueado por bucket/credenciales S3 (misma categoría que LIWA, Grupo 8) |
-| 16 | [Corregir — selección desde Ocupantes conocidos](#grupo-16--corregir--selección-desde-ocupantes-conocidos) | `/paquetes` (modal Corregir) | 🟢 Listo para `/to-spec` |
+| 16 | [Corregir — selección desde Ocupantes conocidos](#grupo-16--corregir--selección-desde-ocupantes-conocidos) | `/paquetes` (modal Corregir) | ✅ Implementado — `.scratch/corregir-ocupantes-conocidos/` |
 | 17 | [Residentes — búsqueda extendida](#grupo-17--residentes--búsqueda-extendida) | `/residentes` | 🟢 Listo para `/to-spec` |
 | 18 | [Personal — CRUD completo de cuentas de staff](#grupo-18--personal--crud-completo-de-cuentas-de-staff) | `/administracion/personal` | 🟢 Listo para `/to-spec` |
 | 19 | [Notificaciones — plantilla Anunciado dividida Cliente/Staff](#grupo-19--notificaciones--plantilla-anunciado-dividida-clientestaff) | `/administracion/notificaciones` | 🟢 Listo para `/to-spec` |
