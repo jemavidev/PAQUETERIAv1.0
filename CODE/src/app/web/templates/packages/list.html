@@ -163,8 +163,8 @@
             {% endfor %}
           </select>
 
-          <label for="foto-{{ p.id }}">Foto (opcional)</label>
-          <input type="file" id="foto-{{ p.id }}" name="foto" accept="image/*">
+          <label for="foto-{{ p.id }}">Fotos (opcional, hasta 3 ángulos)</label>
+          <input type="file" id="foto-{{ p.id }}" name="fotos" accept="image/*" multiple>
 
           <button type="submit" class="btn btn-primary">Confirmar recibo</button>
         </form>

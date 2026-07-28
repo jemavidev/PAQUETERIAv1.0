@@ -209,7 +209,7 @@ async def receive_action(
     guide_number: str = Form(None),
     package_type: str = Form(None),
     package_condition: str = Form(None),
-    foto: UploadFile = File(None),
+    fotos: list[UploadFile] = File(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     guia = (guide_number or "").strip() or None
@@ -219,10 +219,20 @@ async def receive_action(
         receive(db, paquete, staff, guia, package_type=tipo, package_condition=condicion)
     except TransicionInvalida as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
-    if foto is not None and foto.filename:
-        contenido = await foto.read()
-        if contenido:
-            agregar_foto(db, paquete, storage, foto.filename, contenido)
+    # Hasta 3 fotos (Grupo 15, Ronda 2) -- el tope real vive en el servicio
+    # (agregar_foto); si alguien manda más de 3 en un POST armado a mano, se
+    # guardan las primeras 3 y las demás se ignoran (recibir NUNCA falla por
+    # esto, no es un campo crítico).
+    for archivo in fotos or []:
+        if not archivo.filename:
+            continue
+        contenido = await archivo.read()
+        if not contenido:
+            continue
+        try:
+            agregar_foto(db, paquete, storage, archivo.filename, contenido)
+        except ValueError:
+            break
     notificar_evento(db, paquete, EstadoPaquete.RECIBIDO, sender)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 

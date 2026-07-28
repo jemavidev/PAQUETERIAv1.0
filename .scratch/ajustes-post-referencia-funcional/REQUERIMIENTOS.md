@@ -32,7 +32,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 
 **Roadmap Ronda 1 completo — los 9 grupos implementados. 310/310 tests pasan.** LIWA implementado y desplegado con credenciales reales; verificación en vivo bloqueada por whitelist de IP pendiente del lado de LIWA (ver Grupo 8) — único pendiente externo de la Ronda 1. Header/footer (Grupo 9, `.scratch/header-footer/`): los 3 tickets implementados y revisados, footer visible también en desktop a pedido posterior del usuario.
 
-**Ronda 2** (este documento continúa más abajo, Grupos 10-19): fuente = comentarios `**NOTA:**` que el usuario dejó directamente dentro de `GUIA_USUARIO_FINAL.md` al revisar el estado real desplegado. Mismo formato, misma disciplina — cada grupo pasa a 🟢 solo cuando sus preguntas están resueltas.
+**Ronda 2 — los 10 grupos implementados. 394/394 tests pasan.** (Grupos 10-19, este documento continúa más abajo): fuente = comentarios `**NOTA:**` que el usuario dejó directamente dentro de `GUIA_USUARIO_FINAL.md` al revisar el estado real desplegado. Único pendiente: Grupo 15 (fotos + S3) tiene el código 100% listo pero el despliegue real espera que el usuario confirme bucket/credenciales de AWS S3 — misma categoría que el whitelist de IP de LIWA en la Ronda 1.
 
 | # | Grupo | Toca | Estado |
 |---|---|---|---|
@@ -41,7 +41,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 | 12 | [Mis Datos — eliminar documento, bloquear Conjunto](#grupo-12--mis-datos--eliminar-documento-bloquear-conjunto) | `/mis-datos`, `/residentes/{id}` | ✅ Implementado — `.scratch/mis-datos-documento-conjunto/` |
 | 13 | [Preferencias de notificación por canal × evento](#grupo-13--preferencias-de-notificación-por-canal--evento) | dominio `Persona`, `/mis-datos` | ✅ Implementado — `.scratch/preferencia-notificacion-matriz/` |
 | 14 | [Paquetes — doble escaneo de guía al entregar](#grupo-14--paquetes--doble-escaneo-de-guía-al-entregar) | `/paquetes` (modal Entregar) | ✅ Implementado — `.scratch/doble-escaneo-guia-entregar/` |
-| 15 | [Paquetes — fotos múltiples + S3 real](#grupo-15--paquetes--fotos-múltiples--s3-real) | `/paquetes` (modal Recibir), `foto_storage.py` | 🟡 Código listo para spec; despliegue real bloqueado por bucket/credenciales S3 (misma categoría que LIWA, Grupo 8) |
+| 15 | [Paquetes — fotos múltiples + S3 real](#grupo-15--paquetes--fotos-múltiples--s3-real) | `/paquetes` (modal Recibir), `foto_storage.py` | 🟡 Código implementado — `.scratch/fotos-multiples-s3/`. Despliegue real bloqueado por bucket/credenciales S3 (misma categoría que LIWA, Grupo 8) |
 | 16 | [Corregir — selección desde Ocupantes conocidos](#grupo-16--corregir--selección-desde-ocupantes-conocidos) | `/paquetes` (modal Corregir) | ✅ Implementado — `.scratch/corregir-ocupantes-conocidos/` |
 | 17 | [Residentes — búsqueda extendida](#grupo-17--residentes--búsqueda-extendida) | `/residentes` | ✅ Implementado — `.scratch/residentes-busqueda-extendida/` |
 | 18 | [Personal — CRUD completo de cuentas de staff](#grupo-18--personal--crud-completo-de-cuentas-de-staff) | `/administracion/personal` | ✅ Implementado — `.scratch/personal-crud-staff/` |

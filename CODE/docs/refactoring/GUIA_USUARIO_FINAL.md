@@ -149,13 +149,14 @@ Cada paquete **Anunciado** o **Recibido** tiene botones de acción que abren una
 - **Recibir** (solo si está Anunciado) — registra que el paquete llegó físicamente:
   - **Guía del transportador** — opcional, a mano o tocando **"📷 Escanear con cámara"** para leer el código de barras/QR automáticamente. Si la cámara falla, se escribe a mano — nunca bloquea el flujo.
   - **Tipo de paquete** (Normal / Extra dimensionado) y **Condición** (Bueno / Abierto / Regular) — ambos opcionales.
-  - **Foto** — opcional, se puede adjuntar una imagen del paquete recibido; queda visible después en la línea de tiempo de `/consultar`.
+  - **Fotos** — opcionales, hasta **3 en distintos ángulos** por paquete; quedan visibles después en la línea de tiempo de `/consultar`, para identificarlo entre todos los que haya en portería.
 - **Corregir** (solo si está Anunciado) — ajusta el destinatario antes de recibirlo, por si el residente anunció con un dato incompleto o equivocado. Ya **no se escribe a mano**: si el paquete tiene un Apartamento resuelto, el staff elige de una lista los nombres ya conocidos de esa unidad (los Ocupantes registrados vía `/announce`, más quien anunció) — nunca se puede tipear un nombre nuevo ahí, solo seleccionar uno ya validado por el propio cliente. Solo si el paquete no tiene ningún Apartamento asociado (y por lo tanto no hay ninguna lista posible) se mantiene el campo de texto libre como antes. Deja de estar disponible una vez el paquete pasa a Recibido.
 - **Entregar** (solo si está Recibido) — confirma que el residente se lo llevó. Muestra a quién se entrega como recordatorio visual. Si el paquete tiene guía registrada, aparece el mismo botón de escanear que en Recibir — es una **doble confirmación opcional**: si la guía escaneada coincide con la ya guardada, se ve un ✅; si no coincide, un aviso ⚠️, pero **nunca bloquea la entrega**.
 - **Cancelar** (Anunciado o Recibido) — pide un **motivo obligatorio** (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Es **irreversible**.
 
 Cada acción queda registrada con quién del staff la hizo y cuándo — nunca de forma anónima. Si el nombre anunciado no coincide con el nombre ya registrado para ese teléfono, aparece una advertencia visual en la tarjeta del paquete (no bloquea nada, es solo un aviso).
-**NOTA:** La idea de las fotos es que se puedan capturar hasta 3 imágenes de cada paquete, en diferentes ángulos, esto permitirá tener una confirmación de como se ve el paquete y su estado, así poder identificarlo entro todos los que existan (actualmente ya hay una implementacion de las imágenes y están guardadas en AWS S3, analiza el como se hace en la solución corriendo en producción).
+
+> Las fotos se guardan en el servidor mientras no se conecte un bucket de AWS S3 real — el código ya soporta ambos (`LocalFotoStorage`/`S3FotoStorage`, se activa solo con la variable de entorno del bucket), pendiente de que se confirme cuál bucket usar.
 
 ### 4.3 Declarar unidad y anunciar — `/announce`
 

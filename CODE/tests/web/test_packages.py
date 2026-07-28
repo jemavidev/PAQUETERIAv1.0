@@ -96,7 +96,7 @@ def test_recibir_con_tipo_condicion_y_foto(client):
     r = client.post(
         f"/paquetes/{p.id}/recibir",
         data={"package_type": "EXTRA_DIMENSIONADO", "package_condition": "ABIERTO"},
-        files={"foto": ("recibo.jpg", b"contenido-de-prueba", "image/jpeg")},
+        files={"fotos": ("recibo.jpg", b"contenido-de-prueba", "image/jpeg")},
         follow_redirects=False,
     )
     assert r.status_code == 303
@@ -111,6 +111,54 @@ def test_recibir_con_tipo_condicion_y_foto(client):
     fotos = client.db.query(PaqueteFoto).filter(PaqueteFoto.paquete_id == p.id).all()
     assert len(fotos) == 1
     assert fotos[0].url.startswith("/static/fotos-recibidas/")
+
+
+# --------------------------------------------------------------------------- #
+# Grupo 15 (Ronda 2) — hasta 3 fotos por paquete.
+# --------------------------------------------------------------------------- #
+def test_recibir_con_3_fotos_las_guarda_todas(client):
+    from app.domain.paquete_foto import PaqueteFoto
+
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        files=[
+            ("fotos", ("a.jpg", b"foto-a", "image/jpeg")),
+            ("fotos", ("b.jpg", b"foto-b", "image/jpeg")),
+            ("fotos", ("c.jpg", b"foto-c", "image/jpeg")),
+        ],
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    fotos = client.db.query(PaqueteFoto).filter(PaqueteFoto.paquete_id == p.id).all()
+    assert len(fotos) == 3
+
+
+def test_recibir_con_4_fotos_solo_guarda_3_y_no_falla(client):
+    from app.domain.paquete_foto import PaqueteFoto
+
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        files=[
+            ("fotos", ("a.jpg", b"foto-a", "image/jpeg")),
+            ("fotos", ("b.jpg", b"foto-b", "image/jpeg")),
+            ("fotos", ("c.jpg", b"foto-c", "image/jpeg")),
+            ("fotos", ("d.jpg", b"foto-d", "image/jpeg")),
+        ],
+        follow_redirects=False,
+    )
+    assert r.status_code == 303  # recibir nunca falla por exceso de fotos
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
+    fotos = client.db.query(PaqueteFoto).filter(PaqueteFoto.paquete_id == p.id).all()
+    assert len(fotos) == 3
 
 
 def test_recibir_sin_tipo_ni_condicion_usa_defaults(client):
