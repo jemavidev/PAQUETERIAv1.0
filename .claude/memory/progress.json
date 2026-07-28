@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T14:57:04-0500",
+  "lastUpdated": "2026-07-28T15:15:57-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -2017,28 +2017,52 @@
       },
       "outcome": "_buscar_residentes en customers_manage.py: une con OR telefono/nombre de Persona (igual que antes), torre/apartamento via join a Apartamento, segundo_contacto (nombre o telefono, mismo campo texto), y nombre de cualquier Ocupante (con o sin telefono propio) resolviendo al principal de esa unidad. Resultados unicos por Persona.id. 6 tests nuevos. 342/342 tests pasan. Commit ec32b7a.",
       "description": "_buscar_residentes en customers_manage.py: une con OR telefono/nombre de Persona (igual que antes), torre/apartamento via join a Apartamento, segundo_contacto (nombre o telefono, mismo campo texto), y nombre de cualquier Ocupante (con o sin telefono propio) resolviendo al principal de esa unidad. Resultados unicos por Persona.id. 6 tests nuevos. 342/342 tests pasan. Commit ec32b7a."
+    },
+    {
+      "id": "TASK-89",
+      "title": "Grupo 10 (Ronda 2): header unificado -- login combinado, Mis paquetes, logout unico",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "high",
+      "date": "2026-07-28T15:15:57-0500",
+      "createdAt": "2026-07-28T15:15:57-0500",
+      "updatedAt": "2026-07-28T15:15:57-0500",
+      "duration": 70,
+      "tags": [
+        "header",
+        "login",
+        "logout",
+        "footer",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Nueva ruta /entrar (toggle CSS-only Cliente/Staff, sin JS, envuelve /otp e /ingresar sin tocarlos). Nav staff renombrado (Clientes) y reducido (Declarar unidad sale del nav de escritorio, queda en footer movil de staff). Nueva ruta /mis-paquetes (historial via announced_by_phone OR recipient_phone). Nueva ruta POST /salir-todo (pop de las 3 claves de sesion a la vez, header ahora un solo boton de logout). Footer movil uniforme por audiencia: nueva ruta /ayuda (FAQ estatica) y Whatsapp condicional (WHATSAPP_SOPORTE_NUMERO, funcion expuesta a Jinja para evaluarse por request). Verificado visualmente con Playwright+Chrome real (toggle, nav staff, logout, footer). Reescritos 5 tests de test_layout.py que dependian de /otp,/ingresar,accion de logout individual. 357/357 tests pasan. Commit 7fb0876.",
+      "description": "Nueva ruta /entrar (toggle CSS-only Cliente/Staff, sin JS, envuelve /otp e /ingresar sin tocarlos). Nav staff renombrado (Clientes) y reducido (Declarar unidad sale del nav de escritorio, queda en footer movil de staff). Nueva ruta /mis-paquetes (historial via announced_by_phone OR recipient_phone). Nueva ruta POST /salir-todo (pop de las 3 claves de sesion a la vez, header ahora un solo boton de logout). Footer movil uniforme por audiencia: nueva ruta /ayuda (FAQ estatica) y Whatsapp condicional (WHATSAPP_SOPORTE_NUMERO, funcion expuesta a Jinja para evaluarse por request). Verificado visualmente con Playwright+Chrome real (toggle, nav staff, logout, footer). Reescritos 5 tests de test_layout.py que dependian de /otp,/ingresar,accion de logout individual. 357/357 tests pasan. Commit 7fb0876."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 88,
+    "totalTasks": 89,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 88,
+      "completed": 89,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
-      "high": 67,
+      "high": 68,
       "medium": 18,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 7,
+      "coder": 8,
       "agentx": 48
     },
     "completionRate": 100,
@@ -2057,9 +2081,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 88,
+    "totalEntries": 89,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T14:57:04-0500",
+    "lastUpdated": "2026-07-28T15:15:57-0500",
     "tokensByAgent": {}
   }
 }
