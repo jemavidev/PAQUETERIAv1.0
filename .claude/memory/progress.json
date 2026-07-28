@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T15:15:57-0500",
+  "lastUpdated": "2026-07-28T15:25:15-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -2041,28 +2041,51 @@
       },
       "outcome": "Nueva ruta /entrar (toggle CSS-only Cliente/Staff, sin JS, envuelve /otp e /ingresar sin tocarlos). Nav staff renombrado (Clientes) y reducido (Declarar unidad sale del nav de escritorio, queda en footer movil de staff). Nueva ruta /mis-paquetes (historial via announced_by_phone OR recipient_phone). Nueva ruta POST /salir-todo (pop de las 3 claves de sesion a la vez, header ahora un solo boton de logout). Footer movil uniforme por audiencia: nueva ruta /ayuda (FAQ estatica) y Whatsapp condicional (WHATSAPP_SOPORTE_NUMERO, funcion expuesta a Jinja para evaluarse por request). Verificado visualmente con Playwright+Chrome real (toggle, nav staff, logout, footer). Reescritos 5 tests de test_layout.py que dependian de /otp,/ingresar,accion de logout individual. 357/357 tests pasan. Commit 7fb0876.",
       "description": "Nueva ruta /entrar (toggle CSS-only Cliente/Staff, sin JS, envuelve /otp e /ingresar sin tocarlos). Nav staff renombrado (Clientes) y reducido (Declarar unidad sale del nav de escritorio, queda en footer movil de staff). Nueva ruta /mis-paquetes (historial via announced_by_phone OR recipient_phone). Nueva ruta POST /salir-todo (pop de las 3 claves de sesion a la vez, header ahora un solo boton de logout). Footer movil uniforme por audiencia: nueva ruta /ayuda (FAQ estatica) y Whatsapp condicional (WHATSAPP_SOPORTE_NUMERO, funcion expuesta a Jinja para evaluarse por request). Verificado visualmente con Playwright+Chrome real (toggle, nav staff, logout, footer). Reescritos 5 tests de test_layout.py que dependian de /otp,/ingresar,accion de logout individual. 357/357 tests pasan. Commit 7fb0876."
+    },
+    {
+      "id": "TASK-90",
+      "title": "Grupo 18 (Ronda 2): CRUD completo de cuentas de staff",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T15:25:15-0500",
+      "createdAt": "2026-07-28T15:25:15-0500",
+      "updatedAt": "2026-07-28T15:25:15-0500",
+      "duration": 45,
+      "tags": [
+        "personal",
+        "staff",
+        "crud",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Nueva columna usuarios.activo (migracion 0015). staff_service gano listar_staff/editar_staff/resetear_password/set_activo_staff, todas ADMIN-only, con auto-proteccion (no degradarse/desactivarse a si mismo). Desactivar nunca borra (FK de auditoria del Grupo 11 dependen de la fila). /administracion/personal gano tabla de gestion con modales reutilizando packages/_modal.html. 20 tests nuevos (dominio + web). 377/377 tests pasan. Commit cf22d55.",
+      "description": "Nueva columna usuarios.activo (migracion 0015). staff_service gano listar_staff/editar_staff/resetear_password/set_activo_staff, todas ADMIN-only, con auto-proteccion (no degradarse/desactivarse a si mismo). Desactivar nunca borra (FK de auditoria del Grupo 11 dependen de la fila). /administracion/personal gano tabla de gestion con modales reutilizando packages/_modal.html. 20 tests nuevos (dominio + web). 377/377 tests pasan. Commit cf22d55."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 89,
+    "totalTasks": 90,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 89,
+      "completed": 90,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 68,
-      "medium": 18,
+      "medium": 19,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 8,
+      "coder": 9,
       "agentx": 48
     },
     "completionRate": 100,
@@ -2081,9 +2104,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 89,
+    "totalEntries": 90,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T15:15:57-0500",
+    "lastUpdated": "2026-07-28T15:25:15-0500",
     "tokensByAgent": {}
   }
 }
