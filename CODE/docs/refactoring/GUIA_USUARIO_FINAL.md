@@ -24,6 +24,18 @@ Si ya conocías una versión anterior de esta guía, esto es lo que cambió y va
 | **Código OTP de 2 dígitos** (antes 6), válido 5 minutos | `/otp` |
 | **SMS reales vía LIWA** (antes solo quedaban en consola) | Cualquier notificación — ver nota en §6 |
 
+**Ronda 2 (en curso)** — ajustes adicionales sobre lo ya desplegado:
+
+| Cambio | Dónde probarlo |
+|---|---|
+| **Quién hizo cada acción, visible** — anunció/recibió/entregó/canceló | `/consultar`, `/paquetes` |
+| **Ya no se pide "documento"** en ningún formulario | `/mis-datos`, `/residentes/{id}` |
+| **El Conjunto ya no lo cambia el residente** — solo Torre y Apartamento, y solo si el staff ya le asignó un Conjunto | `/mis-datos` |
+| **Notificaciones por Canal × Momento** (tabla, no un solo interruptor) — hoy solo SMS envía de verdad | `/mis-datos` |
+| **"Corregir" por selección**, ya no texto libre — se elige un nombre ya conocido de la lista | `/paquetes`, botón "Corregir" |
+| **Búsqueda de residentes ampliada** — torre, apartamento, segundo contacto, Ocupantes | `/residentes` |
+| **Login único** con pestañas Cliente/Staff, "Mis paquetes", y un solo botón de "Cerrar sesión" | `/entrar`, header |
+
 ---
 
 ## 1. ¿Qué es PAQUETEX?
@@ -47,24 +59,29 @@ Diseñado **mobile-first**: la mayoría de la gente lo va a usar desde el celula
 
 Toda pantalla comparte el mismo encabezado: el logo + "PAQUETEX" a la izquierda (haz clic para volver a tu pantalla principal), y a la derecha los enlaces que te corresponden **según quién eres en ese momento**:
 
-| Quién sos | Qué ves en el header |
+| Quién sos | Qué ves en el header (escritorio) |
 |---|---|
-| Nadie ha iniciado sesión | Anunciar · Consultar · botón "Iniciar sesión" (residente) · botón "Staff" |
-| Residente con sesión verificada | Anunciar · Consultar · Mis datos · "Cerrar sesión" |
-| Staff (`OPERADOR`) | Paquetes · Declarar unidad · Residentes · Consultar · "Cerrar sesión" |
+| Nadie ha iniciado sesión | Anunciar · Consultar · botón único "Iniciar sesión" |
+| Residente con sesión verificada | Anunciar · Consultar · Mis paquetes · Mis datos · "Cerrar sesión" |
+| Staff (`OPERADOR`) | Paquetes · Clientes · Consultar · "Cerrar sesión" |
 | Staff (`ADMIN`) | Lo mismo que `OPERADOR`, más Personal · Notificaciones |
 
-En **celular**, los mismos enlaces (los 2-3 más usados) se repiten como una barra fija abajo, para no tener que estirar el pulgar hasta arriba.
+El botón "Iniciar sesión" lleva a `/entrar`, una sola pantalla con dos pestañas — "Soy residente" (tu teléfono, arranca el código por SMS) y "Soy del staff" (email + contraseña) — así que ya no hay que elegir de antemano cuál botón tocar.
 
-**Caso particular:** si en el mismo navegador tenés sesión de residente **y** de staff a la vez (por ejemplo, un portero que también anunció un paquete propio), el header muestra **ambos** conjuntos de enlaces juntos, cada uno con su propio botón de cerrar sesión — cerrar una sesión nunca cierra la otra.
+"Mis paquetes" (nuevo) muestra tu propio historial: los paquetes que anunciaste vos y los que otros anunciaron a tu nombre, cada uno con enlace a su detalle en Consultar.
+
+En **celular**, el nav de arriba se reemplaza por una barra fija abajo con los 4 accesos más usados de tu audiencia — igual estés con sesión o sin ella:
+
+| Audiencia | Barra móvil |
+|---|---|
+| Residente (con o sin sesión) | Anunciar · Buscar · Ayuda · Whatsapp |
+| Staff | Anunciar · Buscar · Paquetes · Clientes |
+
+"Ayuda" lleva a las preguntas frecuentes (§7). "Whatsapp" solo aparece si el conjunto tiene un número de soporte configurado. "Declarar unidad" (el formulario completo de `/announce`) por ahora solo se alcanza desde ese acceso "Anunciar" del footer de staff — todavía no tiene un botón propio en el nav de escritorio, eso queda para más adelante.
+
+**Caso particular:** si en el mismo navegador tenés sesión de residente **y** de staff a la vez (por ejemplo, un portero que también anunció un paquete propio), el header muestra **ambos** conjuntos de enlaces de navegación juntos, pero con un **único** botón "Cerrar sesión" — al presionarlo se cierran las dos sesiones a la vez, no una por una.
 
 El enlace de la pantalla en la que estás siempre queda resaltado, para que sepas dónde estás parado.
-**NOTA:** Necesito que "Iniciar sesión" (residente) y el botón "Staff" sean el mismo, internamente deberías poder diferenciar entre uno y el otro por medio de una selección en un formulario unico que cambiara según el caso de (Cliente o Usuarios).
-Los Residente con sesión verificada deben tener una opción para ver sus paquetes, en teoría los paquetes que han manejado en el aplicativo, con enlace a cada uno de su historial, entonces quedaría algo como (Anunciar · Consultar · Mis paquetes · Mis datos · "Cerrar sesión").
-El menu para Staff (`OPERADOR`) deberia ser (Paquetes · Clientes · Consultar · "Cerrar sesión"), "Declarar unidad" lo incluiremos mas adelante en un boton, y su nombre deberia ser "Anunciar" y no "Declarar unidad".
-En la seccion de Staff (`ADMIN`), deberia ser igual a Staff (`OPERADOR`), mas "Personal · Notificaciones".
-Desde el celular deberían aparecer las opciones para clientes (Anunciar, Buscar, Ayuda y Whatsapp) y solo login en la parte del header, para Staff (Anunciar, Buscar, Paquetes y Clientes).
-Solo debe aparecer un solo botón de cerrar sección, al presionarlo se cerraran todas las secciones abiertas en el navegador de paquetex, ya sea cliente o staff.
 
 ---
 
@@ -212,8 +229,7 @@ El historial de paquetes se conserva siempre (es la trazabilidad del conjunto), 
 No — el residente no puede editar un paquete ya anunciado. Debe pedirle al staff que use "Corregir" (§4.2), disponible mientras el paquete siga en estado Anunciado.
 
 **¿Por qué a veces veo enlaces de residente Y de staff al mismo tiempo en el header?**
-Porque tenés las dos sesiones abiertas a la vez en el mismo navegador (por ejemplo, entraste como staff y también anunciaste un paquete propio). Son independientes: cerrar una no cierra la otra.
-**NOTA:** Esto deberia quedar corregido con mis comentarios anteriores.
+Porque tenés las dos sesiones abiertas a la vez en el mismo navegador (por ejemplo, entraste como staff y también anunciaste un paquete propio). El botón "Cerrar sesión" (uno solo) cierra ambas de una vez.
 
 ---
 
@@ -224,14 +240,18 @@ Porque tenés las dos sesiones abiertas a la vez en el mismo navegador (por ejem
 | `/` | Cualquiera | Redirige a `/anunciar` |
 | `/anunciar` | Residente (público) | Anunciar un paquete nuevo (nombre + teléfono) |
 | `/consultar` | Residente (público) | Ver el estado de un paquete por código de acceso o guía |
+| `/entrar` | Cualquiera (público) | Login unificado — pestañas "Soy residente" / "Soy del staff" |
+| `/ayuda` | Cualquiera (público) | Preguntas frecuentes |
 | `/otp` | Residente | Verificar el teléfono para entrar (código de 2 dígitos, 5 min) |
-| `/mis-datos` | Residente (verificado) | Ver/editar sus propios datos, apartamento y notificaciones |
+| `/mis-datos` | Residente (verificado) | Ver/editar sus propios datos, torre/apartamento y notificaciones |
+| `/mis-paquetes` | Residente (verificado) | Su propio historial de paquetes (anunciados o a su nombre) |
 | `/ingresar` | Staff | Iniciar sesión (email + contraseña) |
-| `/mi-sesion` | Staff | Ver su propia sesión y cerrar sesión |
+| `/mi-sesion` | Staff | Ver su propia sesión |
+| `/salir-todo` | Cualquiera con sesión | Cierra TODAS las sesiones abiertas (residente y/o staff) a la vez |
 | `/paquetes` | Staff | Recibir, corregir, entregar, cancelar — con filtros y paginación |
 | `/announce` | Staff | Declarar unidad + Ocupantes + anunciar, en un solo flujo |
 | `/residentes` | Staff | Buscar y editar clientes, ver sus Ocupantes; eliminar (solo ADMIN) |
 | `/administracion/personal` | Staff (solo ADMIN) | Crear cuentas de staff |
 | `/administracion/notificaciones` | Staff (solo ADMIN) | Editar los textos de los SMS por evento/motivo |
 
-*(Nombres de ruta en español. Header y footer transversales — Grupo 9 del roadmap post-revisión funcional — implementados y verificados en staging.)*
+*(Nombres de ruta en español. Header y footer transversales — Grupo 9 de la Ronda 1 — implementados y verificados en staging; login unificado, "Mis paquetes" y logout único del Grupo 10 de la Ronda 2.)*

@@ -36,7 +36,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 
 | # | Grupo | Toca | Estado |
 |---|---|---|---|
-| 10 | [Header unificado — login combinado, menús, "Mis paquetes", logout único](#grupo-10--header-unificado--login-combinado-menús-mis-paquetes-logout-único) | `base.html`, nueva ruta `/entrar`, nueva ruta `/mis-paquetes` | 🟢 Listo para `/to-spec` |
+| 10 | [Header unificado — login combinado, menús, "Mis paquetes", logout único](#grupo-10--header-unificado--login-combinado-menús-mis-paquetes-logout-único) | `base.html`, nueva ruta `/entrar`, nueva ruta `/mis-paquetes` | ✅ Implementado — `.scratch/header-unificado-ronda2/` |
 | 11 | [Consultar — mostrar auditoría de actor por transición](#grupo-11--consultar--mostrar-auditoría-de-actor-por-transición) | `/consultar`, `/paquetes` | ✅ Implementado — `.scratch/consultar-auditoria-actor/` |
 | 12 | [Mis Datos — eliminar documento, bloquear Conjunto](#grupo-12--mis-datos--eliminar-documento-bloquear-conjunto) | `/mis-datos`, `/residentes/{id}` | ✅ Implementado — `.scratch/mis-datos-documento-conjunto/` |
 | 13 | [Preferencias de notificación por canal × evento](#grupo-13--preferencias-de-notificación-por-canal--evento) | dominio `Persona`, `/mis-datos` | ✅ Implementado — `.scratch/preferencia-notificacion-matriz/` |
