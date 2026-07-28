@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T14:43:44-0500",
+  "lastUpdated": "2026-07-28T14:52:04-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1972,28 +1972,51 @@
       },
       "outcome": "Nueva tabla persona_preferencia_notificacion (migracion 0014, dispersa a proposito -- sin backfill, default por lectura). Reemplaza Persona.notificaciones_activas (se conserva la columna sin uso). notificar_evento ahora usa preferencia_activa(SMS, evento). /mis-datos gano matriz 4x4 de checkboxes (16 combinaciones). /residentes/{id} conserva su toggle simplificado, ahora actua sobre los 4 eventos a la vez via activar_canal_en_todos_los_eventos. Reescritos 3 tests que dependian del booleano viejo. 329/329 tests pasan. Commit 4ef25d8.",
       "description": "Nueva tabla persona_preferencia_notificacion (migracion 0014, dispersa a proposito -- sin backfill, default por lectura). Reemplaza Persona.notificaciones_activas (se conserva la columna sin uso). notificar_evento ahora usa preferencia_activa(SMS, evento). /mis-datos gano matriz 4x4 de checkboxes (16 combinaciones). /residentes/{id} conserva su toggle simplificado, ahora actua sobre los 4 eventos a la vez via activar_canal_en_todos_los_eventos. Reescritos 3 tests que dependian del booleano viejo. 329/329 tests pasan. Commit 4ef25d8."
+    },
+    {
+      "id": "TASK-87",
+      "title": "Grupo 16 (Ronda 2): Corregir por seleccion de Ocupantes conocidos",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T14:52:04-0500",
+      "createdAt": "2026-07-28T14:52:04-0500",
+      "updatedAt": "2026-07-28T14:52:04-0500",
+      "duration": 40,
+      "tags": [
+        "corregir",
+        "ocupantes",
+        "paquetes",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Nuevo paquete_correccion_service.candidatos_correccion (Ocupantes del apartamento del snapshot + Anunciante, unicos por nombre+telefono). Nuevo apartamento_service.buscar_apartamento_por_terna (solo lectura). Modal Corregir: select cuando hay candidatos, texto libre solo si no hay ninguno. Ruta recalcula candidatos server-side, valida indice -- restriccion real no solo de UI. Reescrito 1 test que pasaba texto libre y ahora debe seleccionar por indice (el anunciante siempre es candidato). 336/336 tests pasan. Commit ae85323.",
+      "description": "Nuevo paquete_correccion_service.candidatos_correccion (Ocupantes del apartamento del snapshot + Anunciante, unicos por nombre+telefono). Nuevo apartamento_service.buscar_apartamento_por_terna (solo lectura). Modal Corregir: select cuando hay candidatos, texto libre solo si no hay ninguno. Ruta recalcula candidatos server-side, valida indice -- restriccion real no solo de UI. Reescrito 1 test que pasaba texto libre y ahora debe seleccionar por indice (el anunciante siempre es candidato). 336/336 tests pasan. Commit ae85323."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 86,
+    "totalTasks": 87,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 86,
+      "completed": 87,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 67,
-      "medium": 16,
+      "medium": 17,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 5,
+      "coder": 6,
       "agentx": 48
     },
     "completionRate": 100,
@@ -2012,9 +2035,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 86,
+    "totalEntries": 87,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T14:43:44-0500",
+    "lastUpdated": "2026-07-28T14:52:04-0500",
     "tokensByAgent": {}
   }
 }
