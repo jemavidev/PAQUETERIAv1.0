@@ -119,6 +119,9 @@
       <div class="pkg-sub">
         {% if p.snapshot_apartamento %}{{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% else %}Sin apartamento{% endif %}
       </div>
+      {% if p.actor_ultima_accion %}
+      <div class="pkg-sub">Última acción por: {{ p.actor_ultima_accion }}</div>
+      {% endif %}
       {% if p.advertencia_nombre %}
       <div class="advertencia">⚠️ El nombre anunciado no coincide con el registrado para este teléfono.</div>
       {% endif %}

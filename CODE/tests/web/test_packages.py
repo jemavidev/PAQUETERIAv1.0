@@ -503,3 +503,48 @@ def test_paginacion_con_mas_de_20_paquetes(client):
     r2 = client.get("/paquetes", params={"pagina": 2})
     assert r2.status_code == 200
     assert "Cliente0" in r2.text  # el más viejo, cae en la página 2
+
+
+# --------------------------------------------------------------------------- #
+# Grupo 11 (Ronda 2) — actor de la última acción visible en cada tarjeta.
+# --------------------------------------------------------------------------- #
+def test_tarjeta_de_anunciado_muestra_el_actor_del_anuncio(client):
+    staff = _login_staff(client)
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+        staff_actor=staff,
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert staff.nombre in r.text
+
+
+def test_tarjeta_de_cancelado_muestra_el_actor_de_la_cancelacion_no_el_de_recepcion(client):
+    staff_recibe = _login_staff(client, email="recibe@club.com")
+    p = _anunciar(client)
+    _recibir(client, staff_recibe, p)
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    from app.domain.paquete_lifecycle import cancel as dom_cancel
+    from app.domain.staff_service import create_staff
+    from app.domain.usuario import RolUsuario
+
+    staff_cancela = create_staff(
+        client.db, staff_recibe, "cancela@club.com", "Cancela", _PW, RolUsuario.OPERADOR
+    )
+    client.db.commit()
+    dom_cancel(client.db, p2, staff_cancela, "NO_RECLAMADO")
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    idx = r.text.index(p2.recipient_name)
+    tarjeta = r.text[idx : idx + 800]
+    assert staff_cancela.nombre in tarjeta
+    assert staff_recibe.nombre not in tarjeta

@@ -15,6 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.domain.actor_service import nombre_usuario
 from app.domain.foto_storage import FotoStorage
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import notificar_evento
@@ -50,6 +51,25 @@ def _nombre_no_coincide(db: Session, paquete: Paquete) -> bool:
     if persona is None or not persona.nombre:
         return False
     return persona.nombre.strip().lower() != (paquete.recipient_name or "").strip().lower()
+
+
+def _actor_ultima_accion(db: Session, paquete: Paquete) -> str | None:
+    """Quién hizo la transición más avanzada que ya ocurrió (Grupo 11, Ronda
+    2) — Cancelado y Entregado son mutuamente excluyentes (ambos terminales),
+    por eso el orden de prioridad alcanza para desambiguar."""
+    for usuario_id in (
+        paquete.cancelled_by_usuario_id,
+        paquete.delivered_by_usuario_id,
+        paquete.received_by_usuario_id,
+    ):
+        nombre = nombre_usuario(db, usuario_id)
+        if nombre is not None:
+            return nombre
+    nombre_staff_anuncio = nombre_usuario(db, paquete.announced_by_usuario_id)
+    if nombre_staff_anuncio is not None:
+        return nombre_staff_anuncio
+    persona = db.get(Persona, paquete.announced_by_persona_id)
+    return persona.nombre if persona and persona.nombre else None
 
 
 def _listar(
@@ -102,8 +122,9 @@ def _listar(
         .all()
     )
     for p in paquetes:
-        # Atributo transitorio (no persistido), solo para la plantilla.
+        # Atributos transitorios (no persistidos), solo para la plantilla.
         p.advertencia_nombre = _nombre_no_coincide(db, p)
+        p.actor_ultima_accion = _actor_ultima_accion(db, p)
 
     return paquetes, pagina, total_paginas
 
