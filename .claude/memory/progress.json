@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T14:52:04-0500",
+  "lastUpdated": "2026-07-28T14:57:04-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -1995,28 +1995,50 @@
       },
       "outcome": "Nuevo paquete_correccion_service.candidatos_correccion (Ocupantes del apartamento del snapshot + Anunciante, unicos por nombre+telefono). Nuevo apartamento_service.buscar_apartamento_por_terna (solo lectura). Modal Corregir: select cuando hay candidatos, texto libre solo si no hay ninguno. Ruta recalcula candidatos server-side, valida indice -- restriccion real no solo de UI. Reescrito 1 test que pasaba texto libre y ahora debe seleccionar por indice (el anunciante siempre es candidato). 336/336 tests pasan. Commit ae85323.",
       "description": "Nuevo paquete_correccion_service.candidatos_correccion (Ocupantes del apartamento del snapshot + Anunciante, unicos por nombre+telefono). Nuevo apartamento_service.buscar_apartamento_por_terna (solo lectura). Modal Corregir: select cuando hay candidatos, texto libre solo si no hay ninguno. Ruta recalcula candidatos server-side, valida indice -- restriccion real no solo de UI. Reescrito 1 test que pasaba texto libre y ahora debe seleccionar por indice (el anunciante siempre es candidato). 336/336 tests pasan. Commit ae85323."
+    },
+    {
+      "id": "TASK-88",
+      "title": "Grupo 17 (Ronda 2): busqueda extendida de residentes",
+      "status": "completed",
+      "agent": "coder",
+      "priority": "medium",
+      "date": "2026-07-28T14:57:04-0500",
+      "createdAt": "2026-07-28T14:57:04-0500",
+      "updatedAt": "2026-07-28T14:57:04-0500",
+      "duration": 25,
+      "tags": [
+        "residentes",
+        "busqueda",
+        "ronda-2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "_buscar_residentes en customers_manage.py: une con OR telefono/nombre de Persona (igual que antes), torre/apartamento via join a Apartamento, segundo_contacto (nombre o telefono, mismo campo texto), y nombre de cualquier Ocupante (con o sin telefono propio) resolviendo al principal de esa unidad. Resultados unicos por Persona.id. 6 tests nuevos. 342/342 tests pasan. Commit ec32b7a.",
+      "description": "_buscar_residentes en customers_manage.py: une con OR telefono/nombre de Persona (igual que antes), torre/apartamento via join a Apartamento, segundo_contacto (nombre o telefono, mismo campo texto), y nombre de cualquier Ocupante (con o sin telefono propio) resolviendo al principal de esa unidad. Resultados unicos por Persona.id. 6 tests nuevos. 342/342 tests pasan. Commit ec32b7a."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 87,
+    "totalTasks": 88,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 87,
+      "completed": 88,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 67,
-      "medium": 17,
+      "medium": 18,
       "low": 3
     },
     "byAgent": {
       "architect": 31,
       "devops": 2,
-      "coder": 6,
+      "coder": 7,
       "agentx": 48
     },
     "completionRate": 100,
@@ -2035,9 +2057,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 87,
+    "totalEntries": 88,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T14:52:04-0500",
+    "lastUpdated": "2026-07-28T14:57:04-0500",
     "tokensByAgent": {}
   }
 }
