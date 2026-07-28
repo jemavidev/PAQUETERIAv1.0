@@ -15,7 +15,12 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.domain.notificacion_service import guardar_plantilla, obtener_texto_actual
+from app.domain.notificacion_service import (
+    ORIGEN_ANUNCIO_CLIENTE,
+    ORIGEN_ANUNCIO_STAFF,
+    guardar_plantilla,
+    obtener_texto_actual,
+)
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion
 from app.domain.staff_service import (
     create_staff,
@@ -32,7 +37,7 @@ from ..templating import templates
 
 router = APIRouter()
 
-_EVENTOS_SIN_MOTIVO = (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO, EstadoPaquete.ENTREGADO)
+_EVENTOS_SIN_MOTIVO = (EstadoPaquete.RECIBIDO, EstadoPaquete.ENTREGADO)
 
 
 def _get_usuario_o_404(db: Session, usuario_id: str) -> Usuario:
@@ -213,10 +218,19 @@ def admin_staff_desactivar(
 
 
 def _filas_plantillas(db: Session):
-    """Una fila por evento (sin motivo), más una fila por cada
-    `MotivoCancelacion` para `CANCELADO` — con su texto vigente (personalizado
-    o el default)."""
+    """Una fila por `ANUNCIADO · Cliente` y `ANUNCIADO · Staff` (Grupo 19,
+    Ronda 2), una por cada evento sin motivo (RECIBIDO/ENTREGADO), y una por
+    cada `MotivoCancelacion` para `CANCELADO` — con su texto vigente
+    (personalizado o el default)."""
     filas = [
+        {
+            "evento": EstadoPaquete.ANUNCIADO,
+            "motivo": origen,
+            "texto": obtener_texto_actual(db, EstadoPaquete.ANUNCIADO, origen),
+        }
+        for origen in (ORIGEN_ANUNCIO_CLIENTE, ORIGEN_ANUNCIO_STAFF)
+    ]
+    filas += [
         {
             "evento": e,
             "motivo": None,

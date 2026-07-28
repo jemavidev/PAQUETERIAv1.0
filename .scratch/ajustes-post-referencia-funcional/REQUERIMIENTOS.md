@@ -45,7 +45,7 @@ varios otros grupos lo referencian (2, 5, 6) — conviene resolverlo primero.
 | 16 | [Corregir — selección desde Ocupantes conocidos](#grupo-16--corregir--selección-desde-ocupantes-conocidos) | `/paquetes` (modal Corregir) | ✅ Implementado — `.scratch/corregir-ocupantes-conocidos/` |
 | 17 | [Residentes — búsqueda extendida](#grupo-17--residentes--búsqueda-extendida) | `/residentes` | ✅ Implementado — `.scratch/residentes-busqueda-extendida/` |
 | 18 | [Personal — CRUD completo de cuentas de staff](#grupo-18--personal--crud-completo-de-cuentas-de-staff) | `/administracion/personal` | ✅ Implementado — `.scratch/personal-crud-staff/` |
-| 19 | [Notificaciones — plantilla Anunciado dividida Cliente/Staff](#grupo-19--notificaciones--plantilla-anunciado-dividida-clientestaff) | `/administracion/notificaciones` | 🟢 Listo para `/to-spec` |
+| 19 | [Notificaciones — plantilla Anunciado dividida Cliente/Staff](#grupo-19--notificaciones--plantilla-anunciado-dividida-clientestaff) | `/administracion/notificaciones` | ✅ Implementado — `.scratch/plantilla-anunciado-dividida/` |
 
 **Orden de ejecución sugerido (Ronda 2):** 11 → 12 → 13 (cluster residente: consultar + mis-datos, se tocan cerca en el tiempo) → 16 → 17 (cluster staff: paquetes/residentes) → 10 (header, cruza todas las pantallas — conviene que las rutas nuevas como `/mis-paquetes` ya existan antes de enlazarlas desde el nav) → 18 → 19 (pantallas de administración) → 14 → 15 (fotos, cierra con el ítem parcialmente bloqueado). No es una dependencia dura salvo 10 después de 11/13 (que crean rutas que el header enlaza) — es la secuencia que minimiza retrabajo.
 

@@ -183,8 +183,7 @@ Solo visible para `ADMIN`. Muestra una tabla con todo el personal existente (nom
 
 ### 4.6 Administración › Notificaciones — `/administracion/notificaciones`
 
-Solo visible para `ADMIN`. Una fila editable por cada evento que notifica (Anunciado, Recibido, Entregado) más una fila por cada motivo de cancelación (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Cada texto se puede personalizar; si no se toca, se usa el mensaje por defecto del sistema.
-Así mismo como existen motivos de cancelación, debería existir 2 tipos de anuncios (ANUNCIADO · Cliente y ANUNCIADO · Staff) con su mensaje para cada caso.
+Solo visible para `ADMIN`. Una fila editable por **Anunciado · Cliente** y otra por **Anunciado · Staff** (el mensaje cambia según si el propio residente anunció desde `/anunciar`, o el staff le anunció un paquete a su nombre desde `/announce`), más Recibido y Entregado, más una fila por cada motivo de cancelación (Anuncio erróneo, Devuelto al transportador, No reclamado, Otro). Cada texto se puede personalizar; si no se toca, se usa el mensaje por defecto del sistema.
 
 ---
 
