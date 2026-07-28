@@ -276,6 +276,49 @@ def test_el_modal_recibir_incluye_el_disparador_de_escaneo(client):
 
 
 # --------------------------------------------------------------------------- #
+# Grupo 14 (Ronda 2) — doble escaneo de guía al entregar (opcional, visual).
+# --------------------------------------------------------------------------- #
+def test_modal_entregar_incluye_escaneo_si_el_paquete_tiene_guia(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    dom_receive(client.db, p, staff, "1Z-ABC-9")
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    idx = r.text.index('id="modal-deliver-' + str(p.id) + '"')
+    modal_html = r.text[idx : idx + 1500]
+    assert "scan-btn" in modal_html
+    assert 'data-guia-esperada="1Z-ABC-9"' in modal_html
+
+
+def test_modal_entregar_sin_escaneo_si_el_paquete_no_tiene_guia(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    dom_receive(client.db, p, staff)  # sin guide_number
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    idx = r.text.index('id="modal-deliver-' + str(p.id) + '"')
+    modal_html = r.text[idx : idx + 800]
+    assert "data-guia-esperada" not in modal_html
+    assert "Confirmar entrega" in modal_html  # el resto del modal sigue ahí
+
+
+def test_entregar_sigue_funcionando_sin_confirmar_la_guia(client):
+    """El escaneo en Entregar es puramente visual (JS) -- el POST no cambia,
+    ningún campo nuevo es obligatorio."""
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    dom_receive(client.db, p, staff, "1Z-ABC-9")
+    client.db.commit()
+
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
+    assert r.status_code == 303
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
+
+
+# --------------------------------------------------------------------------- #
 # Advertencia de nombre no coincide (Grupo 1, ticket 03) — se calcula al leer.
 # --------------------------------------------------------------------------- #
 def test_advertencia_aparece_cuando_el_nombre_no_coincide_con_el_registrado(client):
