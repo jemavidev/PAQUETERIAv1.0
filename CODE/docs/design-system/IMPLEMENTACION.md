@@ -77,17 +77,18 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Ninguna plantilla real todavía importa los componentes** (verificado: cero `{% from
-'components/...' %}` fuera de `components/` mismo). Todas siguen con su propio `<style>` inline.
-`base.html` es la única excepción — ya migrado (header, footer, favicon).
+**Tanda 1 completa (2026-07-30): `packages/list.html` ya usa los componentes.** El resto de
+plantillas todavía no importa nada de `components/` y sigue con su propio `<style>` inline.
+`base.html` y `packages/list.html` son las dos excepciones migradas hasta ahora (header/footer/
+favicon la primera; lista+filtros+paginación+4 modales+scanner la segunda).
 
-Leyenda de estado: 🔴 no iniciado (todas) · las columnas de componentes son la lista de qué
+Leyenda de estado: ✅ migrada · 🔴 no iniciado · las columnas de componentes son la lista de qué
 aplica, no un orden obligatorio.
 
 | Plantilla | Qué tiene hoy (ad-hoc) | Componentes que aplican |
 |---|---|---|
-| `packages/list.html` | Lista de paquetes + filtros + paginación + 4 modales (recibir/corregir/entregar/cancelar) + scanner de guía | Tarjetas (`tarjeta_paquete`), Búsqueda y filtros, Paginación, Modales (`modal`, `modal_confirmacion`, `grupo_chips` para tipo/condición/motivo), Carga de fotos (dentro del modal Recibir), Badges, Empty states ("No hay paquetes"), Toast (error) |
-| `packages/_modal.html` | Macro `modal()` ad-hoc, bottom-sheet | **Se reemplaza por completo** por `_modales.html` → `modal()`. Este archivo se elimina cuando `packages/list.html` migre. |
+| `packages/list.html` ✅ | ~~Lista de paquetes + filtros + paginación + 4 modales (recibir/corregir/entregar/cancelar) + scanner de guía~~ Migrada a Tarjetas (`tarjeta_paquete`, con `mostrar_codigo=False` — ver nota en el macro), Búsqueda y filtros, Paginación, Modales (`modal`, `modal_confirmacion`, `grupo_chips` para tipo/condición/motivo), Carga de fotos, Badges, Empty states, Toast (error). El scanner ZXing y el doble-check de guía siguen siendo JS/CSS propios de la página (no son parte del design system) — ver el `<style>` de ganchos `.scan-*`/`.guia-check-*` en el `head` de la plantilla. |
+| `packages/_modal.html` | Macro `modal()` ad-hoc, bottom-sheet | Ya no lo usa `packages/list.html` (reemplazado por `_modales.html` → `modal()`). **Todavía lo usa `admin/staff.html`** — no se elimina hasta que esa pantalla también migre. |
 | `admin/staff.html` | Lista de personal (tarjetas), alta de staff, editar/resetear (modales) | Tablas (`accion_icono` para editar/resetear/activar/desactivar), Modales, Formularios (alta de staff), Botones, Toast |
 | `admin/notificaciones.html` | Formulario + error/ok | Formularios, Inputs, Botones, Toast |
 | `announce/form.html` | Nombre + Teléfono + checkbox T&C (el caso de referencia de Formularios) | Formularios (`formulario_flujo`), Inputs, Botones |
@@ -104,13 +105,15 @@ aplica, no un orden obligatorio.
 
 ### Orden sugerido (no obligatorio)
 
-1. `packages/list.html` — es la pantalla más usada a diario por staff y toca 6 de los 15
-   componentes de una sola vez (mejor retorno por esfuerzo).
+1. ~~`packages/list.html`~~ ✅ hecho (2026-07-30) — desplegado y verificado en vivo en
+   `test.papyrus.com.co`.
 2. `customers_manage/detail.html` — el vacío de Breadcrumbs es real y molesta hoy.
 3. `search/form.html` — reemplaza el `.timeline` legacy por el componente real.
 4. El resto de formularios (`announce/*`, `auth/*`, `admin/notificaciones.html`,
    `ayuda/form.html`) — son todos el mismo patrón (Formularios + Inputs + Botones + Toast),
    conviene hacerlos en lote una vez que el patrón esté probado en una pantalla real.
+5. `admin/staff.html` — pendiente; sigue importando `packages/_modal.html` (ver sección 5), es el
+   único motivo por el que ese archivo ad-hoc no se ha borrado todavía.
 
 ## 6. Reglas para cuando migres (no renegociables sin pedirlo)
 
@@ -126,7 +129,8 @@ Las mismas de siempre (`README.md` sección "Reglas de interacción"), la que m�
 
 ## 7. Lo que NO está hecho todavía
 
-- Ninguna plantilla real migrada (sección 5).
+- Solo una plantilla real migrada hasta ahora: `packages/list.html` (sección 5). El resto de la
+  lista sigue con su `<style>` ad-hoc.
 - Componente para "página de confirmación/éxito" no existe como los 15 — evaluar si hace falta
   antes de migrar `announce/confirmacion.html`.
 - Íconos de navegación en el **header** de escritorio (`.site-nav`) — el footer ya los tiene, el

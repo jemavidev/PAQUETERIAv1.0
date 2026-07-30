@@ -19,6 +19,14 @@
   que varían según `estado` y disparan modales) NO viven en el macro: se inyectan vía `{% call %}`
   porque son lógica de flujo, no de diseño.
 
+  `mostrar_codigo=False` oculta el `access_code` de la primera línea de metadatos (default
+  `True`). Se agregó al migrar `packages/list.html` (2026-07-30): esa pantalla tiene la regla de
+  negocio explícita "sin columna de Código, el access_code no se muestra en la lista de staff"
+  (`tests/web/test_packages.py::test_packages_con_sesion_lista_y_muestra_estado`) — el código de
+  acceso es el secreto que el cliente usa en `/consultar`, no algo para exponer en una lista
+  compartida. Otras pantallas (ej. `customer/paquetes.html`, donde el cliente ve su propio código)
+  pueden seguir usando el default.
+
   Uso — tarjeta_cliente(cliente, ubicacion=None):
     {% from 'components/_tarjetas.html' import tarjeta_cliente %}
 
@@ -34,7 +42,7 @@
   muestra la fila de botones.
 #}
 
-{% macro tarjeta_paquete(p) %}
+{% macro tarjeta_paquete(p, mostrar_codigo=True) %}
 {%- from 'components/_badge.html' import badge -%}
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between gap-2">
@@ -42,7 +50,8 @@
     {{ badge(p.estado) }}
   </div>
   <p class="text-sm text-slate-500 mt-1">
-    {{ p.access_code }}{% if p.snapshot_apartamento %} · {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% else %} · Sin apartamento{% endif %}
+    {%- if mostrar_codigo %}{{ p.access_code }}{% if p.snapshot_apartamento %} · {% endif %}{% endif -%}
+    {%- if p.snapshot_apartamento %}{{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre }} · Apto {{ p.snapshot_apartamento }}{% else %}{% if mostrar_codigo %} · {% endif %}Sin apartamento{% endif %}
   </p>
   {%- if p.guide_number or p.actor_ultima_accion %}
   <p class="text-xs text-slate-400 mt-1">
