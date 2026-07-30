@@ -77,14 +77,10 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Tandas 1 a 5 completas (2026-07-30).** `packages/list.html`, `customers_manage/detail.html`,
-`search/form.html`, el lote de formularios (`announce/form.html`, `announce_new/form.html`,
-`auth/login.html`, `auth/entrar.html`, `auth/me.html`, `auth/customer_login.html`,
-`auth/customer_verify.html`, `auth/customer_me.html`, `admin/notificaciones.html`,
-`ayuda/form.html`) y `admin/staff.html` ya usan los componentes. `packages/_modal.html` (el modal
-ad-hoc bottom-sheet) ya no tiene usuarios y se BORRÓ. Quedan `customer/paquetes.html`,
-`customer/verify.html`, `customers_manage/search.html` y `announce/confirmacion.html` (este
-último necesita un componente nuevo).
+**Tandas 1 a 6 completas (2026-07-30).** Todas las plantillas reales del rebuild usan ya los
+componentes, salvo `announce/confirmacion.html` (necesita una ronda de diseño nueva — no hay
+componente de "página de éxito" entre los 15). `packages/_modal.html` (el modal ad-hoc
+bottom-sheet) ya no tiene usuarios y se BORRÓ.
 
 Leyenda de estado: ✅ migrada · 🔴 no iniciado · las columnas de componentes son la lista de qué
 aplica, no un orden obligatorio.
@@ -101,9 +97,9 @@ aplica, no un orden obligatorio.
 | `auth/login.html` ✅, `auth/entrar.html` ✅, `auth/me.html` ✅ | ~~Forms de login/sesión staff~~ `login.html`→`formulario_flujo`; `me.html`→tarjeta a mano (dl + `boton` danger, no hay macro de "perfil de solo lectura"); `entrar.html`→tabs CSS-only reimplementadas con `peer/cliente` y `peer/staff` (grupos peer con nombre de Tailwind 3.3+, uno por radio) en vez del `:checked ~` a mano — mismo comportamiento sin JS. |
 | `auth/customer_login.html` ✅, `auth/customer_verify.html` ✅, `auth/customer_me.html` ✅ | ~~Forms de login/verificación cliente (OTP)~~ Mismo patrón que sus equivalentes de staff. El input de código OTP (2 dígitos, centrado, letter-spacing) no usa `input_texto` — necesita clases que el macro no expone, es un caso a mano intencional. |
 | `ayuda/form.html` ✅ | ~~Formulario de contacto/ayuda~~ No era un formulario real (FAQ estática) — solo se llevó el `<style>` ad-hoc a Tailwind, sin macros de Formularios/Inputs/Botones (no aplican). |
-| `customer/paquetes.html` | Lista de paquetes del cliente + empty state | Tarjetas (`tarjeta_paquete`), Empty states, Timeline (si se agrega seguimiento por paquete) |
-| `customer/verify.html` | Form + tabla + error/ok | Formularios, Tablas, Toast |
-| `customers_manage/search.html` | Búsqueda simple de clientes (un campo) | Búsqueda y filtros (`busqueda_filtros(..., mostrar_estado=False, mostrar_torre_apartamento=False)` — ya diseñado para este caso exacto) |
+| `customer/paquetes.html` ✅ | ~~Lista de paquetes del cliente + empty state~~ Migrada: no se usó `tarjeta_paquete` completo porque esta vista necesita la fecha de anuncio, no el access_code/apartamento que muestra ese macro — tarjeta a mano reutilizando `badge()` para el estado. Toda la tarjeta es el link a `/consultar?q=`. Empty states para "sin paquetes". |
+| `customer/verify.html` ✅ | ~~Form + tabla + error/ok~~ Migrada (`/mis-datos`): 3 tarjetas en un solo `<form>` (Datos personales / Notificaciones / Mi apartamento), mismo patrón que `announce_new/form.html`. La matriz de preferencias (Canal × Evento, 16 checkboxes) sigue siendo una `<table>` a mano — es contenido genuinamente tabular específico de esta página, consistente con la regla de Tablas de no sobre-abstraer. Toast (error/guardado). |
+| `customers_manage/search.html` ✅ | ~~Búsqueda simple de clientes (un campo)~~ Migrada a Búsqueda y filtros (`busqueda_filtros(..., mostrar_estado=False, mostrar_torre_apartamento=False)`, el caso para el que se diseñó) + Tarjetas (`tarjeta_cliente`) + Empty states (sin resultados). |
 | `customers_manage/detail.html` ✅ | ~~Ficha de cliente — sin forma de volver a la lista~~ Migrada a Breadcrumbs (`encabezado_volver`), Formularios (`formulario_flujo` para nombre/email/segundo contacto/SMS), Toast (error/guardado). "Zona de peligro" pasó del `confirm()` nativo del navegador a `modal_confirmacion` (variant danger) — mismo texto, mismo endpoint, ahora consistente con Cancelar en `packages/list.html`. Ocupantes de la unidad sigue siendo una tarjeta a mano (no hay componente de "fila de ocupante" entre los 15). |
 | `search/form.html` ✅ | ~~Tracking público — usaba un `.timeline` ad-hoc que predataba al componente 7~~ Migrada a Timeline (`paso_timeline`, con `rol` solo en el hito que coincide con `paquete.estado` — el resto en gris, misma regla que Badges), Búsqueda y filtros (caso simple, sin estado/torre/apartamento), Badge (estado actual), Empty states (sin resultados). El timeline sigue mostrando solo los hitos OCURRIDOS (sin pasos "pendientes" — la ruta no arma esa info); las fotos quedan en una grilla con Tailwind (no se usó `tarjeta_paquete`, ese macro asume un paquete de lista, no una galería). |
 
@@ -119,8 +115,8 @@ aplica, no un orden obligatorio.
    `ayuda/form.html`.
 5. ~~`admin/staff.html`~~ ✅ hecho (2026-07-30) — con esto `packages/_modal.html` se borró (sin
    más usuarios).
-6. Quedan sueltas: `customer/paquetes.html`, `customer/verify.html` (`/mis-datos`),
-   `customers_manage/search.html`, y `announce/confirmacion.html` (necesita componente nuevo).
+6. ~~`customer/paquetes.html`, `customer/verify.html`, `customers_manage/search.html`~~ ✅ hecho
+   (2026-07-30). Solo queda `announce/confirmacion.html` (necesita componente nuevo — sección 6).
 
 ## 6. Reglas para cuando migres (no renegociables sin pedirlo)
 
@@ -136,10 +132,8 @@ Las mismas de siempre (`README.md` sección "Reglas de interacción"), la que m�
 
 ## 7. Lo que NO está hecho todavía
 
-- Solo una plantilla real migrada hasta ahora: `packages/list.html` (sección 5). El resto de la
-  lista sigue con su `<style>` ad-hoc.
-- Componente para "página de confirmación/éxito" no existe como los 15 — evaluar si hace falta
-  antes de migrar `announce/confirmacion.html`.
+- `announce/confirmacion.html` es la ÚNICA plantilla real sin migrar — necesita una ronda de
+  diseño nueva (componente de "página de confirmación/éxito" no existe entre los 15).
 - Íconos de navegación en el **header** de escritorio (`.site-nav`) — el footer ya los tiene, el
   header todavía es solo texto. No se tocó en esta ronda por no haber sido pedido explícitamente.
 - `_iconos.html` centralizado — hoy cada componente repite sus propios `<path>` SVG inline. Es una
