@@ -77,11 +77,12 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Tandas 1 a 4 completas (2026-07-30).** `packages/list.html`, `customers_manage/detail.html`,
-`search/form.html` y todo el lote de formularios (`announce/form.html`, `announce_new/form.html`,
+**Tandas 1 a 5 completas (2026-07-30).** `packages/list.html`, `customers_manage/detail.html`,
+`search/form.html`, el lote de formularios (`announce/form.html`, `announce_new/form.html`,
 `auth/login.html`, `auth/entrar.html`, `auth/me.html`, `auth/customer_login.html`,
 `auth/customer_verify.html`, `auth/customer_me.html`, `admin/notificaciones.html`,
-`ayuda/form.html`) ya usan los componentes. Quedan `admin/staff.html`, `customer/paquetes.html`,
+`ayuda/form.html`) y `admin/staff.html` ya usan los componentes. `packages/_modal.html` (el modal
+ad-hoc bottom-sheet) ya no tiene usuarios y se BORRÓ. Quedan `customer/paquetes.html`,
 `customer/verify.html`, `customers_manage/search.html` y `announce/confirmacion.html` (este
 último necesita un componente nuevo).
 
@@ -91,8 +92,8 @@ aplica, no un orden obligatorio.
 | Plantilla | Qué tiene hoy (ad-hoc) | Componentes que aplican |
 |---|---|---|
 | `packages/list.html` ✅ | ~~Lista de paquetes + filtros + paginación + 4 modales (recibir/corregir/entregar/cancelar) + scanner de guía~~ Migrada a Tarjetas (`tarjeta_paquete`, con `mostrar_codigo=False` — ver nota en el macro), Búsqueda y filtros, Paginación, Modales (`modal`, `modal_confirmacion`, `grupo_chips` para tipo/condición/motivo), Carga de fotos, Badges, Empty states, Toast (error). El scanner ZXing y el doble-check de guía siguen siendo JS/CSS propios de la página (no son parte del design system) — ver el `<style>` de ganchos `.scan-*`/`.guia-check-*` en el `head` de la plantilla. |
-| `packages/_modal.html` | Macro `modal()` ad-hoc, bottom-sheet | Ya no lo usa `packages/list.html` (reemplazado por `_modales.html` → `modal()`). **Todavía lo usa `admin/staff.html`** — no se elimina hasta que esa pantalla también migre. |
-| `admin/staff.html` | Lista de personal (tarjetas), alta de staff, editar/resetear (modales) | Tablas (`accion_icono` para editar/resetear/activar/desactivar), Modales, Formularios (alta de staff), Botones, Toast |
+| `packages/_modal.html` | ~~Macro `modal()` ad-hoc, bottom-sheet~~ **Borrado (2026-07-30)** — sin usuarios desde que `admin/staff.html` migró, último que lo importaba. |
+| `admin/staff.html` ✅ | ~~Lista de personal (tarjetas), alta de staff, editar/resetear (modales)~~ Migrada: la lista de tarjetas pasa a `<table>` real (Tablas, `accion_icono` para editar/resetear/activar/desactivar, coloreado por rol semántico), Modales (`modal` para editar/resetear, `grupo_chips` para el Rol — 2 opciones), Formularios (`formulario_flujo` para el alta), Toast (error/creado, el mensaje de creado es el ejemplo textual del propio docstring de `_toast.html`). Rol (ADMIN/OPERADOR) y Estado (Activo/Inactivo) son badges a mano — no hay macro para roles de staff, es un dominio distinto al de Badges de paquete. |
 | `admin/notificaciones.html` ✅ | ~~Formulario + error/ok~~ Migrada: N tarjetas independientes (una por evento/motivo), cada una su propio `formulario_flujo` con los hidden `evento`/`motivo` + un `<textarea>` dentro del `{% call %}`. Toast para error/guardado. |
 | `announce/form.html` ✅ | ~~Nombre + Teléfono + checkbox T&C~~ Migrada a `formulario_flujo` (nombre/teléfono en grid 2 columnas desde 1024px) + Toast (error). El checkbox de T&C no tiene macro dedicado — markup a mano igual que en el docstring de `_formularios.html`. |
 | `announce_new/form.html` ✅ | ~~Variante del anterior, con error/ok~~ Migrada: 3 tarjetas dentro de UN solo `<form>` (Apartamento / Residentes dinámicos / Anunciar) — no se usó `formulario_flujo` porque asume una sola tarjeta por formulario y acá hay tres. Inputs vía `input_texto`, filas de residentes siguen siendo inputs a mano (el JS de agregar/quitar fila las clona). Toast para error / unidad creada / paquete anunciado. |
@@ -116,8 +117,8 @@ aplica, no un orden obligatorio.
    `auth/login.html`, `auth/entrar.html`, `auth/me.html`, `auth/customer_login.html`,
    `auth/customer_verify.html`, `auth/customer_me.html`, `admin/notificaciones.html`,
    `ayuda/form.html`.
-5. `admin/staff.html` — pendiente; sigue importando `packages/_modal.html` (ver sección 5), es el
-   único motivo por el que ese archivo ad-hoc no se ha borrado todavía.
+5. ~~`admin/staff.html`~~ ✅ hecho (2026-07-30) — con esto `packages/_modal.html` se borró (sin
+   más usuarios).
 6. Quedan sueltas: `customer/paquetes.html`, `customer/verify.html` (`/mis-datos`),
    `customers_manage/search.html`, y `announce/confirmacion.html` (necesita componente nuevo).
 
