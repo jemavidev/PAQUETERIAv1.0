@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Tablas de datos (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Tablas de datos — Scroll horizontal en móvil</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Tabla real, sin transformar, envuelta en <code class="bg-slate-100 px-1 rounded">overflow-x-auto</code>
+      con ancho mínimo — en pantallas angostas se desliza en vez de romper el layout. Las acciones CRUD
+      (Editar / Resetear / Activar / Desactivar) son íconos accesibles coloreados por rol semántico —
+      mismo lenguaje de color que Botones y Badges (Editar/Ver = primary, Resetear = warning, Activar =
+      success, Desactivar/Eliminar = danger), no un gris neutro. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_tablas.html</code>
+      (macro <code class="bg-slate-100 px-1 rounded">accion_icono(...)</code>).
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full min-w-[640px] text-sm">
+          <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="text-left font-semibold px-4 py-2.5">Nombre</th>
+              <th class="text-left font-semibold px-4 py-2.5">Correo</th>
+              <th class="text-left font-semibold px-4 py-2.5">Rol</th>
+              <th class="text-left font-semibold px-4 py-2.5">Estado</th>
+              <th class="text-right font-semibold px-4 py-2.5">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 font-medium text-slate-900">Camila Ruiz</td>
+              <td class="px-4 py-3 text-slate-500">camila@paquetex.com</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-3 py-1 text-xs font-semibold">Admin</span></td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1 text-xs font-semibold">Activo</span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5 justify-end">
+                  <button title="Editar" aria-label="Editar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                  </button>
+                  <button title="Resetear contraseña" aria-label="Resetear contraseña" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button title="Desactivar" aria-label="Desactivar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 font-medium text-slate-900">Jorge Pérez</td>
+              <td class="px-4 py-3 text-slate-500">jorge@paquetex.com</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-gray-50 text-gray-600 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Operador</span></td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1 text-xs font-semibold">Activo</span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5 justify-end">
+                  <button title="Editar" aria-label="Editar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                  </button>
+                  <button title="Resetear contraseña" aria-label="Resetear contraseña" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button title="Desactivar" aria-label="Desactivar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3 font-medium text-slate-900">Ana Gómez</td>
+              <td class="px-4 py-3 text-slate-500">ana@paquetex.com</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-gray-50 text-gray-600 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Operador</span></td>
+              <td class="px-4 py-3"><span class="inline-flex items-center bg-red-50 text-red-700 border border-red-200 rounded-full px-3 py-1 text-xs font-semibold">Inactivo</span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5 justify-end">
+                  <button title="Editar" aria-label="Editar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                  </button>
+                  <button title="Resetear contraseña" aria-label="Resetear contraseña" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:border-orange-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button title="Activar" aria-label="Activar" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-blue-100 border border-blue-300"></span> Editar / Ver — primary</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-orange-100 border border-orange-300"></span> Resetear — warning</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-emerald-100 border border-emerald-300"></span> Activar — success</span>
+        <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-red-100 border border-red-300"></span> Desactivar / Eliminar — danger</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

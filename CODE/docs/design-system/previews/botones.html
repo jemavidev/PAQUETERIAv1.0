@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Botones (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .spinner { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Botones — Variante A "Vívida"</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Forma: sólido, <code class="bg-slate-100 px-1 rounded">rounded-lg</code>,
+      <code class="bg-slate-100 px-1 rounded">shadow-sm → hover:shadow-md</code>, anillo de foco visible.
+      Paleta corregida el 2026-07-29 a los valores EXACTOS de producción (`paqueteex.papyrus.com.co`):
+      <code class="bg-slate-100 px-1 rounded">blue-800</code> / <code class="bg-slate-100 px-1 rounded">emerald-600</code> /
+      <code class="bg-slate-100 px-1 rounded">orange-600</code> / <code class="bg-slate-100 px-1 rounded">red-600</code> / gris para deshabilitado.
+      Esta paleta queda fija como base de todo el design system. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_botones.html</code>.
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Roles semánticos</h3>
+      <div class="flex flex-wrap items-center gap-4 mb-8">
+        <button type="button"
+          class="bg-blue-800 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:outline-none transition px-4 py-2 text-sm font-medium">
+          Primario
+        </button>
+        <button type="button"
+          class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:outline-none transition px-4 py-2 text-sm font-medium">
+          Éxito / OK
+        </button>
+        <button type="button"
+          class="bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-sm hover:shadow-md focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:outline-none transition px-4 py-2 text-sm font-medium">
+          Advertencia
+        </button>
+        <button type="button"
+          class="bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm hover:shadow-md focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:outline-none transition px-4 py-2 text-sm font-medium">
+          Peligro / Eliminar
+        </button>
+        <button type="button" disabled
+          class="bg-blue-800 text-white rounded-lg shadow-sm px-4 py-2 text-sm font-medium disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed">
+          Deshabilitado
+        </button>
+      </div>
+
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Tamaños (primario)</h3>
+      <div class="flex flex-wrap items-center gap-4 mb-8">
+        <button type="button" class="bg-blue-800 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md transition px-3 py-1.5 text-sm font-medium">sm</button>
+        <button type="button" class="bg-blue-800 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md transition px-4 py-2 text-sm font-medium">base</button>
+        <button type="button" class="bg-blue-800 hover:bg-blue-700 text-white rounded-lg shadow-sm hover:shadow-md transition px-5 py-2.5 text-base font-medium">lg</button>
+      </div>
+
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Loading (primario)</h3>
+      <button type="button" disabled
+        class="bg-blue-800 text-white rounded-lg shadow-sm px-4 py-2 text-sm font-medium opacity-70 cursor-wait flex items-center gap-2">
+        <svg class="spinner h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        Procesando…
+      </button>
+    </section>
+
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

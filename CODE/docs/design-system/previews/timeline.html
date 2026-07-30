@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Timeline de seguimiento (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Timeline de seguimiento — Vertical encajonado</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Cada paso del ciclo de vida del paquete es su propia tarjeta unida por una línea
+      vertical. <strong>Solo el paso que es el estado actual del paquete se resalta con color</strong> (ícono +
+      badge en su rol semántico); todos los demás — ya hayan ocurrido o estén pendientes — quedan en gris
+      neutro, con toda su información intacta (fecha, actor, guía, tipo, condición). Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_timeline.html</code>.
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16 space-y-10">
+
+    <!-- ============================================================ -->
+    <!-- EJEMPLO 1 — Estado actual: Recibido (en curso)                -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-300 mb-2">Estado actual: Recibido</span>
+        <h2 class="text-xl font-bold text-slate-900">Paquete en curso</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          "Anunciado" ya ocurrió pero no es el estado actual → gris. "Recibido" es el estado actual → color
+          (rol <code class="bg-slate-100 px-1 rounded">primary</code>). "Entregado" todavía no ocurrió → gris,
+          igual que antes.
+        </p>
+      </div>
+
+      <div class="max-w-md mx-auto">
+        <ol class="relative">
+          <!-- Anunciado: ocurrió, NO es el actual → neutro -->
+          <li class="relative pb-4 pl-10"><span class="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200"></span>
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 border border-slate-200">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            </span>
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-500">Anunciado</p>
+                <span class="inline-flex items-center bg-gray-50 text-gray-500 border-gray-200 border rounded-full px-3 py-1 text-xs font-semibold">Anunciado</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">28 jul, 9:02 am · por Camila R.</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-xs text-slate-500 bg-slate-100 rounded px-2 py-0.5">Torre B · Apto 402</span>
+              </div>
+            </div>
+          </li>
+          <!-- Recibido: ES el estado actual → color (primary, azul) -->
+          <li class="relative pb-4 pl-10"><span class="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200"></span>
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-800 text-white ring-4 ring-blue-100">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            </span>
+            <div class="bg-white border border-blue-300 ring-1 ring-blue-100 rounded-lg shadow-sm px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-900">Recibido en mostrador</p>
+                <span class="inline-flex items-center bg-blue-100 text-blue-800 border-blue-300 border rounded-full px-3 py-1 text-xs font-semibold">Recibido</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">28 jul, 3:40 pm · por Camila R.</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-xs text-slate-600 bg-slate-100 rounded px-2 py-0.5">Guía 1Z999AA1012...</span>
+                <span class="text-xs text-slate-600 bg-slate-100 rounded px-2 py-0.5">Normal</span>
+                <span class="text-xs text-slate-600 bg-slate-100 rounded px-2 py-0.5">Bueno</span>
+              </div>
+            </div>
+          </li>
+          <!-- Entregado: pendiente, NO es el actual → neutro (igual que antes) -->
+          <li class="relative pl-10">
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 border-2 border-slate-200"></span>
+            <div class="border border-dashed border-slate-200 rounded-lg px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-400">Entregado</p>
+                <span class="inline-flex items-center bg-gray-50 text-gray-500 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Pendiente</span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- EJEMPLO 2 — Estado actual: Entregado (completado)             -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-600 border border-green-300 mb-2">Estado actual: Entregado</span>
+        <h2 class="text-xl font-bold text-slate-900">Paquete completado</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          Confirma que la regla se sostiene en cualquier punto del ciclo: acá "Anunciado" y "Recibido" ya
+          ocurrieron y están en gris — el único paso a color es "Entregado" (rol
+          <code class="bg-slate-100 px-1 rounded">success</code>), que es el estado actual del paquete.
+        </p>
+      </div>
+
+      <div class="max-w-md mx-auto">
+        <ol class="relative">
+          <li class="relative pb-4 pl-10">
+            <span class="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200"></span>
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 border border-slate-200">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            </span>
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-500">Anunciado</p>
+                <span class="inline-flex items-center bg-gray-50 text-gray-500 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Anunciado</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">28 jul, 9:02 am · por Camila R.</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-xs text-slate-500 bg-slate-100 rounded px-2 py-0.5">Torre B · Apto 402</span>
+              </div>
+            </div>
+          </li>
+          <li class="relative pb-4 pl-10">
+            <span class="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200"></span>
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 border border-slate-200">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            </span>
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm px-4 py-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-500">Recibido en mostrador</p>
+                <span class="inline-flex items-center bg-gray-50 text-gray-500 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Recibido</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">28 jul, 3:40 pm · por Camila R.</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-xs text-slate-500 bg-slate-100 rounded px-2 py-0.5">Guía 1Z999AA1012...</span>
+                <span class="text-xs text-slate-500 bg-slate-100 rounded px-2 py-0.5">Normal</span>
+                <span class="text-xs text-slate-500 bg-slate-100 rounded px-2 py-0.5">Bueno</span>
+              </div>
+            </div>
+          </li>
+          <li class="relative pl-10">
+            <span class="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white ring-4 ring-emerald-100">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            </span>
+            <div class="bg-white border border-emerald-300 rounded-lg shadow-sm px-4 py-3 ring-1 ring-emerald-100">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-slate-900">Entregado</p>
+                <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-green-300 rounded-full px-3 py-1 text-xs font-semibold">Entregado</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">29 jul, 10:15 am · por María Torres</p>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="text-xs text-slate-600 bg-slate-100 rounded px-2 py-0.5">Guía confirmada</span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en los macros Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Breadcrumbs / nav secundaria (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Breadcrumbs / nav secundaria — Encabezado contextual con volver integrado</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. La flecha de volver vive pegada al título, en la misma línea — patrón de barra de
+      navegación de app móvil nativa. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_breadcrumbs.html</code>
+      (macro <code class="bg-slate-100 px-1 rounded">encabezado_volver(titulo, href_volver, texto_volver, subtitulo=None, nivel='h1')</code>).
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16 space-y-4">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="max-w-sm mx-auto bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+        <div class="flex items-center gap-2">
+          <a href="#" aria-label="Volver a Clientes" class="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-blue-800 transition">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd"/></svg>
+          </a>
+          <h2 class="text-lg font-bold text-slate-900">Ficha de cliente</h2>
+        </div>
+        <p class="text-sm text-slate-500 ml-10">María Torres · 300 555 1234</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

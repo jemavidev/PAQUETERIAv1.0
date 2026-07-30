@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Tarjetas de paquete y cliente (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Tarjetas de paquete y cliente — Compacta de lista</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Identidad + badge de estado en la primera línea, metadatos en gris debajo, acciones en
+      ancho completo. El badge reutiliza <code class="bg-slate-100 px-1 rounded">_badge.html</code> ya cerrado —
+      el color por estado no se reinventa. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_tarjetas.html</code>.
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Tarjeta de paquete + tarjeta de cliente</h3>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <!-- Tarjeta Paquete -->
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900">María Torres</strong>
+            <span class="inline-flex items-center bg-blue-100 text-blue-800 border border-blue-300 rounded-full px-3 py-1 text-xs font-semibold">Recibido</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">PX-00219 · Torres del Parque · Torre B · Apto 402</p>
+          <p class="text-xs text-slate-400 mt-1">Guía 1Z999AA10123456784 · Última acción por: Camila R.</p>
+          <div class="mt-3 flex gap-2">
+            <button class="flex-1 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 shadow-sm transition">Entregar</button>
+            <button class="rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-3 py-2 transition">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Tarjeta Cliente -->
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900">María Torres</strong>
+            <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-full px-3 py-1 text-xs font-semibold">Notif. activas</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">+57 300 555 1234</p>
+          <p class="text-xs text-slate-400 mt-1">Torres del Parque · Torre B · Apto 402 · CC 123456</p>
+          <div class="mt-3">
+            <button class="w-full rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-3 py-2 transition">Ver historial de paquetes</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-8 mb-3">Estado sin ubicación + advertencia (caso ANUNCIADO)</h3>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900">Juan Pérez</strong>
+            <span class="inline-flex items-center bg-amber-100 text-amber-600 border border-amber-200 rounded-full px-3 py-1 text-xs font-semibold">Anunciado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">PX-00220 · Sin apartamento</p>
+          <p class="text-xs text-orange-800 bg-orange-50 border border-orange-100 rounded-md px-2 py-1 mt-2">⚠️ El nombre anunciado no coincide con el registrado para este teléfono.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en los macros Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

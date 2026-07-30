@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Estados de carga (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado · 15 de 15</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Estados de carga / skeleton — Spinner centrado simple</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado — el último de los 15. Un solo spinner + texto centrado, reutiliza el mismo SVG que ya
+      usa <code class="bg-slate-100 px-1 rounded">boton(loading=True)</code> (componente 1). Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_estado_carga.html</code>
+      (macro <code class="bg-slate-100 px-1 rounded">estado_carga(texto='Cargando…', alto='h-40')</code>).
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="max-w-sm mx-auto bg-white border border-gray-200 rounded-lg shadow-sm h-40 flex flex-col items-center justify-center gap-2">
+        <svg class="animate-spin h-6 w-6 text-blue-800" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <p class="text-sm text-slate-400">Cargando…</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

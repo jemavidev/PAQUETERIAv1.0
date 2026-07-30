@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Alertas / notificaciones (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Alertas / notificaciones — Toast flotante con auto-dismiss</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Reemplaza el <code class="bg-slate-100 px-1 rounded">&lt;div class="error"&gt;</code>/<code class="bg-slate-100 px-1 rounded">&lt;div class="ok"&gt;</code>
+      repetido a mano en ~10 plantillas. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_toast.html</code>
+      (macro <code class="bg-slate-100 px-1 rounded">toast(...)</code>). Tokens documentados en
+      <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>. El caso real de PaqueteX:
+      <code class="bg-slate-100 px-1 rounded">base.html</code> tiene una barra de navegación inferior fija
+      (<code class="bg-slate-100 px-1 rounded">.site-footer-mobile</code>, <code class="bg-slate-100 px-1 rounded">position:fixed; bottom:0</code>)
+      visible en <strong>todos</strong> los anchos de pantalla, no solo móvil — el <code class="bg-slate-100 px-1 rounded">body</code>
+      le reserva <code class="bg-slate-100 px-1 rounded">padding-bottom:80px</code> (56px de nav con íconos + 24px
+      de línea de crédito "Desarrollado por JEMAVI", agregada para igualar el footer real de producción). Si el
+      toast se ancla a <code class="bg-slate-100 px-1 rounded">bottom-4</code>, queda literalmente encima de esos
+      botones de navegación. El mockup de abajo simula esa barra real (con su línea de crédito) para mostrar la
+      corrección: el toast se ancla con el mismo margen que ya reserva el body (80px) más un respiro, nunca menos.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16 space-y-10">
+
+    <!-- ============================================================ -->
+    <!-- MOCKUP — Toast respetando la barra de navegación fija         -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Mockup</span>
+        <h2 class="text-xl font-bold text-slate-900">Toast por encima de la nav inferior fija (no tapa nada)</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          Simulación de una pantalla real (con su barra de navegación inferior + línea de crédito). El toast se
+          ancla a <code class="bg-slate-100 px-1 rounded">bottom-24</code> (96px = los 80px que ya reserva el
+          body para la barra completa + 16px de respiro) en vez de
+          <code class="bg-slate-100 px-1 rounded">bottom-4</code> — nunca se superpone a "Anunciar" / "Buscar" /
+          "Ayuda" / "Whatsapp" / "Teléfono" ni a la línea de crédito.
+        </p>
+      </div>
+
+      <div class="max-w-sm mx-auto relative bg-slate-100 rounded-lg h-[420px] overflow-hidden border border-slate-300">
+        <p class="p-4 text-sm text-slate-400">(simulación de la pantalla — contenido detrás)</p>
+
+        <!-- Toast, correctamente por encima de la nav -->
+        <div class="absolute bottom-24 left-3 right-3 flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-white shadow-lg px-4 py-3">
+          <svg class="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <p class="text-sm text-slate-700 flex-1">Datos guardados.</p>
+          <button class="text-slate-400 hover:text-slate-600 shrink-0" aria-label="Cerrar">
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+
+        <!-- Barra de navegación inferior fija (réplica de .site-footer-mobile, con línea de crédito) -->
+        <div class="absolute left-0 right-0 bottom-0 bg-white border-t border-slate-200">
+          <nav class="flex" style="height:56px">
+            <a class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-blue-800">Anunciar</a>
+            <a class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-slate-500">Buscar</a>
+            <a class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-slate-500">Ayuda</a>
+            <a class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-slate-500">Whatsapp</a>
+            <a class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-slate-500">Teléfono</a>
+          </nav>
+          <div class="flex items-center justify-center border-t border-slate-200 text-[10px] text-slate-400" style="height:24px">
+            Desarrollado por <span class="text-blue-800 font-semibold mx-1">JEMAVI</span> | © 2026 PAPYRUS
+          </div>
+        </div>
+      </div>
+
+      <p class="text-center text-xs text-slate-400 mt-3">↑ el toast nunca cubre la barra (nav + crédito) — queda 16px de espacio libre entre ambos, siempre visibles y clickeables los dos.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Los 4 roles semánticos, con la posición ya corregida          -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Referencia</span>
+        <h2 class="text-xl font-bold text-slate-900">Los 4 roles semánticos</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          El toast cubre los 4 roles ya fijados (sección 1 de tokens.md), no solo error/ok — mismo criterio que
+          Badges, no un color nuevo por caso de uso.
+        </p>
+      </div>
+
+      <div class="max-w-sm mx-auto space-y-3">
+        <div class="flex items-start gap-2.5 rounded-lg border border-blue-200 bg-white shadow-lg px-4 py-3" role="status">
+          <svg class="h-5 w-5 shrink-0 text-blue-800 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          <p class="text-sm text-slate-700 flex-1">El código de rastreo se generó automáticamente.</p>
+        </div>
+        <div class="flex items-start gap-2.5 rounded-lg border border-orange-200 bg-white shadow-lg px-4 py-3" role="alert">
+          <svg class="h-5 w-5 shrink-0 text-orange-600 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.184c.75 1.334-.213 2.98-1.742 2.98H3.72c-1.53 0-2.492-1.646-1.743-2.98L8.257 3.1zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <p class="text-sm text-slate-700 flex-1">Tu sesión está por expirar en 2 minutos.</p>
+        </div>
+        <div class="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-white shadow-lg px-4 py-3" role="status">
+          <svg class="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <p class="text-sm text-slate-700 flex-1">Datos guardados.</p>
+        </div>
+        <div class="flex items-start gap-2.5 rounded-lg border border-red-200 bg-white shadow-lg px-4 py-3" role="alert">
+          <svg class="h-5 w-5 shrink-0 text-red-600 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 0010 5z" clip-rule="evenodd"/></svg>
+          <p class="text-sm text-slate-700 flex-1">Correo o contraseña incorrectos.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

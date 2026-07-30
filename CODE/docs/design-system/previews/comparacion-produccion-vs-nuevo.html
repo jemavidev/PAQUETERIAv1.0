@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Producción vs. Nuevo diseño</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-6xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Comparación</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Producción actual vs. Nuevo diseño</h1>
+    <p class="text-slate-600 mt-2 max-w-3xl">
+      Todo lo del lado izquierdo es código REAL extraído de <code class="bg-slate-100 px-1 rounded">paqueteex.papyrus.com.co</code>
+      (<code class="bg-slate-100 px-1 rounded">templates/base/base.html</code> y
+      <code class="bg-slate-100 px-1 rounded">static/css/components/status.css</code>, vía SSH) — no una recreación
+      aproximada. <strong>Corregido el 2026-07-29</strong>: el color de Anunciado/Recibido, que salió invertido en
+      la comparación original, ya está arreglado en `tokens.md` y los macros — ver sección 2. El favicon, el logo
+      del header y el footer también quedaron alineados a producción.
+    </p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 pb-16 space-y-10">
+
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">1. Header</h2>
+      <div class="grid md:grid-cols-2 gap-5">
+
+        <div class="rounded-xl overflow-hidden border-2 border-red-200">
+          <p class="bg-red-50 text-red-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">Producción real</p>
+          <div class="bg-white border-b border-gray-200">
+            <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+              <a href="#" class="flex items-center space-x-3">
+                <img src="../../../src/app/web/static/branding/colibri-icono.png" alt="Logo EL CLUB - Colibrí" class="w-10 h-10 object-contain">
+                <span class="text-xl font-bold text-gray-800">PAQUETEX</span>
+              </a>
+              <a href="#" class="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium" style="color:#1e40af">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                Paquetes
+              </a>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">Colibrí real (40×40) + Heroicons <em>outline</em> junto al link activo, color <code>#1e40af</code> (papyrus-blue, custom, no un blue-* de Tailwind de fábrica).</p>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border-2 border-emerald-200">
+          <p class="bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">Nuestro base.html — ✅ corregido</p>
+          <div class="bg-white border-b border-gray-200">
+            <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
+              <a href="#" class="flex items-center gap-2">
+                <img src="../../../src/app/web/static/branding/colibri-icono.png" alt="" class="w-7 h-7 object-contain">
+                <span class="text-[1.05rem] font-bold" style="letter-spacing:.02em">PAQUETEX</span>
+              </a>
+              <a href="#" class="px-3 py-2 rounded-lg text-sm font-semibold bg-blue-100 text-blue-800">Paquetes</a>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">Mismo colibrí real, mismo <code>#1e40af</code> (ahora <code>blue-800</code> en vez del <code>blue-600</code> genérico) — el blob placeholder ya no existe.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- BADGES DE ESTADO — LA DIFERENCIA QUE IMPORTA -->
+    <!-- ============================================================ -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">2. Badges de estado — acá está el problema real</h2>
+      <div class="grid md:grid-cols-2 gap-5">
+
+        <div class="rounded-xl overflow-hidden border-2 border-red-200">
+          <p class="bg-red-50 text-red-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">Producción real (<code>status.css</code>)</p>
+          <div class="bg-white p-5 flex flex-wrap gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" style="background:#fef3c7;color:#d97706;border:1px solid #fde68a">Anunciado</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd">Recibido</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" style="background:#d1fae5;color:#059669;border:1px solid #86efac">Entregado</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5">Cancelado</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" style="background:#fed7aa;color:#ea580c;border:1px solid #fdba74">Devuelto</span>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">Anunciado = ámbar/amarillo (pendiente). Recibido = azul (en curso). 5 estados — incluye "Devuelto", que no existe en el dominio local.</p>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border-2 border-emerald-200">
+          <p class="bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">tokens.md — ✅ corregido el 2026-07-29</p>
+          <div class="bg-white p-5 flex flex-wrap gap-2">
+            <span class="inline-flex items-center bg-amber-100 text-amber-600 border border-amber-200 rounded-full px-3 py-1 text-sm font-semibold">Anunciado</span>
+            <span class="inline-flex items-center bg-blue-100 text-blue-800 border border-blue-300 rounded-full px-3 py-1 text-sm font-semibold">Recibido</span>
+            <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-green-300 rounded-full px-3 py-1 text-sm font-semibold">Entregado</span>
+            <span class="inline-flex items-center bg-red-100 text-red-600 border border-red-300 rounded-full px-3 py-1 text-sm font-semibold">Cancelado</span>
+            <span class="inline-flex items-center bg-orange-200 text-orange-600 border border-orange-300 rounded-full px-3 py-1 text-sm font-semibold">Devuelto</span>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">Ya coincide exactamente con producción, valor por valor — Badges, Timeline y filtro_estado de Búsqueda quedaron corregidos en <code>_badge.html</code>, <code>_timeline.html</code> y <code>_busqueda_filtros.html</code>. "Devuelto" queda listo para cuando el dominio lo agregue.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================================ -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">3. Footer</h2>
+      <div class="grid md:grid-cols-2 gap-5">
+
+        <div class="rounded-xl overflow-hidden border-2 border-red-200">
+          <p class="bg-red-50 text-red-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">Producción real</p>
+          <div class="bg-white border-t px-4 py-3 flex items-center justify-between text-sm">
+            <span class="text-xs text-gray-500">Desarrollado por <span class="underline" style="color:#1e40af">JEMAVI</span> | © 2025 PAPYRUS</span>
+            <div class="flex items-center gap-3 text-gray-500">
+              <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Ayuda</span>
+              <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>WhatsApp</span>
+              <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>Teléfono</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">3 íconos con texto + copyright con crédito a JEMAVI/PAPYRUS.</p>
+        </div>
+
+        <div class="rounded-xl overflow-hidden border-2 border-emerald-200">
+          <p class="bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wide px-4 py-1.5">Nuestro base.html — ✅ íconos + copyright</p>
+          <div class="bg-white border-t">
+            <nav class="flex items-stretch justify-center gap-1 text-xs font-semibold text-slate-500" style="height:56px">
+              <span class="flex-1 flex flex-col items-center justify-center gap-0.5 px-2"><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM10.75 7a.75.75 0 00-1.5 0v2.25H7a.75.75 0 000 1.5h2.25V13a.75.75 0 001.5 0v-2.25H13a.75.75 0 000-1.5h-2.25V7z"/></svg>Anunciar</span>
+              <span class="flex-1 flex flex-col items-center justify-center gap-0.5 px-2"><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>Buscar</span>
+              <span class="flex-1 flex flex-col items-center justify-center gap-0.5 px-2"><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>Ayuda</span>
+              <span class="flex-1 flex flex-col items-center justify-center gap-0.5 px-2"><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>Whatsapp</span>
+              <span class="flex-1 flex flex-col items-center justify-center gap-0.5 px-2"><svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z" clip-rule="evenodd"/></svg>Teléfono</span>
+            </nav>
+            <div class="flex items-center justify-center border-t border-slate-200 text-[10px] text-slate-400" style="height:24px">
+              Desarrollado por <span class="text-blue-800 font-semibold mx-1">JEMAVI</span> | © 2026 PAPYRUS
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 px-4 py-2 bg-slate-50">5 íconos (Ayuda/WhatsApp/Teléfono son los mismos exactos de producción, Teléfono es nuevo) + línea de crédito. La barra creció de 64px a 80px (56px nav + 24px crédito) — el offset del toast se recalculó a la par (<code>bottom-20</code> → <code>bottom-24</code>, sección 13 de tokens.md), están acoplados a propósito.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">Comparación de referencia — no es código de producción, ninguno de los dos lados se toca desde acá.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

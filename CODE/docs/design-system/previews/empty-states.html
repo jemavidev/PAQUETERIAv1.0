@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Empty states (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Empty states — Ícono + texto + acción sugerida</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Distingue "sin resultados" (lupa, gris neutro) de "genuinamente vacío" (ícono azul
+      primary, con CTA para empezar). Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_estado_vacio.html</code>
+      (macro <code class="bg-slate-100 px-1 rounded">estado_vacio(titulo, mensaje, icono='buscar', boton_texto=None, boton_href=None)</code>).
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm py-8 px-6 text-center">
+          <div class="mx-auto h-12 w-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-700">Sin resultados</p>
+          <p class="text-sm text-slate-500 mt-1">No encontramos ningún paquete con esos filtros. Probá ajustar la búsqueda.</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm py-8 px-6 text-center">
+          <div class="mx-auto h-12 w-12 rounded-full bg-blue-50 text-blue-800 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a.75.75 0 01.75.75v.51a8.25 8.25 0 016.99 6.99h.51a.75.75 0 010 1.5h-.51a8.25 8.25 0 01-6.99 6.99v.51a.75.75 0 01-1.5 0v-.51a8.25 8.25 0 01-6.99-6.99h-.51a.75.75 0 010-1.5h.51a8.25 8.25 0 016.99-6.99v-.51A.75.75 0 0110 2z"/></svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-700">Todavía no tenés paquetes</p>
+          <p class="text-sm text-slate-500 mt-1 mb-4">Anunciá tu primer paquete para empezar a hacerle seguimiento.</p>
+          <button class="inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Anunciar un paquete</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

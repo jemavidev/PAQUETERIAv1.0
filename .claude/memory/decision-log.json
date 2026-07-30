@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-26T16:26:13-0500",
+  "lastUpdated": "2026-07-29T07:53:53-0500",
   "decisions": [
     {
       "id": "DEC-001",
@@ -185,20 +185,50 @@
       "rationale": "El header necesita saber si el staff logueado es ADMIN (para mostrar Administracion) sin agregar una dependencia de FastAPI nueva a las ~10 rutas que ya renderizan paginas completas (shotgun surgery solo para pintar un menu). La sesion de staff hoy solo guarda usuario_id.",
       "decision": "routes/auth.py (login_submit) escribe request.session[\"rol\"] = usuario.rol.value junto a usuario_id en el momento del login. base.html lee request.session.get(\"rol\") directamente (Jinja ya recibe request en todo TemplateResponse) para decidir si mostrar los enlaces de Administracion. require_admin sigue siendo la UNICA puerta real de esas rutas -- el rol en sesion es solo un dato derivado para pintar el menu, nunca una fuente de autorizacion.",
       "consequences": "Si el rol de un Usuario cambia en BD, el menu no se actualiza hasta su proximo login (igual que ya pasa con usuario_id si el Usuario se borra a mitad de sesion -- current_staff ya maneja ese caso con un 401). Evita agregar una dependencia de DB a las ~10 rutas que renderizan paginas completas solo para resolver un menu."
+    },
+    {
+      "id": "DEC-10",
+      "title": "Fijar vocabulario visual base del Design System (Botones, Variante A)",
+      "date": "2026-07-29T07:53:53-0500",
+      "timestamp": "2026-07-29T07:53:53-0500",
+      "agent": "ux-designer",
+      "status": "implemented",
+      "tags": [
+        "design-system",
+        "frontend",
+        "tailwind",
+        "ui"
+      ],
+      "context": "El proyecto necesitaba un Design System unificado para el frontend (Jinja2+Tailwind+Alpine+HTMX) sin base visual previa consistente; se definio con el usuario, componente por componente, empezando por Botones con 3 direcciones de estilo y luego 2 variantes de paleta semantica",
+      "rationale": "El proyecto necesitaba un Design System unificado para el frontend (Jinja2+Tailwind+Alpine+HTMX) sin base visual previa consistente; se definio con el usuario, componente por componente, empezando por Botones con 3 direcciones de estilo y luego 2 variantes de paleta semantica",
+      "decision": "Estructura ganadora: solido, rounded-lg, shadow-sm->hover:shadow-md, anillo de foco focus-visible:ring-2 ring-offset-2. Paleta semantica fijada (Variante A - vivida): primary=blue-600/700, success=emerald-700/800, warning=amber-500/600 con texto amber-950 (no blanco, por contraste AA), danger=red-600/700, disabled=gray-200/400 via atributo disabled real. Registrado en docs/design-system/tokens.md como fuente de verdad; todo componente futuro (Badges, Inputs, Modales, etc.) hereda este vocabulario.",
+      "consequences": {
+        "positive": [
+          "Vocabulario visual consistente para los 16 componentes restantes del plan",
+          "Paleta con contraste AA verificado desde el inicio (warning con texto oscuro sobre ambar)"
+        ],
+        "negative": [
+          "Cambiar la paleta/forma base mas adelante implica reabrir todos los componentes que ya la hereden"
+        ],
+        "risks": [
+          "Si un futuro componente necesita un rol semantico no cubierto (ej. info distinto de primary), hay que decidir si se extiende la paleta o se reusa un rol existente"
+        ]
+      }
     }
   ],
   "summary": {
-    "totalDecisions": 9,
+    "totalDecisions": 10,
     "byStatus": {
       "proposed": 0,
       "approved": 0,
-      "implemented": 9,
+      "implemented": 10,
       "rejected": 0,
       "superseded": 0
     },
     "byAgent": {
       "agentx": 3,
-      "architect": 6
+      "architect": 6,
+      "ux-designer": 1
     }
   },
   "_comments": {

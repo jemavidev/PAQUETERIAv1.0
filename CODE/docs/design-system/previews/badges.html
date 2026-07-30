@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Badges de estado (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Badges de estado — Fondo suave (soft)</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Forma: píldora (<code class="bg-slate-100 px-1 rounded">rounded-full</code>), fondo pastel
+      (<code class="bg-slate-100 px-1 rounded">bg-{color}-100</code>), texto y borde en tono fuerte.
+      Mapea los 5 estados reales de producción (<code class="bg-slate-100 px-1 rounded">status.css</code> de
+      <code class="bg-slate-100 px-1 rounded">paqueteex.papyrus.com.co</code>) — colores corregidos el 2026-07-29
+      a los valores EXACTOS de producción, ver <code class="bg-slate-100 px-1 rounded">tokens.md</code> sección 6/7.
+      Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_badge.html</code>.
+      Tokens documentados en <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16">
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Los 5 estados (4 reales del dominio + Devuelto, pendiente de agregarse)</h3>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="inline-flex items-center bg-amber-100 text-amber-600 border-amber-200 border rounded-full px-3 py-1 text-xs font-semibold">Anunciado</span>
+        <span class="inline-flex items-center bg-blue-100 text-blue-800 border-blue-300 border rounded-full px-3 py-1 text-xs font-semibold">Recibido</span>
+        <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border-green-300 border rounded-full px-3 py-1 text-xs font-semibold">Entregado</span>
+        <span class="inline-flex items-center bg-red-100 text-red-600 border-red-300 border rounded-full px-3 py-1 text-xs font-semibold">Cancelado</span>
+        <span class="inline-flex items-center bg-orange-200 text-orange-600 border-orange-300 border rounded-full px-3 py-1 text-xs font-semibold">Devuelto</span>
+      </div>
+
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-8 mb-3">Fallback (estado no reconocido)</h3>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="inline-flex items-center bg-gray-50 text-gray-600 border border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">Desconocido</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en el macro Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

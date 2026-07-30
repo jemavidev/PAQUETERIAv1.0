@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaqueteX — Design System / Modales / confirmación (aprobado)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-slate-800">
+
+  <header class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+    <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">PaqueteX · Design System · Componente aprobado</p>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Modales / confirmación — Centrado + chips de pocas opciones</h1>
+    <p class="text-slate-600 mt-2 max-w-2xl">
+      Componente cerrado. Código fuente:
+      <code class="bg-slate-100 px-1 rounded">src/app/web/templates/components/_modales.html</code>
+      (macros <code class="bg-slate-100 px-1 rounded">modal(...)</code>,
+      <code class="bg-slate-100 px-1 rounded">modal_confirmacion(...)</code>,
+      <code class="bg-slate-100 px-1 rounded">grupo_chips(...)</code>). Tokens documentados en
+      <code class="bg-slate-100 px-1 rounded">docs/design-system/tokens.md</code>. Cuando un
+      <code class="bg-slate-100 px-1 rounded">&lt;select&gt;</code> dentro de un modal tiene
+      <strong>menos de 5 opciones</strong>, no va como lista desplegable — las opciones se muestran directo en
+      pantalla como chips clickeables (un solo tap, sin abrir/cerrar nada). Con 5 o más, sigue siendo un
+      <code class="bg-slate-100 px-1 rounded">&lt;select&gt;</code> normal (evita que la tarjeta crezca sin
+      límite). Implementación sin JS: son <code class="bg-slate-100 px-1 rounded">&lt;input type="radio"&gt;</code>
+      reales ocultos (<code class="bg-slate-100 px-1 rounded">sr-only</code>) con su <code class="bg-slate-100 px-1 rounded">&lt;label&gt;</code>
+      estilizado vía <code class="bg-slate-100 px-1 rounded">peer-checked</code> — accesibles y navegables por
+      teclado igual que un select nativo, cero JavaScript.
+    </p>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 pb-16 space-y-10">
+
+    <!-- ============================================================ -->
+    <!-- Recibir paquete — Tipo (2 opciones) + Condición (3 opciones)  -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Modal: Recibir paquete</span>
+        <h2 class="text-xl font-bold text-slate-900">Tipo (2) y Condición (3) como chips</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          Antes eran dos <code class="bg-slate-100 px-1 rounded">&lt;select&gt;</code> (regla 2 y 3 opciones cada
+          uno, ambos bajo el umbral de 5). Ahora son grupos de chips — se ve toda la información sin tocar nada,
+          y elegir es un solo tap.
+        </p>
+      </div>
+
+      <div class="max-w-xs mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900">Recibir paquete</h3>
+          <button class="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+
+        <p class="text-sm font-medium text-slate-700 mb-1.5">Tipo de paquete</p>
+        <div role="radiogroup" aria-label="Tipo de paquete" class="flex flex-wrap gap-2 mb-4">
+          <label class="cursor-pointer">
+            <input type="radio" name="package_type" value="NORMAL" class="peer sr-only" checked>
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-300 peer-focus-visible:ring-offset-2">Normal</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="package_type" value="EXTRA_DIMENSIONADO" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-300 peer-focus-visible:ring-offset-2">Extra dimensionado</span>
+          </label>
+        </div>
+
+        <p class="text-sm font-medium text-slate-700 mb-1.5">Condición</p>
+        <div role="radiogroup" aria-label="Condición" class="flex flex-wrap gap-2 mb-5">
+          <label class="cursor-pointer">
+            <input type="radio" name="package_condition" value="BUENO" class="peer sr-only" checked>
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-300 peer-focus-visible:ring-offset-2">Bueno</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="package_condition" value="ABIERTO" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-300 peer-focus-visible:ring-offset-2">Abierto</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="package_condition" value="REGULAR" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-blue-300 peer-focus-visible:ring-offset-2">Regular</span>
+          </label>
+        </div>
+
+        <button class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Confirmar recibo</button>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Cancelar paquete — Motivo (4 opciones, justo bajo el umbral)  -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Modal: Cancelar paquete</span>
+        <h2 class="text-xl font-bold text-slate-900">Motivo (4 opciones) como chips</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          4 motivos de cancelación — justo bajo el umbral de 5, también pasa a chips. La confirmación destructiva
+          conserva el ícono de alerta de la Opción 2 elegida.
+        </p>
+      </div>
+
+      <div class="max-w-xs mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-5 text-center">
+        <div class="mx-auto h-12 w-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-3">
+          <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.184c.75 1.334-.213 2.98-1.742 2.98H3.72c-1.53 0-2.492-1.646-1.743-2.98L8.257 3.1zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">¿Cancelar este paquete?</h3>
+        <p class="text-sm text-slate-500 mt-1 mb-4">Esta acción es irreversible.</p>
+
+        <p class="text-sm font-medium text-slate-700 mb-1.5 text-left">Motivo</p>
+        <div role="radiogroup" aria-label="Motivo de cancelación" class="flex flex-wrap gap-2 mb-5 justify-start">
+          <label class="cursor-pointer">
+            <input type="radio" name="motivo" value="ANUNCIO_ERRONEO" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-red-600 peer-checked:border-red-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-red-300 peer-focus-visible:ring-offset-2">Anuncio erróneo</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="motivo" value="DEVUELTO_AL_TRANSPORTADOR" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-red-600 peer-checked:border-red-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-red-300 peer-focus-visible:ring-offset-2">Devuelto al transportador</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="motivo" value="NO_RECLAMADO" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-red-600 peer-checked:border-red-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-red-300 peer-focus-visible:ring-offset-2">No reclamado</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="motivo" value="OTRO" class="peer sr-only">
+            <span class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition peer-checked:bg-red-600 peer-checked:border-red-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-red-300 peer-focus-visible:ring-offset-2">Otro</span>
+          </label>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="flex-1 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-4 py-2">Volver</button>
+          <button class="flex-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Cancelar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Corregir destinatario — candidatos: sigue siendo <select>     -->
+    <!-- ============================================================ -->
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8">
+      <div class="mb-6">
+        <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Modal: Corregir destinatario</span>
+        <h2 class="text-xl font-bold text-slate-900">Candidatos: sigue siendo &lt;select&gt;</h2>
+        <p class="text-slate-600 text-sm mt-1">
+          Este caso NO aplica la regla: la lista de candidatos a corregir es de tamaño variable (depende de
+          cuántas personas coincidan con el teléfono), no un enum fijo de &lt;5 — puede tener más de 5 sin
+          problema, así que se queda como <code class="bg-slate-100 px-1 rounded">&lt;select&gt;</code> normal.
+        </p>
+      </div>
+
+      <div class="max-w-xs mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900">Corregir destinatario</h3>
+          <button class="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Nombre correcto (elegí de la lista)</label>
+        <select class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm mb-5">
+          <option disabled selected>Seleccioná un nombre…</option>
+          <option>María Torres — 300 555 1234</option>
+          <option>María Fernanda Torres — 301 222 9988</option>
+        </select>
+        <button class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Guardar corrección</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 pb-12">
+    <div class="border-t border-slate-200 pt-6 text-center">
+      <p class="text-sm text-slate-500">
+        Este archivo es un registro visual de referencia. El componente reutilizable real vive en los macros Jinja2.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-07-28T15:59:06-0500",
+  "lastUpdated": "2026-07-29T08:01:47-0500",
   "tasks": [
     {
       "id": "TASK-001",
@@ -2154,29 +2154,101 @@
       },
       "outcome": "Sync del repo de desarrollo al repo de despliegue jemavidev/PaqueteX (65 archivos). Smoke test en venv aislado encontro un bug real antes de produccion: boto3 faltaba en requirements.txt del repo de despliegue (S3FotoStorage lo necesita, la app no arrancaba sin el) -- corregido antes de push. Limpiadas fotos de prueba commiteadas por error en rondas anteriores. Push a main (commit 3b4e04b9): CI (394/394 tests) y Deploy to Staging ambos success. Verificado en vivo con Playwright real: /entrar (toggle CSS funcionando), /ayuda, /paquetes (auditoria de actor con datos reales), /administracion/personal (CRUD con 3 cuentas reales), /administracion/notificaciones (plantilla Anunciado dividida Cliente/Staff). Health check OK. Migraciones 0014/0015 aplicadas automaticamente por el entrypoint de Docker (alembic upgrade head).",
       "description": "Sync del repo de desarrollo al repo de despliegue jemavidev/PaqueteX (65 archivos). Smoke test en venv aislado encontro un bug real antes de produccion: boto3 faltaba en requirements.txt del repo de despliegue (S3FotoStorage lo necesita, la app no arrancaba sin el) -- corregido antes de push. Limpiadas fotos de prueba commiteadas por error en rondas anteriores. Push a main (commit 3b4e04b9): CI (394/394 tests) y Deploy to Staging ambos success. Verificado en vivo con Playwright real: /entrar (toggle CSS funcionando), /ayuda, /paquetes (auditoria de actor con datos reales), /administracion/personal (CRUD con 3 cuentas reales), /administracion/notificaciones (plantilla Anunciado dividida Cliente/Staff). Health check OK. Migraciones 0014/0015 aplicadas automaticamente por el entrypoint de Docker (alembic upgrade head)."
+    },
+    {
+      "id": "TASK-95",
+      "title": "Analisis toolstack CODE/ (architect+critic)",
+      "status": "completed",
+      "agent": "architect",
+      "priority": "medium",
+      "date": "2026-07-29T07:23:20-0500",
+      "createdAt": "2026-07-29T07:23:20-0500",
+      "updatedAt": "2026-07-29T07:23:20-0500",
+      "duration": 12,
+      "tags": [
+        "toolstack",
+        "architecture",
+        "analysis",
+        "critic-gate"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Architect inventario stack completo de CODE/: FastAPI legacy (src/main.py) + rebuild strangler-fig (src/app/web+domain), SQLAlchemy/Alembic raiz unica confirmada, htmx+Alpine vendorizados, S3/LIWA/Redis/Celery, 3 Dockerfiles, 90 scripts sueltos candidatos a archivar. Critic (Tenth Man Rule) refuto 2 hallazgos: docker-compose.prod.yml/staging.yml SI existen (fuera de CODE/, en raiz MATT/) y Celery worker/beat SI estan wireados ahi -- Celery NO esta muerto. Tambien refuto que Dockerfile.lightsail sea el 'candidato a consolidar': prod y staging usan el Dockerfile plano actualmente. Recomendaciones altas: sin linter/type-checker, python-jose sin mantenimiento, boto3/pillow desactualizados -- con matiz de que auth legacy y la mitad de boto3 no tienen cobertura de tests (fuera de pytest.ini testpaths).",
+      "description": "Architect inventario stack completo de CODE/: FastAPI legacy (src/main.py) + rebuild strangler-fig (src/app/web+domain), SQLAlchemy/Alembic raiz unica confirmada, htmx+Alpine vendorizados, S3/LIWA/Redis/Celery, 3 Dockerfiles, 90 scripts sueltos candidatos a archivar. Critic (Tenth Man Rule) refuto 2 hallazgos: docker-compose.prod.yml/staging.yml SI existen (fuera de CODE/, en raiz MATT/) y Celery worker/beat SI estan wireados ahi -- Celery NO esta muerto. Tambien refuto que Dockerfile.lightsail sea el 'candidato a consolidar': prod y staging usan el Dockerfile plano actualmente. Recomendaciones altas: sin linter/type-checker, python-jose sin mantenimiento, boto3/pillow desactualizados -- con matiz de que auth legacy y la mitad de boto3 no tienen cobertura de tests (fuera de pytest.ini testpaths)."
+    },
+    {
+      "id": "TASK-96",
+      "title": "Design System: cerrar Botones + opciones Badges",
+      "status": "completed",
+      "agent": "ux-designer",
+      "priority": "medium",
+      "date": "2026-07-29T07:57:06-0500",
+      "createdAt": "2026-07-29T07:57:06-0500",
+      "updatedAt": "2026-07-29T07:57:06-0500",
+      "duration": 20,
+      "tags": [
+        "design-system",
+        "frontend",
+        "tailwind",
+        "ui",
+        "jinja2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Botones aprobado (Variante A vivida) y congelado: docs/design-system/previews/botones.html (registro final), src/app/web/templates/components/_botones.html (macro Jinja2 boton() con variant/size/disabled/loading), docs/design-system/tokens.md (fuente de verdad de paleta/radio/sombra/foco para todo el sistema). DEC-10 registrada. Arrancado componente 2 (Badges de estado): 3 opciones de forma (solido/soft-pill/dot) sobre los 4 estados reales de EstadoPaquete (ANUNCIADO/RECIBIDO/ENTREGADO/CANCELADO), preview en docs/design-system/previews/badges.html. Esperando eleccion del usuario.",
+      "description": "Botones aprobado (Variante A vivida) y congelado: docs/design-system/previews/botones.html (registro final), src/app/web/templates/components/_botones.html (macro Jinja2 boton() con variant/size/disabled/loading), docs/design-system/tokens.md (fuente de verdad de paleta/radio/sombra/foco para todo el sistema). DEC-10 registrada. Arrancado componente 2 (Badges de estado): 3 opciones de forma (solido/soft-pill/dot) sobre los 4 estados reales de EstadoPaquete (ANUNCIADO/RECIBIDO/ENTREGADO/CANCELADO), preview en docs/design-system/previews/badges.html. Esperando eleccion del usuario."
+    },
+    {
+      "id": "TASK-97",
+      "title": "Design System: cerrar Badges + opciones Inputs",
+      "status": "completed",
+      "agent": "ux-designer",
+      "priority": "medium",
+      "date": "2026-07-29T08:01:47-0500",
+      "createdAt": "2026-07-29T08:01:47-0500",
+      "updatedAt": "2026-07-29T08:01:47-0500",
+      "duration": 15,
+      "tags": [
+        "design-system",
+        "frontend",
+        "tailwind",
+        "ui",
+        "jinja2"
+      ],
+      "triviality": {
+        "score": 2,
+        "automated": false
+      },
+      "outcome": "Badges aprobado (Opcion 2, fondo suave/pill) y congelado: docs/design-system/previews/badges.html, src/app/web/templates/components/_badge.html (macro badge(estado) con fallback gris defensivo para valores no reconocidos), tokens.md ampliado con seccion Badges. PAT-registrado (status-badge-soft-pill). Arrancado componente 3 (Inputs de texto+validacion): 3 opciones de mecanica de label/error (clasico, floating label, acento de borde izquierdo) manteniendo foco azul/error rojo ya fijados, preview en docs/design-system/previews/inputs.html. Esperando eleccion del usuario.",
+      "description": "Badges aprobado (Opcion 2, fondo suave/pill) y congelado: docs/design-system/previews/badges.html, src/app/web/templates/components/_badge.html (macro badge(estado) con fallback gris defensivo para valores no reconocidos), tokens.md ampliado con seccion Badges. PAT-registrado (status-badge-soft-pill). Arrancado componente 3 (Inputs de texto+validacion): 3 opciones de mecanica de label/error (clasico, floating label, acento de borde izquierdo) manteniendo foco azul/error rojo ya fijados, preview en docs/design-system/previews/inputs.html. Esperando eleccion del usuario."
     }
   ],
   "milestones": [],
   "summary": {
-    "totalTasks": 94,
+    "totalTasks": 97,
     "byStatus": {
       "todo": 0,
       "in-progress": 0,
       "blocked": 0,
-      "completed": 94,
+      "completed": 97,
       "cancelled": 0
     },
     "byPriority": {
       "critical": 0,
       "high": 69,
-      "medium": 22,
+      "medium": 25,
       "low": 3
     },
     "byAgent": {
-      "architect": 31,
+      "architect": 32,
       "devops": 2,
       "coder": 12,
-      "agentx": 49
+      "agentx": 49,
+      "ux-designer": 2
     },
     "completionRate": 100,
     "averageCompletionTime": 0
@@ -2194,9 +2266,9 @@
   },
   "metadata": {
     "totalTokens": 0,
-    "totalEntries": 94,
+    "totalEntries": 97,
     "avgTokensPerEntry": 0,
-    "lastUpdated": "2026-07-28T15:59:06-0500",
+    "lastUpdated": "2026-07-29T08:01:47-0500",
     "tokensByAgent": {}
   }
 }
