@@ -138,10 +138,38 @@ Las mismas de siempre (`README.md` sección "Reglas de interacción"), la que m�
 
 Migración de plantillas: ninguna pendiente — ver sección 5.
 
-- Íconos de navegación en el **header** de escritorio (`.site-nav`) — el footer ya los tiene, el
-  header todavía es solo texto. No se tocó en esta ronda por no haber sido pedido explícitamente.
+- ~~Íconos de navegación en el header de escritorio~~ ✅ hecho (2026-07-30) — ver sección 8.
 - `_iconos.html` centralizado — hoy cada componente repite sus propios `<path>` SVG inline. Es una
   mejora de mantenibilidad identificada pero no construida (ver análisis del 2026-07-29 en el
   historial de esta conversación).
 - `papyrus-logo.png` (el wordmark ancho) está descargado pero sin usar en ninguna pantalla
   todavía — candidato natural para una pantalla de login o splash si se necesita en algún punto.
+
+## 8. Refinamiento de íconos de header y footer (2026-07-30)
+
+El header de escritorio (`.site-nav`) nunca había tenido íconos (solo texto); el footer ya los
+tenía pero chicos (18px móvil, 14px escritorio) y sin distinguir el ítem activo más allá del
+color. Se presentaron 3 opciones visuales (ver conversación — no quedó preview en
+`docs/design-system/previews/` porque esto vive en `base.html`, no es uno de los 16 componentes).
+Elegida la Opción C ("móvil grande estilo app nativa, header como nav principal en escritorio"),
+con un ajuste pedido tras verla: los íconos del footer de escritorio, un poco más grandes de lo
+propuesto.
+
+Tamaños finales por contexto (el header de escritorio es a propósito el más grande de los tres —
+ahí vive el nav principal en pantallas grandes):
+
+| Contexto | Antes | Ahora |
+|---|---|---|
+| Header — escritorio (`.site-nav svg`) | sin ícono (solo texto) | 20px |
+| Footer — móvil (`.site-footer-mobile nav a svg`) | 18px | 24px, con círculo `bg-blue-50` (`#eaf1fd`) detrás del ítem activo |
+| Footer — escritorio (≥768px) | 14px | 18px, sin círculo (discreto a propósito) |
+
+`iconos_footer` se renombró a `iconos_nav` en `base.html` — ahora es compartido entre
+`enlace_nav()` (header) y `enlace_nav_footer()` (footer), con 3 íconos nuevos que solo usa el
+header: `mis_datos` (círculo de usuario), `personal` (carné/ID) y `notificaciones` (campana). El
+footer nunca mostró esos tres enlaces (Grupo 10, Ronda 2, a propósito) así que no los necesita.
+
+Detalle de implementación no obvio: `enlace_nav()` concatena el SVG directo con la etiqueta sin
+`<span>` de por medio (`</svg>{{ etiqueta }}</a>`) — a propósito, para no romper
+`test_layout.py::test_staff_operador_ve_su_conjunto_de_enlaces_sin_administracion`, que verifica
+`">Clientes<"` como substring literal.
