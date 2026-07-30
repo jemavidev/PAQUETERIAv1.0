@@ -77,10 +77,9 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Tanda 1 y 2 completas (2026-07-30): `packages/list.html` y `customers_manage/detail.html` ya
-usan los componentes.** El resto de plantillas todavía no importa nada de `components/` y sigue
-con su propio `<style>` inline. `base.html`, `packages/list.html` y `customers_manage/detail.html`
-son las tres excepciones migradas hasta ahora.
+**Tandas 1, 2 y 3 completas (2026-07-30): `packages/list.html`, `customers_manage/detail.html` y
+`search/form.html` ya usan los componentes.** El resto de plantillas todavía no importa nada de
+`components/` y sigue con su propio `<style>` inline.
 
 Leyenda de estado: ✅ migrada · 🔴 no iniciado · las columnas de componentes son la lista de qué
 aplica, no un orden obligatorio.
@@ -101,14 +100,14 @@ aplica, no un orden obligatorio.
 | `customer/verify.html` | Form + tabla + error/ok | Formularios, Tablas, Toast |
 | `customers_manage/search.html` | Búsqueda simple de clientes (un campo) | Búsqueda y filtros (`busqueda_filtros(..., mostrar_estado=False, mostrar_torre_apartamento=False)` — ya diseñado para este caso exacto) |
 | `customers_manage/detail.html` ✅ | ~~Ficha de cliente — sin forma de volver a la lista~~ Migrada a Breadcrumbs (`encabezado_volver`), Formularios (`formulario_flujo` para nombre/email/segundo contacto/SMS), Toast (error/guardado). "Zona de peligro" pasó del `confirm()` nativo del navegador a `modal_confirmacion` (variant danger) — mismo texto, mismo endpoint, ahora consistente con Cancelar en `packages/list.html`. Ocupantes de la unidad sigue siendo una tarjeta a mano (no hay componente de "fila de ocupante" entre los 15). |
-| `search/form.html` | Tracking público — usa un `.timeline` ad-hoc que predata al componente 7 | **Timeline** (`paso_timeline`) reemplaza el `.timeline` legacy — es el caso de uso original que motivó ese componente. También Empty states, Tarjetas (fotos del paquete) |
+| `search/form.html` ✅ | ~~Tracking público — usaba un `.timeline` ad-hoc que predataba al componente 7~~ Migrada a Timeline (`paso_timeline`, con `rol` solo en el hito que coincide con `paquete.estado` — el resto en gris, misma regla que Badges), Búsqueda y filtros (caso simple, sin estado/torre/apartamento), Badge (estado actual), Empty states (sin resultados). El timeline sigue mostrando solo los hitos OCURRIDOS (sin pasos "pendientes" — la ruta no arma esa info); las fotos quedan en una grilla con Tailwind (no se usó `tarjeta_paquete`, ese macro asume un paquete de lista, no una galería). |
 
 ### Orden sugerido (no obligatorio)
 
 1. ~~`packages/list.html`~~ ✅ hecho (2026-07-30) — desplegado y verificado en vivo en
    `test.papyrus.com.co`.
 2. ~~`customers_manage/detail.html`~~ ✅ hecho (2026-07-30).
-3. `search/form.html` — reemplaza el `.timeline` legacy por el componente real.
+3. ~~`search/form.html`~~ ✅ hecho (2026-07-30).
 4. El resto de formularios (`announce/*`, `auth/*`, `admin/notificaciones.html`,
    `ayuda/form.html`) — son todos el mismo patrón (Formularios + Inputs + Botones + Toast),
    conviene hacerlos en lote una vez que el patrón esté probado en una pantalla real.
