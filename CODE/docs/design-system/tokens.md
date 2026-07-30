@@ -375,12 +375,13 @@ Preview visual: `docs/design-system/previews/toast.html`
 
 `base.html` tiene una barra de navegación inferior **fija** (`.site-footer-mobile`,
 `position:fixed; bottom:0`) visible en **todos** los anchos de pantalla, no solo móvil. Desde el
-2026-07-29 esa barra mide **80px totales** (56px de nav con íconos + 24px de línea de crédito
-"Desarrollado por JEMAVI | © PAPYRUS", agregada para igualar el footer real de producción) — el
-`<body>` le reserva `padding-bottom:80px` (antes 64px, cuando la barra no tenía la línea de
-crédito). Un toast anclado a `bottom-4` queda literalmente encima de esos botones de navegación
-(Anunciar / Buscar / Ayuda / Whatsapp / Teléfono). `bottom-24` (96px) reutiliza exactamente esos
-80px reservados más 16px de respiro — nunca menos. **Estos dos números están acoplados a
+2026-07-29 esa barra mide **80px totales en móvil** (56px de nav con íconos + 24px de línea de
+crédito "Desarrollado por JEMAVI | © PAPYRUS", agregada para igualar el footer real de
+producción) y **44px en desktop** (≥768px, donde se compacta a una sola fila delgada — crédito a
+la izquierda, enlaces inline a la derecha, estilo producción v1). El `<body>` le reserva
+`padding-bottom:80px` en móvil y `48px` en desktop. Un toast anclado a `bottom-4` queda literalmente encima de esos botones de navegación
+(Anunciar / Buscar / Ayuda / Whatsapp / Teléfono). `bottom-24` (96px) libra la altura de móvil
+(80px + 16px de respiro) y con más margen la de desktop (44px) — nunca menos. **Estos dos números están acoplados a
 propósito**: si la altura del footer en `base.html` vuelve a cambiar, el offset del toast debe
 corregirse en el mismo commit (hay un comentario cruzado en el `<style>` de `base.html` y en
 `_toast.html` recordándolo). Cualquier componente flotante futuro que se ancle abajo debe heredar
