@@ -77,10 +77,11 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Tandas 1 a 6 completas (2026-07-30).** Todas las plantillas reales del rebuild usan ya los
-componentes, salvo `announce/confirmacion.html` (necesita una ronda de diseño nueva — no hay
-componente de "página de éxito" entre los 15). `packages/_modal.html` (el modal ad-hoc
-bottom-sheet) ya no tiene usuarios y se BORRÓ.
+**Migración terminada (2026-07-30).** Las 19 plantillas reales del rebuild usan ya los
+componentes del design system. `announce/confirmacion.html` era la última — motivó el componente
+16 (Confirmación de anuncio, `_confirmacion.html`) porque ninguno de los 15 originales cubría una
+"página de éxito". `packages/_modal.html` (el modal ad-hoc bottom-sheet) ya no tiene usuarios y se
+BORRÓ.
 
 Leyenda de estado: ✅ migrada · 🔴 no iniciado · las columnas de componentes son la lista de qué
 aplica, no un orden obligatorio.
@@ -93,7 +94,7 @@ aplica, no un orden obligatorio.
 | `admin/notificaciones.html` ✅ | ~~Formulario + error/ok~~ Migrada: N tarjetas independientes (una por evento/motivo), cada una su propio `formulario_flujo` con los hidden `evento`/`motivo` + un `<textarea>` dentro del `{% call %}`. Toast para error/guardado. |
 | `announce/form.html` ✅ | ~~Nombre + Teléfono + checkbox T&C~~ Migrada a `formulario_flujo` (nombre/teléfono en grid 2 columnas desde 1024px) + Toast (error). El checkbox de T&C no tiene macro dedicado — markup a mano igual que en el docstring de `_formularios.html`. |
 | `announce_new/form.html` ✅ | ~~Variante del anterior, con error/ok~~ Migrada: 3 tarjetas dentro de UN solo `<form>` (Apartamento / Residentes dinámicos / Anunciar) — no se usó `formulario_flujo` porque asume una sola tarjeta por formulario y acá hay tres. Inputs vía `input_texto`, filas de residentes siguen siendo inputs a mano (el JS de agregar/quitar fila las clona). Toast para error / unidad creada / paquete anunciado. |
-| `announce/confirmacion.html` | Página de éxito simple | No hay un componente "confirmación de página completa" en la lista de 15 — evaluar si Empty states (`estado_vacio` con ícono de éxito) encaja o si amerita un componente nuevo |
+| `announce/confirmacion.html` ✅ | ~~Página de éxito simple~~ Motivó el componente 16, "Confirmación de anuncio" (`_confirmacion.html`, macro `confirmacion_exito` + helper `fila_dato`) — Opción 1 de 3, "Recibo con código destacado": ícono de éxito, título, y el `access_code` en un bloque propio con borde punteado. La recapitulación de datos y los enlaces de acción se inyectan vía `{% call %}` porque son específicos de esta página. |
 | `auth/login.html` ✅, `auth/entrar.html` ✅, `auth/me.html` ✅ | ~~Forms de login/sesión staff~~ `login.html`→`formulario_flujo`; `me.html`→tarjeta a mano (dl + `boton` danger, no hay macro de "perfil de solo lectura"); `entrar.html`→tabs CSS-only reimplementadas con `peer/cliente` y `peer/staff` (grupos peer con nombre de Tailwind 3.3+, uno por radio) en vez del `:checked ~` a mano — mismo comportamiento sin JS. |
 | `auth/customer_login.html` ✅, `auth/customer_verify.html` ✅, `auth/customer_me.html` ✅ | ~~Forms de login/verificación cliente (OTP)~~ Mismo patrón que sus equivalentes de staff. El input de código OTP (2 dígitos, centrado, letter-spacing) no usa `input_texto` — necesita clases que el macro no expone, es un caso a mano intencional. |
 | `ayuda/form.html` ✅ | ~~Formulario de contacto/ayuda~~ No era un formulario real (FAQ estática) — solo se llevó el `<style>` ad-hoc a Tailwind, sin macros de Formularios/Inputs/Botones (no aplican). |
@@ -116,7 +117,10 @@ aplica, no un orden obligatorio.
 5. ~~`admin/staff.html`~~ ✅ hecho (2026-07-30) — con esto `packages/_modal.html` se borró (sin
    más usuarios).
 6. ~~`customer/paquetes.html`, `customer/verify.html`, `customers_manage/search.html`~~ ✅ hecho
-   (2026-07-30). Solo queda `announce/confirmacion.html` (necesita componente nuevo — sección 6).
+   (2026-07-30).
+7. ~~`announce/confirmacion.html`~~ ✅ hecho (2026-07-30) — ronda de diseño nueva (componente 16),
+   3 opciones presentadas, elegida la Opción 1. **Con esto termina la migración: las 19 plantillas
+   reales del rebuild usan el design system.**
 
 ## 6. Reglas para cuando migres (no renegociables sin pedirlo)
 
@@ -132,8 +136,8 @@ Las mismas de siempre (`README.md` sección "Reglas de interacción"), la que m�
 
 ## 7. Lo que NO está hecho todavía
 
-- `announce/confirmacion.html` es la ÚNICA plantilla real sin migrar — necesita una ronda de
-  diseño nueva (componente de "página de confirmación/éxito" no existe entre los 15).
+Migración de plantillas: ninguna pendiente — ver sección 5.
+
 - Íconos de navegación en el **header** de escritorio (`.site-nav`) — el footer ya los tiene, el
   header todavía es solo texto. No se tocó en esta ronda por no haber sido pedido explícitamente.
 - `_iconos.html` centralizado — hoy cada componente repite sus propios `<path>` SVG inline. Es una

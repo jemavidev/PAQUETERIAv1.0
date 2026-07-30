@@ -614,11 +614,40 @@ reemplazarlo.
 
 ---
 
-## Design system completo
+## 21. Confirmación de anuncio (componente cerrado — componente 16, agregado durante la migración)
 
-Con este cierre quedan los 15 componentes de `docs/design-system/README.md` cerrados: Botones,
-Badges, Inputs, Tarjetas, Formularios, Tablas, Timeline, Toast, Modales, Carga de fotos, Búsqueda
-y filtros, Paginación, Breadcrumbs, Empty states y Estados de carga. Cada uno tiene su macro en
-`src/app/web/templates/components/_*.html`, su preview aprobado en `docs/design-system/previews/`,
-y su entrada en este documento — listos para integrarse en las plantillas reales del rebuild
-(`src/app/web/templates/`) cuando se decida empezar esa migración.
+**Forma aprobada:** "Recibo con código destacado". Tarjeta centrada con ícono de éxito (círculo
+`emerald`, mismo check que usaría un toast `success`), título, subtítulo opcional, y el código de
+acceso en un bloque propio con borde punteado azul — 4 caracteres con `tracking-[0.35em]`, porque
+es el único dato que la persona necesita anotar de toda la pantalla. No existía en los 15
+originales: ninguno cubría una "página de éxito" completa. Se cerró el 2026-07-30 al migrar
+`announce/confirmacion.html`, la última plantilla real sin el tema.
+
+Implementación de referencia: `src/app/web/templates/components/_confirmacion.html`
+Preview visual: `docs/design-system/previews/confirmacion.html`
+
+| Token | Valor | Clase Tailwind |
+|---|---|---|
+| Ícono de éxito | mismo rol `success` de Badges/Toast | `bg-emerald-100 text-emerald-600`, círculo `h-12 w-12` |
+| Bloque de código | fondo suave `primary`, borde punteado | `rounded-xl border-2 border-dashed border-blue-200 bg-blue-50` |
+| Texto del código | grande, muy espaciado, `primary` | `text-4xl font-bold tracking-[0.35em] text-blue-800` |
+| Tarjeta | mismo lenguaje que Modales (`rounded-2xl`, no el `rounded-xl` del resto) | `bg-white border border-gray-200 rounded-2xl shadow-sm` |
+
+El macro `confirmacion_exito(titulo, subtitulo=None, codigo=None, etiqueta_codigo='Código de
+acceso')` solo define la cáscara fija — la recapitulación de datos y los enlaces de acción se
+inyectan vía `{% call %}` porque varían por página (número de campos, hrefs) y hoy solo hay un
+caso de uso real. `codigo=None` omite el bloque completo, para no atar el macro a paquetes
+específicamente si mañana hace falta una confirmación de éxito sin código. `fila_dato(etiqueta,
+valor)` es un helper opcional para las filas de la recapitulación.
+
+---
+
+## Design system completo — migración completa
+
+Los 16 componentes de `docs/design-system/README.md` están cerrados: Botones, Badges, Inputs,
+Tarjetas, Formularios, Tablas, Timeline, Toast, Modales, Carga de fotos, Búsqueda y filtros,
+Paginación, Breadcrumbs, Empty states, Estados de carga, y Confirmación de anuncio. Cada uno tiene
+su macro en `src/app/web/templates/components/_*.html`, su preview aprobado en
+`docs/design-system/previews/`, y su entrada en este documento. Al 2026-07-30, además, **todas
+las plantillas reales del rebuild ya usan estos componentes** — la migración página por página
+documentada en `IMPLEMENTACION.md` sección 5 terminó con esta última pantalla.

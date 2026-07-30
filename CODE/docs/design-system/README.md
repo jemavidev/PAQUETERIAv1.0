@@ -50,21 +50,25 @@ Léeme primero antes de tocar cualquier componente nuevo.
 | 13 | Breadcrumbs / nav secundaria | ✅ Cerrado — Encabezado contextual con volver integrado: `_breadcrumbs.html` |
 | 14 | Empty states | ✅ Cerrado — Ícono + texto + acción sugerida (distingue sin-resultados de vacío-real): `_estado_vacio.html` |
 | 15 | Estados de carga / skeleton | ✅ Cerrado — Spinner centrado simple, reutiliza el spinner de Botones: `_estado_carga.html` |
+| 16 | Confirmación de anuncio (página de éxito) | ✅ Cerrado (2026-07-30) — Opción 1 (Recibo con código destacado): `_confirmacion.html` |
 
-## Design system completo ✅
+## Design system completo ✅ — migración completa ✅
 
-Los 15 componentes están cerrados. Cada uno tiene su macro final en
+Los 16 componentes están cerrados. Cada uno tiene su macro final en
 `../../src/app/web/templates/components/_*.html`, su preview aprobado en `previews/*.html`, y su
 sección correspondiente en `tokens.md` (fuente de verdad del vocabulario visual).
 
+**Migración terminada (2026-07-30):** todas las plantillas reales del rebuild usan ya estos
+componentes — ver el checklist completo en `IMPLEMENTACION.md` sección 5. `announce/confirmacion.html`
+era la última pendiente; motivó el componente 16 porque ninguno de los primeros 15 cubría una
+"página de éxito".
+
 ## Siguiente paso
 
-No queda ningún componente pendiente de diseño, y el tema ya se corrigió contra los valores reales
-de producción (colores, favicon, logo, footer — ver `IMPLEMENTACION.md` sección 4). El siguiente
-trabajo natural, cuando el usuario lo pida, es la **migración**: reemplazar el CSS ad-hoc de las
-plantillas reales del rebuild por los macros ya cerrados en `components/` — hay un checklist
-página por página en `IMPLEMENTACION.md` sección 5. Eso es un proyecto aparte de "elegir 3
-opciones" — no se empieza sin que el usuario lo pida explícitamente.
+No queda trabajo de diseño ni de migración pendiente. El próximo trabajo natural sobre el tema,
+cuando el usuario lo pida, son los ítems sueltos que quedaron anotados en `IMPLEMENTACION.md`
+sección 7 (íconos de header de escritorio, `_iconos.html` centralizado, uso de `papyrus-logo.png`)
+— ninguno es urgente, ninguno se empieza sin que el usuario lo pida explícitamente.
 
 Nota de contexto del proyecto: este repo tenía un sistema de orquestación de agentes ("AgentX",
 definido en `CLAUDE.md`) que fue desactivado a petición del usuario el 2026-07-29 — ver
