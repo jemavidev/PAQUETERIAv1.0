@@ -9,6 +9,11 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/static/branding/colibri-icono.png?v=1">
   <link rel="shortcut icon" href="/static/branding/colibri-icono.png?v=1">
   <link rel="apple-touch-icon" href="/static/branding/colibri-icono.png?v=1">
+  {# Tailwind compilado (npx tailwindcss@3.4 --content 'src/app/web/templates/**/*.html' --minify),
+     requerido por los macros del design system (components/_*.html). Al agregar clases nuevas en
+     una plantilla hay que RECOMPILAR este archivo y subir el ?v= — no es un CDN en runtime.
+     Mismo enfoque que produccion v1 (static/css/tailwind.css commiteado). #}
+  <link rel="stylesheet" href="/static/css/tailwind.css?v=1">
   <style>
     :root { --site-brand:#1e40af; --site-ink:#1a1a1a; --site-line:#e5e7eb; }
     .site-header { background:#fff; border-bottom:1px solid var(--site-line); font-family: system-ui, -apple-system, sans-serif; }
