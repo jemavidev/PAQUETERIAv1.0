@@ -77,10 +77,10 @@ se ancla a `bottom-24` porque el footer mide 80px — estos dos números están 
 
 ## 5. Checklist de migración — página por página
 
-**Tanda 1 completa (2026-07-30): `packages/list.html` ya usa los componentes.** El resto de
-plantillas todavía no importa nada de `components/` y sigue con su propio `<style>` inline.
-`base.html` y `packages/list.html` son las dos excepciones migradas hasta ahora (header/footer/
-favicon la primera; lista+filtros+paginación+4 modales+scanner la segunda).
+**Tanda 1 y 2 completas (2026-07-30): `packages/list.html` y `customers_manage/detail.html` ya
+usan los componentes.** El resto de plantillas todavía no importa nada de `components/` y sigue
+con su propio `<style>` inline. `base.html`, `packages/list.html` y `customers_manage/detail.html`
+son las tres excepciones migradas hasta ahora.
 
 Leyenda de estado: ✅ migrada · 🔴 no iniciado · las columnas de componentes son la lista de qué
 aplica, no un orden obligatorio.
@@ -100,14 +100,14 @@ aplica, no un orden obligatorio.
 | `customer/paquetes.html` | Lista de paquetes del cliente + empty state | Tarjetas (`tarjeta_paquete`), Empty states, Timeline (si se agrega seguimiento por paquete) |
 | `customer/verify.html` | Form + tabla + error/ok | Formularios, Tablas, Toast |
 | `customers_manage/search.html` | Búsqueda simple de clientes (un campo) | Búsqueda y filtros (`busqueda_filtros(..., mostrar_estado=False, mostrar_torre_apartamento=False)` — ya diseñado para este caso exacto) |
-| `customers_manage/detail.html` | Ficha de cliente — **sin forma de volver a la lista, vacío real que Breadcrumbs resuelve** | Breadcrumbs (`encabezado_volver('Ficha de cliente', '/residentes', 'Volver a Clientes')`), Formularios, Botones, Toast |
+| `customers_manage/detail.html` ✅ | ~~Ficha de cliente — sin forma de volver a la lista~~ Migrada a Breadcrumbs (`encabezado_volver`), Formularios (`formulario_flujo` para nombre/email/segundo contacto/SMS), Toast (error/guardado). "Zona de peligro" pasó del `confirm()` nativo del navegador a `modal_confirmacion` (variant danger) — mismo texto, mismo endpoint, ahora consistente con Cancelar en `packages/list.html`. Ocupantes de la unidad sigue siendo una tarjeta a mano (no hay componente de "fila de ocupante" entre los 15). |
 | `search/form.html` | Tracking público — usa un `.timeline` ad-hoc que predata al componente 7 | **Timeline** (`paso_timeline`) reemplaza el `.timeline` legacy — es el caso de uso original que motivó ese componente. También Empty states, Tarjetas (fotos del paquete) |
 
 ### Orden sugerido (no obligatorio)
 
 1. ~~`packages/list.html`~~ ✅ hecho (2026-07-30) — desplegado y verificado en vivo en
    `test.papyrus.com.co`.
-2. `customers_manage/detail.html` — el vacío de Breadcrumbs es real y molesta hoy.
+2. ~~`customers_manage/detail.html`~~ ✅ hecho (2026-07-30).
 3. `search/form.html` — reemplaza el `.timeline` legacy por el componente real.
 4. El resto de formularios (`announce/*`, `auth/*`, `admin/notificaciones.html`,
    `ayuda/form.html`) — son todos el mismo patrón (Formularios + Inputs + Botones + Toast),
