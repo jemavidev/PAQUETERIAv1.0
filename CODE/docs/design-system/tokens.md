@@ -74,16 +74,41 @@ específicamente para el acento ANUNCIADO de la sección 6, que no es uno de los
 
 ## 4. Tamaños
 
+**Corregido el 2026-07-31** — el tamaño `base` original (`px-4 py-2 text-sm`, ≈36px de alto) quedaba
+visiblemente más chico que el botón real de producción, medido en vivo en `paquetex.papyrus.com.co`:
+50px de alto, texto 16px, `padding: 12px 32px`. Se subieron los tres tamaños de la escala para que
+`base` iguale ese alto real y `sm`/`lg` mantengan la jerarquía relativa (antes `lg` quedaba más
+chico que el nuevo `base`).
+
 | Tamaño | Padding | Texto |
 |---|---|---|
-| `sm` | `px-3 py-1.5` | `text-sm` |
-| `base` | `px-4 py-2` | `text-sm` |
-| `lg` | `px-5 py-2.5` | `text-base` |
+| `sm` | `px-4 py-2` | `text-sm` |
+| `base` | `px-6 py-3` | `text-base` |
+| `lg` | `px-7 py-3.5` | `text-base` |
 
 ## 5. Estado loading
 
 Spinner SVG inline (`animate-spin`) + `opacity-70 cursor-wait` + el elemento se marca `disabled`
 para impedir doble envío. Ver implementación en `_botones.html`.
+
+### Forma de tarjeta genérica — corregida el 2026-07-31
+
+No es un componente propio de la lista de 16 (es el contenedor `bg-white border border-gray-200
+rounded-* shadow-*` que reaparece en Formularios, Empty states, Búsqueda y filtros, Confirmación,
+y varias plantillas reales) pero se corrigió al mismo tiempo que Botones/Inputs por el mismo
+motivo: comparado en vivo con producción, la sombra (`shadow-sm`) y el radio (`rounded-xl`, 12px)
+quedaban más planos que el `shadow-lg`/`rounded-2xl` (16px) real. Regla aplicada en todo el
+sistema:
+
+| Contexto | Antes | Ahora |
+|---|---|---|
+| Tarjetas de página (Formularios, Empty states, Búsqueda y filtros, Confirmación, tarjetas sueltas en pantallas) | `rounded-xl shadow-sm` | `rounded-2xl shadow` |
+| Tarjetas compactas de lista (`tarjeta_paquete`/`tarjeta_cliente`, pasos de Timeline, tarjeta de "Mis paquetes") | `rounded-lg shadow-sm` | sin cambio de radio — ver nota |
+| Modales (`_modales.html`) | `rounded-2xl shadow-xl` | sin cambio — ya tenían más sombra que el resto |
+
+Nota: las tarjetas compactas de lista (radio 8px) no subieron de radio a propósito — son ítems
+densos dentro de una lista/grid, no contenedores de página completa; subir su radio al mismo nivel
+que una tarjeta de formulario las haría desproporcionadamente redondeadas para su tamaño.
 
 ---
 
@@ -176,9 +201,15 @@ rápidos de mostrador. Reutiliza el mismo radio de borde y anillo de foco ya fij
 Implementación de referencia: `src/app/web/templates/components/_inputs.html`
 Preview visual: `docs/design-system/previews/inputs.html`
 
+**Tamaño corregido el 2026-07-31** — igual que Botones (sección 4): el padding/texto original
+(`px-3 py-2 text-sm`, ≈38px de alto) quedaba más chico que el input real de producción (medido en
+vivo: 50px de alto, texto 16px, `padding: 12px`). Pasó a `px-3.5 py-3 text-base` (≈50px con el
+borde de 1px incluido).
+
 | Token | Valor | Clase Tailwind |
 |---|---|---|
 | Radio de borde | 8px | `rounded-lg` |
+| Padding / texto | `px-3.5 py-3`, 16px | `px-3.5 py-3 text-base` |
 | Borde normal | 1px, `slate-300` | `border border-slate-300` |
 | Foco (normal) | primary | `focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2` |
 | Borde error | danger, 1px | `border border-red-600` + `focus-visible:ring-2 focus-visible:ring-red-300` |
