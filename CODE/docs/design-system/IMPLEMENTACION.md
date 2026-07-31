@@ -152,17 +152,18 @@ tenía pero chicos (18px móvil, 14px escritorio) y sin distinguir el ítem acti
 color. Se presentaron 3 opciones visuales (ver conversación — no quedó preview en
 `docs/design-system/previews/` porque esto vive en `base.html`, no es uno de los 16 componentes).
 Elegida la Opción C ("móvil grande estilo app nativa, header como nav principal en escritorio"),
-con un ajuste pedido tras verla: los íconos del footer de escritorio, un poco más grandes de lo
-propuesto.
+con dos ajustes pedidos tras verla en vivo: primero, los íconos del footer de escritorio un poco
+más grandes de lo propuesto (18px); después, que los tres contextos usaran el **mismo tamaño** —
+se unificó todo a 24px y se quitó el override de escritorio que los achicaba y les quitaba el
+círculo de fondo del activo.
 
-Tamaños finales por contexto (el header de escritorio es a propósito el más grande de los tres —
-ahí vive el nav principal en pantallas grandes):
+Tamaños finales — los tres contextos iguales a propósito, a pedido explícito:
 
-| Contexto | Antes | Ahora |
+| Contexto | Antes de esta ronda | Ahora |
 |---|---|---|
-| Header — escritorio (`.site-nav svg`) | sin ícono (solo texto) | 20px |
-| Footer — móvil (`.site-footer-mobile nav a svg`) | 18px | 24px, con círculo `bg-blue-50` (`#eaf1fd`) detrás del ítem activo |
-| Footer — escritorio (≥768px) | 14px | 18px, sin círculo (discreto a propósito) |
+| Header — escritorio (`.site-nav svg`) | sin ícono (solo texto) | 24px, círculo `bg-blue-50` (`#eaf1fd`) detrás del activo (vía el fondo ya existente en `.site-nav a[aria-current="page"]`) |
+| Footer — móvil (`.site-footer-mobile nav a svg`) | 18px | 24px, con círculo `bg-blue-50` detrás del ítem activo |
+| Footer — escritorio (≥768px) | 14px | 24px, mismo círculo — ya no hay override que lo achique ni le quite el círculo |
 
 `iconos_footer` se renombró a `iconos_nav` en `base.html` — ahora es compartido entre
 `enlace_nav()` (header) y `enlace_nav_footer()` (footer), con 3 íconos nuevos que solo usa el
