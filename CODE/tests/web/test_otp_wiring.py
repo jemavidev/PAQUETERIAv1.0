@@ -19,7 +19,7 @@ def _sin_ningun_proveedor(monkeypatch):
     monkeypatch.delenv("LIWA_PASSWORD", raising=False)
     monkeypatch.delenv("TWILIO_ACCOUNT_SID", raising=False)
     monkeypatch.delenv("TWILIO_AUTH_TOKEN", raising=False)
-    monkeypatch.delenv("TWILIO_FROM_NUMBER", raising=False)
+    monkeypatch.delenv("TWILIO_MESSAGING_SERVICE_SID", raising=False)
     monkeypatch.delenv("AWS_SNS_SMS_ENABLED", raising=False)
 
 
@@ -32,7 +32,7 @@ def _liwa_completo(monkeypatch):
 def _twilio_completo(monkeypatch):
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
 
 
 def test_sin_credenciales_devuelve_dev_otp_sender(monkeypatch):

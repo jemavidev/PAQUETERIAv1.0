@@ -1,7 +1,7 @@
 # 02 — Twilio como proveedor SMS real + selección multi-proveedor (LIWA → Twilio)
 
 **What to build:** Un operador que configura
-`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM_NUMBER` junto al
+`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_MESSAGING_SERVICE_SID` junto al
 `LIWA_API_KEY` ya existente obtiene respaldo automático: todo SMS de evento
 de paquete y todo código OTP le sigue llegando al residente aunque LIWA no
 responda, porque el mismo mensaje se reintenta por Twilio sin ningún paso
@@ -19,8 +19,11 @@ el comportamiento de desarrollo/test (`ConsoleNotificationSender`/
       `NotificationSender`/`OtpSender` vía `POST` directo por `httpx` a la
       Messages API de Twilio (Basic Auth con Account SID/Auth Token), y
       lanzan `RuntimeError` con mensaje claro si
-      `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM_NUMBER` no están
-      los tres configurados.
+      `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_MESSAGING_SERVICE_SID`
+      no están los tres configurados. (Corrección post-implementación,
+      durante el deploy real a `paquetex-v2`: la cuenta de Twilio en uso usa
+      un Messaging Service, no un `TWILIO_FROM_NUMBER` fijo — se cambió el
+      tercer campo requerido, sin tocar el resto del diseño.)
 - [x] El teléfono se envía a Twilio tal cual llega (ya viene en E.164 con
       `"+"`, forma canónica de `telefono.py`) — a diferencia de LIWA, que le
       quita el `"+"`.

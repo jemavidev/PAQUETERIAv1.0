@@ -154,8 +154,8 @@ Sin ningún proveedor configurado, sigue devolviendo `ConsoleNotificationSender`
   `app/web/otp.py`) recorren esa lista, incluyen cada proveedor cuya
   configuración esté completa:
   - LIWA: `LIWA_API_KEY` (comportamiento actual, sin cambios).
-  - Twilio: `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` + `TWILIO_FROM_NUMBER`
-    (los tres).
+  - Twilio: `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` +
+    `TWILIO_MESSAGING_SERVICE_SID` (los tres).
   - SNS: `AWS_SNS_SMS_ENABLED=true` (bandera explícita — ver más abajo por
     qué no basta con que ya existan credenciales AWS de S3).
   - 0 proveedores → `ConsoleNotificationSender`/`DevOtpSender` (sin cambios).
@@ -167,13 +167,15 @@ Sin ningún proveedor configurado, sigue devolviendo `ConsoleNotificationSender`
     `_sender_base()` devuelva, sea un sender único o la cadena de failover.
 
 - **Twilio — config y llamada:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
-  `TWILIO_FROM_NUMBER` (los tres obligatorios o `_config()` lanza
+  `TWILIO_MESSAGING_SERVICE_SID` (los tres obligatorios o `_config()` lanza
   `RuntimeError`, igual que LIWA). `POST
   https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json`,
   Basic Auth `(AccountSid, AuthToken)`, body form-encoded `{"To": destino,
-  "From": TWILIO_FROM_NUMBER, "Body": mensaje}`. El `destino` ya llega en
-  E.164 con `"+"` (forma canónica de `telefono.py`) — se pasa tal cual, a
-  diferencia de LIWA que le quita el `"+"`.
+  "MessagingServiceSid": TWILIO_MESSAGING_SERVICE_SID, "Body": mensaje}`. El
+  `destino` ya llega en E.164 con `"+"` (forma canónica de `telefono.py`) —
+  se pasa tal cual, a diferencia de LIWA que le quita el `"+"`. (Corrección
+  post-implementación, durante el deploy real: la cuenta de Twilio en uso no
+  opera con un número fijo — ver nota corregida en "Out of Scope").
 
 - **AWS SNS — config y llamada:** reutiliza
   `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_REGION` (cadena estándar
@@ -242,10 +244,12 @@ costo real.
 
 ## Out of Scope
 
-- Soporte de `TWILIO_MESSAGING_SERVICE_SID` — solo un `TWILIO_FROM_NUMBER`
-  por ahora ("solo SMS por ahora", decisión del usuario en el grilling).
-  Puede agregarse después como alternativa de configuración sin tocar el
-  Protocol.
+- ~~Soporte de `TWILIO_MESSAGING_SERVICE_SID` — solo un `TWILIO_FROM_NUMBER`
+  por ahora~~ — **revertido durante el deploy real**: la cuenta de Twilio
+  provista no opera con un `TWILIO_FROM_NUMBER` fijo, así que
+  `twilio_sender.py` termina usando `TWILIO_MESSAGING_SERVICE_SID` en su
+  lugar (no ambos — el soporte de un número fijo directo queda fuera de
+  alcance, no al revés).
 - Orden de precedencia configurable por el operador (variable de entorno
   para reordenar proveedores) — `LIWA → Twilio → SNS` es una constante fija
   en este slice.
@@ -273,7 +277,7 @@ costo real.
   y se asume que eventualmente se autoriza— pero evita que staging/producción
   dependan únicamente de LIWA mientras tanto.
 - Las credenciales reales de Twilio y AWS SNS
-  (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM_NUMBER`, habilitar
+  (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_MESSAGING_SERVICE_SID`, habilitar
   `AWS_SNS_SMS_ENABLED` + agregar `sns:Publish` a la política IAM existente)
   no están provistas todavía — mismo patrón "bloqueado en confirmación
   externa, código listo de todas formas" ya usado con LIWA (Grupo 8) y S3

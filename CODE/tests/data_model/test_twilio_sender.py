@@ -28,7 +28,7 @@ class _RespuestaFalsa:
 def _credenciales(monkeypatch):
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
 
 
 def test_enviar_sms_llama_con_basic_auth_y_payload_correcto(monkeypatch):
@@ -45,7 +45,7 @@ def test_enviar_sms_llama_con_basic_auth_y_payload_correcto(monkeypatch):
     assert len(llamadas) == 1
     url, payload, auth = llamadas[0]
     assert url == "https://api.twilio.com/2010-04-01/Accounts/ACfake/Messages.json"
-    assert payload == {"To": "+573001234567", "From": "+15005550006", "Body": "Hola"}
+    assert payload == {"To": "+573001234567", "MessagingServiceSid": "MGfake", "Body": "Hola"}
     assert auth == ("ACfake", "fake-token")
 
 

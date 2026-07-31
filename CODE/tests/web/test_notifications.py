@@ -92,7 +92,7 @@ def _sin_ningun_proveedor(monkeypatch):
     monkeypatch.delenv("LIWA_PASSWORD", raising=False)
     monkeypatch.delenv("TWILIO_ACCOUNT_SID", raising=False)
     monkeypatch.delenv("TWILIO_AUTH_TOKEN", raising=False)
-    monkeypatch.delenv("TWILIO_FROM_NUMBER", raising=False)
+    monkeypatch.delenv("TWILIO_MESSAGING_SERVICE_SID", raising=False)
     monkeypatch.delenv("AWS_SNS_SMS_ENABLED", raising=False)
 
 
@@ -105,7 +105,7 @@ def _liwa_completo(monkeypatch):
 def _twilio_completo(monkeypatch):
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
 
 
 def test_solo_twilio_configurado_devuelve_twilio_directo(monkeypatch):
@@ -197,7 +197,7 @@ def test_liwa_inalcanzable_reintenta_automaticamente_con_twilio(monkeypatch):
     monkeypatch.setenv("LIWA_PASSWORD", "fake")
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
     monkeypatch.setattr(httpx, "post", _post)
     liwa_sender._token_cache.clear()
 
@@ -205,7 +205,7 @@ def test_liwa_inalcanzable_reintenta_automaticamente_con_twilio(monkeypatch):
     sender.enviar("+573001234567", "Tu paquete llegó")
 
     assert llamadas_twilio == [
-        {"To": "+573001234567", "From": "+15005550006", "Body": "Tu paquete llegó"}
+        {"To": "+573001234567", "MessagingServiceSid": "MGfake", "Body": "Tu paquete llegó"}
     ]
 
 
@@ -243,7 +243,7 @@ def test_liwa_rechaza_explicitamente_no_reintenta_con_twilio(monkeypatch):
     monkeypatch.setenv("LIWA_PASSWORD", "fake")
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
     monkeypatch.setattr(httpx, "post", _post)
     liwa_sender._token_cache.clear()
 
@@ -275,7 +275,7 @@ def test_liwa_y_twilio_inalcanzables_reintenta_hasta_sns(monkeypatch):
     monkeypatch.setenv("LIWA_PASSWORD", "fake")
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
     monkeypatch.setenv("AWS_SNS_SMS_ENABLED", "true")
     monkeypatch.setattr(httpx, "post", _post)
     monkeypatch.setattr(boto3, "client", lambda *a, **kw: _ClienteSnsFalso())
@@ -399,7 +399,7 @@ def test_staging_sin_override_number_con_los_tres_proveedores_configurados(
     monkeypatch.setenv("LIWA_PASSWORD", "fake")
     monkeypatch.setenv("TWILIO_ACCOUNT_SID", "ACfake")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "fake-token")
-    monkeypatch.setenv("TWILIO_FROM_NUMBER", "+15005550006")
+    monkeypatch.setenv("TWILIO_MESSAGING_SERVICE_SID", "MGfake")
     monkeypatch.setenv("AWS_SNS_SMS_ENABLED", "true")
     monkeypatch.setattr(httpx, "post", _post_que_no_deberia_llamarse)
     monkeypatch.setattr(boto3, "client", _client_que_no_deberia_llamarse)

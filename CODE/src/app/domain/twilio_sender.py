@@ -8,19 +8,20 @@ proyecto — ver `.scratch/sms-failover-twilio-sns/spec.md`).
 Envío: ``POST
 https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json``,
 Basic Auth ``(AccountSid, AuthToken)``, body form-encoded ``{"To": destino,
-"From": TWILIO_FROM_NUMBER, "Body": mensaje}``.
+"MessagingServiceSid": TWILIO_MESSAGING_SERVICE_SID, "Body": mensaje}``.
 
 Variables de entorno requeridas: ``TWILIO_ACCOUNT_SID``,
-``TWILIO_AUTH_TOKEN``, ``TWILIO_FROM_NUMBER``. Si faltan, `_config()` lanza
-`RuntimeError` — la selección de esta implementación vs. LIWA/SNS/consola
-vive en la capa web (`app/web/notifications.py`, `app/web/otp.py`), no aquí.
+``TWILIO_AUTH_TOKEN``, ``TWILIO_MESSAGING_SERVICE_SID``. Si faltan,
+`_config()` lanza `RuntimeError` — la selección de esta implementación vs.
+LIWA/SNS/consola vive en la capa web (`app/web/notifications.py`,
+`app/web/otp.py`), no aquí.
 
 El `destino` llega ya en E.164 con ``"+"`` (forma canónica de
 `telefono.py`) y se pasa tal cual — a diferencia de LIWA, que le quita el
 ``"+"``.
 
-Solo "sin Messaging Service" por ahora (un único `TWILIO_FROM_NUMBER`) —
-decisión explícita del grilling, ver "Out of Scope" del spec.
+Se usa un Messaging Service (no un número fijo) — la cuenta de Twilio en
+uso no opera con `TWILIO_FROM_NUMBER`.
 """
 
 import os
@@ -36,13 +37,13 @@ _TIMEOUT_SEGUNDOS = 15.0
 def _config() -> tuple[str, str, str]:
     account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
     auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-    from_number = os.environ.get("TWILIO_FROM_NUMBER")
-    if not (account_sid and auth_token and from_number):
+    messaging_service_sid = os.environ.get("TWILIO_MESSAGING_SERVICE_SID")
+    if not (account_sid and auth_token and messaging_service_sid):
         raise RuntimeError(
             "Configuración de Twilio incompleta — se requieren TWILIO_ACCOUNT_SID, "
-            "TWILIO_AUTH_TOKEN y TWILIO_FROM_NUMBER."
+            "TWILIO_AUTH_TOKEN y TWILIO_MESSAGING_SERVICE_SID."
         )
-    return account_sid, auth_token, from_number
+    return account_sid, auth_token, messaging_service_sid
 
 
 def configurado() -> bool:
@@ -58,9 +59,9 @@ def configurado() -> bool:
 
 
 def _enviar_sms(destino: str, mensaje: str) -> None:
-    account_sid, auth_token, from_number = _config()
+    account_sid, auth_token, messaging_service_sid = _config()
     url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-    payload = {"To": destino, "From": from_number, "Body": mensaje}
+    payload = {"To": destino, "MessagingServiceSid": messaging_service_sid, "Body": mensaje}
 
     try:
         respuesta = httpx.post(
