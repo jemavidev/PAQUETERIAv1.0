@@ -23,3 +23,7 @@ python-multipart==0.0.6
 bcrypt==4.1.3
 # Firma de la cookie de sesión (SessionMiddleware de Starlette).
 itsdangerous==2.1.2
+
+# S3FotoStorage (Grupo 15) y SnsNotificationSender/SnsOtpSender (ticket 03,
+# sms-failover-twilio-sns) — botocore llega como dependencia transitiva.
+boto3==1.34.0
