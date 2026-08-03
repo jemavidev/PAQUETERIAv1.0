@@ -18,9 +18,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from .apartamento import Apartamento
 from .paquete import CondicionPaquete, EstadoPaquete, MotivoCancelacion, Paquete, TipoPaquete
 from .telefono import normalizar_telefono
+from .texto import normalizar_nombre
 from .usuario import Usuario
 
 
@@ -69,7 +69,7 @@ def receive(
     paquete.received_at = _now()
     paquete.received_by_usuario_id = actor.id
     if guide_number is not None:
-        paquete.guide_number = guide_number
+        paquete.guide_number = normalizar_nombre(guide_number)
     paquete.package_type = package_type or TipoPaquete.NORMAL
     paquete.package_condition = package_condition or CondicionPaquete.BUENO
 
@@ -171,53 +171,9 @@ def corregir_destinatario(
     if recipient_phone is not None and recipient_phone.strip():
         telefono_normalizado = normalizar_telefono(recipient_phone)
 
-    paquete.recipient_name = nombre
+    paquete.recipient_name = normalizar_nombre(nombre)
     if telefono_normalizado is not None:
         paquete.recipient_phone = telefono_normalizado
-    paquete.corrected_at = _now()
-    paquete.corrected_by_usuario_id = actor.id
-
-    session.flush()
-    return paquete
-
-
-def corregir_apartamento(
-    session: Session,
-    paquete: Paquete,
-    actor: Usuario,
-    apartamento: Apartamento,
-) -> Paquete:
-    """Corrige el Apartamento (snapshot) de un Paquete `ANUNCIADO` —
-    segunda excepción ACOTADA y auditada a la inmutabilidad del snapshot
-    (ADR-0001), hermana de `corregir_destinatario`.
-
-    Pensada para el caso de "Paquete huérfano"
-    (`.scratch/asociacion-retroactiva-apartamento`): un Paquete se anunció
-    antes de que su Teléfono estuviera vinculado a un Apartamento, y ese
-    Teléfono se vincula después -- el staff autoriza, explícitamente y
-    mientras el Paquete sigue `ANUNCIADO`, que el snapshot se complete con el
-    Apartamento ya conocido. Copia el texto de `apartamento` (nunca un FK,
-    mismo criterio que `paquete_service.announce`). No cambia `estado`;
-    registra `corrected_at`/`corrected_by_usuario_id` igual que
-    `corregir_destinatario` (mismas columnas, sin distinguir en el esquema
-    cuál de las dos correcciones fue).
-
-    Raises:
-        TransicionInvalida: si el paquete no está `ANUNCIADO` (queda intacto)
-            — una vez `RECIBIDO` el contexto de entrega es tan inmutable como
-            siempre, sin excepción.
-        ValueError: si `apartamento` es ``None`` (el paquete queda intacto) —
-            mismo criterio "valida antes de mutar" que el resto del archivo.
-    """
-    if paquete.estado is not EstadoPaquete.ANUNCIADO:
-        raise TransicionInvalida(paquete.estado, "corregir apartamento")
-
-    if apartamento is None:
-        raise ValueError("El apartamento es obligatorio.")
-
-    paquete.snapshot_conjunto = apartamento.conjunto
-    paquete.snapshot_torre = apartamento.torre
-    paquete.snapshot_apartamento = apartamento.apartamento
     paquete.corrected_at = _now()
     paquete.corrected_by_usuario_id = actor.id
 
