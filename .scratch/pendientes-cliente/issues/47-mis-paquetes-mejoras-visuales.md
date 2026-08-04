@@ -8,7 +8,18 @@ me das para esto). Por ultimo que posibilidad existe en que coloques alque que i
 usuario en esta vista, de forma que a simple vista se puedan diferenciar los paquetes que le
 pertenecen a uno y a otro ocupante."
 
-**Status:** en diseño — 3 puntos, distinto estado cada uno (ver abajo)
+**Status:** en curso — decisiones del cliente registradas abajo
+
+## Decisiones del cliente (2026-08-04)
+
+- **Punto 1:** quiere el efecto más fuerte — fondo de color en el tab activo, no solo texto.
+- **Punto 3:** confirmado — sí quiere que `/mis-paquetes` muestre los paquetes de TODOS los
+  Ocupantes del MISMO apartamento (no de todo el edificio), con marca visual de a quién pertenece
+  cada uno. Relacionado con la asociación teléfono→apartamento que se está construyendo en
+  `.scratch/asociacion-retroactiva-apartamento/` — mismo tema de fondo (una vez un teléfono queda
+  bien vinculado a su apartamento, la vista debería aprovecharlo). Es un cambio de alcance real con
+  trade-off de privacidad (un Ocupante ve los paquetes de otro) — candidato a `/to-spec` antes de
+  construir, no se implementa ad-hoc en este hilo de pedidos puntuales.
 
 ## Punto 1 — Color en los tabs: ya está en producción
 
