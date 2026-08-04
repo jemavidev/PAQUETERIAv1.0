@@ -76,4 +76,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `43` — `/mis-paquetes`: quitar tab "Todos", color por estado, precio de entregados (bloqueado — falta que el cliente aclare el dato), alternativas de tarjeta — **pendiente**
 - `44` — `/anunciar`: paquetes quedan "Sin apartamento" cuando el teléfono nunca fue vinculado, aunque el nombre coincida con un ocupante conocido (32TE, 64E3) — **formalizado en `.scratch/asociacion-retroactiva-apartamento/spec.md`**
 - `45` — `tailwind.config.js` no escaneaba `src/app/web/templates/` (todo el rebuild sin compilar hace tiempo) — **implementado**
-- `46` — `/mis-paquetes`: el código de acceso redirige a `/consultar?q=` en vez de copiar al portapapeles — **pendiente**
+- `46` — `/mis-paquetes`: el código de acceso redirige a `/consultar?q=` en vez de copiar al portapapeles — **verificado**

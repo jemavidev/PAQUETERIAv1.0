@@ -5,9 +5,8 @@ acceso de los paquetes en la clase (codigo-texto), quiero que al hacer click en 
 copiar ese codigo, el usuario sea redirigido a la vista (/consultar?q=<CODIGO DE ACCESO>) para ver
 la informacion".
 
-**Status:** implementado — verificado con tests (10/10 en `test_mis_paquetes.py`, suite completa
-553/559, mismas 6 fallas preexistentes de `test_layout.py` sin relación). Falta desplegar y
-verificar en vivo.
+**Status:** verificado en vivo — desplegado a `test.papyrus.com.co` (commit `286f5ab` en
+`jemavidev/PaqueteX`), health check OK, `/consultar?q=` responde 200.
 
 ## Verificación previa
 
