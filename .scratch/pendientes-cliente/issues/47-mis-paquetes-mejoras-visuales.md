@@ -37,7 +37,8 @@ leyendo `p.snapshot_conjunto`/`torre`/`apartamento` (con `|title` para el Conjun
 string ya unido — `ubicacion_paquete()` quedó sin ningún llamador tras el cambio, se eliminó junto
 con su cómputo huérfano en `customer_paquetes.py`. Tests nuevos: con apartamento (Título Case,
 Torre/Apto resaltados) y sin apartamento (texto genérico). 12/12 en `test_mis_paquetes.py`, suite
-completa 555/561 (mismas 6 fallas preexistentes de `test_layout.py`).
+completa 555/561 (mismas 6 fallas preexistentes de `test_layout.py`). **Verificado en vivo**
+(commit `2e3942b` en `jemavidev/PaqueteX`, deploy success, health OK).
 
 ## Punto 3 — Identificar a qué ocupante pertenece cada paquete: bloqueado por alcance de datos
 
