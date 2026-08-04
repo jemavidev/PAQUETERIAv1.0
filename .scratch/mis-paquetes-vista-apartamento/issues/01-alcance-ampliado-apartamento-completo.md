@@ -8,6 +8,9 @@ conjunto ampliado. Una sesión sin Apartamento asignado sigue viendo exactamente
 
 **Blocked by:** None — can start immediately.
 
+**Verificado en vivo** (commit `2fa910c` en `jemavidev/PaqueteX`, deploy success, health OK,
+`test.papyrus.com.co`). Ticket 02 (avatar de color) desbloqueado.
+
 **Status:** ready-for-agent
 
 - [ ] `ocupante_service.telefonos_activos_del_apartamento_de(session, persona)` existe: sin
