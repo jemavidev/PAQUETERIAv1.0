@@ -70,8 +70,7 @@ cuando el usuario lo pida, son los ítems sueltos que quedaron anotados en `IMPL
 sección 7 (íconos de header de escritorio, `_iconos.html` centralizado, uso de `papyrus-logo.png`)
 — ninguno es urgente, ninguno se empieza sin que el usuario lo pida explícitamente.
 
-Nota de contexto del proyecto: este repo tenía un sistema de orquestación de agentes ("AgentX",
-definido en `CLAUDE.md`) que fue desactivado a petición del usuario el 2026-07-29 — ver
-`../../.claude/archive/CLAUDE.md.agentx-2026-07-29.bak` si hace falta contexto histórico de cómo se
-generaron los primeros componentes. De aquí en adelante el trabajo es directo, sin sub-agentes ni
-protocolo de dispatch.
+Nota de contexto del proyecto: los primeros componentes de este design system se generaron bajo un
+sistema de orquestación de agentes ("AgentX") que pertenecía a un proyecto anterior, no a PaqueteX
+— se retiró por completo del repo el 2026-08-04 (sin backup, nunca fue parte de este rebuild). De
+aquí en adelante el trabajo es directo, sin sub-agentes ni protocolo de dispatch.
