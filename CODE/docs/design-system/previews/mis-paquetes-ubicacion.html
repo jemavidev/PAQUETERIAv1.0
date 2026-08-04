@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Ubicación (Conjunto/Torre/Apto) en /mis-paquetes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen py-8">
+<div class="max-w-md mx-auto px-4 space-y-10">
+
+  <div>
+    <h1 class="text-lg font-bold text-slate-900">Ubicación (Conjunto/Torre/Apto) — 3 alternativas</h1>
+    <p class="text-sm text-slate-500 mt-1">Hoy se muestra como una sola línea de texto gris, todo en
+      MAYÚSCULAS: <span class="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">LAS FLORES · TORRE
+      A · APTO 502</span>. Estas 3 opciones son solo de presentación — el dato no cambia.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACTUAL (referencia) -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-200 text-slate-600 border border-slate-300 mb-2">Actual</span>
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+      <strong class="text-slate-900">María Gómez</strong>
+      <p class="text-sm text-slate-500 mt-0.5">LAS FLORES · TORRE B · APTO 301</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA A — Ícono + jerarquía tipográfica -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa A</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Ícono + jerarquía tipográfica</h2>
+    <p class="text-sm text-slate-500 mb-3">Un ícono de ubicación fijo (siempre el mismo, no cambia
+      por estado) + Torre/Apto en Título Case con las etiquetas chiquitas y el valor con más peso —
+      el Conjunto queda implícito por contexto salvo que haya más de uno.</p>
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+      <strong class="text-slate-900">María Gómez</strong>
+      <p class="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
+        <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.5-7.5 11.25-7.5 11.25S4.5 18 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+        Las Flores — <span class="text-slate-600">Torre <strong class="text-slate-700">B</strong> · Apto <strong class="text-slate-700">301</strong></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA B — Chip de apartamento separado -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa B</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Chip de apartamento separado</h2>
+    <p class="text-sm text-slate-500 mb-3">El Conjunto se queda como texto de contexto arriba;
+      Torre+Apto se destacan como un chip compacto tipo "placa" — más fácil de leer de un vistazo en
+      una lista larga, y visualmente distinto de los datos de estado (que ya usan chips de color).</p>
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+      <div class="flex items-center justify-between gap-2">
+        <strong class="text-slate-900">María Gómez</strong>
+        <span class="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md px-2 py-0.5 text-xs font-bold font-mono text-slate-700">
+          B · 301
+        </span>
+      </div>
+      <p class="text-xs text-slate-400 mt-1">Las Flores</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA C — Todo en una línea, solo Título Case (mínimo cambio) -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa C</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Título Case, mínimo cambio</h2>
+    <p class="text-sm text-slate-500 mb-3">El cambio más chico posible: se deja la misma estructura
+      de una sola línea, solo se baja de MAYÚSCULAS a Título Case (más suave a la vista) y se
+      abrevia "Torre"/"Apto" en gris para que el ojo vaya directo a los valores.</p>
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+      <strong class="text-slate-900">María Gómez</strong>
+      <p class="text-sm text-slate-500 mt-0.5">Las Flores · <span class="text-slate-400">Torre</span> B · <span class="text-slate-400">Apto</span> 301</p>
+    </div>
+  </section>
+
+  <div class="text-sm text-slate-500 border-t border-slate-200 pt-4">
+    Respondé en el chat: <strong>Opcion elegida: [A/B/C] / Comentarios: [ajustes]</strong>
+  </div>
+
+</div>
+</body>
+</html>
