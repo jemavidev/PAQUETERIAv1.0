@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — Tarjeta /mis-paquetes (alternativas)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen py-8">
+<div class="max-w-md mx-auto px-4 space-y-10">
+
+  <div>
+    <h1 class="text-lg font-bold text-slate-900">Tarjeta de /mis-paquetes — 3 alternativas</h1>
+    <p class="text-sm text-slate-500 mt-1">Mismo dato base que hoy (nombre, estado, ubicación, fecha) con
+      4 paquetes de ejemplo (uno por estado) para comparar cómo se ve cada alternativa en los 4 casos
+      reales. La estructura general de la vista (pestañas, detalle expandible) no cambia — solo el
+      contenido de la tarjeta colapsada.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA A — Ícono de estado                               -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa A</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Ícono de estado</h2>
+    <p class="text-sm text-slate-500 mb-3">Un ícono circular a la izquierda identifica el estado de un
+      vistazo (antes de leer el badge de texto) — la forma del ícono ayuda a alguien que hojea rápido la
+      lista, no solo el color.</p>
+
+    <div class="space-y-2">
+      <!-- Anunciado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-start gap-3">
+        <div class="h-10 w-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7L12 3 4 7m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900 truncate">Juan Pérez</strong>
+            <span class="inline-flex items-center bg-amber-100 text-amber-600 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Anunciado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 502</p>
+          <p class="text-xs text-slate-400 mt-0.5">Anunció · 03/08/2026</p>
+        </div>
+      </div>
+
+      <!-- Recibido -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-start gap-3">
+        <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v6H4V4zm0 6l1.5 10.5A1 1 0 006.5 21h11a1 1 0 001-1.5L20 10M9 14h6"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900 truncate">María Gómez</strong>
+            <span class="inline-flex items-center bg-blue-100 text-blue-800 border border-blue-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Recibido</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre B · Apto 301</p>
+          <p class="text-xs text-slate-400 mt-0.5">Recibió · 01/08/2026</p>
+        </div>
+      </div>
+
+      <!-- Entregado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-start gap-3">
+        <div class="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900 truncate">Carlos Ruiz</strong>
+            <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-green-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Entregado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 101</p>
+          <p class="text-xs text-slate-400 mt-0.5">Entregó · 30/07/2026</p>
+        </div>
+      </div>
+
+      <!-- Cancelado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-start gap-3">
+        <div class="h-10 w-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900 truncate">Ana Torres</strong>
+            <span class="inline-flex items-center bg-red-100 text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Cancelado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre C · Apto 204</p>
+          <p class="text-xs text-slate-400 mt-0.5">Canceló · 29/07/2026</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA B — Dato destacado a la derecha                   -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa B</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Dato destacado a la derecha</h2>
+    <p class="text-sm text-slate-500 mb-3">Lo más útil de saber sin expandir la tarjeta va a la derecha,
+      grande: para Recibido, cuántos días lleva esperando (hoy ese dato existe pero está escondido dentro
+      del detalle); para los demás estados, la fecha del hito en formato corto.</p>
+
+    <div class="space-y-2">
+      <!-- Anunciado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <strong class="text-slate-900 truncate">Juan Pérez</strong>
+            <span class="inline-flex items-center bg-amber-100 text-amber-600 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Anunciado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 502</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-xs text-slate-400">Anunciado</p>
+          <p class="text-sm font-semibold text-slate-700">03 ago</p>
+        </div>
+      </div>
+
+      <!-- Recibido — el caso donde el dato destacado importa más -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <strong class="text-slate-900 truncate">María Gómez</strong>
+            <span class="inline-flex items-center bg-blue-100 text-blue-800 border border-blue-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Recibido</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre B · Apto 301</p>
+        </div>
+        <div class="text-right shrink-0 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5">
+          <p class="text-lg font-bold text-blue-800 leading-none">3</p>
+          <p class="text-[11px] text-blue-700 leading-none mt-0.5">días</p>
+        </div>
+      </div>
+
+      <!-- Entregado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <strong class="text-slate-900 truncate">Carlos Ruiz</strong>
+            <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-green-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Entregado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 101</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-xs text-slate-400">Entregado</p>
+          <p class="text-sm font-semibold text-slate-700">30 jul</p>
+        </div>
+      </div>
+
+      <!-- Cancelado -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <strong class="text-slate-900 truncate">Ana Torres</strong>
+            <span class="inline-flex items-center bg-red-100 text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0">Cancelado</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Torre C · Apto 204</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-xs text-slate-400">Cancelado</p>
+          <p class="text-sm font-semibold text-slate-700">29 jul</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ALTERNATIVA C — Mini progreso de ciclo de vida                -->
+  <!-- ============================================================ -->
+  <section>
+    <span class="inline-block text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 mb-2">Alternativa C</span>
+    <h2 class="text-base font-bold text-slate-900 mb-1">Mini progreso de ciclo de vida</h2>
+    <p class="text-sm text-slate-500 mb-3">Una barra de 3 segmentos (Anunciado → Recibido → Entregado)
+      arriba de cada tarjeta muestra en qué parte del camino va el paquete sin tener que leer el badge.
+      Cancelado rompe el patrón a propósito (barra roja completa) para que se note distinto al resto,
+      no como "un paso más".</p>
+
+    <div class="space-y-2">
+      <!-- Anunciado: 1/3 -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+        <div class="flex gap-1 mb-2.5" aria-hidden="true">
+          <div class="h-1.5 flex-1 rounded-full bg-amber-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-slate-900">Juan Pérez</strong>
+          <span class="inline-flex items-center bg-amber-100 text-amber-600 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-semibold">Anunciado</span>
+        </div>
+        <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 502 · Anunció 03/08</p>
+      </div>
+
+      <!-- Recibido: 2/3 -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+        <div class="flex gap-1 mb-2.5" aria-hidden="true">
+          <div class="h-1.5 flex-1 rounded-full bg-blue-800"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-blue-800"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-slate-900">María Gómez</strong>
+          <span class="inline-flex items-center bg-blue-100 text-blue-800 border border-blue-300 rounded-full px-2.5 py-0.5 text-xs font-semibold">Recibido</span>
+        </div>
+        <p class="text-sm text-slate-500 mt-0.5">Torre B · Apto 301 · Recibió 01/08 · 3 días</p>
+      </div>
+
+      <!-- Entregado: 3/3 -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+        <div class="flex gap-1 mb-2.5" aria-hidden="true">
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-600"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-600"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-600"></div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-slate-900">Carlos Ruiz</strong>
+          <span class="inline-flex items-center bg-emerald-100 text-emerald-600 border border-green-300 rounded-full px-2.5 py-0.5 text-xs font-semibold">Entregado</span>
+        </div>
+        <p class="text-sm text-slate-500 mt-0.5">Torre A · Apto 101 · Entregó 30/07</p>
+      </div>
+
+      <!-- Cancelado: barra completa roja, rompe el patrón -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+        <div class="flex gap-1 mb-2.5" aria-hidden="true">
+          <div class="h-1.5 flex-1 rounded-full bg-red-600"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-red-600"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-red-600"></div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-slate-900">Ana Torres</strong>
+          <span class="inline-flex items-center bg-red-100 text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 text-xs font-semibold">Cancelado</span>
+        </div>
+        <p class="text-sm text-slate-500 mt-0.5">Torre C · Apto 204 · Canceló 29/07</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="text-sm text-slate-500 border-t border-slate-200 pt-4">
+    Respondé en el chat: <strong>Opcion elegida: [A/B/C] / Comentarios: [ajustes]</strong> — también se
+    puede combinar (ej. "A, pero con el dato destacado de B a la derecha").
+  </div>
+
+</div>
+</body>
+</html>

@@ -3,7 +3,9 @@
   "version": "4.0.0",
   "description": "Sistema de gestión de paquetería",
   "scripts": {
-    "build:css": "tailwindcss -i ./src/static/css/input.css -o ./src/static/css/tailwind.css --minify",
+    "build:css": "npm run build:css:legacy && npm run build:css:rebuild",
+    "build:css:legacy": "tailwindcss -i ./src/static/css/input.css -o ./src/static/css/tailwind.css --minify",
+    "build:css:rebuild": "tailwindcss -i ./src/static/css/input.css -o ./src/app/web/static/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./src/static/css/input.css -o ./src/static/css/tailwind.css --watch"
   },
   "devDependencies": {

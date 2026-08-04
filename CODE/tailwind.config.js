@@ -1,7 +1,16 @@
 /** @type {import('tailwindcss').Config} */
+// OJO: hay DOS carpetas static/ servidas por separado -- legacy en
+// `src/static/` (mount de src/main.py) y el rebuild en `src/app/web/static/`
+// (mount de src/app/web/app.py, StaticFiles(_STATIC_DIR)). Un solo
+// tailwind.css NO alcanza: `npm run build:css` corre este mismo config DOS
+// veces (ver package.json: build:css:legacy + build:css:rebuild) y escribe
+// el resultado idéntico en ambas rutas. `content` de acá abajo debe seguir
+// cubriendo AMBOS árboles de plantillas para que ninguna de las dos copias
+// quede corta de clases (.scratch/pendientes-cliente/issues/45).
 module.exports = {
   content: [
     "./src/templates/**/*.html",
+    "./src/app/web/templates/**/*.html",
     "./src/static/js/**/*.js",
   ],
   theme: {
