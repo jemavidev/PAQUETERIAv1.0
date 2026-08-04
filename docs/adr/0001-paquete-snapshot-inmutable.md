@@ -15,3 +15,18 @@ Al **anunciar**, el Paquete copia `{anunciado_por (teléfono), nombre_destinatar
 
 - El Anunciante sí puede referenciarse por FK a Persona (su Teléfono es estable, no muta), pero el **snapshot es la fuente de verdad** para mostrar e historizar el paquete.
 - Hay duplicación deliberada de datos de apartamento entre `apartamentos` y las columnas-foto del Paquete. Es el costo aceptado de la inmutabilidad.
+
+## Excepciones conocidas — acotadas y auditadas, no un FK vivo
+
+Esta ADR protege contra que un FK a una entidad mutable reescriba paquetes viejos SOLO porque la
+Persona cambió después — no contra que el staff corrija, de forma explícita y mientras el Paquete
+sigue `ANUNCIADO`, un dato del snapshot que quedó incompleto o con un error de tipeo. Dos funciones
+de `paquete_lifecycle.py` implementan esta excepción, siempre con el mismo guard (`ANUNCIADO`
+únicamente) y el mismo rastro de auditoría (`corrected_at`/`corrected_by_usuario_id`):
+
+1. **`corregir_destinatario`** — corrige `recipient_name`/`recipient_phone` (ej. error de tipeo del
+   cliente al anunciar).
+2. **`corregir_apartamento`** — corrige el snapshot de Apartamento cuando un Paquete se anunció
+   antes de que su Teléfono estuviera vinculado a una unidad, y ese Teléfono se vincula después
+   (`.scratch/asociacion-retroactiva-apartamento`). Ambas funciones comparten las mismas columnas de
+   auditoría — el esquema no distingue cuál de las dos correcciones ocurrió.
