@@ -16,11 +16,9 @@ pertenecen a uno y a otro ocupante."
   **Verificado en vivo** (commit `0b3ffd3` en `jemavidev/PaqueteX`, deploy success, health OK).
 - **Punto 3:** confirmado — sí quiere que `/mis-paquetes` muestre los paquetes de TODOS los
   Ocupantes del MISMO apartamento (no de todo el edificio), con marca visual de a quién pertenece
-  cada uno. Relacionado con la asociación teléfono→apartamento que se está construyendo en
-  `.scratch/asociacion-retroactiva-apartamento/` — mismo tema de fondo (una vez un teléfono queda
-  bien vinculado a su apartamento, la vista debería aprovecharlo). Es un cambio de alcance real con
-  trade-off de privacidad (un Ocupante ve los paquetes de otro) — candidato a `/to-spec` antes de
-  construir, no se implementa ad-hoc en este hilo de pedidos puntuales.
+  cada uno. Formalizado vía `/to-spec` en
+  `.scratch/mis-paquetes-vista-apartamento/spec.md` (`ready-for-agent`) — el seguimiento de
+  implementación de este punto continúa allá, no acá.
 
 ## Punto 1 — Color en los tabs: ya está en producción
 
