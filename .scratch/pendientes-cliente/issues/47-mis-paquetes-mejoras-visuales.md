@@ -13,6 +13,7 @@ pertenecen a uno y a otro ocupante."
 ## Decisiones del cliente (2026-08-04)
 
 - **Punto 1:** quiere el efecto más fuerte — fondo de color en el tab activo, no solo texto.
+  **Verificado en vivo** (commit `0b3ffd3` en `jemavidev/PaqueteX`, deploy success, health OK).
 - **Punto 3:** confirmado — sí quiere que `/mis-paquetes` muestre los paquetes de TODOS los
   Ocupantes del MISMO apartamento (no de todo el edificio), con marca visual de a quién pertenece
   cada uno. Relacionado con la asociación teléfono→apartamento que se está construyendo en
