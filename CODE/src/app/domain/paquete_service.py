@@ -25,6 +25,7 @@ destinatario y la terna del apartamento resuelto EN EL INSTANTE del anuncio
 import enum
 import secrets
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento
@@ -261,3 +262,31 @@ def announce(
     session.add(paquete)
     session.flush()
     return paquete
+
+
+def paquetes_sin_apartamento_de_telefono(
+    session: Session, telefono_canonico: str
+) -> list[Paquete]:
+    """Paquetes "huérfanos" de `telefono_canonico`: `ANUNCIADO` y sin Apartamento
+    resuelto en su snapshot (`.scratch/asociacion-retroactiva-apartamento`).
+
+    Trae los que tienen ese teléfono como Anunciante O como Destinatario.
+    `telefono_canonico` se recibe YA normalizado -- esta función no normaliza
+    (mismo criterio que el resto del dominio: normalizar es responsabilidad
+    de quien llama, con el teléfono en mano antes de resolver Personas).
+
+    Nunca trae Paquetes `RECIBIDO`/`ENTREGADO`/`CANCELADO`, aunque no tengan
+    Apartamento en su snapshot -- una vez el Paquete avanza de estado, su
+    contexto de entrega es inmutable sin excepción (ADR-0001)."""
+    return (
+        session.query(Paquete)
+        .filter(
+            Paquete.estado == EstadoPaquete.ANUNCIADO,
+            Paquete.snapshot_apartamento.is_(None),
+            or_(
+                Paquete.announced_by_phone == telefono_canonico,
+                Paquete.recipient_phone == telefono_canonico,
+            ),
+        )
+        .all()
+    )
