@@ -2,6 +2,13 @@ Status: ready-for-agent
 
 Origen: `.scratch/pendientes-cliente/issues/47-mis-paquetes-mejoras-visuales.md`, punto 3.
 
+## Tickets
+
+Desglosado vía `/to-tickets` — ver `issues/`:
+
+1. `issues/01-alcance-ampliado-apartamento-completo.md` — sin bloqueos
+2. `issues/02-avatar-color-por-ocupante.md` — bloqueado por 01
+
 # `/mis-paquetes`: ver los paquetes de todo el Apartamento, con identificación visual por Ocupante
 
 ## Problem Statement
