@@ -30,11 +30,14 @@ Entregados verde, Cancelados rojo. Es posible que el cliente no lo haya visto to
 que lo que pide sea MÁS fuerte que solo el texto (ej. fondo de color, no solo texto) — pendiente de
 confirmar cuál de las dos cosas.
 
-## Punto 2 — Conjunto/Torre/Apartamento "más natural": alternativas
+## Punto 2 — Conjunto/Torre/Apartamento "más natural": Alternativa A elegida
 
-Hoy se muestra como una sola línea de texto gris plano, todo en MAYÚSCULAS (normalización de
-`snapshot_conjunto`/`torre`/`apartamento`): `LAS FLORES · TORRE A · APTO 502`. Se construyen
-alternativas visuales (ver preview) — no requiere cambios de datos, solo de presentación.
+Cliente eligió Alternativa A (ícono + jerarquía tipográfica). Implementado directo en el template
+leyendo `p.snapshot_conjunto`/`torre`/`apartamento` (con `|title` para el Conjunto) en vez del
+string ya unido — `ubicacion_paquete()` quedó sin ningún llamador tras el cambio, se eliminó junto
+con su cómputo huérfano en `customer_paquetes.py`. Tests nuevos: con apartamento (Título Case,
+Torre/Apto resaltados) y sin apartamento (texto genérico). 12/12 en `test_mis_paquetes.py`, suite
+completa 555/561 (mismas 6 fallas preexistentes de `test_layout.py`).
 
 ## Punto 3 — Identificar a qué ocupante pertenece cada paquete: bloqueado por alcance de datos
 
