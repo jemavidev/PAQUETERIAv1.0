@@ -85,6 +85,9 @@ Segunda vuelta de ajustes pedidos tras ver la tarjeta en vivo:
   Torre/Apartamento, los 3 en negrilla.
 - Quitar "Estos datos los asigna el personal de Papyrus." -- irrelevante
   para el cliente.
+- Corrección de formato tras el primer intento (apilado etiqueta/valor):
+  el cliente pidió fila (etiqueta a la izquierda, valor en negrilla a la
+  derecha, mismo estilo que ya tenían Conjunto/Apartamento antes) -- ajustado.
 
 De paso, a pedido del cliente ("necesito que analices, verifiques y puedas
 corregir lo relacionado a git, github, ci/cd"): se encontró y corrigió que
