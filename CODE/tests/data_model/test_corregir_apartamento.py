@@ -10,7 +10,7 @@ en cualquier otro estado, TransicionInvalida sin efecto.
 
 import pytest
 
-from app.domain.apartamento_service import get_or_create_apartamento
+from app.domain.apartamento_service import resolver_apartamento
 from app.domain.paquete import EstadoPaquete
 from app.domain.paquete_lifecycle import (
     TransicionInvalida,
@@ -35,7 +35,7 @@ def _anunciar(session, tel="3001234567", nombre="Jesus Peres"):
 
 def test_corregir_en_anunciado_actualiza_snapshot_y_registra_actor(db_session):
     staff = _staff(db_session)
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     assert p.snapshot_apartamento is None
 
@@ -43,8 +43,8 @@ def test_corregir_en_anunciado_actualiza_snapshot_y_registra_actor(db_session):
 
     # normalizar_terna sube a MAYUSCULAS -- literales independientes del
     # calculo de la propia implementacion, no `apto.*`.
-    assert p.snapshot_conjunto == "LAS FLORES"
-    assert p.snapshot_torre == "TORRE A"
+    assert p.snapshot_conjunto == "EL CLUB"
+    assert p.snapshot_torre == "TORRE 1"
     assert p.snapshot_apartamento == "101"
     assert p.corrected_by_usuario_id == staff.id
     assert p.corrected_at is not None
@@ -53,7 +53,7 @@ def test_corregir_en_anunciado_actualiza_snapshot_y_registra_actor(db_session):
 
 def test_corregir_no_toca_recipient_name_ni_phone(db_session):
     staff = _staff(db_session)
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     nombre_original = p.recipient_name
     telefono_original = p.recipient_phone
@@ -77,7 +77,7 @@ def test_corregir_sin_apartamento_falla_y_no_muta(db_session):
 
 def test_corregir_en_recibido_falla_sin_efecto(db_session):
     staff = _staff(db_session)
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     receive(db_session, p, staff)
 
@@ -90,7 +90,7 @@ def test_corregir_en_recibido_falla_sin_efecto(db_session):
 
 def test_corregir_en_entregado_falla_sin_efecto(db_session):
     staff = _staff(db_session)
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     receive(db_session, p, staff)
     deliver(db_session, p, staff)
@@ -101,7 +101,7 @@ def test_corregir_en_entregado_falla_sin_efecto(db_session):
 
 def test_corregir_en_cancelado_falla_sin_efecto(db_session):
     staff = _staff(db_session)
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     cancel(db_session, p, staff, "OTRO")
 

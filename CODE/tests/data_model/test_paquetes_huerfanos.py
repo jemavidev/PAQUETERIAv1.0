@@ -9,7 +9,7 @@ para ese teléfono (como anunciante o destinatario); nunca trae paquetes ya
 avanzados de estado ni paquetes con apartamento ya resuelto.
 """
 
-from app.domain.apartamento_service import get_or_create_apartamento, set_apartamento_actual
+from app.domain.apartamento_service import resolver_apartamento, set_apartamento_actual
 from app.domain.paquete_lifecycle import cancel, deliver, receive
 from app.domain.paquete_service import (
     Destinatario,
@@ -59,7 +59,7 @@ def test_destinatario_registrado_sin_apartamento_es_huerfano(db_session):
 
 
 def test_paquete_con_apartamento_ya_resuelto_no_es_huerfano(db_session):
-    apto = get_or_create_apartamento(db_session, "Las Flores", "Torre A", "101")
+    apto = resolver_apartamento(db_session, "TORRE 1", "101")
     announce(db_session, "3001234567", "Jesus Peres", Destinatario.yo_mismo())
     set_apartamento_actual(db_session, "3001234567", apto)
     p2 = announce(db_session, "3001234567", "Jesus Peres", Destinatario.yo_mismo())
