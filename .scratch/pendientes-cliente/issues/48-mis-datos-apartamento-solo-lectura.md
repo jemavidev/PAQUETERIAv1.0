@@ -73,5 +73,26 @@ Prototipo visual verificado interactivamente por el cliente antes de
 implementar (3 conceptos, eligió B, pidió el ajuste de una sola ventana
 resaltada — aplicado).
 
-Pendiente: desplegar a `test.papyrus.com.co` y confirmar visualmente ahí
-(cambia `Status` a `verificado`).
+Desplegado y confirmado visualmente por el cliente en vivo (2026-08-05) --
+encontró y se corrigió un problema real: el edificio SVG no se veía porque
+Tailwind es un paso de build en este proyecto (no JIT), y las clases
+arbitrarias nuevas no estaban en el CSS ya compilado (mismo patrón que
+issues 39/45). Recompilado + cache-bust `?v=28`→`?v=29`.
+
+Segunda vuelta de ajustes pedidos tras ver la tarjeta en vivo:
+- Reordenar Conjunto → Torre → Apartamento (antes Torre era el título grande
+  y Conjunto/Apartamento filas chicas); Conjunto ahora un poco más grande que
+  Torre/Apartamento, los 3 en negrilla.
+- Quitar "Estos datos los asigna el personal de Papyrus." -- irrelevante
+  para el cliente.
+
+De paso, a pedido del cliente ("necesito que analices, verifiques y puedas
+corregir lo relacionado a git, github, ci/cd"): se encontró y corrigió que
+CI llevaba en rojo desde el 2026-08-04 en TODOS los commits (incluso los que
+no tocaban nada de esto) -- causa raíz: tests huérfanos/desactualizados en el
+repo de deploy (ver commit `9c7c4ad` en jemavidev/PaqueteX), sin relación
+con esta feature salvo coincidir en el tiempo. CI y Deploy to Staging quedan
+ambos en verde por primera vez desde esa fecha.
+
+Pendiente: que el cliente confirme esta segunda vuelta visualmente (cambia
+`Status` a `verificado`).
