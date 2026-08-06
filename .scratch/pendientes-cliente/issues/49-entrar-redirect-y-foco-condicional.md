@@ -12,7 +12,7 @@ activaria el teclado automatico que aparece en un dispositivo movil y de esta
 manera se podra visualizar el mensaje de error que aparece en la parte
 inferior de la vista desde el mobile."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Contexto
 
@@ -70,5 +70,5 @@ el foco condicional, cubriendo `/otp`, `/otp/verificar`, `/anunciar`,
 y de los 3 patrones de campo distintos -- input_texto, casillas de dígito
 crudas, y el textarea en loop).
 
-Pendiente: desplegar a `test.papyrus.com.co` y que el cliente confirme en
-vivo (cambia `Status` a `verificado`).
+Confirmado en vivo por el cliente en `test.papyrus.com.co` (2026-08-05):
+"/otp" y "/otp/verificar" ok, "no veo nada raro".
