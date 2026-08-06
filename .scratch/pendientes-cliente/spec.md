@@ -81,3 +81,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `48` — `/mis-datos`: Torre/Apartamento de solo lectura, asignación exclusiva del staff desde `/residentes/{id}`, rediseño visual (edificio + marcador) — **implementado**
 - `49` — `/entrar`: redirigir si ya hay sesión (otp→/mis-datos, staff→/paquetes); foco condicional (sin autofocus si hay error) aplicado a las 13 vistas del app que lo usaban — **implementado**
 - `50` — `/anunciar`: límite de 10 anuncios activos por teléfono, con pantalla de confirmación desde el primero, sin mostrar códigos de acceso ajenos — **implementado**
+- `51` — Failover de SMS/OTP: AWS SNS pasa al frente de la cadena (antes LIWA→Twilio→SNS, ahora SNS→LIWA→Twilio) por problemas puntuales con Twilio — **implementado**
