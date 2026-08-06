@@ -80,3 +80,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `47` — `/mis-paquetes`: color de tabs (ya en vivo), ubicación más natural (alternativas), identificar ocupante (bloqueado — alcance de datos) — **en diseño**
 - `48` — `/mis-datos`: Torre/Apartamento de solo lectura, asignación exclusiva del staff desde `/residentes/{id}`, rediseño visual (edificio + marcador) — **implementado**
 - `49` — `/entrar`: redirigir si ya hay sesión (otp→/mis-datos, staff→/paquetes); foco condicional (sin autofocus si hay error) aplicado a las 13 vistas del app que lo usaban — **implementado**
+- `50` — `/anunciar`: límite de 10 anuncios activos por teléfono, con pantalla de confirmación desde el primero, sin mostrar códigos de acceso ajenos — **implementado**

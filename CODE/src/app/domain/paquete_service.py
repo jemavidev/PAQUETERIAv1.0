@@ -264,6 +264,31 @@ def announce(
     return paquete
 
 
+# Máximo de Paquetes en ANUNCIADO (pendientes de recibir) que un mismo
+# Teléfono puede acumular anunciando desde `/anunciar` (vista pública, sin
+# sesión) -- pedido del cliente, `.scratch/pendientes-cliente`: evita que un
+# error o abuso dispare una ráfaga de notificaciones SMS reales (cada
+# ANUNCIADO nuevo notifica). Mismo espíritu que `MAX_OCUPANTES_ACTIVOS` en
+# `ocupante_service.py` -- un tope duro con su propio mensaje claro.
+MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO = 10
+
+
+def contar_anunciados_activos_de_telefono(session: Session, telefono_canonico: str) -> int:
+    """Cuántos Paquetes en `ANUNCIADO` (pendientes de recibir) tiene
+    `telefono_canonico` como Anunciante -- la "cola" real que le interesa a
+    este límite (una vez Recibido/Entregado/Cancelado, ya no aporta al
+    problema de acumulación). `telefono_canonico` se recibe YA normalizado,
+    mismo criterio que el resto del dominio."""
+    return (
+        session.query(Paquete)
+        .filter(
+            Paquete.estado == EstadoPaquete.ANUNCIADO,
+            Paquete.announced_by_phone == telefono_canonico,
+        )
+        .count()
+    )
+
+
 def paquetes_sin_apartamento_de_telefono(
     session: Session, telefono_canonico: str
 ) -> list[Paquete]:
