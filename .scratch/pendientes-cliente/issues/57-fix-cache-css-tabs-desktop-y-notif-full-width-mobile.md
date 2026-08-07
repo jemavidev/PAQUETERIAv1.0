@@ -11,7 +11,9 @@ vista de mobiles distribuyas el contenido en el ancho total del
 dispositivo, esto ya que se encuentra todo el contenido ajustado y
 apiñado a la izquierda."
 
-**Status:** implementado
+**Status:** verificado (el cliente confirmó "me parece perfecto el como se
+ve la version mobil"; pidió por separado ajustar el LOOK AND FEEL de
+desktop -- no una regresión, ver [[58]])
 
 ## Análisis — causa raíz real
 
