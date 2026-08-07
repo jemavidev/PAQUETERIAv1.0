@@ -92,3 +92,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `59` — Header: "Mis paquetes"/"Mis datos" en el menú de cuenta (mobile+desktop) + 4ta opción en el nav de escritorio — **verificado**
 - `60` — `/mis-datos` y `/mis-paquetes`: unificar ancho/alineación del contenedor (mismas clases) — **verificado**
 - `61` — Footer móvil de cliente logueado: Anunciar/Mis paquetes/Mis datos/Whatsapp (reemplaza Consultar/Ayuda) — **implementado**
+- `62` — Menú de cuenta: agregar Consultar y Ayuda (debajo de Mis paquetes/Mis datos, arriba de Cerrar sesión) — **implementado**
