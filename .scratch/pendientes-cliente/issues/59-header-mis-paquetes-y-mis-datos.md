@@ -17,7 +17,8 @@ igual en mobile y desktop) y agregar "Mis datos" como 4ta opción de
 Anunciar/Consultar dentro del menú de cuenta (esos ya están en el footer
 móvil).
 
-**Status:** implementado
+**Status:** verificado (el cliente confirmó "ya ahora si los tengo de lado
+a lado" en `test.papyrus.com.co`)
 
 ## Contexto
 

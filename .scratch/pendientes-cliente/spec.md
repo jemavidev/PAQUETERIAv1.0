@@ -89,4 +89,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `56` — `/mis-datos` y `/mis-paquetes`: resaltar cada tab en mobile con fondo + borde (solo mobile, desktop intacto) — **implementado** (desktop se rompió por cache de CSS, ver [[57]])
 - `57` — Fix: tabs/Notificaciones "dañados" en desktop (CSS nunca recompilado en el deploy, no un bug de lógica) + Notificaciones a ancho completo en mobile — **verificado**
 - `58` — `/mis-datos` y `/mis-paquetes`: tabs desktop más grandes y resaltados, misma posición — **implementado**
-- `59` — Header: "Mis paquetes"/"Mis datos" en el menú de cuenta (mobile+desktop) + 4ta opción en el nav de escritorio — **implementado**
+- `59` — Header: "Mis paquetes"/"Mis datos" en el menú de cuenta (mobile+desktop) + 4ta opción en el nav de escritorio — **verificado**
+- `60` — `/mis-datos` y `/mis-paquetes`: unificar ancho/alineación del contenedor (mismas clases) — **implementado**
