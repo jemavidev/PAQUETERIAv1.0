@@ -6,7 +6,8 @@ diferente, puedes analizar esto y corregirlo, al cambiar entre una y otra
 esto no se deberia notar ya que debe ser con las mismas clases o
 similares."
 
-**Status:** implementado
+**Status:** verificado (el cliente confirmó "Casi perfecto, estas
+mejorando" en `test.papyrus.com.co`)
 
 ## Análisis
 
