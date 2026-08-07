@@ -19,46 +19,70 @@ apiñado a la izquierda."
 comportamiento esperado de cada clase `lg:*` agregada en [[54]]/[[55]]/[[56]]
 contra el HTML real, y la cascada mobile-first (`grid` → `lg:flex`,
 `bg-slate-50 border` → `lg:bg-transparent lg:border-0`, `flex flex-wrap` →
-`lg:grid lg:grid-cols-[...]`, etc.) es correcta — confirmado además
-recompilando Tailwind localmente y verificando que CADA una de esas reglas
-(incluida la columna con valor arbitrario `grid-cols-[1fr_repeat(4,minmax(0,1fr))]`)
-se genera bien.
+`lg:grid lg:grid-cols-[...]`, etc.) es correcta.
 
-**La causa real: `base.html` sirve el CSS compilado como
-`/static/css/tailwind.css?v=29` — un cache-buster manual.** El comentario
-en el propio archivo ya lo advertía: *"Al agregar clases nuevas en una
-plantilla hay que RECOMPILAR este archivo y subir el ?v= — no es un CDN en
-runtime."* El `?v=29` llevaba fijo desde el 2026-08-05 (issue 48, la última
-vez que alguien sí lo subió). En los 3 despliegues de este pedido (54, 55,
-56) se agregaron clases Tailwind genuinamente nuevas (el grid 2x2 de tabs,
-`bg-slate-50`/`lg:bg-transparent`/`lg:border-0`, el layout de tarjetas de
-Notificaciones con la columna arbitraria) SIN subir el `?v=`. El servidor
-sí recompiló el CSS correctamente en cada deploy (`Dockerfile` corre `npm
-run build:css` en cada build) -- el problema es que cualquier navegador
-que ya tuviera cacheado `tailwind.css?v=29` de ANTES de estos 3 cambios
-nunca volvió a pedirlo, porque la URL nunca cambió. Ese navegador sigue
-sirviendo, de memoria, un CSS que no define las reglas `lg:` necesarias
-para esas clases nuevas -- así que en desktop, esos elementos quedan sin
-ninguna regla que revierta el estilo mobile, mostrando algo roto/mezclado
-en vez de la vista de escritorio de siempre. Los deploys previos de esta
-misma vuelta (52/53, el visor de fotos) escaparon del problema solo por
-suerte: la única clase Tailwind nueva que agregaron (`overflow-hidden`) ya
-existía de sobra en el resto de la app, así que ya estaba en cualquier CSS
-cacheado medianamente reciente.
+**Primer intento de corrección (INCOMPLETO, corregido más abajo):** se
+asumió que el problema era un `?v=` de cache-busting sin subir en
+`base.html`, y se subió `?v=29` → `?v=30`. Desplegado, verificado con
+`curl` directo (sin cache de navegador de por medio) contra
+`test.papyrus.com.co/static/css/tailwind.css?v=30` -- **las reglas nuevas
+seguían faltando**, con el mismo `etag`/`last-modified` (2026-08-05) que
+`?v=29`. Eso descartó cache de navegador: ni Caddy ni el propio `curl` con
+un query-string jamás usado antes cambiaban el resultado.
 
-Esto explica también por qué mobile SÍ se veía bien en cada ronda (54, 55,
-56) mientras el cliente lo probaba desde el celular: el navegador del
-celular sí traía el CSS fresco (o no tenía nada cacheado todavía); el
-navegador de escritorio, probado por primera vez recién en este pedido,
-llevaba semanas con una copia vieja cacheada bajo la misma URL.
+**Causa raíz real, encontrada entrando por SSH al servidor:** el
+`Dockerfile` del repo de deploy (`jemavidev/PaqueteX`) es DISTINTO del
+`Dockerfile` de este monorepo (`CODE/Dockerfile`) -- el de deploy NO
+instala Node/npm ni corre `npm run build:css` en ningún paso; solo copia
+`src/` tal cual viene del checkout de git:
+
+```
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY alembic.ini .
+COPY alembic/ alembic/
+COPY src/ src/
+```
+
+Es decir: `src/app/web/static/css/tailwind.css` es un archivo COMMITEADO
+en git que el deploy nunca recompila -- exactamente lo que el comentario
+de `base.html` ya advertía ("hay que RECOMPILAR este archivo"), pero se
+interpretó mal: no bastaba con subir el `?v=`, había que recompilar el
+CSS EN LOCAL y comitear el archivo resultante, cosa que en los últimos 4
+deploys (54, 55, 56, y el primer intento de 57) se hizo exactamente al
+revés -- se recompiló en local para verificar las clases, y después se
+revirtió (`git checkout --`) esa recompilación por creer, incorrectamente,
+que el Dockerfile de deploy la iba a regenerar sola en cada build (así
+trabaja el `CODE/Dockerfile` de este monorepo, pero NO el del repo de
+deploy). Confirmado entrando al contenedor corriendo en
+`test.papyrus.com.co`: `tailwind.css` con fecha 5 de agosto, sin ninguna
+de las clases nuevas -- congelado desde el último commit (issue 48) que sí
+comiteó el CSS recompilado.
+
+Esto también explica por qué mobile SÍ se veía bien en 54/55/56: las
+clases mobile-first (`grid`, `bg-slate-50`, `py-3`, `text-base`,
+`flex-wrap`, etc.) ya existían en el CSS viejo por casualidad -- son
+utilidades comunes usadas en otras partes de la app. Las que faltaban eran
+específicamente las `lg:*` que revierten esos estilos en desktop
+(`lg:bg-transparent`, `lg:border-0`, la columna de grid con valor
+arbitrario), mucho menos probable que ya existieran de casualidad en
+cualquier build viejo.
 
 ## Corrección
 
-- `base.html`: `?v=29` → `?v=30` -- fuerza a todo navegador a pedir el CSS
-  fresco, que ya tenía las reglas correctas desde el deploy de 56.
-- Regla a seguir de ahora en más (ya documentada en el propio archivo,
-  simplemente no se siguió): **toda vez que se agregue/quite una clase de
-  Tailwind en cualquier plantilla, subir el `?v=` en el mismo commit.**
+- CSS recompilado en local (`npm run build:css`, las dos rutas --
+  `src/static/css/` y `src/app/web/static/css/`, ambas quedan idénticas
+  como espera `tailwind.config.js`) y esta vez SÍ comiteado.
+- `base.html`: `?v=30` → `?v=31` (insurance extra, ya que `?v=30` alcanzó a
+  servir contenido viejo un rato antes de detectar el problema real).
+- Regla a seguir de ahora en más: toda vez que se agregue/quite una clase
+  de Tailwind en cualquier plantilla, **recompilar Tailwind en local Y
+  comitear el `tailwind.css` resultante** (no solo subir el `?v=` --
+  el deploy NO lo recompila solo) en el mismo commit.
+- Pendiente de decidir con el cliente (fuera de alcance de este fix
+  puntual): agregar el paso de build de Tailwind al `Dockerfile` del repo
+  de deploy, para que esto deje de depender de que alguien se acuerde de
+  recompilar y comitear a mano cada vez.
 
 ## Adicional — Notificaciones en mobile, distribuir a ancho completo
 
