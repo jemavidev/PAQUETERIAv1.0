@@ -83,3 +83,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `50` — `/anunciar`: límite de 10 anuncios activos por teléfono, con pantalla de confirmación desde el primero, sin mostrar códigos de acceso ajenos — **implementado**
 - `51` — Failover de SMS/OTP: AWS SNS pasa al frente de la cadena (antes LIWA→Twilio→SNS, ahora SNS→LIWA→Twilio) por problemas puntuales con Twilio — **implementado**
 - `52` — `/consultar`: foco condicional tras buscar (no reactiva teclado) + gestos táctiles reales (pinch zoom, pan, swipe, doble tap) en el visor de fotos — **implementado**
+- `53` — `/consultar`: quitar las flechas del visor de fotos, navegación solo por swipe (+ teclado en escritorio) — **implementado**

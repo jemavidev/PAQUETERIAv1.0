@@ -49,5 +49,5 @@ con SNS primero) a su espejo correcto "SNS y LIWA caídos, Twilio entrega".
 630 tests pasan (mismo total que antes -- se reescribieron aserciones
 existentes, no se agregaron tests nuevos).
 
-Pendiente: desplegar a `test.papyrus.com.co` y confirmar en vivo que el
-próximo envío real (SMS/OTP) sale por AWS SNS.
+Desplegado en `test.papyrus.com.co` (2026-08-06). Pendiente: confirmar en
+vivo que el próximo envío real (SMS/OTP) sale por AWS SNS.
