@@ -11,7 +11,9 @@ tabla [...] no se muestra toda la tabla y hay que hacer scroll. En la
 seccion de 'Residentes' [...] el campo 'telefono' tiene una especie de
 overflow en la pantalla, este campo se sale de la pantalla."
 
-**Status:** implementado
+**Status:** verificado (el cliente confirmó "se ve bastante bien" en
+`test.papyrus.com.co`, pidió solo un ajuste de tamaño de los tabs — ver
+[[55]])
 
 ## Contexto
 
