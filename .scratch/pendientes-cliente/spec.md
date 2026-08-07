@@ -86,4 +86,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `53` — `/consultar`: quitar las flechas del visor de fotos, navegación solo por swipe (+ teclado en escritorio) — **implementado**
 - `54` — `/mis-datos`: quitar encabezado con avatar, tabs en grid 2x2 mobile, Notificaciones en tarjetas mobile, fix overflow del teléfono en Residentes — **verificado**
 - `55` — `/mis-datos` y `/mis-paquetes`: tabs mobile más grandes, mismo grid 2x2 en las 2 vistas — **verificado**
-- `56` — `/mis-datos` y `/mis-paquetes`: resaltar cada tab en mobile con fondo + borde (solo mobile, desktop intacto) — **implementado**
+- `56` — `/mis-datos` y `/mis-paquetes`: resaltar cada tab en mobile con fondo + borde (solo mobile, desktop intacto) — **implementado** (desktop se rompió por cache de CSS, ver [[57]])
+- `57` — Fix: tabs/Notificaciones "dañados" en desktop (cache de `tailwind.css?v=`, no un bug de lógica) + Notificaciones a ancho completo en mobile — **implementado**
