@@ -5,7 +5,9 @@ en la grilla que acabas de crear hagas que sea somo un poco mas grande.
 Adicional a esto necesito que en la vista '/mis-paquetes' apliques la misma
 logica de la grilla para que se vea uniforme las 2 vistas."
 
-**Status:** implementado
+**Status:** verificado (el cliente confirmó "el tamano es perfecto, en las
+2 vistas" en `test.papyrus.com.co`, pidió después resaltar cada tab con
+fondo/borde — ver [[56]])
 
 ## Contexto
 
