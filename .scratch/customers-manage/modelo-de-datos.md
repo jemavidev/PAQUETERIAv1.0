@@ -111,6 +111,74 @@ esos tres — no hay proveedor integrado.
 
 ---
 
+## Cómo se usan realmente algunos campos
+
+No solo el tipo/nulabilidad importa para decidir qué hacer con un campo —
+esto es lo que el código de verdad hace con cada uno hoy.
+
+**`telefono`** — la identidad real. `get_or_create_persona` (la única forma
+en que nace una Persona, implícita al anunciar o loguearse por OTP) la crea/
+encuentra por acá. Destino del SMS. Queda **congelado** dentro de cada
+paquete anunciado (`announced_by_phone`/`recipient_phone`, ADR-0001) — si la
+Persona cambia de teléfono después, los paquetes viejos siguen mostrando el
+de entonces.
+
+**`segundo_contacto`** — texto libre, SIN relación estructurada con nada
+(ni con `Ocupante`, ni con otra `Persona`). Se usa solo para búsqueda por
+texto (`ilike`) en `/residentes`, y se borra al anonimizar. Dato relevante:
+`CONTEXT.md` (glosario del proyecto) dice explícitamente que "segundo
+contacto" fue el nombre coloquial usado ANTES de resolver el modelo, y que
+el término formal que lo reemplazó es **Ocupante**. En el código de hoy,
+sin embargo, `Persona.segundo_contacto` sigue existiendo como campo suelto,
+completamente desconectado de la tabla `Ocupante` real — son dos cosas de
+nombre parecido, sin relación entre sí. Vale la pena decidir si conservarlo,
+retirarlo, o migrarlo al padrón de Ocupantes (que ya cubre lo mismo, de
+forma estructurada).
+
+**`apartamento_actual_id`** — el apartamento ACTUAL de la Persona, mutable
+en cualquier momento (`apartamento_service.move_resident`/
+`set_apartamento_actual`). Todas las Personas que comparten el mismo valor
+acá forman el grupo "misma unidad" — implícito, no una lista guardada
+aparte. Alimenta `telefonos_activos_del_apartamento_de` (`/mis-paquetes`
+ampliado a todo el apartamento, no solo el propio teléfono). Mudarse NUNCA
+reescribe el snapshot de paquetes ya anunciados.
+
+**`whatsapp_usuario`** — hoy es SOLO un dato guardado. No dispara ningún
+envío, no está conectado al canal `WHATSAPP` de la matriz de notificaciones
+(ese canal sigue sin proveedor real integrado). Puramente informativo por
+ahora.
+
+## Relaciones entre las 4 tablas
+
+```
+Persona ---(apartamento_actual_id, opcional)---> Apartamento
+Ocupante ---(apartamento_id, obligatorio)------> Apartamento
+Ocupante ---(persona_id, OPCIONAL)-------------> Persona
+PersonaPreferenciaNotificacion ---(persona_id)-> Persona
+```
+
+**El detalle no obvio**: `Persona.apartamento_actual_id` y
+`Ocupante.apartamento_id` son dos referencias INDEPENDIENTES que el código
+mantiene sincronizadas a mano (no una relación que se derive sola de la base
+de datos). Cada vez que se le asocia/quita un teléfono a un Ocupante
+(`agregar_ocupante`, `asociar_telefono_a_ocupante`,
+`desvincular_telefono_ocupante`, `dar_de_baja_ocupante`,
+`editar_telefono_ocupante`), esa misma función TAMBIÉN actualiza el
+`apartamento_actual_id` de la Persona correspondiente (ver los comentarios
+"Mantiene apartamento_actual_id en sincronía" en `ocupante_service.py`). El
+padrón real (quién vive ahí, quién es principal, quién está confirmado)
+vive en `Ocupante`; el `apartamento_actual_id` de cada Persona es un espejo
+rápido de eso.
+
+**Notificaciones de un Ocupante sin teléfono propio**: no tiene
+`persona_id`, así que no tiene fila propia en
+`persona_preferencia_notificacion`. Sus avisos usan las preferencias del
+Ocupante **principal confirmado** de su apartamento
+(`preferencia_efectiva_ocupante`); si no hay principal resoluble, cae al
+mismo default de siempre (SMS activo, el resto no).
+
+---
+
 ## Qué se ve/edita hoy en `/residentes` (post-issue 66)
 
 La tabla de `/residentes` (al cargar, sin buscar, paginada de a 20) ya
