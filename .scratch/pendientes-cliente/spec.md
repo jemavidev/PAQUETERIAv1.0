@@ -94,4 +94,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `61` — Footer móvil de cliente logueado: Anunciar/Mis paquetes/Mis datos/Whatsapp (reemplaza Consultar/Ayuda) — **implementado**
 - `62` — Menú de cuenta: agregar Consultar y Ayuda (debajo de Mis paquetes/Mis datos, arriba de Cerrar sesión) — **implementado**
 - `63` — Índices faltantes en `paquetes`/`paquete_fotos` (auditoría de base de datos) — **implementado**
-- `64` — Correo de recuperación de contraseña de staff: HTML profesional + remitente con nombre — **implementado**
+- `64` — Correo de recuperación de contraseña de staff: HTML profesional + remitente con nombre — **verificado**
+- `65` — Correo de recuperación: ajustar remitente ("PaqueteX - Papyrus") y asunto ("...de PaqueteX") — **implementado** (cierra la sección de login)

@@ -8,7 +8,9 @@ restablecimiento de contraseñas" — seguido de la confirmación: cambiar el
 texto a "Recibimos una solicitud para restablecer tu contraseña.", agregar
 HTML con el logo de PAPYRUS, remitente "PaqueteX - Papeleria Papyrus".
 
-**Status:** implementado
+**Status:** verificado (el cliente pidió un ajuste de texto en el
+remitente/asunto sobre esta misma base -- ver [[65]] -- y dio por cerrada
+la sección de login con eso)
 
 ## Contexto
 
