@@ -82,3 +82,24 @@ el staff no invalida ninguna sesión activa de ese residente).
   vivo.
 - No se agrega ningún flujo de invalidación de sesión al cambiar el
   teléfono de un residente desde el staff (no aplica, ver arriba).
+
+## Verificación
+
+- Sintaxis Jinja verificada con `Environment.parse()` (`get_template` sobre
+  ambas plantillas reescritas).
+- Suite completa (`tests/data_model tests/web`): 655/655, sin regresiones.
+  16 tests nuevos/reescritos en `test_customers_manage.py` (links
+  WhatsApp/llamada con prioridad de username, columnas fuera de la tabla,
+  eliminados excluidos, validación de `whatsapp_usuario`, edición de
+  teléfono con choque, matriz de notificaciones vía la nueva ruta
+  `/residentes/{id}/notificaciones`, 3 tabs presentes).
+- Tailwind recompilado y comiteado (clases nuevas: `col-span-2`,
+  `ring-emerald-300`, etc.) — `?v=33` → `?v=34`.
+- Deploy a `test.papyrus.com.co`: push directo a `jemavidev/PaqueteX`
+  (copia manual de los archivos cambiados, NO `git subtree push` — arrastra
+  ~800 commits de scripts legacy no relacionados, ver memoria
+  `paquetex-v2-infra-topology`). Workflow `CI & Deploy to Staging` (run
+  #132) completó en verde (~4 min). `/residentes` responde 200 en vivo.
+- Pendiente: confirmación visual del cliente en `test.papyrus.com.co` —
+  en particular si el link de WhatsApp por username realmente abre un chat
+  (no hay forma de probarlo sin un username real de WhatsApp registrado).

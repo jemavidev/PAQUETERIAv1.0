@@ -98,3 +98,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `65` — Correo de recuperación: ajustar remitente ("PaqueteX - Papyrus") y asunto ("...de PaqueteX") — **implementado** (cierra la sección de login)
 - `66` — `/residentes`: tabla con todos los campos al cargar (paginada) + campo nuevo "Usuario de WhatsApp" — **implementado**
 - `67` — `/residentes`: tabla simplificada (4 columnas + íconos WhatsApp/llamada) + ficha con tabs (Datos/Notificaciones/Apartamento y Residentes) — **implementado**
+- `68` — `/residentes`: batch de 14 correcciones (picker Torre/Piso/Apto, tab Dirección, badges principal/auto-recepción, íconos a Acciones, etc.) — **implementado**
