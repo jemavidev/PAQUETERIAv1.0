@@ -96,3 +96,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `63` — Índices faltantes en `paquetes`/`paquete_fotos` (auditoría de base de datos) — **implementado**
 - `64` — Correo de recuperación de contraseña de staff: HTML profesional + remitente con nombre — **verificado**
 - `65` — Correo de recuperación: ajustar remitente ("PaqueteX - Papyrus") y asunto ("...de PaqueteX") — **implementado** (cierra la sección de login)
+- `66` — `/residentes`: tabla con todos los campos al cargar (paginada) + campo nuevo "Usuario de WhatsApp" — **implementado**
