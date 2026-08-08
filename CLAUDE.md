@@ -35,18 +35,43 @@ desglosarse) se sigue usando `/to-spec` → `/to-tickets`, que el cliente invoca
 
 ### Ruteo por tipo de pedido
 
-**Gate obligatorio de primer paso: toda petición del cliente se contrasta contra esta tabla antes de
-tocar código o registrar nada.** Lo que sigue siendo situacional es la EJECUCIÓN, no la revisión — la
-mayoría de los pedidos chicos (como los del tracking de arriba) no van a encontrar ningún skill
-aplicable, y ahí el camino sigue siendo el de siempre: registro + implementar + verificar en vivo, sin
-desglosar en tickets ni triage formal. Lo que ya no es opcional es pasar por la tabla para decidir eso
-— no se asume de entrada que un pedido es "chico" sin haberlo contrastado primero.
+**Gate obligatorio de primer paso: toda petición sustantiva se contrasta contra esta tabla antes de
+tocar código o registrar nada.** "Sustantiva" es trabajo real — feature, bug, refactor, duda de
+diseño, revisión de código — no mensajes puramente conversacionales o de coordinación, esos no pasan
+por el gate. Aplica sin importar el origen: una petición que Jesús (quien opera este repo) hace
+directamente, o un pedido del cliente final de PaqueteX que Jesús relaya — el gate mira la sustancia
+del trabajo, no quién lo pidió.
+
+Lo que sigue siendo situacional es la EJECUCIÓN, no la revisión — la mayoría de los pedidos chicos
+(como los del tracking de arriba) no van a encontrar ningún skill aplicable, y ahí el camino sigue
+siendo el de siempre: registro + implementar + verificar en vivo, sin desglosar en tickets ni triage
+formal. Lo que ya no es opcional es pasar por la tabla para decidir eso — no se asume de entrada que un
+pedido es "chico" sin haberlo contrastado primero.
+
+Este gate y los skills que rutea son un mecanismo propio de este proyecto, sin relación con el
+aparataje AgentX retirado (ver arriba) — no se mezclan.
+
+**Cómo se ve en la respuesta.** Cuando la tabla arroja uno o más skills aplicables, la respuesta abre
+con el plan paso a paso antes de ejecutar nada — qué skill(s), en qué orden, y para qué parte del
+pedido resuelve cada uno. Ej.: "Usaré `grilling` para acordar el diseño, luego pasaré cada punto
+resuelto por `/to-tickets` para desglosarlo en tickets." Cuando ningún skill aplica, el gate no se
+menciona — se procede directo, sin ruido.
 
 Columna "Quién invoca": los skills marcados **Claude** los puedo arrancar yo solo, sin que el cliente
 escriba nada; los marcados **Cliente (`/comando`)** tienen `disable-model-invocation` — solo arrancan
 si el cliente escribe el slash command. Para esos, mi rol es sugerir cuándo aplican y, si el cliente
 quiere, dejar el terreno preparado (ej. resumir la conversación) para que el comando tenga con qué
 trabajar.
+
+**Encadenar pasos sin fricción.** Cuando un pedido resuelve varios pasos de la tabla en secuencia (ej.
+`grilling` → `/to-spec` → `/to-tickets`), los pasos marcados **Claude** se encadenan solos, sin pausar
+a preguntar — la respuesta ya mostró el plan completo al arrancar (ver arriba), así que avanzar al
+siguiente paso Claude de esa misma secuencia no pide confirmación extra. Al llegar a un paso marcado
+**Cliente** — bloqueado por `disable-model-invocation` en el propio skill, no algo que yo pueda decidir
+saltarme — dejo el terreno listo automáticamente y sin que haya que pedírmelo: resumo lo resuelto hasta
+ahí (ej. las respuestas dadas durante `grilling`) y entrego el comando exacto con sus argumentos ya
+armados a partir de la conversación, listo para copiar y pegar. El único paso tuyo en esos casos es
+pegarlo — no redactarlo.
 
 | Situación | Skill | Quién invoca |
 |---|---|---|

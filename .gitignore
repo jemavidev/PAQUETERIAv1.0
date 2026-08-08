@@ -421,14 +421,6 @@ temp/
 *.gsheet
 
 # ========================================
-# BetterAgentX
-# ========================================
-.betteragentx-config
-.kiro/memory/*.backup.*
-.kiro/settings/*.backup.*
-.kiro/steering/*.backup.*
-
-# ========================================
 # Other
 # ========================================
 # PEP 582
@@ -466,7 +458,5 @@ RESUMEN_RAMA_PROD_STAGING.md
 VERIFICACION_SINCRONIZACION_*.md
 test_optimizacion.sh
 FEATURE_ORDENAMIENTO_ULTIMA_ACTUALIZACION.md
-# BetterAgents (Project Closed)
-.betteragents/
 .claude/cache/
 .claude/backups/
