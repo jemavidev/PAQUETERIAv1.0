@@ -42,6 +42,14 @@ por el gate. Aplica sin importar el origen: una petición que Jesús (quien oper
 directamente, o un pedido del cliente final de PaqueteX que Jesús relaya — el gate mira la sustancia
 del trabajo, no quién lo pidió.
 
+**El calce tiene que ser con la situación concreta, no con la categoría.** Que un pedido "toque
+código" o "sea un feature" en sentido amplio no alcanza — tiene que calzar con la columna "Situación"
+de una fila puntual: diseño por acordar, bug no obvio, decisión de interfaz pendiente, diff grande que
+amerita revisión en dos ejes, etc. Un cambio de color, texto, espaciado, o de comportamiento puntual en
+una vista que ya existe **no calza con ninguna fila**, aunque sea técnicamente un "feature" — el
+default es que ningún skill aplica, y ese pedido sigue el camino de siempre (ver el párrafo siguiente),
+sin mencionarlo ni invocar nada.
+
 Lo que sigue siendo situacional es la EJECUCIÓN, no la revisión — la mayoría de los pedidos chicos
 (como los del tracking de arriba) no van a encontrar ningún skill aplicable, y ahí el camino sigue
 siendo el de siempre: registro + implementar + verificar en vivo, sin desglosar en tickets ni triage
