@@ -8,10 +8,10 @@ Esta ficha además actualiza la línea de `CONTEXT.md` sobre Ocupante/Principal 
 
 **Blocked by:** 01 (necesita que Persona pueda existir solo-WhatsApp).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Un Ocupante cuya Persona tiene solo `whatsapp_usuario` (sin Teléfono) puede promoverse a Principal vía `promover_a_principal`.
-- [ ] `confirmar_ocupante` sobre el primer Ocupante de una unidad vacía, con una Persona solo-WhatsApp, lo promueve a Principal en la misma operación (igual que ya hace hoy para una Persona con Teléfono).
-- [ ] `agregar_ocupante` acepta el primer Ocupante de una unidad vacía con solo `whatsapp_usuario` (sin Teléfono) sin lanzar `ValueError`.
-- [ ] Un Ocupante sin Teléfono NI WhatsApp (ninguno de los dos) sigue rechazado por los tres guards, sin cambios en ese caso.
-- [ ] `CONTEXT.md` (sección Ocupante) actualizado: "Teléfono obligatorio" del Principal pasa a "Teléfono o WhatsApp".
+- [x] Un Ocupante cuya Persona tiene solo `whatsapp_usuario` (sin Teléfono) puede promoverse a Principal vía `promover_a_principal`.
+- [x] `confirmar_ocupante` sobre el primer Ocupante de una unidad vacía, con una Persona solo-WhatsApp, lo promueve a Principal en la misma operación (igual que ya hace hoy para una Persona con Teléfono).
+- [x] `agregar_ocupante` acepta el primer Ocupante de una unidad vacía con solo `whatsapp_usuario` (sin Teléfono) sin lanzar `ValueError`.
+- [x] Un Ocupante sin Teléfono NI WhatsApp (ninguno de los dos) sigue rechazado por los tres guards, sin cambios en ese caso.
+- [x] `CONTEXT.md` (sección Ocupante) actualizado: "Teléfono obligatorio" del Principal pasa a "Teléfono o WhatsApp".
