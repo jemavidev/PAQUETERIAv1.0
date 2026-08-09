@@ -24,13 +24,16 @@ Término evitado: no llamar "usuario" al cliente ni "cliente" al staff. **Usuari
 Definido pregunta a pregunta en el grilling. Es el corazón del rebuild.
 
 ### Persona
-Un residente. **Su llave universal e identidad estable es el Teléfono** — siempre existe. Tiene nombre, un **Apartamento actual** (opcional, mutable) y datos de registro ampliables (email, documento, segundo contacto…). Se crea implícitamente al anunciar (teléfono + nombre) y amplía sus datos desde `/mis-datos`.
+Un residente. **Su identidad estable es el Teléfono o el usuario de WhatsApp** — siempre existe AL MENOS uno de los dos (nunca ninguno, [ADR-0007](docs/adr/0007-persona-telefono-o-whatsapp.md), que relaja [ADR-0003](docs/adr/0003-telefono-llave-universal.md)). El Teléfono sigue siendo la ÚNICA llave que habilita login/OTP y notificaciones automáticas — una Persona solo-WhatsApp existe, pero no puede loguearse ni recibir avisos automáticos todavía (y, por ahora, tampoco puede ser Ocupante de un Apartamento — `.scratch/announce-rapido`, tickets 02/03, en curso). Tiene nombre, un **Apartamento actual** (opcional, mutable) y datos de registro ampliables (email, documento, segundo contacto…). Se crea implícitamente al anunciar (teléfono + nombre, o usuario de WhatsApp + nombre) y amplía sus datos desde `/mis-datos`.
 
-- Término evitado: **`display_name` huérfano** — el modelo viejo guardaba un nombre de texto libre suelto en el paquete, sin identidad. Ya no existe: todo nombre vive bajo un Teléfono real.
-- Término evitado: "cliente = teléfono único e inmutable" (modelo viejo, phone-céntrico rígido). Aquí el Teléfono es la llave, pero la Persona es la entidad.
+- Término evitado: **`display_name` huérfano** — el modelo viejo guardaba un nombre de texto libre suelto en el paquete, sin identidad. Ya no existe: todo nombre vive bajo una identidad real (Teléfono o WhatsApp).
+- Término evitado: "cliente = teléfono único e inmutable" (modelo viejo, phone-céntrico rígido). Aquí el Teléfono (o el WhatsApp) es la llave, pero la Persona es la entidad.
 
 ### Teléfono
-La **llave universal** de una Persona. Siempre existe. Es el identificador estable a lo largo de todo el sistema.
+La identidad de una Persona **cuando la tiene** — habilita login/OTP y notificaciones automáticas, ninguna otra vía las habilita todavía (ADR-0007). No siempre existe: una Persona solo-WhatsApp no lo tiene.
+
+### Usuario de WhatsApp (`whatsapp_usuario`)
+Identidad alterna de una Persona, con la misma garantía de unicidad que el Teléfono (ADR-0007) — una Persona tiene Teléfono, WhatsApp, o ambos, nunca ninguno. No habilita login/OTP ni notificaciones automáticas (depende de un canal de envío por WhatsApp que este rebuild no construye todavía).
 
 ### Apartamento
 La unidad de vivienda: **Conjunto → Torre → Apartamento**. Entidad **ligera** (creable sobre la marcha) y **opcional** — puede existir o no. Es un **agrupador** al que se asocian Teléfonos.
@@ -96,7 +99,7 @@ Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. *
 
 ## Invariantes y reglas de dominio
 
-1. **El Teléfono es la llave universal** de una Persona; nunca falta.
+1. **Toda Persona tiene Teléfono o usuario de WhatsApp** (nunca ninguno de los dos, ADR-0007); el Teléfono es la única identidad que habilita login/OTP y notificaciones automáticas.
 2. **El Paquete es inmutable en su contexto de entrega** una vez anunciado (snapshot). Mudarse no reescribe paquetes viejos.
 3. **El actor de cada acción sale de la sesión real** — nunca un `operator_id`/`user_id` hardcodeado.
 4. **Un solo endpoint por acción** (recibir/entregar/cancelar). Sin rutas legacy paralelas.
