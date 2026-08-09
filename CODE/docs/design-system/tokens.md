@@ -501,16 +501,14 @@ guía visual del lado del cliente; el límite real lo sigue aplicando
 
 ## 16. Búsqueda y filtros (componente cerrado)
 
-**Forma aprobada:** Barra de filtros inline (reskin del filtro real de `/paquetes`), con dos
-ajustes de retroalimentación: (1) un ÚNICO campo de texto libre cubre todos los criterios de
-búsqueda (código, guía, nombre, WhatsApp, teléfono, Torre, Apartamento — folded en `q`, ver
-`_listar` en `app/web/routes/packages.py`; ya no hay cajas separadas de Torre/Apartamento, ver
-`.scratch/paquetes-busqueda-viva`, ticket 01), dentro de un marco compartido — el foco resalta la
-barra entera, no cada campo suelto; (2) los chips de Estado reutilizan la MISMA gama de color por
-estado ya fijada en Badges (sección 6/7), no gris neutro genérico. Un solo `<form>`, un solo botón
-de envío — todo sale de la misma barra en un solo submit (GET, sin JS/HTMX). (Íconos de Estado con
-toggle/reseteo y resultados en vivo sin botón de envío: tickets 02/03 de esa misma spec, todavía
-no implementados a la fecha de esta nota.)
+**Forma aprobada (ticket 02 de `.scratch/paquetes-busqueda-viva` — reemplaza la variante de chips
+de texto que describía esta sección antes):** una sola fila — ícono de lupa + el ÚNICO campo de
+texto libre (`q`, cubre código, guía, nombre, WhatsApp, teléfono, Torre, Apartamento — folded,
+ticket 01, ver `_listar` en `app/web/routes/packages.py`) + 4 íconos circulares de Estado + 1
+ícono de reseteo, sin botón de envío visible. Un solo `<form>` — cada clic en un ícono dispara el
+submit por JS (`form.requestSubmit()`); un `<button type="submit" class="sr-only">` mantiene Enter
+funcionando en el campo de texto como fallback nativo, sin necesitar JS. (Resultados en vivo sin
+recarga de página: ticket 03 de esa misma spec, todavía no implementado a la fecha de esta nota.)
 
 Implementación de referencia: `src/app/web/templates/components/_busqueda_filtros.html`
 Preview visual: `docs/design-system/previews/busqueda-filtros.html`
@@ -518,10 +516,12 @@ Preview visual: `docs/design-system/previews/busqueda-filtros.html`
 | Token | Valor | Clase Tailwind |
 |---|---|---|
 | Contenedor | tarjeta centrada, mismo ancho que Formularios (sección 10) | `max-w-lg mx-auto bg-white border border-gray-200 rounded-xl shadow-sm p-5` |
-| Barra unificada | un solo marco (ícono de lupa + el único campo `q` + botón), sin borde propio en el input | `rounded-lg border border-slate-300 overflow-hidden` + `border-0` en el `<input>` |
-| Foco de la barra | en el contenedor completo, no por campo | `focus-within:ring-2 focus-within:ring-blue-300 focus-within:ring-offset-2 focus-within:border-blue-800` |
-| Chip "Todos" (sin filtro) | gris oscuro neutro — nunca se confunde con un estado real | suave `border-slate-300 bg-white text-slate-700`, activo `peer-checked:bg-slate-800` |
-| Chip por estado | mismo mapeo REAL que `badge()` (sección 7), versión clickeable | suave = fórmula de Badges corregida, activo (`peer-checked:`) = color sólido correspondiente |
+| Barra de texto | un solo marco (ícono de lupa + el campo `q`), sin borde propio en el input | `rounded-lg border border-slate-300 overflow-hidden` + `border-0` en el `<input>` |
+| Foco de la barra de texto | en el contenedor completo, no por campo | `focus-within:ring-2 focus-within:ring-blue-300 focus-within:ring-offset-2 focus-within:border-blue-800` |
+| Ícono de Estado, inactivo | borde + fondo pastel, mismo mapeo que `badge()` (sección 7) | `border border-{color}-{200/300} bg-{color}-100` |
+| Ícono de Estado, activo | sólido + anillo permanente (NO `peer-checked:`, mismo patrón que el paso activo del Timeline, sección 12) | `border-transparent bg-{color}-{500/600/800} ring-4 ring-{color}-100` |
+| Ícono de reseteo | neutro, distinto de los 4 de Estado — no representa un estado | `border border-slate-300 text-slate-500 hover:bg-slate-50` |
+| Tamaño de los íconos circulares | `h-7 w-7 rounded-full`, sin texto visible — `aria-label`/`title` llevan el nombre | — |
 
 ### `filtro_estado` vs `grupo_chips` — por qué son macros distintos
 
@@ -529,9 +529,20 @@ Preview visual: `docs/design-system/previews/busqueda-filtros.html`
 opciones del mismo tono). `filtro_estado(seleccionado)` necesita que CADA opción tenga su propio
 color — el mismo mapeo REAL corregido de la sección 6 (Anunciado=ámbar especial, Recibido=azul
 `primary`, Entregado=verde `success`, Cancelado=rojo `danger`), igual que usa `badge()` (sección
-7), solo que como `<input type="radio">` clickeable en vez de una etiqueta de solo lectura. No se
-generalizó un macro único para ambos casos porque las firmas son distintas por diseño (un color
-vs. color-por-opción), no por descuido.
+7). No se generalizó un macro único para ambos casos porque las firmas son distintas por diseño
+(un color vs. color-por-opción), no por descuido.
+
+### Por qué son `<button>` + `<input type="hidden">`, no un radiogroup (ticket 02)
+
+La variante anterior (chips de texto) usaba `<input type="radio">` porque un radiogroup nativo
+alcanzaba para "selección única, con 'Todos' como opción explícita para volver a ninguno". El
+ticket 02 quitó el chip "Todos" -- la ausencia de selección ES "todos los estados" -- y agregó el
+requisito de TOGGLE (clic en el ícono ya activo lo desactiva). Un `<input type="radio">` nativo no
+soporta des-seleccionarse a sí mismo con un clic, así que los 4 íconos son `<button type="button">`
+con `data-estado-icono`, y un único `<input type="hidden" name="estado">` (`data-estado-hidden`)
+que el JS del macro actualiza antes de cada `form.requestSubmit()`. El estado visual (`aria-pressed`,
+suave/activo) sigue siendo 100% server-rendered en cada recarga -- el JS solo decide QUÉ enviar, no
+pinta ningún estado "optimista" en el cliente (eso llega recién con el ticket 03).
 
 ---
 
