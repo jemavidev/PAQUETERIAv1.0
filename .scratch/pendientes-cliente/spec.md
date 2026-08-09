@@ -99,3 +99,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `66` — `/residentes`: tabla con todos los campos al cargar (paginada) + campo nuevo "Usuario de WhatsApp" — **implementado**
 - `67` — `/residentes`: tabla simplificada (4 columnas + íconos WhatsApp/llamada) + ficha con tabs (Datos/Notificaciones/Apartamento y Residentes) — **implementado**
 - `68` — `/residentes`: batch de 14 correcciones (picker Torre/Piso/Apto, tab Dirección, badges principal/auto-recepción, íconos a Acciones, etc.) — **implementado**
+- `69` — `/residentes`: revisión punto por punto de [[68]] tras probar en vivo (fondo Secundario, aviso de reasignación bloqueada, Zona de peligro en un solo lugar, íconos en Acciones, bug de whatsapp_usuario que no se podía borrar, etc.) — **implementado, punto 14 pendiente**
