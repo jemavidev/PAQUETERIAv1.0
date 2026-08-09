@@ -6,11 +6,11 @@ Su identidad estable es el Teléfono (forma canónica, único) O el usuario de
 WhatsApp (único también, ADR-0007 -- relaja ADR-0003, que exigía Teléfono sin
 excepción): nunca los dos vacíos a la vez (`ck_personas_telefono_o_whatsapp`).
 El Teléfono sigue siendo la única llave que habilita login/OTP y
-notificaciones automáticas -- una Persona solo-WhatsApp puede existir (y ser
-Ocupante, incluso Principal, ver `docs/adr/0007-persona-telefono-o-whatsapp.md`)
-pero no puede loguearse todavía. La Persona tiene surrogate key propia (UUID)
-para las FKs de otras entidades, nombre y campos ampliables nullable que se
-completan desde `/customer/verify` en rebanadas posteriores.
+notificaciones automáticas -- una Persona solo-WhatsApp puede existir, pero no
+puede loguearse todavía (ver `docs/adr/0007-persona-telefono-o-whatsapp.md`).
+La Persona tiene surrogate key propia (UUID) para las FKs de otras entidades,
+nombre y campos ampliables nullable que se completan desde `/customer/verify`
+en rebanadas posteriores.
 """
 
 import uuid
