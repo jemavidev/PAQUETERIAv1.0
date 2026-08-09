@@ -502,11 +502,15 @@ guía visual del lado del cliente; el límite real lo sigue aplicando
 ## 16. Búsqueda y filtros (componente cerrado)
 
 **Forma aprobada:** Barra de filtros inline (reskin del filtro real de `/paquetes`), con dos
-ajustes de retroalimentación: (1) búsqueda libre + Torre + Apartamento viven en UNA sola barra
-unificada, un marco compartido — el foco resalta la barra entera, no cada campo suelto; (2) los
-chips de Estado reutilizan la MISMA gama de color por estado ya fijada en Badges (sección 6/7), no
-gris neutro genérico. Un solo `<form>`, un solo botón de envío — todo sale de la misma barra en un
-solo submit (GET, sin JS/HTMX).
+ajustes de retroalimentación: (1) un ÚNICO campo de texto libre cubre todos los criterios de
+búsqueda (código, guía, nombre, WhatsApp, teléfono, Torre, Apartamento — folded en `q`, ver
+`_listar` en `app/web/routes/packages.py`; ya no hay cajas separadas de Torre/Apartamento, ver
+`.scratch/paquetes-busqueda-viva`, ticket 01), dentro de un marco compartido — el foco resalta la
+barra entera, no cada campo suelto; (2) los chips de Estado reutilizan la MISMA gama de color por
+estado ya fijada en Badges (sección 6/7), no gris neutro genérico. Un solo `<form>`, un solo botón
+de envío — todo sale de la misma barra en un solo submit (GET, sin JS/HTMX). (Íconos de Estado con
+toggle/reseteo y resultados en vivo sin botón de envío: tickets 02/03 de esa misma spec, todavía
+no implementados a la fecha de esta nota.)
 
 Implementación de referencia: `src/app/web/templates/components/_busqueda_filtros.html`
 Preview visual: `docs/design-system/previews/busqueda-filtros.html`
@@ -514,9 +518,8 @@ Preview visual: `docs/design-system/previews/busqueda-filtros.html`
 | Token | Valor | Clase Tailwind |
 |---|---|---|
 | Contenedor | tarjeta centrada, mismo ancho que Formularios (sección 10) | `max-w-lg mx-auto bg-white border border-gray-200 rounded-xl shadow-sm p-5` |
-| Barra unificada | un solo marco, campos internos sin borde propio | `rounded-lg border border-slate-300 overflow-hidden` + `border-0` en cada `<input>` interno |
+| Barra unificada | un solo marco (ícono de lupa + el único campo `q` + botón), sin borde propio en el input | `rounded-lg border border-slate-300 overflow-hidden` + `border-0` en el `<input>` |
 | Foco de la barra | en el contenedor completo, no por campo | `focus-within:ring-2 focus-within:ring-blue-300 focus-within:ring-offset-2 focus-within:border-blue-800` |
-| Separador entre campos internos | línea fina, no doble borde | `border-l border-slate-200` en cada campo salvo el primero |
 | Chip "Todos" (sin filtro) | gris oscuro neutro — nunca se confunde con un estado real | suave `border-slate-300 bg-white text-slate-700`, activo `peer-checked:bg-slate-800` |
 | Chip por estado | mismo mapeo REAL que `badge()` (sección 7), versión clickeable | suave = fórmula de Badges corregida, activo (`peer-checked:`) = color sólido correspondiente |
 
@@ -551,8 +554,9 @@ Preview visual: `docs/design-system/previews/paginacion.html`
 El macro local anterior escribía `estado`/`q`/`torre`/`apartamento` directo en cada link — atado
 a `/paquetes` únicamente. `paginacion(pagina_actual, total_paginas, base_url, params=None)` recibe
 los filtros a preservar como diccionario, así que sirve para cualquier listado paginado
-(`/residentes` sin filtros, `/paquetes` con los 4 suyos, o cualquier otro futuro). No renderiza
-nada si `total_paginas <= 1`.
+(`/residentes` sin filtros, `/paquetes` con los suyos —`estado`/`q`, folded desde
+`.scratch/paquetes-busqueda-viva` ticket 01—, o cualquier otro futuro). No renderiza nada si
+`total_paginas <= 1`.
 
 ### Nota técnica: `{% set %}` dentro de un `{% for %}` no persiste en Jinja2
 
