@@ -102,3 +102,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `69` — `/residentes`: revisión punto por punto de [[68]] tras probar en vivo (fondo Secundario, aviso de reasignación bloqueada, Zona de peligro en un solo lugar, íconos en Acciones, bug de whatsapp_usuario que no se podía borrar, etc.) — **implementado, punto 14 pendiente**
 - `70` — `/residentes`: quitar "Zona de peligro" de la ficha por completo (ya existe en la lista) + formato compacto "T 05 - APT 105"/"No Asignado" en la columna Torre y Apartamento de la lista — **implementado** (aviso de reasignación queda abierto, ver [[69]])
 - `71` — `/residentes`: reemplazar el fondo rojizo completo de Residente Secundario por un acento de borde a la izquierda, más sutil (elegido entre 4 alternativas presentadas) — **implementado**
+- `72` — `/paquetes`: quitar la línea "nombre · anunciar · sesión" del header (redundante con el menú de cuenta) — **implementado**
+- `73` — `/paquetes`: tarjeta de filtros con look de producción — ancho completo, padding responsivo, íconos de Estado más vivos (círculo sólido + glifo en vez de pastel vacío) — **implementado**
