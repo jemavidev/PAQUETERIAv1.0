@@ -501,14 +501,15 @@ guía visual del lado del cliente; el límite real lo sigue aplicando
 
 ## 16. Búsqueda y filtros (componente cerrado)
 
-**Forma aprobada (ticket 02 de `.scratch/paquetes-busqueda-viva` — reemplaza la variante de chips
-de texto que describía esta sección antes):** una sola fila — ícono de lupa + el ÚNICO campo de
-texto libre (`q`, cubre código, guía, nombre, WhatsApp, teléfono, Torre, Apartamento — folded,
-ticket 01, ver `_listar` en `app/web/routes/packages.py`) + 4 íconos circulares de Estado + 1
-ícono de reseteo, sin botón de envío visible. Un solo `<form>` — cada clic en un ícono dispara el
-submit por JS (`form.requestSubmit()`); un `<button type="submit" class="sr-only">` mantiene Enter
-funcionando en el campo de texto como fallback nativo, sin necesitar JS. (Resultados en vivo sin
-recarga de página: ticket 03 de esa misma spec, todavía no implementado a la fecha de esta nota.)
+**Forma aprobada (tickets 01-03 de `.scratch/paquetes-busqueda-viva` — reemplaza la variante de
+chips de texto con recarga completa que describía esta sección antes):** una sola fila — ícono de
+lupa + el ÚNICO campo de texto libre (`q`, cubre código, guía, nombre, WhatsApp, teléfono, Torre,
+Apartamento — folded, ticket 01, ver `_listar` en `app/web/routes/packages.py`) + 4 íconos
+circulares de Estado + 1 ícono de reseteo, sin botón de envío visible. Los resultados (tarjetas +
+paginación, `packages/_resultados.html`) se actualizan SOLOS al escribir (debounce ~300ms) o al
+tocar un ícono de Estado/reseteo, vía `fetch` con `AbortController` (ticket 03) -- sin recarga de
+página. Un `<button type="submit" class="sr-only">` mantiene Enter funcionando en el campo de
+texto como fallback nativo, CON o SIN JavaScript.
 
 Implementación de referencia: `src/app/web/templates/components/_busqueda_filtros.html`
 Preview visual: `docs/design-system/previews/busqueda-filtros.html`
@@ -540,9 +541,34 @@ ticket 02 quitó el chip "Todos" -- la ausencia de selección ES "todos los esta
 requisito de TOGGLE (clic en el ícono ya activo lo desactiva). Un `<input type="radio">` nativo no
 soporta des-seleccionarse a sí mismo con un clic, así que los 4 íconos son `<button type="button">`
 con `data-estado-icono`, y un único `<input type="hidden" name="estado">` (`data-estado-hidden`)
-que el JS del macro actualiza antes de cada `form.requestSubmit()`. El estado visual (`aria-pressed`,
-suave/activo) sigue siendo 100% server-rendered en cada recarga -- el JS solo decide QUÉ enviar, no
-pinta ningún estado "optimista" en el cliente (eso llega recién con el ticket 03).
+que el JS del macro actualiza en cada clic. El estado visual (`aria-pressed`, suave/activo) se
+pinta server-side en la carga inicial/recarga; en una actualización en vivo (ticket 03, sin
+recarga) lo repinta `pintarIconos()` del lado del cliente -- por eso cada botón lleva
+`data-suave`/`data-activo` con sus clases de color como atributos (el JS no adivina el mapeo de
+color, lo lee del HTML que el servidor ya calculó).
+
+### Resultados en vivo: `fetch` + debounce + `AbortController` (ticket 03)
+
+Si `busqueda_filtros(...)` recibe `resultados_id`, su `<script>` reemplaza el submit tradicional:
+escribir en `q` dispara `actualizar()` con debounce ~300ms; tocar un ícono de Estado o el de
+reseteo lo dispara al toque (sin debounce). Cada `actualizar()` cancela con `AbortController` la
+petición anterior si seguía en vuelo, evita que una respuesta vieja y lenta pise una más nueva. La
+petición lleva el header `X-Requested-With: fetch`; `_render_lista` (`app/web/routes/packages.py`)
+lo detecta y responde con `packages/_resultados.html` (el fragmento de tarjetas+paginación,
+extraído de `packages/list.html`) en vez de la página completa -- la respuesta reemplaza por
+completo (`innerHTML`) el elemento `resultados_id`.
+
+Como ese contenedor se reemplaza seguido, los listeners de los modales de acción (`data-open`/
+`data-close`) y el anti-doble-envío de sus `<form>` -- antes enlazados una sola vez con
+`querySelectorAll(...).forEach(...)` -- pasaron a delegación de eventos sobre `document` en
+`packages/list.html`: así siguen funcionando en tarjetas que llegan por una actualización en vivo,
+sin importar cuántas veces cambie el HTML de adentro.
+
+El `<script>` de `busqueda_filtros` se ejecuta ANTES de que el navegador parsee `resultados_id`
+(vive más abajo en el documento, dentro de `list.html`) -- buscarlo en ese momento devuelve `null`
+y desactivaría toda la búsqueda en vivo en silencio. Por eso la inicialización se difiere a
+`DOMContentLoaded` cuando el documento sigue cargando (bug real encontrado en la verificación
+manual de este ticket, no una precaución especulativa).
 
 ---
 
