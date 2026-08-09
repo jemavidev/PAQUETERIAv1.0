@@ -2,7 +2,9 @@
 
 **What to build:** `Paquete.announced_by_phone` pasa a nullable (queda `NULL` cuando el Anunciante no tiene Teléfono) — `announced_by_persona_id` **no cambia** (sigue `NOT NULL`, toda Persona real es referenciable por FK tenga o no Teléfono). `paquete_service.announce` gana una vía alterna para identificar al Anunciante: Teléfono (como hoy) o `whatsapp_usuario` (nuevo), exactamente uno de los dos — resuelve internamente con `get_or_create_persona` o `get_or_create_persona_por_whatsapp` (ticket 01) según cuál se pasó.
 
-Nuevo constructor `Destinatario.ocupante(ocupante_id)`: generaliza la resolución que hoy hace `_resolver_ocupante_por_nombre` dentro del caso `DECLARADO_POR_CLIENTE` — dado un Ocupante puntual, resuelve su nombre y su contacto de notificación (Teléfono o WhatsApp propios si los tiene; si no, cae al Teléfono/WhatsApp del Principal activo de la misma unidad, mismo mecanismo que ya usa `telefono_notificacion_ocupante`).
+Nuevo constructor `Destinatario.ocupante(ocupante_id)`: generaliza la resolución que hoy hace `_resolver_ocupante_por_nombre` dentro del caso `DECLARADO_POR_CLIENTE` — dado un Ocupante puntual, resuelve su nombre y su contacto de notificación (Teléfono propio si lo tiene; si no, cae al Teléfono del Principal activo de la misma unidad, mismo mecanismo que ya usa `telefono_notificacion_ocupante`).
+
+**Corrección durante implementación:** el texto original de este punto decía "Teléfono/WhatsApp del Principal" — impreciso. `recipient_phone` (`Paquete`) es una columna estrictamente de Teléfono que SMS/OTP ya consumen como tal (`notificacion_service.resolver_destino_notificable`, `otp_service`); no existe `recipient_whatsapp` ni ningún canal de envío por WhatsApp todavía. `telefono_notificacion_ocupante` sigue devolviendo solo Teléfono (o `None`) — meterle un usuario de WhatsApp ahí rompería esos consumidores en vez de ampliarlos. Documentado en el docstring de esa función.
 
 El límite de "máx. 10 anuncios activos por Teléfono" (`MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO`) simplemente no aplica a un Anunciante solo-WhatsApp por ahora (no hay Teléfono contra el cual contar) — un límite equivalente por WhatsApp queda fuera de esta ficha.
 
@@ -10,10 +12,10 @@ Sin superficie de UI todavía — se verifica llamando `announce()`/`Destinatari
 
 **Blocked by:** 01, 02.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `paquetes.announced_by_phone` es nullable; migración `upgrade head` → `downgrade base` limpia.
-- [ ] `announce()` con Anunciante identificado por `whatsapp_usuario` (sin Teléfono) crea el Paquete con `announced_by_phone=NULL` y `announced_by_persona_id` apuntando a la Persona correcta.
-- [ ] `announce()` sigue funcionando exactamente igual que hoy cuando el Anunciante se identifica por Teléfono (sin regresión).
-- [ ] `Destinatario.ocupante(id)` resuelve `recipient_name`/contacto de notificación igual que hoy hace la resolución por nombre, incluida la caída al Teléfono/WhatsApp del Principal cuando el Ocupante no tiene contacto propio.
-- [ ] `contar_anunciados_activos_de_telefono` no cuenta (ni falla) sobre Paquetes con `announced_by_phone=NULL`.
+- [x] `paquetes.announced_by_phone` es nullable; migración `upgrade head` → `downgrade base` limpia.
+- [x] `announce()` con Anunciante identificado por `whatsapp_usuario` (sin Teléfono) crea el Paquete con `announced_by_phone=NULL` y `announced_by_persona_id` apuntando a la Persona correcta.
+- [x] `announce()` sigue funcionando exactamente igual que hoy cuando el Anunciante se identifica por Teléfono (sin regresión).
+- [x] `Destinatario.ocupante(id)` resuelve `recipient_name`/contacto de notificación igual que hoy hace la resolución por nombre, incluida la caída al Teléfono/WhatsApp del Principal cuando el Ocupante no tiene contacto propio.
+- [x] `contar_anunciados_activos_de_telefono` no cuenta (ni falla) sobre Paquetes con `announced_by_phone=NULL`.

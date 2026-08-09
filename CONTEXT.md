@@ -52,11 +52,11 @@ Declarar la unidad es también, hoy, la forma de registrar **Ocupantes** de un A
 
 ### Anunciante y Destinatario
 Cada Paquete guarda **dos referencias independientes** (pueden coincidir o no):
-- **Anunciante** (`anunciado_por`) — la Persona (Teléfono) que anuncia el paquete.
+- **Anunciante** (`anunciado_por`) — la Persona (Teléfono o WhatsApp, ADR-0007) que anuncia el paquete. El Teléfono congelado en el snapshot (`announced_by_phone`) queda `NULL` si el Anunciante es solo-WhatsApp.
 - **Destinatario** — a nombre de quién llega el paquete.
 
 ### Nombre sin teléfono
-Un Destinatario que no tiene (o no da) su propio Teléfono se representa como un **nombre bajo el Teléfono del Anunciante** — no es una Persona sin llave. Así el Teléfono nunca falta como identidad.
+Un Destinatario que no tiene (o no da) su propio Teléfono se representa como un **nombre bajo la identidad del Anunciante** — no es una Persona sin llave. Así la identidad nunca falta (aunque el Teléfono específicamente sí puede faltar, si el Anunciante es solo-WhatsApp).
 
 No tiene **existencia propia** fuera del Paquete: vive **solo dentro del snapshot** del paquete que lo nombra, no como registro independiente. Distinto de **Ocupante** (abajo), que sí persiste — un "nombre sin teléfono" es un caso puntual y no planeado (alguien anunció sin dar el teléfono del destinatario); un Ocupante es un residente reconocido a propósito como parte del padrón de un Apartamento.
 
@@ -69,7 +69,7 @@ Un residente reconocido de un **Apartamento**, con nombre y **Persona propia opc
 - Término evitado: "segundo contacto" (nombre coloquial usado antes de resolver el modelo) — el término del glosario es **Ocupante**.
 
 ### Contexto de entrega (snapshot)
-Al **anunciar**, el Paquete **congela** una foto inmutable de `{anunciado_por (teléfono), nombre_destinatario, teléfono_destinatario (si hay), apartamento}`. Si la Persona se muda **después**, los paquetes viejos **siguen mostrando el apartamento de entonces** — mudarse **nunca reescribe la historia**. "Los datos permanecen de principio a fin en cada paquete."
+Al **anunciar**, el Paquete **congela** una foto inmutable de `{anunciado_por (teléfono, si tiene), nombre_destinatario, teléfono_destinatario (si hay), apartamento}`. Si la Persona se muda **después**, los paquetes viejos **siguen mostrando el apartamento de entonces** — mudarse **nunca reescribe la historia**. "Los datos permanecen de principio a fin en cada paquete."
 
 - Término clave: **snapshot** / **contexto de entrega congelado**. Evitar "referencia al estado actual de la persona" para datos de un paquete ya anunciado.
 
