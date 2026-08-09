@@ -104,3 +104,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `71` — `/residentes`: reemplazar el fondo rojizo completo de Residente Secundario por un acento de borde a la izquierda, más sutil (elegido entre 4 alternativas presentadas) — **implementado**
 - `72` — `/paquetes`: quitar la línea "nombre · anunciar · sesión" del header (redundante con el menú de cuenta) — **implementado**
 - `73` — `/paquetes`: tarjeta de filtros con look de producción — ancho completo, padding responsivo, íconos de Estado más vivos (círculo sólido + glifo en vez de pastel vacío) — **implementado**
+- `74` — `/paquetes`: íconos de Estado no seleccionados se opacan cuando hay uno activo + esquinas cuadradas en vez de círculo — **implementado**
