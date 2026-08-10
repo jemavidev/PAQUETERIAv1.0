@@ -8,12 +8,19 @@ Clic/tap sobre un residente de la lista resuelve el Destinatario vía `Destinata
 
 **Blocked by:** 04.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Un código Torre+Apto incompleto o inválido no dispara ningún resultado (no revienta).
-- [ ] Un código válido con residentes muestra la lista (Principal primero) + "Nueva persona".
-- [ ] Un código válido de una unidad vacía muestra solo "Nueva persona" (sin lista).
-- [ ] "Nueva persona" da de alta un Ocupante `pending`, sin `es_principal`, con Teléfono o WhatsApp según lo que se haya tecleado.
-- [ ] Clic en un residente de la lista resuelve vía `Destinatario.ocupante()` y muestra Anunciar/Recibir.
-- [ ] "Anunciar" sobre un residente de la lista (con Teléfono propio, con WhatsApp propio, o sin ninguno de los dos — cae al Principal) deja el Paquete en `ANUNCIADO` con el snapshot de esa unidad.
-- [ ] Verificación manual en navegador real (skill `run`): flujo completo Torre+Apto de punta a punta, sin errores de consola.
+## Hallazgos de code-review (corregidos antes de desplegar)
+
+- **Bug real (Spec):** el `contacto` de "Nueva persona" que no clasificaba limpio ni como Teléfono ni como WhatsApp (ej. un teléfono mal tecleado de 8 dígitos) se descartaba en silencio -- el Ocupante quedaba creado SIN el contacto que el staff sí quiso darle, sin ningún aviso. Corregido: ahora se rechaza explícitamente ("Ese contacto no parece un Teléfono ni un usuario de WhatsApp válido").
+- **Duplicación real (Standards):** el parseo de `ocupante_id` (UUID) estaba repetido en `GET /announce/identificar-ocupante` y en el camino 2 de `POST /announce`. Extraído a `_resolver_ocupante`, un único lugar.
+- **Menor:** la etiqueta "Teléfono o WhatsApp (opcional)" del campo Contacto era engañosa para el primer residente de una unidad vacía (ahí SÍ es obligatorio, `agregar_ocupante` lo exige) -- ahora la etiqueta cambia según si la unidad ya tiene residentes o no.
+- Agregado test end-to-end faltante: anunciar un residente existente identificado solo por WhatsApp (antes solo estaba cubierto a nivel de dominio).
+
+- [x] Un código Torre+Apto incompleto o inválido no dispara ningún resultado (no revienta).
+- [x] Un código válido con residentes muestra la lista (Principal primero) + "Nueva persona".
+- [x] Un código válido de una unidad vacía muestra solo "Nueva persona" (sin lista).
+- [x] "Nueva persona" da de alta un Ocupante `pending`, sin `es_principal`, con Teléfono o WhatsApp según lo que se haya tecleado.
+- [x] Clic en un residente de la lista resuelve vía `Destinatario.ocupante()` y muestra Anunciar/Recibir.
+- [x] "Anunciar" sobre un residente de la lista (con Teléfono propio, con WhatsApp propio, o sin ninguno de los dos — cae al Principal) deja el Paquete en `ANUNCIADO` con el snapshot de esa unidad.
+- [x] Verificación manual en navegador real (skill `run`): flujo completo Torre+Apto de punta a punta, sin errores de consola.
