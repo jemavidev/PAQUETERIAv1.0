@@ -6,12 +6,18 @@ Con esto, `Persona.apartamento_actual_id` queda siempre derivado del padrón de 
 
 **Blocked by:** None — puede arrancar de inmediato.
 
-**Status:** ready-for-agent
+**Status:** implementado
 
-- [ ] Asignar Torre+Apartamento desde "Dirección" a una unidad vacía crea un Ocupante confirmado y lo promueve a Principal.
-- [ ] Asignar Torre+Apartamento desde "Dirección" a una unidad que ya tiene Principal crea un Ocupante confirmado, no-principal.
-- [ ] Asignar Torre+Apartamento desde "Dirección" a una Persona que ya es Ocupante activo de OTRA unidad se bloquea, mismo mensaje de error que hoy.
-- [ ] Quitar la Torre/Apartamento desde "Dirección" (campos vacíos) da de baja al Ocupante correspondiente (`desvinculado_en` queda con fecha).
-- [ ] El Ocupante creado por esta vía es consultable inmediatamente desde la tab "Residentes" de la misma ficha, y desde el camino Torre+Apartamento de `/announce`.
-- [ ] Los tests existentes de `/residentes` (búsqueda, ficha, tab Dirección) siguen pasando sin romperse.
-- [ ] Verificación manual en navegador real (skill `run`): asignar y quitar una unidad desde "Dirección", confirmar que se refleja correctamente en la tab "Residentes" y en `/announce` (Torre+Apto), sin errores de consola.
+## Hallazgos de code-review (corregidos antes de desplegar)
+
+- **Comentario desactualizado (Standards):** `_aviso_reasignacion_bloqueada` seguía apuntando a "el guard real en `customers_manage_asignar_apartamento`" -- ese guard ya no vive ahí, se movió a `ocupante_service.reasignar_apartamento`. Corregido.
+- **Decisión de producto no documentada (Spec):** el criterio de abajo decía "mismo mensaje de error que hoy" para el bloqueo por Ocupante activo en otra unidad -- la implementación reusa deliberadamente `_MENSAJE_YA_OCUPANTE_ACTIVO` (el mensaje que ya usa `agregar_ocupante` para este mismo caso) en vez de mantener el texto viejo del guard manual, para tener una sola fuente de verdad. Es una decisión mejor que la letra original del ticket, pero ningún test lo dejaba explícito -- corregido: los tests ahora verifican el contenido del mensaje, y este ticket documenta la decisión.
+- **Test faltante (Spec):** el criterio de "consultable desde la tab Residentes" solo tenía cobertura para `/announce`, no para la propia ficha de `/residentes`. Agregado `test_direccion_asigna_visible_de_inmediato_en_la_tab_residentes`.
+
+- [x] Asignar Torre+Apartamento desde "Dirección" a una unidad vacía crea un Ocupante confirmado y lo promueve a Principal.
+- [x] Asignar Torre+Apartamento desde "Dirección" a una unidad que ya tiene Principal crea un Ocupante confirmado, no-principal.
+- [x] Asignar Torre+Apartamento desde "Dirección" a una Persona que ya es Ocupante activo de OTRA unidad se bloquea (mensaje reusado de `agregar_ocupante`, ver nota de code-review arriba).
+- [x] Quitar la Torre/Apartamento desde "Dirección" (campos vacíos) da de baja al Ocupante correspondiente (`desvinculado_en` queda con fecha).
+- [x] El Ocupante creado por esta vía es consultable inmediatamente desde la tab "Residentes" de la misma ficha, y desde el camino Torre+Apartamento de `/announce`.
+- [x] Los tests existentes de `/residentes` (búsqueda, ficha, tab Dirección) siguen pasando sin romperse.
+- [x] Verificación manual en navegador real (contra el ambiente local persistente, `scripts/paquetex_dev_up.sh` + Playwright): asignar Torre 6/101 desde "Dirección" -- queda "Residente principal", visible de inmediato en `/announce` con el código Torre+Apto (`06101`); quitar la dirección -- vuelve a "Sin apartamento asignado". Sin errores de consola en ningún paso.

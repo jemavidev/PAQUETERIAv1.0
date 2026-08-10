@@ -610,8 +610,12 @@ def test_cambiar_de_apartamento_no_reescribe_snapshot_de_paquete_ya_anunciado(cl
     # Invariante de dominio (ADR-0001): mover a alguien de unidad NUNCA
     # reescribe el snapshot de un Paquete ya anunciado. Antes se probaba vía
     # el autoservicio del cliente; ahora que mover es exclusivo del staff
-    # (.scratch/pendientes-cliente), se ejerce `move_resident` directo --
-    # sigue siendo el mismo mecanismo que usa la ruta de staff.
+    # (.scratch/pendientes-cliente), se ejerce `move_resident` directo como
+    # herramienta de dominio para simular el cambio de dirección -- la ruta
+    # de staff hoy pasa por `ocupante_service.reasignar_apartamento`
+    # (`.scratch/announce-residente-correcto` ticket 01), pero el invariante
+    # que este test cubre (el snapshot nunca se reescribe) es el mismo sin
+    # importar qué mecanismo mueve a la Persona.
     from app.domain.apartamento_service import move_resident
 
     apto_inicial = resolver_apartamento(client.db, "TORRE 1", "101")

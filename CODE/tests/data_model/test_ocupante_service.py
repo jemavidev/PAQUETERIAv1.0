@@ -25,9 +25,11 @@ from app.domain.ocupante_service import (
     ocupante_activo_de_persona,
     ocupantes_activos_de_personas,
     promover_a_principal,
+    reasignar_apartamento,
     telefono_notificacion_ocupante,
 )
 from app.domain.persona import Persona
+from app.domain.persona_service import get_or_create_persona
 from app.domain.staff_service import create_initial_admin
 from app.domain.usuario import RolUsuario, Usuario
 
@@ -722,3 +724,104 @@ def test_telefono_notificacion_ocupante_sigue_funcionando_igual_tras_el_refactor
 
     assert telefono_notificacion_ocupante(db_session, hijo) == "+573001234567"
     assert telefono_notificacion_ocupante(db_session, papa) == "+573001234567"
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 01 (.scratch/announce-residente-correcto) — reasignar_apartamento:
+# la tab "Dirección" de /residentes pasa a crear/ligar un Ocupante en vez de
+# escribir Persona.apartamento_actual_id de forma aislada.
+# --------------------------------------------------------------------------- #
+def test_reasignar_apartamento_a_unidad_vacia_crea_ocupante_confirmado_y_principal(db_session):
+    apto = _apto(db_session)
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+    staff = _staff(db_session)
+
+    ocupante = reasignar_apartamento(db_session, persona, apto, staff)
+
+    assert ocupante.apartamento_id == apto.id
+    assert ocupante.persona_id == persona.id
+    assert ocupante.confirmado_en is not None
+    assert ocupante.es_principal is True
+    db_session.refresh(persona)
+    assert persona.apartamento_actual_id == apto.id
+
+
+def test_reasignar_apartamento_a_unidad_con_principal_no_promueve(db_session):
+    apto = _apto(db_session)
+    _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+    hija = get_or_create_persona(db_session, "3021112233", "Hija")
+    staff = _staff(db_session)
+
+    ocupante = reasignar_apartamento(db_session, hija, apto, staff)
+
+    assert ocupante.confirmado_en is not None
+    assert ocupante.es_principal is False  # Papá se queda de principal
+
+
+def test_reasignar_apartamento_bloquea_si_ya_es_ocupante_activo_de_otra_unidad(db_session):
+    # El mensaje es el mismo que ya usa `agregar_ocupante` para este caso
+    # (`_MENSAJE_YA_OCUPANTE_ACTIVO`) -- decisión deliberada: una sola fuente
+    # de verdad para "ya es Ocupante activo en otro lado", en vez de que
+    # `reasignar_apartamento` duplique su propio texto.
+    apto1 = _apto(db_session)
+    apto2 = resolver_apartamento(db_session, "TORRE 2", "202")
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+    staff = _staff(db_session)
+    reasignar_apartamento(db_session, persona, apto1, staff)
+
+    with pytest.raises(ValueError, match="ya es Ocupante activo"):
+        reasignar_apartamento(db_session, persona, apto2, staff)
+
+    db_session.refresh(persona)
+    assert persona.apartamento_actual_id == apto1.id  # no se movió
+
+
+def test_reasignar_apartamento_a_la_misma_unidad_es_no_op(db_session):
+    apto = _apto(db_session)
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+    staff = _staff(db_session)
+    original = reasignar_apartamento(db_session, persona, apto, staff)
+
+    otra_vez = reasignar_apartamento(db_session, persona, apto, staff)
+
+    assert otra_vez.id == original.id
+    assert listar_ocupantes(db_session, apto) == [original]  # no se duplicó
+
+
+def test_reasignar_apartamento_none_desvincula_al_ocupante(db_session):
+    apto = _apto(db_session)
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+    staff = _staff(db_session)
+    ocupante = reasignar_apartamento(db_session, persona, apto, staff)
+
+    resultado = reasignar_apartamento(db_session, persona, None, staff)
+
+    assert resultado is None
+    db_session.refresh(ocupante)
+    assert ocupante.desvinculado_en is not None
+    db_session.refresh(persona)
+    assert persona.apartamento_actual_id is None
+
+
+def test_reasignar_apartamento_none_sin_ocupante_limpia_apartamento_actual_id_huerfano(db_session):
+    # Dato huérfano de ANTES de este ticket (apartamento_actual_id puesto a
+    # mano, sin Ocupante correspondiente) -- el respaldo debe poder
+    # limpiarlo igual, no solo el camino nuevo.
+    apto = _apto(db_session)
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+    persona.apartamento_actual_id = apto.id
+    db_session.flush()
+
+    resultado = reasignar_apartamento(db_session, persona, None, _staff(db_session))
+
+    assert resultado is None
+    db_session.refresh(persona)
+    assert persona.apartamento_actual_id is None
+
+
+def test_reasignar_apartamento_none_sin_nada_que_desvincular_no_falla(db_session):
+    persona = get_or_create_persona(db_session, "3001234567", "Ana")
+
+    resultado = reasignar_apartamento(db_session, persona, None, _staff(db_session))
+
+    assert resultado is None

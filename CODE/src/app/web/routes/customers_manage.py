@@ -26,11 +26,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
-from app.domain.apartamento_service import (
-    listar_catalogo_por_torre,
-    move_resident,
-    resolver_apartamento,
-)
+from app.domain.apartamento_service import listar_catalogo_por_torre, resolver_apartamento
 from app.domain.ocupante import Ocupante
 from app.domain.ocupante_service import (
     MAX_OCUPANTES_ACTIVOS,
@@ -46,6 +42,7 @@ from app.domain.ocupante_service import (
     ocupante_activo_de_persona,
     ocupantes_activos_de_personas,
     promover_a_principal,
+    reasignar_apartamento,
 )
 from app.domain.persona import Persona
 from app.domain.persona_service import (
@@ -285,7 +282,7 @@ def _etiqueta_tab_residentes(apartamento) -> str:
 def _aviso_reasignacion_bloqueada(db: Session, mi_ocupante) -> str | None:
     """Explica de antemano (issue 69) por qué el picker de Dirección va a
     rechazar el guardado -- antes el staff solo se enteraba después de
-    intentarlo (ver el guard real en `customers_manage_asignar_apartamento`,
+    intentarlo (ver el guard real en `ocupante_service.reasignar_apartamento`,
     que bloquea SIEMPRE que la Persona sea Ocupante activo de algún
     Apartamento, para no desincronizar `Persona.apartamento_actual_id` de su
     `Ocupante.apartamento_id`: primero hay que darla de baja como Residente,
@@ -502,7 +499,17 @@ def customers_manage_asignar_apartamento(
     """Asigna, cambia o desvincula la Torre/Apartamento de un cliente --
     única vía para tocar `apartamento_actual_id` ahora que `/mis-datos` es de
     solo lectura para el residente (.scratch/pendientes-cliente): la
-    asignación es exclusiva del personal de Papyrus."""
+    asignación es exclusiva del personal de Papyrus.
+
+    Pasa siempre por el padrón de `Ocupante` (`ocupante_service.
+    reasignar_apartamento`, `.scratch/announce-residente-correcto` ticket
+    01) en vez de escribir `apartamento_actual_id` de forma aislada -- así
+    ese campo queda SIEMPRE derivado del padrón real, nunca un residente
+    "fantasma" invisible para el resto del sistema (incluido el camino
+    Torre+Apartamento de `/announce`). El guard de "no reasignar mientras
+    haya otros Residentes activos" ya no vive acá -- lo aplican, cada uno
+    con su propio mensaje, `agregar_ocupante` (ya activo en otra unidad) y
+    `dar_de_baja_ocupante` (principal con otros Ocupantes activos)."""
     persona = _get_persona_o_404(db, persona_id)
     torre_v = _blank_to_none(torre)
     apartamento_v = _blank_to_none(apartamento)
@@ -523,23 +530,13 @@ def customers_manage_asignar_apartamento(
                 request, db, staff, persona, str(exc), tab_inicial="direccion"
             )
 
-    # Mismo guard que tenía el autoservicio del residente (.scratch/
-    # apartamento-catalogo-confirmacion): reasignar mientras queden otros
-    # Residentes activos en la unidad ACTUAL dejaría ese roster huérfano --
-    # promover a otro principal o dar de baja a todos primero.
-    mi_ocupante = ocupante_activo_de_persona(db, persona.id)
-    if mi_ocupante is not None and (
-        nuevo_apto is None or mi_ocupante.apartamento_id != nuevo_apto.id
-    ):
+    try:
+        reasignar_apartamento(db, persona, nuevo_apto, staff)
+    except ValueError as exc:
         return _render_detalle_con_error(
-            request, db, staff, persona,
-            "No se puede reasignar mientras este cliente tenga otros Residentes "
-            "activos en su unidad actual -- convierte a otro en principal, o "
-            "dales de baja a todos antes de reasignar.",
-            tab_inicial="direccion",
+            request, db, staff, persona, str(exc), tab_inicial="direccion"
         )
 
-    move_resident(db, persona.telefono, nuevo_apto)
     contexto = _contexto_detalle(db, staff, persona)
     contexto["request"] = request
     contexto["guardado"] = True

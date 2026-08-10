@@ -650,3 +650,66 @@ def hay_otro_ocupante_activo(session: Session, apartamento_id, ocupante_id) -> b
         .first()
         is not None
     )
+
+
+def reasignar_apartamento(
+    session: Session, persona: Persona, apartamento: Apartamento | None, actor: Usuario
+) -> Ocupante | None:
+    """La cara de staff de "mudar" o "desvincular" a `persona` de un
+    Apartamento (tab "Dirección" de `/residentes/{id}`, `.scratch/announce-
+    residente-correcto` ticket 01) -- a diferencia de `apartamento_service.
+    move_resident` (que solo tocaba `Persona.apartamento_actual_id` directo),
+    ESTA función pasa siempre por el padrón de `Ocupante`, para que ese campo
+    quede SIEMPRE derivado de él -- nunca un residente "fantasma", invisible
+    para `listar_ocupantes` (y por lo tanto para el camino Torre+Apartamento
+    de `/announce`).
+
+    - `apartamento` es la unidad donde `persona` YA es Ocupante activo ->
+      no-op, devuelve ese Ocupante tal cual (mismo comportamiento que el
+      guard de "reasignar al mismo apartamento" que ya tenía la ruta).
+    - `apartamento` es distinta (o `persona` no es Ocupante de ninguna
+      unidad todavía) -> da de alta un Ocupante nuevo (`agregar_ocupante`,
+      reusando la Persona por su Teléfono/WhatsApp) y lo confirma en el
+      mismo acto (`confirmar_ocupante`, `actor` = el `Usuario` de staff que
+      hace la asignación -- promueve a principal si la unidad estaba vacía,
+      mismo comportamiento ya existente de `confirmar_ocupante`).
+    - `apartamento` es `None` -> desvincula: da de baja el Ocupante activo
+      de `persona` si tiene uno (`dar_de_baja_ocupante`, que ya limpia
+      `apartamento_actual_id` como efecto secundario); si no tiene Ocupante
+      pero `apartamento_actual_id` seguía puesto (dato huérfano de antes de
+      este ticket), lo limpia directo como respaldo.
+
+    Args:
+        session: sesión de SQLAlchemy activa.
+        persona: la Persona a mudar o desvincular.
+        apartamento: la unidad destino, o `None` para desvincular.
+        actor: el `Usuario` de staff que hace la asignación (confirma el
+            Ocupante nuevo en su nombre).
+
+    Returns:
+        El Ocupante resultante, o `None` si se desvinculó.
+
+    Raises:
+        ValueError: si `persona` ya es Ocupante activo de OTRA unidad
+            (debe darse de baja allá primero -- mismo guard que ya aplica
+            `agregar_ocupante`), o si la unidad destino ya tiene el máximo
+            de Ocupantes activos.
+    """
+    mi_ocupante = ocupante_activo_de_persona(session, persona.id)
+
+    if apartamento is None:
+        if mi_ocupante is not None:
+            dar_de_baja_ocupante(session, mi_ocupante)
+        elif persona.apartamento_actual_id is not None:
+            persona.apartamento_actual_id = None
+            session.flush()
+        return None
+
+    if mi_ocupante is not None and mi_ocupante.apartamento_id == apartamento.id:
+        return mi_ocupante
+
+    nuevo = agregar_ocupante(
+        session, apartamento, persona.nombre,
+        telefono=persona.telefono, whatsapp_usuario=persona.whatsapp_usuario,
+    )
+    return confirmar_ocupante(session, nuevo, actor)

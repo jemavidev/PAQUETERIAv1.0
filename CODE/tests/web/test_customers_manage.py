@@ -791,6 +791,122 @@ def test_ficha_sin_apartamento_no_muestra_ocupantes(client):
 # /mis-datos (ver test_customer_verify.py), acá el personal de Papyrus la
 # asigna, cambia o desvincula.
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Ticket 01 (.scratch/announce-residente-correcto) — asignar por "Dirección"
+# pasa a crear/ligar un Ocupante confirmado, no solo escribir
+# apartamento_actual_id.
+# --------------------------------------------------------------------------- #
+def test_direccion_asigna_crea_ocupante_confirmado_y_principal(client):
+    from app.domain.ocupante import Ocupante
+
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(
+        f"/residentes/{p.id}/apartamento",
+        data={"torre": "TORRE 1", "apartamento": "101"},
+    )
+
+    client.db.expire_all()
+    ocupante = client.db.query(Ocupante).filter(Ocupante.persona_id == p.id).one()
+    assert ocupante.confirmado_en is not None
+    assert ocupante.es_principal is True
+
+
+def test_direccion_asigna_a_unidad_con_principal_no_promueve(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    papa = agregar_ocupante(client.db, apto, "Papá", telefono="3001234567")
+    client.db.commit()
+    _login_operador(client)
+    _confirmar(client, papa)
+
+    hija = get_or_create_persona(client.db, "3021112233", "Hija")
+    client.db.commit()
+
+    client.post(
+        f"/residentes/{hija.id}/apartamento",
+        data={"torre": "TORRE 1", "apartamento": "101"},
+    )
+
+    client.db.expire_all()
+    ocupante_hija = client.db.query(Ocupante).filter(Ocupante.persona_id == hija.id).one()
+    assert ocupante_hija.confirmado_en is not None
+    assert ocupante_hija.es_principal is False  # Papá se queda de principal
+
+
+def test_direccion_desvincula_da_de_baja_al_ocupante(client):
+    from app.domain.ocupante import Ocupante
+
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+    client.post(
+        f"/residentes/{p.id}/apartamento", data={"torre": "TORRE 1", "apartamento": "101"}
+    )
+
+    client.post(f"/residentes/{p.id}/apartamento", data={"torre": "", "apartamento": ""})
+
+    client.db.expire_all()
+    ocupante = client.db.query(Ocupante).filter(Ocupante.persona_id == p.id).one()
+    assert ocupante.desvinculado_en is not None
+
+
+def test_direccion_bloquea_reasignar_a_quien_ya_es_ocupante_de_otra_unidad(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto1 = resolver_apartamento(client.db, "TORRE 1", "101")
+    papa = agregar_ocupante(client.db, apto1, "Papá", telefono="3001234567")
+    client.db.commit()
+    _login_operador(client)
+    _confirmar(client, papa)
+    persona = client.db.get(Persona, papa.persona_id)
+
+    r = client.post(
+        f"/residentes/{persona.id}/apartamento",
+        data={"torre": "TORRE 2", "apartamento": "202"},
+    )
+
+    assert r.status_code == 400
+    assert "ya es Ocupante activo" in r.text  # mensaje de agregar_ocupante, reusado
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).apartamento_actual_id == apto1.id
+
+
+def test_direccion_asigna_visible_de_inmediato_en_la_tab_residentes(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(
+        f"/residentes/{p.id}/apartamento",
+        data={"torre": "TORRE 1", "apartamento": "101"},
+    )
+
+    r = client.get(f"/residentes/{p.id}")
+    assert "ANA" in r.text
+    assert "Residente principal" in r.text  # tab "Residentes", mismo patrón que test_ficha_muestra_los_ocupantes_del_apartamento
+
+
+def test_residente_agregado_por_direccion_visible_en_announce_torre_apto(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(
+        f"/residentes/{p.id}/apartamento", data={"torre": "TORRE 1", "apartamento": "101"}
+    )
+
+    r = client.get("/announce/identificar", params={"q": "01101"})
+    assert r.status_code == 200
+    assert "ANA" in r.text  # visible para /announce, no un residente "fantasma"
+
+
 def test_staff_asigna_torre_y_apartamento_a_cliente_sin_unidad(client):
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
