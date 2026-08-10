@@ -65,17 +65,29 @@
       debounceTimer = setTimeout(actualizar, 150);
     });
 
-    // Torre+Apto (ticket 05): clic/tap en un residente de la lista --
-    // delegado sobre `resultado` (el contenedor NUNCA se reemplaza a sí
-    // mismo, solo su contenido) porque los botones `[data-ocupante-id]` se
-    // insertan dinámicamente en cada actualización, mismo criterio que ya
-    // usa `packages/list.html` para sus acciones.
+    // Torre+Apto (ticket 05) Y Teléfono/WhatsApp con co-residentes (ticket
+    // 02, .scratch/announce-residente-correcto): clic/tap en un residente
+    // de la lista -- delegado sobre `resultado` (el contenedor NUNCA se
+    // reemplaza a sí mismo, solo su contenido) porque los botones
+    // `[data-ocupante-id]` se insertan dinámicamente en cada actualización,
+    // mismo criterio que ya usa `packages/list.html` para sus acciones.
     resultado.addEventListener('click', function (e) {
       var boton = e.target.closest('[data-ocupante-id]');
       if (!boton) return;
       var accion = document.getElementById('announce-unidad-accion');
       if (!accion) return;
-      fetch('/announce/identificar-ocupante?ocupante_id=' + encodeURIComponent(boton.dataset.ocupanteId), {
+      var params = new URLSearchParams({ ocupante_id: boton.dataset.ocupanteId });
+      // `data-anunciante-telefono`/`data-anunciante-whatsapp` viven en el
+      // contenedor de la lista (_identificar_unidad.html) -- presentes
+      // (aunque vacíos) solo si el fragmento vino del camino Teléfono/
+      // WhatsApp; identifican a quien llamó, para que el Anunciante del
+      // Paquete no dependa de a qué residente se le anuncie.
+      var lista = boton.closest('[data-anunciante-telefono]');
+      if (lista) {
+        if (lista.dataset.anuncianteTelefono) params.set('anunciante_telefono', lista.dataset.anuncianteTelefono);
+        if (lista.dataset.anuncianteWhatsapp) params.set('anunciante_whatsapp', lista.dataset.anuncianteWhatsapp);
+      }
+      fetch('/announce/identificar-ocupante?' + params.toString(), {
         headers: { 'X-Requested-With': 'fetch' },
       })
         .then(function (r) { return r.text(); })

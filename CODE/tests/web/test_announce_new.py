@@ -689,3 +689,220 @@ def test_recibir_reusa_la_ruta_existente_de_recepcion(client):
     client.db.expire_all()
     p = client.db.query(Paquete).one()
     assert p.estado == EstadoPaquete.RECIBIDO
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 02 (.scratch/announce-residente-correcto) -- Teléfono/WhatsApp con
+# co-residentes: elegir el destinatario correcto, Anunciante = quien llamó.
+# --------------------------------------------------------------------------- #
+def test_identificar_telefono_con_coresidentes_muestra_la_lista_de_la_unidad(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")  # sin contacto propio
+    client.db.commit()
+
+    r = client.get("/announce/identificar", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert "MAMÁ" in r.text
+    assert "HIJO" in r.text
+    assert "Principal" in r.text
+    assert "Nueva persona" in r.text
+    assert "data-ocupante-id" in r.text  # lista de residentes, no la tarjeta directa
+    assert "Ya registrado" not in r.text  # esa etiqueta es de la tarjeta directa de _identificar.html
+
+
+def test_identificar_telefono_con_coresidentes_marca_a_quien_llama_como_anunciante(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.get("/announce/identificar", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert "Anunciante" in r.text
+    # El badge está asociado a Mamá, no a Hijo -- confirmado por posición
+    # dentro del HTML (cada residente es un <button> propio).
+    idx_mama = r.text.index("MAMÁ")
+    idx_hijo = r.text.index("HIJO")
+    idx_badge = r.text.index("Anunciante")
+    assert idx_mama < idx_badge < idx_hijo
+
+
+def test_identificar_whatsapp_con_coresidentes_muestra_la_lista_y_el_badge(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", whatsapp_usuario="mama.whats")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.get("/announce/identificar", params={"q": "mama.whats"})
+    assert r.status_code == 200
+    assert "MAMÁ" in r.text
+    assert "HIJO" in r.text
+    assert "Anunciante" in r.text
+
+
+def test_identificar_telefono_sin_coresidentes_mantiene_el_atajo_directo(client):
+    # Regresión: Ocupante de una unidad donde vive SOLA -- sigue siendo la
+    # tarjeta directa de siempre, sin pantalla intermedia.
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3001234567")
+    client.db.commit()
+
+    r = client.get("/announce/identificar", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert "Anunciante" not in r.text
+    assert "data-ocupante-id" not in r.text
+    assert "Ya registrado" in r.text
+    assert 'name="telefono"' in r.text
+
+
+def test_elegir_residente_distinto_anuncia_con_anunciante_quien_llamo(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    hijo = agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.post(
+        "/announce", data={"ocupante_id": str(hijo.id), "telefono": "3001234567"}
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    p = client.db.query(Paquete).one()
+    assert p.recipient_name == "HIJO"
+    assert p.announced_by_persona_id == mama.persona_id
+    assert p.announced_by_phone == "+573001234567"
+
+
+def test_elegir_a_quien_llama_funciona_como_yo_mismo(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.post(
+        "/announce", data={"ocupante_id": str(mama.id), "telefono": "3001234567"}
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    p = client.db.query(Paquete).one()
+    assert p.recipient_name == "MAMÁ"
+    assert p.announced_by_persona_id == mama.persona_id
+    assert p.announced_by_phone == "+573001234567"
+    assert p.recipient_phone == "+573001234567"
+
+
+def test_nueva_persona_desde_coresidentes_anunciante_es_quien_llamo(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante, listar_ocupantes
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")  # co-residente, sin él este camino no se activa
+    client.db.commit()
+
+    r = client.post(
+        "/announce",
+        data={
+            "torre": "TORRE 1", "apartamento": "106", "nombre": "Visita",
+            "telefono": "3001234567",
+        },
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    p = client.db.query(Paquete).one()
+    assert p.recipient_name == "VISITA"
+    assert p.announced_by_persona_id == mama.persona_id
+    assert p.announced_by_phone == "+573001234567"
+    assert len(listar_ocupantes(client.db, apto)) == 3  # Mamá, Hijo, Visita
+
+
+def test_recibir_desde_camino_con_coresidentes(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    hijo = agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.post(
+        "/announce",
+        data={"ocupante_id": str(hijo.id), "telefono": "3001234567", "accion": "recibir"},
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    p = client.db.query(Paquete).one()
+    assert "modal-receive-" in r.text
+    assert f'action="/paquetes/{p.id}/recibir"' in r.text
+
+
+def test_identificar_ocupante_propaga_anunciante_telefono_a_la_tarjeta(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    hijo = agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.get(
+        "/announce/identificar-ocupante",
+        params={"ocupante_id": str(hijo.id), "anunciante_telefono": "3001234567"},
+    )
+    assert r.status_code == 200
+    assert 'name="telefono" value="3001234567"' in r.text
+    assert f'name="ocupante_id" value="{hijo.id}"' in r.text
+
+
+def test_identificar_ocupante_sin_anunciante_conocido_no_agrega_telefono(client):
+    # Camino Torre+Apto directo (sin llamante conocido) -- regresión.
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    hija = agregar_ocupante(client.db, apto, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    r = client.get("/announce/identificar-ocupante", params={"ocupante_id": str(hija.id)})
+    assert r.status_code == 200
+    assert 'name="telefono"' not in r.text

@@ -25,11 +25,26 @@ Tres caminos para identificar a quién se le anuncia (POST /announce):
   2. Un residente YA EXISTENTE elegido de la lista de una unidad (ticket
      05) -- `ocupante_id`, resuelto vía `Destinatario.ocupante(id)`; el
      Anunciante es la Persona propia del Ocupante o, si no tiene, la del
-     Principal de su unidad (`anunciante_para_ocupante`).
+     Principal de su unidad (`anunciante_para_ocupante`) -- SALVO que ya se
+     conozca a quien llamó (ver más abajo).
   3. Un residente NUEVO dentro de una unidad (ticket 05) -- `torre` +
      `apartamento` + `nombre` (+ `contacto` opcional): da de alta el
      Ocupante (`agregar_ocupante` tal cual, nace `pending`) y anuncia en el
      mismo paso, mismo mecanismo del camino 2.
+
+Teléfono/WhatsApp con co-residentes (ticket 02, `.scratch/announce-
+residente-correcto`): si la Persona que resuelve el camino 1 es Ocupante
+activo de una unidad con MÁS de un residente activo, `GET /announce/
+identificar` deja de mostrar la tarjeta directa -- en su lugar muestra la
+MISMA pantalla de unidad del camino 2/3 (`_identificar_unidad.html`,
+`_unidad_con_coresidentes`), con esa Persona marcada "Anunciante" en la
+lista. Sin importar a qué residente se le anuncie desde ahí (existente o
+nuevo), el Anunciante del Paquete es SIEMPRE quien se identificó por
+Teléfono/WhatsApp -- nunca `anunciante_para_ocupante` -- gracias a que
+`telefono`/`whatsapp_usuario` viajan como campos ocultos ADICIONALES junto
+a `ocupante_id`/`torre`+`apartamento` (ver `_anunciar_para` más abajo). El
+camino Torre+Apto directo no cambia: ahí nunca se conoce con certeza quién
+llama, así que sigue cayendo en `anunciante_para_ocupante`.
 
 Los tres caminos comparten el mismo botón doble Anunciar/Recibir (ticket 06,
 `components/_persona_resuelta.html` e `_identificar_unidad.html`) -- ambos
@@ -50,13 +65,20 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import resolver_apartamento
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
 from app.domain.ocupante import Ocupante
-from app.domain.ocupante_service import agregar_ocupante, anunciante_para_ocupante, listar_ocupantes
+from app.domain.ocupante_service import (
+    agregar_ocupante,
+    anunciante_para_ocupante,
+    listar_ocupantes,
+    ocupante_activo_de_persona,
+)
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, TipoPaquete
 from app.domain.paquete_service import Destinatario, announce
+from app.domain.persona import Persona
 from app.domain.persona_service import buscar_persona_por_telefono, buscar_persona_por_whatsapp
 from app.domain.usuario import Usuario
 
@@ -138,6 +160,22 @@ def _resolver_torre_apto(session: Session, valor: str):
         return None
 
 
+def _unidad_con_coresidentes(session: Session, persona: Persona):
+    """`(Apartamento, residentes)` si `persona` es Ocupante activo de una
+    unidad con MÁS de un residente activo -- `None` si no es Ocupante de
+    nada, o si vive sola (ahí el atajo directo de Teléfono/WhatsApp de
+    siempre sigue aplicando -- ticket 02, `.scratch/announce-residente-
+    correcto`)."""
+    ocupante = ocupante_activo_de_persona(session, persona.id)
+    if ocupante is None:
+        return None
+    apto = session.get(Apartamento, ocupante.apartamento_id)
+    residentes = listar_ocupantes(session, apto)
+    if len(residentes) <= 1:
+        return None
+    return apto, residentes
+
+
 @router.get("/announce", response_class=HTMLResponse)
 def announce_form(request: Request, staff: Usuario = Depends(current_staff)):
     return templates.TemplateResponse("announce_new/form.html", {"request": request, "staff": staff})
@@ -158,6 +196,21 @@ def announce_identificar(
             if tipo == "telefono"
             else buscar_persona_por_whatsapp(db, q)
         )
+        if persona is not None:
+            unidad = _unidad_con_coresidentes(db, persona)
+            if unidad is not None:
+                apto, residentes = unidad
+                return templates.TemplateResponse(
+                    "announce_new/_identificar_unidad.html",
+                    {
+                        "request": request,
+                        "apartamento": apto,
+                        "residentes": residentes,
+                        "anunciante_persona_id": persona.id,
+                        "anunciante_telefono": persona.telefono if tipo == "telefono" else None,
+                        "anunciante_whatsapp": persona.whatsapp_usuario if tipo == "whatsapp" else None,
+                    },
+                )
         return templates.TemplateResponse(
             "announce_new/_identificar.html",
             {"request": request, "tipo": tipo, "valor": q, "persona": persona},
@@ -192,18 +245,30 @@ def _resolver_ocupante(session: Session, ocupante_id: str) -> Ocupante | None:
 def announce_identificar_ocupante(
     request: Request,
     ocupante_id: str = "",
+    anunciante_telefono: str = None,
+    anunciante_whatsapp: str = None,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
 ):
     """Clic/tap sobre un residente de la lista de `_identificar_unidad.html`
     (ticket 05) -- resuelve ese Ocupante puntual y devuelve la misma
-    tarjeta Anunciar/Recibir que el camino de Teléfono/WhatsApp."""
+    tarjeta Anunciar/Recibir que el camino de Teléfono/WhatsApp.
+
+    `anunciante_telefono`/`anunciante_whatsapp` (ticket 02): presentes solo
+    si se llegó desde el camino Teléfono/WhatsApp con co-residentes -- se
+    propagan tal cual a la tarjeta para que el Anunciante del Paquete
+    quede fijo en quien llamó (ver docstring del módulo)."""
     ocupante = _resolver_ocupante(db, ocupante_id)
     if ocupante is None:
         return HTMLResponse("")
     return templates.TemplateResponse(
         "announce_new/_identificar_ocupante.html",
-        {"request": request, "ocupante": ocupante},
+        {
+            "request": request,
+            "ocupante": ocupante,
+            "anunciante_telefono": anunciante_telefono,
+            "anunciante_whatsapp": anunciante_whatsapp,
+        },
     )
 
 
@@ -237,13 +302,41 @@ def announce_submit(
             "announce_new/form.html", contexto, status_code=400
         )
 
-    def _anunciar_para(ocupante: Ocupante):
+    def _anunciar_para(ocupante: Ocupante, llamante_telefono: str = None, llamante_whatsapp: str = None):
         """`(paquete, None)` si se pudo anunciar, o `(None, mensaje)` si
         `ocupante` no tiene ninguna identidad real (propia ni del
         Principal de su unidad) con la cual anunciar -- ver
         `anunciante_para_ocupante`. Comparte el mismo camino (ticket 05)
         tanto para un residente YA existente como para uno recién creado
-        con "Nueva persona"."""
+        con "Nueva persona".
+
+        `llamante_telefono`/`llamante_whatsapp` (ticket 02, `.scratch/
+        announce-residente-correcto`): si vienen, YA se sabe quién anuncia
+        (el camino Teléfono/WhatsApp con co-residentes) -- el Anunciante es
+        esa Persona, sin pasar por `anunciante_para_ocupante` (que resuelve
+        a partir del Destinatario, no de quien llamó). Ambos juntos nunca
+        deberían llegar acá (el GET de `/announce/identificar` y el `elif`
+        de `_identificar_unidad.html` ya son mutuamente excluyentes sobre
+        cuál de los dos se propaga) -- por defensivo, si pasara, se
+        prefiere Teléfono en silencio, a diferencia del camino 1 más abajo
+        (que rechaza explícitamente "Identifica a la persona antes de
+        anunciar." cuando el STAFF manda los dos desde el campo único).
+        Son dos guards distintos a propósito: acá el valor viene de un
+        hidden field que la propia app generó, no de lo que el staff
+        tecleó -- no hace falta la misma UX de rechazo explícito para un
+        estado que la UI nunca produce."""
+        llamante_telefono = (llamante_telefono or "").strip()
+        llamante_whatsapp = (llamante_whatsapp or "").strip()
+        if llamante_telefono or llamante_whatsapp:
+            paquete = announce(
+                db,
+                anunciante_telefono=llamante_telefono or None,
+                anunciante_whatsapp=None if llamante_telefono else (llamante_whatsapp or None),
+                destinatario=Destinatario.ocupante(ocupante.id),
+                staff_actor=staff,
+            )
+            return paquete, None
+
         anunciante = anunciante_para_ocupante(db, ocupante)
         if anunciante is None:
             return None, (
@@ -262,19 +355,20 @@ def announce_submit(
         return paquete, None
 
     if ocupante_id:
-        # Camino 2 (ticket 05): residente YA existente, elegido de la lista
-        # de una unidad.
+        # Camino 2 (ticket 05, + llamante conocido del ticket 02): residente
+        # YA existente, elegido de la lista de una unidad.
         ocupante = _resolver_ocupante(db, ocupante_id)
         if ocupante is None:
             return _error("Ese residente ya no existe -- vuelve a buscar la unidad.")
-        paquete, error = _anunciar_para(ocupante)
+        paquete, error = _anunciar_para(ocupante, telefono, whatsapp_usuario)
         if error:
             return _error(error)
 
     elif torre and apartamento:
-        # Camino 3 (ticket 05): "Nueva persona" dentro de una unidad --
-        # registra el Ocupante (agregar_ocupante tal cual, nace pending) Y
-        # anuncia en el mismo paso.
+        # Camino 3 (ticket 05, + llamante conocido del ticket 02): "Nueva
+        # persona" dentro de una unidad -- registra el Ocupante
+        # (agregar_ocupante tal cual, nace pending) Y anuncia en el mismo
+        # paso.
         try:
             apto = resolver_apartamento(db, torre, apartamento)
         except ValueError as exc:
@@ -305,7 +399,7 @@ def announce_submit(
         except ValueError as exc:
             return _error(str(exc))
 
-        paquete, error = _anunciar_para(ocupante)
+        paquete, error = _anunciar_para(ocupante, telefono, whatsapp_usuario)
         if error:
             return _error(error)
 
