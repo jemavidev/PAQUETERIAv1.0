@@ -67,6 +67,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import resolver_apartamento
+from app.domain.contacto import clasificar_contacto
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
 from app.domain.ocupante import Ocupante
@@ -96,7 +97,10 @@ def _clasificar(valor: str) -> str:
     """'telefono' | 'whatsapp' | 'torre_apto' | 'ninguno' -- ver docstring
     del módulo. Única función que decide esto; `/announce/identificar`,
     `/announce` (POST, para el `contacto` de un residente nuevo) y esta
-    misma la usan, para que nunca diverjan.
+    misma la usan, para que nunca diverjan. Teléfono/WhatsApp delega en
+    `clasificar_contacto` (dominio, `.scratch/ocupante-principal-
+    escenarios` ticket 01) -- Torre+Apto es un caso propio de esta vista,
+    no se generaliza.
 
     Exige el valor COMPLETO, no cualquier prefijo -- encontrado en
     code-review antes de desplegar: sin este mínimo, el primer dígito/letra
@@ -118,13 +122,9 @@ def _clasificar(valor: str) -> str:
     if not valor:
         return "ninguno"
     primero = valor[0]
-    if primero == "3" and valor.isdigit():
-        return "telefono" if len(valor) == 10 else "ninguno"
     if primero in ("0", "1") and valor.isdigit():
         return "torre_apto"
-    if primero.isalpha():
-        return "whatsapp" if len(valor) >= 3 else "ninguno"
-    return "ninguno"
+    return clasificar_contacto(valor)
 
 
 def _torre_desde_codigo(valor: str) -> str | None:
