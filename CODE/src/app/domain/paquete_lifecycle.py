@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento
+from .ocupante_service import promover_al_recibir
 from .paquete import CondicionPaquete, EstadoPaquete, MotivoCancelacion, Paquete, TipoPaquete
 from .telefono import normalizar_telefono
 from .texto import normalizar_nombre
@@ -75,6 +76,13 @@ def receive(
     paquete.package_condition = package_condition or CondicionPaquete.BUENO
 
     session.flush()
+
+    # Promoción automática a principal (.scratch/ocupante-principal-
+    # escenarios, ticket 04): si se puede resolver el Ocupante destinatario
+    # y su unidad no tiene principal todavía, queda promovido acá mismo --
+    # nunca bloquea ni falla el recibo en sí.
+    promover_al_recibir(session, paquete)
+
     return paquete
 
 

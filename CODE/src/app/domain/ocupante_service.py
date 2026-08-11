@@ -40,9 +40,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento
+from .apartamento_service import buscar_apartamento_por_terna
 from .ocupante import Ocupante
+from .paquete import Paquete
 from .persona import Persona
 from .persona_service import (
+    buscar_persona_por_telefono,
     get_or_create_persona,
     get_or_create_persona_por_whatsapp,
     update_datos_personales,
@@ -622,6 +625,74 @@ def promover_a_principal(session: Session, ocupante: Ocupante) -> Ocupante:
         ocupante.confirmado_en = _utcnow()
     session.flush()
     return ocupante
+
+
+def resolver_ocupante_de_paquete(session: Session, paquete: Paquete) -> Ocupante | None:
+    """El Ocupante que corresponde al destinatario de `paquete` -- `Paquete`
+    nunca guarda una FK a `Ocupante` (ADR-0001, solo el snapshot congelado),
+    así que hay que resolverlo desde los datos que sí quedaron.
+
+    Dos intentos, en orden: (1) `recipient_phone` -> la Persona dueña de ese
+    Teléfono -> su Ocupante activo; (2) si no hay match, el roster de la
+    unidad del snapshot (`snapshot_conjunto/torre/apartamento`), buscando un
+    Ocupante cuyo nombre coincida con `recipient_name` -- mismo patrón que
+    ya usa `paquete_service._resolver_ocupante_por_nombre` para un caso
+    análogo. `None` si ninguno de los dos resuelve (paquete sin apartamento
+    en el snapshot, o destinatario que no calza con el roster actual)."""
+    if paquete.recipient_phone:
+        persona = buscar_persona_por_telefono(session, paquete.recipient_phone)
+        if persona is not None:
+            ocupante = ocupante_activo_de_persona(session, persona.id)
+            if ocupante is not None:
+                return ocupante
+
+    if not (
+        paquete.snapshot_conjunto and paquete.snapshot_torre and paquete.snapshot_apartamento
+    ):
+        return None
+    apartamento = buscar_apartamento_por_terna(
+        session, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
+    )
+    if apartamento is None or not paquete.recipient_name:
+        return None
+    nombre_normalizado = normalizar_nombre(paquete.recipient_name)
+    for ocupante in listar_ocupantes(session, apartamento):
+        if ocupante.nombre == nombre_normalizado:
+            return ocupante
+    return None
+
+
+def promover_al_recibir(session: Session, paquete: Paquete) -> Ocupante | None:
+    """Dispara la promoción automática a principal (`.scratch/ocupante-
+    principal-escenarios`, ticket 04): si se puede resolver el Ocupante
+    destinatario de `paquete` (`resolver_ocupante_de_paquete`), su unidad
+    todavía no tiene principal, y ese Ocupante tiene Persona propia -- se
+    promueve en el momento. Llamada por `paquete_lifecycle.receive()`
+    después de una transición exitosa; nunca falla ni bloquea el recibo en
+    sí -- si no se puede resolver nada, o el resuelto no tiene contacto
+    propio, la unidad simplemente se queda sin principal hasta que alguien
+    con contacto reciba algo.
+
+    Returns:
+        El Ocupante promovido, o `None` si no se disparó ninguna promoción.
+    """
+    ocupante = resolver_ocupante_de_paquete(session, paquete)
+    if ocupante is None or ocupante.persona_id is None:
+        return None
+
+    hay_principal = (
+        session.query(Ocupante)
+        .filter(
+            Ocupante.apartamento_id == ocupante.apartamento_id,
+            Ocupante.es_principal.is_(True),
+        )
+        .first()
+        is not None
+    )
+    if hay_principal:
+        return None
+
+    return promover_a_principal(session, ocupante)
 
 
 def apartamentos_con_principal(session: Session) -> set:

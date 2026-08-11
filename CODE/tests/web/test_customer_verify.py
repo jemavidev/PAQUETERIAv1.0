@@ -36,16 +36,25 @@ def _confirmar_principal(client, apto):
     promueve a principal en el mismo acto (ticket 06). Fixture de
     conveniencia para tests que no son SOBRE el flujo de confirmación en sí,
     pero necesitan un principal ya establecido (p.ej. para gestionar otros
-    Ocupantes, que exige `es_principal`)."""
+    Ocupantes, que exige `es_principal`).
+
+    Idempotente (`.scratch/ocupante-principal-escenarios`, ticket 04): desde
+    que `receive()` puede promover automáticamente, el paquete de
+    elegibilidad que siembra `_login_cliente` (mismo teléfono, misma unidad)
+    a menudo ya deja al Ocupante confirmado y principal antes de que este
+    helper se llame -- no hay nada que corregir en ese caso."""
+    ocupante = client.db.query(Ocupante).filter(
+        Ocupante.apartamento_id == apto.id, Ocupante.desvinculado_en.is_(None)
+    ).one()
+    if ocupante.confirmado_en is not None:
+        return
+
     from app.domain.ocupante_service import confirmar_ocupante
     from app.domain.staff_service import create_initial_admin
 
     admin = client.db.query(Usuario).filter(Usuario.rol == RolUsuario.ADMIN).first()
     if admin is None:
         admin = create_initial_admin(client.db, "admin@club.com", "Admin", "Contrasena1")
-    ocupante = client.db.query(Ocupante).filter(
-        Ocupante.apartamento_id == apto.id, Ocupante.desvinculado_en.is_(None)
-    ).one()
     confirmar_ocupante(client.db, ocupante, admin)
     client.db.commit()
 
@@ -513,6 +522,11 @@ def test_ocupante_no_principal_se_autodescarta(client):
     apto = resolver_apartamento(client.db, "TORRE 1", "101")
     agregar_ocupante(client.db, apto, "Ana", "3001234567")
     client.db.commit()
+    # Ana confirmada como principal ANTES de que Hija reciba su paquete de
+    # elegibilidad -- si no, la promoción automática (ticket 04) dejaría a
+    # Hija como principal (unidad sin nadie confirmado todavía), y este test
+    # dejaría de probar el caso "no principal" que le da nombre.
+    _confirmar_principal(client, apto)
 
     hija = agregar_ocupante(client.db, apto, "Hija")
     asociar_telefono_a_ocupante(client.db, hija, "3021112233")
