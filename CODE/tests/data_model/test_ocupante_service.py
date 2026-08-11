@@ -12,6 +12,7 @@ import pytest
 from app.domain.apartamento_service import resolver_apartamento
 from app.domain.ocupante import Ocupante
 from app.domain.ocupante_service import (
+    MAX_OCUPANTES_ACTIVOS,
     agregar_ocupante,
     anunciante_para_ocupante,
     apartamentos_con_principal,
@@ -135,16 +136,13 @@ def test_rechazar_un_pending_reutiliza_dar_de_baja_y_nunca_fue_principal(db_sess
     assert papa.es_principal is False
 
 
-def test_pending_cuenta_para_el_limite_de_5(db_session):
+def test_pending_cuenta_para_el_limite(db_session):
     apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Uno", telefono="3000000001")
-    agregar_ocupante(db_session, apto, "Dos", telefono="3000000002")
-    agregar_ocupante(db_session, apto, "Tres", telefono="3000000003")
-    agregar_ocupante(db_session, apto, "Cuatro", telefono="3000000004")
-    agregar_ocupante(db_session, apto, "Cinco", telefono="3000000005")  # ninguno confirmado
+    for i in range(MAX_OCUPANTES_ACTIVOS):  # ninguno confirmado
+        agregar_ocupante(db_session, apto, f"Ocupante{i}", telefono=f"30000000{i:02d}")
 
     with pytest.raises(ValueError):
-        agregar_ocupante(db_session, apto, "Seis", telefono="3000000006")
+        agregar_ocupante(db_session, apto, "DeMas", telefono="3000009999")
 
 
 def test_pending_sincroniza_apartamento_actual_igual_que_confirmado(db_session):
@@ -526,29 +524,27 @@ def test_desvincular_telefono_del_principal_falla(db_session):
         desvincular_telefono_ocupante(db_session, papa)
 
 
-def test_maximo_5_ocupantes_activos_por_apartamento(db_session):
+def test_maximo_ocupantes_activos_por_apartamento(db_session):
     apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Uno", telefono="3000000001")
-    agregar_ocupante(db_session, apto, "Dos", telefono="3000000002")
-    agregar_ocupante(db_session, apto, "Tres", telefono="3000000003")
-    agregar_ocupante(db_session, apto, "Cuatro", telefono="3000000004")
-    agregar_ocupante(db_session, apto, "Cinco", telefono="3000000005")
+    for i in range(MAX_OCUPANTES_ACTIVOS):
+        agregar_ocupante(db_session, apto, f"Ocupante{i}", telefono=f"30000000{i:02d}")
 
     with pytest.raises(ValueError):
-        agregar_ocupante(db_session, apto, "Seis", telefono="3000000006")
+        agregar_ocupante(db_session, apto, "DeMas", telefono="3000009999")
 
 
-def test_dar_de_baja_libera_espacio_bajo_el_limite_de_5(db_session):
+def test_dar_de_baja_libera_espacio_bajo_el_limite(db_session):
     apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Uno", telefono="3000000001")
-    agregar_ocupante(db_session, apto, "Dos", telefono="3000000002")
-    agregar_ocupante(db_session, apto, "Tres", telefono="3000000003")
-    agregar_ocupante(db_session, apto, "Cuatro", telefono="3000000004")
-    cinco = agregar_ocupante(db_session, apto, "Cinco", telefono="3000000005")
+    for i in range(MAX_OCUPANTES_ACTIVOS - 1):
+        agregar_ocupante(db_session, apto, f"Ocupante{i}", telefono=f"30000000{i:02d}")
+    ultimo = agregar_ocupante(
+        db_session, apto, f"Ocupante{MAX_OCUPANTES_ACTIVOS - 1}",
+        telefono=f"30000000{MAX_OCUPANTES_ACTIVOS - 1:02d}",
+    )
 
-    dar_de_baja_ocupante(db_session, cinco)
-    seis = agregar_ocupante(db_session, apto, "Seis", telefono="3000000006")
-    assert seis.persona_id is not None
+    dar_de_baja_ocupante(db_session, ultimo)
+    de_mas = agregar_ocupante(db_session, apto, "DeMas", telefono="3000009999")
+    assert de_mas.persona_id is not None
 
 
 # --------------------------------------------------------------------------- #

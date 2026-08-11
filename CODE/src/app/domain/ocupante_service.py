@@ -240,7 +240,7 @@ def anunciante_para_ocupante(session: Session, ocupante: Ocupante) -> Persona | 
     return _persona_de_ocupante_o_principal(session, ocupante)
 
 
-MAX_OCUPANTES_ACTIVOS = 5
+MAX_OCUPANTES_ACTIVOS = 10
 
 # Mismo mensaje tanto si lo atrapa el chequeo de aplicación
 # (`_persona_ya_es_ocupante_activo`, el caso normal) como si lo atrapa el

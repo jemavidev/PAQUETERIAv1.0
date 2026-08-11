@@ -18,7 +18,7 @@ POST. La asignación es exclusiva del personal de Papyrus desde
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import declare_unit, resolver_apartamento
 from app.domain.ocupante import Ocupante
-from app.domain.ocupante_service import agregar_ocupante
+from app.domain.ocupante_service import MAX_OCUPANTES_ACTIVOS, agregar_ocupante
 from app.domain.otp_sender import DevOtpSender
 from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.paquete_lifecycle import receive
@@ -330,7 +330,7 @@ def test_crear_ocupante_sin_nombre_falla(client):
     assert r.status_code == 400
 
 
-def test_crear_ocupante_respeta_limite_de_5(client):
+def test_crear_ocupante_respeta_limite(client):
     apto = resolver_apartamento(client.db, "TORRE 1", "101")
     agregar_ocupante(client.db, apto, "Ana", "3001234567")
     client.db.commit()
@@ -338,11 +338,11 @@ def test_crear_ocupante_respeta_limite_de_5(client):
     _login_cliente(client)
     _confirmar_principal(client, apto)
 
-    for i in range(4):  # +1 principal ya existente = 5
+    for i in range(MAX_OCUPANTES_ACTIVOS - 1):  # +1 principal ya existente = MAX_OCUPANTES_ACTIVOS
         agregar_ocupante(client.db, apto, f"Extra{i}")
     client.db.commit()
 
-    r = client.post("/mis-datos/ocupantes", data={"nombre": "Seis"})
+    r = client.post("/mis-datos/ocupantes", data={"nombre": "DeMas"})
     assert r.status_code == 400
 
 
