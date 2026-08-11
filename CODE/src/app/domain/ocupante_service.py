@@ -583,6 +583,12 @@ def promover_a_principal(session: Session, ocupante: Ocupante) -> Ocupante:
     """Promueve `ocupante` a principal de su Apartamento, degradando al
     principal anterior (si había uno) en la misma transacción.
 
+    Si `ocupante` todavía estaba `pending`, queda confirmado en el mismo
+    acto (`.scratch/ocupante-principal-escenarios`, ticket 03) -- promover
+    (por cualquier vía: el botón explícito, o la promoción automática al
+    recibir un paquete) nunca debe dejar a alguien `es_principal=True` sin
+    `confirmado_en`. Si ya estaba confirmado, esa fecha original no se toca.
+
     Raises:
         ValueError: si `ocupante` no tiene `persona_id` (sin Teléfono ni
             WhatsApp propios, ADR-0007, no puede ser principal), o si ya
@@ -612,6 +618,8 @@ def promover_a_principal(session: Session, ocupante: Ocupante) -> Ocupante:
         session.flush()  # libera el índice único parcial antes de marcar el nuevo
 
     ocupante.es_principal = True
+    if ocupante.confirmado_en is None:
+        ocupante.confirmado_en = _utcnow()
     session.flush()
     return ocupante
 

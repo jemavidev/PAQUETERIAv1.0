@@ -209,6 +209,35 @@ def test_promover_con_telefono_degrada_al_anterior(db_session):
     assert len(principales) == 1
 
 
+def test_promover_confirma_al_que_estaba_pending(db_session):
+    """.scratch/ocupante-principal-escenarios, ticket 03 -- promover a
+    principal (por cualquier vía) ya no puede dejar a alguien
+    es_principal=True sin confirmar."""
+    apto = _apto(db_session)
+    _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+    assert hija.confirmado_en is None  # todavía pending
+
+    promover_a_principal(db_session, hija)
+    db_session.refresh(hija)
+
+    assert hija.es_principal is True
+    assert hija.confirmado_en is not None
+
+
+def test_promover_no_pisa_confirmado_en_si_ya_estaba_confirmado(db_session):
+    apto = _apto(db_session)
+    _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+    confirmar_ocupante(db_session, hija, _staff(db_session))
+    confirmado_original = hija.confirmado_en
+
+    promover_a_principal(db_session, hija)
+    db_session.refresh(hija)
+
+    assert hija.confirmado_en == confirmado_original
+
+
 def test_listar_ordena_principal_primero(db_session):
     apto = _apto(db_session)
     _agregar_confirmado(db_session, apto, "Papá", "3001234567")
