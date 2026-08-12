@@ -198,6 +198,181 @@ def test_recibir_sin_sesion_redirige_a_login(client):
 
 
 # --------------------------------------------------------------------------- #
+# Recibir: paso nuevo de resolución de apartamento/destinatario
+# (.scratch/ocupante-principal-escenarios, ticket 05)
+# --------------------------------------------------------------------------- #
+def test_recibir_declara_apartamento_cuando_el_destinatario_no_tenia(client):
+    from app.domain.apartamento_service import resolver_apartamento
+
+    _login_staff(client)
+    resolver_apartamento(client.db, "TORRE 1", "101")  # asegura que existe en el catálogo
+    p = _anunciar(client)  # sin apartamento -- Destinatario.yo_mismo(), sin unidad
+    assert p.snapshot_apartamento is None
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"torre": "TORRE 1", "apartamento": "101"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.RECIBIDO
+    assert p2.snapshot_torre == "TORRE 1"
+    assert p2.snapshot_apartamento == "101"
+
+
+def test_recibir_no_pisa_un_apartamento_que_ya_tenia(client):
+    from app.domain.apartamento_service import resolver_apartamento
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"torre": "TORRE 2", "apartamento": "202"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.snapshot_torre == "TORRE 1"  # sin cambios -- ya tenía uno
+
+
+def test_recibir_con_torre_apto_invalido_no_recibe(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"torre": "TORRE 99", "apartamento": "101"},
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_recibir_elige_un_residente_existente_de_la_unidad(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Jesus Villalobos", "3033333333")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"candidato_idx": "0"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.RECIBIDO
+    assert p2.recipient_name == "JESUS VILLALOBOS"
+
+
+def test_recibir_registra_un_residente_nuevo_de_la_unidad(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"candidato_idx": "nuevo", "nuevo_ocupante_nombre": "Hija"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.RECIBIDO
+    assert p2.recipient_name == "HIJA"
+    nuevo = (
+        client.db.query(Ocupante)
+        .filter(Ocupante.apartamento_id == apto.id, Ocupante.nombre == "HIJA")
+        .one()
+    )
+    assert nuevo.id is not None
+
+
+def test_recibir_con_candidato_invalido_no_recibe(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(f"/paquetes/{p.id}/recibir", data={"candidato_idx": "99"})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_recibir_sin_ambiguedad_no_pide_nada_nuevo(client):
+    """Sin los campos nuevos, Recibir se comporta exactamente igual que
+    siempre -- el paso de resolución es opcional."""
+    staff = _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(f"/paquetes/{p.id}/recibir", data={}, follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Paquete, p.id)
+    assert p2.estado == EstadoPaquete.RECIBIDO
+    assert p2.received_by_usuario_id == staff.id
+
+
+# --------------------------------------------------------------------------- #
 # Entregar (ticket 02)
 # --------------------------------------------------------------------------- #
 def _recibir(client, staff, p):
@@ -321,6 +496,59 @@ def test_el_modal_recibir_incluye_el_disparador_de_escaneo(client):
     assert r.status_code == 200
     assert "scan-btn" in r.text  # el botón "Escanear" vive en el modal Recibir
     assert "zxing.min.js" in r.text  # el bundle se carga (lazy) desde /static
+
+
+def test_modal_recibir_ofrece_declarar_apartamento_si_falta(client):
+    _login_staff(client)
+    _anunciar(client)  # sin apartamento -- Destinatario.yo_mismo(), sin unidad
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "todavía no tiene apartamento" in r.text
+    assert 'data-torre-recibir' in r.text
+
+
+def test_modal_recibir_no_ofrece_declarar_apartamento_si_ya_tiene(client):
+    from app.domain.apartamento_service import resolver_apartamento
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "todavía no tiene apartamento" not in r.text
+
+
+def test_modal_recibir_ofrece_elegir_o_crear_residente_con_candidatos(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Jesus Villalobos", "3033333333")
+    client.db.commit()
+
+    announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "A nombre de quién es" in r.text
+    assert "JESUS VILLALOBOS" in r.text
+    assert "Es un nuevo residente de este apartamento" in r.text
 
 
 # --------------------------------------------------------------------------- #

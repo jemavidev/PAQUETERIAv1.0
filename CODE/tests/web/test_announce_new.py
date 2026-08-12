@@ -593,6 +593,10 @@ def test_recibir_telefono_directo_anuncia_y_muestra_modal_abierto(client):
     assert _modal_receive_abierto(r.text, p.id)
     assert f'action="/paquetes/{p.id}/recibir"' in r.text
     assert "Confirmar recibo" in r.text
+    # Paso nuevo (.scratch/ocupante-principal-escenarios, ticket 05): Ana
+    # quedó sin apartamento (Destinatario.yo_mismo() por Teléfono directo,
+    # sin unidad) -- el modal de Recibir ofrece declararlo ahí mismo.
+    assert "todavía no tiene apartamento" in r.text
 
 
 def test_recibir_residente_existente_anuncia_y_muestra_modal_abierto(client):

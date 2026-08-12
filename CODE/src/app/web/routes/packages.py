@@ -25,7 +25,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.domain.apartamento_service import buscar_apartamento_por_terna
+from app.domain.apartamento_service import (
+    buscar_apartamento_por_terna,
+    listar_catalogo_por_torre,
+    resolver_apartamento,
+)
 from app.domain.foto_storage import FotoStorage
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
@@ -35,6 +39,7 @@ from app.domain.paquete_correccion_service import candidatos_correccion, candida
 from app.domain.paquete_lifecycle import (
     TransicionInvalida,
     cancel,
+    corregir_apartamento,
     corregir_destinatario,
     deliver,
     receive,
@@ -250,6 +255,10 @@ def _render_lista(
             "filtro_q": q or "",
             "pagina_actual": pagina_actual,
             "total_paginas": total_paginas,
+            # Catálogo de Torre+Apartamento para el paso nuevo de Recibir
+            # (.scratch/ocupante-principal-escenarios, ticket 05) -- declarar
+            # unidad cuando el destinatario todavía no tiene una.
+            "catalogo_torres": listar_catalogo_por_torre(db),
             # Identifica CUÁL paquete/modal tenía el error, para reabrirlo
             # y marcar su campo específico (retroalimentación en vivo
             # 2026-08-02) -- solo aplica hoy al modal "Corregir" (el único
@@ -299,11 +308,56 @@ async def receive_action(
     package_type: str = Form(None),
     package_condition: str = Form(None),
     fotos: list[UploadFile] = File(None),
+    torre: str = Form(None),
+    apartamento: str = Form(None),
+    candidato_idx: str = Form(None),
+    nuevo_ocupante_nombre: str = Form(None),
+    nuevo_ocupante_telefono: str = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     guia = (guide_number or "").strip() or None
     tipo = TipoPaquete(package_type) if package_type else None
     condicion = CondicionPaquete(package_condition) if package_condition else None
+
+    # Paso nuevo, opcional (.scratch/ocupante-principal-escenarios, ticket
+    # 05): declarar la unidad si al destinatario todavía no se le resolvió
+    # ninguna, y/o confirmar-elegir-crear a quién exactamente corresponde --
+    # mismo mecanismo que Corregir destinatario, reusado acá para que la
+    # promoción automática a principal (ticket 04) tenga sobre quién actuar.
+    # Ninguno de los dos sub-pasos corre si sus campos vienen vacíos -- sin
+    # ellos, Recibir se comporta exactamente igual que siempre.
+    torre_v = (torre or "").strip() or None
+    apartamento_v = (apartamento or "").strip() or None
+    if torre_v and apartamento_v and paquete.snapshot_apartamento is None:
+        try:
+            apto = resolver_apartamento(db, torre_v, apartamento_v)
+            corregir_apartamento(db, paquete, staff, apto)
+        except (ValueError, TransicionInvalida) as exc:
+            return _render_lista(
+                request, db, staff, error=str(exc), status_code=400,
+                error_paquete_id=str(paquete.id),
+            )
+
+    if candidato_idx or (nuevo_ocupante_nombre or "").strip():
+        nombre, telefono = _resolver_desde_candidato(
+            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_telefono
+        )
+        if nombre is None:
+            return _render_lista(
+                request, db, staff, error=telefono, status_code=400,
+                error_paquete_id=str(paquete.id),
+            )
+        try:
+            corregir_destinatario(db, paquete, staff, nombre, telefono)
+        except TransicionInvalida as exc:
+            # Mismo criterio que el ticket 09 (.scratch/ocupante-principal-
+            # escenarios): si `_resolver_desde_candidato` ya creó un
+            # Ocupante nuevo ("nuevo") antes de que ESTE paso fallara por una
+            # carrera real (el paquete cambió de estado desde que se abrió
+            # la página), ese Ocupante no debe quedar huérfano.
+            db.rollback()
+            return _render_lista(request, db, staff, error=str(exc), status_code=400)
+
     try:
         receive(db, paquete, staff, guia, package_type=tipo, package_condition=condicion)
     except TransicionInvalida as exc:
@@ -373,6 +427,52 @@ def cancel_action(
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
+def _resolver_desde_candidato(
+    db: Session,
+    paquete: Paquete,
+    candidato_idx: str,
+    nuevo_ocupante_nombre: str,
+    nuevo_ocupante_telefono: str,
+) -> tuple[str, str] | tuple[None, str]:
+    """`(nombre, telefono)` resuelto desde los mismos 3 campos que ya usa
+    Corregir destinatario (`candidato_idx`/`nuevo_ocupante_*`) -- comparte
+    esta lógica `correct_recipient_action` y el paso nuevo de Recibir
+    (`receive_action`, `.scratch/ocupante-principal-escenarios` ticket 05),
+    para no duplicarla. Sin fallback de texto libre acá (a diferencia de
+    Corregir destinatario) -- ese caso no aplica al paso opcional de
+    Recibir, que solo se muestra cuando SÍ hay candidatos.
+
+    Returns:
+        `(nombre, telefono)` si se resolvió, o `(None, mensaje_de_error)`
+        si no.
+    """
+    candidatos = candidatos_correccion(db, paquete)
+
+    if candidato_idx == "nuevo":
+        apto = buscar_apartamento_por_terna(
+            db, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
+        )
+        nombre_nuevo = (nuevo_ocupante_nombre or "").strip()
+        if apto is None or not nombre_nuevo:
+            return None, "Escribí el nombre del nuevo ocupante."
+        telefono_nuevo = (nuevo_ocupante_telefono or "").strip() or None
+        try:
+            ocupante = agregar_ocupante(db, apto, nombre_nuevo, telefono_nuevo)
+        except ValueError as exc:
+            return None, str(exc)
+        return ocupante.nombre, telefono_notificacion_ocupante(db, ocupante)
+
+    if candidatos:
+        try:
+            idx = int(candidato_idx)
+            candidato = candidatos[idx]
+        except (TypeError, ValueError, IndexError):
+            return None, "Seleccioná uno de los nombres de la lista."
+        return candidato["nombre"], candidato["telefono"]
+
+    return None, "No hay candidatos para elegir."
+
+
 @router.post("/paquetes/{paquete_id}/corregir")
 def correct_recipient_action(
     paquete_id: str,
@@ -404,42 +504,18 @@ def correct_recipient_action(
     paquete = _get_paquete_o_404(db, paquete_id)
     candidatos = candidatos_correccion(db, paquete)
 
-    if candidato_idx == "nuevo":
-        apto = buscar_apartamento_por_terna(
-            db, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
+    if candidato_idx == "nuevo" or candidatos:
+        # Sin campo que marcar en el error de selección (es un grupo de
+        # candidatos, no un input_texto) -- sí se reabre el modal de este
+        # paquete para que el toast aparezca con contexto visible.
+        nombre, telefono = _resolver_desde_candidato(
+            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_telefono
         )
-        nombre_nuevo = (nuevo_ocupante_nombre or "").strip()
-        if apto is None or not nombre_nuevo:
+        if nombre is None:
             return _render_lista(
-                request, db, staff,
-                error="Escribí el nombre del nuevo ocupante.",
-                status_code=400,
+                request, db, staff, error=telefono, status_code=400,
                 error_paquete_id=str(paquete.id),
             )
-        telefono_nuevo = (nuevo_ocupante_telefono or "").strip() or None
-        try:
-            ocupante = agregar_ocupante(db, apto, nombre_nuevo, telefono_nuevo)
-        except ValueError as exc:
-            return _render_lista(
-                request, db, staff, error=str(exc), status_code=400,
-                error_paquete_id=str(paquete.id),
-            )
-        nombre, telefono = ocupante.nombre, telefono_notificacion_ocupante(db, ocupante)
-    elif candidatos:
-        try:
-            idx = int(candidato_idx)
-            candidato = candidatos[idx]
-        except (TypeError, ValueError, IndexError):
-            # Sin campo que marcar (la selección es un grupo de candidatos,
-            # no un input_texto) -- sí se reabre el modal de este paquete
-            # para que el toast aparezca con contexto visible.
-            return _render_lista(
-                request, db, staff,
-                error="Seleccioná uno de los nombres de la lista.",
-                status_code=400,
-                error_paquete_id=str(paquete.id),
-            )
-        nombre, telefono = candidato["nombre"], candidato["telefono"]
     else:
         nombre, telefono = recipient_name, recipient_phone
 

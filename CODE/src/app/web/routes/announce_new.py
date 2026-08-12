@@ -66,7 +66,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.domain.apartamento import Apartamento
-from app.domain.apartamento_service import resolver_apartamento
+from app.domain.apartamento_service import listar_catalogo_por_torre, resolver_apartamento
 from app.domain.contacto import clasificar_contacto
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
@@ -78,6 +78,7 @@ from app.domain.ocupante_service import (
     ocupante_activo_de_persona,
 )
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, TipoPaquete
+from app.domain.paquete_correccion_service import candidatos_correccion
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.persona import Persona
 from app.domain.persona_service import buscar_persona_por_telefono, buscar_persona_por_whatsapp
@@ -454,5 +455,11 @@ def announce_submit(
         contexto["mostrar_recibir"] = True
         contexto["tipos"] = list(TipoPaquete)
         contexto["condiciones"] = list(CondicionPaquete)
+        # Paso nuevo de Recibir (.scratch/ocupante-principal-escenarios,
+        # ticket 05) -- mismo contexto que ya le pasa packages.py a su
+        # propio modal_recibir, para el mismo componente compartido.
+        contexto["sin_apartamento"] = not paquete.snapshot_apartamento
+        contexto["candidatos"] = candidatos_correccion(db, paquete)
+        contexto["catalogo_torres"] = listar_catalogo_por_torre(db)
 
     return templates.TemplateResponse("announce_new/form.html", contexto)

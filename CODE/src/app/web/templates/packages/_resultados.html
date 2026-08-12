@@ -53,7 +53,7 @@
     {% endcall %}
 
     {% if p.estado.value == "ANUNCIADO" %}
-    {{ modal_recibir(p.id, tipos, condiciones) }}
+    {{ modal_recibir(p.id, tipos, condiciones, sin_apartamento=(not p.snapshot_apartamento), candidatos=p.candidatos_correccion, catalogo_torres=catalogo_torres) }}
     {% endif %}
 
     {% if p.estado.value == "ANUNCIADO" %}
