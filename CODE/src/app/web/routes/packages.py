@@ -522,6 +522,14 @@ def correct_recipient_action(
     try:
         corregir_destinatario(db, paquete, staff, nombre, telefono)
     except TransicionInvalida as exc:
+        # Integridad transaccional (.scratch/ocupante-principal-escenarios,
+        # ticket 09): si `_resolver_desde_candidato` ya creó un Ocupante
+        # nuevo ("nuevo") antes de que ESTA carrera real ocurriera (el
+        # paquete cambió de estado desde que se abrió la página), ese
+        # Ocupante no debe quedar huérfano -- `get_db` comitearía igual sin
+        # este rollback (commit al éxito / rollback SOLO si se lanza una
+        # excepción hasta la capa de arriba).
+        db.rollback()
         # Sin campo ni modal que reabrir con sentido: el estado cambió
         # (ya no está ANUNCIADO) desde que se abrió la página -- el toast
         # ya lo explica.

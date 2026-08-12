@@ -484,6 +484,36 @@ def test_nueva_persona_en_unidad_sin_contacto_no_siendo_el_primero(client):
     assert p.announced_by_phone == "+573001234567"  # cae al Principal (Papá)
 
 
+def test_nueva_persona_sin_anunciante_resolvible_no_deja_ocupante_huerfano(client):
+    """.scratch/ocupante-principal-escenarios, ticket 09 -- unidad con un
+    primer Ocupante SIN confirmar (sin principal todavía): agregar_ocupante
+    para el nuevo residente (sin contacto) tiene éxito, pero _anunciar_para
+    falla después (no hay Anunciante resolvible) -- el Ocupante recién
+    creado no debe quedar persistido."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3001234567")  # sin confirmar
+    client.db.commit()
+
+    r = client.post(
+        "/announce",
+        data={"torre": "TORRE 1", "apartamento": "106", "nombre": "Hijo"},
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    existe = (
+        client.db.query(Ocupante)
+        .filter(Ocupante.apartamento_id == apto.id, Ocupante.nombre == "HIJO")
+        .first()
+    )
+    assert existe is None
+
+
 def test_nueva_persona_primer_residente_de_unidad_vacia_sin_contacto_falla(client):
     _login_operador(client)
 

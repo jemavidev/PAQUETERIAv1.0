@@ -871,6 +871,46 @@ def test_corregir_un_recibido_se_rechaza_sin_efecto(client):
     assert client.db.get(Paquete, p.id).recipient_name == nombre_original
 
 
+def test_corregir_nuevo_ocupante_no_deja_huerfano_si_falla_despues(client):
+    """.scratch/ocupante-principal-escenarios, ticket 09 -- si el Ocupante
+    nuevo se creó pero corregir_destinatario falla después (carrera real:
+    el paquete cambió de estado desde que se abrió la página), el Ocupante
+    NO debe quedar persistido."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    staff = _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+    dom_receive(client.db, p, staff)  # ya no está ANUNCIADO -- fuerza la carrera
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={"candidato_idx": "nuevo", "nuevo_ocupante_nombre": "Huerfano"},
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    existe = (
+        client.db.query(Ocupante)
+        .filter(Ocupante.apartamento_id == apto.id, Ocupante.nombre == "HUERFANO")
+        .first()
+    )
+    assert existe is None
+
+
 # --------------------------------------------------------------------------- #
 # Filtros y paginación (Grupo 5, ticket 02)
 # --------------------------------------------------------------------------- #

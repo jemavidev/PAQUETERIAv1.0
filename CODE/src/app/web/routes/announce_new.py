@@ -402,6 +402,13 @@ def announce_submit(
 
         paquete, error = _anunciar_para(ocupante, telefono, whatsapp_usuario)
         if error:
+            # Integridad transaccional (.scratch/ocupante-principal-
+            # escenarios, ticket 09): agregar_ocupante YA tuvo éxito (el
+            # Ocupante está flushed en esta sesión) -- sin este rollback,
+            # `get_db` lo comitearía igual al cerrar el request (commit al
+            # éxito / rollback SOLO si se lanza una excepción), dejando un
+            # Ocupante creado aunque el anuncio en sí haya fallado.
+            db.rollback()
             return _error(error)
 
     else:
