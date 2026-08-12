@@ -134,6 +134,34 @@
     </div>
   </form>
 
+  {% if persona.whatsapp_usuario %}
+  {# Ticket 14 (.scratch/ocupante-principal-escenarios): quitar el propio
+     Teléfono es una acción aparte, con su propio <form> (no puede vivir
+     DENTRO del <form> de arriba -- no se anidan) -- por eso este segundo
+     `data-panel="datos"`, igual que el patrón ya usado para "apto" más
+     abajo. Solo se ofrece si ya hay WhatsApp asociado como respaldo (si no,
+     `desvincular_telefono_propio` la rechaza igual, pero ni mostrar el
+     botón es más claro que dejarlo fallar). #}
+  <div class="tab-panel mt-4" data-panel="datos">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow p-6">
+      <details>
+        <summary class="cursor-pointer text-sm font-semibold text-red-700">Quitar mi Teléfono</summary>
+        <form method="post" action="/mis-datos/desvincular-telefono" class="mt-3 space-y-3">
+          <p class="text-xs text-slate-600">
+            Vas a perder el acceso a "Mis datos" en este dispositivo -- el ingreso siempre es por Teléfono.
+            Solo podrás volver a entrar si el staff te asigna un Teléfono nuevo.
+          </p>
+          <label class="flex items-start gap-2 text-xs text-slate-600">
+            <input type="checkbox" name="confirmar" required class="mt-0.5 rounded border-slate-300 text-red-700 focus-visible:ring-red-300">
+            <span>Entiendo que perderé el acceso a "Mis datos" en este dispositivo.</span>
+          </label>
+          <button type="submit" class="text-sm font-semibold text-red-700 hover:text-red-800">Quitar mi Teléfono</button>
+        </form>
+      </details>
+    </div>
+  </div>
+  {% endif %}
+
   {# Torre/Apartamento/Conjunto (pedido del cliente, .scratch/pendientes-cliente):
      SIEMPRE de solo lectura para el residente/Ocupante -- la asignación la
      hace exclusivamente el personal de Papyrus desde /residentes/{id}. Fuera

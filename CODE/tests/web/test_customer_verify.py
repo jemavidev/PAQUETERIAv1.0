@@ -674,6 +674,53 @@ def test_principal_reenviar_su_mismo_telefono_no_cierra_sesion(client):
     assert r.headers["location"] == "/mis-datos?guardado=1"
 
 
+def test_principal_desvincula_su_propio_telefono_con_whatsapp_de_respaldo(client):
+    """.scratch/ocupante-principal-escenarios, ticket 14 -- con WhatsApp ya
+    asociado como respaldo (acá lo pone el staff directo en la Persona,
+    único camino existente hoy), el principal puede quitarse su propio
+    Teléfono con confirmación explícita; la sesión se cierra de inmediato."""
+    persona = _login_cliente(client)
+    persona.whatsapp_usuario = "ana_respaldo"
+    client.db.commit()
+
+    r = client.post(
+        "/mis-datos/desvincular-telefono", data={"confirmar": "1"}, follow_redirects=False
+    )
+    assert r.status_code == 303
+    assert r.headers["location"].startswith("/otp")
+
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).telefono is None
+
+    # La sesión de cliente quedó cerrada -- /mis-datos vuelve a redirigir.
+    r2 = client.get("/mis-datos", follow_redirects=False)
+    assert r2.status_code == 303
+
+
+def test_desvincular_telefono_propio_sin_whatsapp_de_respaldo_falla(client):
+    persona = _login_cliente(client)
+
+    r = client.post("/mis-datos/desvincular-telefono", data={"confirmar": "1"})
+    assert r.status_code == 400
+    assert "WhatsApp" in r.text
+
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).telefono is not None
+
+
+def test_desvincular_telefono_propio_sin_confirmar_falla(client):
+    persona = _login_cliente(client)
+    persona.whatsapp_usuario = "ana_respaldo"
+    client.db.commit()
+
+    r = client.post("/mis-datos/desvincular-telefono", data={})
+    assert r.status_code == 400
+    assert "Confirma" in r.text
+
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).telefono is not None
+
+
 def test_principal_edita_telefono_a_uno_en_uso_falla(client):
     from app.domain.persona_service import get_or_create_persona
 

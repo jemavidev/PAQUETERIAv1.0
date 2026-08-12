@@ -25,7 +25,7 @@ Ocupantes de esa unidad (crear, asociar/desvincular teléfono, dar de baja) —
 aplica. Un Ocupante no-principal (ticket 05) NO ve este bloque.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -53,6 +53,7 @@ from app.domain.notificacion_service import es_cliente_verificado
 from app.domain.persona import Persona
 from app.domain.persona_service import (
     cambiar_telefono_propio,
+    desvincular_telefono_propio,
     set_autoriza_recepcion_automatica,
     update_datos_personales,
 )
@@ -311,6 +312,40 @@ async def customer_verify_submit(
             return RedirectResponse("/otp?telefono_actualizado=1", status_code=303)
 
     return RedirectResponse("/mis-datos?guardado=1", status_code=303)
+
+
+@router.post("/mis-datos/desvincular-telefono", response_class=HTMLResponse)
+def customer_desvincular_telefono(
+    request: Request,
+    persona: Persona = Depends(current_customer),
+    db: Session = Depends(get_db),
+    confirmar: str = Form(None),
+):
+    """Quita el propio Teléfono (`.scratch/ocupante-principal-escenarios`,
+    ticket 14) -- acción separada del `<form>` general de "Datos
+    personales", con su propia confirmación explícita (checkbox
+    `confirmar`, exigido también acá server-side, no solo `required` en el
+    HTML). A diferencia de `cambiar_telefono_propio` (que reabre una
+    verificación OTP al número nuevo), acá no hay a dónde reverificar: el
+    número desaparece, así que la sesión se cierra directo."""
+    gate = _gate_no_verificado(request, db, persona)
+    if gate is not None:
+        return gate
+
+    if not confirmar:
+        return _render_con_error(
+            request, db, persona,
+            "Confirma que entiendes que perderás el acceso, antes de continuar.",
+        )
+
+    try:
+        desvincular_telefono_propio(db, persona)
+    except ValueError as exc:
+        return _render_con_error(request, db, persona, str(exc))
+
+    request.session.pop(CUSTOMER_SESSION_KEY, None)
+    request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
+    return RedirectResponse("/otp?telefono_desvinculado=1", status_code=303)
 
 
 @router.post("/mis-datos/ocupantes", response_class=HTMLResponse)
