@@ -26,8 +26,10 @@ from app.domain.ocupante_service import (
     editar_whatsapp_ocupante,
     hay_otro_ocupante_activo,
     listar_ocupantes,
+    mensaje_ya_ocupante_activo,
     mover_ocupante,
     ocupante_activo_de_persona,
+    ocupante_activo_por_contacto,
     ocupantes_activos_de_personas,
     promover_a_principal,
     reasignar_apartamento,
@@ -1038,3 +1040,48 @@ def test_mover_ocupante_a_unidad_llena_falla(db_session):
 
     with pytest.raises(ValueError):
         mover_ocupante(db_session, hija, destino)
+
+
+def test_ocupante_activo_por_contacto_por_telefono(db_session):
+    apto = _apto(db_session)
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+
+    encontrado = ocupante_activo_por_contacto(db_session, telefono="3021112233")
+
+    assert encontrado is not None
+    assert encontrado.id == hija.id
+
+
+def test_ocupante_activo_por_contacto_por_whatsapp(db_session):
+    apto = _apto(db_session)
+    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
+
+    encontrado = ocupante_activo_por_contacto(db_session, whatsapp_usuario="hija.whats")
+
+    assert encontrado is not None
+    assert encontrado.id == hija.id
+
+
+def test_ocupante_activo_por_contacto_sin_match_es_none(db_session):
+    assert ocupante_activo_por_contacto(db_session, telefono="3099999999") is None
+
+
+def test_mensaje_ya_ocupante_activo_no_principal_menciona_la_unidad(db_session):
+    apto = _apto(db_session)
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+
+    mensaje = mensaje_ya_ocupante_activo(db_session, hija)
+
+    assert "TORRE 1" in mensaje
+    assert "101" in mensaje
+    assert "Mover acá" in mensaje
+
+
+def test_mensaje_ya_ocupante_activo_principal_no_ofrece_mover(db_session):
+    apto = _apto(db_session)
+    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+
+    mensaje = mensaje_ya_ocupante_activo(db_session, papa)
+
+    assert "PRINCIPAL" in mensaje
+    assert "Mover acá" not in mensaje

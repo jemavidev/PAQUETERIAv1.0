@@ -43,7 +43,10 @@ from app.domain.ocupante_service import (
     editar_whatsapp_ocupante,
     hay_otro_ocupante_activo,
     listar_ocupantes,
+    mensaje_ya_ocupante_activo,
+    mover_ocupante,
     ocupante_activo_de_persona,
+    ocupante_activo_por_contacto,
     ocupantes_activos_de_personas,
     promover_a_principal,
     reasignar_apartamento,
@@ -502,6 +505,7 @@ def customers_manage_asignar_apartamento(
     staff: Usuario = Depends(current_staff),
     torre: str = Form(None),
     apartamento: str = Form(None),
+    mover_de_otra_unidad: str = Form(None),
 ):
     """Asigna, cambia o desvincula la Torre/Apartamento de un cliente --
     única vía para tocar `apartamento_actual_id` ahora que `/mis-datos` es de
@@ -514,9 +518,14 @@ def customers_manage_asignar_apartamento(
     ese campo queda SIEMPRE derivado del padrón real, nunca un residente
     "fantasma" invisible para el resto del sistema (incluido el camino
     Torre+Apartamento de `/announce`). El guard de "no reasignar mientras
-    haya otros Residentes activos" ya no vive acá -- lo aplican, cada uno
-    con su propio mensaje, `agregar_ocupante` (ya activo en otra unidad) y
-    `dar_de_baja_ocupante` (principal con otros Ocupantes activos)."""
+    haya otros Residentes activos" ya no vive acá -- lo aplica
+    `dar_de_baja_ocupante` (principal con otros Ocupantes activos).
+
+    `mover_de_otra_unidad` (`.scratch/ocupante-principal-escenarios`,
+    ticket 12): si `persona` ya es Ocupante activo no-principal de OTRA
+    unidad, en vez de solo bloquear se ofrece moverla ahí mismo
+    (`mover_ocupante`) cuando el staff marca la casilla. Un principal nunca
+    se mueve así, sin excepción."""
     persona = _get_persona_o_404(db, persona_id)
     torre_v = _blank_to_none(torre)
     apartamento_v = _blank_to_none(apartamento)
@@ -536,6 +545,31 @@ def customers_manage_asignar_apartamento(
             return _render_detalle_con_error(
                 request, db, staff, persona, str(exc), tab_inicial="direccion"
             )
+
+    if nuevo_apto is not None:
+        conflicto = ocupante_activo_de_persona(db, persona.id)
+        if conflicto is not None and conflicto.apartamento_id != nuevo_apto.id:
+            if conflicto.es_principal:
+                return _render_detalle_con_error(
+                    request, db, staff, persona,
+                    mensaje_ya_ocupante_activo(db, conflicto), tab_inicial="direccion",
+                )
+            if not mover_de_otra_unidad:
+                return _render_detalle_con_error(
+                    request, db, staff, persona,
+                    mensaje_ya_ocupante_activo(db, conflicto), tab_inicial="direccion",
+                )
+            try:
+                mover_ocupante(db, conflicto, nuevo_apto)
+            except ValueError as exc:
+                return _render_detalle_con_error(
+                    request, db, staff, persona, str(exc), tab_inicial="direccion"
+                )
+            contexto = _contexto_detalle(db, staff, persona)
+            contexto["request"] = request
+            contexto["guardado"] = True
+            contexto["tab_inicial"] = "direccion"
+            return templates.TemplateResponse("customers_manage/detail.html", contexto)
 
     try:
         reasignar_apartamento(db, persona, nuevo_apto, staff)
@@ -570,6 +604,7 @@ def customers_manage_ocupante_crear(
     staff: Usuario = Depends(current_staff),
     nombre: str = Form(None),
     contacto: str = Form(None),
+    mover_de_otra_unidad: str = Form(None),
 ):
     """Staff sin restricción (.scratch/mis-datos, ticket 10) — mismas
     funciones de dominio que `/mis-datos` (ticket 03), sin exigir que el
@@ -577,7 +612,12 @@ def customers_manage_ocupante_crear(
 
     `contacto` (.scratch/ocupante-principal-escenarios, ticket 06): un
     input único, autoclasificado (Teléfono o WhatsApp) igual que
-    `/announce` -- ya no exige que el primer contacto sea Teléfono."""
+    `/announce` -- ya no exige que el primer contacto sea Teléfono.
+
+    `mover_de_otra_unidad` (ticket 12): si `contacto` ya es Ocupante activo
+    no-principal de OTRA unidad, mueve a esa persona (con su identidad
+    real, no un registro nuevo con el `nombre` recién tecleado) en vez de
+    solo bloquear -- el `nombre` tecleado se ignora en ese caso."""
     persona = _get_persona_o_404(db, persona_id)
     apto = _apartamento_actual(db, persona)
     nombre_v = _blank_to_none(nombre)
@@ -603,6 +643,23 @@ def customers_manage_ocupante_crear(
                 "Ese contacto no parece un Teléfono ni un usuario de WhatsApp "
                 "válido -- revísalo, o déjalo vacío.",
                 tab_inicial="residentes",
+            )
+
+        conflicto = ocupante_activo_por_contacto(db, **kwargs_contacto)
+        if conflicto is not None and conflicto.apartamento_id != apto.id:
+            if conflicto.es_principal or not mover_de_otra_unidad:
+                return _render_detalle_con_error(
+                    request, db, staff, persona,
+                    mensaje_ya_ocupante_activo(db, conflicto), tab_inicial="residentes",
+                )
+            try:
+                mover_ocupante(db, conflicto, apto)
+            except ValueError as exc:
+                return _render_detalle_con_error(
+                    request, db, staff, persona, str(exc), tab_inicial="residentes"
+                )
+            return RedirectResponse(
+                f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
             )
 
     try:

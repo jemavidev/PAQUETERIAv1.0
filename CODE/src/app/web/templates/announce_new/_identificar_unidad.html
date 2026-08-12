@@ -106,6 +106,13 @@
          acá "(opcional)" sería engañoso -- issue encontrada en code-review. #}
       {{ input_texto('Teléfono o WhatsApp', name='contacto', icono=iconos_nav.buscar_campo) }}
       {%- endif %}
+      {# Mover (.scratch/ocupante-principal-escenarios, ticket 12): si el
+         contacto ya es Ocupante activo no-principal de otra unidad, en vez
+         de bloquear se mueve a esa persona (con su identidad real) acá. #}
+      <label class="flex items-center gap-2 text-xs text-slate-600">
+        <input type="checkbox" name="mover_de_otra_unidad" value="1">
+        Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
+      </label>
       <div class="grid grid-cols-2 gap-2">
         {{ boton('Anunciar', type='submit', variant='primary', full_width=True, name='accion', value='anunciar') }}
         {{ boton('Recibir', type='submit', variant='success', full_width=True, name='accion', value='recibir') }}

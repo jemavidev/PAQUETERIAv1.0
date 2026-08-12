@@ -853,6 +853,22 @@ def ocupante_activo_por_contacto(
     return ocupante_activo_de_persona(session, persona.id)
 
 
+def mensaje_ya_ocupante_activo(session: Session, conflicto: Ocupante) -> str:
+    """Mensaje enriquecido para cuando un contacto ya es Ocupante activo de
+    otra unidad -- incluye Torre+Apartamento, y si es principal explica por
+    qué no se puede mover directo (`.scratch/ocupante-principal-
+    escenarios`, ticket 12) en vez de solo bloquear con el mensaje genérico
+    de `MENSAJE_YA_OCUPANTE_ACTIVO`."""
+    apto = session.get(Apartamento, conflicto.apartamento_id)
+    unidad = f"{apto.torre} Apto {apto.apartamento}" if apto is not None else "otra unidad"
+    if conflicto.es_principal:
+        return (
+            f"Ya es Ocupante PRINCIPAL de {unidad} -- no se puede mover directo "
+            "(debe promover a otro residente primero, o desvincularse si está solo)."
+        )
+    return f'Ya es Ocupante de {unidad} (no principal) -- marcá "Mover acá" para reubicarlo.'
+
+
 def mover_ocupante(
     session: Session, ocupante: Ocupante, apartamento_destino: Apartamento
 ) -> Ocupante:

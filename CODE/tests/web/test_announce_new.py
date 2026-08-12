@@ -514,6 +514,64 @@ def test_nueva_persona_sin_anunciante_resolvible_no_deja_ocupante_huerfano(clien
     assert existe is None
 
 
+def test_nueva_persona_contacto_ya_ocupante_de_otra_unidad_bloquea_sin_mover(client):
+    """.scratch/ocupante-principal-escenarios, ticket 12 -- sin marcar la
+    casilla, queda bloqueado con el mensaje que ofrece mover."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_operador(client)
+    apto_otra = resolver_apartamento(client.db, "TORRE 2", "202")
+    agregar_ocupante(client.db, apto_otra, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    r = client.post(
+        "/announce",
+        data={
+            "torre": "TORRE 1", "apartamento": "106",
+            "nombre": "Cualquiera", "contacto": "3021112233",
+        },
+    )
+    assert r.status_code == 400
+    assert "Mover acá" in r.text
+    assert client.db.query(Paquete).count() == 0
+
+
+def test_nueva_persona_mueve_marcando_la_casilla(client):
+    """El nombre tecleado se ignora -- se mueve/anuncia con la identidad
+    REAL (Hija), no se crea un residente nuevo llamado "Cualquiera"."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_operador(client)
+    apto_otra = resolver_apartamento(client.db, "TORRE 2", "202")
+    hija = agregar_ocupante(client.db, apto_otra, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    r = client.post(
+        "/announce",
+        data={
+            "torre": "TORRE 1", "apartamento": "106",
+            "nombre": "Cualquiera", "contacto": "3021112233",
+            "mover_de_otra_unidad": "1",
+        },
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    apto_nueva = resolver_apartamento(client.db, "TORRE 1", "106")
+    movida = client.db.query(Ocupante).filter(
+        Ocupante.apartamento_id == apto_nueva.id, Ocupante.persona_id == hija.persona_id
+    ).one()
+    assert movida.nombre == "HIJA"
+    assert client.db.get(Ocupante, hija.id).desvinculado_en is not None
+
+    p = client.db.query(Paquete).one()
+    assert p.recipient_name == "HIJA"
+    assert p.snapshot_apartamento == "106"
+
+
 def test_nueva_persona_primer_residente_de_unidad_vacia_sin_contacto_falla(client):
     _login_operador(client)
 

@@ -75,7 +75,10 @@ from app.domain.ocupante_service import (
     agregar_ocupante,
     anunciante_para_ocupante,
     listar_ocupantes,
+    mensaje_ya_ocupante_activo,
+    mover_ocupante,
     ocupante_activo_de_persona,
+    ocupante_activo_por_contacto,
 )
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, TipoPaquete
 from app.domain.paquete_correccion_service import candidatos_correccion
@@ -287,6 +290,7 @@ def announce_submit(
     torre: str = Form(None),
     apartamento: str = Form(None),
     contacto: str = Form(None),
+    mover_de_otra_unidad: str = Form(None),
     accion: str = Form("anunciar"),
 ):
     def _error(mensaje: str, valor_q: str = None):
@@ -395,19 +399,33 @@ def announce_submit(
                 "WhatsApp válido -- revísalo, o déjalo vacío."
             )
 
+        # Mover (.scratch/ocupante-principal-escenarios, ticket 12): si el
+        # contacto ya es Ocupante activo no-principal de OTRA unidad, mover
+        # a esa persona (con su identidad real) en vez de crear un
+        # registro nuevo -- el `nombre` recién tecleado se ignora en ese
+        # caso. Nunca aplica a un principal, sin excepción.
+        conflicto = ocupante_activo_por_contacto(db, **kwargs_contacto) if kwargs_contacto else None
+        moviendo = conflicto is not None and conflicto.apartamento_id != apto.id
+        if moviendo and (conflicto.es_principal or not mover_de_otra_unidad):
+            return _error(mensaje_ya_ocupante_activo(db, conflicto))
+
         try:
-            ocupante = agregar_ocupante(db, apto, nombre, **kwargs_contacto)
+            if moviendo:
+                ocupante = mover_ocupante(db, conflicto, apto)
+            else:
+                ocupante = agregar_ocupante(db, apto, nombre, **kwargs_contacto)
         except ValueError as exc:
             return _error(str(exc))
 
         paquete, error = _anunciar_para(ocupante, telefono, whatsapp_usuario)
         if error:
             # Integridad transaccional (.scratch/ocupante-principal-
-            # escenarios, ticket 09): agregar_ocupante YA tuvo éxito (el
-            # Ocupante está flushed en esta sesión) -- sin este rollback,
-            # `get_db` lo comitearía igual al cerrar el request (commit al
-            # éxito / rollback SOLO si se lanza una excepción), dejando un
-            # Ocupante creado aunque el anuncio en sí haya fallado.
+            # escenarios, ticket 09): agregar_ocupante/mover_ocupante YA
+            # tuvo éxito (el Ocupante está flushed en esta sesión) -- sin
+            # este rollback, `get_db` lo comitearía igual al cerrar el
+            # request (commit al éxito / rollback SOLO si se lanza una
+            # excepción), dejando un cambio aplicado aunque el anuncio en
+            # sí haya fallado.
             db.rollback()
             return _error(error)
 

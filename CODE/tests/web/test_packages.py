@@ -911,6 +911,125 @@ def test_corregir_declara_ocupante_nuevo_con_whatsapp(client):
     assert client.db.get(Persona, nuevo.persona_id).whatsapp_usuario == "hija.whats"
 
 
+def test_corregir_nuevo_ocupante_contacto_ya_ocupante_bloquea_sin_mover(client):
+    """.scratch/ocupante-principal-escenarios, ticket 12 -- sin marcar la
+    casilla, queda bloqueado con el mensaje que ofrece mover."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    apto_otra = resolver_apartamento(client.db, "TORRE 2", "202")
+    agregar_ocupante(client.db, apto_otra, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={
+            "candidato_idx": "nuevo",
+            "nuevo_ocupante_nombre": "Cualquiera",
+            "nuevo_ocupante_contacto": "3021112233",
+        },
+    )
+    assert r.status_code == 400
+    assert "Mover acá" in r.text
+
+
+def test_corregir_nuevo_ocupante_mueve_marcando_la_casilla(client):
+    """El nombre tecleado se ignora -- se corrige el destinatario a la
+    identidad REAL (Hija), no se crea un residente nuevo "Cualquiera"."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    apto_otra = resolver_apartamento(client.db, "TORRE 2", "202")
+    hija = agregar_ocupante(client.db, apto_otra, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={
+            "candidato_idx": "nuevo",
+            "nuevo_ocupante_nombre": "Cualquiera",
+            "nuevo_ocupante_contacto": "3021112233",
+            "mover_de_otra_unidad": "1",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    movida = client.db.query(Ocupante).filter(
+        Ocupante.apartamento_id == apto.id, Ocupante.persona_id == hija.persona_id
+    ).one()
+    assert movida.nombre == "HIJA"
+    assert client.db.get(Ocupante, hija.id).desvinculado_en is not None
+    paquete = client.db.get(Paquete, p.id)
+    assert paquete.recipient_name == "HIJA"
+
+
+def test_recibir_no_ofrece_mover_aunque_el_contacto_ya_sea_ocupante(client):
+    """.scratch/ocupante-principal-escenarios, ticket 12 -- "mover" nunca
+    se ofrece dentro de Recibir, ni marcando la casilla a mano (no existe
+    en ese form; un POST directo con el campo tampoco debe moverlo)."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    apto_otra = resolver_apartamento(client.db, "TORRE 2", "202")
+    hija = agregar_ocupante(client.db, apto_otra, "Hija", telefono="3021112233")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={
+            "candidato_idx": "nuevo",
+            "nuevo_ocupante_nombre": "Cualquiera",
+            "nuevo_ocupante_contacto": "3021112233",
+            "mover_de_otra_unidad": "1",
+        },
+    )
+    assert r.status_code == 400  # bloqueado -- no hay camino de "mover" acá
+
+    client.db.expire_all()
+    assert client.db.get(Ocupante, hija.id).desvinculado_en is None
+    assert client.db.get(Ocupante, hija.id).apartamento_id == apto_otra.id
+
+
 def test_corregir_un_recibido_se_rechaza_sin_efecto(client):
     staff = _login_staff(client)
     p = _anunciar(client)

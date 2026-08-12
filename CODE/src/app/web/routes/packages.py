@@ -34,7 +34,13 @@ from app.domain.contacto import clasificar_contacto
 from app.domain.foto_storage import FotoStorage
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
-from app.domain.ocupante_service import agregar_ocupante, telefono_notificacion_ocupante
+from app.domain.ocupante_service import (
+    agregar_ocupante,
+    mensaje_ya_ocupante_activo,
+    mover_ocupante,
+    ocupante_activo_por_contacto,
+    telefono_notificacion_ocupante,
+)
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, MotivoCancelacion, Paquete, TipoPaquete
 from app.domain.paquete_correccion_service import candidatos_correccion, candidatos_correccion_por_paquetes
 from app.domain.paquete_lifecycle import (
@@ -434,6 +440,8 @@ def _resolver_desde_candidato(
     candidato_idx: str,
     nuevo_ocupante_nombre: str,
     nuevo_ocupante_contacto: str,
+    permitir_mover: bool = False,
+    mover_de_otra_unidad: str = None,
 ) -> tuple[str, str] | tuple[None, str]:
     """`(nombre, telefono)` resuelto desde los mismos 3 campos que ya usa
     Corregir destinatario (`candidato_idx`/`nuevo_ocupante_*`) -- comparte
@@ -445,6 +453,13 @@ def _resolver_desde_candidato(
 
     `nuevo_ocupante_contacto` (ticket 08): input único autoclasificado
     (Teléfono o WhatsApp), mismo criterio que tab Residentes/`/mis-datos`.
+
+    `permitir_mover` (ticket 12): SOLO `True` desde Corregir destinatario --
+    "mover" nunca se ofrece dentro de Recibir (el caller no pasa este
+    parámetro en ese caso, así que queda `False` por defecto). Si el
+    contacto ya es Ocupante activo no-principal de otra unidad, mueve a esa
+    persona (con su identidad real) en vez de crear un registro nuevo -- el
+    `nuevo_ocupante_nombre` tecleado se ignora en ese caso.
 
     Returns:
         `(nombre, telefono)` si se resolvió, o `(None, mensaje_de_error)`
@@ -477,8 +492,21 @@ def _resolver_desde_candidato(
                     "Ese contacto no parece un Teléfono ni un usuario de "
                     "WhatsApp válido -- revísalo, o déjalo vacío."
                 )
+
+        conflicto = (
+            ocupante_activo_por_contacto(db, **kwargs_contacto)
+            if permitir_mover and kwargs_contacto
+            else None
+        )
+        moviendo = conflicto is not None and conflicto.apartamento_id != apto.id
+        if moviendo and (conflicto.es_principal or not mover_de_otra_unidad):
+            return None, mensaje_ya_ocupante_activo(db, conflicto)
+
         try:
-            ocupante = agregar_ocupante(db, apto, nombre_nuevo, **kwargs_contacto)
+            if moviendo:
+                ocupante = mover_ocupante(db, conflicto, apto)
+            else:
+                ocupante = agregar_ocupante(db, apto, nombre_nuevo, **kwargs_contacto)
         except ValueError as exc:
             return None, str(exc)
         return ocupante.nombre, telefono_notificacion_ocupante(db, ocupante)
@@ -505,6 +533,7 @@ def correct_recipient_action(
     recipient_phone: str = Form(None),
     nuevo_ocupante_nombre: str = Form(None),
     nuevo_ocupante_contacto: str = Form(None),
+    mover_de_otra_unidad: str = Form(None),
 ):
     """Corrige destinatario de un Paquete `ANUNCIADO` — excepción acotada a
     ADR-0001 (ver `paquete_lifecycle.corregir_destinatario`).
@@ -530,7 +559,8 @@ def correct_recipient_action(
         # candidatos, no un input_texto) -- sí se reabre el modal de este
         # paquete para que el toast aparezca con contexto visible.
         nombre, telefono = _resolver_desde_candidato(
-            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_contacto
+            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_contacto,
+            permitir_mover=True, mover_de_otra_unidad=mover_de_otra_unidad,
         )
         if nombre is None:
             return _render_lista(
