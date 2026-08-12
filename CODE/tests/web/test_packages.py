@@ -819,7 +819,7 @@ def test_corregir_declara_ocupante_nuevo_con_telefono(client):
         data={
             "candidato_idx": "nuevo",
             "nuevo_ocupante_nombre": "Hija",
-            "nuevo_ocupante_telefono": "3021112233",
+            "nuevo_ocupante_contacto": "3021112233",
         },
         follow_redirects=False,
     )
@@ -853,6 +853,62 @@ def test_corregir_ocupante_nuevo_sin_nombre_se_rechaza(client):
         f"/paquetes/{p.id}/corregir", data={"candidato_idx": "nuevo"}
     )
     assert r.status_code == 400
+
+
+def test_corregir_ocupante_nuevo_sin_apartamento_en_snapshot_mensaje_especifico(client):
+    """.scratch/ocupante-principal-escenarios, ticket 08 -- mensaje
+    distinto de "falta el nombre" cuando la causa real es que el paquete
+    no tiene apartamento resuelto en su snapshot."""
+    _login_staff(client)
+    p = _anunciar(client)  # sin apartamento
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={"candidato_idx": "nuevo", "nuevo_ocupante_nombre": "Hija"},
+    )
+    assert r.status_code == 400
+    assert "no tiene apartamento resuelto" in r.text
+    assert "Escribí el nombre" not in r.text
+
+
+def test_corregir_declara_ocupante_nuevo_con_whatsapp(client):
+    """.scratch/ocupante-principal-escenarios, ticket 08 -- input único
+    autoclasificado, mismo criterio que tab Residentes/`/mis-datos`."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+    from app.domain.persona import Persona
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Ana", telefono="3033333333")
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.declarado_por_cliente("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/corregir",
+        data={
+            "candidato_idx": "nuevo",
+            "nuevo_ocupante_nombre": "Hija",
+            "nuevo_ocupante_contacto": "hija.whats",
+        },
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    nuevo = client.db.query(Ocupante).filter(
+        Ocupante.apartamento_id == apto.id, Ocupante.nombre == "HIJA"
+    ).one()
+    assert client.db.get(Persona, nuevo.persona_id).whatsapp_usuario == "hija.whats"
 
 
 def test_corregir_un_recibido_se_rechaza_sin_efecto(client):

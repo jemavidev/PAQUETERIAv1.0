@@ -30,6 +30,7 @@ from app.domain.apartamento_service import (
     listar_catalogo_por_torre,
     resolver_apartamento,
 )
+from app.domain.contacto import clasificar_contacto
 from app.domain.foto_storage import FotoStorage
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
@@ -312,7 +313,7 @@ async def receive_action(
     apartamento: str = Form(None),
     candidato_idx: str = Form(None),
     nuevo_ocupante_nombre: str = Form(None),
-    nuevo_ocupante_telefono: str = Form(None),
+    nuevo_ocupante_contacto: str = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     guia = (guide_number or "").strip() or None
@@ -340,7 +341,7 @@ async def receive_action(
 
     if candidato_idx or (nuevo_ocupante_nombre or "").strip():
         nombre, telefono = _resolver_desde_candidato(
-            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_telefono
+            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_contacto
         )
         if nombre is None:
             return _render_lista(
@@ -432,7 +433,7 @@ def _resolver_desde_candidato(
     paquete: Paquete,
     candidato_idx: str,
     nuevo_ocupante_nombre: str,
-    nuevo_ocupante_telefono: str,
+    nuevo_ocupante_contacto: str,
 ) -> tuple[str, str] | tuple[None, str]:
     """`(nombre, telefono)` resuelto desde los mismos 3 campos que ya usa
     Corregir destinatario (`candidato_idx`/`nuevo_ocupante_*`) -- comparte
@@ -442,6 +443,9 @@ def _resolver_desde_candidato(
     Corregir destinatario) -- ese caso no aplica al paso opcional de
     Recibir, que solo se muestra cuando SÍ hay candidatos.
 
+    `nuevo_ocupante_contacto` (ticket 08): input único autoclasificado
+    (Teléfono o WhatsApp), mismo criterio que tab Residentes/`/mis-datos`.
+
     Returns:
         `(nombre, telefono)` si se resolvió, o `(None, mensaje_de_error)`
         si no.
@@ -449,15 +453,32 @@ def _resolver_desde_candidato(
     candidatos = candidatos_correccion(db, paquete)
 
     if candidato_idx == "nuevo":
-        apto = buscar_apartamento_por_terna(
-            db, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
-        )
+        apto = None
+        if paquete.snapshot_conjunto and paquete.snapshot_torre and paquete.snapshot_apartamento:
+            apto = buscar_apartamento_por_terna(
+                db, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
+            )
+        if apto is None:
+            return None, "Este paquete no tiene apartamento resuelto en su snapshot."
         nombre_nuevo = (nuevo_ocupante_nombre or "").strip()
-        if apto is None or not nombre_nuevo:
+        if not nombre_nuevo:
             return None, "Escribí el nombre del nuevo ocupante."
-        telefono_nuevo = (nuevo_ocupante_telefono or "").strip() or None
+
+        contacto_v = (nuevo_ocupante_contacto or "").strip()
+        kwargs_contacto = {}
+        if contacto_v:
+            tipo_contacto = clasificar_contacto(contacto_v)
+            if tipo_contacto == "telefono":
+                kwargs_contacto["telefono"] = contacto_v
+            elif tipo_contacto == "whatsapp":
+                kwargs_contacto["whatsapp_usuario"] = contacto_v
+            else:
+                return None, (
+                    "Ese contacto no parece un Teléfono ni un usuario de "
+                    "WhatsApp válido -- revísalo, o déjalo vacío."
+                )
         try:
-            ocupante = agregar_ocupante(db, apto, nombre_nuevo, telefono_nuevo)
+            ocupante = agregar_ocupante(db, apto, nombre_nuevo, **kwargs_contacto)
         except ValueError as exc:
             return None, str(exc)
         return ocupante.nombre, telefono_notificacion_ocupante(db, ocupante)
@@ -483,7 +504,7 @@ def correct_recipient_action(
     recipient_name: str = Form(None),
     recipient_phone: str = Form(None),
     nuevo_ocupante_nombre: str = Form(None),
-    nuevo_ocupante_telefono: str = Form(None),
+    nuevo_ocupante_contacto: str = Form(None),
 ):
     """Corrige destinatario de un Paquete `ANUNCIADO` — excepción acotada a
     ADR-0001 (ver `paquete_lifecycle.corregir_destinatario`).
@@ -509,7 +530,7 @@ def correct_recipient_action(
         # candidatos, no un input_texto) -- sí se reabre el modal de este
         # paquete para que el toast aparezca con contexto visible.
         nombre, telefono = _resolver_desde_candidato(
-            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_telefono
+            db, paquete, candidato_idx, nuevo_ocupante_nombre, nuevo_ocupante_contacto
         )
         if nombre is None:
             return _render_lista(
