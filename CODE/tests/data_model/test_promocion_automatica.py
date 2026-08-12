@@ -141,11 +141,12 @@ def test_resolver_ocupante_de_paquete_por_telefono(db_session):
     assert resuelto.id == ocupante.id
 
 
-def test_resolver_ocupante_de_paquete_por_nombre_cuando_no_hay_telefono(db_session):
-    """Sin ningún principal confirmado todavía y sin Persona propia en el
-    destinatario, `recipient_phone` queda `None` (no hay a quién caer) --
-    la resolución debe apoyarse en `recipient_name` contra el roster de la
-    unidad, y encontrar exactamente a Hijo, no a Ana."""
+def test_resolver_ocupante_de_paquete_por_nombre_prioriza_sobre_telefono(db_session):
+    """El destinatario (Hijo) no tiene contacto propio, así que
+    `recipient_phone` cae al Anunciante (Ana -- ticket 10), NO queda `None`
+    y NO es el teléfono de Hijo. Aun así, la resolución debe encontrar a
+    Hijo (por nombre dentro del roster de la unidad), no a Ana -- resolver
+    por teléfono ahí identificaría erróneamente a quien anunció."""
     apto = _apto(db_session)
     agregar_ocupante(db_session, apto, "Ana", telefono="3001234567")
     hijo = agregar_ocupante(db_session, apto, "Hijo")
@@ -156,7 +157,7 @@ def test_resolver_ocupante_de_paquete_por_nombre_cuando_no_hay_telefono(db_sessi
         destinatario=Destinatario.ocupante(hijo.id),
         apartamento=apto,
     )
-    assert paquete.recipient_phone is None  # nadie a quien caer todavía
+    assert paquete.recipient_phone == "+573001234567"  # el de Ana (Anunciante), no None
 
     resuelto = resolver_ocupante_de_paquete(db_session, paquete)
 

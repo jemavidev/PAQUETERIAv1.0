@@ -632,13 +632,36 @@ def resolver_ocupante_de_paquete(session: Session, paquete: Paquete) -> Ocupante
     nunca guarda una FK a `Ocupante` (ADR-0001, solo el snapshot congelado),
     así que hay que resolverlo desde los datos que sí quedaron.
 
-    Dos intentos, en orden: (1) `recipient_phone` -> la Persona dueña de ese
-    Teléfono -> su Ocupante activo; (2) si no hay match, el roster de la
-    unidad del snapshot (`snapshot_conjunto/torre/apartamento`), buscando un
-    Ocupante cuyo nombre coincida con `recipient_name` -- mismo patrón que
-    ya usa `paquete_service._resolver_ocupante_por_nombre` para un caso
-    análogo. `None` si ninguno de los dos resuelve (paquete sin apartamento
-    en el snapshot, o destinatario que no calza con el roster actual)."""
+    Dos intentos, en orden: (1) el roster de la unidad del snapshot
+    (`snapshot_conjunto/torre/apartamento`), buscando un Ocupante cuyo
+    nombre coincida con `recipient_name` -- mismo patrón que ya usa
+    `paquete_service._resolver_ocupante_por_nombre` para un caso análogo;
+    (2) si no hay snapshot de apartamento (o ningún nombre calza ahí),
+    `recipient_phone` -> la Persona dueña de ese Teléfono -> su Ocupante
+    activo. `None` si ninguno de los dos resuelve.
+
+    Nombre PRIMERO, no teléfono -- a propósito (`.scratch/ocupante-
+    principal-escenarios`, ticket 10): desde que `recipient_phone` puede
+    ser el Teléfono de quien ANUNCIÓ (no del destinatario, cuando este
+    último no tiene contacto propio), resolver por teléfono primero
+    identificaría erróneamente al Anunciante como si fuera el destinatario.
+    `recipient_name` siempre identifica a quien el paquete realmente nombra,
+    sin importar de quién sea el contacto de notificación."""
+    if (
+        paquete.snapshot_conjunto
+        and paquete.snapshot_torre
+        and paquete.snapshot_apartamento
+        and paquete.recipient_name
+    ):
+        apartamento = buscar_apartamento_por_terna(
+            session, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
+        )
+        if apartamento is not None:
+            nombre_normalizado = normalizar_nombre(paquete.recipient_name)
+            for ocupante in listar_ocupantes(session, apartamento):
+                if ocupante.nombre == nombre_normalizado:
+                    return ocupante
+
     if paquete.recipient_phone:
         persona = buscar_persona_por_telefono(session, paquete.recipient_phone)
         if persona is not None:
@@ -646,19 +669,6 @@ def resolver_ocupante_de_paquete(session: Session, paquete: Paquete) -> Ocupante
             if ocupante is not None:
                 return ocupante
 
-    if not (
-        paquete.snapshot_conjunto and paquete.snapshot_torre and paquete.snapshot_apartamento
-    ):
-        return None
-    apartamento = buscar_apartamento_por_terna(
-        session, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
-    )
-    if apartamento is None or not paquete.recipient_name:
-        return None
-    nombre_normalizado = normalizar_nombre(paquete.recipient_name)
-    for ocupante in listar_ocupantes(session, apartamento):
-        if ocupante.nombre == nombre_normalizado:
-            return ocupante
     return None
 
 

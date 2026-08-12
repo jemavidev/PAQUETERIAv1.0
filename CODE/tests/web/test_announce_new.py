@@ -772,6 +772,29 @@ def test_identificar_telefono_con_coresidentes_marca_a_quien_llama_como_anuncian
     assert idx_mama < idx_badge < idx_hijo
 
 
+def test_identificar_telefono_con_coresidentes_preselecciona_a_quien_llama(client):
+    """.scratch/ocupante-principal-escenarios, ticket 10 -- la tarjeta
+    Anunciar/Recibir de quien llamó ya viene lista en la respuesta inicial,
+    sin necesitar un clic extra sobre su fila."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)
+    agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    r = client.get("/announce/identificar", params={"q": "3001234567"})
+    assert r.status_code == 200
+    assert f'name="ocupante_id" value="{mama.id}"' in r.text
+    assert 'name="telefono" value="+573001234567"' in r.text
+    assert "Confirmar recibo" not in r.text  # es la tarjeta, no el modal de Recibir
+    assert ">Anunciar<" in r.text
+    assert ">Recibir<" in r.text
+
+
 def test_identificar_whatsapp_con_coresidentes_muestra_la_lista_y_el_badge(client):
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
@@ -807,6 +830,35 @@ def test_identificar_telefono_sin_coresidentes_mantiene_el_atajo_directo(client)
     assert "data-ocupante-id" not in r.text
     assert "Ya registrado" in r.text
     assert 'name="telefono"' in r.text
+
+
+def test_coresidentes_notificacion_cae_a_quien_llamo_no_al_principal(client):
+    """.scratch/ocupante-principal-escenarios, ticket 10 -- cuando el
+    destinatario elegido no tiene contacto propio, la notificación
+    (recipient_phone) cae a quien identificó por Teléfono/WhatsApp, NO al
+    principal de la unidad (a menos que sean la misma persona)."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    staff = _login_operador(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "106")
+    mama = agregar_ocupante(client.db, apto, "Mamá", telefono="3001234567")
+    confirmar_ocupante(client.db, mama, staff)  # Mamá es la principal
+    papa = agregar_ocupante(client.db, apto, "Papá", telefono="3007654321")
+    hijo = agregar_ocupante(client.db, apto, "Hijo")  # sin contacto propio
+    client.db.commit()
+
+    # Papá (NO es el principal) llama y anuncia a nombre de Hijo.
+    r = client.post(
+        "/announce", data={"ocupante_id": str(hijo.id), "telefono": "3007654321"}
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    p = client.db.query(Paquete).one()
+    assert p.recipient_name == "HIJO"
+    assert p.announced_by_persona_id == papa.persona_id
+    assert p.recipient_phone == "+573007654321"  # el de Papá (quien llamó), no el de Mamá
 
 
 def test_elegir_residente_distinto_anuncia_con_anunciante_quien_llamo(client):
