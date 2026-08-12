@@ -46,6 +46,7 @@ from .paquete import Paquete
 from .persona import Persona
 from .persona_service import (
     buscar_persona_por_telefono,
+    buscar_persona_por_whatsapp,
     get_or_create_persona,
     get_or_create_persona_por_whatsapp,
     update_datos_personales,
@@ -249,7 +250,7 @@ MAX_OCUPANTES_ACTIVOS = 10
 # (`_persona_ya_es_ocupante_activo`, el caso normal) como si lo atrapa el
 # índice único de BD (`uq_ocupantes_persona_activo`, solo bajo una carrera
 # real) -- quien llama nunca necesita distinguir cuál de los dos disparó.
-_MENSAJE_YA_OCUPANTE_ACTIVO = (
+MENSAJE_YA_OCUPANTE_ACTIVO = (
     "Este teléfono ya es Ocupante activo -- debe darse de baja antes de "
     "asociarse de nuevo."
 )
@@ -270,7 +271,7 @@ def asociar_telefono_a_ocupante(
 
     persona = get_or_create_persona(session, telefono, ocupante.nombre)
     if _persona_ya_es_ocupante_activo(session, persona.id):
-        raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
 
     ocupante.persona_id = persona.id
     # Mantiene apartamento_actual_id en sincronía (ver agregar_ocupante) --
@@ -284,7 +285,7 @@ def asociar_telefono_a_ocupante(
         # Ocupante entre el chequeo de arriba y este flush -- el índice
         # único de BD (uq_ocupantes_persona_activo) la atrapó.
         session.rollback()
-        raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
     return ocupante
 
 
@@ -316,7 +317,7 @@ def editar_telefono_ocupante(session: Session, ocupante: Ocupante, nuevo_telefon
         return ocupante  # mismo teléfono, sin cambios reales
 
     if _persona_ya_es_ocupante_activo(session, persona.id):
-        raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
 
     ocupante.persona_id = persona.id
     persona.apartamento_actual_id = ocupante.apartamento_id
@@ -324,7 +325,7 @@ def editar_telefono_ocupante(session: Session, ocupante: Ocupante, nuevo_telefon
         session.flush()
     except IntegrityError:
         session.rollback()
-        raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
     return ocupante
 
 
@@ -340,6 +341,99 @@ def desvincular_telefono_ocupante(session: Session, ocupante: Ocupante) -> Ocupa
         raise ValueError(
             "El teléfono del principal no puede desvincularse directamente "
             "-- promové a otro Ocupante con teléfono primero."
+        )
+
+    if ocupante.persona_id is not None:
+        persona = session.get(Persona, ocupante.persona_id)
+        if persona is not None and persona.apartamento_actual_id == ocupante.apartamento_id:
+            persona.apartamento_actual_id = None
+
+    ocupante.persona_id = None
+    session.flush()
+    return ocupante
+
+
+def asociar_whatsapp_a_ocupante(
+    session: Session, ocupante: Ocupante, whatsapp_usuario: str
+) -> Ocupante:
+    """Asocia `whatsapp_usuario` a un `ocupante` que hoy no tiene contacto
+    propio -- mismo patrón que `asociar_telefono_a_ocupante`, resuelto por
+    WhatsApp en vez de Teléfono (`.scratch/ocupante-principal-escenarios`,
+    ticket 06).
+
+    Raises:
+        ValueError: si `ocupante` ya tiene un contacto propio asociado (sea
+            Teléfono o WhatsApp), o si el WhatsApp ya es Ocupante activo (de
+            este mismo Apartamento o de otro).
+    """
+    if ocupante.persona_id is not None:
+        raise ValueError("Este Ocupante ya tiene un contacto asociado.")
+
+    persona = get_or_create_persona_por_whatsapp(session, whatsapp_usuario, ocupante.nombre)
+    if _persona_ya_es_ocupante_activo(session, persona.id):
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
+
+    ocupante.persona_id = persona.id
+    persona.apartamento_actual_id = ocupante.apartamento_id
+    try:
+        session.flush()
+    except IntegrityError:
+        session.rollback()
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
+    return ocupante
+
+
+def editar_whatsapp_ocupante(
+    session: Session, ocupante: Ocupante, nuevo_whatsapp_usuario: str
+) -> Ocupante:
+    """Cambia el WhatsApp de un `ocupante` no-principal que YA tiene
+    contacto propio por WhatsApp, re-ligando `persona_id` a la Persona del
+    nuevo usuario (`get_or_create_persona_por_whatsapp`) -- mismo patrón
+    que `editar_telefono_ocupante`.
+
+    Raises:
+        ValueError: si `ocupante` es el principal, si todavía no tiene
+            contacto propio (usar `asociar_whatsapp_a_ocupante`), o si el
+            nuevo WhatsApp ya es Ocupante activo (de este mismo Apartamento
+            o de otro).
+    """
+    if ocupante.es_principal:
+        raise ValueError(
+            "El WhatsApp del principal se edita desde 'Datos personales', no acá."
+        )
+    if ocupante.persona_id is None:
+        raise ValueError("Este Ocupante todavía no tiene contacto -- usa 'Asociar'.")
+
+    persona = get_or_create_persona_por_whatsapp(session, nuevo_whatsapp_usuario, ocupante.nombre)
+    if persona.id == ocupante.persona_id:
+        return ocupante  # mismo WhatsApp, sin cambios reales
+
+    if _persona_ya_es_ocupante_activo(session, persona.id):
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
+
+    ocupante.persona_id = persona.id
+    persona.apartamento_actual_id = ocupante.apartamento_id
+    try:
+        session.flush()
+    except IntegrityError:
+        session.rollback()
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
+    return ocupante
+
+
+def desvincular_whatsapp_ocupante(session: Session, ocupante: Ocupante) -> Ocupante:
+    """Quita el contacto de `ocupante` (asociado por WhatsApp) — sigue
+    existiendo como registro liviano (solo nombre), sin poder loguearse ni
+    anunciar por sí mismo. Mismo patrón que `desvincular_telefono_ocupante`.
+
+    Raises:
+        ValueError: si `ocupante` es el principal (el principal SIEMPRE debe
+            tener contacto propio — promové a otro primero).
+    """
+    if ocupante.es_principal:
+        raise ValueError(
+            "El WhatsApp del principal no puede desvincularse directamente "
+            "-- promové a otro Ocupante con contacto primero."
         )
 
     if ocupante.persona_id is not None:
@@ -444,7 +538,7 @@ def agregar_ocupante(
 
     if persona is not None:
         if _persona_ya_es_ocupante_activo(session, persona.id):
-            raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+            raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
         # Mantiene `apartamento_actual_id` en sincronía con el roster de
         # Ocupantes -- otros consumidores (p.ej. `paquete_service.announce`,
         # que resuelve el snapshot del apartamento a partir de este campo)
@@ -462,7 +556,7 @@ def agregar_ocupante(
         session.flush()
     except IntegrityError:
         session.rollback()
-        raise ValueError(_MENSAJE_YA_OCUPANTE_ACTIVO)
+        raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
     return ocupante
 
 
@@ -739,6 +833,24 @@ def hay_otro_ocupante_activo(session: Session, apartamento_id, ocupante_id) -> b
         .first()
         is not None
     )
+
+
+def ocupante_activo_por_contacto(
+    session: Session, telefono: str = None, whatsapp_usuario: str = None
+) -> Ocupante | None:
+    """El Ocupante activo (si hay) de la Persona identificada por
+    `telefono` o `whatsapp_usuario` -- para cuando `agregar_ocupante`
+    rechaza por "ya es Ocupante activo" y hace falta saber de qué unidad
+    es y si es principal ahí, para ofrecer "Mover acá" en vez de solo
+    bloquear (`.scratch/ocupante-principal-escenarios`, ticket 12)."""
+    persona = None
+    if telefono:
+        persona = buscar_persona_por_telefono(session, telefono)
+    elif whatsapp_usuario:
+        persona = buscar_persona_por_whatsapp(session, whatsapp_usuario)
+    if persona is None:
+        return None
+    return ocupante_activo_de_persona(session, persona.id)
 
 
 def mover_ocupante(

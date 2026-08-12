@@ -1163,6 +1163,91 @@ def test_staff_desvincula_telefono_de_ocupante(client):
     assert client.db.get(Ocupante, hija.id).persona_id is None
 
 
+def test_staff_agrega_ocupante_con_whatsapp_desde_agregar_residente(client):
+    """.scratch/ocupante-principal-escenarios, ticket 06 -- input único
+    autoclasificado en "agregar Residente"."""
+    from app.domain.ocupante import Ocupante
+
+    persona, apto = _persona_con_apartamento(client)
+    _login_operador(client)
+
+    r = client.post(
+        f"/residentes/{persona.id}/ocupantes",
+        data={"nombre": "Hija", "contacto": "hija.whats"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    ocupante = client.db.query(Ocupante).filter(
+        Ocupante.apartamento_id == apto.id, Ocupante.nombre == "HIJA"
+    ).one()
+    nueva_persona = client.db.get(Persona, ocupante.persona_id)
+    assert nueva_persona.whatsapp_usuario == "hija.whats"
+
+
+def test_staff_asocia_whatsapp_a_ocupante_sin_contacto(client):
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    persona, apto = _persona_con_apartamento(client)
+    hijo = agregar_ocupante(client.db, apto, "Hijo")
+    client.db.commit()
+
+    _login_operador(client)
+    r = client.post(
+        f"/residentes/{persona.id}/ocupantes/{hijo.id}/contacto",
+        data={"contacto": "hijo.whats"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    ocupante = client.db.get(Ocupante, hijo.id)
+    assert ocupante.persona_id is not None
+    assert client.db.get(Persona, ocupante.persona_id).whatsapp_usuario == "hijo.whats"
+
+
+def test_staff_edita_whatsapp_ya_asociado(client):
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    persona, apto = _persona_con_apartamento(client)
+    hija = agregar_ocupante(client.db, apto, "Hija", whatsapp_usuario="hija.vieja")
+    client.db.commit()
+
+    _login_operador(client)
+    r = client.post(
+        f"/residentes/{persona.id}/ocupantes/{hija.id}/whatsapp",
+        data={"whatsapp_usuario": "hija.nueva"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    ocupante = client.db.get(Ocupante, hija.id)
+    assert client.db.get(Persona, ocupante.persona_id).whatsapp_usuario == "hija.nueva"
+
+
+def test_staff_desvincula_whatsapp_de_ocupante(client):
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    persona, apto = _persona_con_apartamento(client)
+    hija = agregar_ocupante(client.db, apto, "Hija", whatsapp_usuario="hija.whats")
+    client.db.commit()
+
+    _login_operador(client)
+    r = client.post(
+        f"/residentes/{persona.id}/ocupantes/{hija.id}/desvincular-whatsapp",
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Ocupante, hija.id).persona_id is None
+
+
 def test_staff_da_de_baja_ocupante(client):
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante

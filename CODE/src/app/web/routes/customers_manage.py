@@ -28,15 +28,19 @@ from sqlalchemy.orm import Session
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import listar_catalogo_por_torre, resolver_apartamento
 from app.domain.ocupante import Ocupante
+from app.domain.contacto import clasificar_contacto
 from app.domain.ocupante_service import (
     MAX_OCUPANTES_ACTIVOS,
     agregar_ocupante,
     apartamentos_con_principal,
     asociar_telefono_a_ocupante,
+    asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
     dar_de_baja_ocupante,
     desvincular_telefono_ocupante,
+    desvincular_whatsapp_ocupante,
     editar_telefono_ocupante,
+    editar_whatsapp_ocupante,
     hay_otro_ocupante_activo,
     listar_ocupantes,
     ocupante_activo_de_persona,
@@ -96,9 +100,12 @@ def _ocupantes_de(db: Session, apartamento):
         return []
     ocupantes = listar_ocupantes(db, apartamento)
     for o in ocupantes:
-        # Atributo transitorio (no persistido) — Ocupante no tiene relationship
-        # ORM a Persona, solo el FK crudo `persona_id`.
-        o.telefono = db.get(Persona, o.persona_id).telefono if o.persona_id else None
+        # Atributos transitorios (no persistidos) — Ocupante no tiene
+        # relationship ORM a Persona, solo el FK crudo `persona_id`.
+        persona = db.get(Persona, o.persona_id) if o.persona_id else None
+        o.telefono = persona.telefono if persona else None
+        # WhatsApp (.scratch/ocupante-principal-escenarios, ticket 06).
+        o.whatsapp_usuario = persona.whatsapp_usuario if persona else None
     return ocupantes
 
 
@@ -562,11 +569,15 @@ def customers_manage_ocupante_crear(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     nombre: str = Form(None),
-    telefono: str = Form(None),
+    contacto: str = Form(None),
 ):
     """Staff sin restricción (.scratch/mis-datos, ticket 10) — mismas
     funciones de dominio que `/mis-datos` (ticket 03), sin exigir que el
-    staff sea "principal" de nada."""
+    staff sea "principal" de nada.
+
+    `contacto` (.scratch/ocupante-principal-escenarios, ticket 06): un
+    input único, autoclasificado (Teléfono o WhatsApp) igual que
+    `/announce` -- ya no exige que el primer contacto sea Teléfono."""
     persona = _get_persona_o_404(db, persona_id)
     apto = _apartamento_actual(db, persona)
     nombre_v = _blank_to_none(nombre)
@@ -577,8 +588,25 @@ def customers_manage_ocupante_crear(
             else "El nombre del Ocupante es obligatorio.",
             tab_inicial="residentes",
         )
+
+    contacto_v = (contacto or "").strip()
+    kwargs_contacto = {}
+    if contacto_v:
+        tipo_contacto = clasificar_contacto(contacto_v)
+        if tipo_contacto == "telefono":
+            kwargs_contacto["telefono"] = contacto_v
+        elif tipo_contacto == "whatsapp":
+            kwargs_contacto["whatsapp_usuario"] = contacto_v
+        else:
+            return _render_detalle_con_error(
+                request, db, staff, persona,
+                "Ese contacto no parece un Teléfono ni un usuario de WhatsApp "
+                "válido -- revísalo, o déjalo vacío.",
+                tab_inicial="residentes",
+            )
+
     try:
-        agregar_ocupante(db, apto, nombre_v, _blank_to_none(telefono))
+        agregar_ocupante(db, apto, nombre_v, **kwargs_contacto)
     except ValueError as exc:
         return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
     return RedirectResponse(
@@ -636,6 +664,104 @@ def customers_manage_ocupante_desvincular_telefono(
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
         desvincular_telefono_ocupante(db, ocupante)
+    except ValueError as exc:
+        return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/residentes/{persona_id}/ocupantes/{ocupante_id}/contacto", response_class=HTMLResponse
+)
+def customers_manage_ocupante_asociar_contacto(
+    persona_id: str,
+    ocupante_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    contacto: str = Form(None),
+):
+    """Asocia el PRIMER contacto propio de un Ocupante que hoy no tiene
+    ninguno -- input único autoclasificado (`.scratch/ocupante-principal-
+    escenarios`, ticket 06), mismo criterio que "agregar Residente" y que
+    `/announce`. Una vez asociado, editarlo pasa por `/telefono` o
+    `/whatsapp` (según cuál haya quedado), no por acá."""
+    persona = _get_persona_o_404(db, persona_id)
+    ocupante = _ocupante_o_404(db, ocupante_id)
+    contacto_v = (contacto or "").strip()
+    if not contacto_v:
+        return _render_detalle_con_error(
+            request, db, staff, persona, "El contacto es obligatorio.", tab_inicial="residentes"
+        )
+    tipo_contacto = clasificar_contacto(contacto_v)
+    try:
+        if tipo_contacto == "telefono":
+            asociar_telefono_a_ocupante(db, ocupante, contacto_v)
+        elif tipo_contacto == "whatsapp":
+            asociar_whatsapp_a_ocupante(db, ocupante, contacto_v)
+        else:
+            return _render_detalle_con_error(
+                request, db, staff, persona,
+                "Ese contacto no parece un Teléfono ni un usuario de WhatsApp "
+                "válido -- revísalo.",
+                tab_inicial="residentes",
+            )
+    except ValueError as exc:
+        return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/residentes/{persona_id}/ocupantes/{ocupante_id}/whatsapp", response_class=HTMLResponse
+)
+def customers_manage_ocupante_asociar_whatsapp(
+    persona_id: str,
+    ocupante_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    whatsapp_usuario: str = Form(None),
+):
+    """Asociar/editar WhatsApp de un Ocupante -- mismo patrón que
+    `customers_manage_ocupante_asociar_telefono`
+    (`.scratch/ocupante-principal-escenarios`, ticket 06)."""
+    persona = _get_persona_o_404(db, persona_id)
+    ocupante = _ocupante_o_404(db, ocupante_id)
+    whatsapp_v = _blank_to_none(whatsapp_usuario)
+    if not whatsapp_v:
+        return _render_detalle_con_error(
+            request, db, staff, persona, "El WhatsApp es obligatorio.", tab_inicial="residentes"
+        )
+    try:
+        if ocupante.persona_id is None:
+            asociar_whatsapp_a_ocupante(db, ocupante, whatsapp_v)
+        else:
+            editar_whatsapp_ocupante(db, ocupante, whatsapp_v)
+    except ValueError as exc:
+        return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post(
+    "/residentes/{persona_id}/ocupantes/{ocupante_id}/desvincular-whatsapp",
+    response_class=HTMLResponse,
+)
+def customers_manage_ocupante_desvincular_whatsapp(
+    persona_id: str,
+    ocupante_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    persona = _get_persona_o_404(db, persona_id)
+    ocupante = _ocupante_o_404(db, ocupante_id)
+    try:
+        desvincular_whatsapp_ocupante(db, ocupante)
     except ValueError as exc:
         return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
     return RedirectResponse(

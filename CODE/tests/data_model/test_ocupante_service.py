@@ -17,10 +17,13 @@ from app.domain.ocupante_service import (
     anunciante_para_ocupante,
     apartamentos_con_principal,
     asociar_telefono_a_ocupante,
+    asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
     dar_de_baja_ocupante,
     desvincular_telefono_ocupante,
+    desvincular_whatsapp_ocupante,
     editar_telefono_ocupante,
+    editar_whatsapp_ocupante,
     hay_otro_ocupante_activo,
     listar_ocupantes,
     mover_ocupante,
@@ -552,6 +555,101 @@ def test_desvincular_telefono_del_principal_falla(db_session):
 
     with pytest.raises(ValueError):
         desvincular_telefono_ocupante(db_session, papa)
+
+
+# --------------------------------------------------------------------------- #
+# WhatsApp (.scratch/ocupante-principal-escenarios, ticket 06) -- mismo
+# patrón que Teléfono arriba, resuelto por WhatsApp.
+# --------------------------------------------------------------------------- #
+def test_asociar_whatsapp_a_ocupante_sin_contacto(db_session):
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    mama = agregar_ocupante(db_session, apto, "Mamá")
+
+    asociar_whatsapp_a_ocupante(db_session, mama, "mama.whats")
+
+    assert mama.persona_id is not None
+    persona = db_session.get(Persona, mama.persona_id)
+    assert persona.whatsapp_usuario == "mama.whats"
+    assert persona.apartamento_actual_id == apto.id
+
+
+def test_asociar_whatsapp_a_ocupante_que_ya_tiene_contacto_falla(db_session):
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+
+    with pytest.raises(ValueError):
+        asociar_whatsapp_a_ocupante(db_session, papa, "papa.whats")
+
+
+def test_asociar_whatsapp_ya_activo_en_otro_apartamento_falla(db_session):
+    apto1 = _apto(db_session)
+    apto2 = resolver_apartamento(db_session, "TORRE 2", "202")
+    agregar_ocupante(db_session, apto1, "Papá", whatsapp_usuario="papa.whats")
+    mama = agregar_ocupante(db_session, apto2, "Mamá", telefono="3021112233")
+
+    with pytest.raises(ValueError):
+        asociar_whatsapp_a_ocupante(db_session, mama, "papa.whats")
+
+
+def test_editar_whatsapp_ocupante_cambia_la_persona_ligada(db_session):
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hijo = agregar_ocupante(db_session, apto, "Hijo", whatsapp_usuario="hijo.viejo")
+
+    editar_whatsapp_ocupante(db_session, hijo, "hijo.nuevo")
+
+    persona = db_session.get(Persona, hijo.persona_id)
+    assert persona.whatsapp_usuario == "hijo.nuevo"
+    assert persona.apartamento_actual_id == apto.id
+
+
+def test_editar_whatsapp_ocupante_sin_contacto_previo_falla(db_session):
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hijo = agregar_ocupante(db_session, apto, "Hijo")  # sin contacto
+
+    with pytest.raises(ValueError):
+        editar_whatsapp_ocupante(db_session, hijo, "hijo.nuevo")
+
+
+def test_editar_whatsapp_del_principal_falla(db_session):
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
+    confirmar_ocupante(db_session, papa, _staff(db_session))
+
+    with pytest.raises(ValueError):
+        editar_whatsapp_ocupante(db_session, papa, "papa.nuevo")
+
+
+def test_editar_whatsapp_ocupante_ya_activo_en_otro_apartamento_falla(db_session):
+    apto1 = _apto(db_session)
+    apto2 = resolver_apartamento(db_session, "TORRE 2", "202")
+    agregar_ocupante(db_session, apto1, "Papá", telefono="3001234567")
+    hijo = agregar_ocupante(db_session, apto1, "Hijo", whatsapp_usuario="hijo.whats")
+    agregar_ocupante(db_session, apto2, "Mamá", whatsapp_usuario="mama.whats")
+
+    with pytest.raises(ValueError):
+        editar_whatsapp_ocupante(db_session, hijo, "mama.whats")
+
+
+def test_desvincular_whatsapp_de_ocupante_no_principal(db_session):
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
+
+    desvincular_whatsapp_ocupante(db_session, hija)
+
+    assert hija.persona_id is None
+
+
+def test_desvincular_whatsapp_del_principal_falla(db_session):
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
+    confirmar_ocupante(db_session, papa, _staff(db_session))
+
+    with pytest.raises(ValueError):
+        desvincular_whatsapp_ocupante(db_session, papa)
 
 
 def test_maximo_ocupantes_activos_por_apartamento(db_session):
