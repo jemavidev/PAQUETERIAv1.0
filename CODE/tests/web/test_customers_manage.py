@@ -814,7 +814,12 @@ def test_direccion_asigna_crea_ocupante_confirmado_y_principal(client):
     assert ocupante.es_principal is True
 
 
-def test_direccion_asigna_a_unidad_con_principal_no_promueve(client):
+def test_direccion_rechaza_asignar_a_unidad_con_principal_ya_confirmado(client):
+    """.scratch/ocupante-principal-escenarios, ticket 13 -- antes tab
+    Dirección permitía agregar un segundo residente a una unidad ya ocupada
+    (sin promoverlo, ver `test_staff_confirma_un_segundo_ocupante_sin_tocar_
+    quien_es_principal` para esa cobertura vía tab Residentes); ahora esa vía
+    queda exclusiva de tab Residentes y Dirección rechaza directo."""
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
@@ -828,15 +833,15 @@ def test_direccion_asigna_a_unidad_con_principal_no_promueve(client):
     hija = get_or_create_persona(client.db, "3021112233", "Hija")
     client.db.commit()
 
-    client.post(
+    r = client.post(
         f"/residentes/{hija.id}/apartamento",
         data={"torre": "TORRE 1", "apartamento": "101"},
     )
 
+    assert r.status_code == 400
+    assert "Ya tiene residentes" in r.text
     client.db.expire_all()
-    ocupante_hija = client.db.query(Ocupante).filter(Ocupante.persona_id == hija.id).one()
-    assert ocupante_hija.confirmado_en is not None
-    assert ocupante_hija.es_principal is False  # Papá se queda de principal
+    assert client.db.query(Ocupante).filter(Ocupante.persona_id == hija.id).one_or_none() is None
 
 
 def test_direccion_desvincula_da_de_baja_al_ocupante(client):
@@ -932,6 +937,80 @@ def test_direccion_mueve_a_un_no_principal_marcando_la_casilla(client):
     assert hija_original.desvinculado_en is not None
 
 
+def test_direccion_picker_marca_unidades_ocupadas(client):
+    """.scratch/ocupante-principal-escenarios, ticket 13 -- el picker recibe
+    TORRE|apto de cualquier unidad con al menos un Ocupante activo (con o
+    sin principal confirmado), para deshabilitarla en el cliente."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto1 = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto1, "Papá", telefono="3001234567")  # pending, sin principal
+    client.db.commit()
+    _login_operador(client)
+
+    p = get_or_create_persona(client.db, "3021112233", "Hija")
+    client.db.commit()
+
+    r = client.get(f"/residentes/{p.id}")
+    assert '"TORRE 1|101"' in r.text
+
+
+def test_direccion_rechaza_por_post_directo_unidad_ya_ocupada_por_terceros(client):
+    """.scratch/ocupante-principal-escenarios, ticket 13 -- el picker ya
+    deshabilita la unidad en el cliente, pero un POST directo forzando esa
+    unidad se rechaza igual server-side."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto1 = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto1, "Papá", telefono="3001234567")
+    client.db.commit()
+    _login_operador(client)
+
+    p = get_or_create_persona(client.db, "3021112233", "Hija")
+    client.db.commit()
+
+    r = client.post(
+        f"/residentes/{p.id}/apartamento",
+        data={"torre": "TORRE 1", "apartamento": "101"},
+    )
+
+    assert r.status_code == 400
+    assert "Ya tiene residentes" in r.text
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).apartamento_actual_id is None
+    assert client.db.query(Ocupante).filter(Ocupante.persona_id == p.id).one_or_none() is None
+
+
+def test_direccion_mover_rechaza_si_unidad_destino_ya_tiene_residentes(client):
+    """.scratch/ocupante-principal-escenarios, ticket 13 -- el "mover" de
+    ticket 12 tampoco puede aterrizar en una unidad que ya tiene gente;
+    tab Dirección sigue siendo solo para unidades vacías, aun moviendo."""
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto1 = resolver_apartamento(client.db, "TORRE 1", "101")
+    apto2 = resolver_apartamento(client.db, "TORRE 2", "202")
+    agregar_ocupante(client.db, apto1, "Papá", telefono="3001234567")
+    hija = agregar_ocupante(client.db, apto1, "Hija", telefono="3021112233")
+    agregar_ocupante(client.db, apto2, "Vecino", telefono="3031112233")
+    client.db.commit()
+    _login_operador(client)
+    persona = client.db.get(Persona, hija.persona_id)
+
+    r = client.post(
+        f"/residentes/{persona.id}/apartamento",
+        data={"torre": "TORRE 2", "apartamento": "202", "mover_de_otra_unidad": "1"},
+    )
+
+    assert r.status_code == 400
+    assert "Ya tiene residentes" in r.text
+    client.db.expire_all()
+    assert client.db.get(Persona, persona.id).apartamento_actual_id == apto1.id
+
+
 def test_direccion_asigna_visible_de_inmediato_en_la_tab_residentes(client):
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
@@ -1021,6 +1100,9 @@ def test_staff_desvincula_apartamento_dejando_ambos_campos_vacios(client):
 
     client.db.expire_all()
     assert client.db.get(Persona, p.id).apartamento_actual_id is None
+    # .scratch/ocupante-principal-escenarios, ticket 13: `p.apartamento_actual_id`
+    # no tenía ningún Ocupante real detrás -- se avisa que se limpió el dato.
+    assert "dato inconsistente" in r.text
 
 
 def test_staff_asignar_terna_fuera_del_catalogo_falla(client):

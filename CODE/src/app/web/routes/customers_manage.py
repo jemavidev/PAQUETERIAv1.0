@@ -32,7 +32,7 @@ from app.domain.contacto import clasificar_contacto
 from app.domain.ocupante_service import (
     MAX_OCUPANTES_ACTIVOS,
     agregar_ocupante,
-    apartamentos_con_principal,
+    apartamentos_ocupados,
     asociar_telefono_a_ocupante,
     asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
@@ -347,12 +347,19 @@ def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
         "etiqueta_canal": _ETIQUETA_CANAL,
         "eventos": EVENTOS,
         "matriz": matriz_preferencias(db, persona.id),
-        # Issue 69: picker de Dirección -- señaliza unidades con Principal ya
-        # asignado, y avisa de antemano si esta Persona no se puede
-        # reasignar todavía (en vez de que se entere recién al guardar).
-        # `sorted(list(...))`: un `set` no es serializable por `|tojson` en la
-        # plantilla (el picker lo consume como JS).
-        "apartamentos_con_principal": sorted(apartamentos_con_principal(db)),
+        # Ticket 13 (.scratch/ocupante-principal-escenarios): picker de
+        # Dirección deshabilita unidades ya ocupadas (con o sin principal) --
+        # reemplaza el `apartamentos_con_principal` puramente informativo de
+        # antes (issue 69). Excluye la unidad ACTUAL de `persona` (si tiene)
+        # -- si no, el picker se auto-bloquearía al mostrar su propia
+        # asignación vigente, impidiendo hasta re-confirmarla sin cambios.
+        # Avisa también de antemano si esta Persona no se puede reasignar
+        # todavía (en vez de que se entere recién al guardar). `sorted(list(
+        # ...))`: un `set` no es serializable por `|tojson` en la plantilla
+        # (el picker lo consume como JS).
+        "apartamentos_ocupados": sorted(
+            apartamentos_ocupados(db) - ({f"{apto.torre}|{apto.apartamento}"} if apto else set())
+        ),
         "aviso_reasignacion_bloqueada": _aviso_reasignacion_bloqueada(db, mi_ocupante),
         "etiqueta_tab_residentes": _etiqueta_tab_residentes(apto),
     }
@@ -525,7 +532,14 @@ def customers_manage_asignar_apartamento(
     ticket 12): si `persona` ya es Ocupante activo no-principal de OTRA
     unidad, en vez de solo bloquear se ofrece moverla ahí mismo
     (`mover_ocupante`) cuando el staff marca la casilla. Un principal nunca
-    se mueve así, sin excepción."""
+    se mueve así, sin excepción.
+
+    Ticket 13 (`.scratch/ocupante-principal-escenarios`): tab Dirección solo
+    declara unidades COMPLETAMENTE vacías -- el picker ya las deshabilita en
+    el cliente, pero acá se rechaza igual un POST directo a una unidad
+    ocupada (mismo criterio que `apartamentos_ocupados`: cualquier Ocupante
+    activo, tenga o no principal confirmado). Agregar más gente a una unidad
+    que ya tiene Residentes sigue siendo exclusivo de tab Residentes."""
     persona = _get_persona_o_404(db, persona_id)
     torre_v = _blank_to_none(torre)
     apartamento_v = _blank_to_none(apartamento)
@@ -548,6 +562,17 @@ def customers_manage_asignar_apartamento(
 
     if nuevo_apto is not None:
         conflicto = ocupante_activo_de_persona(db, persona.id)
+        ya_tiene_residentes = (
+            conflicto is None or conflicto.apartamento_id != nuevo_apto.id
+        ) and hay_otro_ocupante_activo(
+            db, nuevo_apto.id, conflicto.id if conflicto is not None else None
+        )
+        if ya_tiene_residentes:
+            return _render_detalle_con_error(
+                request, db, staff, persona,
+                "Ya tiene residentes -- agregá más gente desde tab Residentes.",
+                tab_inicial="direccion",
+            )
         if conflicto is not None and conflicto.apartamento_id != nuevo_apto.id:
             if conflicto.es_principal:
                 return _render_detalle_con_error(
@@ -571,6 +596,12 @@ def customers_manage_asignar_apartamento(
             contexto["tab_inicial"] = "direccion"
             return templates.TemplateResponse("customers_manage/detail.html", contexto)
 
+    huerfano_detectado = (
+        nuevo_apto is None
+        and persona.apartamento_actual_id is not None
+        and ocupante_activo_de_persona(db, persona.id) is None
+    )
+
     try:
         reasignar_apartamento(db, persona, nuevo_apto, staff)
     except ValueError as exc:
@@ -582,6 +613,11 @@ def customers_manage_asignar_apartamento(
     contexto["request"] = request
     contexto["guardado"] = True
     contexto["tab_inicial"] = "direccion"
+    if huerfano_detectado:
+        contexto["aviso_dato_huerfano"] = (
+            "Este cliente tenía un apartamento asignado sin ningún Residente "
+            "real detrás -- se limpió ese dato inconsistente."
+        )
     return templates.TemplateResponse("customers_manage/detail.html", contexto)
 
 
