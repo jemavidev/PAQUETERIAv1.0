@@ -240,7 +240,7 @@
               <span class="inline-flex items-center bg-amber-100 text-amber-800 text-xs font-semibold rounded-full px-2 py-0.5 mt-1">Pendiente de confirmar</span>
               {% endif %}
               {% if not ocupante.es_principal and not ocupante.persona_id %}
-              <p class="text-xs text-slate-500 mt-0.5">Sin teléfono</p>
+              <p class="text-xs text-slate-500 mt-0.5">Sin contacto</p>
               {% endif %}
             </div>
             {% if not ocupante.es_principal %}
@@ -258,25 +258,43 @@
           </div>
           {% if not ocupante.es_principal %}
             {% if ocupante.persona_id %}
+            {%- set tel_ocupante = personas_telefono.get(ocupante.persona_id, '') %}
+            {%- set whats_ocupante = personas_whatsapp.get(ocupante.persona_id, '') %}
             <div class="mt-2 flex flex-wrap gap-3">
+              {% if tel_ocupante %}
               <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/desvincular-telefono">
                 <button type="submit" class="text-xs text-slate-600 hover:underline">Eliminar teléfono</button>
               </form>
-              {# Ver §10 (.scratch/mis-datos) -- ya tiene teléfono, puede promoverse. #}
+              {% endif %}
+              {% if whats_ocupante %}
+              <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/desvincular-whatsapp">
+                <button type="submit" class="text-xs text-slate-600 hover:underline">Eliminar WhatsApp</button>
+              </form>
+              {% endif %}
+              {# Ver §10 (.scratch/mis-datos) -- ya tiene contacto propio, puede promoverse. #}
               <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/promover" onsubmit="return confirm('¿Convertir a {{ ocupante.nombre }} en el nuevo residente principal? Tú pasarás a ser un residente normal.')">
                 <button type="submit" class="text-xs text-blue-800 font-semibold hover:underline">Convertir en residente principal</button>
               </form>
             </div>
-            {# Editar el teléfono ya asociado (pedido del cliente,
-               `.scratch/pendientes-cliente/issues/35`) -- mismo endpoint que
-               "Asociar", la ruta decide según si ya tenía uno. #}
+            {# Editar el teléfono/WhatsApp ya asociado (pedido del cliente,
+               `.scratch/pendientes-cliente/issues/35`; WhatsApp:
+               `.scratch/ocupante-principal-escenarios`, ticket 07) -- mismo
+               endpoint que "Asociar", la ruta decide según si ya tenía uno. #}
+            {% if tel_ocupante %}
             <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/telefono" class="mt-2 flex gap-2">
-              <input type="tel" name="telefono" value="{{ personas_telefono.get(ocupante.persona_id, '') }}" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+              <input type="tel" name="telefono" value="{{ tel_ocupante }}" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
               <button type="submit" class="text-xs bg-blue-800 hover:bg-blue-700 text-white rounded-lg px-3 py-2 font-semibold whitespace-nowrap">Actualizar</button>
             </form>
+            {% endif %}
+            {% if whats_ocupante %}
+            <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/whatsapp" class="mt-2 flex gap-2">
+              <input type="text" name="whatsapp_usuario" value="{{ whats_ocupante }}" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+              <button type="submit" class="text-xs bg-blue-800 hover:bg-blue-700 text-white rounded-lg px-3 py-2 font-semibold whitespace-nowrap">Actualizar</button>
+            </form>
+            {% endif %}
             {% else %}
-            <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/telefono" class="mt-2 flex gap-2">
-              <input type="tel" name="telefono" placeholder="Agregar teléfono" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+            <form method="post" action="/mis-datos/ocupantes/{{ ocupante.id }}/contacto" class="mt-2 flex gap-2">
+              <input type="text" name="contacto" placeholder="Agregar Teléfono o WhatsApp" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
               <button type="submit" class="text-xs bg-blue-800 hover:bg-blue-700 text-white rounded-lg px-3 py-2 font-semibold whitespace-nowrap">Agregar</button>
             </form>
             {% endif %}
@@ -295,7 +313,7 @@
            para este mismo par de campos. #}
         <div class="flex gap-2">
           <input type="text" name="nombre" placeholder="Nombre" required oninput="this.value = this.value.toUpperCase()" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
-          <input type="tel" name="telefono" placeholder="Teléfono (opcional)" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+          <input type="text" name="contacto" placeholder="Teléfono o WhatsApp (opcional)" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
         </div>
         <button type="submit" class="text-sm bg-blue-800 hover:bg-blue-700 text-white rounded-lg px-4 py-2 font-semibold">Agregar</button>
       </form>
@@ -322,7 +340,7 @@
             {% endif %}
           </div>
           {% if ocupante.persona_id %}
-          <p class="text-xs text-slate-500">{{ personas_telefono.get(ocupante.persona_id, '') }}</p>
+          <p class="text-xs text-slate-500">{{ personas_telefono.get(ocupante.persona_id) or personas_whatsapp.get(ocupante.persona_id, '') }}</p>
           {% else %}
           <p class="text-xs text-slate-400">Sin teléfono</p>
           {% endif %}
