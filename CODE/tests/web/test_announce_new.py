@@ -159,6 +159,30 @@ def test_identificar_torre_apto_invalido_no_dispara_nada(client):
     assert r.text == ""
 
 
+def test_identificar_torre_apto_con_pocos_digitos_de_apto_no_dispara_nada(client):
+    """.scratch/ocupante-principal-escenarios, ticket 15 -- con menos de 3
+    dígitos de apartamento (el mínimo real, "101") sigue siendo "a medio
+    teclear", igual que antes de este ticket: mostrar el aviso ahí
+    interrumpiría al staff a mitad de un código real (ej. camino a "01106")."""
+    _login_operador(client)
+    for q in ("01", "011", "0110"):
+        r = client.get("/announce/identificar", params={"q": q})
+        assert r.status_code == 200
+        assert r.text == "", f"{q!r} no debería disparar el aviso todavía"
+
+
+def test_identificar_torre_apto_completo_sin_match_muestra_aviso(client):
+    """.scratch/ocupante-principal-escenarios, ticket 15 -- torre válida +
+    apto de 3+ dígitos que no calza con ninguna unidad real: antes no
+    mostraba nada, ahora avisa explícito."""
+    _login_operador(client)
+    # TORRE 1 (chica) solo tiene 101-106, 201-206, ..., 701-702 -- "199" no
+    # es ninguna unidad real.
+    r = client.get("/announce/identificar", params={"q": "01199"})
+    assert r.status_code == 200
+    assert "No encontramos esa Torre/Apartamento" in r.text
+
+
 def test_identificar_valor_sin_candidato_no_devuelve_nada(client):
     _login_operador(client)
     r = client.get("/announce/identificar", params={"q": "500 no es nada"})
@@ -176,11 +200,15 @@ def test_identificar_vacio_no_devuelve_nada(client):
 def test_identificar_reclasifica_en_servidor_sin_confiar_en_el_cliente(client):
     # El "cliente" (este test) manda un valor con forma de Torre+Apto que no
     # calza con ninguna unidad real -- el servidor no lo reclasifica como
-    # Teléfono ni WhatsApp solo porque alguien lo pida distinto.
+    # Teléfono ni WhatsApp solo porque alguien lo pida distinto (ni lo trata
+    # como un número de teléfono, aunque sea igual de largo).
     _login_operador(client)
     r = client.get("/announce/identificar", params={"q": "0110699999999999"})
     assert r.status_code == 200
-    assert r.text == ""  # empieza en 0 -> torre_apto, NUNCA telefono aunque sea largo
+    assert "Ya registrado" not in r.text
+    # .scratch/ocupante-principal-escenarios, ticket 15: torre válida + apto
+    # de sobra dígitos ya es "completo" -- sin match, avisa en vez de callar.
+    assert "No encontramos esa Torre/Apartamento" in r.text
 
 
 # --------------------------------------------------------------------------- #

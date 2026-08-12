@@ -146,6 +146,26 @@ def _torre_desde_codigo(valor: str) -> str | None:
     return f"TORRE {numero}"
 
 
+def _torre_apto_completo(valor: str) -> bool:
+    """¿`valor` ya tiene los 2 dígitos de una Torre VÁLIDA (1-10) más un
+    número de apartamento con largo mínimo real (3 dígitos -- el catálogo
+    sembrado en `0021_seed_catalogo_apartamentos` numera cada piso como
+    `piso*100 + i`, así que ningún apartamento real tiene menos de 3
+    dígitos, aunque el piso 13 de las torres grandes sube a 4)? -- umbral
+    para decidir si un código Torre+Apto que no calzó ya es evaluable
+    contra el catálogo (ticket 15, `.scratch/ocupante-principal-
+    escenarios`) o si todavía está a medio teclear (estado normal, sin
+    mensaje). Un código con torre inválida (ej. "11", torre 11 no existe)
+    nunca cuenta como completo -- ningún dígito adicional lo va a arreglar,
+    pero eso ya es indistinguible de "a medio teclear" con la info que hay,
+    así que se trata igual (sin mensaje, mismo comportamiento de antes de
+    este ticket)."""
+    torre = _torre_desde_codigo(valor)
+    if torre is None:
+        return False
+    return len(valor) - 2 >= 3
+
+
 def _resolver_torre_apto(session: Session, valor: str):
     """Resuelve `valor` (código Torre+Apto tecleado, ej. `"01106"`) contra
     el catálogo cerrado -- `None` si el código todavía no calza EXACTO con
@@ -223,6 +243,11 @@ def announce_identificar(
     if tipo == "torre_apto":
         apto = _resolver_torre_apto(db, q)
         if apto is None:
+            if _torre_apto_completo(q):
+                return templates.TemplateResponse(
+                    "announce_new/_identificar_torre_apto_sin_match.html",
+                    {"request": request},
+                )
             return HTMLResponse("")
         residentes = listar_ocupantes(db, apto)
         return templates.TemplateResponse(
