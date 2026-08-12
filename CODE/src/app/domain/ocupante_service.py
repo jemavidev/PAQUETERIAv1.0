@@ -741,6 +741,64 @@ def hay_otro_ocupante_activo(session: Session, apartamento_id, ocupante_id) -> b
     )
 
 
+def mover_ocupante(
+    session: Session, ocupante: Ocupante, apartamento_destino: Apartamento
+) -> Ocupante:
+    """Mueve a `ocupante` (activo, NO-principal) de su unidad actual a
+    `apartamento_destino` en un solo paso -- da de baja en la anterior y
+    agrega en la nueva, sin el paso manual de "dar de baja" primero que
+    hoy exige `agregar_ocupante` (`.scratch/ocupante-principal-
+    escenarios`, ticket 11). Acción exclusiva de staff -- las 4 vistas que
+    la exponen (tab Dirección, tab Residentes, `/announce` Torre+Apto
+    nueva persona, Corregir destinatario) son todas de staff, nunca
+    autoservicio.
+
+    Nunca aplica a un principal, SIN EXCEPCIÓN -- ni siquiera si está solo
+    en su unidad: un principal siempre pasa por el camino de siempre
+    (promover a otro primero si hay más gente, o desvincularse si está
+    solo) antes de poder reubicarse en otra unidad.
+
+    Conserva el contacto que `ocupante` ya tenía (Teléfono y/o WhatsApp) --
+    reutiliza la misma Persona (`agregar_ocupante` la resuelve por su
+    contacto), nunca crea una nueva.
+
+    Args:
+        session: sesión de SQLAlchemy activa.
+        ocupante: el Ocupante activo, no-principal, a mover.
+        apartamento_destino: la unidad a la que se mueve.
+
+    Returns:
+        El nuevo Ocupante (fila nueva -- la anterior queda dada de baja,
+        de solo consulta, mismo criterio que `dar_de_baja_ocupante`).
+
+    Raises:
+        ValueError: si `ocupante` es principal, si ya está dado de baja, o
+            si `apartamento_destino` ya tiene el máximo de Ocupantes
+            activos (`agregar_ocupante` lo exige igual).
+    """
+    if ocupante.es_principal:
+        raise ValueError(
+            "Un principal no puede moverse directo -- promové a otro "
+            "primero (o desvinculate, si estás solo) antes de reubicarte."
+        )
+    if ocupante.desvinculado_en is not None:
+        raise ValueError("Este Ocupante ya está dado de baja.")
+
+    nombre = ocupante.nombre
+    telefono = None
+    whatsapp_usuario = None
+    if ocupante.persona_id is not None:
+        persona = session.get(Persona, ocupante.persona_id)
+        if persona is not None:
+            telefono = persona.telefono
+            whatsapp_usuario = persona.whatsapp_usuario
+
+    dar_de_baja_ocupante(session, ocupante)
+    return agregar_ocupante(
+        session, apartamento_destino, nombre, telefono=telefono, whatsapp_usuario=whatsapp_usuario
+    )
+
+
 def reasignar_apartamento(
     session: Session, persona: Persona, apartamento: Apartamento | None, actor: Usuario
 ) -> Ocupante | None:

@@ -23,6 +23,7 @@ from app.domain.ocupante_service import (
     editar_telefono_ocupante,
     hay_otro_ocupante_activo,
     listar_ocupantes,
+    mover_ocupante,
     ocupante_activo_de_persona,
     ocupantes_activos_de_personas,
     promover_a_principal,
@@ -850,3 +851,92 @@ def test_reasignar_apartamento_none_sin_nada_que_desvincular_no_falla(db_session
     resultado = reasignar_apartamento(db_session, persona, None, _staff(db_session))
 
     assert resultado is None
+
+
+# --------------------------------------------------------------------------- #
+# mover_ocupante (.scratch/ocupante-principal-escenarios, ticket 11)
+# --------------------------------------------------------------------------- #
+def test_mover_ocupante_no_principal_a_otra_unidad(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    _agregar_confirmado(db_session, origen, "Papá", "3001234567")  # principal de origen
+    hija = agregar_ocupante(db_session, origen, "Hija", telefono="3021112233")
+
+    movida = mover_ocupante(db_session, hija, destino)
+
+    assert movida.apartamento_id == destino.id
+    assert movida.es_principal is False
+    db_session.refresh(hija)
+    assert hija.desvinculado_en is not None  # la fila anterior queda de baja, histórica
+
+
+def test_mover_ocupante_conserva_el_telefono(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    _agregar_confirmado(db_session, origen, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, origen, "Hija", telefono="3021112233")
+
+    movida = mover_ocupante(db_session, hija, destino)
+
+    persona = db_session.get(Persona, movida.persona_id)
+    assert persona.telefono == "+573021112233"
+    assert persona.apartamento_actual_id == destino.id
+
+
+def test_mover_ocupante_sin_contacto_a_unidad_con_gente(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    _agregar_confirmado(db_session, origen, "Papá", "3001234567")
+    hijo = agregar_ocupante(db_session, origen, "Hijo")  # sin contacto
+    _agregar_confirmado(db_session, destino, "Mamá", "3021112233")  # destino no vacío
+
+    movida = mover_ocupante(db_session, hijo, destino)
+
+    assert movida.apartamento_id == destino.id
+    assert movida.persona_id is None
+
+
+def test_mover_ocupante_principal_esta_bloqueado_aunque_este_solo(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    papa = _agregar_confirmado(db_session, origen, "Papá", "3001234567")  # único activo
+
+    with pytest.raises(ValueError):
+        mover_ocupante(db_session, papa, destino)
+
+    db_session.refresh(papa)
+    assert papa.desvinculado_en is None
+    assert papa.apartamento_id == origen.id
+
+
+def test_mover_ocupante_principal_con_otros_tambien_bloqueado(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    papa = _agregar_confirmado(db_session, origen, "Papá", "3001234567")
+    agregar_ocupante(db_session, origen, "Hija", telefono="3021112233")
+
+    with pytest.raises(ValueError):
+        mover_ocupante(db_session, papa, destino)
+
+
+def test_mover_ocupante_ya_dado_de_baja_falla(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    _agregar_confirmado(db_session, origen, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, origen, "Hija", telefono="3021112233")
+    dar_de_baja_ocupante(db_session, hija)
+
+    with pytest.raises(ValueError):
+        mover_ocupante(db_session, hija, destino)
+
+
+def test_mover_ocupante_a_unidad_llena_falla(db_session):
+    origen = _apto(db_session)
+    destino = resolver_apartamento(db_session, "TORRE 2", "202")
+    _agregar_confirmado(db_session, origen, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, origen, "Hija", telefono="3021112233")
+    for i in range(MAX_OCUPANTES_ACTIVOS):
+        agregar_ocupante(db_session, destino, f"Relleno{i}", telefono=f"30500000{i:02d}")
+
+    with pytest.raises(ValueError):
+        mover_ocupante(db_session, hija, destino)
