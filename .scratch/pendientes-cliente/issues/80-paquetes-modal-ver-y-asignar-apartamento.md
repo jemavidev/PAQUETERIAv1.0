@@ -115,5 +115,7 @@ feature nueva chica (asignar apartamento) que salió de esa misma revisión.
   Dirección en mayúsculas, ícono "Asignar apartamento" abre el modal y la
   cascada Torre→Apartamento funciona, íconos Acción/Cancelar en color real
   (verde/rojo) para filas Entregado/Cancelado en vez de gris.
-- Pendiente: confirmar en test.papyrus.com.co tras el próximo deploy (no
-  desplegado todavía).
+- Desplegado 2026-08-15 junto con [[81]] (sync manual a
+  `jemavidev/PaqueteX`, rama `deploy-paquetes-ver-modal-y-hora`, commit
+  `4649bf0`, push directo a `main`). Pendiente confirmar visualmente en
+  vivo (sin credenciales de ese ambiente en esta sesión).

@@ -51,8 +51,9 @@ que esto no cambia nada para el cliente en `/consultar` ni `/mis-paquetes`.
 
 ## Verificación
 
-- `tests/web/` completo pasa (ver corrida tras este commit).
+- `tests/web/` completo: 483 tests pasan.
 - Verificación manual en navegador: ícono Email en indigo con datos reales,
   código de acceso visible en la columna Cliente y en el modal "Ver" junto
   al ícono de acción.
-- Pendiente: confirmar en test.papyrus.com.co tras el próximo deploy.
+- Desplegado 2026-08-15 junto con [[80]] (mismo push a `jemavidev/PaqueteX`,
+  ver esa nota de despliegue). Pendiente confirmar visualmente en vivo.
