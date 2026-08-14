@@ -110,3 +110,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `77` — `/paquetes` y `/mis-paquetes` se sentían pesados al navegar: N+1 de consultas SQL por paquete, corregido con batch-resolución — **verificado**
 - `78` — `/paquetes`: tabla en vez de tarjetas (5 alternativas evaluadas en vivo, ganó "Grid denso") — **implementado**
 - `79` — `/paquetes`: renombrar columnas (Cliente/Dirección/Fecha) + columna Acciones ampliada a 8 íconos (Whatsapp/Teléfono/Email/Ver/Modificar/Acción/Cancelar/Eliminar) — **implementado**, ver [[78]]
+- `80` — `/paquetes`: pulido del modal "Ver" (campos clicables/ocultos, sin etiquetas), Dirección en mayúsculas, ícono nuevo "Asignar apartamento" (solo Anunciado sin unidad), ícono "Ver" quitado de Acciones (redundante con columna Cliente) — **implementado**, ver [[79]]
+- `81` — `/paquetes`: bug del ícono Email en Acciones (quedaba siempre apagado) corregido + código de acceso visible para staff (columna Cliente + modal Ver, confirmado explícitamente con el cliente que revierte una regla de privacidad previa) — **implementado**, ver [[80]]
