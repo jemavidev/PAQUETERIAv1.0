@@ -108,3 +108,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `75` — `/paquetes`: botón "Agregar" (enlace a `/announce`) a la izquierda del grupo de íconos de Estado, mismo look and feel — **implementado**
 - `76` — Ambiente local de desarrollo (`scripts/paquetex_dev_up.sh`/`_reset.sh`) para testing manual rápido + deploy a test.papyrus.com.co solo cuando se pida — **implementado**
 - `77` — `/paquetes` y `/mis-paquetes` se sentían pesados al navegar: N+1 de consultas SQL por paquete, corregido con batch-resolución — **verificado**
+- `78` — `/paquetes`: tabla en vez de tarjetas (5 alternativas evaluadas en vivo, ganó "Grid denso") — **implementado**
+- `79` — `/paquetes`: renombrar columnas (Cliente/Dirección/Fecha) + columna Acciones ampliada a 8 íconos (Whatsapp/Teléfono/Email/Ver/Modificar/Acción/Cancelar/Eliminar) — **implementado**, ver [[78]]
