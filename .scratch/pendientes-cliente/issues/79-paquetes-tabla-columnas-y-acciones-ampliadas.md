@@ -108,8 +108,13 @@ código/dato existente, se le preguntó directo al cliente):
   Email siempre apagado), modal "Ver" muestra destinatario + anunciante +
   residentes de la unidad con datos reales, Eliminar solo visible para
   ADMIN y solo en paquetes Anunciados.
-- Pendiente: confirmar en test.papyrus.com.co tras el próximo deploy (no
-  desplegado todavía).
+- Desplegado 2026-08-14: sync manual a `jemavidev/PaqueteX` (rama
+  `deploy-paquetes-tabla-y-acciones`, commit `15f13e5`, desde
+  `PaqueteXv.2@ec26f45`), push directo a `main` → CI + deploy vía SSH.
+  `https://test.papyrus.com.co/health` responde `{"status":"ok"}` tras el
+  push. **Pendiente confirmar visualmente en vivo** (login de staff real) —
+  esta sesión no tiene credenciales de ese ambiente para verificar el
+  contenido, solo que el servidor está sano.
 - Deuda declarada (no bloquea este issue): el ícono Email queda sin datos
   reales hasta que se decida construir "email de apartamento" como feature
   propia (columna nueva + pantalla para configurarla).

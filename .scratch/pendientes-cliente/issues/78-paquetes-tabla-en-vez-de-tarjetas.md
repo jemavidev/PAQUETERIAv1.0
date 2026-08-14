@@ -50,5 +50,5 @@ estaba conectado), y el cliente eligió la variante A ("Grid denso").
   enviadas al cliente): tabla renderiza con datos reales, búsqueda en vivo y
   filtros de Estado siguen funcionando, acciones reales (Recibir/Corregir/
   Entregar/Cancelar) probadas con clicks reales.
-- Pendiente: confirmar en test.papyrus.com.co tras el próximo deploy (no
-  desplegado todavía — cambios solo en working tree local).
+- Desplegado 2026-08-14 junto con [[79]] (mismo push a `jemavidev/PaqueteX`,
+  ver esa nota de despliegue). Pendiente confirmar visualmente en vivo.
