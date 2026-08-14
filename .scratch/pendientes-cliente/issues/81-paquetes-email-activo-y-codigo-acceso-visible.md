@@ -68,4 +68,6 @@ que esto no cambia nada para el cliente en `/consultar` ni `/mis-paquetes`.
   código de acceso visible en la columna Cliente y en el modal "Ver" junto
   al ícono de acción.
 - Desplegado 2026-08-15 junto con [[80]] (mismo push a `jemavidev/PaqueteX`,
-  ver esa nota de despliegue). Pendiente confirmar visualmente en vivo.
+  ver esa nota de despliegue) -- el chip de alto contraste (ronda 2) se
+  desplegó por separado el mismo día: rama `deploy-paquetes-codigo-acceso-
+  chip`, commit `a65db27`. Pendiente confirmar visualmente en vivo.
