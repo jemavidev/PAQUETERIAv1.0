@@ -13,6 +13,13 @@
    estar visible en la misma columna de clientes al lado del nombre del
    cliente al igual que dentro del modal al lado del boton para cambiar de
    estado Recibir o Entregar."
+3. "la idea es que este codigo lo hagas que resalte mas que cualquier otro
+   item en el sistema, posiblemente la letra con colores que hagan mas
+   contraste y que sea mas grande que el resto de las letras posiblemente
+   en negrilla, este codigo hay que tenerlo bastante a mano" — el texto
+   chico gris del punto 2 se reemplaza por un chip de fondo sólido
+   (`bg-amber-400`), negrilla, monoespaciado, más grande que el texto de
+   alrededor.
 
 **Status:** implementado
 
@@ -38,11 +45,16 @@ que esto no cambia nada para el cliente en `/consultar` ni `/mis-paquetes`.
   que es el email de quien anunció, no necesariamente el destinatario (solo
   coincide en el caso "yo mismo").
 - `packages/_resultados.html`:
-  - Columna Cliente: `p.access_code` como texto chico gris junto al nombre.
-  - Modal "Ver": `p.access_code` en fuente monoespaciada junto al ícono de
-    siguiente estado (Recibir/Entregar) en la esquina superior derecha,
-    visible también en Entregado/Cancelado (el código no depende del
-    estado, aunque ahí no hay ícono de acción al lado).
+  - Columna Cliente: `p.access_code` junto al nombre.
+  - Modal "Ver": `p.access_code` junto al ícono de siguiente estado
+    (Recibir/Entregar) en la esquina superior derecha, visible también en
+    Entregado/Cancelado (el código no depende del estado, aunque ahí no hay
+    ícono de acción al lado).
+  - Estilo (ronda 2, mismo día): de texto chico gris a chip de fondo sólido
+    `bg-amber-400`/`text-slate-900`, `font-extrabold`, `font-mono`,
+    `tracking-wide` -- deliberadamente MÁS intenso que los badges de Estado
+    (que son pastel/suave) para que gane el contraste visual sobre
+    cualquier otro elemento de la fila o del modal.
 - `tests/web/test_packages.py`:
   - `test_packages_con_sesion_lista_y_muestra_estado`: assertion invertida
     (`access_code in r.text`, ya no `not in`).
