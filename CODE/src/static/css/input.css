@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  /* Scroll interno de los modales (conversación 2026-08-15, pedido
+     explícito): mantiene el scroll funcional, oculta la barra visual --
+     Firefox/IE vía propiedad, Chrome/Safari/Edge vía pseudo-elemento. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

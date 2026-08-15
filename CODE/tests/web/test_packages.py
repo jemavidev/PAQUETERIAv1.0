@@ -604,7 +604,11 @@ def test_entregar_sigue_funcionando_sin_confirmar_la_guia(client):
 def test_advertencia_aparece_cuando_el_nombre_no_coincide_con_el_registrado(client):
     _login_staff(client)
     # Ana ya está registrada; alguien anuncia con su teléfono pero declara un
-    # nombre distinto (typo o tercero) -- vía el nuevo modo del cliente.
+    # nombre distinto (typo o tercero) -- `solo_nombre` (no
+    # `declarado_por_cliente`: desde la conversación 2026-08-15 ese
+    # constructor SOLO honra nombres de co-residentes de la misma unidad,
+    # cae al propio Anunciante si no hay match -- no serviría para este
+    # escenario de mismatch).
     from app.domain.persona_service import get_or_create_persona
 
     get_or_create_persona(client.db, "3001234567", "Ana Perez")
@@ -613,7 +617,7 @@ def test_advertencia_aparece_cuando_el_nombre_no_coincide_con_el_registrado(clie
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.declarado_por_cliente("Ana Peres"),
+        destinatario=Destinatario.solo_nombre("Ana Peres"),
     )
     client.db.commit()
 
@@ -631,6 +635,55 @@ def test_advertencia_no_aparece_cuando_el_nombre_coincide(client):
     assert "no coincide" not in r.text.lower()
 
 
+def test_advertencia_es_clickeable_y_abre_corregir_destinatario_en_anunciado(client):
+    # Conversación 2026-08-15 (pedido explícito): el ícono de advertencia
+    # debe ser clickeable y abrir el modal "Corregir destinatario" -- mismo
+    # modal que el ícono "Modificar" de Acciones.
+    _login_staff(client)
+    from app.domain.persona_service import get_or_create_persona
+
+    get_or_create_persona(client.db, "3001234567", "Ana Perez")
+    client.db.commit()
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana Perez",
+        destinatario=Destinatario.solo_nombre("Ana Peres"),
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    modal_correct = _segmento_modal(r.text, f"modal-correct-{p.id}")
+    assert modal_correct  # el modal existe (paquete ANUNCIADO)
+    assert f'data-open="modal-correct-{p.id}"' in r.text
+
+
+def test_advertencia_no_es_clickeable_fuera_de_anunciado(client):
+    # Fuera de ANUNCIADO no hay nada que corregir (ADR-0001, snapshot ya
+    # congelado) -- el modal "Corregir destinatario" ni existe en el DOM,
+    # así que el ícono se queda plano, sin `data-open`.
+    staff = _login_staff(client)
+    from app.domain.persona_service import get_or_create_persona
+
+    get_or_create_persona(client.db, "3001234567", "Ana Perez")
+    client.db.commit()
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana Perez",
+        destinatario=Destinatario.solo_nombre("Ana Peres"),
+    )
+    client.db.commit()
+    dom_receive(client.db, p, staff)
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "no coincide" in r.text.lower()
+    assert f'data-open="modal-correct-{p.id}"' not in r.text
+
+
 def test_advertencia_no_bloquea_las_acciones_normales(client):
     _login_staff(client)
     from app.domain.persona_service import get_or_create_persona
@@ -641,7 +694,7 @@ def test_advertencia_no_bloquea_las_acciones_normales(client):
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.declarado_por_cliente("Ana Peres"),
+        destinatario=Destinatario.solo_nombre("Ana Peres"),
     )
     client.db.commit()
 
@@ -677,7 +730,7 @@ def test_corregir_actualiza_nombre_y_quita_la_advertencia(client):
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.declarado_por_cliente("Ana Peres"),
+        destinatario=Destinatario.solo_nombre("Ana Peres"),
     )
     client.db.commit()
 
@@ -1200,7 +1253,7 @@ def test_filtro_por_q_encuentra_por_nombre_del_anunciante_cuando_difiere_del_des
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.declarado_por_cliente("Un Vecino"),
+        destinatario=Destinatario.solo_nombre("Un Vecino"),
     )
     client.db.commit()
 
@@ -1548,6 +1601,59 @@ def test_modal_ver_ya_no_tiene_seccion_anunciado_por(client):
     assert "Anunciado por" not in modal_ver
     assert "Anunció" in modal_ver
     assert "ANA" in modal_ver
+
+
+def test_destinatario_anuncio_es_el_telefono_propio_si_lo_tiene(client):
+    # Conversación 2026-08-15 (pedido explícito): "Destinatario" siempre
+    # muestra dónde llega la notificación del anuncio -- si el destinatario
+    # tiene teléfono propio, es ese.
+    _login_staff(client)
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    modal_ver = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "Anuncio" in modal_ver
+    assert "+573001234567" in modal_ver
+
+
+def test_destinatario_anuncio_cae_al_telefono_del_anunciante_sin_telefono_propio(client):
+    # Sin teléfono propio del destinatario (`Destinatario.solo_nombre`),
+    # "Anuncio" cae al Anunciante -- mismo fallback que usa el envío real
+    # de SMS (`resolver_destino_notificable`).
+    _login_staff(client)
+    p = announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.solo_nombre("Invitado Sin Telefono"),
+    )
+    client.db.commit()
+    assert p.recipient_phone is None
+
+    r = client.get("/paquetes")
+    modal_ver = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "Anuncio" in modal_ver
+    assert "+573001234567" in modal_ver
+
+
+def test_destinatario_anuncio_cae_al_whatsapp_del_anunciante_sin_telefono(client):
+    # Anunciante solo-WhatsApp (sin teléfono): "Anuncio" cae a su WhatsApp
+    # -- el campo nunca queda vacío (`announce()` exige uno de los dos).
+    _login_staff(client)
+    p = announce(
+        client.db,
+        anunciante_whatsapp="ana.whats",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.solo_nombre("Invitado Sin Telefono"),
+    )
+    client.db.commit()
+    assert p.recipient_phone is None
+
+    r = client.get("/paquetes")
+    modal_ver = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "Anuncio" in modal_ver
+    assert "ana.whats" in modal_ver
 
 
 def test_modal_ver_muestra_residentes_de_la_unidad(client):

@@ -74,7 +74,18 @@
           {# Pedido explícito: "Cliente" clic == botón "Ver" (mismo modal). #}
           <button type="button" data-open="modal-ver-{{ p.id }}" class="text-blue-800 hover:underline text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded">{{ p.recipient_name }}</button>
           {%- if p.advertencia_nombre %}
+          {%- if p.estado.value == "ANUNCIADO" %}
+          {# Clickeable -- pedido explícito (conversación 2026-08-15): abre
+             "Corregir destinatario" directo, mismo modal que el ícono
+             "Modificar" de Acciones. Solo mientras ANUNCIADO -- ese modal
+             ni existe en el DOM para los demás estados (ADR-0001, el
+             snapshot ya quedó congelado). #}
+          <button type="button" data-open="modal-correct-{{ p.id }}" class="inline-flex align-text-bottom ml-1 text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 rounded" aria-label="Corregir: el nombre anunciado no coincide con el registrado" title="El nombre anunciado no coincide con el registrado -- click para corregir">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.alerta|safe }}</svg>
+          </button>
+          {%- else %}
           <svg class="inline h-4 w-4 text-orange-600 align-text-bottom ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><title>El nombre anunciado no coincide con el registrado</title>{{ iconos_nav.alerta|safe }}</svg>
+          {%- endif %}
           {%- endif %}
           {# Código de acceso (conversación 2026-08-15) -- visible para
              STAFF acá (esta pantalla es staff-only, `current_staff`); el
@@ -158,15 +169,35 @@
           <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
           {{ p.recipient_name }}
         </p>
-        {% if p.recipient_phone %}
+        {# "Anuncio": dónde llega la notificación de este paquete -- pedido
+           explícito (conversación 2026-08-15), reemplaza el "Teléfono"
+           condicional de antes. SIEMPRE muestra algo (nunca queda vacío):
+           el teléfono propio del destinatario si lo tiene: si no, cae al
+           canal del Anunciante (mismo fallback que usa el envío real de
+           SMS, `notificacion_service.resolver_destino_notificable` -- sin
+           teléfono propio del destinatario, el aviso le llega al
+           Anunciante), primero su teléfono, si no su WhatsApp -- `announce()`
+           exige que el Anunciante tenga uno de los dos, así que este campo
+           nunca queda sin valor. #}
         <p class="text-sm text-slate-800 flex items-center gap-1.5">
-          <span class="inline-block bg-white/70 text-blue-700 text-[11px] font-semibold rounded px-1.5 py-0.5">Teléfono</span>
+          <span class="inline-block bg-white/70 text-blue-700 text-[11px] font-semibold rounded px-1.5 py-0.5">Anuncio</span>
+          {%- if p.recipient_phone %}
           <a href="tel:{{ p.recipient_phone }}" class="text-slate-800 hover:text-blue-700 hover:underline flex items-center gap-1.5">
             <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
             {{ p.recipient_phone }}
           </a>
+          {%- elif p.persona_anunciante and p.persona_anunciante.telefono %}
+          <a href="{{ url_llamada(p.persona_anunciante) }}" class="text-slate-800 hover:text-blue-700 hover:underline flex items-center gap-1.5">
+            <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
+            {{ p.persona_anunciante.telefono }}
+          </a>
+          {%- elif p.persona_anunciante and p.persona_anunciante.whatsapp_usuario %}
+          <a href="{{ url_whatsapp(p.persona_anunciante) }}" target="_blank" rel="noopener noreferrer" class="text-slate-800 hover:text-emerald-600 hover:underline flex items-center gap-1.5">
+            <svg class="h-4 w-4 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">{{ iconos_nav.whatsapp|safe }}</svg>
+            {{ p.persona_anunciante.whatsapp_usuario }}
+          </a>
+          {%- endif %}
         </p>
-        {% endif %}
       </div>
 
       {% if p.residentes_unidad %}
@@ -261,35 +292,92 @@
 
     {% if p.estado.value == "ANUNCIADO" %}
     {%- set este_paquete_con_error = error_paquete_id|default(none) == p.id|string -%}
+    {#- PROTOTYPE 2026-08-15 -- throwaway, borrar antes de mergear a main.
+       Pregunta: "menor cantidad de clicks posible" para elegir el
+       candidato correcto al corregir destinatario. 3 variantes, gatilladas
+       por ?variant=select|click|confirm (switcher al pie de la página). #}
+    {%- set variant_correccion = request.query_params.get('variant', 'select') -%}
     {% call modal("correct-" ~ p.id, "Corregir destinatario", abierto=este_paquete_con_error) %}
       <form method="post" action="/paquetes/{{ p.id }}/corregir">
         {% if p.candidatos_correccion %}
-        <label class="block text-sm font-medium text-slate-700 mb-1" for="candidato-{{ p.id }}">Nombre correcto (elige de la lista)</label>
-        <select id="candidato-{{ p.id }}" name="candidato_idx" required onchange="document.getElementById('nuevo-ocupante-{{ p.id }}').hidden = (this.value !== 'nuevo')" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
-          <option value="" disabled selected>Seleccioná un nombre…</option>
-          {% for c in p.candidatos_correccion %}
-          <option value="{{ loop.index0 }}">{{ c.nombre }}{% if c.telefono %} — {{ c.telefono }}{% endif %}</option>
-          {% endfor %}
-          {# Ticket 09 (.scratch/mis-datos): declarar un Ocupante nuevo del
-             apartamento directamente acá, en vez de elegir uno ya conocido. #}
-          <option value="nuevo">Es un nuevo residente de este apartamento</option>
-        </select>
-        <div id="nuevo-ocupante-{{ p.id }}" hidden class="mt-3 space-y-3">
-          {{ input_texto('Nombre del nuevo residente', name='nuevo_ocupante_nombre', id='nuevo-ocupante-nombre-' ~ p.id, icono=iconos_nav.persona, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
-          {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='nuevo-ocupante-telefono-' ~ p.id, icono=iconos_nav.telefono_campo) }}
-          {# Mover (.scratch/ocupante-principal-escenarios, ticket 12): si el
-             contacto ya es Ocupante activo no-principal de otra unidad, en
-             vez de bloquear se mueve a esa persona (con su identidad real). #}
-          <label class="flex items-center gap-2 text-xs text-slate-600">
-            <input type="checkbox" name="mover_de_otra_unidad" value="1">
-            Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
-          </label>
-        </div>
+          {%- if variant_correccion == 'click' %}
+          {#- Variante B -- un clic, auto-submit: cada tarjeta ES el submit. #}
+          <label class="block text-sm font-medium text-slate-700 mb-2">Nombre correcto (un clic)</label>
+          <div class="space-y-2">
+            {% for c in p.candidatos_correccion %}
+            <button type="submit" name="candidato_idx" value="{{ loop.index0 }}" class="w-full flex items-center gap-3 text-left rounded-lg border border-slate-200 px-3.5 py-3 hover:bg-slate-50 hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 transition">
+              <svg class="h-5 w-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
+              <span class="flex-1">
+                <span class="block text-sm font-medium text-slate-900">{{ c.nombre }}</span>
+                {% if c.telefono %}<span class="block text-xs text-slate-500">{{ c.telefono }}</span>{% endif %}
+              </span>
+            </button>
+            {% endfor %}
+            <button type="button" onclick="document.getElementById('nuevo-ocupante-{{ p.id }}').hidden = false; this.hidden = true;" class="w-full text-left rounded-lg border border-dashed border-slate-300 px-3.5 py-3 text-sm text-slate-500 hover:bg-slate-50 transition">+ Es un nuevo residente de este apartamento</button>
+          </div>
+          <div id="nuevo-ocupante-{{ p.id }}" hidden class="mt-3 space-y-3">
+            {{ input_texto('Nombre del nuevo residente', name='nuevo_ocupante_nombre', id='nuevo-ocupante-nombre-' ~ p.id, icono=iconos_nav.persona, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
+            {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='nuevo-ocupante-telefono-' ~ p.id, icono=iconos_nav.telefono_campo) }}
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" name="mover_de_otra_unidad" value="1">
+              Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
+            </label>
+            <input type="hidden" name="candidato_idx" value="nuevo">
+            <button type="submit" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar nuevo residente</button>
+          </div>
+          {%- elif variant_correccion == 'confirm' %}
+          {#- Variante C -- tarjetas seleccionables (radio oculto) + confirmar. #}
+          <label class="block text-sm font-medium text-slate-700 mb-2">Nombre correcto</label>
+          <div class="space-y-2">
+            {% for c in p.candidatos_correccion %}
+            <label class="flex items-center gap-3 rounded-lg border border-slate-200 px-3.5 py-3 cursor-pointer hover:bg-slate-50 has-[:checked]:border-blue-800 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-800 transition">
+              <input type="radio" name="candidato_idx" value="{{ loop.index0 }}" required onchange="document.getElementById('guardar-correccion-{{ p.id }}').disabled = false; document.getElementById('nuevo-ocupante-{{ p.id }}').hidden = true;" class="h-4 w-4 text-blue-800 focus-visible:outline-none">
+              <svg class="h-5 w-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
+              <span class="flex-1">
+                <span class="block text-sm font-medium text-slate-900">{{ c.nombre }}</span>
+                {% if c.telefono %}<span class="block text-xs text-slate-500">{{ c.telefono }}</span>{% endif %}
+              </span>
+            </label>
+            {% endfor %}
+            <label class="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 px-3.5 py-3 cursor-pointer hover:bg-slate-50 has-[:checked]:border-blue-800 has-[:checked]:bg-blue-50 transition">
+              <input type="radio" name="candidato_idx" value="nuevo" required onchange="document.getElementById('guardar-correccion-{{ p.id }}').disabled = false; document.getElementById('nuevo-ocupante-{{ p.id }}').hidden = false;" class="h-4 w-4 text-blue-800 focus-visible:outline-none">
+              <span class="text-sm text-slate-500">Es un nuevo residente de este apartamento</span>
+            </label>
+          </div>
+          <div id="nuevo-ocupante-{{ p.id }}" hidden class="mt-3 space-y-3">
+            {{ input_texto('Nombre del nuevo residente', name='nuevo_ocupante_nombre', id='nuevo-ocupante-nombre-' ~ p.id, icono=iconos_nav.persona, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
+            {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='nuevo-ocupante-telefono-' ~ p.id, icono=iconos_nav.telefono_campo) }}
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" name="mover_de_otra_unidad" value="1">
+              Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
+            </label>
+          </div>
+          <button type="submit" id="guardar-correccion-{{ p.id }}" disabled class="w-full justify-center mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed">Guardar corrección</button>
+          {%- else %}
+          {#- Variante A -- baseline actual (select nativo), sin cambios. #}
+          <label class="block text-sm font-medium text-slate-700 mb-1" for="candidato-{{ p.id }}">Nombre correcto (elige de la lista)</label>
+          <select id="candidato-{{ p.id }}" name="candidato_idx" required onchange="document.getElementById('nuevo-ocupante-{{ p.id }}').hidden = (this.value !== 'nuevo')" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
+            <option value="" disabled selected>Seleccioná un nombre…</option>
+            {% for c in p.candidatos_correccion %}
+            <option value="{{ loop.index0 }}">{{ c.nombre }}{% if c.telefono %} — {{ c.telefono }}{% endif %}</option>
+            {% endfor %}
+            <option value="nuevo">Es un nuevo residente de este apartamento</option>
+          </select>
+          <div id="nuevo-ocupante-{{ p.id }}" hidden class="mt-3 space-y-3">
+            {{ input_texto('Nombre del nuevo residente', name='nuevo_ocupante_nombre', id='nuevo-ocupante-nombre-' ~ p.id, icono=iconos_nav.persona, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
+            {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='nuevo-ocupante-telefono-' ~ p.id, icono=iconos_nav.telefono_campo) }}
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" name="mover_de_otra_unidad" value="1">
+              Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
+            </label>
+          </div>
+          <button type="submit" class="w-full justify-center mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar corrección</button>
+          {%- endif %}
         {% else %}
         {{ input_texto('Nombre', name='recipient_name', value=p.recipient_name, required=True, id='nombre-corregir-' ~ p.id, icono=iconos_nav.persona, error=(error if (este_paquete_con_error and error_campo|default(none) == 'recipient_name') else none), extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
         {{ input_texto('Teléfono de notificación (opcional)', name='recipient_phone', type='tel', value=p.recipient_phone or '', id='telefono-corregir-' ~ p.id, icono=iconos_nav.telefono_campo) }}
-        {% endif %}
         <button type="submit" class="w-full justify-center mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar corrección</button>
+        {% endif %}
       </form>
     {% endcall %}
     {% endif %}
@@ -329,4 +417,19 @@
 
 <div class="mt-4">
   {{ paginacion(pagina_actual, total_paginas, '/paquetes', params=filtros_vigentes) }}
+</div>
+
+{#- PROTOTYPE 2026-08-15 -- switcher de variantes para "Corregir
+   destinatario" (pregunta: menor cantidad de clicks posible para elegir
+   el candidato correcto). Throwaway -- borrar este bloque completo + los
+   3 `{% if variant_correccion == ... %}` de arriba antes de mergear a
+   main. Abre cualquier paquete Anunciado con nombre no coincidente
+   (ícono naranja junto al nombre, o "Modificar" en Acciones) para
+   comparar. #}
+{%- set variante_actual = request.query_params.get('variant', 'select') -%}
+<div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-white rounded-full shadow-xl px-2 py-2 flex items-center gap-1 text-sm">
+  <span class="px-2 text-slate-400 text-xs uppercase tracking-wide">Prototipo</span>
+  <a href="/paquetes?variant=select" class="px-3 py-1.5 rounded-full transition {{ 'bg-blue-600 text-white' if variante_actual == 'select' else 'text-slate-300 hover:bg-slate-800' }}">A · Select actual</a>
+  <a href="/paquetes?variant=click" class="px-3 py-1.5 rounded-full transition {{ 'bg-blue-600 text-white' if variante_actual == 'click' else 'text-slate-300 hover:bg-slate-800' }}">B · Un clic</a>
+  <a href="/paquetes?variant=confirm" class="px-3 py-1.5 rounded-full transition {{ 'bg-blue-600 text-white' if variante_actual == 'confirm' else 'text-slate-300 hover:bg-slate-800' }}">C · Selección + confirmar</a>
 </div>
