@@ -165,6 +165,22 @@
       aptoSelect.disabled = opciones.length === 0;
     });
 
+    // Auto-submit al elegir Apartamento (conversación 2026-08-15, pedido
+    // explícito: mismo espíritu "eficiente, menor cantidad de clicks" que
+    // las tarjetas de un clic de "Corregir destinatario" -- acá el
+    // catálogo es demasiado grande para tarjetas (10 Torres x hasta ~80
+    // Apartamentos), así que el ahorro de clicks es distinto: el <select>
+    // se queda (es el widget correcto para una lista así de grande), pero
+    // elegir el Apartamento ya envía el form -- sin un tercer click en un
+    // botón "Asignar apartamento" aparte. El botón se queda en el DOM
+    // (oculto) como respaldo de teclado/accesibilidad y para que el guard
+    // de anti doble-envío de abajo siga teniendo algo que deshabilitar.
+    document.addEventListener('change', function (e) {
+      var aptoSelect = e.target.closest('[data-apto-asignar]');
+      if (!aptoSelect || !aptoSelect.value) return;
+      aptoSelect.form.requestSubmit();
+    });
+
     // Anti doble-envío: deshabilitar y re-habilitar SIEMPRE (finally) por si el
     // envío se aborta en el cliente (bug a no heredar de los modales viejos).
     document.addEventListener('submit', function (e) {
