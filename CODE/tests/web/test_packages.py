@@ -752,7 +752,7 @@ def test_corregir_actualiza_nombre_y_quita_la_advertencia(client):
 # --------------------------------------------------------------------------- #
 # Grupo 16 (Ronda 2) — Corregir por selección de Ocupantes conocidos.
 # --------------------------------------------------------------------------- #
-def test_modal_corregir_muestra_select_cuando_hay_candidatos(client):
+def test_modal_corregir_muestra_candidatos_cuando_los_hay(client):
     _login_staff(client)
     p = _anunciar(client, tel="3001234567", nombre="Ana")
 
@@ -763,6 +763,35 @@ def test_modal_corregir_muestra_select_cuando_hay_candidatos(client):
     modal_html = r.text[idx:fin] if fin != -1 else r.text[idx:]
     assert f'name="candidato_idx"' in modal_html
     assert 'name="recipient_name"' not in modal_html
+
+
+def test_modal_corregir_candidatos_son_tarjetas_de_un_clic(client):
+    # Conversación 2026-08-15 (prototipado en
+    # `prototype/corregir-destinatario-candidatos`, decisión del cliente):
+    # cada candidato ES el submit -- sin <select> ni botón "Guardar" aparte
+    # para el caso de elegir a alguien ya conocido.
+    _login_staff(client)
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Jesus Villalobos", telefono="3033333333")
+    client.db.commit()
+    p = announce(
+        client.db,
+        anunciante_telefono="3044444444",
+        anunciante_nombre="Portero",
+        destinatario=Destinatario.solo_nombre("Nombre Que No Coincide"),
+        apartamento=apto,
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    modal_correct = _segmento_modal(r.text, f"modal-correct-{p.id}")
+    assert '<select' not in modal_correct
+    assert f'<button type="submit" name="candidato_idx" value="0"' in modal_correct
+    assert "JESUS VILLALOBOS" in modal_correct
 
 
 def test_corregir_con_candidato_invalido_se_rechaza_sin_efecto(client):
