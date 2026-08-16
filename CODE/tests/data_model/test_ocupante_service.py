@@ -33,6 +33,7 @@ from app.domain.ocupante_service import (
     ocupantes_activos_de_personas,
     promover_a_principal,
     reasignar_apartamento,
+    residentes_por_torre_apartamento,
     telefono_notificacion_ocupante,
 )
 from app.domain.persona import Persona
@@ -295,6 +296,24 @@ def test_listar_ocupantes_excluye_dados_de_baja_por_defecto(db_session):
 
     con_historial = listar_ocupantes(db_session, apto, incluir_baja=True)
     assert {o.id for o in con_historial} == {papa.id, hija.id}
+
+
+def test_residentes_por_torre_apartamento_solo_unidades_con_ocupante_activo(db_session):
+    # Issue 85 (.scratch/pendientes-cliente) -- buscador de "Asignar
+    # apartamento": una unidad ausente del dict está libre.
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+    dar_de_baja_ocupante(db_session, hija)
+
+    residentes = residentes_por_torre_apartamento(db_session)
+    assert residentes[apto.torre][apto.apartamento] == [papa.nombre]  # Hija, dada de baja, no cuenta
+
+    # Otra unidad del catálogo, sin ningún Ocupante -- ausente del dict.
+    from app.domain.apartamento_service import resolver_apartamento
+
+    libre = resolver_apartamento(db_session, "TORRE 2", "201")
+    assert libre.apartamento not in residentes.get(libre.torre, {})
 
 
 def test_dar_de_baja_es_idempotente(db_session):

@@ -41,6 +41,7 @@ from app.domain.ocupante_service import (
     mensaje_ya_ocupante_activo,
     mover_ocupante,
     ocupante_activo_por_contacto,
+    residentes_por_torre_apartamento,
     telefono_notificacion_ocupante,
 )
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, MotivoCancelacion, Paquete, TipoPaquete
@@ -376,6 +377,11 @@ def _render_lista(
             # (.scratch/ocupante-principal-escenarios, ticket 05) -- declarar
             # unidad cuando el destinatario todavía no tiene una.
             "catalogo_torres": listar_catalogo_por_torre(db),
+            # Residentes ACTIVOS por unidad, para el buscador de "Asignar
+            # apartamento" (issue 85) -- antes de asociar, el staff ve si
+            # la unidad está libre o ya tiene residentes (y cuáles), para
+            # no mezclar por error a alguien con la familia equivocada.
+            "residentes_por_unidad": residentes_por_torre_apartamento(db),
             # Identifica CUÁL paquete/modal tenía el error, para reabrirlo
             # y marcar su campo específico (retroalimentación en vivo
             # 2026-08-02) -- solo aplica hoy al modal "Corregir" (el único

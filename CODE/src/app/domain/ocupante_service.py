@@ -73,6 +73,30 @@ def listar_ocupantes(
     return query.order_by(Ocupante.es_principal.desc(), Ocupante.created_at.asc()).all()
 
 
+def residentes_por_torre_apartamento(session: Session) -> dict[str, dict[str, list[str]]]:
+    """`{torre: {apartamento: [nombre, ...]}}` -- SOLO las unidades con al
+    menos un Ocupante ACTIVO, para todo el catálogo en una sola consulta
+    (issue 85, .scratch/pendientes-cliente: buscador de "Asignar
+    apartamento" -- antes de asociar un paquete sin unidad a una, el staff
+    necesita saber si esa unidad está libre o ya tiene residentes, para no
+    mezclar por error a alguien con la familia equivocada). Una unidad
+    ausente está libre (sin ningún Ocupante activo); principal primero,
+    mismo orden que `listar_ocupantes`. Forma anidada (no tupla como
+    llave) a propósito -- se serializa tal cual a JSON para el buscador
+    client-side, mismo criterio que `listar_catalogo_por_torre`."""
+    filas = (
+        session.query(Apartamento.torre, Apartamento.apartamento, Ocupante.nombre)
+        .join(Ocupante, Ocupante.apartamento_id == Apartamento.id)
+        .filter(Ocupante.desvinculado_en.is_(None))
+        .order_by(Ocupante.es_principal.desc(), Ocupante.created_at.asc())
+        .all()
+    )
+    resultado: dict[str, dict[str, list[str]]] = {}
+    for torre, apartamento, nombre in filas:
+        resultado.setdefault(torre, {}).setdefault(apartamento, []).append(nombre)
+    return resultado
+
+
 def ocupante_de_persona(
     session: Session, apartamento: Apartamento, persona_id
 ) -> Ocupante | None:

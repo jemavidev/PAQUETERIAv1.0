@@ -1817,6 +1817,35 @@ def test_modal_asignar_apartamento_es_un_campo_de_busqueda(client):
     assert 'name="apartamento"' in modal_asignar
 
 
+def test_modal_asignar_apartamento_expone_residentes_por_unidad(client):
+    # Conversación 2026-08-15 (pedido explícito): al buscar una unidad,
+    # debe verse si está libre o ya tiene residentes -- para no asociar
+    # por error a alguien con la familia equivocada.
+    import json
+    import re
+
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    agregar_ocupante(client.db, apto, "Jesus Villalobos", telefono="3033333333")
+    client.db.commit()
+    p = _anunciar(client, nombre="Ana")  # sin unidad
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    modal_asignar = _segmento_modal(r.text, f"modal-asignar-apto-{p.id}")
+    match = re.search(
+        rf'id="residentes-unidad-asignar-{p.id}">(.*?)</script>', modal_asignar, re.S
+    )
+    assert match, "no se encontró el script de residentes por unidad"
+    residentes = json.loads(match.group(1))
+    assert residentes["TORRE 1"]["101"] == ["JESUS VILLALOBOS"]
+    # Torre 1/102 nunca tuvo Ocupante -- está libre, por eso ausente del dict.
+    assert "102" not in residentes.get("TORRE 1", {})
+
+
 def test_icono_asignar_apartamento_solo_en_anunciado_sin_unidad(client):
     staff = _login_staff(client)
     anunciado = _anunciar(client, tel="3001234567", nombre="Ana")  # sin unidad
