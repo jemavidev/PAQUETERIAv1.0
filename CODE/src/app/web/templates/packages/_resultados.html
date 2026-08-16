@@ -275,120 +275,131 @@
     {% if p.estado.value == "ANUNCIADO" and not p.direccion_corta and catalogo_torres %}
     {% call modal("asignar-apto-" ~ p.id, "Asignar apartamento") %}
       <p class="text-sm text-slate-700 mb-3">Asignale una unidad a <strong>{{ p.recipient_name }}</strong>. Solo se puede mientras el paquete sigue Anunciado.</p>
-      {# Campo único de búsqueda sobre el catálogo completo (conversación
-         2026-08-15, prototipado en `prototype/asignar-apartamento-buscar`,
-         decisión del cliente: "La opcion c es la mas rapida") -- escribir
-         "302" o "Torre 3" filtra sugerencias "Torre X · Apt Y"; elegir
-         una envía el form de una vez, sin navegar Torre y Apartamento por
-         separado. #}
+      {# Flujo guiado de 3 pasos (conversación 2026-08-15, pedido explícito
+         tras 2 rondas fallidas del campo de búsqueda libre -- rama
+         `prototype/asignar-apartamento-buscar` queda como referencia
+         histórica de ese intento, ya no es lo que corre acá):
+           1) Escribir el número de Apartamento (3 o 4 dígitos según el
+              catálogo -- pisos 10/11 usan 4).
+           2) En cuanto lo escrito calza EXACTO con al menos una unidad
+              real, aparecen las Torres donde existe ese número (tarjetas
+              de un clic).
+           3) Elegir una Torre muestra sus residentes actuales (o "Libre")
+              y un botón de confirmar -- recién ahí se envía el form,
+              nunca antes: el punto es poder revisar antes de asignar. #}
       <form method="post" action="/paquetes/{{ p.id }}/asignar-apartamento">
         <script type="application/json" id="catalogo-torres-asignar-{{ p.id }}">{{ catalogo_torres|tojson }}</script>
-        {# Residentes activos por unidad (issue 85, pedido explícito: "al
-           digitar el apartamento, deberia aparecer si este esta libre o
-           si tiene residentes actuales... para saber si se asocia o no")
-           -- una unidad ausente del dict está libre. #}
         <script type="application/json" id="residentes-unidad-asignar-{{ p.id }}">{{ residentes_por_unidad|tojson }}</script>
-        <label class="block text-sm font-medium text-slate-700 mb-1" for="buscar-unidad-{{ p.id }}">Buscar unidad</label>
-        <input type="text" id="buscar-unidad-{{ p.id }}" autocomplete="off" placeholder="Ej. 302, o Torre 3" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
-        <div id="buscar-resultados-{{ p.id }}" class="mt-2 space-y-1 max-h-56 overflow-y-auto"></div>
-        <input type="hidden" name="torre" id="buscar-torre-{{ p.id }}">
-        <input type="hidden" name="apartamento" id="buscar-apto-{{ p.id }}">
+
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="asignar-apto-input-{{ p.id }}">Apartamento</label>
+        <input type="text" id="asignar-apto-input-{{ p.id }}" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="Ej. 302" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
+
+        <div id="asignar-paso-torre-{{ p.id }}" hidden class="mt-3">
+          <label class="block text-sm font-medium text-slate-700 mb-2">¿Cuál Torre?</label>
+          <div id="asignar-torres-posibles-{{ p.id }}" class="grid grid-cols-5 gap-2"></div>
+        </div>
+
+        <div id="asignar-paso-resumen-{{ p.id }}" hidden class="mt-3">
+          <div id="asignar-resumen-{{ p.id }}" class="rounded-lg border border-slate-200 p-3"></div>
+          <button type="submit" class="w-full justify-center mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Asignar apartamento</button>
+        </div>
+
+        <input type="hidden" name="torre" id="asignar-hid-torre-{{ p.id }}">
+        <input type="hidden" name="apartamento" id="asignar-hid-apto-{{ p.id }}">
         <script>
           (function () {
             var catalogo = JSON.parse(document.getElementById('catalogo-torres-asignar-{{ p.id }}').textContent);
             var residentes = JSON.parse(document.getElementById('residentes-unidad-asignar-{{ p.id }}').textContent);
-            var plano = [];
-            Object.keys(catalogo).forEach(function (torre) {
-              var mNumero = torre.match(/(\d{1,2})/);
-              (catalogo[torre] || []).forEach(function (apto) {
-                var nombres = (residentes[torre] || {})[apto] || [];
-                plano.push({
-                  torre: torre,
-                  torreNumero: mNumero ? mNumero[1] : null,
-                  apto: apto,
-                  etiqueta: torre + ' · Apt ' + apto,
-                  nombres: nombres,
-                  nombresTexto: nombres.join(' ').toLowerCase()
-                });
-              });
-            });
-            var input = document.getElementById('buscar-unidad-{{ p.id }}');
-            var resultados = document.getElementById('buscar-resultados-{{ p.id }}');
-            var form = input.closest('form');
-            input.addEventListener('input', function () {
-              // Búsqueda consciente de los campos, no un match a ciegas
-              // contra un solo texto pegado (bug reportado en vivo, 2 rondas:
-              // v1 comparaba la query COMPLETA como substring contiguo de
-              // "Torre X · Apt Y" -- escribir "torre 3 302" no calzaba por el
-              // " · Apt " de en medio, resultados en cero. v2 partió por
-              // palabras pero las comparaba como substring en cualquier
-              // parte -- "torre 3" mostraba TORRE 1 porque "3" calzaba
-              // dentro de "103"/"203"/"303", el dígito de la Torre se
-              // confundía con dígitos del número de Apartamento. Acá se
-              // extrae explícitamente el número de Torre con /torre\s*(\d{1,2})/
-              // -- si aparece, filtra por ESE número exacto de Torre, nunca
-              // por substring -- y el resto de lo escrito se interpreta por
-              // token: dígitos buscan por PREFIJO del número de Apartamento,
-              // letras buscan por substring en los nombres de residentes.
-              var q = input.value.trim().toLowerCase();
-              resultados.innerHTML = '';
-              if (!q) return;
-              var torreExplicita = null;
-              var resto = q;
-              var mTorre = q.match(/torre\s*(\d{1,2})/);
-              if (mTorre) {
-                torreExplicita = mTorre[1];
-                resto = (q.slice(0, mTorre.index) + q.slice(mTorre.index + mTorre[0].length)).trim();
+
+            var aptoInput = document.getElementById('asignar-apto-input-{{ p.id }}');
+            var pasoTorre = document.getElementById('asignar-paso-torre-{{ p.id }}');
+            var torresContenedor = document.getElementById('asignar-torres-posibles-{{ p.id }}');
+            var pasoResumen = document.getElementById('asignar-paso-resumen-{{ p.id }}');
+            var resumen = document.getElementById('asignar-resumen-{{ p.id }}');
+            var hidTorre = document.getElementById('asignar-hid-torre-{{ p.id }}');
+            var hidApto = document.getElementById('asignar-hid-apto-{{ p.id }}');
+
+            function ocultarDesdeTorre() {
+              pasoTorre.hidden = true;
+              torresContenedor.innerHTML = '';
+              pasoResumen.hidden = true;
+              resumen.innerHTML = '';
+              hidTorre.value = '';
+              hidApto.value = '';
+            }
+
+            function mostrarResumen(torre, apto) {
+              hidTorre.value = torre;
+              hidApto.value = apto;
+              resumen.innerHTML = '';
+              var titulo = document.createElement('p');
+              titulo.className = 'text-sm font-bold text-slate-900';
+              titulo.textContent = torre + ' · Apt ' + apto;
+              resumen.appendChild(titulo);
+              var nombres = (residentes[torre] || {})[apto] || [];
+              if (nombres.length === 0) {
+                var libre = document.createElement('p');
+                libre.className = 'mt-1 text-sm font-semibold text-emerald-600';
+                libre.textContent = 'Libre -- sin residentes registrados';
+                resumen.appendChild(libre);
+              } else {
+                var aviso = document.createElement('p');
+                aviso.className = 'mt-1 text-xs font-semibold text-orange-600';
+                aviso.textContent = (nombres.length === 1 ? '1 residente' : nombres.length + ' residentes') + ':';
+                resumen.appendChild(aviso);
+                var lista = document.createElement('p');
+                lista.className = 'text-sm text-slate-700';
+                lista.textContent = nombres.join(', ');
+                resumen.appendChild(lista);
               }
-              var tokensResto = resto.split(/\s+/).filter(Boolean);
-              var coincidencias = plano.filter(function (u) {
-                if (torreExplicita !== null && u.torreNumero !== torreExplicita) return false;
-                return tokensResto.every(function (t) {
-                  if (/^\d+$/.test(t)) return u.apto.indexOf(t) === 0;
-                  return u.nombresTexto.indexOf(t) !== -1;
+              pasoResumen.hidden = false;
+            }
+
+            // Paso 1 -> 2: en cuanto lo escrito calza EXACTO con al menos
+            // una unidad real del catálogo (nunca por prefijo -- el
+            // catálogo mezcla números de 3 y 4 dígitos sin que un 3
+            // dígitos completo sea nunca prefijo de uno de 4, confirmado
+            // contra los datos reales, así que el match exacto no deja
+            // colgada la escritura de un 4to dígito).
+            aptoInput.addEventListener('input', function () {
+              aptoInput.value = aptoInput.value.replace(/\D/g, '').slice(0, 4);
+              ocultarDesdeTorre();
+              var apto = aptoInput.value;
+              if (apto.length < 3) { pasoTorre.hidden = true; torresContenedor.innerHTML = ''; return; }
+              var torresValidas = Object.keys(catalogo)
+                .filter(function (t) { return (catalogo[t] || []).indexOf(apto) !== -1; })
+                .sort(function (a, b) {
+                  var na = parseInt((a.match(/\d+/) || ['0'])[0], 10);
+                  var nb = parseInt((b.match(/\d+/) || ['0'])[0], 10);
+                  return na - nb;
                 });
-              }).slice(0, 10);
-              coincidencias.forEach(function (u) {
+              torresContenedor.innerHTML = '';
+              if (!torresValidas.length) {
+                var sinResultados = document.createElement('p');
+                sinResultados.className = 'col-span-5 text-sm text-slate-400';
+                sinResultados.textContent = 'Ninguna Torre tiene el Apartamento ' + apto + '.';
+                torresContenedor.appendChild(sinResultados);
+                pasoTorre.hidden = false;
+                return;
+              }
+              torresValidas.forEach(function (torre) {
                 var btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'w-full text-left rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50 hover:border-blue-300 transition';
-                var fila = document.createElement('div');
-                fila.className = 'flex items-center justify-between gap-2';
-                var etiqueta = document.createElement('span');
-                etiqueta.className = 'text-sm text-slate-700';
-                etiqueta.textContent = u.etiqueta;
-                fila.appendChild(etiqueta);
-                var estado = document.createElement('span');
-                if (u.nombres.length === 0) {
-                  estado.className = 'shrink-0 text-xs font-semibold text-emerald-600';
-                  estado.textContent = 'Libre';
-                } else {
-                  estado.className = 'shrink-0 text-xs font-semibold text-orange-600';
-                  estado.textContent = u.nombres.length === 1 ? '1 residente' : u.nombres.length + ' residentes';
-                }
-                fila.appendChild(estado);
-                btn.appendChild(fila);
-                // Residentes COMPLETOS, sin truncar (pedido explícito: "ver
-                // incluso los residentes que existan en un apartamento...
-                // para asignar a la persona correcta al apartamento
-                // correcto") -- segunda línea, solo si hay alguno.
-                if (u.nombres.length > 0) {
-                  var listaResidentes = document.createElement('p');
-                  listaResidentes.className = 'mt-0.5 text-xs text-slate-500';
-                  listaResidentes.textContent = u.nombres.join(', ');
-                  btn.appendChild(listaResidentes);
-                }
+                btn.className = 'rounded-lg border border-slate-200 px-2 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 transition';
+                btn.textContent = torre.replace('TORRE ', '');
                 btn.addEventListener('click', function () {
-                  document.getElementById('buscar-torre-{{ p.id }}').value = u.torre;
-                  document.getElementById('buscar-apto-{{ p.id }}').value = u.apto;
-                  form.requestSubmit();
+                  Array.prototype.forEach.call(torresContenedor.querySelectorAll('button'), function (b) {
+                    b.classList.remove('bg-blue-800', 'border-blue-800', 'text-white');
+                  });
+                  btn.classList.add('bg-blue-800', 'border-blue-800', 'text-white');
+                  mostrarResumen(torre, apto);
                 });
-                resultados.appendChild(btn);
+                torresContenedor.appendChild(btn);
               });
+              pasoTorre.hidden = false;
             });
           })();
         </script>
-        <button type="submit" class="sr-only">Asignar apartamento</button>
       </form>
     {% endcall %}
     {% endif %}
