@@ -119,40 +119,33 @@
 </div>
 
 {% for p in paquetes %}
-    {% call modal("ver-" ~ p.id, p.recipient_name, ancho='md') %}
-      <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+    {# Título = "Nombre - Código de acceso" (conversación 2026-08-16,
+       pedido explícito: compactar la parte superior del modal) -- el
+       código ya no vive aparte en la fila del badge, queda junto al
+       nombre en el encabezado del modal mismo. #}
+    {% call modal("ver-" ~ p.id, p.recipient_name ~ " - " ~ p.access_code, ancho='md') %}
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div class="flex flex-wrap items-center gap-2">
           {{ badge(p.estado) }}
           {% if p.direccion_corta %}<span class="text-sm font-bold uppercase text-slate-600">{{ p.direccion_corta }}</span>{% endif %}
         </div>
-        <div class="flex items-center gap-2">
-          {# Código de acceso (conversación 2026-08-15) -- visible para
-             STAFF acá, junto al ícono de siguiente estado; el cliente
-             sigue sin verlo en /consultar ni /mis-paquetes. Sin fondo
-             (mismo criterio que la columna Cliente, pedido explícito de
-             quitar el chip ámbar) -- negrilla + monoespaciado, un punto
-             más grande acá porque hay más espacio que en una celda de tabla. #}
-          <span class="inline-flex items-center text-slate-900 font-mono font-extrabold text-base tracking-wide" title="Código de acceso">{{ p.access_code }}</span>
-          {# Ícono de "siguiente estado" en la esquina superior derecha del
-             modal "Ver" (conversación 2026-08-14) -- Recibir en ANUNCIADO,
-             Entregar en RECIBIDO; Entregado/Cancelado son terminales, sin
-             siguiente paso, sin ícono. `data-close="modal-ver-<id>"` junto
-             a `data-open` en el MISMO botón: cierra este modal al abrir el
-             siguiente (traspaso limpio, ver el `<script>` de
-             `recursos_recibir()`). #}
-          {# Botón el DOBLE de grande (conversación 2026-08-15, pedido
-             explícito) -- 72px/40px en vez de 36px/20px, misma proporción
-             ícono:botón que antes. #}
-          {%- if p.estado.value == "ANUNCIADO" %}
-          <button type="button" data-open="modal-receive-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-[72px] w-[72px] rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300" aria-label="Recibir" title="Recibir">
-            <svg class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-          </button>
-          {%- elif p.estado.value == "RECIBIDO" %}
-          <button type="button" data-open="modal-deliver-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-[72px] w-[72px] rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="Entregar" title="Entregar">
-            <svg class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-          </button>
-          {%- endif %}
-        </div>
+        {# Ícono de "siguiente estado" (conversación 2026-08-14) -- Recibir
+           en ANUNCIADO, Entregar en RECIBIDO; terminales sin ícono.
+           `data-close="modal-ver-<id>"` junto a `data-open` en el MISMO
+           botón: cierra este modal al abrir el siguiente. Tamaño reducido
+           de 72px a 56px (conversación 2026-08-16, pedido explícito: "un
+           poco mas pequeno... para tener esa seccion superior mas
+           pequena", pero "lo suficientemente grande para su look and
+           feel") -- entre el original (36px) y el doblado de ayer (72px). #}
+        {%- if p.estado.value == "ANUNCIADO" %}
+        <button type="button" data-open="modal-receive-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300" aria-label="Recibir" title="Recibir">
+          <svg class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+        </button>
+        {%- elif p.estado.value == "RECIBIDO" %}
+        <button type="button" data-open="modal-deliver-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-14 w-14 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="Entregar" title="Entregar">
+          <svg class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+        </button>
+        {%- endif %}
       </div>
       {# Ganador del prototipo de 3 variantes (conversación 2026-08-14):
          "C" (tarjeta con fondo tintado por sección + etiqueta en chip)
