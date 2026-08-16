@@ -36,16 +36,17 @@
     - Modificar: el Corregir de siempre, renombrado -- mismo
       `data-open="modal-correct-<id>"`, mismo modal, solo cambia el label.
       Solo activo en ANUNCIADO (regla de negocio ya existente).
-    - Acción: UN ícono contextual, coloreado SIEMPRE (conversación
-      2026-08-14: "todos los iconos siempre tengan colores... me refiero a
-      los iconos de los estados Anunciado, recibido, entregado y
-      cancelado") -- Recibir (azul, como el badge RECIBIDO) en ANUNCIADO,
-      Entregar (verde, como el badge ENTREGADO) en RECIBIDO, y en los dos
-      estados terminales (sin acción real pendiente) el ícono de check
-      queda con el MISMO color que el badge propio de la fila -- verde en
-      ENTREGADO, rojo en CANCELADO -- en vez de gris, para que el color
-      siga comunicando el estado aunque ya no sea clicable. No se fusiona
-      con Cancelar (decisión explícita, issue 79).
+    - Acción: UN ícono contextual -- Recibir (azul, como el badge
+      RECIBIDO) en ANUNCIADO, Entregar (verde, como el badge ENTREGADO)
+      en RECIBIDO. En ENTREGADO (terminal, sin acción pendiente) el
+      ícono de check se apaga a gris (`text-slate-300`, mismo tono que
+      WhatsApp/Teléfono/Email sin dato) -- pedido explícito, conversación
+      2026-08-15: "para los paquetes entregados coloca el icono...gris
+      o desactivado". Revierte, solo para ENTREGADO, el criterio
+      anterior (conversación 2026-08-14: "todos los iconos siempre
+      tengan colores") que coloreaba también los estados terminales;
+      CANCELADO se queda rojo (no se tocó, no fue parte de este pedido).
+      No se fusiona con Cancelar (decisión explícita, issue 79).
     - Cancelar: aparte, siempre rojo -- clicable en ANUNCIADO/RECIBIDO, y
       SIGUE rojo (ya no clicable) en los estados terminales, mismo criterio
       que Acción de arriba.
@@ -108,7 +109,7 @@
     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ _check() }}</svg>
   </button>
   {%- elif p.estado.value == "ENTREGADO" %}
-  <span class="text-emerald-600" aria-hidden="true" title="Entregado"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">{{ _check() }}</svg></span>
+  <span class="text-slate-300" aria-hidden="true" title="Entregado"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">{{ _check() }}</svg></span>
   {%- else %}
   <span class="text-red-600" aria-hidden="true" title="Cancelado"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">{{ _check() }}</svg></span>
   {%- endif %}
