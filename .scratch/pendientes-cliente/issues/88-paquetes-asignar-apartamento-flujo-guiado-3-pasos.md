@@ -83,4 +83,16 @@ referencia histórica de ese intento -- ya no es el código que corre acá.
   y el caso de 4 dígitos ("1001", piso 10 -- solo 8 Torres válidas, ni
   Torre 1 ni Torre 10 tienen esa unidad).
 - `tests/web/test_packages.py` completo: 95 tests pasan.
+
+## Ajuste posterior -- residentes como lista
+
+"MUCHO mejor, ahora en ese mismo modal quiero que muestres los
+residentes en caso que existan pero en forma de lista, similar a como
+se hace en los otros modales" -- el resumen del paso 3 mostraba los
+nombres en un solo texto corrido separado por comas; pasa a una lista
+(ícono de persona + nombre por fila), mismo patrón visual que
+"Residentes de la unidad" del modal Ver. Verificado con Playwright
+(captura real). Sin cambios de backend ni de tests server-rendered
+(la lista se construye en el mismo JS del paso 3).
+
 - Pendiente: deploy a test.papyrus.com.co.
