@@ -301,35 +301,63 @@
             Object.keys(catalogo).forEach(function (torre) {
               (catalogo[torre] || []).forEach(function (apto) {
                 var nombres = (residentes[torre] || {})[apto] || [];
-                plano.push({ torre: torre, apto: apto, etiqueta: torre + ' · Apt ' + apto, nombres: nombres });
+                // Bolsa de texto para buscar -- Torre + Apartamento + TODOS
+                // los nombres de residentes, no solo la etiqueta "Torre X ·
+                // Apt Y" (conversación 2026-08-15, pedido explícito: poder
+                // encontrar la unidad buscando por el nombre de quien ya
+                // vive ahí, no solo por número).
+                var bolsa = (torre + ' ' + apto + ' ' + nombres.join(' ')).toLowerCase();
+                plano.push({ torre: torre, apto: apto, etiqueta: torre + ' · Apt ' + apto, nombres: nombres, bolsa: bolsa });
               });
             });
             var input = document.getElementById('buscar-unidad-{{ p.id }}');
             var resultados = document.getElementById('buscar-resultados-{{ p.id }}');
             var form = input.closest('form');
             input.addEventListener('input', function () {
-              var q = input.value.trim().toLowerCase();
+              // Match por TOKENS, no por la query completa como bloque --
+              // bug reportado en vivo: "torre 3" + seguir tecleando el
+              // apartamento (ej. "torre 3 302") dejaba de calzar como
+              // substring contiguo de "Torre 3 · Apt 302" (el " · Apt " de
+              // en medio rompe la cadena), así que los resultados se
+              // vaciaban apenas se empezaba el número de apartamento. Acá
+              // cada palabra escrita se busca por separado (todas deben
+              // aparecer, en cualquier orden) contra Torre+Apto+residentes.
+              var tokens = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
               resultados.innerHTML = '';
-              if (!q) return;
-              var coincidencias = plano.filter(function (u) { return u.etiqueta.toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+              if (!tokens.length) return;
+              var coincidencias = plano.filter(function (u) {
+                return tokens.every(function (t) { return u.bolsa.indexOf(t) !== -1; });
+              }).slice(0, 10);
               coincidencias.forEach(function (u) {
                 var btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'w-full flex items-center justify-between gap-2 text-left rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50 hover:border-blue-300 transition';
+                btn.className = 'w-full text-left rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50 hover:border-blue-300 transition';
+                var fila = document.createElement('div');
+                fila.className = 'flex items-center justify-between gap-2';
                 var etiqueta = document.createElement('span');
                 etiqueta.className = 'text-sm text-slate-700';
                 etiqueta.textContent = u.etiqueta;
-                btn.appendChild(etiqueta);
+                fila.appendChild(etiqueta);
                 var estado = document.createElement('span');
                 if (u.nombres.length === 0) {
                   estado.className = 'shrink-0 text-xs font-semibold text-emerald-600';
                   estado.textContent = 'Libre';
                 } else {
-                  estado.className = 'shrink-0 text-xs text-orange-600 text-right';
-                  estado.textContent = u.nombres.length > 1 ? (u.nombres[0] + ' +' + (u.nombres.length - 1)) : u.nombres[0];
-                  estado.title = u.nombres.join(', ');
+                  estado.className = 'shrink-0 text-xs font-semibold text-orange-600';
+                  estado.textContent = u.nombres.length === 1 ? '1 residente' : u.nombres.length + ' residentes';
                 }
-                btn.appendChild(estado);
+                fila.appendChild(estado);
+                btn.appendChild(fila);
+                // Residentes COMPLETOS, sin truncar (pedido explícito: "ver
+                // incluso los residentes que existan en un apartamento...
+                // para asignar a la persona correcta al apartamento
+                // correcto") -- segunda línea, solo si hay alguno.
+                if (u.nombres.length > 0) {
+                  var listaResidentes = document.createElement('p');
+                  listaResidentes.className = 'mt-0.5 text-xs text-slate-500';
+                  listaResidentes.textContent = u.nombres.join(', ');
+                  btn.appendChild(listaResidentes);
+                }
                 btn.addEventListener('click', function () {
                   document.getElementById('buscar-torre-{{ p.id }}').value = u.torre;
                   document.getElementById('buscar-apto-{{ p.id }}').value = u.apto;
