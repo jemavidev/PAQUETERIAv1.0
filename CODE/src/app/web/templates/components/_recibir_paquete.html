@@ -140,12 +140,32 @@
 
     // Anti doble-envío: deshabilitar y re-habilitar SIEMPRE (finally) por si el
     // envío se aborta en el cliente (bug a no heredar de los modales viejos).
+    // `e.submitter` (bug real encontrado en vivo, conversación 2026-08-16):
+    // `f.querySelector('button[type=submit]')` siempre agarra el PRIMER
+    // submit del form, sin importar cuál se clickeó -- para forms con un
+    // solo botón (la mayoría) es lo mismo, pero "Corregir destinatario"
+    // (tarjetas de un clic, issue 84) tiene VARIOS submits con el mismo
+    // `name="candidato_idx"`. Al clickear la PRIMERA tarjeta, este handler
+    // la deshabilitaba ANTES de que el navegador terminara de armar el
+    // envío -- un control deshabilitado nunca se manda, así que
+    // `candidato_idx` llegaba vacío al servidor (400) aunque la tarjeta
+    // clickeada fuera justo la correcta. `e.submitter` identifica el botón
+    // real que disparó el submit -- pero deshabilitarlo DENTRO del propio
+    // handler de 'submit' corre el mismo riesgo (el navegador arma el
+    // envío recién después de que termina de disparar el evento, así que
+    // un submitter ya deshabilitado en ese momento también se pierde,
+    // confirmado en vivo) -- por eso se difiere un tick con `setTimeout`,
+    // imperceptible para un doble-click real pero después de que ESTE
+    // envío ya quedó armado.
     document.addEventListener('submit', function (e) {
       var f = e.target;
       if (!(f instanceof HTMLFormElement)) return;
-      var btn = f.querySelector('button[type=submit]');
-      try { if (btn) btn.disabled = true; }
-      finally { setTimeout(function () { if (btn) btn.disabled = false; }, 5000); }
+      var btn = e.submitter || f.querySelector('button[type=submit]');
+      if (!btn) return;
+      setTimeout(function () {
+        btn.disabled = true;
+        setTimeout(function () { btn.disabled = false; }, 5000);
+      }, 0);
     });
 
     // Escáner ZXing (cámara): carga el bundle de forma perezosa, decodifica

@@ -456,8 +456,7 @@
             <input type="checkbox" name="mover_de_otra_unidad" value="1">
             Si el contacto ya es Ocupante (no principal) de otra unidad, moverlo acá
           </label>
-          <input type="hidden" name="candidato_idx" value="nuevo">
-          <button type="submit" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar nuevo residente</button>
+          <button type="submit" name="candidato_idx" value="nuevo" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar nuevo residente</button>
         </div>
         {% else %}
         {{ input_texto('Nombre', name='recipient_name', value=p.recipient_name, required=True, id='nombre-corregir-' ~ p.id, icono=iconos_nav.persona, error=(error if (este_paquete_con_error and error_campo|default(none) == 'recipient_name') else none), extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
