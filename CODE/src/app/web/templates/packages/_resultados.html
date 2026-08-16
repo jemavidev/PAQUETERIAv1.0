@@ -299,34 +299,54 @@
             var residentes = JSON.parse(document.getElementById('residentes-unidad-asignar-{{ p.id }}').textContent);
             var plano = [];
             Object.keys(catalogo).forEach(function (torre) {
+              var mNumero = torre.match(/(\d{1,2})/);
               (catalogo[torre] || []).forEach(function (apto) {
                 var nombres = (residentes[torre] || {})[apto] || [];
-                // Bolsa de texto para buscar -- Torre + Apartamento + TODOS
-                // los nombres de residentes, no solo la etiqueta "Torre X ·
-                // Apt Y" (conversación 2026-08-15, pedido explícito: poder
-                // encontrar la unidad buscando por el nombre de quien ya
-                // vive ahí, no solo por número).
-                var bolsa = (torre + ' ' + apto + ' ' + nombres.join(' ')).toLowerCase();
-                plano.push({ torre: torre, apto: apto, etiqueta: torre + ' · Apt ' + apto, nombres: nombres, bolsa: bolsa });
+                plano.push({
+                  torre: torre,
+                  torreNumero: mNumero ? mNumero[1] : null,
+                  apto: apto,
+                  etiqueta: torre + ' · Apt ' + apto,
+                  nombres: nombres,
+                  nombresTexto: nombres.join(' ').toLowerCase()
+                });
               });
             });
             var input = document.getElementById('buscar-unidad-{{ p.id }}');
             var resultados = document.getElementById('buscar-resultados-{{ p.id }}');
             var form = input.closest('form');
             input.addEventListener('input', function () {
-              // Match por TOKENS, no por la query completa como bloque --
-              // bug reportado en vivo: "torre 3" + seguir tecleando el
-              // apartamento (ej. "torre 3 302") dejaba de calzar como
-              // substring contiguo de "Torre 3 · Apt 302" (el " · Apt " de
-              // en medio rompe la cadena), así que los resultados se
-              // vaciaban apenas se empezaba el número de apartamento. Acá
-              // cada palabra escrita se busca por separado (todas deben
-              // aparecer, en cualquier orden) contra Torre+Apto+residentes.
-              var tokens = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+              // Búsqueda consciente de los campos, no un match a ciegas
+              // contra un solo texto pegado (bug reportado en vivo, 2 rondas:
+              // v1 comparaba la query COMPLETA como substring contiguo de
+              // "Torre X · Apt Y" -- escribir "torre 3 302" no calzaba por el
+              // " · Apt " de en medio, resultados en cero. v2 partió por
+              // palabras pero las comparaba como substring en cualquier
+              // parte -- "torre 3" mostraba TORRE 1 porque "3" calzaba
+              // dentro de "103"/"203"/"303", el dígito de la Torre se
+              // confundía con dígitos del número de Apartamento. Acá se
+              // extrae explícitamente el número de Torre con /torre\s*(\d{1,2})/
+              // -- si aparece, filtra por ESE número exacto de Torre, nunca
+              // por substring -- y el resto de lo escrito se interpreta por
+              // token: dígitos buscan por PREFIJO del número de Apartamento,
+              // letras buscan por substring en los nombres de residentes.
+              var q = input.value.trim().toLowerCase();
               resultados.innerHTML = '';
-              if (!tokens.length) return;
+              if (!q) return;
+              var torreExplicita = null;
+              var resto = q;
+              var mTorre = q.match(/torre\s*(\d{1,2})/);
+              if (mTorre) {
+                torreExplicita = mTorre[1];
+                resto = (q.slice(0, mTorre.index) + q.slice(mTorre.index + mTorre[0].length)).trim();
+              }
+              var tokensResto = resto.split(/\s+/).filter(Boolean);
               var coincidencias = plano.filter(function (u) {
-                return tokens.every(function (t) { return u.bolsa.indexOf(t) !== -1; });
+                if (torreExplicita !== null && u.torreNumero !== torreExplicita) return false;
+                return tokensResto.every(function (t) {
+                  if (/^\d+$/.test(t)) return u.apto.indexOf(t) === 0;
+                  return u.nombresTexto.indexOf(t) !== -1;
+                });
               }).slice(0, 10);
               coincidencias.forEach(function (u) {
                 var btn = document.createElement('button');
