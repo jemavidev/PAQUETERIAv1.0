@@ -347,9 +347,21 @@
                 aviso.className = 'mt-1 text-xs font-semibold text-orange-600';
                 aviso.textContent = (nombres.length === 1 ? '1 residente' : nombres.length + ' residentes') + ':';
                 resumen.appendChild(aviso);
-                var lista = document.createElement('p');
-                lista.className = 'text-sm text-slate-700';
-                lista.textContent = nombres.join(', ');
+                // Lista, no texto corrido -- mismo patrón que "Residentes
+                // de la unidad" del modal Ver (ícono de persona + nombre
+                // por fila), pedido explícito: "en forma de lista, similar
+                // a como se hace en los otros modales".
+                var lista = document.createElement('ul');
+                lista.className = 'mt-1 space-y-1';
+                nombres.forEach(function (nombre) {
+                  var li = document.createElement('li');
+                  li.className = 'flex items-center gap-1.5 text-sm text-slate-700';
+                  li.innerHTML = '<svg class="h-4 w-4 text-orange-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>';
+                  var nombreSpan = document.createElement('span');
+                  nombreSpan.textContent = nombre;
+                  li.appendChild(nombreSpan);
+                  lista.appendChild(li);
+                });
                 resumen.appendChild(lista);
               }
               pasoResumen.hidden = false;
