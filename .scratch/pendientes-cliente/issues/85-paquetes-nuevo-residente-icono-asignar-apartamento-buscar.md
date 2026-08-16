@@ -47,7 +47,7 @@
 
 ## Verificación
 
-- `tests/` completo: pasa (ver commit).
+- `tests/` completo: 920 tests pasan.
 - Verificación manual vía HTTP (ambiente local): confirmado que el campo
   de búsqueda está presente, el `<select>` viejo y sus data-attrs ya no
   existen en el HTML, y el switcher del prototipo quedó completamente
