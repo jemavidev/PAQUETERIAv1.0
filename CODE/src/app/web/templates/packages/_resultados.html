@@ -275,22 +275,51 @@
     {% if p.estado.value == "ANUNCIADO" and not p.direccion_corta and catalogo_torres %}
     {% call modal("asignar-apto-" ~ p.id, "Asignar apartamento") %}
       <p class="text-sm text-slate-700 mb-3">Asignale una unidad a <strong>{{ p.recipient_name }}</strong>. Solo se puede mientras el paquete sigue Anunciado.</p>
-      {# Eficiente (conversación 2026-08-15, pedido explícito: mismo look
-         and feel que las tarjetas de un clic de "Corregir destinatario")
-         -- Torre y Apartamento se quedan como <select> (el widget correcto
-         para un catálogo de 10 Torres x hasta ~80 Apartamentos, muy
-         grande para tarjetas), pero elegir el Apartamento envía el form
-         de una vez (`aptoSelect.form.requestSubmit()`, ver el `<script>`
-         de `recursos_recibir()`) -- sin un tercer click en un botón
-         aparte. El botón se queda `sr-only` (mismo patrón que
-         `_busqueda_filtros.html`): respaldo de teclado/accesibilidad y
-         ancla del guard de anti doble-envío. #}
+      {# Campo único de búsqueda sobre el catálogo completo (conversación
+         2026-08-15, prototipado en `prototype/asignar-apartamento-buscar`,
+         decisión del cliente: "La opcion c es la mas rapida") -- escribir
+         "302" o "Torre 3" filtra sugerencias "Torre X · Apt Y"; elegir
+         una envía el form de una vez, sin navegar Torre y Apartamento por
+         separado. #}
       <form method="post" action="/paquetes/{{ p.id }}/asignar-apartamento">
         <script type="application/json" id="catalogo-torres-asignar-{{ p.id }}">{{ catalogo_torres|tojson }}</script>
-        {{ input_select('Torre', name='torre', opciones=catalogo_torres.keys()|list, required=True, id='asignar-torre-' ~ p.id, icono=iconos_nav.casa, extra_attrs='data-torre-asignar="' ~ p.id ~ '"') }}
-        <div class="mt-3">
-          {{ input_select('Apartamento', name='apartamento', opciones=[], required=True, disabled=True, id='asignar-apto-' ~ p.id, icono=iconos_nav.casa, extra_attrs='data-apto-asignar="' ~ p.id ~ '"') }}
-        </div>
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="buscar-unidad-{{ p.id }}">Buscar unidad</label>
+        <input type="text" id="buscar-unidad-{{ p.id }}" autocomplete="off" placeholder="Ej. 302, o Torre 3" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
+        <div id="buscar-resultados-{{ p.id }}" class="mt-2 space-y-1 max-h-56 overflow-y-auto"></div>
+        <input type="hidden" name="torre" id="buscar-torre-{{ p.id }}">
+        <input type="hidden" name="apartamento" id="buscar-apto-{{ p.id }}">
+        <script>
+          (function () {
+            var catalogo = JSON.parse(document.getElementById('catalogo-torres-asignar-{{ p.id }}').textContent);
+            var plano = [];
+            Object.keys(catalogo).forEach(function (torre) {
+              (catalogo[torre] || []).forEach(function (apto) {
+                plano.push({ torre: torre, apto: apto, etiqueta: torre + ' · Apt ' + apto });
+              });
+            });
+            var input = document.getElementById('buscar-unidad-{{ p.id }}');
+            var resultados = document.getElementById('buscar-resultados-{{ p.id }}');
+            var form = input.closest('form');
+            input.addEventListener('input', function () {
+              var q = input.value.trim().toLowerCase();
+              resultados.innerHTML = '';
+              if (!q) return;
+              var coincidencias = plano.filter(function (u) { return u.etiqueta.toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+              coincidencias.forEach(function (u) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:border-blue-300 transition';
+                btn.textContent = u.etiqueta;
+                btn.addEventListener('click', function () {
+                  document.getElementById('buscar-torre-{{ p.id }}').value = u.torre;
+                  document.getElementById('buscar-apto-{{ p.id }}').value = u.apto;
+                  form.requestSubmit();
+                });
+                resultados.appendChild(btn);
+              });
+            });
+          })();
+        </script>
         <button type="submit" class="sr-only">Asignar apartamento</button>
       </form>
     {% endcall %}

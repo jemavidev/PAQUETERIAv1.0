@@ -1800,6 +1800,23 @@ def test_eliminar_sin_ser_admin_da_403(client):
 # "Asignar apartamento" (conversación 2026-08-14) -- ícono + modal
 # independientes para corregir_apartamento (excepción ADR-0001, solo ANUNCIADO).
 # --------------------------------------------------------------------------- #
+def test_modal_asignar_apartamento_es_un_campo_de_busqueda(client):
+    # Conversación 2026-08-15 (prototipado en
+    # `prototype/asignar-apartamento-buscar`, decisión del cliente: "La
+    # opcion c es la mas rapida"): un solo campo de búsqueda sobre el
+    # catálogo completo, sin los <select> de Torre/Apartamento en cascada.
+    _login_staff(client)
+    p = _anunciar(client, nombre="Ana")  # sin unidad
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    modal_asignar = _segmento_modal(r.text, f"modal-asignar-apto-{p.id}")
+    assert f'id="buscar-unidad-{p.id}"' in modal_asignar
+    assert "<select" not in modal_asignar
+    assert 'name="torre"' in modal_asignar
+    assert 'name="apartamento"' in modal_asignar
+
+
 def test_icono_asignar_apartamento_solo_en_anunciado_sin_unidad(client):
     staff = _login_staff(client)
     anunciado = _anunciar(client, tel="3001234567", nombre="Ana")  # sin unidad

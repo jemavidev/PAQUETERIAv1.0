@@ -138,49 +138,6 @@
       aptoSelect.disabled = opciones.length === 0;
     });
 
-    // Misma cascada Torre -> Apartamento, para el modal independiente
-    // "Asignar apartamento" de /paquetes (conversación 2026-08-14,
-    // `corregir_apartamento`) -- NO es parte de Recibir, pero vive acá
-    // porque este es el único `<script>` con delegación sobre `document` ya
-    // cargado una vez por página para /paquetes. Prefijo `-asignar` propio
-    // en data-attrs/id del catálogo para no chocar con el de arriba cuando
-    // AMBOS modales existen a la vez para el mismo paquete (Anunciado sin
-    // unidad ofrece los dos).
-    document.addEventListener('change', function (e) {
-      var torreSelect = e.target.closest('[data-torre-asignar]');
-      if (!torreSelect) return;
-      var pid = torreSelect.dataset.torreAsignar;
-      var aptoSelect = document.querySelector('[data-apto-asignar="' + pid + '"]');
-      var catalogoEl = document.getElementById('catalogo-torres-asignar-' + pid);
-      if (!aptoSelect || !catalogoEl) return;
-      var catalogo = JSON.parse(catalogoEl.textContent);
-      var opciones = catalogo[torreSelect.value] || [];
-      aptoSelect.innerHTML = '<option value="">Apartamento</option>';
-      opciones.forEach(function (a) {
-        var opt = document.createElement('option');
-        opt.value = a;
-        opt.textContent = a;
-        aptoSelect.appendChild(opt);
-      });
-      aptoSelect.disabled = opciones.length === 0;
-    });
-
-    // Auto-submit al elegir Apartamento (conversación 2026-08-15, pedido
-    // explícito: mismo espíritu "eficiente, menor cantidad de clicks" que
-    // las tarjetas de un clic de "Corregir destinatario" -- acá el
-    // catálogo es demasiado grande para tarjetas (10 Torres x hasta ~80
-    // Apartamentos), así que el ahorro de clicks es distinto: el <select>
-    // se queda (es el widget correcto para una lista así de grande), pero
-    // elegir el Apartamento ya envía el form -- sin un tercer click en un
-    // botón "Asignar apartamento" aparte. El botón se queda en el DOM
-    // (oculto) como respaldo de teclado/accesibilidad y para que el guard
-    // de anti doble-envío de abajo siga teniendo algo que deshabilitar.
-    document.addEventListener('change', function (e) {
-      var aptoSelect = e.target.closest('[data-apto-asignar]');
-      if (!aptoSelect || !aptoSelect.value) return;
-      aptoSelect.form.requestSubmit();
-    });
-
     // Anti doble-envío: deshabilitar y re-habilitar SIEMPRE (finally) por si el
     // envío se aborta en el cliente (bug a no heredar de los modales viejos).
     document.addEventListener('submit', function (e) {
