@@ -25,10 +25,11 @@ esta excepción, cada una con su propio guard de estado acotado y el mismo rastr
 (`corrected_at`/`corrected_by_usuario_id`):
 
 1. **`corregir_destinatario`** — corrige `recipient_name`/`recipient_phone` (ej. error de tipeo del
-   cliente al anunciar). Guard: `ESTADOS_CORREGIBLES` (`ANUNCIADO`/`RECIBIDO`/`ENTREGADO` — ampliado
-   2026-08-16, pedido explícito del cliente: el typo no siempre se nota mientras el paquete sigue
-   `ANUNCIADO`). `CANCELADO` queda afuera — no tiene sentido de negocio corregir el destinatario de
-   un paquete que nunca se entregó.
+   cliente al anunciar). Guard: `ESTADOS_CORREGIBLES` (`ANUNCIADO`/`RECIBIDO`). Amplió a incluir
+   `ENTREGADO` el 2026-08-16 (typo no siempre se nota mientras el paquete sigue `ANUNCIADO`), y lo
+   retiró al día siguiente (2026-08-17, pedido explícito del cliente: el botón de corregir no debía
+   verse en paquetes ya Entregados). `CANCELADO` nunca estuvo incluido — no tiene sentido de negocio
+   corregir el destinatario de un paquete que nunca se entregó.
 2. **`corregir_apartamento`** — corrige el snapshot de Apartamento cuando un Paquete se anunció
    antes de que su Teléfono estuviera vinculado a una unidad, y ese Teléfono se vincula después
    (`.scratch/asociacion-retroactiva-apartamento`). Guard: `ANUNCIADO` únicamente (sin cambios).

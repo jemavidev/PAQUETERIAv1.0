@@ -128,3 +128,25 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `95` — Modal "Ver": botón de siguiente estado de 56px a 48px, para compactar aún más el header — **verificado**, ver [[94]]
 - `96` — Modal "Ver": botón "Corregir" al lado del de estado (solo si hay advertencia de nombre), se abre encima de Ver y al terminar regresa a reabrir Ver — **verificado**, ver [[95]]
 - `97` — "+ Nuevo residente" respeta el nombre de una identidad ya registrada (enforcement en `agregar_ocupante`, cubre los 4 lugares que la llaman) + vista previa en vivo en Corregir destinatario — **verificado**
+- `98` — "+ Nuevo residente": "Mudar residente a `<Torre/Apto>`" condicional al match (antes siempre visible), aviso + link a `/residentes` si es Principal, textos "Nombre correcto"/"Guardar" simplificados; bug de paso: `hidden`+`flex` nunca ocultaba de verdad (issue 97 incluido) — **implementado**
+- `99` — "+ Nuevo residente": campo Nombre oculto hasta teclear el contacto (Contacto ahora va primero) -- aparece relleno/solo-lectura si existe, vacío/editable si no — **implementado**
+- `100` — "+ Nuevo residente" se oculta (o hace swap a Asignar apartamento) si el paquete no tiene apartamento propio + aviso de Principal acortado con link directo a la tab Residentes (`?tab=`) + vista previa "Ya existe como X" simplificada — **implementado**
+- `101` — "Promover a otro residente" sin salir de "Corregir destinatario" (modal encima, redirect con `?corregir=&recontactar=`) + `clasificar_contacto` acepta WhatsApp con o sin `@` inicial (mismo hueco que `+57` de issue 92) — **implementado**
+- `102` — La advertencia de nombre se apaga con cualquier corrección explícita (antes solo si coincidía con el Anunciante) — **implementado**
+- `103` — Ícono de WhatsApp en columna Acciones de `/paquetes` prioriza el username registrado sobre el teléfono (revisados todos los demás usos de link WhatsApp, ya estaban bien) — **implementado**
+- `104` — Ícono de WhatsApp: fallback por nombre exacto cuando el destinatario no tiene teléfono en el snapshot (solo-WhatsApp, ejemplo real "CAMILA OSPINA") — **implementado**, ver [[103]]
+- `105` — "Corregir destinatario" retira ENTREGADO de `ESTADOS_CORREGIBLES` (reversión parcial de issue 93, mismo día: el botón ya no debe verse en paquetes Entregados) — **implementado**
+- `106` — Modal "Ver": teléfono+Torre/Apto en una sola línea con separador, chip de días transcurridos junto al badge de Estado (calendario, cuenta en curso si sigue abierto), sufijo "• Actual" quitado del historial — **implementado**
+- `107` — Columna Cliente: código de acceso cliqueable → `/consultar?q=` (mismo patrón de [[46]]) + el chip de duración de [[106]] pasa de días-calendario a días+horas reales ("3 días y 4 horas") — **implementado**
+- `108` — Chip de duración toma el color del badge de Estado de al lado (mismo rol/paleta, opción A entre 2 presentadas) — **implementado**
+- `109` — Código de acceso de la columna Cliente (tabla) también con fondo redondeado y color por Estado (mismo tratamiento de [[108]], `estado_colores` compartido) — **implementado**
+- `110` — Fuente Roboto en `/paquetes` (Google Fonts, solo esta vista, header/footer compartidos sin cambios) — **implementado**
+- `111` — Modal "Cancelar": motivos en lista vertical, botón "Confirmar cancelación" → "Cancelar", se quita "Volver" (solo este modal, `modal_confirmacion` gana `mostrar_volver`), "Otro" revela input de texto libre — **implementado**
+- `112` — Fuente definitiva de /paquetes: Nunito Sans (reemplaza Roboto de [[110]], elegida tras comparar 7 opciones en galería) — **implementado**
+- `113` — Bug: íconos de Teléfono/WhatsApp en Acciones apagados sin fallback al anunciante cuando el destinatario no tiene contacto propio (ejemplo real "6Y5U") — **implementado**
+- `114` — Picker de Apartamento (número→Torre) unificado entre "Asignar apartamento" y "Recibir" (nuevo macro compartido `picker_apartamento`, JS delegado en vez de repetido por fila) — **implementado**
+- `115` — Modal "Recibir": quita el párrafo de apartamento y la etiqueta de Fotos, etiquetas "Apartamento"/"Guía" pasan a placeholder, cámara móvil habilitada para fotos, botón "Confirmar recibo" → "Recibir" — **implementado**
+- `116` — "¿A nombre de quién es?" en Recibir solo se ofrece si el paquete ya tiene apartamento resuelto (elimina riesgo real de índice desalineado con el picker de Apartamento) — **implementado**
+- `117` — "¿A nombre de quién es?" en Recibir: sin etiqueta, `<select>` reemplazado por tarjetas de un clic (2 por fila), badge "Actual" informativo sin pre-marcar radio (evita reactivar corregir_destinatario sin cambios reales) — **implementado**
+- `118` — Tarjetas de candidato en Recibir: se quita el teléfono, "Actual" pasa de badge de texto a fondo de color (slate, distinto del azul de selección activa) — **implementado**
+- `119` — Auditoría de unificación de /paquetes: botones "Entregar"/"Guardar" (verbo solo), "Confirmar guía" (sin "(opcional)"), fondo "Actual" también en Corregir destinatario, ícono de persona retirado ahí (Recibir manda la dirección "menos") — **implementado**
