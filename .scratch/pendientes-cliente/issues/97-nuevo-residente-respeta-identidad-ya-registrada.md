@@ -14,7 +14,7 @@ nuevo con el nombre que se requiera" -- confirmado el diagnóstico exacto
 "Persona existente pero no activa en ningún lado ahora mismo") y elegido
 el tratamiento de UI: vista previa en vivo (no solo aviso silencioso).
 
-**Status:** implementado
+**Status:** verificado
 
 ## Implementación
 
@@ -60,4 +60,4 @@ Dos partes, backend como enforcement real y frontend como vista previa:
 - Suite completa: 936 pasan antes de sumar los tests nuevos de este
   issue (sin regresiones en ningún otro flujo que usa `agregar_ocupante`);
   ver commit para el conteo final con los tests nuevos incluidos.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a test.papyrus.com.co (2026-08-17), confirmado en el contenedor real (`docker exec paquetex-app-1`).

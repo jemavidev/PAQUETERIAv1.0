@@ -9,7 +9,7 @@ mb-3' llamada 'Destinatario'. al finalizar si todo sale bien, quiero que
 remuevas de este modal esta seccion... todo esto enfocado a optimizar el
 tamano y espacio para mostrar informacion en este modal."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Implementación
 
@@ -38,4 +38,4 @@ tamano y espacio para mostrar informacion en este modal."
   tarjeta azul de "Destinatario" desaparece, el modal queda notablemente
   más compacto.
 - Suite completa: ver commit para el conteo final.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a test.papyrus.com.co (2026-08-17), confirmado en el contenedor real (`docker exec paquetex-app-1`).

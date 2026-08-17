@@ -11,7 +11,7 @@ Colombia: "Sí, ajústalo para que acepte +57 también. Ten presente que +57
 es colombia, pero existen mas paises, ejemplo (+1, +58, +34,...) USA,
 Venezuela, España... entre otros muchos paises, como manejaras esto."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Implementación
 
@@ -51,4 +51,4 @@ Venezuela, España... entre otros muchos paises, como manejaras esto."
   del fix resuelve correctamente la unidad TORRE 3 · Apto 302 con sus 5
   residentes.
 - Suite completa: ver commit para el conteo final.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a test.papyrus.com.co (2026-08-17), confirmado en el contenedor real (`docker exec paquetex-app-1`).

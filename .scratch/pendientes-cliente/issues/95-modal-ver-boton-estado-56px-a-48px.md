@@ -9,7 +9,7 @@ botón de estado (Recibir/Entregar, 56px); Cancelar no vive dentro de este
 modal, solo en la columna Acciones de la tabla. El cliente confirmó que
 solo quería achicar el botón existente, sin agregar Cancelar al modal.
 
-**Status:** implementado
+**Status:** verificado
 
 ## Implementación
 
@@ -28,4 +28,4 @@ solo quería achicar el botón existente, sin agregar Cancelar al modal.
   muestra el header más compacto con el botón todavía claramente visible y
   cliqueable.
 - Suite completa: ver commit para el conteo final.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a test.papyrus.com.co (2026-08-17), confirmado en el contenedor real (`docker exec paquetex-app-1`).

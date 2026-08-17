@@ -6,7 +6,7 @@ del anunciado no coincide, pero quiero poder hacer esto en el estado de
 recibido tambien" — seguido, sobre la marcha, de: "y en el estado de
 entregado tambien".
 
-**Status:** implementado
+**Status:** verificado
 
 ## Implementación
 
@@ -50,4 +50,4 @@ anunciado no siempre se nota mientras el paquete sigue `ANUNCIADO`.
   y uno ENTREGADO de punta a punta (clic en advertencia → modal → elegir
   candidato → nombre actualizado, visible en la lista).
 - Suite completa: ver commit para el conteo final.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a test.papyrus.com.co (2026-08-17), confirmado en el contenedor real (`docker exec paquetex-app-1`).
