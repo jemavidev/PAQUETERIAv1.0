@@ -74,13 +74,14 @@
           {# Pedido explícito: "Cliente" clic == botón "Ver" (mismo modal). #}
           <button type="button" data-open="modal-ver-{{ p.id }}" class="text-blue-800 hover:underline text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded">{{ p.recipient_name }}</button>
           {%- if p.advertencia_nombre %}
-          {%- if p.estado.value == "ANUNCIADO" %}
+          {%- if p.estado.value in ("ANUNCIADO", "RECIBIDO", "ENTREGADO") %}
           {# Clickeable -- pedido explícito (conversación 2026-08-15): abre
              "Corregir destinatario" directo, mismo modal que el ícono
-             "Modificar" de Acciones. Solo mientras ANUNCIADO -- ese modal
-             ni existe en el DOM para los demás estados (ADR-0001, el
-             snapshot ya quedó congelado). #}
-          <button type="button" data-open="modal-correct-{{ p.id }}" class="inline-flex align-text-bottom ml-1 text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 rounded" aria-label="Corregir: el nombre anunciado no coincide con el registrado" title="El nombre anunciado no coincide con el registrado -- click para corregir">
+             "Modificar" de Acciones. Mientras el estado esté en
+             `ESTADOS_CORREGIBLES` (conversación 2026-08-16: ampliado de
+             "solo ANUNCIADO" a incluir RECIBIDO/ENTREGADO -- ese modal ni
+             existe en el DOM para CANCELADO, la única excepción que queda). #}
+          <button type="button" data-open="modal-correct-{{ p.id }}" onclick="document.getElementById('corregir-origen-{{ p.id }}').value = ''" class="inline-flex align-text-bottom ml-1 text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 rounded" aria-label="Corregir: el nombre anunciado no coincide con el registrado" title="El nombre anunciado no coincide con el registrado -- click para corregir">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.alerta|safe }}</svg>
           </button>
           {%- else %}
@@ -123,76 +124,85 @@
        pedido explícito: compactar la parte superior del modal) -- el
        código ya no vive aparte en la fila del badge, queda junto al
        nombre en el encabezado del modal mismo. #}
-    {% call modal("ver-" ~ p.id, p.recipient_name ~ " - " ~ p.access_code, ancho='md') %}
+    {# `abierto`: reabre este modal tras el redirect de una corrección
+       exitosa disparada desde SU PROPIO botón "Corregir destinatario"
+       (conversación 2026-08-16, pedido explícito) -- `ver_paquete_id` viaja
+       como querystring (`/paquetes?ver=<id>`), mismo patrón ya usado por
+       `error_paquete_id` para reabrir el modal Corregir en un error. #}
+    {% call modal("ver-" ~ p.id, p.recipient_name ~ " - " ~ p.access_code, ancho='md', abierto=(ver_paquete_id|default(none) == p.id|string)) %}
+      {# Teléfono justo debajo del título (conversación 2026-08-16, pedido
+         explícito: optimizar tamaño/espacio del modal) -- mismo dato y
+         misma cadena de fallback que antes vivían en el campo "Anuncio" de
+         la sección "Destinatario" (retirada más abajo, ya redundante: el
+         Nombre ya está en el título, y el teléfono ahora vive acá): el
+         teléfono propio del destinatario si lo tiene, si no el canal del
+         Anunciante (mismo fallback que usa el envío real de SMS,
+         `notificacion_service.resolver_destino_notificable`), primero su
+         teléfono, si no su WhatsApp -- `announce()` exige que el Anunciante
+         tenga uno de los dos, así que esta línea nunca queda vacía. #}
+      <p class="text-sm text-slate-600 mb-3 flex items-center gap-1.5">
+        {%- if p.recipient_phone %}
+        <a href="tel:{{ p.recipient_phone }}" class="text-slate-600 hover:text-blue-700 hover:underline flex items-center gap-1.5">
+          <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
+          {{ p.recipient_phone }}
+        </a>
+        {%- elif p.persona_anunciante and p.persona_anunciante.telefono %}
+        <a href="{{ url_llamada(p.persona_anunciante) }}" class="text-slate-600 hover:text-blue-700 hover:underline flex items-center gap-1.5">
+          <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
+          {{ p.persona_anunciante.telefono }}
+        </a>
+        {%- elif p.persona_anunciante and p.persona_anunciante.whatsapp_usuario %}
+        <a href="{{ url_whatsapp(p.persona_anunciante) }}" target="_blank" rel="noopener noreferrer" class="text-slate-600 hover:text-emerald-600 hover:underline flex items-center gap-1.5">
+          <svg class="h-4 w-4 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">{{ iconos_nav.whatsapp|safe }}</svg>
+          {{ p.persona_anunciante.whatsapp_usuario }}
+        </a>
+        {%- endif %}
+      </p>
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div class="flex flex-wrap items-center gap-2">
           {{ badge(p.estado) }}
           {% if p.direccion_corta %}<span class="text-sm font-bold uppercase text-slate-600">{{ p.direccion_corta }}</span>{% endif %}
         </div>
-        {# Ícono de "siguiente estado" (conversación 2026-08-14) -- Recibir
-           en ANUNCIADO, Entregar en RECIBIDO; terminales sin ícono.
-           `data-close="modal-ver-<id>"` junto a `data-open` en el MISMO
-           botón: cierra este modal al abrir el siguiente. Tamaño reducido
-           de 72px a 56px (conversación 2026-08-16, pedido explícito: "un
-           poco mas pequeno... para tener esa seccion superior mas
-           pequena", pero "lo suficientemente grande para su look and
-           feel") -- entre el original (36px) y el doblado de ayer (72px). #}
-        {%- if p.estado.value == "ANUNCIADO" %}
-        <button type="button" data-open="modal-receive-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300" aria-label="Recibir" title="Recibir">
-          <svg class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-        </button>
-        {%- elif p.estado.value == "RECIBIDO" %}
-        <button type="button" data-open="modal-deliver-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-14 w-14 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="Entregar" title="Entregar">
-          <svg class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-        </button>
-        {%- endif %}
-      </div>
-      {# Ganador del prototipo de 3 variantes (conversación 2026-08-14):
-         "C" (tarjeta con fondo tintado por sección + etiqueta en chip)
-         combinada con los íconos por tipo de campo de "A". Sección =
-         color propio (separa GRUPOS de un vistazo); chip + ícono por campo
-         = separa CAMPOS dentro del grupo sin depender solo del texto. #}
-      <div class="rounded-xl bg-blue-50 border border-blue-100 p-3 mb-3">
-        <div class="flex items-center gap-1.5 mb-2">
-          <svg class="h-4 w-4 text-blue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
-          <h3 class="text-xs font-bold uppercase tracking-wide text-blue-800">Destinatario</h3>
-        </div>
-        <p class="text-sm text-slate-800 mb-1.5 flex items-center gap-1.5">
-          <span class="inline-block bg-white/70 text-blue-700 text-[11px] font-semibold rounded px-1.5 py-0.5">Nombre</span>
-          <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
-          {{ p.recipient_name }}
-        </p>
-        {# "Anuncio": dónde llega la notificación de este paquete -- pedido
-           explícito (conversación 2026-08-15), reemplaza el "Teléfono"
-           condicional de antes. SIEMPRE muestra algo (nunca queda vacío):
-           el teléfono propio del destinatario si lo tiene: si no, cae al
-           canal del Anunciante (mismo fallback que usa el envío real de
-           SMS, `notificacion_service.resolver_destino_notificable` -- sin
-           teléfono propio del destinatario, el aviso le llega al
-           Anunciante), primero su teléfono, si no su WhatsApp -- `announce()`
-           exige que el Anunciante tenga uno de los dos, así que este campo
-           nunca queda sin valor. #}
-        <p class="text-sm text-slate-800 flex items-center gap-1.5">
-          <span class="inline-block bg-white/70 text-blue-700 text-[11px] font-semibold rounded px-1.5 py-0.5">Anuncio</span>
-          {%- if p.recipient_phone %}
-          <a href="tel:{{ p.recipient_phone }}" class="text-slate-800 hover:text-blue-700 hover:underline flex items-center gap-1.5">
-            <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
-            {{ p.recipient_phone }}
-          </a>
-          {%- elif p.persona_anunciante and p.persona_anunciante.telefono %}
-          <a href="{{ url_llamada(p.persona_anunciante) }}" class="text-slate-800 hover:text-blue-700 hover:underline flex items-center gap-1.5">
-            <svg class="h-4 w-4 text-blue-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
-            {{ p.persona_anunciante.telefono }}
-          </a>
-          {%- elif p.persona_anunciante and p.persona_anunciante.whatsapp_usuario %}
-          <a href="{{ url_whatsapp(p.persona_anunciante) }}" target="_blank" rel="noopener noreferrer" class="text-slate-800 hover:text-emerald-600 hover:underline flex items-center gap-1.5">
-            <svg class="h-4 w-4 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">{{ iconos_nav.whatsapp|safe }}</svg>
-            {{ p.persona_anunciante.whatsapp_usuario }}
-          </a>
+        <div class="flex items-center gap-2">
+          {# Corregir destinatario, al lado del botón de estado (conversación
+             2026-08-16, pedido explícito) -- SOLO si hay advertencia de
+             nombre Y el estado sigue en `ESTADOS_CORREGIBLES` (mismo criterio
+             que el ícono de advertencia de la columna Cliente y "Modificar"
+             de Acciones). Sin `data-close="modal-ver-<id>"` a propósito: NO
+             cierra Ver al abrir Corregir -- "encima" (los dos hidden=False a
+             la vez), ya que Corregir se define DESPUÉS de Ver en el DOM y
+             ambos comparten z-50, así que pinta arriba sin CSS extra. El
+             onclick pone 'ver' en el campo oculto del form de Corregir --
+             así SOLO esta entrada regresa a Ver al terminar; las otras dos
+             entradas al mismo modal (advertencia de la columna Cliente,
+             "Modificar" de Acciones) lo dejan en '' explícitamente, para que
+             el comportamiento de siempre (volver a la lista) no dependa de
+             qué se haya clickeado antes en la misma carga de página. #}
+          {%- if p.advertencia_nombre and p.estado.value in ("ANUNCIADO", "RECIBIDO", "ENTREGADO") %}
+          <button type="button" data-open="modal-correct-{{ p.id }}" onclick="document.getElementById('corregir-origen-{{ p.id }}').value = 'ver'" class="shrink-0 inline-flex items-center justify-center h-12 w-12 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300" aria-label="Corregir destinatario" title="El nombre anunciado no coincide con el registrado -- click para corregir">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.alerta|safe }}</svg>
+          </button>
           {%- endif %}
-        </p>
+          {# Ícono de "siguiente estado" (conversación 2026-08-14) -- Recibir
+             en ANUNCIADO, Entregar en RECIBIDO; terminales sin ícono.
+             `data-close="modal-ver-<id>"` junto a `data-open` en el MISMO
+             botón: cierra este modal al abrir el siguiente. Tamaño reducido
+             de 56px a 48px (conversación 2026-08-16, pedido explícito: "make
+             it a bit more compact... reducing the size (margin or padding)")
+             -- tercer ajuste de este botón: 36px original -> 72px (doblado)
+             -> 56px -> 48px ahora, siempre buscando el punto donde siga
+             viéndose prominente sin dominar el modal ya compactado. #}
+          {%- if p.estado.value == "ANUNCIADO" %}
+          <button type="button" data-open="modal-receive-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-12 w-12 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300" aria-label="Recibir" title="Recibir">
+            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          </button>
+          {%- elif p.estado.value == "RECIBIDO" %}
+          <button type="button" data-open="modal-deliver-{{ p.id }}" data-close="modal-ver-{{ p.id }}" class="shrink-0 inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300" aria-label="Entregar" title="Entregar">
+            <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          </button>
+          {%- endif %}
+        </div>
       </div>
-
       {% if p.residentes_unidad %}
       <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 mb-3">
         <div class="flex items-center gap-1.5 mb-2">
@@ -413,10 +423,19 @@
     {{ modal_recibir(p.id, tipos, condiciones, sin_apartamento=(not p.snapshot_apartamento), candidatos=p.candidatos_correccion, catalogo_torres=catalogo_torres) }}
     {% endif %}
 
-    {% if p.estado.value == "ANUNCIADO" %}
+    {% if p.estado.value in ("ANUNCIADO", "RECIBIDO", "ENTREGADO") %}
     {%- set este_paquete_con_error = error_paquete_id|default(none) == p.id|string -%}
     {% call modal("correct-" ~ p.id, "Corregir destinatario", abierto=este_paquete_con_error) %}
       <form method="post" action="/paquetes/{{ p.id }}/corregir">
+        {# `origen`: puesto en 'ver' SOLO por el botón "Corregir" del propio
+           modal "Ver" (onclick, ver más arriba) -- las otras dos entradas a
+           este mismo modal (advertencia en la columna Cliente, "Modificar"
+           de Acciones) lo ponen en '' explícitamente al abrir, así que el
+           valor nunca depende de qué se haya clickeado antes en esta misma
+           carga de página. Server-side (`correct_recipient_action`):
+           `origen == "ver"` decide si el redirect de éxito vuelve a
+           `/paquetes?ver=<id>` (reabre Ver) o al `/paquetes` de siempre. #}
+        <input type="hidden" name="origen" id="corregir-origen-{{ p.id }}" value="">
         {% if p.candidatos_correccion %}
         {# Tarjetas de un clic (conversación 2026-08-15, prototipado en
            `prototype/corregir-destinatario-candidatos`): cada candidato ES
@@ -442,6 +461,17 @@
         <div id="nuevo-ocupante-{{ p.id }}" hidden class="mt-3 space-y-3">
           {{ input_texto('Nombre del nuevo residente', name='nuevo_ocupante_nombre', id='nuevo-ocupante-nombre-' ~ p.id, icono=iconos_nav.persona, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
           {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='nuevo-ocupante-telefono-' ~ p.id, icono=iconos_nav.telefono_campo) }}
+          {# Vista previa en vivo (conversación 2026-08-16, pedido explícito):
+             si el contacto tecleado ya es una Persona registrada, avisa Y
+             completa el Nombre por ella -- el staff no puede rebautizar a
+             alguien ya conocido por esta puerta (mismo enforcement real en
+             `agregar_ocupante`, esto es solo la vista previa). Para usar
+             otro nombre con este contacto hay que desvincularlo primero de
+             donde esté. #}
+          <p id="nuevo-ocupante-preview-{{ p.id }}" class="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex items-start gap-1.5" hidden>
+            <svg class="h-4 w-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.persona|safe }}</svg>
+            <span></span>
+          </p>
           {# Mover (.scratch/ocupante-principal-escenarios, ticket 12): si el
              contacto ya es Ocupante activo no-principal de otra unidad, en
              vez de bloquear se mueve a esa persona (con su identidad real). #}
@@ -451,6 +481,57 @@
           </label>
           <button type="submit" name="candidato_idx" value="nuevo" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Guardar nuevo residente</button>
         </div>
+        <script>
+          (function () {
+            var contacto = document.getElementById('nuevo-ocupante-telefono-{{ p.id }}');
+            var nombreInput = document.getElementById('nuevo-ocupante-nombre-{{ p.id }}');
+            var preview = document.getElementById('nuevo-ocupante-preview-{{ p.id }}');
+            if (!contacto || !nombreInput || !preview) return;
+            var previewTexto = preview.querySelector('span');
+
+            var nombreOriginal = null;
+            var debounceTimer = null;
+            var controller = null;
+
+            function limpiar() {
+              preview.hidden = true;
+              nombreInput.readOnly = false;
+              if (nombreOriginal !== null) { nombreInput.value = nombreOriginal; nombreOriginal = null; }
+            }
+
+            function actualizar() {
+              clearTimeout(debounceTimer);
+              if (controller) controller.abort();
+              var valor = contacto.value.trim();
+              if (!valor) { limpiar(); return; }
+              controller = new AbortController();
+              fetch('/paquetes/nuevo-residente/identificar?contacto=' + encodeURIComponent(valor), {
+                headers: { 'X-Requested-With': 'fetch' },
+                signal: controller.signal,
+              })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                  if (data.encontrado) {
+                    if (nombreOriginal === null) nombreOriginal = nombreInput.value;
+                    nombreInput.value = data.nombre;
+                    nombreInput.readOnly = true;
+                    previewTexto.textContent = 'Ya existe como ' + data.nombre + ' -- se usará ese nombre. Para registrar este número con otro nombre, primero hay que desvincularlo de donde esté.';
+                    preview.hidden = false;
+                  } else {
+                    limpiar();
+                  }
+                })
+                .catch(function (err) {
+                  if (err.name !== 'AbortError') { window.console && console.error('Identificar nuevo residente falló:', err); }
+                });
+            }
+
+            contacto.addEventListener('input', function () {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(actualizar, 150);
+            });
+          })();
+        </script>
         {% else %}
         {{ input_texto('Nombre', name='recipient_name', value=p.recipient_name, required=True, id='nombre-corregir-' ~ p.id, icono=iconos_nav.persona, error=(error if (este_paquete_con_error and error_campo|default(none) == 'recipient_name') else none), extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
         {{ input_texto('Teléfono de notificación (opcional)', name='recipient_phone', type='tel', value=p.recipient_phone or '', id='telefono-corregir-' ~ p.id, icono=iconos_nav.telefono_campo) }}

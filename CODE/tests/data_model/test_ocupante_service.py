@@ -191,6 +191,67 @@ def test_ocupante_con_telefono_reutiliza_persona_existente(db_session):
         agregar_ocupante(db_session, apto2, "Papá Otra Vez", telefono="3001234567")
 
 
+def test_agregar_ocupante_con_telefono_ya_registrado_usa_el_nombre_existente(db_session):
+    # Conversación 2026-08-16 (pedido explícito del cliente): si el contacto
+    # YA es una Persona conocida (acá, una que existe pero no está
+    # ACTIVAMENTE ocupando nada en este momento -- el otro caso, activo en
+    # otra unidad, ya lo bloquea `_persona_ya_es_ocupante_activo` antes de
+    # llegar a este punto), el nombre que se guarda es el registrado, no el
+    # recién tecleado -- evita que la misma Persona muestre nombres
+    # distintos según qué Ocupante se mire.
+    from app.domain.persona_service import get_or_create_persona
+
+    apto = _apto(db_session)
+    persona = get_or_create_persona(db_session, "3005551111", "Nombre Real Registrado")
+
+    ocupante = agregar_ocupante(db_session, apto, "Nombre Que Alguien Tipeo Distinto", telefono="3005551111")
+
+    assert ocupante.persona_id == persona.id
+    assert ocupante.nombre == "NOMBRE REAL REGISTRADO"
+
+
+def test_agregar_ocupante_con_whatsapp_ya_registrado_usa_el_nombre_existente(db_session):
+    from app.domain.persona_service import get_or_create_persona_por_whatsapp
+
+    apto = _apto(db_session)
+    persona = get_or_create_persona_por_whatsapp(db_session, "nombre.real", "Nombre Real Registrado")
+
+    ocupante = agregar_ocupante(db_session, apto, "Nombre Distinto Tipeo", whatsapp_usuario="nombre.real")
+
+    assert ocupante.persona_id == persona.id
+    assert ocupante.nombre == "NOMBRE REAL REGISTRADO"
+
+
+def test_agregar_ocupante_con_telefono_nuevo_si_usa_el_nombre_tecleado(db_session):
+    # Contraparte del test anterior: sin Persona previa para ese teléfono,
+    # el nombre tecleado SÍ se usa -- no hay identidad registrada que
+    # proteger.
+    apto = _apto(db_session)
+
+    ocupante = agregar_ocupante(db_session, apto, "Nombre Nuevo De Verdad", telefono="3005552222")
+
+    assert ocupante.nombre == "NOMBRE NUEVO DE VERDAD"
+
+
+def test_agregar_ocupante_reutiliza_nombre_registrado_tras_desvincular(db_session):
+    # El escenario concreto que motivó el pedido: alguien ya registrado se
+    # desvincula de su unidad, y luego alguien intenta darlo de alta de
+    # nuevo (en la misma unidad u otra) con un nombre distinto -- el nombre
+    # real registrado sigue mandando; para usar otro nombre con ese
+    # contacto hay que desvincularlo primero (ya se cumple acá) y el nuevo
+    # alta TAMBIÉN respeta el nombre real, no cualquier texto libre.
+    apto1 = _apto(db_session)
+    apto2 = resolver_apartamento(db_session, "TORRE 3", "303")
+
+    original = agregar_ocupante(db_session, apto1, "Nombre Real Registrado", telefono="3005553333")
+    dar_de_baja_ocupante(db_session, original)
+
+    reingreso = agregar_ocupante(db_session, apto2, "Intento De Renombrar", telefono="3005553333")
+
+    assert reingreso.persona_id == original.persona_id
+    assert reingreso.nombre == "NOMBRE REAL REGISTRADO"
+
+
 def test_promover_sin_telefono_falla(db_session):
     apto = _apto(db_session)
     agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
