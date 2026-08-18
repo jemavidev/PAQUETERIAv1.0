@@ -6,7 +6,7 @@ baja antes de asociarse de nuevo.": "Vamos con la opcion 1" (de las dos
 presentadas -- conectar el mecanismo de "mover" que ya tenía Corregir
 destinatario, sin portar toda la vista previa en vivo).
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

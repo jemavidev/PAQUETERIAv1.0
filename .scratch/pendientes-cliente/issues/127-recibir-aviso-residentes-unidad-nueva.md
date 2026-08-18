@@ -10,7 +10,7 @@ Se presentaron 3 opciones (informativo sin bloquear / informativo +
 aviso si el nombre no calza / con fricción extra tipo checkbox). El
 cliente eligió la opción 2.
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Diagnóstico
 

@@ -3,7 +3,7 @@
 **Pedido original (cliente):**
 "En la vista de /paquetes remueve la columna de 'Estado'"
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

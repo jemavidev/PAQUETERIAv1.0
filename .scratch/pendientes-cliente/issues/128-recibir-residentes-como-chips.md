@@ -11,7 +11,7 @@ Refina [[127]] (aviso de residentes al declarar unidad nueva desde
 Recibir), que originalmente mostraba "Residentes actuales: X, Y, Z."
 como una sola oración con comas.
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

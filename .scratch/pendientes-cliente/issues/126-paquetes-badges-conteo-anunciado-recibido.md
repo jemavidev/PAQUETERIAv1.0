@@ -10,7 +10,7 @@ llamarlos los iconos de filtro"
 **Confirmación (cliente):** "global, dale con esa" -- conteo GLOBAL
 confirmado (no filtrado por búsqueda/estado activo).
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Propuesta
 

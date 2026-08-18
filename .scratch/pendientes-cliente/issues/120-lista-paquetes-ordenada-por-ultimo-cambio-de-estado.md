@@ -5,7 +5,7 @@
 cambio de estado hasta el mas antiguo, la idea es que siempre este lo mas
 reciente de primero."
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Diagnóstico
 

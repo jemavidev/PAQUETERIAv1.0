@@ -10,7 +10,7 @@ Revierte parcialmente [[127]]/[[128]]: se queda la lista de residentes
 aviso ámbar aparte que marcaba explícitamente si el destinatario no
 calzaba con ninguno -- la lista de nombres ya lo deja ver por sí sola.
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

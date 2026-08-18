@@ -150,14 +150,14 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `117` — "¿A nombre de quién es?" en Recibir: sin etiqueta, `<select>` reemplazado por tarjetas de un clic (2 por fila), badge "Actual" informativo sin pre-marcar radio (evita reactivar corregir_destinatario sin cambios reales) — **implementado**
 - `118` — Tarjetas de candidato en Recibir: se quita el teléfono, "Actual" pasa de badge de texto a fondo de color (slate, distinto del azul de selección activa) — **implementado**
 - `119` — Auditoría de unificación de /paquetes: botones "Entregar"/"Guardar" (verbo solo), "Confirmar guía" (sin "(opcional)"), fondo "Actual" también en Corregir destinatario, ícono de persona retirado ahí (Recibir manda la dirección "menos") — **implementado**
-- `120` — Lista de /paquetes ordenada por último cambio de estado (no por fecha de anuncio) — el más reciente siempre primero — **implementado**
-- `121` — Candidatos de Recibir/Corregir destinatario con badge Principal/Confirmado/Pendiente, mismo look de /residentes — **implementado**
-- `122` — "+ Nuevo residente" de Recibir permite mover (mismo mecanismo de Corregir destinatario, checkbox mínimo) — **implementado**
-- `123` — "+ Nuevo residente" de Recibir: vista previa en vivo completa portada de Corregir destinatario (bloqueo de nombre, "Mudar residente", "Degradarlo" con modal Promover ahora compartido) — **implementado**
-- `124` — `/consultar`: botón "Entregar" visible solo para staff logueado, redirect de vuelta a `/consultar?q=`, reescaneo/confirmación de guía (mismo mecanismo que `/paquetes`), sin revelar la guía real cuando no coincide — **implementado**
-- `125` — Modal "Recibir paquete": quita el badge de estado de ocupante de las tarjetas de candidato (solo Recibir, Corregir destinatario lo conserva) — **implementado**
-- `126` — `/paquetes`: badges de conteo (Anunciado/Recibido) superpuestos en los íconos de filtro, rojos — **implementado**
-- `127` — Recibir: aviso (no bloqueante) si la unidad declarada ya tiene residentes y el nombre no calza — **implementado**
-- `128` — Recibir: lista de residentes de [[127]] como chips compactos (solo nombre), no oración con comas — **implementado**
-- `129` — `/paquetes`: quitar la columna "Estado" de la tabla (el estado sigue visible vía el chip de código de acceso) — **implementado**
-- `130` — Recibir: quitar el aviso ámbar "no está entre los residentes" de [[127]] — se queda solo la lista de chips — **implementado**
+- `120` — Lista de /paquetes ordenada por último cambio de estado (no por fecha de anuncio) — el más reciente siempre primero — **verificado**
+- `121` — Candidatos de Recibir/Corregir destinatario con badge Principal/Confirmado/Pendiente, mismo look de /residentes — **verificado**
+- `122` — "+ Nuevo residente" de Recibir permite mover (mismo mecanismo de Corregir destinatario, checkbox mínimo) — **verificado**
+- `123` — "+ Nuevo residente" de Recibir: vista previa en vivo completa portada de Corregir destinatario (bloqueo de nombre, "Mudar residente", "Degradarlo" con modal Promover ahora compartido) — **verificado**
+- `124` — `/consultar`: botón "Entregar" visible solo para staff logueado, redirect de vuelta a `/consultar?q=`, reescaneo/confirmación de guía (mismo mecanismo que `/paquetes`), sin revelar la guía real cuando no coincide — **verificado**
+- `125` — Modal "Recibir paquete": quita el badge de estado de ocupante de las tarjetas de candidato (solo Recibir, Corregir destinatario lo conserva) — **verificado**
+- `126` — `/paquetes`: badges de conteo (Anunciado/Recibido) superpuestos en los íconos de filtro, rojos — **verificado**
+- `127` — Recibir: aviso (no bloqueante) si la unidad declarada ya tiene residentes y el nombre no calza — **verificado**
+- `128` — Recibir: lista de residentes de [[127]] como chips compactos (solo nombre), no oración con comas — **verificado**
+- `129` — `/paquetes`: quitar la columna "Estado" de la tabla (el estado sigue visible vía el chip de código de acceso) — **verificado**
+- `130` — Recibir: quitar el aviso ámbar "no está entre los residentes" de [[127]] — se queda solo la lista de chips — **verificado**

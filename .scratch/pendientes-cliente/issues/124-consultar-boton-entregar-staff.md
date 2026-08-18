@@ -24,7 +24,7 @@ nada, aunque `data-guia-esperada` ya tuviera el valor correcto. Este bug
 existía TAMBIÉN en `/paquetes` desde antes de este issue (mismo macro
 compartido) -- no era exclusivo de `/consultar`.
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Diseño acordado
 

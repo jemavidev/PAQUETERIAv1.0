@@ -7,7 +7,7 @@ confirmados...' que se remueba esta badge o etiqueta, que solo aparezca
 el nombre del residente y siga teniendo la funcionalidad de poder
 seleccionar cualquiera de estos"
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

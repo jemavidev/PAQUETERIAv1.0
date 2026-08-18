@@ -7,7 +7,7 @@ Corregir destinatario (issue 122 solo conectó el mecanismo de "mover";
 esto agrega la vista previa, el bloqueo/desbloqueo de nombre, y el aviso
 + "Degradarlo" para conflictos con el Principal).
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

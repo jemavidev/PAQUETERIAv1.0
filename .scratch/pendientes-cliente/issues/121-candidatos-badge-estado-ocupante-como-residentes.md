@@ -6,7 +6,7 @@ residentes tenga el mismo look and feel que los Tab de la vista de
 /residentes (Datos, Direccion, Notificaciones ...), la idea es que los
 nombres de los residentes se muestren asi de ordenados."
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Diagnóstico
 
