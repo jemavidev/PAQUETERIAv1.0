@@ -6,7 +6,7 @@ De las 3 posibilidades presentadas para `/announce`, eligió "b y c":
 - **C.** Código de acceso clickeable en el toast de éxito, hacia
   `/consultar`.
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 

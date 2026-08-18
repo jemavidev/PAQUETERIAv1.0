@@ -6,7 +6,7 @@ posibilidades. Eligió la primera: "la primera" -- quitar los badges
 "Principal"/"Anunciante" de la lista de residentes de una unidad, mismo
 criterio ya aplicado a Recibir en [[125]].
 
-**Status:** implementado
+**Status:** verificado en test.papyrus.com.co
 
 ## Implementación
 
