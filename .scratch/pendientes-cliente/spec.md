@@ -161,3 +161,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `128` — Recibir: lista de residentes de [[127]] como chips compactos (solo nombre), no oración con comas — **verificado**
 - `129` — `/paquetes`: quitar la columna "Estado" de la tabla (el estado sigue visible vía el chip de código de acceso) — **verificado**
 - `130` — Recibir: quitar el aviso ámbar "no está entre los residentes" de [[127]] — se queda solo la lista de chips — **verificado**
+- `131` — `/announce`: quitar badges "Principal"/"Anunciante" de la lista de residentes (mismo criterio que [[125]]) — **implementado**
+- `132` — `/announce`: fuente Nunito Sans (mismo que [[110]]/[[112]]) + código de acceso clickeable en el toast de éxito — **implementado**
