@@ -163,3 +163,13 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `130` — Recibir: quitar el aviso ámbar "no está entre los residentes" de [[127]] — se queda solo la lista de chips — **verificado**
 - `131` — `/announce`: quitar badges "Principal"/"Anunciante" de la lista de residentes (mismo criterio que [[125]]) — **verificado**
 - `132` — `/announce`: fuente Nunito Sans (mismo que [[110]]/[[112]]) + código de acceso clickeable en el toast de éxito — **verificado**
+- `133` — Recibir: capturar varias fotos con la cámara reemplazaba en vez de sumar (bug real, `capture="environment"` + `change` que reemplazaba en vez de acumular) — **implementado**
+- `134` — `/consultar`: quitar el sufijo " • Actual" del badge de cada paso del timeline (mismo criterio ya aplicado en [[106]] al modal Ver) — **implementado**
+- `135` — "Corregir destinatario": permitir asignar apartamento también en RECIBIDO (antes solo Anunciado), emoji 🏢/🏢❌ en la columna Dirección — **implementado**
+- `136` — `/paquetes`: unificar tamaño de los íconos de Acciones (36×36px) con los de la barra de filtros — **implementado**
+- `137` — Colores más intensos (mismo tono, un paso más oscuro) en íconos de Acciones de `/paquetes` y de Estado en la barra de filtros — **implementado**
+- `138` — Reemplazar el literal "None" por "N/D" cuando un campo no tiene dato (solo front) — bug real encontrado en `/residentes`: teléfono en texto plano y enlace "Llamar" roto (`tel:None`) para Personas solo-WhatsApp — **implementado**
+- `139` — Paginación: sticky arriba (desktop) + píldora flotante abajo (mobile) en `/paquetes` y `/residentes`, 6 bugs reales encontrados y corregidos en el camino — **implementado**
+- `140` — `/paquetes`: 20 por página (revierte la decisión del 2026-08-13 que lo bajó a 10) — **implementado**
+- `141` — Barra de búsqueda/filtros: título inline en desktop, sombra retirada, espacios optimizados, filtros redistribuidos en mobile — **implementado**
+- `142` — `/paquetes`: búsqueda por email + teléfono parcial (últimos 4+ dígitos) — **implementado**
