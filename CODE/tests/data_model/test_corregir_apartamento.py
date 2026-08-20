@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Seam A — corregir el Apartamento (snapshot) de un Paquete `ANUNCIADO`, hermana
-directa de `corregir_destinatario` (excepción acotada a ADR-0001). Ver
-.scratch/asociacion-retroactiva-apartamento/spec.md e issues/01.
+Seam A — corregir el Apartamento (snapshot) de un Paquete en
+`ESTADOS_CORREGIBLES` (ANUNCIADO/RECIBIDO), hermana directa de
+`corregir_destinatario` (excepción acotada a ADR-0001). Ver
+.scratch/asociacion-retroactiva-apartamento/spec.md e issues/01, y
+.scratch/pendientes-cliente/issues/135 (ampliación a RECIBIDO).
 
-Comportamiento observable: corrige en ANUNCIADO y registra actor+timestamp;
-en cualquier otro estado, TransicionInvalida sin efecto.
+Comportamiento observable: corrige en ANUNCIADO/RECIBIDO y registra
+actor+timestamp; en ENTREGADO/CANCELADO, TransicionInvalida sin efecto.
 """
 
 import pytest
@@ -75,17 +77,24 @@ def test_corregir_sin_apartamento_falla_y_no_muta(db_session):
     assert p.corrected_at is None
 
 
-def test_corregir_en_recibido_falla_sin_efecto(db_session):
+def test_corregir_en_recibido_actualiza_snapshot_y_registra_actor(db_session):
+    # Issue 135, pedido explícito 2026-08-19: un Paquete puede llegar a
+    # RECIBIDO sin apartamento (ej. anunciado por Teléfono/WhatsApp
+    # directo) -- ampliado el guard para poder asociarle uno ahí también,
+    # mismo criterio que ya usa `corregir_destinatario`.
     staff = _staff(db_session)
     apto = resolver_apartamento(db_session, "TORRE 1", "101")
     p = _anunciar(db_session)
     receive(db_session, p, staff)
 
-    with pytest.raises(TransicionInvalida):
-        corregir_apartamento(db_session, p, staff, apto)
+    corregir_apartamento(db_session, p, staff, apto)
 
-    assert p.snapshot_apartamento is None
-    assert p.corrected_at is None
+    assert p.snapshot_conjunto == "EL CLUB"
+    assert p.snapshot_torre == "TORRE 1"
+    assert p.snapshot_apartamento == "101"
+    assert p.corrected_by_usuario_id == staff.id
+    assert p.corrected_at is not None
+    assert p.estado == EstadoPaquete.RECIBIDO
 
 
 def test_corregir_en_entregado_falla_sin_efecto(db_session):

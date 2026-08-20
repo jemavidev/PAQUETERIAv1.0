@@ -32,6 +32,10 @@ esta excepción, cada una con su propio guard de estado acotado y el mismo rastr
    corregir el destinatario de un paquete que nunca se entregó.
 2. **`corregir_apartamento`** — corrige el snapshot de Apartamento cuando un Paquete se anunció
    antes de que su Teléfono estuviera vinculado a una unidad, y ese Teléfono se vincula después
-   (`.scratch/asociacion-retroactiva-apartamento`). Guard: `ANUNCIADO` únicamente (sin cambios).
-   Comparte las mismas columnas de auditoría que `corregir_destinatario` — el esquema no distingue
-   cuál de las dos correcciones ocurrió.
+   (`.scratch/asociacion-retroactiva-apartamento`). Guard: `ESTADOS_CORREGIBLES`
+   (`ANUNCIADO`/`RECIBIDO`) — empezó acotado a `ANUNCIADO` únicamente; amplió a `RECIBIDO` el
+   2026-08-19 (pedido explícito del cliente, mismo guard que `corregir_destinatario`: un Paquete
+   puede llegar a RECIBIDO sin apartamento y quedar sin forma de asociarle un residente nuevo desde
+   "Corregir destinatario"). `ENTREGADO`/`CANCELADO` siguen bloqueados. Comparte las mismas columnas
+   de auditoría que `corregir_destinatario` — el esquema no distingue cuál de las dos correcciones
+   ocurrió.
