@@ -173,3 +173,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `140` — `/paquetes`: 20 por página (revierte la decisión del 2026-08-13 que lo bajó a 10) — **implementado**
 - `141` — Barra de búsqueda/filtros: título inline en desktop, sombra retirada, espacios optimizados, filtros redistribuidos en mobile — **implementado**
 - `142` — `/paquetes`: búsqueda por email + teléfono parcial (últimos 4+ dígitos) — **implementado**
+- `143` — Alinear ancho del contenido con el header en `/paquetes`, `/residentes`, `/administracion/personal` — **implementado**
+- `144` — Letras grises más oscuras en todo el sistema (un escalón, contraste) — **implementado**
