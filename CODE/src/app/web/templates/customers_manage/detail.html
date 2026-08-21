@@ -4,7 +4,8 @@
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
-{% block title %}Cliente — PAQUETEX{% endblock %}
+{% from "components/_modales.html" import modal_confirmacion %}
+{% block title %}Residente — PAQUETEX{% endblock %}
 {% block content %}
 {# Issue 69/71: Residente Secundario ya no lleva badge -- un acento de color
    a la izquierda de cada tab-panel es la única señal (issue 71: reemplaza el
@@ -13,7 +14,7 @@
    la lista). #}
 {% set es_secundario = mi_ocupante and not mi_ocupante.es_principal %}
 <div class="max-w-[460px] lg:max-w-[760px] mx-auto px-4 py-6">
-  {{ encabezado_volver('Ficha de cliente', '/residentes', texto_volver='Volver a Clientes') }}
+  {{ encabezado_volver('Ficha de residente', '/residentes', texto_volver='Volver a Residentes') }}
 
   {# Badges siempre visibles (issue 68), sin importar la tab activa --
      reemplazan la línea de subtítulo (teléfono/conjunto/torre/apto) que
@@ -46,7 +47,7 @@
   </div>
 
   <div class="tab-panel{{ ' border-l-4 border-red-400 pl-3' if es_secundario else '' }}" data-panel="datos">
-    {% call formulario_flujo('Datos del cliente', action='/residentes/' ~ persona.id, boton_texto='Guardar') %}
+    {% call formulario_flujo('Datos del residente', action='/residentes/' ~ persona.id, boton_texto='Guardar') %}
       {{ input_texto('Nombre', name='nombre', value=persona.nombre or '', icono=iconos_nav.persona, autofocus=(not error), extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
       {{ input_texto('Teléfono', name='telefono', type='tel', value=persona.telefono or '', icono=iconos_nav.telefono_campo, error=error_telefono|default(none), extra_attrs='autocomplete="tel" inputmode="tel"') }}
       {{ input_texto('Email', name='email', type='email', value=persona.email or '', icono=iconos_nav.email, error=error_email|default(none)) }}
@@ -68,7 +69,7 @@
        mismo contrato. #}
     <div class="max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow p-6">
       <h3 class="text-lg font-bold text-slate-900 mb-1">Dirección</h3>
-      <p class="text-xs text-slate-700 mb-4">Solo el personal de Papyrus puede asignar o cambiar esto -- el cliente lo ve de solo lectura en "Mis datos".</p>
+      <p class="text-xs text-slate-700 mb-4">Solo el personal de Papyrus puede asignar o cambiar esto -- el residente lo ve de solo lectura en "Mis datos".</p>
       {% if aviso_reasignacion_bloqueada %}
       {# Issue 69: explica de antemano por qué el picker va a rechazar el
          guardado -- antes el staff solo se enteraba después de intentarlo. #}
@@ -128,7 +129,7 @@
        acá usa el ancho completo del contenedor de la página en su lugar. #}
     <div class="bg-white border border-gray-200 rounded-2xl shadow p-6">
       <h2 class="text-base font-bold text-slate-900 mb-1">Notificaciones</h2>
-      <p class="text-xs text-slate-700 mb-3">Elige por cuáles canales se le notifica a este cliente, para cada estado de sus paquetes.</p>
+      <p class="text-xs text-slate-700 mb-3">Elige por cuáles canales se le notifica a este residente, para cada estado de sus paquetes.</p>
       <form method="post" action="/residentes/{{ persona.id }}/notificaciones">
         <div class="rounded-lg border border-slate-200 overflow-hidden">
           <div class="hidden lg:grid lg:grid-cols-[1fr_repeat(4,minmax(0,1fr))] lg:gap-2 bg-slate-50 text-xs text-slate-700 px-3 py-2">
@@ -191,10 +192,15 @@
                 <button type="submit" class="text-xs text-green-700 font-semibold hover:underline whitespace-nowrap">Confirmar</button>
               </form>
               {% endif %}
-              <form method="post" action="/residentes/{{ persona.id }}/ocupantes/{{ o.id }}/baja" onsubmit="return confirm('¿{{ 'Rechazar' if not o.confirmado_en else 'Eliminar a' }} {{ o.nombre }}? Sus datos quedarán solo de consulta.')">
-                <button type="submit" class="text-xs text-red-600 font-semibold hover:underline whitespace-nowrap">{{ 'Rechazar' if not o.confirmado_en else 'Eliminar' }}</button>
-              </form>
+              {% set accion_baja = 'Rechazar' if not o.confirmado_en else 'Eliminar' %}
+              <button type="button" class="text-xs text-red-600 font-semibold hover:underline whitespace-nowrap" data-open="modal-baja-{{ o.id }}">{{ accion_baja }}</button>
             </div>
+            {# Mismo componente/patrón que "Eliminar residente" (search.html) y
+               "Eliminar paquete"/"Cancelar paquete" (/paquetes) -- ya no
+               `confirm()` nativo del navegador (conversación 2026-08-20). #}
+            {{ modal_confirmacion('baja-' ~ o.id, accion_baja ~ ' residente',
+                '¿' ~ accion_baja ~ ' a ' ~ o.nombre ~ '? Sus datos quedarán solo de consulta.',
+                accion_baja, action='/residentes/' ~ persona.id ~ '/ocupantes/' ~ o.id ~ '/baja', variant='danger') }}
             {% endif %}
           </div>
           {% if not o.es_principal %}
@@ -210,10 +216,14 @@
                 <button type="submit" class="text-xs text-slate-800 hover:underline">Eliminar WhatsApp</button>
               </form>
               {% endif %}
-              <form method="post" action="/residentes/{{ persona.id }}/ocupantes/{{ o.id }}/promover" onsubmit="return confirm('¿Convertir a {{ o.nombre }} en el nuevo residente principal?')">
-                <button type="submit" class="text-xs text-blue-800 font-semibold hover:underline">Convertir en residente principal</button>
-              </form>
+              <button type="button" class="text-xs text-blue-800 font-semibold hover:underline" data-open="modal-promover-{{ o.id }}">Convertir en residente principal</button>
             </div>
+            {# Mismo texto que el modal "Promover a otro residente" de
+               /paquetes (`packages/_resultados.html`) -- "se degrada
+               automáticamente a quien es principal ahora". #}
+            {{ modal_confirmacion('promover-' ~ o.id, 'Convertir en residente principal',
+                '¿Convertir a ' ~ o.nombre ~ ' en el nuevo residente principal? Se degrada automáticamente a quien es principal ahora.',
+                'Convertir en principal', action='/residentes/' ~ persona.id ~ '/ocupantes/' ~ o.id ~ '/promover', variant='warning') }}
             {% if o.telefono %}
             <form method="post" action="/residentes/{{ persona.id }}/ocupantes/{{ o.id }}/telefono" class="mt-2 flex gap-2">
               <input type="tel" name="telefono" value="{{ o.telefono }}" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
@@ -262,12 +272,26 @@
     </div>
     {% else %}
     <div class="max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow p-6 text-sm text-slate-700">
-      Este cliente todavía no tiene un apartamento asignado -- asígnalo desde la tab "Dirección" para poder gestionar sus Residentes.
+      Este residente todavía no tiene un apartamento asignado -- asígnalo desde la tab "Dirección" para poder gestionar sus Residentes.
     </div>
     {% endif %}
   </div>
 </div>
 <script>
+  (function () {
+    // Toggle de los modales de confirmación de Ocupantes (Rechazar/Eliminar,
+    // Convertir en principal) -- mismo contrato/script que ya usan
+    // `customers_manage/search.html` (Eliminar residente) y `admin/staff.html`:
+    // data-open abre, data-close cierra.
+    function toggle(id, hidden) { var m = document.getElementById(id); if (m) m.hidden = hidden; }
+    document.querySelectorAll('[data-open]').forEach(function (b) {
+      b.addEventListener('click', function () { toggle(b.dataset.open, false); });
+    });
+    document.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () { toggle(b.dataset.close, true); });
+    });
+  })();
+
   (function () {
     // Tabs de la ficha (issues 67/68) -- cada tab es un <div class="tab-panel">
     // independiente con su PROPIO <form>, así que no hace falta coordinar un

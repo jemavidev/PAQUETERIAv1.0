@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Ruta `/residentes` — buscar + ver/editar cliente (staff).
+Ruta `/residentes` — buscar + ver/editar residente (staff).
 
 Buscar y editar son operativos, abiertos a CUALQUIER rol de staff (a diferencia
 de eliminar, gated por `require_admin` en el módulo de la acción destructiva).
@@ -116,10 +116,10 @@ def _get_persona_o_404(db: Session, persona_id: str) -> Persona:
     try:
         pid = uuid.UUID(persona_id)
     except (ValueError, TypeError):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Residente no encontrado")
     persona = db.get(Persona, pid)
     if persona is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Residente no encontrado")
     return persona
 
 
@@ -219,7 +219,7 @@ def _adjuntar_ocupante(db: Session, personas: list[Persona]) -> list[Persona]:
 
 
 def _listar_todos_los_residentes(db: Session, pagina: int = 1):
-    """Sin término de búsqueda: TODOS los clientes ACTIVOS, paginados (pedido
+    """Sin término de búsqueda: TODOS los residentes ACTIVOS, paginados (pedido
     del cliente, .scratch/pendientes-cliente -- antes `/residentes` no
     mostraba nada hasta buscar). La búsqueda con término (`_buscar_residentes`)
     no se pagina -- ya es un subconjunto acotado por el propio filtro.
@@ -303,20 +303,20 @@ def _aviso_reasignacion_bloqueada(db: Session, mi_ocupante) -> str | None:
         db, mi_ocupante.apartamento_id, mi_ocupante.id
     ):
         return (
-            "Este cliente es el Residente principal de su apartamento actual, que "
+            "Este residente es el Residente principal de su apartamento actual, que "
             "tiene otros Residentes activos -- para reasignarlo desde acá, primero "
             "convierte a otro en principal o dales de baja a todos en la tab "
             '"Residentes".'
         )
     return (
-        "Este cliente está registrado como Residente de su apartamento actual -- "
+        "Este residente está registrado como Residente de su apartamento actual -- "
         'para reasignarlo desde acá, primero dalo de baja como Residente en la tab '
         '"Residentes".'
     )
 
 
 def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
-    """Contexto común a la ficha de cliente y a cualquier re-render tras un
+    """Contexto común a la ficha de residente y a cualquier re-render tras un
     error o una acción sobre Ocupantes/Notificaciones (.scratch/mis-datos,
     ticket 10; issue 67)."""
     apto = _apartamento_actual(db, persona)
@@ -422,7 +422,7 @@ def customers_manage_update(
     segundo_contacto: str = Form(None),
     whatsapp_usuario: str = Form(None),
 ):
-    """Datos del cliente (tab "Datos", issue 67) -- nombre/email/segundo
+    """Datos del residente (tab "Datos", issue 67) -- nombre/email/segundo
     contacto/usuario de WhatsApp/teléfono, todo o nada por request."""
     persona = _get_persona_o_404(db, persona_id)
     # "" explícito (no None -- issue 69): este formulario SIEMPRE manda este
@@ -526,7 +526,7 @@ def customers_manage_asignar_apartamento(
     apartamento: str = Form(None),
     mover_de_otra_unidad: str = Form(None),
 ):
-    """Asigna, cambia o desvincula la Torre/Apartamento de un cliente --
+    """Asigna, cambia o desvincula la Torre/Apartamento de un residente --
     única vía para tocar `apartamento_actual_id` ahora que `/mis-datos` es de
     solo lectura para el residente (.scratch/pendientes-cliente): la
     asignación es exclusiva del personal de Papyrus.
@@ -627,7 +627,7 @@ def customers_manage_asignar_apartamento(
     contexto["tab_inicial"] = "direccion"
     if huerfano_detectado:
         contexto["aviso_dato_huerfano"] = (
-            "Este cliente tenía un apartamento asignado sin ningún Residente "
+            "Este residente tenía un apartamento asignado sin ningún Residente "
             "real detrás -- se limpió ese dato inconsistente."
         )
     return templates.TemplateResponse("customers_manage/detail.html", contexto)
@@ -672,7 +672,7 @@ def customers_manage_ocupante_crear(
     if apto is None or not nombre_v:
         return _render_detalle_con_error(
             request, db, staff, persona,
-            "Este cliente no tiene apartamento asignado, o falta el nombre." if apto is None
+            "Este residente no tiene apartamento asignado, o falta el nombre." if apto is None
             else "El nombre del Ocupante es obligatorio.",
             tab_inicial="residentes",
         )
@@ -962,7 +962,7 @@ def customers_manage_delete(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
-    """Elimina (anonimiza) un cliente. **Solo ADMIN** — acción destructiva
+    """Elimina (anonimiza) un residente. **Solo ADMIN** — acción destructiva
     (ADR-0005); la ruta se protege server-side, la UI no es la única barrera."""
     persona = _get_persona_o_404(db, persona_id)
     anonimizar_persona(db, persona)

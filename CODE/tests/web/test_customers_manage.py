@@ -186,12 +186,12 @@ def test_residentes_sin_busqueda_lista_todos_los_clientes(client):
     assert "BETO" in r.text
 
 
-def test_residentes_sin_clientes_registrados_muestra_estado_vacio(client):
+def test_residentes_sin_residentes_registrados_muestra_estado_vacio(client):
     _login_operador(client)
 
     r = client.get("/residentes")
     assert r.status_code == 200
-    assert "sin clientes todavía" in r.text.lower()
+    assert "sin residentes todavía" in r.text.lower()
 
 
 def test_residentes_sin_busqueda_pagina_cuando_hay_muchos_clientes(client):
