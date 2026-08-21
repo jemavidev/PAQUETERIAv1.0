@@ -5,7 +5,7 @@ uses este 🏢, pero lo vas a dejar desactivado o de color gris para que haga lo
 segundo pedido, cambiar además 🏢 por 🏠 ("el de la casa"), con 3 opciones presentadas (🏠/🏡/🏘️),
 eligió la 1.
 
-**Status:** implementado
+**Status:** verificado
 
 ## Contexto
 

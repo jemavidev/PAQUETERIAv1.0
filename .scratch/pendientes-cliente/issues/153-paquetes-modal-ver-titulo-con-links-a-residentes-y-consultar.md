@@ -4,7 +4,7 @@
 'JESUS VILLALOBOS - QK5P' quiero que para el nombre y el codigo se generen 2 links (JESUS
 VILLALOBOS --> /residentes<residente seleccionado> y QK5P --> /consultar?q=QK5P)".
 
-**Status:** implementado
+**Status:** verificado
 
 ## Decisiones
 

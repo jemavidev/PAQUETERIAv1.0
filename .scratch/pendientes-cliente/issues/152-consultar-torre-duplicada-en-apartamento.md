@@ -7,7 +7,7 @@ EL CLUB · Torre 10 · Apto 101', la palabra 'TORRE' está de más" — seguido 
 pedir que se revisara si el mismo problema aparecía en otras secciones de la
 app.
 
-**Status:** implementado
+**Status:** verificado
 
 ## Causa raíz
 
