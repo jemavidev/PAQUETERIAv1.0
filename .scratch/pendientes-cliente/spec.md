@@ -177,3 +177,7 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `144` — Letras grises más oscuras en todo el sistema (un escalón, contraste) — **implementado**
 - `145` — `/residentes`: modales de confirmación (`modal_confirmacion`) en vez de `confirm()` nativo en "Rechazar/Eliminar" y "Convertir en principal", alineado con `/paquetes` — **implementado**
 - `146` — Terminología "Clientes" → "Residentes" en `/residentes` y su nav (revierte rename explícito de Grupo 10/Ronda 2) — **implementado**
+- `147` — `/residentes` tab Dirección: mismo picker de Apartamento (Apto→Torre, informativo no bloqueante) que `/paquetes`/`/announce`, elimina `apartamentos_ocupados()` — **implementado**
+- `148` — "Recibir": declarar unidad nueva + registrar residente (¿A nombre de quién es?) en un solo envío, antes requería una segunda visita a "Corregir destinatario" — **implementado**
+- `149` — "Asignar apartamento" (el otro punto de entrada, sin cubrir por [[148]]): también registra "+ Nuevo residente" opcional en el mismo envío — **implementado**
+- `150` — Desactivar un staff corta su sesión ya abierta en el siguiente request, no solo su próximo login (`current_staff` releía `.activo`, faltaba) — **implementado**
