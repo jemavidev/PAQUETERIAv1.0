@@ -181,3 +181,6 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `148` — "Recibir": declarar unidad nueva + registrar residente (¿A nombre de quién es?) en un solo envío, antes requería una segunda visita a "Corregir destinatario" — **implementado**
 - `149` — "Asignar apartamento" (el otro punto de entrada, sin cubrir por [[148]]): también registra "+ Nuevo residente" opcional en el mismo envío — **implementado**
 - `150` — Desactivar un staff corta su sesión ya abierta en el siguiente request, no solo su próximo login (`current_staff` releía `.activo`, faltaba) — **implementado**
+- `152` — `/consultar`: "Torre TORRE 10" duplicaba la palabra "Torre" (`snapshot_torre` ya trae el prefijo del catálogo) — mismo bug corregido en 4 lugares más, filtro `torre_sin_prefijo` centraliza el saneo (reusa [[79]]) — **implementado**
+- `151` — `/paquetes`: 🏠 apagado (gris, `grayscale`+`opacity-50`) en vez del emoji compuesto "🏢❌" para "sin apartamento, no editable" — bug real en el camino: `text-slate-300` no apaga un emoji a color (solo un SVG con `fill="currentColor"`) — **implementado**
+- `153` — `/paquetes` modal "Ver": nombre del título enlaza a `/residentes/<id>` (solo si hay Persona resuelta) y el código de acceso a `/consultar?q=`, cada uno como link independiente — **implementado**
