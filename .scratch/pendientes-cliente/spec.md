@@ -175,3 +175,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `142` — `/paquetes`: búsqueda por email + teléfono parcial (últimos 4+ dígitos) — **implementado**
 - `143` — Alinear ancho del contenido con el header en `/paquetes`, `/residentes`, `/administracion/personal` — **implementado**
 - `144` — Letras grises más oscuras en todo el sistema (un escalón, contraste) — **implementado**
+- `145` — `/residentes`: modales de confirmación (`modal_confirmacion`) en vez de `confirm()` nativo en "Rechazar/Eliminar" y "Convertir en principal", alineado con `/paquetes` — **implementado**
+- `146` — Terminología "Clientes" → "Residentes" en `/residentes` y su nav (revierte rename explícito de Grupo 10/Ronda 2) — **implementado**
