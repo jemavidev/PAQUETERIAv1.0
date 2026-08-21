@@ -5,6 +5,8 @@
 {% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
 {% from "components/_modales.html" import modal_confirmacion %}
+{% from "components/_picker_apartamento.html" import picker_apartamento %}
+{% from "components/_recibir_paquete.html" import recursos_recibir %}
 {% block title %}Residente — PAQUETEX{% endblock %}
 {% block content %}
 {# Issue 69/71: Residente Secundario ya no lleva badge -- un acento de color
@@ -62,11 +64,15 @@
   </div>
 
   <div class="tab-panel{{ ' border-l-4 border-red-400 pl-3' if es_secundario else '' }}" data-panel="direccion">
-    {# Picker interactivo de Torre → Piso → Apartamento (issue 68), reemplaza
-       los 2 `<select>` que tenía antes esta ficha. Los inputs REALES siguen
-       siendo `name="torre"`/`name="apartamento"` (ocultos) -- la ruta
-       `/residentes/{id}/apartamento` no cambió, esto es puro JS encima del
-       mismo contrato. #}
+    {# Issue 147 (.scratch/pendientes-cliente): mismo picker de Apartamento
+       que "Asignar apartamento"/Recibir en /paquetes (y /announce, mismo
+       modal compartido) -- `components/_picker_apartamento.html`, con el
+       JS de `recursos_recibir()`. Reemplaza el picker Torre->Piso->Apto
+       propio que tenía esta ficha (issue 68), que había quedado atrás
+       cuando ese componente se extrajo y refinó en /paquetes. Los inputs
+       REALES siguen siendo `name="torre"`/`name="apartamento"` (ocultos,
+       dentro del macro) -- la ruta `/residentes/{id}/apartamento` no
+       cambió. #}
     <div class="max-w-md mx-auto bg-white border border-gray-200 rounded-2xl shadow p-6">
       <h3 class="text-lg font-bold text-slate-900 mb-1">Dirección</h3>
       <p class="text-xs text-slate-700 mb-4">Solo el personal de Papyrus puede asignar o cambiar esto -- el residente lo ve de solo lectura en "Mis datos".</p>
@@ -78,37 +84,17 @@
       </div>
       {% endif %}
       <form method="post" action="/residentes/{{ persona.id }}/apartamento" id="form-direccion">
-        <input type="hidden" name="torre" id="direccion-torre-value" value="{{ apartamento.torre if apartamento else '' }}">
-        <input type="hidden" name="apartamento" id="direccion-apartamento-value" value="{{ apartamento.apartamento if apartamento else '' }}">
-
-        <p class="text-sm font-semibold text-slate-700 mb-2">1. Torre</p>
-        <div id="direccion-torres" class="grid grid-cols-5 gap-2 mb-4"></div>
-
-        <div id="direccion-pisos-wrap" hidden>
-          <p class="text-sm font-semibold text-slate-700 mb-2">2. Piso</p>
-          <div id="direccion-pisos" class="flex flex-wrap gap-2 mb-4"></div>
-        </div>
-
-        <div id="direccion-aptos-wrap" hidden>
-          <p class="text-sm font-semibold text-slate-700 mb-2">3. Apartamento</p>
-          <div id="direccion-aptos" class="flex flex-wrap gap-2 mb-2"></div>
-          {# Ticket 13 (.scratch/ocupante-principal-escenarios): las unidades
-             ya ocupadas se ven en gris, deshabilitadas -- agregar más gente
-             a una unidad existente es exclusivo de tab Residentes. #}
-          <p class="flex items-center gap-1.5 text-xs text-slate-700 mb-4">
-            <span class="inline-block h-2.5 w-2.5 rounded-full bg-gray-300"></span>
-            En gris: ya tiene residentes -- agregá más gente desde tab Residentes
-          </p>
-        </div>
-
-        <p id="direccion-resumen" class="text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4"></p>
+        {{ picker_apartamento('direccion', catalogo_torres, con_resumen=True,
+                               residentes_por_unidad=residentes_por_unidad,
+                               torre_inicial=(apartamento.torre if apartamento else none),
+                               apartamento_inicial=(apartamento.apartamento if apartamento else none)) }}
 
         {# Mover (.scratch/ocupante-principal-escenarios, ticket 12): si
            `persona` ya es Ocupante activo no-principal de otra unidad, esta
            casilla evita el paso manual de "dar de baja" primero -- sin
            efecto si no hay conflicto, o si es principal en otro lado (ahí
            nunca se mueve directo, el error lo explica). #}
-        <label class="flex items-center gap-2 text-xs text-slate-800 mb-3">
+        <label class="flex items-center gap-2 text-xs text-slate-800 mb-3 mt-3">
           <input type="checkbox" name="mover_de_otra_unidad" value="1">
           Si ya es Ocupante (no principal) de otra unidad, moverlo acá
         </label>
@@ -277,21 +263,15 @@
     {% endif %}
   </div>
 </div>
+{# Issue 147: `recursos_recibir()` trae el JS del picker de Apartamento
+   compartido (además del toggle genérico data-open/data-close, delegado
+   sobre `document` -- reemplaza el script simple que tenía antes esta
+   ficha para los modales de Ocupantes, mismo mecanismo, más robusto) y del
+   escaneo de guía por cámara (sin efecto acá, esta ficha no tiene ningún
+   `.scan-video` -- mismo criterio ya aceptado en `/announce`, que también
+   llama esto sin usar el modal "Recibir"). #}
+{{ recursos_recibir() }}
 <script>
-  (function () {
-    // Toggle de los modales de confirmación de Ocupantes (Rechazar/Eliminar,
-    // Convertir en principal) -- mismo contrato/script que ya usan
-    // `customers_manage/search.html` (Eliminar residente) y `admin/staff.html`:
-    // data-open abre, data-close cierra.
-    function toggle(id, hidden) { var m = document.getElementById(id); if (m) m.hidden = hidden; }
-    document.querySelectorAll('[data-open]').forEach(function (b) {
-      b.addEventListener('click', function () { toggle(b.dataset.open, false); });
-    });
-    document.querySelectorAll('[data-close]').forEach(function (b) {
-      b.addEventListener('click', function () { toggle(b.dataset.close, true); });
-    });
-  })();
-
   (function () {
     // Tabs de la ficha (issues 67/68) -- cada tab es un <div class="tab-panel">
     // independiente con su PROPIO <form>, así que no hace falta coordinar un
@@ -322,135 +302,19 @@
   })();
 
   (function () {
-    // Picker interactivo Torre → Piso → Apartamento (issue 68) -- 100% JS
-    // sobre el mismo catálogo cerrado que antes alimentaba los <select>. El
-    // "Piso" es el primer dígito del número de apartamento (pedido del
-    // cliente), derivado en el navegador -- no existe como dato propio en
-    // el catálogo.
-    var wrapTorres = document.getElementById('direccion-torres');
-    if (!wrapTorres) return;
-
-    var catalogo = {{ catalogo_torres|tojson }};
-    // Ticket 13 (.scratch/ocupante-principal-escenarios): unidades que YA
-    // tienen al menos un Ocupante activo -- clave "TORRE X|apto",
-    // DESHABILITADAS para selección (antes solo informativo, issue 69).
-    // Agregar más gente a una unidad con residentes es exclusivo de tab
-    // Residentes, no de este picker.
-    var apartamentosOcupados = {{ apartamentos_ocupados|tojson }};
-    var inputTorre = document.getElementById('direccion-torre-value');
-    var inputApto = document.getElementById('direccion-apartamento-value');
-    var wrapPisosOuter = document.getElementById('direccion-pisos-wrap');
-    var wrapPisos = document.getElementById('direccion-pisos');
-    var wrapAptosOuter = document.getElementById('direccion-aptos-wrap');
-    var wrapAptos = document.getElementById('direccion-aptos');
-    var resumen = document.getElementById('direccion-resumen');
-
-    var estado = {
-      torre: inputTorre.value || '',
-      apartamento: inputApto.value || '',
-    };
-    estado.piso = estado.apartamento ? estado.apartamento.charAt(0) : '';
-
-    function crearBoton(texto, activo, deshabilitado, onClick) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'relative px-3 py-2 rounded-lg border text-sm font-semibold transition ' +
-        (activo
-          ? 'bg-blue-800 border-blue-800 text-white'
-          : (deshabilitado
-              ? 'bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed'
-              : 'bg-white border-slate-300 text-slate-700 hover:border-blue-400'));
-      var etiqueta = document.createElement('span');
-      etiqueta.textContent = texto;
-      b.appendChild(etiqueta);
-      if (deshabilitado) {
-        // Ticket 13 (.scratch/ocupante-principal-escenarios): unidad ya
-        // ocupada -- se ve (existe) pero no se puede seleccionar. Agregar
-        // más gente ahí es exclusivo de tab Residentes.
-        b.disabled = true;
-        b.title = 'Ya tiene residentes -- agregá más gente desde tab Residentes.';
-      } else {
-        b.addEventListener('click', onClick);
-      }
-      return b;
-    }
-
-    function renderResumen() {
-      resumen.textContent = (estado.torre && estado.apartamento)
-        ? (estado.torre + ' · Apto ' + estado.apartamento)
-        : 'Sin apartamento asignado.';
-    }
-
-    function renderAptos() {
-      wrapAptos.innerHTML = '';
-      if (!estado.torre || !estado.piso) { wrapAptosOuter.hidden = true; return; }
-      wrapAptosOuter.hidden = false;
-      (catalogo[estado.torre] || [])
-        .filter(function (a) { return a.charAt(0) === estado.piso; })
-        .forEach(function (a) {
-          var ocupada = apartamentosOcupados.indexOf(estado.torre + '|' + a) !== -1;
-          wrapAptos.appendChild(crearBoton(a, estado.apartamento === a, ocupada, function () {
-            estado.apartamento = a;
-            inputApto.value = a;
-            renderAptos();
-            renderResumen();
-          }));
-        });
-    }
-
-    function renderPisos() {
-      wrapPisos.innerHTML = '';
-      if (!estado.torre) { wrapPisosOuter.hidden = true; return; }
-      wrapPisosOuter.hidden = false;
-      var pisos = [];
-      (catalogo[estado.torre] || []).forEach(function (a) {
-        var p = a.charAt(0);
-        if (pisos.indexOf(p) === -1) { pisos.push(p); }
-      });
-      pisos.sort();
-      pisos.forEach(function (p) {
-        wrapPisos.appendChild(crearBoton('Piso ' + p, estado.piso === p, false, function () {
-          estado.piso = p;
-          estado.apartamento = '';
-          inputApto.value = '';
-          renderPisos();
-          renderAptos();
-          renderResumen();
-        }));
-      });
-    }
-
-    function renderTorres() {
-      wrapTorres.innerHTML = '';
-      Object.keys(catalogo).forEach(function (torre) {
-        wrapTorres.appendChild(crearBoton(torre.replace('TORRE ', 'T'), estado.torre === torre, false, function () {
-          estado.torre = torre;
-          estado.piso = '';
-          estado.apartamento = '';
-          inputTorre.value = torre;
-          inputApto.value = '';
-          renderTorres();
-          renderPisos();
-          renderAptos();
-          renderResumen();
-        }));
-      });
-    }
-
-    document.getElementById('direccion-quitar').addEventListener('click', function () {
-      estado = { torre: '', piso: '', apartamento: '' };
-      inputTorre.value = '';
-      inputApto.value = '';
-      renderTorres();
-      renderPisos();
-      renderAptos();
-      renderResumen();
+    // "Quitar" (tab Dirección, issue 147) -- el picker compartido no trae
+    // un botón de limpiar (nunca lo necesitó: "Asignar apartamento" solo
+    // aparece cuando TODAVÍA no hay unidad). Vaciar el input visible y
+    // disparar el mismo evento `input` que ya escucha `recursos_recibir()`
+    // reusa 100% su lógica de limpieza -- no hace falta duplicarla acá.
+    var quitar = document.getElementById('direccion-quitar');
+    if (!quitar) return;
+    quitar.addEventListener('click', function () {
+      var input = document.getElementById('picker-apto-input-direccion');
+      if (!input) return;
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     });
-
-    renderTorres();
-    renderPisos();
-    renderAptos();
-    renderResumen();
   })();
 </script>
 {% endblock %}

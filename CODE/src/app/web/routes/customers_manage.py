@@ -32,7 +32,6 @@ from app.domain.contacto import clasificar_contacto
 from app.domain.ocupante_service import (
     MAX_OCUPANTES_ACTIVOS,
     agregar_ocupante,
-    apartamentos_ocupados,
     asociar_telefono_a_ocupante,
     asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
@@ -50,6 +49,7 @@ from app.domain.ocupante_service import (
     ocupantes_activos_de_personas,
     promover_a_principal,
     reasignar_apartamento,
+    residentes_por_torre_apartamento,
 )
 from app.domain.persona import Persona
 from app.domain.persona_service import (
@@ -347,19 +347,21 @@ def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
         "etiqueta_canal": _ETIQUETA_CANAL,
         "eventos": EVENTOS,
         "matriz": matriz_preferencias(db, persona.id),
-        # Ticket 13 (.scratch/ocupante-principal-escenarios): picker de
-        # Dirección deshabilita unidades ya ocupadas (con o sin principal) --
-        # reemplaza el `apartamentos_con_principal` puramente informativo de
-        # antes (issue 69). Excluye la unidad ACTUAL de `persona` (si tiene)
-        # -- si no, el picker se auto-bloquearía al mostrar su propia
-        # asignación vigente, impidiendo hasta re-confirmarla sin cambios.
-        # Avisa también de antemano si esta Persona no se puede reasignar
-        # todavía (en vez de que se entere recién al guardar). `sorted(list(
-        # ...))`: un `set` no es serializable por `|tojson` en la plantilla
-        # (el picker lo consume como JS).
-        "apartamentos_ocupados": sorted(
-            apartamentos_ocupados(db) - ({f"{apto.torre}|{apto.apartamento}"} if apto else set())
-        ),
+        # Issue 147 (.scratch/pendientes-cliente): tab Dirección pasa a usar
+        # `components/_picker_apartamento.html`, el mismo componente/flujo de
+        # "Asignar apartamento" y "Recibir" en /paquetes (y compartido con
+        # /announce) -- reemplaza el picker Torre->Piso->Apartamento propio
+        # que tenía esta ficha, que nunca se actualizó cuando ese componente
+        # se extrajo. Mismo dato (`residentes_por_torre_apartamento`) que ya
+        # usan esas 2 vistas: informativo (nombres reales de quién vive en
+        # cada unidad), NUNCA bloquea la selección en el cliente -- "mismo
+        # criterio del resto de la app" (ver el propio comentario del picker
+        # compartido). El bloqueo real de unidades ocupadas se sigue
+        # aplicando SOLO server-side, en el POST de abajo (`ya_tiene_
+        # residentes`) -- ver también `_aviso_reasignacion_bloqueada`, que
+        # avisa de antemano si esta Persona en particular no se puede
+        # reasignar (un caso distinto: ella ya es Ocupante de algo).
+        "residentes_por_unidad": residentes_por_torre_apartamento(db),
         "aviso_reasignacion_bloqueada": _aviso_reasignacion_bloqueada(db, mi_ocupante),
         "etiqueta_tab_residentes": _etiqueta_tab_residentes(apto),
     }
@@ -546,10 +548,12 @@ def customers_manage_asignar_apartamento(
     (`mover_ocupante`) cuando el staff marca la casilla. Un principal nunca
     se mueve así, sin excepción.
 
-    Ticket 13 (`.scratch/ocupante-principal-escenarios`): tab Dirección solo
-    declara unidades COMPLETAMENTE vacías -- el picker ya las deshabilita en
-    el cliente, pero acá se rechaza igual un POST directo a una unidad
-    ocupada (mismo criterio que `apartamentos_ocupados`: cualquier Ocupante
+    Ticket 13 (`.scratch/ocupante-principal-escenarios`) + issue 147: tab
+    Dirección solo declara unidades COMPLETAMENTE vacías -- el picker (issue
+    147: mismo componente que "Asignar apartamento"/Recibir en /paquetes) ya
+    NO deshabilita nada en el cliente, solo informa quién vive en cada
+    unidad (mismo criterio que el resto de la app); el rechazo real de una
+    unidad ocupada pasa acá, server-side, sin excepción (cualquier Ocupante
     activo, tenga o no principal confirmado). Agregar más gente a una unidad
     que ya tiene Residentes sigue siendo exclusivo de tab Residentes."""
     persona = _get_persona_o_404(db, persona_id)
