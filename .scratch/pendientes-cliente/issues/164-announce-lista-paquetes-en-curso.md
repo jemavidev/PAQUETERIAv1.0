@@ -7,7 +7,7 @@ seguridad y los coloques en tipo bala... que en esta misma vista se tenga de est
 representados los paquetes ANUNCIADOS y RECIBIDOS, con el fin de poder desde aquí continuar su
 flujo de forma más fácil."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diseño (confirmado con el cliente antes de implementar)
 

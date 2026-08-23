@@ -5,7 +5,7 @@
 en algún flujo, de lo contrario lo vamos a remover o eliminar" → confirmado: "si procede con la
 eliminacion."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

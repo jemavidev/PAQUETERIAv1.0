@@ -4,7 +4,7 @@
 minúsculas?") seguida de instrucción explícita: "con relación a lo de usuarios de whatsapp,
 normalizalo a como lo requiere META/WhatsApp para identificar a sus diferentes usuarios."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

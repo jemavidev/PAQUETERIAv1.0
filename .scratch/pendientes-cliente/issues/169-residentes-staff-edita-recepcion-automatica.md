@@ -3,7 +3,7 @@
 **Pedido original:** "no tengo forma en este momento yo (staff) de modificar la Píldora verde
 'Auto - recepción automática de paquetes', puedes hacer esto posible."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

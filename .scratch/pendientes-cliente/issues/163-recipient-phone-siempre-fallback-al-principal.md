@@ -5,7 +5,7 @@ quedado claro que cada paquete debería tener siempre un número de teléfono, d
 su defecto si no tiene [contacto propio] usaría el del principal del apartamento, siempre debe
 haber un número o usuario de WhatsApp responsable, siempre."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

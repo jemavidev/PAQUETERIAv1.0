@@ -10,7 +10,7 @@ un poco más grandes, similares a las que ya hemos venido usando, adicional que 
 píldoras fueran en esta vista las que permiten Recibir o Entregar, de esta forma nos ahorramos los
 enlaces que se puedan generar."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Parte 1 — Ícono 🔄 en `/paquetes` (elegido entre 3 opciones mostradas: 🚚/🔄/↔️)
 

@@ -6,7 +6,7 @@ para recibir un paquete y si estás logueado como staff, dime que piensas" → c
 intenta que sea reutilizando lo que se tiene que ya sabemos que funciona, los modales, dime que te
 parece."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Cambio
 

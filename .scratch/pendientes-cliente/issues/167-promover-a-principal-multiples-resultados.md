@@ -4,7 +4,7 @@
 con "Internal Server Error" al intentar mudar a ANGELICA ARRAZOLA a otro apartamento (vía "+
 Agregar un nuevo Residente" en la ficha de otro residente, con el checkbox "Mudar residente acá").
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

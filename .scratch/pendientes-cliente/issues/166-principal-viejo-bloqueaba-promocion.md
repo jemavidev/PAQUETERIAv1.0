@@ -5,7 +5,7 @@ después del movimiento que le hice a 'DANIELA ARRAZOLA', esta no se cambió a p
 sabiendo que ya tiene asociado apartamento y un teléfono/whatsapp, dime qué pudo haber pasado" →
 confirmado el diagnóstico, pedido explícito de corregirlo: "solucionalo según tu recomendación."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 

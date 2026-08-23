@@ -5,7 +5,7 @@ rojo/gris donde se resalta al lado izquierdo de un residente... no tengo claro a
 tras la explicación (marca "Secundario", issue 71), pedido explícito: "remueve esa marca y dime si
 hay otras similares en esta vista."
 
-**Status:** implementado
+**Status:** verificado
 
 ## Cambio
 
