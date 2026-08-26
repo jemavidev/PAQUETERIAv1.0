@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% from "components/_formularios.html" import formulario_flujo %}
+{% from "components/_inputs.html" import input_texto %}
+{% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
 {% block title %}Plantillas de notificación — PAQUETEX{% endblock %}
 {% block content %}
@@ -8,22 +9,99 @@
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
   {% if guardado %}{{ toast('Plantilla guardada.', variant='success') }}{% endif %}
 
+  {#- Clases de Tailwind ESCRITAS LITERAL (no concatenadas en Jinja): el
+     escaneo de contenido de Tailwind lee este archivo como texto plano y
+     busca clases ya formadas -- una clase construida con `~` en tiempo de
+     render (ej. 'peer-checked/' ~ canal|lower ~ ':block') nunca aparece
+     como texto literal en el archivo, así que Tailwind jamás la generaría y
+     las pestañas se quedarían todas visibles (o todas ocultas) en el
+     navegador real, aunque los tests HTTP (que solo miran el HTML) no lo
+     detecten. Reusar el MISMO nombre de peer (`peer/sms`, etc.) en las 8
+     filas es seguro: el combinador de hermanos de CSS (`~`) solo relaciona
+     elementos con el MISMO padre -- cada fila es su propio contenedor, así
+     que un radio "SMS" marcado en una fila nunca afecta el panel "SMS" de
+     otra fila. -#}
+  {%- set peer_clase = {
+    'SMS': 'peer/sms',
+    'EMAIL': 'peer/email',
+    'WHATSAPP': 'peer/whatsapp',
+  } -%}
+  {%- set label_clase = {
+    'SMS': 'peer-checked/sms:border-blue-800 peer-checked/sms:bg-blue-800 peer-checked/sms:text-white peer-focus-visible/sms:ring-2 peer-focus-visible/sms:ring-blue-300 peer-focus-visible/sms:ring-offset-2',
+    'EMAIL': 'peer-checked/email:border-blue-800 peer-checked/email:bg-blue-800 peer-checked/email:text-white peer-focus-visible/email:ring-2 peer-focus-visible/email:ring-blue-300 peer-focus-visible/email:ring-offset-2',
+    'WHATSAPP': 'peer-checked/whatsapp:border-blue-800 peer-checked/whatsapp:bg-blue-800 peer-checked/whatsapp:text-white peer-focus-visible/whatsapp:ring-2 peer-focus-visible/whatsapp:ring-blue-300 peer-focus-visible/whatsapp:ring-offset-2',
+  } -%}
+  {%- set panel_clase = {
+    'SMS': 'hidden peer-checked/sms:block',
+    'EMAIL': 'hidden peer-checked/email:block',
+    'WHATSAPP': 'hidden peer-checked/whatsapp:block',
+  } -%}
+  {%- set nombres_canal = {'SMS': 'SMS', 'EMAIL': 'Email', 'WHATSAPP': 'WhatsApp'} -%}
+
   {% for fila in filas %}
-  {% call formulario_flujo(fila.evento.value ~ ((' · ' ~ (fila.motivo.replace('_', ' ')|capitalize)) if fila.motivo else ''), action='/administracion/notificaciones', boton_texto='Guardar') %}
-    <input type="hidden" name="evento" value="{{ fila.evento.value }}">
-    <input type="hidden" name="motivo" value="{{ fila.motivo or '' }}">
-    <p class="text-xs text-slate-700">Variables disponibles: {{ '{recipient_name}' }}{% if fila.evento.value == 'ANUNCIADO' %}, {{ '{access_code}' }}{% endif %}{% if fila.evento.value == 'CANCELADO' %}, {{ '{motivo}' }}{% endif %}</p>
-    {%- set fila_con_error = error_evento|default(none) == fila.evento.value and error_motivo|default(none) == (fila.motivo or none) -%}
-    <textarea name="texto" {% if loop.first and not error %}autofocus{% endif %}
-              {% if fila_con_error %}aria-invalid="true" aria-describedby="texto-error-{{ loop.index }}"{% endif %}
-              class="w-full rounded-lg border {{ 'border-red-600' if fila_con_error else 'border-slate-300' }} px-3.5 py-3 text-base min-h-[100px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">{{ fila.texto }}</textarea>
-    {% if fila_con_error %}
-    <p id="texto-error-{{ loop.index }}" class="text-xs text-red-600 mt-1 flex items-center gap-1">
-      <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 0010 5z" clip-rule="evenodd"/></svg>
-      {{ error }}
-    </p>
-    {% endif %}
-  {% endcall %}
+  {%- set fila_id = loop.index -%}
+  {%- set motivo_fila = fila.motivo or none -%}
+  {%- set es_fila_error = (error_evento|default(none)) == fila.evento.value and (error_motivo|default(none)) == motivo_fila -%}
+  {%- set es_fila_guardada = (guardado_evento|default(none)) == fila.evento.value and (guardado_motivo|default(none)) == motivo_fila -%}
+  {%- if es_fila_error -%}
+    {%- set canal_activo = error_canal|default('SMS') -%}
+  {%- elif es_fila_guardada -%}
+    {%- set canal_activo = guardado_canal|default('SMS') -%}
+  {%- else -%}
+    {%- set canal_activo = 'SMS' -%}
+  {%- endif -%}
+  <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
+    <h2 class="text-lg font-bold text-slate-900 mb-3">{{ fila.evento.value }}{{ (' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '' }}</h2>
+
+    {#- `sr-only` (no `.hidden`/`display:none`, mismo criterio que
+       `grupo_chips` en `components/_modales.html`): un radio real, oculto
+       solo visualmente -- sigue en el orden de tabulación y lo anuncia un
+       lector de pantalla, así que las pestañas son navegables por teclado
+       igual que un `<select>` nativo. -#}
+    {%- for c in fila.canales %}
+    <input type="radio" id="tab-{{ fila_id }}-{{ c.canal.value }}" name="tab-{{ fila_id }}"
+           class="{{ peer_clase[c.canal.value] }} sr-only"
+           {% if c.canal.value == canal_activo %}checked{% endif %}>
+    {%- endfor %}
+
+    {%- for c in fila.canales %}
+    <label for="tab-{{ fila_id }}-{{ c.canal.value }}" data-canal="{{ c.canal.value }}"
+           class="inline-block mr-2 mb-3 cursor-pointer select-none rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 {{ label_clase[c.canal.value] }}">
+      {{ nombres_canal[c.canal.value] }}
+    </label>
+    {%- endfor %}
+
+    {%- for c in fila.canales %}
+    {%- set fila_con_error = es_fila_error and (error_canal|default(none)) == c.canal.value %}
+    <div class="{{ panel_clase[c.canal.value] }}" data-canal-panel="{{ c.canal.value }}">
+      <form method="post" action="/administracion/notificaciones" class="space-y-3">
+        <input type="hidden" name="evento" value="{{ fila.evento.value }}">
+        <input type="hidden" name="motivo" value="{{ fila.motivo or '' }}">
+        <input type="hidden" name="canal" value="{{ c.canal.value }}">
+
+        {%- if c.canal.value == 'EMAIL' %}
+        {{ input_texto('Asunto', name='asunto', value=c.asunto,
+                        autofocus=(fila_id == 1 and canal_activo == 'EMAIL' and not error and not (guardado_evento|default(none)))) }}
+        {%- else %}
+        <p class="text-xs text-slate-700">Variables disponibles: {{ '{recipient_name}' }}{% if fila.evento.value == 'ANUNCIADO' %}, {{ '{access_code}' }}{% endif %}{% if fila.evento.value == 'CANCELADO' %}, {{ '{motivo}' }}{% endif %}</p>
+        {%- endif %}
+
+        <textarea name="texto"
+                  {% if fila_id == 1 and canal_activo == c.canal.value and not error and not (guardado_evento|default(none)) %}autofocus{% endif %}
+                  {% if fila_con_error %}aria-invalid="true" aria-describedby="texto-error-{{ fila_id }}-{{ c.canal.value }}"{% endif %}
+                  class="w-full rounded-lg border {{ 'border-red-600' if fila_con_error else 'border-slate-300' }} px-3.5 py-3 text-base min-h-[100px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">{{ c.texto }}</textarea>
+        {%- if fila_con_error %}
+        <p id="texto-error-{{ fila_id }}-{{ c.canal.value }}" class="text-xs text-red-600 flex items-center gap-1">
+          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 0010 5z" clip-rule="evenodd"/></svg>
+          {{ error }}
+        </p>
+        {%- endif %}
+
+        {{ boton('Guardar', type='submit', size='sm') }}
+      </form>
+    </div>
+    {%- endfor %}
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

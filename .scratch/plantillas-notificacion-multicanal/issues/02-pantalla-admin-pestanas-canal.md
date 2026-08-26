@@ -1,12 +1,12 @@
 # 02 — Pantalla admin con pestañas SMS / Email / WhatsApp por evento
 
-**Qué construir:** `/administracion/notificaciones` (misma ruta, mismo gate `require_admin`) se rediseña: en vez de una lista plana de 7 filas SMS, muestra 7 grupos (uno por evento/motivo: `ANUNCIADO·Cliente`, `ANUNCIADO·Staff`, `RECIBIDO`, `ENTREGADO`, `CANCELADO`×cada motivo), cada uno con 3 pestañas — SMS / Email / WhatsApp. Cada pestaña guarda de forma independiente usando `guardar_plantilla`/`obtener_texto_actual` (ticket 01) con su propio `canal`. La pestaña Email agrega un campo de Asunto además del cuerpo. Las pestañas SMS y WhatsApp mantienen el formato actual: textarea + lista de variables disponibles sin resolver (`{recipient_name}`, `{access_code}`, `{motivo}` según el evento).
+**Qué construir:** `/administracion/notificaciones` (misma ruta, mismo gate `require_admin`) se rediseña: en vez de una lista plana de 8 filas SMS, muestra 8 grupos (uno por evento/motivo: `ANUNCIADO·Cliente`, `ANUNCIADO·Staff`, `RECIBIDO`, `ENTREGADO`, `CANCELADO`×cada motivo), cada uno con 3 pestañas — SMS / Email / WhatsApp. Cada pestaña guarda de forma independiente usando `guardar_plantilla`/`obtener_texto_actual` (ticket 01) con su propio `canal`. La pestaña Email agrega un campo de Asunto además del cuerpo. Las pestañas SMS y WhatsApp mantienen el formato actual: textarea + lista de variables disponibles sin resolver (`{recipient_name}`, `{access_code}`, `{motivo}` según el evento).
 
 **Bloqueado por:** 01.
 
 **Estado:** ready-for-agent
 
-- [ ] La pantalla muestra las 7 filas de evento/motivo, cada una con 3 pestañas (SMS/Email/WhatsApp).
+- [ ] La pantalla muestra las 8 filas de evento/motivo, cada una con 3 pestañas (SMS/Email/WhatsApp).
 - [ ] Cada pestaña de canal muestra su propio texto vigente (personalizado o default), independiente de los otros 2 canales del mismo evento.
 - [ ] La pestaña Email incluye un campo de Asunto (además del cuerpo) que se guarda junto con el texto.
 - [ ] Guardar el texto/asunto de un canal de un evento no altera lo guardado en los otros canales del mismo evento.

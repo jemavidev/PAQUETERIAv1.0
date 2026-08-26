@@ -23,9 +23,11 @@ from app.domain.notificacion_service import (
     ORIGEN_ANUNCIO_CLIENTE,
     ORIGEN_ANUNCIO_STAFF,
     guardar_plantilla,
+    obtener_asunto_actual,
     obtener_texto_actual,
 )
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion
+from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import (
     create_staff,
     editar_staff,
@@ -244,16 +246,37 @@ def admin_staff_desactivar(
     return RedirectResponse("/administracion/personal", status_code=status.HTTP_303_SEE_OTHER)
 
 
+_CANALES_PLANTILLA = (CanalNotificacion.SMS, CanalNotificacion.EMAIL, CanalNotificacion.WHATSAPP)
+
+
+def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
+    """Los 3 canales de `(evento, motivo)`, cada uno con su texto vigente
+    (personalizado o default) y, solo Email, su asunto vigente -- `.scratch/
+    plantillas-notificacion-multicanal`, ticket 02."""
+    return [
+        {
+            "canal": canal,
+            "texto": obtener_texto_actual(db, evento, motivo, canal),
+            "asunto": (
+                obtener_asunto_actual(db, evento, motivo)
+                if canal is CanalNotificacion.EMAIL
+                else None
+            ),
+        }
+        for canal in _CANALES_PLANTILLA
+    ]
+
+
 def _filas_plantillas(db: Session):
     """Una fila por `ANUNCIADO · Cliente` y `ANUNCIADO · Staff` (Grupo 19,
     Ronda 2), una por cada evento sin motivo (RECIBIDO/ENTREGADO), y una por
-    cada `MotivoCancelacion` para `CANCELADO` — con su texto vigente
-    (personalizado o el default)."""
+    cada `MotivoCancelacion` para `CANCELADO` — cada una con sus 3 canales
+    (`_canales_de`)."""
     filas = [
         {
             "evento": EstadoPaquete.ANUNCIADO,
             "motivo": origen,
-            "texto": obtener_texto_actual(db, EstadoPaquete.ANUNCIADO, origen),
+            "canales": _canales_de(db, EstadoPaquete.ANUNCIADO, origen),
         }
         for origen in (ORIGEN_ANUNCIO_CLIENTE, ORIGEN_ANUNCIO_STAFF)
     ]
@@ -261,7 +284,7 @@ def _filas_plantillas(db: Session):
         {
             "evento": e,
             "motivo": None,
-            "texto": obtener_texto_actual(db, e),
+            "canales": _canales_de(db, e, None),
         }
         for e in _EVENTOS_SIN_MOTIVO
     ]
@@ -270,7 +293,7 @@ def _filas_plantillas(db: Session):
             {
                 "evento": EstadoPaquete.CANCELADO,
                 "motivo": m.value,
-                "texto": obtener_texto_actual(db, EstadoPaquete.CANCELADO, m.value),
+                "canales": _canales_de(db, EstadoPaquete.CANCELADO, m.value),
             }
         )
     return filas
@@ -293,7 +316,9 @@ def admin_notificaciones_guardar(
     admin: Usuario = Depends(require_admin),
     evento: str = Form(None),
     motivo: str = Form(None),
+    canal: str = Form(CanalNotificacion.SMS.value),
     texto: str = Form(None),
+    asunto: str = Form(None),
 ):
     def _error(mensaje: str, marcar_fila: bool = False):
         return templates.TemplateResponse(
@@ -303,11 +328,13 @@ def admin_notificaciones_guardar(
                 "admin": admin,
                 "filas": _filas_plantillas(db),
                 "error": mensaje,
-                # Identifica CUÁL de las N filas (cada una su propio <form>)
-                # falló, para marcar solo ese textarea -- retroalimentación
-                # en vivo 2026-08-02.
+                # Identifica CUÁL de las N filas × 3 canales (cada uno su
+                # propio <form>) falló, para marcar solo esa pestaña/textarea
+                # -- retroalimentación en vivo 2026-08-02, extendida a canal
+                # en el ticket 02 de plantillas-notificacion-multicanal.
                 "error_evento": evento if marcar_fila else None,
                 "error_motivo": (motivo or None) if marcar_fila else None,
+                "error_canal": canal if marcar_fila else None,
             },
             status_code=400,
         )
@@ -320,10 +347,33 @@ def admin_notificaciones_guardar(
         # real: el toast alcanza.
         return _error("Evento inválido.")
 
+    try:
+        canal_enum = CanalNotificacion(canal)
+    except ValueError:
+        # Mismo criterio que `evento` -- input hidden, manipulación directa.
+        return _error("Canal inválido.")
+
     if not (texto or "").strip():
         return _error("El texto no puede quedar vacío.", marcar_fila=True)
 
-    guardar_plantilla(db, evento_enum, motivo or None, texto)
+    if canal_enum is CanalNotificacion.EMAIL and not (asunto or "").strip():
+        # Mismo criterio que `texto`: un asunto en blanco borraría en
+        # silencio uno ya personalizado (`guardar_plantilla` sobreescribe
+        # sin preguntar) -- se rechaza en vez de guardar `NULL` sin avisar.
+        return _error("El asunto no puede quedar vacío.", marcar_fila=True)
+
+    guardar_plantilla(
+        db,
+        evento_enum,
+        motivo or None,
+        texto,
+        canal=canal_enum,
+        # El asunto solo tiene sentido para Email -- ignorar lo que venga en
+        # el form para otro canal en vez de confiar en que el cliente HTTP
+        # no lo mande (mismo criterio que el resto de la validación de esta
+        # ruta: el servidor no confía en la forma del POST).
+        asunto=(asunto or None) if canal_enum is CanalNotificacion.EMAIL else None,
+    )
 
     return templates.TemplateResponse(
         "admin/notificaciones.html",
@@ -332,6 +382,9 @@ def admin_notificaciones_guardar(
             "admin": admin,
             "filas": _filas_plantillas(db),
             "guardado": True,
+            "guardado_evento": evento,
+            "guardado_motivo": motivo or None,
+            "guardado_canal": canal,
         },
     )
 

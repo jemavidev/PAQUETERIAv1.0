@@ -8,11 +8,11 @@ Hoy solo existe edición de contenido de mensaje para **un canal**: SMS, desde `
 
 ## Solution
 
-Se extiende el sistema de plantillas existente para cubrir 3 canales (SMS, Email, WhatsApp) sobre las mismas 7 combinaciones evento/motivo que ya existen hoy (`ANUNCIADO·Cliente`, `ANUNCIADO·Staff`, `RECIBIDO`, `ENTREGADO`, `CANCELADO` × cada `MotivoCancelacion`) — 21 plantillas en total. Email agrega un campo de asunto y una vista previa en vivo que muestra el texto ya envuelto en un layout de marca (logo Papyrus + enlaces del sitio); WhatsApp reutiliza el mismo formato de texto libre con placeholders con nombre que SMS, sin adoptar todavía el formato de plantilla pre-aprobada que exigirá un proveedor real de WhatsApp Business. Cada guardado queda registrado en un historial de auditoría (quién, cuándo, texto anterior/nuevo), sin botón de revertir. Sigue siendo exclusivo de `ADMIN`. **No se conecta ningún envío real de Email ni WhatsApp en esta rebanada** — es solo el sistema de contenido; conectar el envío real es una decisión y un trabajo aparte que el cliente indicará cuándo hacer.
+Se extiende el sistema de plantillas existente para cubrir 3 canales (SMS, Email, WhatsApp) sobre las mismas 8 combinaciones evento/motivo que ya existen hoy (`ANUNCIADO·Cliente`, `ANUNCIADO·Staff`, `RECIBIDO`, `ENTREGADO`, `CANCELADO` × cada uno de los 4 `MotivoCancelacion`) — 24 plantillas en total. Email agrega un campo de asunto y una vista previa en vivo que muestra el texto ya envuelto en un layout de marca (logo Papyrus + enlaces del sitio); WhatsApp reutiliza el mismo formato de texto libre con placeholders con nombre que SMS, sin adoptar todavía el formato de plantilla pre-aprobada que exigirá un proveedor real de WhatsApp Business. Cada guardado queda registrado en un historial de auditoría (quién, cuándo, texto anterior/nuevo), sin botón de revertir. Sigue siendo exclusivo de `ADMIN`. **No se conecta ningún envío real de Email ni WhatsApp en esta rebanada** — es solo el sistema de contenido; conectar el envío real es una decisión y un trabajo aparte que el cliente indicará cuándo hacer.
 
 ## User Stories
 
-1. Como ADMIN, quiero ver las 7 combinaciones evento/motivo agrupadas (una por fila), para no tener que buscar entre 21 filas sueltas.
+1. Como ADMIN, quiero ver las 8 combinaciones evento/motivo agrupadas (una por fila), para no tener que buscar entre 24 filas sueltas.
 2. Como ADMIN, quiero cambiar entre pestañas SMS / Email / WhatsApp dentro de cada fila de evento, para editar los 3 canales de un mismo evento sin perder el contexto de cuál evento estoy viendo.
 3. Como ADMIN, quiero que cada canal de cada evento tenga su propio texto independiente, para poder decir algo distinto por SMS que por Email si el tono o el detalle lo amerita.
 4. Como ADMIN, quiero que si no he personalizado un canal para un evento, se muestre un texto por defecto razonable (no vacío), para no encontrarme una pestaña en blanco que parezca un error.
@@ -24,7 +24,7 @@ Se extiende el sistema de plantillas existente para cubrir 3 canales (SMS, Email
 10. Como ADMIN, quiero ver la lista de variables disponibles (`{recipient_name}`, `{access_code}`, `{motivo}` según el evento) en las pestañas de SMS y WhatsApp, igual que hoy, para saber qué puedo insertar en el texto.
 11. Como ADMIN, quiero que WhatsApp use el mismo tipo de placeholder con nombre que SMS (no variables numeradas de proveedor), para poder editarlo sin entender todavía la sintaxis que exigirá un proveedor de WhatsApp Business.
 12. Como desarrollador, quiero que el formato real de plantilla de WhatsApp (variables numeradas, categoría, aprobación de Meta) quede fuera de esta rebanada, para no diseñar a ciegas un formato atado a un proveedor que el cliente todavía no eligió.
-13. Como ADMIN, quiero que las 7 filas de evento/motivo sean exactamente las mismas para los 3 canales (sin canal con menos variantes que otro), para que la pantalla sea predecible y no tenga que recordar excepciones por canal.
+13. Como ADMIN, quiero que las 8 filas de evento/motivo sean exactamente las mismas para los 3 canales (sin canal con menos variantes que otro), para que la pantalla sea predecible y no tenga que recordar excepciones por canal.
 14. Como ADMIN, quiero que guardar el texto de un canal de un evento no afecte el texto de los otros 2 canales del mismo evento, para poder editar uno sin arriesgar los demás.
 15. Como desarrollador, quiero que las plantillas SMS existentes (ya personalizadas por el cliente) se preserven exactamente igual tras la migración, para no perder contenido que el cliente ya configuró.
 16. Como ADMIN, quiero que cada vez que guardo un cambio quede un registro de quién lo hizo y cuándo, para poder responder "quién cambió esto y cuándo" si alguna vez hace falta.
@@ -56,7 +56,7 @@ Se extiende el sistema de plantillas existente para cubrir 3 canales (SMS, Email
 
 - **Nuevo módulo de layout de Email** (ej. `app/domain/plantilla_email_html.py`): una función pura `envolver_html(asunto, cuerpo_texto) -> str` que produce el HTML con el layout de marca fijo (logo de Papyrus, enlaces a los sitios de la empresa) alrededor del cuerpo ya resuelto. Esta misma función es la que usará el envío real de Email el día que se conecte (reutiliza `SmtpEmailSender`, ya verificado funcionando en producción) — no se duplica el layout entre "vista previa" y "envío real".
 
-- **`/administracion/notificaciones` (misma ruta, misma dependencia `require_admin`):** el template se rediseña para mostrar 7 grupos (uno por evento/motivo) con 3 pestañas cada uno (SMS / Email / WhatsApp). La pestaña de Email incluye el campo Asunto y una vista previa en vivo (actualizada del lado del cliente o vía submit parcial — decisión de implementación libre para quien construya, mientras el resultado visual sea "veo el correo ya armado con datos de ejemplo antes de guardar"). Las pestañas de SMS y WhatsApp mantienen el formato actual: textarea + lista de variables disponibles, sin resolver.
+- **`/administracion/notificaciones` (misma ruta, misma dependencia `require_admin`):** el template se rediseña para mostrar 8 grupos (uno por evento/motivo) con 3 pestañas cada uno (SMS / Email / WhatsApp). La pestaña de Email incluye el campo Asunto y una vista previa en vivo (actualizada del lado del cliente o vía submit parcial — decisión de implementación libre para quien construya, mientras el resultado visual sea "veo el correo ya armado con datos de ejemplo antes de guardar"). Las pestañas de SMS y WhatsApp mantienen el formato actual: textarea + lista de variables disponibles, sin resolver.
 
 ## Testing Decisions
 
@@ -69,7 +69,7 @@ Se extiende el sistema de plantillas existente para cubrir 3 canales (SMS, Email
   - `envolver_html(asunto, cuerpo_texto)` incluye el asunto, el cuerpo con sus placeholders ya resueltos, y contiene el logo y los enlaces esperados (aserción sobre presencia de esos elementos en el HTML, no sobre el markup exacto).
 - **Seam web** — extender `tests/web/test_admin_notificaciones.py` (mismo patrón de `_login_admin`/`_login_operador` ya presente en el archivo):
   - Gate sin cambios: sin sesión redirige a `/ingresar`; `OPERADOR` recibe 403; solo `ADMIN` accede — mismas aserciones que ya existen, repetidas contra la pantalla rediseñada.
-  - La pantalla muestra las 3 pestañas por cada uno de los 7 eventos/motivos.
+  - La pantalla muestra las 3 pestañas por cada uno de los 8 eventos/motivos.
   - Guardar el texto de la pestaña Email de un evento persiste asunto + texto, y no altera lo guardado en la pestaña SMS del mismo evento.
   - La vista previa de Email refleja el texto recién escrito ya resuelto con datos de ejemplo (no placeholders sin resolver).
 

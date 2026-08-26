@@ -7,8 +7,9 @@ Comportamiento observable por HTTP: gate require_admin (mismo patrón que
 por defecto; guardar persiste la plantilla personalizada.
 """
 
-from app.domain.notificacion_service import obtener_texto_actual
+from app.domain.notificacion_service import obtener_asunto_actual, obtener_texto_actual
 from app.domain.paquete import EstadoPaquete
+from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario
 
@@ -158,6 +159,93 @@ def test_notificar_anunciado_por_cliente_usa_la_plantilla_de_cliente(client):
 
     assert len(sender.enviados) == 1
     assert "Anunciaste un paquete" in sender.enviados[0][1]
+
+
+# --------------------------------------------------------------------------- #
+# `.scratch/plantillas-notificacion-multicanal`, ticket 02 — pestañas
+# SMS/Email/WhatsApp por evento.
+# --------------------------------------------------------------------------- #
+def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_8_filas(client):
+    # 8 filas: ANUNCIADO x2 (Cliente/Staff) + RECIBIDO + ENTREGADO +
+    # CANCELADO x4 (un MotivoCancelacion cada una).
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert r.status_code == 200
+    for canal in ("SMS", "EMAIL", "WHATSAPP"):
+        assert r.text.count(f'data-canal="{canal}"') == 8
+
+
+def test_guardar_email_no_afecta_el_sms_del_mismo_evento(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones",
+        data={
+            "evento": "RECIBIDO",
+            "motivo": "",
+            "canal": "EMAIL",
+            "asunto": "Tu paquete llegó a portería",
+            "texto": "Cuerpo de correo personalizado.",
+        },
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    texto_email = obtener_texto_actual(
+        client.db, EstadoPaquete.RECIBIDO, canal=CanalNotificacion.EMAIL
+    )
+    asunto_email = obtener_asunto_actual(client.db, EstadoPaquete.RECIBIDO)
+    texto_sms = obtener_texto_actual(client.db, EstadoPaquete.RECIBIDO)  # default canal=SMS
+
+    assert texto_email == "Cuerpo de correo personalizado."
+    assert asunto_email == "Tu paquete llegó a portería"
+    assert "portería" in texto_sms  # sigue siendo el default de SMS, sin tocar
+
+
+def test_asunto_vacio_en_email_rechaza_sin_borrar_el_existente(client):
+    _login_admin(client)
+    client.post(
+        "/administracion/notificaciones",
+        data={
+            "evento": "RECIBIDO",
+            "motivo": "",
+            "canal": "EMAIL",
+            "asunto": "Asunto original",
+            "texto": "Cuerpo original.",
+        },
+    )
+
+    r = client.post(
+        "/administracion/notificaciones",
+        data={
+            "evento": "RECIBIDO",
+            "motivo": "",
+            "canal": "EMAIL",
+            "asunto": "   ",
+            "texto": "Cuerpo nuevo.",
+        },
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert obtener_asunto_actual(client.db, EstadoPaquete.RECIBIDO) == "Asunto original"
+
+
+def test_canal_invalido_rechaza(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "FAX", "texto": "texto"},
+    )
+    assert r.status_code == 400
+
+
+def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert r.text.count('aria-label="Asunto"') == 8
+    # "Variables disponibles" solo se muestra en SMS/WhatsApp -- 2 de los 3
+    # canales, en cada una de las 8 filas.
+    assert r.text.count("Variables disponibles") == 16
 
 
 def test_notificar_anunciado_por_staff_usa_la_plantilla_de_staff(client):
