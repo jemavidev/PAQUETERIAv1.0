@@ -125,18 +125,47 @@ def _get_persona_o_404(db: Session, persona_id: str) -> Persona:
     return persona
 
 
+_ESQUEMA_APARTAMENTO_RE = re.compile(r"^apt\s*(\d+)$", re.IGNORECASE)
+
+
 def _buscar_residentes(db: Session, termino: str) -> list[Persona]:
-    """Búsqueda extendida (Grupo 17, Ronda 2): teléfono o nombre de la
-    Persona principal, torre/apartamento de su unidad, o nombre de
-    cualquier Ocupante (con o sin teléfono propio) de su misma unidad — un
-    match por Ocupante resuelve a la Persona **principal** de ese
-    Apartamento (los Ocupantes sin teléfono no tienen ficha propia).
+    """Búsqueda extendida (Grupo 17, Ronda 2): teléfono, WhatsApp, email o
+    nombre de la Persona misma, o torre/apartamento de su unidad.
     Resultados únicos, sin duplicar si varios criterios coinciden con la
     misma Persona.
 
     Issue 170 (.scratch/pendientes-cliente): ya no busca por
     `segundo_contacto` -- ese campo se eliminó por completo, ningún flujo
-    real lo usaba."""
+    real lo usaba.
+
+    Issue 176 (.scratch/pendientes-cliente, seguimiento a [[175]]): ya NO
+    busca por nombre de Ocupante resolviendo al Principal de su unidad --
+    pedido explícito: "no aparezcan las personas que estan relacionadas
+    con ese apartamento, solo la persona que busco", ahora que "Agrupar
+    por apartamento" ([[174]]) cubre ese caso de uso (ver a todos los
+    relacionados de una unidad) sin que la búsqueda de texto tenga que
+    inferirlo. Efecto secundario aceptado: un Ocupante SIN teléfono/
+    WhatsApp propio (sin ficha propia) ya no se puede encontrar por su
+    nombre -- antes resolvía al Principal como sustituto, ahora no hay
+    sustituto.
+
+    Issue 177 (.scratch/pendientes-cliente): teléfono PARCIAL también
+    matchea, no solo completo -- si `termino` no normaliza a un teléfono
+    completo/válido pero son solo dígitos (ej. "3001", los últimos 4), se
+    compara por coincidencia parcial contra el teléfono canónico guardado
+    en vez de exigir el número exacto.
+
+    Issue 178 (.scratch/pendientes-cliente): 2 cambios más, pedido
+    explícito --
+    (1) apartamento ahora se busca con el esquema `apt<número>` (ej.
+    "apt302", espacio opcional, sin distinguir mayúsculas) -- match EXACTO
+    contra el número, en CUALQUIER torre. Reemplaza el match parcial
+    anterior contra el número de apartamento (que sin querer también
+    encontraba unidades como "1302" al buscar "302") -- dígitos sueltos,
+    SIN el prefijo `apt`, ya no buscan apartamento en absoluto. Torre sigue
+    igual que antes (parcial, sin prefijo, no fue parte del pedido).
+    (2) nuevos frentes por `whatsapp_usuario` y `email` de la Persona,
+    mismo criterio parcial que el nombre."""
     encontradas: dict = {}  # id -> Persona, dedup preservando orden de hallazgo
 
     def _agregar_todas(personas):
@@ -148,41 +177,31 @@ def _buscar_residentes(db: Session, termino: str) -> list[Persona]:
     except ValueError:
         telefono = None
 
-    filtros_persona = [Persona.nombre.ilike(f"%{termino}%")]
+    filtros_persona = [
+        Persona.nombre.ilike(f"%{termino}%"),
+        Persona.whatsapp_usuario.ilike(f"%{termino}%"),
+        Persona.email.ilike(f"%{termino}%"),
+    ]
     if telefono is not None:
         filtros_persona.append(Persona.telefono == telefono)
+    elif termino.strip().isdigit():
+        filtros_persona.append(Persona.telefono.ilike(f"%{termino.strip()}%"))
     _agregar_todas(db.query(Persona).filter(or_(*filtros_persona)).all())
 
-    apartamentos_match = (
-        db.query(Apartamento)
-        .filter(
-            or_(
-                Apartamento.torre.ilike(f"%{termino}%"),
-                Apartamento.apartamento.ilike(f"%{termino}%"),
-            )
+    match_apto = _ESQUEMA_APARTAMENTO_RE.match(termino.strip())
+    if match_apto:
+        apartamentos_match = (
+            db.query(Apartamento).filter(Apartamento.apartamento == match_apto.group(1)).all()
         )
-        .all()
-    )
+    else:
+        apartamentos_match = (
+            db.query(Apartamento).filter(Apartamento.torre.ilike(f"%{termino}%")).all()
+        )
     if apartamentos_match:
         apto_ids = [a.id for a in apartamentos_match]
         _agregar_todas(
             db.query(Persona).filter(Persona.apartamento_actual_id.in_(apto_ids)).all()
         )
-
-    ocupantes_match = db.query(Ocupante).filter(Ocupante.nombre.ilike(f"%{termino}%")).all()
-    if ocupantes_match:
-        apto_ids_de_ocupantes = {o.apartamento_id for o in ocupantes_match}
-        principales = (
-            db.query(Ocupante)
-            .filter(
-                Ocupante.apartamento_id.in_(apto_ids_de_ocupantes),
-                Ocupante.es_principal.is_(True),
-            )
-            .all()
-        )
-        persona_ids = [o.persona_id for o in principales if o.persona_id is not None]
-        if persona_ids:
-            _agregar_todas(db.query(Persona).filter(Persona.id.in_(persona_ids)).all())
 
     return sorted(encontradas.values(), key=lambda p: p.nombre or "")
 
@@ -264,6 +283,106 @@ def _listar_todos_los_residentes(db: Session, pagina: int = 1):
     return personas, pagina, total_paginas
 
 
+def _todos_los_residentes_activos(db: Session) -> list[Persona]:
+    """TODOS los residentes activos, SIN paginar (issue 174, .scratch/
+    pendientes-cliente) -- a diferencia de `_listar_todos_los_residentes`,
+    que sí pagina a nivel de base de datos para el listado plano de
+    siempre. La usa `customers_manage_search` SOLO como insumo para
+    `_agrupar_por_apartamento` cuando no hay término de búsqueda: hace
+    falta el universo completo de Personas para saber qué Apartamentos
+    agrupar ANTES de paginar por apartamento, no por persona."""
+    return db.query(Persona).filter(Persona.eliminado_en.is_(None)).order_by(Persona.nombre).all()
+
+
+def _listar_principales(db: Session, pagina: int = 1):
+    """Como `_listar_todos_los_residentes`, pero SOLO Personas que son
+    Residente Principal activo de su unidad (issue 174 -- botón "Listar
+    principales"). Join contra `Ocupante` para filtrar A NIVEL DE BASE DE
+    DATOS antes de paginar, no un filtro en Python sobre una página ya
+    recortada (que perdería principales que hubieran caído en otra
+    página)."""
+    query = (
+        db.query(Persona)
+        .join(Ocupante, Ocupante.persona_id == Persona.id)
+        .filter(
+            Persona.eliminado_en.is_(None),
+            Ocupante.es_principal.is_(True),
+            Ocupante.desvinculado_en.is_(None),
+        )
+        .order_by(Persona.nombre)
+    )
+    total = query.count()
+    total_paginas = max(1, -(-total // _POR_PAGINA))
+    pagina = max(1, min(pagina, total_paginas))
+    personas = query.offset((pagina - 1) * _POR_PAGINA).limit(_POR_PAGINA).all()
+    return personas, pagina, total_paginas
+
+
+def _buscar_principales(db: Session, termino: str) -> list[Persona]:
+    """Como `_buscar_residentes`, filtrado a Residente Principal activo
+    (issue 174). Reusa `_buscar_residentes` + `ocupantes_activos_de_personas`
+    (ya existente, mismo helper que usa `_adjuntar_ocupante`) en vez de
+    duplicar la búsqueda extendida -- el resultado de una búsqueda con
+    término ya es un conjunto chico, filtrar en Python acá no repite el
+    problema de paginación que sí tiene `_listar_principales`."""
+    candidatos = _buscar_residentes(db, termino)
+    por_persona = ocupantes_activos_de_personas(db, [p.id for p in candidatos])
+    return [p for p in candidatos if (por_persona.get(p.id) and por_persona[p.id].es_principal)]
+
+
+def _agrupar_por_apartamento(db: Session, personas_en_alcance: list[Persona], pagina: int = 1):
+    """Agrupa por Apartamento a TODOS los residentes activos de cada unidad
+    referenciada por al menos una Persona en `personas_en_alcance` (issue
+    174 -- botón "Agrupar por apartamento", pedido explícito: "incluso si
+    ya se realizo una busqueda, con el fin de saber todos los integrantes
+    de un mismo apartamento"). El grupo trae a TODOS los compañeros de
+    unidad -- no solo a quien matcheó la búsqueda -- vía `_ocupantes_de`,
+    ya existente (mismo helper que arma la tab "Residentes" de la ficha).
+
+    Paginado por APARTAMENTO, no por persona -- mismo `_POR_PAGINA` que el
+    resto de la vista, pero contando grupos en vez de filas.
+
+    Personas sin apartamento asignado no arman grupo (nada que agrupar) --
+    se devuelven aparte en `sin_apartamento`, SOLO en la página 1 (no tiene
+    sentido paginarla junto a los grupos: son dos universos con su propia
+    cuenta, mezclarlos en la misma paginación numérica confundiría más de
+    lo que ayuda)."""
+    apartamento_ids = {p.apartamento_actual_id for p in personas_en_alcance if p.apartamento_actual_id}
+    sin_apartamento = [p for p in personas_en_alcance if not p.apartamento_actual_id]
+    apartamentos = []
+    if apartamento_ids:
+        apartamentos = (
+            db.query(Apartamento)
+            .filter(Apartamento.id.in_(apartamento_ids))
+            .order_by(Apartamento.torre, Apartamento.apartamento)
+            .all()
+        )
+    total = len(apartamentos)
+    total_paginas = max(1, -(-total // _POR_PAGINA))
+    pagina = max(1, min(pagina, total_paginas))
+    # `_ocupantes_de` hace 1 query por Ocupante para resolver su Persona
+    # (N+1 ya existente, no introducido acá) -- tolerable donde antes se
+    # llamaba (la ficha de UN Apartamento a la vez, ≤`MAX_OCUPANTES_ACTIVOS`
+    # filas), acá se llama hasta `_POR_PAGINA` veces por página. Sin
+    # reescribirlo a una consulta batched: esta vista es staff-only, de bajo
+    # tráfico, y `_POR_PAGINA` acota el peor caso -- no vale la pena el
+    # riesgo de tocar un helper compartido por este pedido puntual.
+    pagina_apartamentos = apartamentos[(pagina - 1) * _POR_PAGINA : pagina * _POR_PAGINA]
+    grupos = [{"apartamento": a, "ocupantes": _ocupantes_de(db, a)} for a in pagina_apartamentos]
+    return grupos, (sin_apartamento if pagina == 1 else []), pagina, total_paginas
+
+
+_VISTAS_VALIDAS = {"principales", "agrupado"}
+
+
+def _peticion_en_vivo(request: Request) -> bool:
+    """True si la petición viene del fetch en vivo de la barra de búsqueda
+    (issue 173, .scratch/pendientes-cliente) -- mismo mecanismo que ya usa
+    `packages._peticion_en_vivo`: el JS de `_busqueda_filtros.html` marca
+    cada petición en segundo plano con este header."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
 @router.get("/residentes", response_class=HTMLResponse)
 def customers_manage_search(
     request: Request,
@@ -271,23 +390,50 @@ def customers_manage_search(
     staff: Usuario = Depends(current_staff),
     q: str = None,
     pagina: int = 1,
+    vista: str = None,
 ):
     termino = _blank_to_none(q)
-    if termino:
-        resultados = _buscar_residentes(db, termino)
-        pagina_actual, total_paginas = 1, 1
+    vista = vista if vista in _VISTAS_VALIDAS else None
+
+    grupos = sin_apartamento = resultados = None
+    if vista == "agrupado":
+        # Alcance = la búsqueda activa, o TODOS los activos si no hay `q`
+        # (issue 174, pedido explícito: agrupar debe funcionar incluso sin
+        # haber buscado antes, no solo como refinamiento de una búsqueda).
+        personas_en_alcance = _buscar_residentes(db, termino) if termino else _todos_los_residentes_activos(db)
+        grupos, sin_apartamento, pagina_actual, total_paginas = _agrupar_por_apartamento(
+            db, personas_en_alcance, pagina
+        )
     else:
-        resultados, pagina_actual, total_paginas = _listar_todos_los_residentes(db, pagina)
-    _adjuntar_apartamentos(db, resultados)
-    _adjuntar_ocupante(db, resultados)
-    _adjuntar_comparte_apartamento(db, resultados)
+        if vista == "principales":
+            if termino:
+                resultados = _buscar_principales(db, termino)
+                pagina_actual, total_paginas = 1, 1
+            else:
+                resultados, pagina_actual, total_paginas = _listar_principales(db, pagina)
+        elif termino:
+            resultados = _buscar_residentes(db, termino)
+            pagina_actual, total_paginas = 1, 1
+        else:
+            resultados, pagina_actual, total_paginas = _listar_todos_los_residentes(db, pagina)
+        _adjuntar_apartamentos(db, resultados)
+        _adjuntar_ocupante(db, resultados)
+        _adjuntar_comparte_apartamento(db, resultados)
+
+    # Fetch en vivo (issue 173): devuelve SOLO el fragmento (paginación +
+    # tabla/tarjetas), sin el layout completo -- mismo patrón que
+    # `packages._render_lista`.
+    plantilla = "customers_manage/_resultados.html" if _peticion_en_vivo(request) else "customers_manage/search.html"
     return templates.TemplateResponse(
-        "customers_manage/search.html",
+        plantilla,
         {
             "request": request,
             "staff": staff,
             "q": termino or "",
+            "vista": vista or "",
             "resultados": resultados,
+            "grupos": grupos,
+            "sin_apartamento": sin_apartamento,
             "pagina_actual": pagina_actual,
             "total_paginas": total_paginas,
             "url_whatsapp": url_whatsapp,
