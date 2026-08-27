@@ -99,6 +99,16 @@
 
         {{ boton('Guardar', type='submit', size='sm') }}
       </form>
+      {%- if c.canal.value == 'EMAIL' %}
+      <div class="mt-4">
+        <p class="text-xs font-medium text-slate-700 mb-1.5">Vista previa (con datos de ejemplo)</p>
+        {#- `srcdoc` recibe el documento completo escapado como valor de
+           atributo (autoescape de Jinja, SIN `|safe`) -- el navegador lo
+           desescapa y renderiza el HTML resultante aislado dentro del
+           iframe, sin mezclarlo con el DOM de esta página. -#}
+        <iframe srcdoc="{{ c.preview_html }}" title="Vista previa del correo" class="w-full rounded-lg border border-slate-200" style="height:420px;"></iframe>
+      </div>
+      {%- endif %}
     </div>
     {%- endfor %}
   </div>

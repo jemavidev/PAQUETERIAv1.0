@@ -143,12 +143,49 @@ def asunto_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
     return _default_de(evento, motivo, ASUNTOS_DEFAULT, _ANUNCIADO_ASUNTO_DEFAULT)
 
 
+def _motivo_legible(motivo: str) -> str:
+    """`NO_RECLAMADO` -> `No reclamado` -- compartido por `_variables` y
+    `variables_ejemplo`, mismo texto en ambos."""
+    return (motivo or "").replace("_", " ").capitalize()
+
+
 def _variables(paquete: Paquete) -> dict:
     return {
         "recipient_name": paquete.recipient_name,
         "access_code": paquete.access_code,
-        "motivo": (paquete.cancel_reason or "").replace("_", " ").capitalize(),
+        "motivo": _motivo_legible(paquete.cancel_reason),
     }
+
+
+def variables_ejemplo(motivo: str = None) -> dict:
+    """Mismo shape que `_variables`, con datos de ejemplo en vez de un
+    `Paquete` real -- usado por la vista previa de Email de
+    `/administracion/notificaciones` (`.scratch/plantillas-notificacion-
+    multicanal`, ticket 03) para resolver `{recipient_name}`/`{access_code}`/
+    `{motivo}` antes de envolver el resultado en el layout de marca. `motivo`
+    solo importa para `CANCELADO` -- mismo criterio que `_variables`, que lo
+    calcula igual sin importar el evento (una plantilla que no lo referencia
+    simplemente no lo usa)."""
+    return {
+        "recipient_name": "Juan Pérez",
+        "access_code": "AB12CD",
+        "motivo": _motivo_legible(motivo),
+    }
+
+
+def resolver_plantilla(texto: str, variables: dict) -> str:
+    """`texto.format(**variables)`, tolerante: si `texto` trae una llave que
+    no calza con `variables` (o una `{`/`}` suelta), se devuelve tal cual en
+    vez de reventar -- a diferencia de `construir_mensaje` (envío real de
+    SMS, que SÍ deja propagar el error porque ese texto ya pasó por el
+    guardado de `/administracion/notificaciones`), esta función la usa la
+    vista previa de Email (ticket 03) sobre texto que el admin puede estar
+    editando a medio escribir, donde reventar la pantalla completa por una
+    llave mal cerrada sería peor que mostrar el texto sin resolver."""
+    try:
+        return texto.format(**variables)
+    except (KeyError, IndexError, ValueError):
+        return texto
 
 
 def _buscar_plantilla(

@@ -25,8 +25,11 @@ from app.domain.notificacion_service import (
     guardar_plantilla,
     obtener_asunto_actual,
     obtener_texto_actual,
+    resolver_plantilla,
+    variables_ejemplo,
 )
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion
+from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import (
     create_staff,
@@ -37,6 +40,7 @@ from app.domain.staff_service import (
 )
 from app.domain.usuario import RolUsuario, Usuario
 
+from ..config import public_base_url
 from ..db import get_db
 from ..security import require_admin
 from ..templating import templates
@@ -249,22 +253,38 @@ def admin_staff_desactivar(
 _CANALES_PLANTILLA = (CanalNotificacion.SMS, CanalNotificacion.EMAIL, CanalNotificacion.WHATSAPP)
 
 
+def _preview_html_de(evento: EstadoPaquete, motivo: str, asunto: str, texto: str) -> str:
+    """Vista previa de Email: `asunto`/`texto` resueltos con datos de ejemplo
+    (`variables_ejemplo` + `resolver_plantilla`, tolerantes a una llave suelta
+    mientras el admin edita) y envueltos en el layout de marca (`envolver_html`)
+    -- `.scratch/plantillas-notificacion-multicanal`, ticket 03."""
+    variables = variables_ejemplo(motivo)
+    asunto_resuelto = resolver_plantilla(asunto, variables)
+    texto_resuelto = resolver_plantilla(texto, variables)
+    return envolver_html(asunto_resuelto, texto_resuelto, public_base_url())
+
+
 def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
     """Los 3 canales de `(evento, motivo)`, cada uno con su texto vigente
-    (personalizado o default) y, solo Email, su asunto vigente -- `.scratch/
-    plantillas-notificacion-multicanal`, ticket 02."""
-    return [
-        {
-            "canal": canal,
-            "texto": obtener_texto_actual(db, evento, motivo, canal),
-            "asunto": (
-                obtener_asunto_actual(db, evento, motivo)
-                if canal is CanalNotificacion.EMAIL
-                else None
-            ),
-        }
-        for canal in _CANALES_PLANTILLA
-    ]
+    (personalizado o default) y, solo Email, su asunto vigente + vista
+    previa con marca (`.scratch/plantillas-notificacion-multicanal`, tickets
+    02 y 03)."""
+    canales = []
+    for canal in _CANALES_PLANTILLA:
+        es_email = canal is CanalNotificacion.EMAIL
+        texto = obtener_texto_actual(db, evento, motivo, canal)
+        asunto = obtener_asunto_actual(db, evento, motivo) if es_email else None
+        canales.append(
+            {
+                "canal": canal,
+                "texto": texto,
+                "asunto": asunto,
+                "preview_html": (
+                    _preview_html_de(evento, motivo, asunto, texto) if es_email else None
+                ),
+            }
+        )
+    return canales
 
 
 def _filas_plantillas(db: Session):

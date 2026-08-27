@@ -230,6 +230,37 @@ def test_asunto_vacio_en_email_rechaza_sin_borrar_el_existente(client):
     assert obtener_asunto_actual(client.db, EstadoPaquete.RECIBIDO) == "Asunto original"
 
 
+def _primer_srcdoc(html_text):
+    inicio = html_text.index('srcdoc="') + len('srcdoc="')
+    fin = html_text.index('"', inicio)
+    return html_text[inicio:fin]
+
+
+def test_pestana_email_muestra_preview_con_datos_de_ejemplo(client):
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert r.status_code == 200
+    preview = _primer_srcdoc(r.text)
+    # Datos de ejemplo (variables_ejemplo) resueltos dentro del preview --
+    # nunca el placeholder crudo.
+    assert "Juan Pérez" in preview
+    assert "{recipient_name}" not in preview
+    assert "papyrus-logo.png" in preview
+    assert "Consultar mis paquetes" in preview
+
+
+def test_preview_de_un_evento_cancelado_usa_su_propio_motivo(client):
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    # CANCELADO·NO_RECLAMADO trae {motivo} en su default -- el preview de
+    # ESA fila debe resolverlo a "No reclamado" (variables_ejemplo).
+    i = r.text.index("CANCELADO · No reclamado")
+    bloque = r.text[i : i + 8000]
+    preview = _primer_srcdoc(bloque)
+    assert "No reclamado" in preview
+    assert "{motivo}" not in preview
+
+
 def test_canal_invalido_rechaza(client):
     _login_admin(client)
     r = client.post(
