@@ -393,6 +393,10 @@ def admin_notificaciones_guardar(
         # no lo mande (mismo criterio que el resto de la validación de esta
         # ruta: el servidor no confía en la forma del POST).
         asunto=(asunto or None) if canal_enum is CanalNotificacion.EMAIL else None,
+        # El actor SIEMPRE sale de la sesión (`require_admin`), nunca de un
+        # campo del formulario -- mismo principio que el resto de esta ruta
+        # (ver docstring del módulo).
+        usuario_id=admin.id,
     )
 
     return templates.TemplateResponse(

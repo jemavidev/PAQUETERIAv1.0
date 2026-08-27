@@ -30,6 +30,8 @@ para `(evento, motivo)`; si no existe, usa el texto por defecto de abajo
 del Grupo 11), `None` para el resto.
 """
 
+import uuid
+
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -39,6 +41,7 @@ from .ocupante_service import ocupante_activo_de_persona
 from .paquete import EstadoPaquete, Paquete
 from .persona import Persona
 from .plantilla_notificacion import PlantillaNotificacion
+from .plantilla_notificacion_historial import PlantillaNotificacionHistorial
 from .preferencia_notificacion import CanalNotificacion
 from .preferencia_notificacion_service import preferencia_activa
 
@@ -407,14 +410,20 @@ def guardar_plantilla(
     texto: str,
     canal: CanalNotificacion = CanalNotificacion.SMS,
     asunto: str = None,
+    usuario_id: uuid.UUID | None = None,
 ) -> PlantillaNotificacion:
-    """Crea o actualiza la `PlantillaNotificacion` de `(evento, motivo, canal)`.
+    """Crea o actualiza la `PlantillaNotificacion` de `(evento, motivo, canal)`,
+    y deja un registro en `PlantillaNotificacionHistorial` por cada guardado
+    exitoso (`.scratch/plantillas-notificacion-multicanal`, ticket 04) --
+    append-only, nunca se edita ni se borra.
 
     `canal`/`asunto` van DESPUÉS de `texto` (no antes) a propósito: preserva
     la firma posicional `(session, evento, motivo, texto)` de antes de la
     extensión multicanal, así que cualquier caller existente que no pase
     `canal` sigue guardando SMS exactamente como antes. `asunto` solo importa
-    para `canal == EMAIL`.
+    para `canal == EMAIL`. `usuario_id` es opcional (default `None`) por el
+    mismo motivo -- un historial con `usuario_id=NULL` es honesto para un
+    caller sin actor real (tests de dominio, scripts), no un dato inventado.
 
     Carrera (dos ediciones simultáneas de la misma plantilla, mismo patrón
     que `persona_service.get_or_create_persona`): si el `INSERT` choca contra
@@ -429,15 +438,32 @@ def guardar_plantilla(
         plantilla.asunto = asunto
         try:
             session.flush()
+            texto_anterior, asunto_anterior = None, None
         except IntegrityError:
             session.rollback()
             plantilla = _buscar_plantilla(session, evento, motivo, canal)
+            texto_anterior, asunto_anterior = plantilla.texto, plantilla.asunto
             plantilla.texto = texto
             plantilla.asunto = asunto
             session.flush()
-        return plantilla
+    else:
+        texto_anterior, asunto_anterior = plantilla.texto, plantilla.asunto
+        plantilla.texto = texto
+        plantilla.asunto = asunto
+        session.flush()
 
-    plantilla.texto = texto
-    plantilla.asunto = asunto
+    session.add(
+        PlantillaNotificacionHistorial(
+            plantilla_id=plantilla.id,
+            evento=evento.value,
+            motivo=motivo,
+            canal=canal.value,
+            usuario_id=usuario_id,
+            texto_anterior=texto_anterior,
+            texto_nuevo=texto,
+            asunto_anterior=asunto_anterior,
+            asunto_nuevo=asunto,
+        )
+    )
     session.flush()
     return plantilla
