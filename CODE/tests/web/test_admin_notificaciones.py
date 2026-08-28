@@ -279,6 +279,46 @@ def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
     assert r.text.count("Variables disponibles") == 16
 
 
+# --------------------------------------------------------------------------- #
+# .scratch/plantillas-notificacion-multicanal / pendientes-cliente issue 200
+# -- layout de acordeón (elegido tras prototipar 3 alternativas en vivo).
+# --------------------------------------------------------------------------- #
+def _tag_details_de(html_text, titulo_summary):
+    """El `<details ...>` cuyo `<summary>` contiene `titulo_summary` como
+    texto (ej. 'RECIBIDO' o 'ANUNCIADO · Cliente')."""
+    i = html_text.index(f">{titulo_summary}<")
+    inicio = html_text.rindex("<details", 0, i)
+    fin = html_text.index(">", inicio)
+    return html_text[inicio : fin + 1]
+
+
+def test_primera_fila_abierta_las_demas_cerradas_por_defecto(client):
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert "open" in _tag_details_de(r.text, "ANUNCIADO · Cliente")  # la primera
+    assert "open" not in _tag_details_de(r.text, "RECIBIDO")
+
+
+def test_error_en_fila_no_primera_abre_su_propio_acordeon(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "texto": "   "},
+    )
+    assert r.status_code == 400
+    assert "open" in _tag_details_de(r.text, "RECIBIDO")
+
+
+def test_guardar_en_fila_no_primera_abre_su_propio_acordeon(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "texto": "Ya llegó."},
+    )
+    assert r.status_code == 200
+    assert "open" in _tag_details_de(r.text, "RECIBIDO")
+
+
 def test_notificar_anunciado_por_staff_usa_la_plantilla_de_staff(client):
     from app.domain.notification_sender import ConsoleNotificationSender
     from app.domain.notificacion_service import notificar_evento

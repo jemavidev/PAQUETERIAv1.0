@@ -4,7 +4,13 @@
 {% from "components/_toast.html" import toast %}
 {% block title %}Plantillas de notificación — PAQUETEX{% endblock %}
 {% block content %}
-<div class="max-w-md lg:max-w-2xl mx-auto px-4 py-8 space-y-4">
+{#- Pedido en vivo 2026-08-26 (.scratch/plantillas-notificacion-multicanal,
+   .scratch/pendientes-cliente issue 200): 8 tarjetas siempre expandidas
+   apiladas era demasiado scroll -- se prototiparon 3 layouts (evento como
+   tab, canal como tab, acordeón) directo sobre esta ruta vía `?variant=`;
+   el cliente eligió acordeón. `details[open]` gira el chevron sin JS. -#}
+<style>details[open] > summary .chevron-acordeon { transform: rotate(180deg); }</style>
+<div class="max-w-md lg:max-w-2xl mx-auto px-4 py-8 space-y-3">
   <h1 class="text-xl font-bold text-slate-900">Plantillas de notificación</h1>
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
   {% if guardado %}{{ toast('Plantilla guardada.', variant='success') }}{% endif %}
@@ -50,8 +56,15 @@
   {%- else -%}
     {%- set canal_activo = 'SMS' -%}
   {%- endif -%}
-  <div class="bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
-    <h2 class="text-lg font-bold text-slate-900 mb-3">{{ fila.evento.value }}{{ (' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '' }}</h2>
+  {#- Abierta por defecto: la primera fila (para que la página no arranque
+     100% colapsada), o cualquier fila con un error/guardado propio recién
+     ocurrido (para que no quede escondida detrás de un acordeón cerrado). -#}
+  <details class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden" {% if loop.first or es_fila_error or es_fila_guardada %}open{% endif %}>
+    <summary class="cursor-pointer select-none list-none px-6 py-4 flex items-center justify-between gap-3 hover:bg-slate-50">
+      <span class="text-lg font-bold text-slate-900">{{ fila.evento.value }}{{ (' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '' }}</span>
+      <svg class="chevron-acordeon h-5 w-5 text-slate-400 shrink-0 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+    </summary>
+    <div class="px-6 pb-6 pt-1 border-t border-gray-100">
 
     {#- `sr-only` (no `.hidden`/`display:none`, mismo criterio que
        `grupo_chips` en `components/_modales.html`): un radio real, oculto
@@ -111,7 +124,8 @@
       {%- endif %}
     </div>
     {%- endfor %}
-  </div>
+    </div>
+  </details>
   {% endfor %}
 </div>
 {% endblock %}

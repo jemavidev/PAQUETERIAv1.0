@@ -21,7 +21,7 @@ VOLUME=paquetex_dev_pgdata          # con NOMBRE -- nunca queda huérfano
 PG_PORT=5433
 APP_PORT=8010
 DB_URL="postgresql://paquetex:paquetex_dev@localhost:${PG_PORT}/paquetex_dev"
-ADMIN_EMAIL="admin@local.test"
+ADMIN_EMAIL="info@papyrus.com.co"
 ADMIN_PASSWORD="Contrasena1"
 
 if [ "$(docker ps -aq -f name="^${CONTAINER}$")" = "" ]; then
