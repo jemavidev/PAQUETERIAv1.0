@@ -24,10 +24,11 @@ la MISMA función, no dos reglas separadas.
 para `(evento, motivo)`; si no existe, usa el texto por defecto de abajo
 (comportamiento histórico, intacto) — la tabla es un OVERRIDE, nunca la
 única fuente de verdad. `motivo` es el motivo de cancelación para
-`CANCELADO`, o `ORIGEN_ANUNCIO_CLIENTE`/`ORIGEN_ANUNCIO_STAFF` para
-`ANUNCIADO` (Grupo 19, Ronda 2: el mensaje cambia según quién anunció —
-`paquete.announced_by_usuario_id` es el mismo dato que ya usa la auditoría
-del Grupo 11), `None` para el resto.
+`CANCELADO`, `None` para el resto -- ANUNCIADO tuvo brevemente dos
+variantes según quién anunciaba (Grupo 19, Ronda 2), revertido en issue
+202 (`.scratch/pendientes-cliente`, pedido explícito del cliente: el aviso
+siempre llega al mismo destinatario final sin importar quién anunció, así
+que una sola plantilla alcanza).
 """
 
 import uuid
@@ -57,6 +58,10 @@ _EVENTOS_QUE_NOTIFICAN = (
 # MOSTRAR y editar desde `/administracion/notificaciones` (Grupo 8, ticket 02)
 # con el mismo mecanismo de `.format()` que una plantilla personalizada.
 PLANTILLAS_DEFAULT = {
+    EstadoPaquete.ANUNCIADO: (
+        "Anunciaste un paquete ({recipient_name}). "
+        "Tu código de acceso: {access_code}. — PAQUETEX"
+    ),
     EstadoPaquete.RECIBIDO: (
         "Tu paquete ({recipient_name}) ya está en portería. "
         "Puedes reclamarlo cuando quieras. — PAQUETEX"
@@ -67,25 +72,6 @@ PLANTILLAS_DEFAULT = {
     ),
 }
 
-# ANUNCIADO tiene DOS defaults, no uno (Grupo 19, Ronda 2): quien lo anunció
-# él mismo ya sabe que lo hizo; a quien el staff le anuncia un paquete a su
-# nombre (vía /announce) recién se está enterando — mismo evento, tono
-# distinto. Reutiliza la columna `motivo` de `PlantillaNotificacion` como
-# llave de sub-variante, igual que ya hace CANCELADO con sus 4 motivos.
-ORIGEN_ANUNCIO_CLIENTE = "CLIENTE"
-ORIGEN_ANUNCIO_STAFF = "STAFF"
-
-_ANUNCIADO_DEFAULT = {
-    ORIGEN_ANUNCIO_CLIENTE: (
-        "Anunciaste un paquete ({recipient_name}). "
-        "Tu código de acceso: {access_code}. — PAQUETEX"
-    ),
-    ORIGEN_ANUNCIO_STAFF: (
-        "Portería anunció un paquete a tu nombre ({recipient_name}). "
-        "Tu código de acceso: {access_code}. — PAQUETEX"
-    ),
-}
-
 # Asunto por defecto — SOLO relevante para canal=EMAIL (SMS/WhatsApp no
 # tienen asunto). El cuerpo del mensaje (arriba) es el MISMO texto informativo
 # para los 3 canales por decisión explícita del cliente (.scratch/plantillas-
@@ -93,49 +79,32 @@ _ANUNCIADO_DEFAULT = {
 # así que no existe un "ASUNTOS_DEFAULT por canal": el asunto es la única
 # pieza de contenido exclusiva de Email.
 ASUNTOS_DEFAULT = {
+    EstadoPaquete.ANUNCIADO: "Anunciaste un paquete",
     EstadoPaquete.RECIBIDO: "Tu paquete ya está en portería",
     EstadoPaquete.ENTREGADO: "Tu paquete fue entregado",
     EstadoPaquete.CANCELADO: "Tu paquete fue cancelado",
 }
 
-_ANUNCIADO_ASUNTO_DEFAULT = {
-    ORIGEN_ANUNCIO_CLIENTE: "Anunciaste un paquete",
-    ORIGEN_ANUNCIO_STAFF: "Portería anunció un paquete a tu nombre",
-}
 
-
-def origen_anuncio(paquete: Paquete) -> str:
-    """`ORIGEN_ANUNCIO_STAFF` si lo anunció el staff (vía `/announce`,
-    `announced_by_usuario_id` no es `None`), `ORIGEN_ANUNCIO_CLIENTE` si lo
-    anunció el propio cliente (vía `/anunciar`) — mismo dato que ya usa la
-    auditoría de actor del Grupo 11."""
-    return ORIGEN_ANUNCIO_STAFF if paquete.announced_by_usuario_id else ORIGEN_ANUNCIO_CLIENTE
-
-
-def _default_de(evento: EstadoPaquete, motivo: str, tabla_eventos: dict, tabla_anunciado: dict):
-    """Árbol de validación compartido por `plantilla_por_defecto` y
-    `asunto_por_defecto` -- solo cambia la tabla de donde se lee (cuerpo vs.
-    asunto), la forma de resolver `evento`/`motivo` es idéntica."""
-    if evento is EstadoPaquete.ANUNCIADO:
-        if motivo not in tabla_anunciado:
-            raise ValueError(
-                f"ANUNCIADO requiere motivo={ORIGEN_ANUNCIO_CLIENTE!r} o "
-                f"{ORIGEN_ANUNCIO_STAFF!r}, recibido {motivo!r}."
-            )
-        return tabla_anunciado[motivo]
-    if evento not in tabla_eventos:
+def _default_de(evento: EstadoPaquete, tabla: dict) -> str:
+    """Lookup compartido por `plantilla_por_defecto` y `asunto_por_defecto`
+    -- solo cambia la tabla de donde se lee (cuerpo vs. asunto)."""
+    if evento not in tabla:
         raise ValueError(f"El evento {evento!r} no dispara notificación.")
-    return tabla_eventos[evento]
+    return tabla[evento]
 
 
 def plantilla_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
     """El texto de plantilla por defecto (sin personalizar) para `evento` —
     usado por `/administracion/notificaciones` para precargar el formulario.
 
-    `motivo` es obligatorio para `ANUNCIADO` (`ORIGEN_ANUNCIO_CLIENTE` o
-    `ORIGEN_ANUNCIO_STAFF`) e ignorado para el resto de eventos.
+    `motivo` no distingue nada acá -- todo motivo de un mismo evento
+    comparte el mismo default (solo importa para PERSONALIZAR, ej. cada
+    `MotivoCancelacion` puede tener su propio texto guardado). Se mantiene
+    el parámetro por compatibilidad con los callers existentes
+    (`obtener_texto_actual`, etc.), aunque ya no se lee.
     """
-    return _default_de(evento, motivo, PLANTILLAS_DEFAULT, _ANUNCIADO_DEFAULT)
+    return _default_de(evento, PLANTILLAS_DEFAULT)
 
 
 def asunto_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
@@ -143,7 +112,7 @@ def asunto_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
     mismo criterio de `motivo` que `plantilla_por_defecto`. Sin significado
     para SMS/WhatsApp (no tienen asunto); usado solo cuando `canal == EMAIL`.
     """
-    return _default_de(evento, motivo, ASUNTOS_DEFAULT, _ANUNCIADO_ASUNTO_DEFAULT)
+    return _default_de(evento, ASUNTOS_DEFAULT)
 
 
 def _motivo_legible(motivo: str) -> str:
@@ -218,12 +187,7 @@ def construir_mensaje(session: Session, evento: EstadoPaquete, paquete: Paquete)
     if evento not in _EVENTOS_QUE_NOTIFICAN:
         raise ValueError(f"El evento {evento!r} no dispara notificación.")
 
-    if evento is EstadoPaquete.CANCELADO:
-        motivo_buscado = paquete.cancel_reason
-    elif evento is EstadoPaquete.ANUNCIADO:
-        motivo_buscado = origen_anuncio(paquete)
-    else:
-        motivo_buscado = None
+    motivo_buscado = paquete.cancel_reason if evento is EstadoPaquete.CANCELADO else None
 
     plantilla = _buscar_plantilla(session, evento, motivo_buscado, CanalNotificacion.SMS)
     texto = (

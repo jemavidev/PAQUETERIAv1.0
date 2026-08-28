@@ -44,6 +44,13 @@
   } -%}
   {%- set nombres_canal = {'SMS': 'SMS', 'EMAIL': 'Email', 'WHATSAPP': 'WhatsApp'} -%}
 
+  {#- Pedido en vivo (issue 202): un solo acordeón abierto a la vez -- si
+     hay una fila con error/guardado propio, ESA es la única candidata a
+     abrir (nunca junto con la primera); si no hay ninguna, abre la
+     primera. Se decide antes del loop para no emitir `open` en dos
+     `<details>` del mismo grupo a la vez. -#}
+  {%- set hay_fila_especial = (error_evento|default(none)) or (guardado_evento|default(none)) -%}
+
   {% for fila in filas %}
   {%- set fila_id = loop.index -%}
   {%- set motivo_fila = fila.motivo or none -%}
@@ -56,10 +63,11 @@
   {%- else -%}
     {%- set canal_activo = 'SMS' -%}
   {%- endif -%}
-  {#- Abierta por defecto: la primera fila (para que la página no arranque
-     100% colapsada), o cualquier fila con un error/guardado propio recién
-     ocurrido (para que no quede escondida detrás de un acordeón cerrado). -#}
-  <details class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden" {% if loop.first or es_fila_error or es_fila_guardada %}open{% endif %}>
+  {%- set fila_abierta = (es_fila_error or es_fila_guardada) if hay_fila_especial else loop.first -%}
+  {#- `name` compartido (soporte nativo de navegador, sin JS): abrir una
+     cierra automáticamente cualquier otra del mismo grupo -- un solo
+     acordeón abierto a la vez. -#}
+  <details name="notif-acordeon" class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden" {% if fila_abierta %}open{% endif %}>
     <summary class="cursor-pointer select-none list-none px-6 py-4 flex items-center justify-between gap-3 hover:bg-slate-50">
       <span class="text-lg font-bold text-slate-900">{{ fila.evento.value }}{{ (' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '' }}</span>
       <svg class="chevron-acordeon h-5 w-5 text-slate-400 shrink-0 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>

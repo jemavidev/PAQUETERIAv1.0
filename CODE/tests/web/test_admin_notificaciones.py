@@ -97,82 +97,67 @@ def test_texto_vacio_rechaza(client):
 
 
 # --------------------------------------------------------------------------- #
-# Grupo 19 (Ronda 2) — plantilla Anunciado dividida Cliente/Staff.
+# issue 202 (.scratch/pendientes-cliente): ANUNCIADO deja de distinguir
+# Cliente/Staff (Grupo 19, Ronda 2, revertido) -- el aviso siempre llega al
+# mismo destinatario final sin importar quién anunció, así que sobraba
+# tener dos plantillas separadas. Ahora se comporta igual que RECIBIDO/
+# ENTREGADO: una sola fila, sin motivo.
 # --------------------------------------------------------------------------- #
-def test_admin_ve_dos_filas_de_anunciado_cliente_y_staff(client):
+def test_admin_ve_una_sola_fila_de_anunciado_sin_motivo(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
     assert r.status_code == 200
-    assert "ANUNCIADO · Cliente" in r.text
-    assert "ANUNCIADO · Staff" in r.text
+    assert ">ANUNCIADO<" in r.text
+    assert "ANUNCIADO · Cliente" not in r.text
+    assert "ANUNCIADO · Staff" not in r.text
 
 
-def test_defaults_de_anunciado_cliente_y_staff_son_distintos(client):
-    _login_admin(client)
-    r = client.get("/administracion/notificaciones")
-    assert "Anunciaste un paquete" in r.text  # default CLIENTE
-    assert "Portería anunció un paquete a tu nombre" in r.text  # default STAFF
-
-
-def test_guardar_anunciado_cliente_no_afecta_anunciado_staff(client):
-    _login_admin(client)
-    client.post(
-        "/administracion/notificaciones",
-        data={
-            "evento": "ANUNCIADO",
-            "motivo": "CLIENTE",
-            "texto": "Gracias por anunciar, {recipient_name}.",
-        },
-    )
-
-    client.db.expire_all()
-    from app.domain.notificacion_service import (
-        ORIGEN_ANUNCIO_CLIENTE,
-        ORIGEN_ANUNCIO_STAFF,
-    )
-
-    texto_cliente = obtener_texto_actual(
-        client.db, EstadoPaquete.ANUNCIADO, ORIGEN_ANUNCIO_CLIENTE
-    )
-    texto_staff = obtener_texto_actual(
-        client.db, EstadoPaquete.ANUNCIADO, ORIGEN_ANUNCIO_STAFF
-    )
-    assert "Gracias por anunciar" in texto_cliente
-    assert "Gracias por anunciar" not in texto_staff
-
-
-def test_notificar_anunciado_por_cliente_usa_la_plantilla_de_cliente(client):
+def test_notificar_anunciado_usa_la_misma_plantilla_sin_importar_quien_anuncio(client):
     from app.domain.notification_sender import ConsoleNotificationSender
     from app.domain.notificacion_service import notificar_evento
     from app.domain.paquete_service import Destinatario, announce
+    from app.domain.usuario import Usuario
 
-    p = announce(
+    _login_admin(client)
+    admin = client.db.query(Usuario).one()
+
+    p_cliente = announce(
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana",
         destinatario=Destinatario.yo_mismo(),
     )
+    p_staff = announce(
+        client.db,
+        anunciante_telefono="3009999999",
+        anunciante_nombre="Beto",
+        destinatario=Destinatario.yo_mismo(),
+        staff_actor=admin,
+    )
     client.db.commit()
 
     sender = ConsoleNotificationSender()
-    notificar_evento(client.db, p, EstadoPaquete.ANUNCIADO, sender)
+    notificar_evento(client.db, p_cliente, EstadoPaquete.ANUNCIADO, sender)
+    notificar_evento(client.db, p_staff, EstadoPaquete.ANUNCIADO, sender)
 
-    assert len(sender.enviados) == 1
+    assert len(sender.enviados) == 2
     assert "Anunciaste un paquete" in sender.enviados[0][1]
+    assert "Anunciaste un paquete" in sender.enviados[1][1]  # mismo texto
 
 
 # --------------------------------------------------------------------------- #
 # `.scratch/plantillas-notificacion-multicanal`, ticket 02 — pestañas
 # SMS/Email/WhatsApp por evento.
 # --------------------------------------------------------------------------- #
-def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_8_filas(client):
-    # 8 filas: ANUNCIADO x2 (Cliente/Staff) + RECIBIDO + ENTREGADO +
-    # CANCELADO x4 (un MotivoCancelacion cada una).
+def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_7_filas(client):
+    # 7 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x4 (un
+    # MotivoCancelacion cada una) -- ANUNCIADO dejó de distinguir
+    # Cliente/Staff en issue 202 (.scratch/pendientes-cliente).
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
     assert r.status_code == 200
     for canal in ("SMS", "EMAIL", "WHATSAPP"):
-        assert r.text.count(f'data-canal="{canal}"') == 8
+        assert r.text.count(f'data-canal="{canal}"') == 7
 
 
 def test_guardar_email_no_afecta_el_sms_del_mismo_evento(client):
@@ -273,10 +258,10 @@ def test_canal_invalido_rechaza(client):
 def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    assert r.text.count('aria-label="Asunto"') == 8
+    assert r.text.count('aria-label="Asunto"') == 7
     # "Variables disponibles" solo se muestra en SMS/WhatsApp -- 2 de los 3
-    # canales, en cada una de las 8 filas.
-    assert r.text.count("Variables disponibles") == 16
+    # canales, en cada una de las 7 filas.
+    assert r.text.count("Variables disponibles") == 14
 
 
 # --------------------------------------------------------------------------- #
@@ -295,7 +280,7 @@ def _tag_details_de(html_text, titulo_summary):
 def test_primera_fila_abierta_las_demas_cerradas_por_defecto(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    assert "open" in _tag_details_de(r.text, "ANUNCIADO · Cliente")  # la primera
+    assert "open" in _tag_details_de(r.text, "ANUNCIADO")  # la primera
     assert "open" not in _tag_details_de(r.text, "RECIBIDO")
 
 
@@ -307,6 +292,17 @@ def test_error_en_fila_no_primera_abre_su_propio_acordeon(client):
     )
     assert r.status_code == 400
     assert "open" in _tag_details_de(r.text, "RECIBIDO")
+    # issue 202: un solo acordeón abierto a la vez -- la primera fila NO
+    # debe quedar abierta también solo porque es la primera.
+    assert "open" not in _tag_details_de(r.text, "ANUNCIADO")
+
+
+def test_details_comparten_name_para_ser_exclusivos(client):
+    # issue 202: `name` compartido -- soporte nativo del navegador para que
+    # abrir uno cierre cualquier otro del mismo grupo, sin JS.
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert r.text.count('name="notif-acordeon"') == 7
 
 
 def test_guardar_en_fila_no_primera_abre_su_propio_acordeon(client):
@@ -317,28 +313,3 @@ def test_guardar_en_fila_no_primera_abre_su_propio_acordeon(client):
     )
     assert r.status_code == 200
     assert "open" in _tag_details_de(r.text, "RECIBIDO")
-
-
-def test_notificar_anunciado_por_staff_usa_la_plantilla_de_staff(client):
-    from app.domain.notification_sender import ConsoleNotificationSender
-    from app.domain.notificacion_service import notificar_evento
-    from app.domain.paquete_service import Destinatario, announce
-    from app.domain.usuario import Usuario
-
-    _login_admin(client)
-    admin = client.db.query(Usuario).one()
-
-    p = announce(
-        client.db,
-        anunciante_telefono="3001234567",
-        anunciante_nombre="Ana",
-        destinatario=Destinatario.yo_mismo(),
-        staff_actor=admin,
-    )
-    client.db.commit()
-
-    sender = ConsoleNotificationSender()
-    notificar_evento(client.db, p, EstadoPaquete.ANUNCIADO, sender)
-
-    assert len(sender.enviados) == 1
-    assert "Portería anunció un paquete a tu nombre" in sender.enviados[0][1]

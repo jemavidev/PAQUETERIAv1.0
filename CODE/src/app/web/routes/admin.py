@@ -20,8 +20,6 @@ from app.domain.configuracion_conjunto_service import (
     renombrar_conjunto,
 )
 from app.domain.notificacion_service import (
-    ORIGEN_ANUNCIO_CLIENTE,
-    ORIGEN_ANUNCIO_STAFF,
     guardar_plantilla,
     obtener_asunto_actual,
     obtener_texto_actual,
@@ -47,7 +45,7 @@ from ..templating import templates
 
 router = APIRouter()
 
-_EVENTOS_SIN_MOTIVO = (EstadoPaquete.RECIBIDO, EstadoPaquete.ENTREGADO)
+_EVENTOS_SIN_MOTIVO = (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO, EstadoPaquete.ENTREGADO)
 
 
 def _get_usuario_o_404(db: Session, usuario_id: str) -> Usuario:
@@ -288,19 +286,11 @@ def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
 
 
 def _filas_plantillas(db: Session):
-    """Una fila por `ANUNCIADO · Cliente` y `ANUNCIADO · Staff` (Grupo 19,
-    Ronda 2), una por cada evento sin motivo (RECIBIDO/ENTREGADO), y una por
-    cada `MotivoCancelacion` para `CANCELADO` — cada una con sus 3 canales
-    (`_canales_de`)."""
+    """Una fila por cada evento sin motivo (ANUNCIADO/RECIBIDO/ENTREGADO --
+    ANUNCIADO dejó de distinguir Cliente/Staff en issue 202, `.scratch/
+    pendientes-cliente`) y una por cada `MotivoCancelacion` para `CANCELADO`
+    — cada una con sus 3 canales (`_canales_de`)."""
     filas = [
-        {
-            "evento": EstadoPaquete.ANUNCIADO,
-            "motivo": origen,
-            "canales": _canales_de(db, EstadoPaquete.ANUNCIADO, origen),
-        }
-        for origen in (ORIGEN_ANUNCIO_CLIENTE, ORIGEN_ANUNCIO_STAFF)
-    ]
-    filas += [
         {
             "evento": e,
             "motivo": None,
