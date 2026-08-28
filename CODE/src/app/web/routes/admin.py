@@ -15,16 +15,18 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.domain import smtp_email_sender
 from app.domain.configuracion_conjunto_service import (
     obtener_nombre_conjunto,
     renombrar_conjunto,
 )
+from app.domain.email_sender import EmailSender
+from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import (
     guardar_plantilla,
+    mensaje_de_prueba,
     obtener_asunto_actual,
     obtener_texto_actual,
-    resolver_plantilla,
-    variables_ejemplo,
 )
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion
 from app.domain.plantilla_email_html import envolver_html
@@ -40,6 +42,8 @@ from app.domain.usuario import RolUsuario, Usuario
 
 from ..config import public_base_url
 from ..db import get_db
+from ..notifications import get_notification_sender, sms_configurado
+from ..password_reset import get_email_sender
 from ..security import require_admin
 from ..templating import templates
 
@@ -251,22 +255,31 @@ def admin_staff_desactivar(
 _CANALES_PLANTILLA = (CanalNotificacion.SMS, CanalNotificacion.EMAIL, CanalNotificacion.WHATSAPP)
 
 
-def _preview_html_de(evento: EstadoPaquete, motivo: str, asunto: str, texto: str) -> str:
-    """Vista previa de Email: `asunto`/`texto` resueltos con datos de ejemplo
-    (`variables_ejemplo` + `resolver_plantilla`, tolerantes a una llave suelta
-    mientras el admin edita) y envueltos en el layout de marca (`envolver_html`)
-    -- `.scratch/plantillas-notificacion-multicanal`, ticket 03."""
-    variables = variables_ejemplo(motivo)
-    asunto_resuelto = resolver_plantilla(asunto, variables)
-    texto_resuelto = resolver_plantilla(texto, variables)
-    return envolver_html(asunto_resuelto, texto_resuelto, public_base_url())
+def _canal_configurado(canal: CanalNotificacion) -> bool:
+    """¿Tiene `canal` al menos un proveedor de envío REAL configurado en el
+    sistema? (.scratch/notificaciones-enviar-prueba, ticket 02) -- gobierna
+    si el botón "Enviar prueba" de esa pestaña aparece habilitado o
+    deshabilitado-con-nota. SMS/Email reusan EXACTAMENTE el mismo booleano
+    que ya decide el sender real (`sms_configurado`, fuente única
+    compartida con `web/notifications.py::_sender_base`; Email vía
+    `smtp_email_sender.configurado()`, igual que `web/password_reset.py::
+    _sender_base`) -- un proveedor a medias no debe contar como
+    "configurado" acá tampoco. WhatsApp siempre `False` hoy: no existe
+    ningún proveedor de envío para ese canal todavía (ticket 03 agrega la
+    pestaña deshabilitada correspondiente)."""
+    if canal is CanalNotificacion.SMS:
+        return sms_configurado()
+    if canal is CanalNotificacion.EMAIL:
+        return smtp_email_sender.configurado()
+    return False
 
 
 def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
     """Los 3 canales de `(evento, motivo)`, cada uno con su texto vigente
-    (personalizado o default) y, solo Email, su asunto vigente + vista
-    previa con marca (`.scratch/plantillas-notificacion-multicanal`, tickets
-    02 y 03)."""
+    (personalizado o default), solo Email su asunto vigente
+    (`.scratch/plantillas-notificacion-multicanal`, ticket 02), y si tiene
+    un proveedor de envío real configurado (`_canal_configurado`, ticket 02
+    de `.scratch/notificaciones-enviar-prueba`)."""
     canales = []
     for canal in _CANALES_PLANTILLA:
         es_email = canal is CanalNotificacion.EMAIL
@@ -277,9 +290,7 @@ def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
                 "canal": canal,
                 "texto": texto,
                 "asunto": asunto,
-                "preview_html": (
-                    _preview_html_de(evento, motivo, asunto, texto) if es_email else None
-                ),
+                "configurado": _canal_configurado(canal),
             }
         )
     return canales
@@ -399,6 +410,96 @@ def admin_notificaciones_guardar(
             "guardado_evento": evento,
             "guardado_motivo": motivo or None,
             "guardado_canal": canal,
+        },
+    )
+
+
+@router.post("/administracion/notificaciones/probar", response_class=HTMLResponse)
+def admin_notificaciones_probar(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    notification_sender: NotificationSender = Depends(get_notification_sender),
+    email_sender: EmailSender = Depends(get_email_sender),
+    evento: str = Form(None),
+    motivo: str = Form(None),
+    canal: str = Form(None),
+    destino: str = Form(None),
+):
+    """Envío de prueba REAL (.scratch/notificaciones-enviar-prueba, ticket
+    02) — endpoint SEPARADO de `admin_notificaciones_guardar`: los dos
+    validan campos requeridos distintos (`texto`/`asunto` vs. `destino`) y
+    mezclarlos en un solo handler con un `accion` de por medio complicaría
+    ambas validaciones sin necesidad.
+
+    A propósito SÍNCRONO y sin `try/except Exception: pass` alrededor del
+    envío (a diferencia de `notificar_evento`, best-effort porque la
+    transición del Paquete ya se completó): acá el ÚNICO propósito de la
+    ruta es que el ADMIN sepa si el mensaje salió o no, así que una falla
+    real del proveedor se propaga a un toast de error en vez de tragarse en
+    silencio."""
+
+    def _error(mensaje: str, marcar_fila: bool = False):
+        return templates.TemplateResponse(
+            "admin/notificaciones.html",
+            {
+                "request": request,
+                "admin": admin,
+                "filas": _filas_plantillas(db),
+                "error": mensaje,
+                "prueba_error_evento": evento if marcar_fila else None,
+                "prueba_error_motivo": (motivo or None) if marcar_fila else None,
+                "prueba_error_canal": canal if marcar_fila else None,
+                "prueba_error_destino": destino if marcar_fila else None,
+            },
+            status_code=400,
+        )
+
+    try:
+        evento_enum = EstadoPaquete(evento)
+    except ValueError:
+        # Sin fila que marcar: `evento` viene de un input hidden -- si esto
+        # falla es manipulación directa del HTML, no un error de usuario real.
+        return _error("Evento inválido.")
+
+    try:
+        canal_enum = CanalNotificacion(canal)
+    except ValueError:
+        return _error("Canal inválido.")
+
+    if not (destino or "").strip():
+        return _error("El destino no puede quedar vacío.", marcar_fila=True)
+
+    if not _canal_configurado(canal_enum):
+        # Cubre WhatsApp hoy (siempre `False`, ticket 03 agrega su propio
+        # botón deshabilitado) Y, en general, cualquier canal manipulado a
+        # mano en un entorno sin proveedor -- el servidor no confía en que
+        # el botón esté deshabilitado en el HTML.
+        return _error(f"{canal_enum.value} no está configurado todavía.", marcar_fila=True)
+
+    texto, asunto = mensaje_de_prueba(db, evento_enum, motivo or None, canal_enum)
+    destino_limpio = destino.strip()
+
+    try:
+        if canal_enum is CanalNotificacion.EMAIL:
+            cuerpo_html = envolver_html(asunto, texto, public_base_url())
+            email_sender.enviar(destino_limpio, asunto, texto, cuerpo_html)
+        else:
+            notification_sender.enviar(destino_limpio, texto)
+    except Exception as exc:
+        return _error(f"No se pudo enviar la prueba: {exc}", marcar_fila=True)
+
+    return templates.TemplateResponse(
+        "admin/notificaciones.html",
+        {
+            "request": request,
+            "admin": admin,
+            "filas": _filas_plantillas(db),
+            "prueba_ok": True,
+            "prueba_destino": destino_limpio,
+            "prueba_ok_evento": evento,
+            "prueba_ok_motivo": motivo or None,
+            "prueba_ok_canal": canal,
         },
     )
 

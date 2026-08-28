@@ -367,6 +367,29 @@ def obtener_asunto_actual(session: Session, evento: EstadoPaquete, motivo: str =
     return asunto_por_defecto(evento, motivo)
 
 
+def mensaje_de_prueba(
+    session: Session, evento: EstadoPaquete, motivo: str, canal: CanalNotificacion
+) -> tuple[str, str | None]:
+    """`(texto, asunto)` para un ENVÍO DE PRUEBA real de `/administracion/
+    notificaciones` (.scratch/notificaciones-enviar-prueba, ticket 02) — la
+    plantilla YA GUARDADA de `(evento, motivo, canal)` (nunca un borrador sin
+    guardar), con sus variables resueltas a datos de ejemplo
+    (`variables_ejemplo`) igual que hacía el preview de Email ya retirado
+    (issue 204, `.scratch/pendientes-cliente`) -- mismas piezas
+    (`obtener_texto_actual`/`obtener_asunto_actual` + `resolver_plantilla`),
+    ahora en el dominio en vez de la capa web porque el envío real también
+    las necesita, no solo una vista.
+
+    `asunto` es `None` para SMS/WhatsApp (sin equivalente en esos canales,
+    mismo criterio que `obtener_asunto_actual`)."""
+    variables = variables_ejemplo(motivo)
+    texto = resolver_plantilla(obtener_texto_actual(session, evento, motivo, canal), variables)
+    asunto = None
+    if canal is CanalNotificacion.EMAIL:
+        asunto = resolver_plantilla(obtener_asunto_actual(session, evento, motivo), variables)
+    return texto, asunto
+
+
 def guardar_plantilla(
     session: Session,
     evento: EstadoPaquete,

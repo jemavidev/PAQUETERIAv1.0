@@ -16,6 +16,7 @@ import pytest
 from app.domain.notificacion_service import (
     construir_mensaje,
     guardar_plantilla,
+    mensaje_de_prueba,
     obtener_asunto_actual,
     obtener_texto_actual,
 )
@@ -121,3 +122,66 @@ def test_construir_mensaje_sigue_usando_el_override_de_sms(db_session):
     msg = construir_mensaje(db_session, EstadoPaquete.RECIBIDO, p)
 
     assert msg == "Hola ANA, override SMS real."
+
+
+# --------------------------------------------------------------------------- #
+# .scratch/notificaciones-enviar-prueba, ticket 02 -- `mensaje_de_prueba`
+# (envío de prueba real desde /administracion/notificaciones).
+# --------------------------------------------------------------------------- #
+def test_mensaje_de_prueba_resuelve_variables_de_ejemplo(db_session):
+    texto, asunto = mensaje_de_prueba(
+        db_session, EstadoPaquete.RECIBIDO, None, CanalNotificacion.SMS
+    )
+
+    assert "Juan Pérez" in texto
+    assert "{recipient_name}" not in texto
+    assert asunto is None  # SMS no tiene asunto
+
+
+def test_mensaje_de_prueba_usa_la_plantilla_ya_guardada_no_un_borrador(db_session):
+    guardar_plantilla(
+        db_session,
+        EstadoPaquete.RECIBIDO,
+        None,
+        "Hola {recipient_name}, plantilla YA guardada.",
+        canal=CanalNotificacion.SMS,
+    )
+
+    texto, _ = mensaje_de_prueba(db_session, EstadoPaquete.RECIBIDO, None, CanalNotificacion.SMS)
+
+    assert texto == "Hola Juan Pérez, plantilla YA guardada."
+
+
+def test_mensaje_de_prueba_email_incluye_asunto_resuelto(db_session):
+    guardar_plantilla(
+        db_session,
+        EstadoPaquete.RECIBIDO,
+        None,
+        "Cuerpo de prueba.",
+        canal=CanalNotificacion.EMAIL,
+        asunto="Asunto de prueba para {recipient_name}",
+    )
+
+    texto, asunto = mensaje_de_prueba(
+        db_session, EstadoPaquete.RECIBIDO, None, CanalNotificacion.EMAIL
+    )
+
+    assert texto == "Cuerpo de prueba."
+    assert asunto == "Asunto de prueba para Juan Pérez"
+
+
+def test_mensaje_de_prueba_whatsapp_tampoco_tiene_asunto(db_session):
+    _, asunto = mensaje_de_prueba(
+        db_session, EstadoPaquete.RECIBIDO, None, CanalNotificacion.WHATSAPP
+    )
+
+    assert asunto is None
+
+
+def test_mensaje_de_prueba_de_un_evento_cancelado_resuelve_su_propio_motivo(db_session):
+    texto, _ = mensaje_de_prueba(
+        db_session, EstadoPaquete.CANCELADO, "NO_RECLAMADO", CanalNotificacion.SMS
+    )
+
+    assert "No reclamado" in texto
+    assert "{motivo}" not in texto

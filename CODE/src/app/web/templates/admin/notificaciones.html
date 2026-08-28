@@ -2,18 +2,22 @@
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
+{% from "components/_modales.html" import modal %}
 {% block title %}Plantillas de notificación — PAQUETEX{% endblock %}
 {% block content %}
 {#- Pedido en vivo 2026-08-26 (.scratch/plantillas-notificacion-multicanal,
    .scratch/pendientes-cliente issue 200): 8 tarjetas siempre expandidas
    apiladas era demasiado scroll -- se prototiparon 3 layouts (evento como
    tab, canal como tab, acordeón) directo sobre esta ruta vía `?variant=`;
-   el cliente eligió acordeón. `details[open]` gira el chevron sin JS. -#}
-<style>details[open] > summary .chevron-acordeon { transform: rotate(180deg); }</style>
+   el cliente eligió acordeón. Pedido en vivo 2026-08-28 (issue 203): pasar
+   cada fila de acordeón a modal -- la lista principal queda como botones
+   compactos, sin nada expandido en la página; el contenido de cada fila
+   (pestañas de canal, forms, preview) es el mismo de siempre. -#}
 <div class="max-w-md lg:max-w-2xl mx-auto px-4 py-8 space-y-3">
   <h1 class="text-xl font-bold text-slate-900">Plantillas de notificación</h1>
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
   {% if guardado %}{{ toast('Plantilla guardada.', variant='success') }}{% endif %}
+  {% if prueba_ok %}{{ toast('Mensaje de prueba enviado a ' ~ prueba_destino ~ '.', variant='success') }}{% endif %}
 
   {#- Clases de Tailwind ESCRITAS LITERAL (no concatenadas en Jinja): el
      escaneo de contenido de Tailwind lee este archivo como texto plano y
@@ -24,9 +28,9 @@
      navegador real, aunque los tests HTTP (que solo miran el HTML) no lo
      detecten. Reusar el MISMO nombre de peer (`peer/sms`, etc.) en las 8
      filas es seguro: el combinador de hermanos de CSS (`~`) solo relaciona
-     elementos con el MISMO padre -- cada fila es su propio contenedor, así
-     que un radio "SMS" marcado en una fila nunca afecta el panel "SMS" de
-     otra fila. -#}
+     elementos con el MISMO padre -- cada modal es su propio contenedor
+     (el `<div>` interno del macro `modal()`), así que un radio "SMS"
+     marcado en un modal nunca afecta el panel "SMS" de otro. -#}
   {%- set peer_clase = {
     'SMS': 'peer/sms',
     'EMAIL': 'peer/email',
@@ -43,36 +47,63 @@
     'WHATSAPP': 'hidden peer-checked/whatsapp:block',
   } -%}
   {%- set nombres_canal = {'SMS': 'SMS', 'EMAIL': 'Email', 'WHATSAPP': 'WhatsApp'} -%}
+  {#- Destino de prueba (.scratch/notificaciones-enviar-prueba, ticket 02):
+     pre-llenado con el propio contacto del admin logueado -- `none` si no
+     lo tiene guardado en `/mi-sesion` todavía (el campo simplemente nace
+     vacío, editable). WhatsApp no tiene botón de prueba en este ticket
+     (ticket 03 lo agrega deshabilitado). -#}
+  {%- set destino_prefill = {'SMS': admin.telefono, 'EMAIL': admin.email} -%}
 
-  {#- Pedido en vivo (issue 202): un solo acordeón abierto a la vez -- si
-     hay una fila con error/guardado propio, ESA es la única candidata a
-     abrir (nunca junto con la primera); si no hay ninguna, abre la
-     primera. Se decide antes del loop para no emitir `open` en dos
-     `<details>` del mismo grupo a la vez. -#}
-  {%- set hay_fila_especial = (error_evento|default(none)) or (guardado_evento|default(none)) -%}
+  {#- Lista compacta -- un botón por fila, cada uno abre su propio modal
+     (`data-open`/`data-close`, mismo contrato que admin/staff.html y
+     packages/_resultados.html). -#}
+  <div class="space-y-2">
+  {% for fila in filas %}
+  {%- set fila_id = loop.index -%}
+  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '') -%}
+  <button type="button" data-open="modal-notif-{{ fila_id }}"
+          class="w-full flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm hover:bg-slate-50 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
+    <span class="text-lg font-bold text-slate-900">{{ titulo_fila }}</span>
+    <svg class="h-5 w-5 text-slate-400 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
+  </button>
+  {% endfor %}
+  </div>
 
+  {#- Pedido en vivo (issue 202, heredado): si hay una fila con
+     error/guardado propio, ESA es la que abre su modal automáticamente; si
+     no hay ninguna, todos quedan cerrados (a diferencia del acordeón, que
+     forzaba la primera fila abierta -- con la lista de botones de arriba
+     ya se ve todo de un vistazo, no hace falta). Solo una fila puede
+     cumplir esto a la vez: error/guardado/prueba nunca llegan juntos en la
+     misma respuesta (cada uno es el resultado de un POST distinto).
+     `prueba_error`/`prueba_ok` (ticket 02, .scratch/notificaciones-enviar-
+     prueba) siguen el mismo criterio que ya usaban error/guardado. -#}
   {% for fila in filas %}
   {%- set fila_id = loop.index -%}
   {%- set motivo_fila = fila.motivo or none -%}
   {%- set es_fila_error = (error_evento|default(none)) == fila.evento.value and (error_motivo|default(none)) == motivo_fila -%}
   {%- set es_fila_guardada = (guardado_evento|default(none)) == fila.evento.value and (guardado_motivo|default(none)) == motivo_fila -%}
+  {%- set es_fila_prueba_error = (prueba_error_evento|default(none)) == fila.evento.value and (prueba_error_motivo|default(none)) == motivo_fila -%}
+  {%- set es_fila_prueba_ok = (prueba_ok_evento|default(none)) == fila.evento.value and (prueba_ok_motivo|default(none)) == motivo_fila -%}
+  {#- Autofocus de texto/asunto SOLO en aperturas de Guardar -- una
+     reapertura por prueba enfoca el campo de destino en su lugar (ver
+     `fila_con_error_prueba` más abajo), nunca el textarea. -#}
+  {%- set fila_abierta_guardar = es_fila_error or es_fila_guardada -%}
+  {%- set fila_abierta = fila_abierta_guardar or es_fila_prueba_error or es_fila_prueba_ok -%}
   {%- if es_fila_error -%}
     {%- set canal_activo = error_canal|default('SMS') -%}
   {%- elif es_fila_guardada -%}
     {%- set canal_activo = guardado_canal|default('SMS') -%}
+  {%- elif es_fila_prueba_error -%}
+    {%- set canal_activo = prueba_error_canal|default('SMS') -%}
+  {%- elif es_fila_prueba_ok -%}
+    {%- set canal_activo = prueba_ok_canal|default('SMS') -%}
   {%- else -%}
     {%- set canal_activo = 'SMS' -%}
   {%- endif -%}
-  {%- set fila_abierta = (es_fila_error or es_fila_guardada) if hay_fila_especial else loop.first -%}
-  {#- `name` compartido (soporte nativo de navegador, sin JS): abrir una
-     cierra automáticamente cualquier otra del mismo grupo -- un solo
-     acordeón abierto a la vez. -#}
-  <details name="notif-acordeon" class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden" {% if fila_abierta %}open{% endif %}>
-    <summary class="cursor-pointer select-none list-none px-6 py-4 flex items-center justify-between gap-3 hover:bg-slate-50">
-      <span class="text-lg font-bold text-slate-900">{{ fila.evento.value }}{{ (' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '' }}</span>
-      <svg class="chevron-acordeon h-5 w-5 text-slate-400 shrink-0 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-    </summary>
-    <div class="px-6 pb-6 pt-1 border-t border-gray-100">
+  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '') -%}
+
+  {% call modal('notif-' ~ fila_id, titulo_fila, ancho='lg', abierto=fila_abierta) %}
 
     {#- `sr-only` (no `.hidden`/`display:none`, mismo criterio que
        `grupo_chips` en `components/_modales.html`): un radio real, oculto
@@ -94,6 +125,7 @@
 
     {%- for c in fila.canales %}
     {%- set fila_con_error = es_fila_error and (error_canal|default(none)) == c.canal.value %}
+    {%- set fila_con_error_prueba = es_fila_prueba_error and (prueba_error_canal|default(none)) == c.canal.value %}
     <div class="{{ panel_clase[c.canal.value] }}" data-canal-panel="{{ c.canal.value }}">
       <form method="post" action="/administracion/notificaciones" class="space-y-3">
         <input type="hidden" name="evento" value="{{ fila.evento.value }}">
@@ -102,13 +134,13 @@
 
         {%- if c.canal.value == 'EMAIL' %}
         {{ input_texto('Asunto', name='asunto', value=c.asunto,
-                        autofocus=(fila_id == 1 and canal_activo == 'EMAIL' and not error and not (guardado_evento|default(none)))) }}
+                        autofocus=(fila_abierta_guardar and canal_activo == 'EMAIL')) }}
         {%- else %}
         <p class="text-xs text-slate-700">Variables disponibles: {{ '{recipient_name}' }}{% if fila.evento.value == 'ANUNCIADO' %}, {{ '{access_code}' }}{% endif %}{% if fila.evento.value == 'CANCELADO' %}, {{ '{motivo}' }}{% endif %}</p>
         {%- endif %}
 
         <textarea name="texto"
-                  {% if fila_id == 1 and canal_activo == c.canal.value and not error and not (guardado_evento|default(none)) %}autofocus{% endif %}
+                  {% if fila_abierta_guardar and canal_activo == c.canal.value %}autofocus{% endif %}
                   {% if fila_con_error %}aria-invalid="true" aria-describedby="texto-error-{{ fila_id }}-{{ c.canal.value }}"{% endif %}
                   class="w-full rounded-lg border {{ 'border-red-600' if fila_con_error else 'border-slate-300' }} px-3.5 py-3 text-base min-h-[100px] resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">{{ c.texto }}</textarea>
         {%- if fila_con_error %}
@@ -120,20 +152,44 @@
 
         {{ boton('Guardar', type='submit', size='sm') }}
       </form>
-      {%- if c.canal.value == 'EMAIL' %}
-      <div class="mt-4">
-        <p class="text-xs font-medium text-slate-700 mb-1.5">Vista previa (con datos de ejemplo)</p>
-        {#- `srcdoc` recibe el documento completo escapado como valor de
-           atributo (autoescape de Jinja, SIN `|safe`) -- el navegador lo
-           desescapa y renderiza el HTML resultante aislado dentro del
-           iframe, sin mezclarlo con el DOM de esta página. -#}
-        <iframe srcdoc="{{ c.preview_html }}" title="Vista previa del correo" class="w-full rounded-lg border border-slate-200" style="height:420px;"></iframe>
-      </div>
+
+      {%- if c.canal.value in ('SMS', 'EMAIL') %}
+      {#- Enviar prueba (.scratch/notificaciones-enviar-prueba, ticket 02):
+         endpoint SEPARADO de Guardar -- envía la plantilla YA GUARDADA
+         (`c.texto`/`c.asunto` no viajan acá a propósito), nunca el
+         textarea que se esté editando. WhatsApp no tiene este bloque
+         todavía (ticket 03 lo agrega deshabilitado). -#}
+      <form method="post" action="/administracion/notificaciones/probar" class="space-y-2 mt-4 pt-4 border-t border-gray-100">
+        <input type="hidden" name="evento" value="{{ fila.evento.value }}">
+        <input type="hidden" name="motivo" value="{{ fila.motivo or '' }}">
+        <input type="hidden" name="canal" value="{{ c.canal.value }}">
+        {{ input_texto('Enviar prueba a', name='destino',
+                        type=('email' if c.canal.value == 'EMAIL' else 'tel'),
+                        value=(prueba_error_destino if fila_con_error_prueba else destino_prefill[c.canal.value]),
+                        disabled=(not c.configurado),
+                        autofocus=fila_con_error_prueba,
+                        error=(error if fila_con_error_prueba else none),
+                        extra_attrs=('autocomplete="email"' if c.canal.value == 'EMAIL' else 'autocomplete="tel" inputmode="tel"')) }}
+        {{ boton('Enviar prueba', type='submit', size='sm', disabled=(not c.configurado)) }}
+        {%- if not c.configurado %}
+        <p class="text-xs text-slate-500">{{ nombres_canal[c.canal.value] }} no está configurado todavía.</p>
+        {%- endif %}
+      </form>
       {%- endif %}
     </div>
     {%- endfor %}
-    </div>
-  </details>
+  {% endcall %}
   {% endfor %}
 </div>
+<script>
+  (function () {
+    function toggle(id, hidden) { var m = document.getElementById(id); if (m) m.hidden = hidden; }
+    document.addEventListener('click', function (e) {
+      var abrir = e.target.closest('[data-open]');
+      if (abrir) { toggle(abrir.dataset.open, false); return; }
+      var cerrar = e.target.closest('[data-close]');
+      if (cerrar) { toggle(cerrar.dataset.close, true); }
+    });
+  })();
+</script>
 {% endblock %}

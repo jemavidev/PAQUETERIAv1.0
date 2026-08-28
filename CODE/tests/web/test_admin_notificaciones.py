@@ -7,11 +7,15 @@ Comportamiento observable por HTTP: gate require_admin (mismo patrón que
 por defecto; guardar persiste la plantilla personalizada.
 """
 
+from app.domain.email_sender import ConsoleEmailSender
+from app.domain.notification_sender import ConsoleNotificationSender
 from app.domain.notificacion_service import obtener_asunto_actual, obtener_texto_actual
 from app.domain.paquete import EstadoPaquete
 from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario
+from app.web.notifications import get_notification_sender
+from app.web.password_reset import get_email_sender
 
 _PW = "Contrasena1"
 
@@ -215,37 +219,6 @@ def test_asunto_vacio_en_email_rechaza_sin_borrar_el_existente(client):
     assert obtener_asunto_actual(client.db, EstadoPaquete.RECIBIDO) == "Asunto original"
 
 
-def _primer_srcdoc(html_text):
-    inicio = html_text.index('srcdoc="') + len('srcdoc="')
-    fin = html_text.index('"', inicio)
-    return html_text[inicio:fin]
-
-
-def test_pestana_email_muestra_preview_con_datos_de_ejemplo(client):
-    _login_admin(client)
-    r = client.get("/administracion/notificaciones")
-    assert r.status_code == 200
-    preview = _primer_srcdoc(r.text)
-    # Datos de ejemplo (variables_ejemplo) resueltos dentro del preview --
-    # nunca el placeholder crudo.
-    assert "Juan Pérez" in preview
-    assert "{recipient_name}" not in preview
-    assert "papyrus-logo.png" in preview
-    assert "Consultar mis paquetes" in preview
-
-
-def test_preview_de_un_evento_cancelado_usa_su_propio_motivo(client):
-    _login_admin(client)
-    r = client.get("/administracion/notificaciones")
-    # CANCELADO·NO_RECLAMADO trae {motivo} en su default -- el preview de
-    # ESA fila debe resolverlo a "No reclamado" (variables_ejemplo).
-    i = r.text.index("CANCELADO · No reclamado")
-    bloque = r.text[i : i + 8000]
-    preview = _primer_srcdoc(bloque)
-    assert "No reclamado" in preview
-    assert "{motivo}" not in preview
-
-
 def test_canal_invalido_rechaza(client):
     _login_admin(client)
     r = client.post(
@@ -267,49 +240,259 @@ def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
 # --------------------------------------------------------------------------- #
 # .scratch/plantillas-notificacion-multicanal / pendientes-cliente issue 200
 # -- layout de acordeón (elegido tras prototipar 3 alternativas en vivo).
+# Reemplazado por issue 203 (.scratch/pendientes-cliente): cada fila abre en
+# su propio modal en vez de acordeón -- la lista principal queda como
+# botones compactos, sin nada expandido en la página.
 # --------------------------------------------------------------------------- #
-def _tag_details_de(html_text, titulo_summary):
-    """El `<details ...>` cuyo `<summary>` contiene `titulo_summary` como
-    texto (ej. 'RECIBIDO' o 'ANUNCIADO · Cliente')."""
-    i = html_text.index(f">{titulo_summary}<")
-    inicio = html_text.rindex("<details", 0, i)
+def _tag_modal_de(html_text, titulo):
+    """El `<div id="modal-notif-N" ...>` cuyo `<h2>` de título contiene
+    `titulo` (ej. 'RECIBIDO' o 'CANCELADO · No reclamado'). El mismo texto
+    aparece antes en el botón de la lista compacta -- se toma la ÚLTIMA
+    ocurrencia, que es el `<h2>` del modal (el template emite la lista de
+    botones primero y los modales después, igual que admin/staff.html)."""
+    i = html_text.rindex(f">{titulo}<")
+    inicio = html_text.rindex('<div id="modal-notif-', 0, i)
     fin = html_text.index(">", inicio)
     return html_text[inicio : fin + 1]
 
 
-def test_primera_fila_abierta_las_demas_cerradas_por_defecto(client):
+def test_todas_las_filas_cerradas_por_defecto(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    assert "open" in _tag_details_de(r.text, "ANUNCIADO")  # la primera
-    assert "open" not in _tag_details_de(r.text, "RECIBIDO")
+    assert "hidden" in _tag_modal_de(r.text, "ANUNCIADO")
+    assert "hidden" in _tag_modal_de(r.text, "RECIBIDO")
 
 
-def test_error_en_fila_no_primera_abre_su_propio_acordeon(client):
+def test_error_en_fila_abre_su_propio_modal(client):
     _login_admin(client)
     r = client.post(
         "/administracion/notificaciones",
         data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "texto": "   "},
     )
     assert r.status_code == 400
-    assert "open" in _tag_details_de(r.text, "RECIBIDO")
-    # issue 202: un solo acordeón abierto a la vez -- la primera fila NO
-    # debe quedar abierta también solo porque es la primera.
-    assert "open" not in _tag_details_de(r.text, "ANUNCIADO")
+    assert "hidden" not in _tag_modal_de(r.text, "RECIBIDO")
+    # issue 203: solo el modal con el error propio se abre, ningún otro.
+    assert "hidden" in _tag_modal_de(r.text, "ANUNCIADO")
 
 
-def test_details_comparten_name_para_ser_exclusivos(client):
-    # issue 202: `name` compartido -- soporte nativo del navegador para que
-    # abrir uno cierre cualquier otro del mismo grupo, sin JS.
-    _login_admin(client)
-    r = client.get("/administracion/notificaciones")
-    assert r.text.count('name="notif-acordeon"') == 7
-
-
-def test_guardar_en_fila_no_primera_abre_su_propio_acordeon(client):
+def test_guardar_abre_su_propio_modal(client):
     _login_admin(client)
     r = client.post(
         "/administracion/notificaciones",
         data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "texto": "Ya llegó."},
     )
     assert r.status_code == 200
-    assert "open" in _tag_details_de(r.text, "RECIBIDO")
+    assert "hidden" not in _tag_modal_de(r.text, "RECIBIDO")
+
+
+# --------------------------------------------------------------------------- #
+# .scratch/notificaciones-enviar-prueba, ticket 02 -- enviar mensaje de
+# prueba real por SMS/Email desde /administracion/notificaciones.
+# --------------------------------------------------------------------------- #
+def _forzar_sms_configurado(monkeypatch):
+    from app.domain import sns_sender
+
+    monkeypatch.setattr(sns_sender, "sns_habilitado", lambda: True)
+
+
+def _forzar_email_configurado(monkeypatch):
+    from app.domain import smtp_email_sender
+
+    monkeypatch.setattr(smtp_email_sender, "configurado", lambda: True)
+
+
+def test_probar_sms_envia_la_plantilla_ya_guardada_con_variables_resueltas(client, monkeypatch):
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+    sender = ConsoleNotificationSender()
+    client.app.dependency_overrides[get_notification_sender] = lambda: sender
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+    assert r.status_code == 200
+
+    assert len(sender.enviados) == 1
+    destino, texto = sender.enviados[0]
+    assert destino == "3001234567"
+    assert "Juan Pérez" in texto
+    assert "{recipient_name}" not in texto
+
+
+def test_probar_email_envia_con_asunto_y_cuerpo_de_marca(client, monkeypatch):
+    _login_admin(client)
+    _forzar_email_configurado(monkeypatch)
+    sender = ConsoleEmailSender()
+    client.app.dependency_overrides[get_email_sender] = lambda: sender
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "EMAIL", "destino": "admin@test.com"},
+    )
+    assert r.status_code == 200
+
+    assert len(sender.enviados) == 1
+    destino, asunto, cuerpo, cuerpo_html = sender.enviados[0]
+    assert destino == "admin@test.com"
+    assert asunto  # el default de Email para RECIBIDO
+    assert "papyrus-logo.png" in cuerpo_html  # mismo layout de marca del preview retirado
+
+
+def test_probar_whatsapp_rechaza_sin_llamar_a_ningun_sender(client):
+    _login_admin(client)
+    sender = ConsoleNotificationSender()
+    client.app.dependency_overrides[get_notification_sender] = lambda: sender
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "WHATSAPP", "destino": "3001234567"},
+    )
+    assert r.status_code == 400
+    assert sender.enviados == []
+
+
+def test_probar_destino_vacio_rechaza_sin_enviar(client, monkeypatch):
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+    sender = ConsoleNotificationSender()
+    client.app.dependency_overrides[get_notification_sender] = lambda: sender
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "   "},
+    )
+    assert r.status_code == 400
+    assert sender.enviados == []
+
+
+def test_probar_evento_invalido_rechaza(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "NOEXISTE", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+    assert r.status_code == 400
+
+
+def test_probar_canal_invalido_rechaza(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "FAX", "destino": "3001234567"},
+    )
+    assert r.status_code == 400
+
+
+def test_probar_falla_del_proveedor_se_muestra_como_error_no_se_traga(client, monkeypatch):
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+
+    class _SenderQueFalla:
+        def enviar(self, destino, mensaje):
+            raise RuntimeError("proveedor caído")
+
+    client.app.dependency_overrides[get_notification_sender] = lambda: _SenderQueFalla()
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+    assert r.status_code == 400
+    assert "no se pudo enviar" in r.text.lower()
+
+
+def test_probar_operador_recibe_403(client):
+    _login_operador(client)
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+    assert r.status_code == 403
+
+
+def test_probar_sin_sesion_redirige_a_login(client):
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/ingresar")
+
+
+def test_probar_no_afecta_el_texto_guardado_ni_el_historial(client, monkeypatch):
+    from app.domain.plantilla_notificacion_historial import PlantillaNotificacionHistorial
+
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+    client.app.dependency_overrides[get_notification_sender] = lambda: ConsoleNotificationSender()
+
+    texto_antes = obtener_texto_actual(client.db, EstadoPaquete.RECIBIDO)
+    client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+
+    client.db.expire_all()
+    assert obtener_texto_actual(client.db, EstadoPaquete.RECIBIDO) == texto_antes
+    assert client.db.query(PlantillaNotificacionHistorial).count() == 0
+
+
+def test_probar_error_abre_su_propio_modal(client, monkeypatch):
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+    client.app.dependency_overrides[get_notification_sender] = lambda: ConsoleNotificationSender()
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "   "},
+    )
+    assert r.status_code == 400
+    assert "hidden" not in _tag_modal_de(r.text, "RECIBIDO")
+
+
+def test_probar_exito_abre_su_propio_modal(client, monkeypatch):
+    _login_admin(client)
+    _forzar_sms_configurado(monkeypatch)
+    client.app.dependency_overrides[get_notification_sender] = lambda: ConsoleNotificationSender()
+
+    r = client.post(
+        "/administracion/notificaciones/probar",
+        data={"evento": "RECIBIDO", "motivo": "", "canal": "SMS", "destino": "3001234567"},
+    )
+    assert r.status_code == 200
+    assert "hidden" not in _tag_modal_de(r.text, "RECIBIDO")
+
+
+def test_boton_deshabilitado_cuando_ningun_proveedor_esta_configurado(client):
+    # Entorno de test: sin credenciales de ningún proveedor -- SMS y Email
+    # aparecen deshabilitados en las 7 filas (mismo patrón que reutilizará
+    # el botón de WhatsApp en el ticket 03).
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert r.text.count("SMS no está configurado todavía.") == 7
+    assert r.text.count("Email no está configurado todavía.") == 7
+
+
+def test_boton_habilitado_cuando_el_canal_esta_configurado(client, monkeypatch):
+    _forzar_sms_configurado(monkeypatch)
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    assert "SMS no está configurado todavía." not in r.text
+    # Email sigue sin proveedor -- solo SMS se forzó.
+    assert r.text.count("Email no está configurado todavía.") == 7
+
+
+def test_destino_preellenado_con_telefono_y_email_del_admin(client):
+    from app.domain.staff_service import editar_mi_perfil
+    from app.domain.usuario import Usuario
+
+    _login_admin(client)
+    admin = client.db.query(Usuario).filter_by(email="admin@club.com").one()
+    editar_mi_perfil(client.db, admin, admin.nombre, telefono="3001112222")
+    client.db.commit()
+
+    r = client.get("/administracion/notificaciones")
+    assert 'value="3001112222"' in r.text
+    assert 'value="admin@club.com"' in r.text
