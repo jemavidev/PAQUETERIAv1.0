@@ -195,7 +195,13 @@ def editar_staff(
     return usuario
 
 
-def editar_mi_perfil(session: Session, usuario: Usuario, nombre: str) -> Usuario:
+def editar_mi_perfil(
+    session: Session,
+    usuario: Usuario,
+    nombre: str,
+    telefono: str = None,
+    whatsapp: str = None,
+) -> Usuario:
     """Autoservicio (.scratch/pendientes-cliente, issue 197): `usuario`
     edita SU PROPIO nombre. A propósito NO tiene parámetro `rol` -- ni
     siquiera existe la posibilidad de pasarlo, a diferencia de
@@ -205,10 +211,19 @@ def editar_mi_perfil(session: Session, usuario: Usuario, nombre: str) -> Usuario
     nombre no distingue ADMIN de OPERADOR) + `editar_staff` sigue siendo el
     único camino para tocar el rol de alguien, siempre admin-only.
 
+    `telefono`/`whatsapp` (.scratch/notificaciones-enviar-prueba, ticket 01)
+    son contacto propio del staff, opcionales -- SIN relación con el
+    Teléfono/WhatsApp de Persona (identidad de residente, ADR-0003/
+    ADR-0007). En blanco o `None` se guardan como `NULL` (nunca cadena
+    vacía), mismo criterio que evita distinguir "nunca lo llenó" de "lo
+    borró a propósito" con dos representaciones distintas.
+
     Raises:
         ValueError: nombre vacío.
     """
     _set_nombre(usuario, nombre)
+    usuario.telefono = (telefono or "").strip() or None
+    usuario.whatsapp = (whatsapp or "").strip() or None
     session.flush()
     return usuario
 

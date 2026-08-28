@@ -21,8 +21,20 @@
      form ni en `editar_mi_perfil` (la función de dominio ni siquiera lo
      acepta como parámetro), para que cambiar el rol propio siga siendo
      imposible incluso manipulando el HTML a mano. -#}
+  {#- Teléfono/WhatsApp propios del staff (.scratch/notificaciones-enviar-
+     prueba, ticket 01): contacto de texto libre, sin relación con el
+     Teléfono/WhatsApp de Persona (identidad de residente) -- sirven para
+     pre-llenar a dónde mandar un mensaje de prueba desde
+     `/administracion/notificaciones`. Mismo `type='tel'`+autocomplete que
+     ya usa el Teléfono de `customers_manage/detail.html`. -#}
   {% call formulario_flujo('Editar mi perfil', action='/mi-sesion/editar', boton_texto='Guardar cambios') %}
     {{ input_texto('Nombre', name='nombre', value=usuario.nombre, icono=iconos_nav.persona, error=error_nombre|default(none), extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
+    {{ input_texto('Teléfono', name='telefono', type='tel', value=usuario.telefono, icono=iconos_nav.telefono_campo, extra_attrs='autocomplete="tel" inputmode="tel"') }}
+    {#- Sin ícono a propósito, mismo criterio que el WhatsApp de
+       `customers_manage/detail.html`: `iconos_nav.whatsapp` es un ícono
+       SOLID (relleno), pero `input_texto` solo sabe renderizar íconos
+       outline (stroke) -- usarlo acá se vería roto. -#}
+    {{ input_texto('WhatsApp', name='whatsapp', type='tel', value=usuario.whatsapp, extra_attrs='autocomplete="tel" inputmode="tel"') }}
   {% endcall %}
 
   {#- Autoservicio (issue 196): cualquier staff cambia SU PROPIA contraseña

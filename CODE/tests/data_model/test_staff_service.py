@@ -166,6 +166,41 @@ def test_editar_mi_perfil_nombre_vacio_rechaza(db_session):
         editar_mi_perfil(db_session, op, "   ")
 
 
+# --------------------------------------------------------------------------- #
+# .scratch/notificaciones-enviar-prueba, ticket 01 -- teléfono/WhatsApp
+# propios del staff (contacto, sin relación con la identidad de Persona).
+# --------------------------------------------------------------------------- #
+def test_editar_mi_perfil_guarda_telefono_y_whatsapp(db_session):
+    admin = _admin(db_session)
+    op = create_staff(db_session, admin, "op@club.com", "Opa", _PW, RolUsuario.OPERADOR)
+
+    editar_mi_perfil(db_session, op, "Opa", telefono="3001234567", whatsapp="3009876543")
+
+    assert op.telefono == "3001234567"
+    assert op.whatsapp == "3009876543"
+
+
+def test_editar_mi_perfil_telefono_y_whatsapp_vacios_quedan_en_none(db_session):
+    admin = _admin(db_session)
+    op = create_staff(db_session, admin, "op@club.com", "Opa", _PW, RolUsuario.OPERADOR)
+    editar_mi_perfil(db_session, op, "Opa", telefono="3001234567", whatsapp="3009876543")
+
+    editar_mi_perfil(db_session, op, "Opa", telefono="   ", whatsapp="")
+
+    assert op.telefono is None
+    assert op.whatsapp is None
+
+
+def test_editar_mi_perfil_sin_telefono_ni_whatsapp_no_falla(db_session):
+    admin = _admin(db_session)
+    op = create_staff(db_session, admin, "op@club.com", "Opa", _PW, RolUsuario.OPERADOR)
+
+    editar_mi_perfil(db_session, op, "Opa")
+
+    assert op.telefono is None
+    assert op.whatsapp is None
+
+
 def test_resetear_password_cambia_el_hash(db_session):
     admin = _admin(db_session)
     op = create_staff(db_session, admin, "op@club.com", "Opa", _PW, RolUsuario.OPERADOR)

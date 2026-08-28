@@ -132,15 +132,20 @@ def editar_mi_perfil_route(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(current_staff),
     nombre: str = Form(None),
+    telefono: str = Form(None),
+    whatsapp: str = Form(None),
 ):
     """Autoservicio (.scratch/pendientes-cliente, issue 197): cualquier
     staff (OPERADOR incluido) edita SU PROPIO nombre. Sin campo de rol en
     este form ni en `editar_mi_perfil` -- a diferencia de
     `admin.admin_staff_editar` (edita nombre+rol de OTRO, exige actor
     ADMIN), acá no hay forma de tocar el rol propio ni manipulando el HTML
-    a mano, porque la función de dominio ni siquiera acepta ese parámetro."""
+    a mano, porque la función de dominio ni siquiera acepta ese parámetro.
+
+    `telefono`/`whatsapp` (.scratch/notificaciones-enviar-prueba, ticket 01):
+    contacto propio del staff, opcionales -- ver `editar_mi_perfil`."""
     try:
-        editar_mi_perfil(db, usuario, nombre)
+        editar_mi_perfil(db, usuario, nombre, telefono=telefono, whatsapp=whatsapp)
     except ValueError as exc:
         return templates.TemplateResponse(
             "auth/me.html",
