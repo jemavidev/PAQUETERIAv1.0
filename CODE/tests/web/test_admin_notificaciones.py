@@ -350,6 +350,10 @@ def test_probar_whatsapp_rechaza_sin_llamar_a_ningun_sender(client):
     )
     assert r.status_code == 400
     assert sender.enviados == []
+    # issue 03 (.scratch/notificaciones-enviar-prueba): mensaje explícito de
+    # "canal no configurado", no un genérico "canal inválido" -- WHATSAPP ES
+    # un canal válido, solo que sin proveedor todavía.
+    assert "WHATSAPP no está configurado todavía." in r.text
 
 
 def test_probar_destino_vacio_rechaza_sin_enviar(client, monkeypatch):
@@ -496,3 +500,52 @@ def test_destino_preellenado_con_telefono_y_email_del_admin(client):
     r = client.get("/administracion/notificaciones")
     assert 'value="3001112222"' in r.text
     assert 'value="admin@club.com"' in r.text
+
+
+# --------------------------------------------------------------------------- #
+# .scratch/notificaciones-enviar-prueba, ticket 03 -- botón de "Enviar
+# prueba" de WhatsApp, siempre visible pero deshabilitado (sin proveedor
+# todavía). El rechazo del servidor y "ningún sender recibe nada" ya quedan
+# cubiertos por `test_probar_whatsapp_rechaza_sin_llamar_a_ningun_sender`
+# (ticket 02) -- acá solo falta la UI de esa pestaña.
+# --------------------------------------------------------------------------- #
+def test_whatsapp_muestra_boton_de_prueba_deshabilitado_con_nota(client):
+    _login_admin(client)
+    r = client.get("/administracion/notificaciones")
+    # 7 filas × 3 canales (SMS/Email/WhatsApp) ahora tienen su propio campo
+    # de destino -- antes del ticket 03 solo SMS/Email lo tenían (14).
+    assert r.text.count('name="destino"') == 21
+    assert r.text.count("WhatsApp no está configurado todavía.") == 7
+
+
+def test_whatsapp_destino_preellenado_con_el_whatsapp_del_admin(client):
+    from app.domain.staff_service import editar_mi_perfil
+    from app.domain.usuario import Usuario
+
+    _login_admin(client)
+    admin = client.db.query(Usuario).filter_by(email="admin@club.com").one()
+    editar_mi_perfil(client.db, admin, admin.nombre, whatsapp="3005556666")
+    client.db.commit()
+
+    r = client.get("/administracion/notificaciones")
+    assert 'value="3005556666"' in r.text
+
+
+def test_guardar_texto_de_whatsapp_sigue_funcionando_con_el_boton_de_prueba_deshabilitado(client):
+    _login_admin(client)
+    r = client.post(
+        "/administracion/notificaciones",
+        data={
+            "evento": "RECIBIDO",
+            "motivo": "",
+            "canal": "WHATSAPP",
+            "texto": "Ya llegó tu paquete por WhatsApp.",
+        },
+    )
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    assert (
+        obtener_texto_actual(client.db, EstadoPaquete.RECIBIDO, canal=CanalNotificacion.WHATSAPP)
+        == "Ya llegó tu paquete por WhatsApp."
+    )

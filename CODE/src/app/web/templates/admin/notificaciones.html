@@ -47,12 +47,13 @@
     'WHATSAPP': 'hidden peer-checked/whatsapp:block',
   } -%}
   {%- set nombres_canal = {'SMS': 'SMS', 'EMAIL': 'Email', 'WHATSAPP': 'WhatsApp'} -%}
-  {#- Destino de prueba (.scratch/notificaciones-enviar-prueba, ticket 02):
-     pre-llenado con el propio contacto del admin logueado -- `none` si no
-     lo tiene guardado en `/mi-sesion` todavía (el campo simplemente nace
-     vacío, editable). WhatsApp no tiene botón de prueba en este ticket
-     (ticket 03 lo agrega deshabilitado). -#}
-  {%- set destino_prefill = {'SMS': admin.telefono, 'EMAIL': admin.email} -%}
+  {#- Destino de prueba (.scratch/notificaciones-enviar-prueba, ticket 02;
+     WhatsApp agregado en ticket 03): pre-llenado con el propio contacto
+     del admin logueado -- `none` si no lo tiene guardado en `/mi-sesion`
+     todavía (el campo simplemente nace vacío, editable). Los 3 canales
+     tienen su propio destino; que el de WhatsApp nazca deshabilitado lo
+     decide `c.configurado` donde se renderiza el campo, no este dict. -#}
+  {%- set destino_prefill = {'SMS': admin.telefono, 'EMAIL': admin.email, 'WHATSAPP': admin.whatsapp} -%}
 
   {#- Lista compacta -- un botón por fila, cada uno abre su propio modal
      (`data-open`/`data-close`, mismo contrato que admin/staff.html y
@@ -153,12 +154,15 @@
         {{ boton('Guardar', type='submit', size='sm') }}
       </form>
 
-      {%- if c.canal.value in ('SMS', 'EMAIL') %}
-      {#- Enviar prueba (.scratch/notificaciones-enviar-prueba, ticket 02):
-         endpoint SEPARADO de Guardar -- envía la plantilla YA GUARDADA
-         (`c.texto`/`c.asunto` no viajan acá a propósito), nunca el
-         textarea que se esté editando. WhatsApp no tiene este bloque
-         todavía (ticket 03 lo agrega deshabilitado). -#}
+      {#- Enviar prueba (.scratch/notificaciones-enviar-prueba, ticket 02;
+         WhatsApp agregado en ticket 03): endpoint SEPARADO de Guardar --
+         envía la plantilla YA GUARDADA (`c.texto`/`c.asunto` no viajan acá
+         a propósito), nunca el textarea que se esté editando. Las 3
+         pestañas muestran SIEMPRE este bloque -- `c.configurado` (ticket 02)
+         es lo único que decide si el campo/botón nacen habilitados o
+         deshabilitados-con-nota; WhatsApp es `False` hoy (sin proveedor,
+         `admin.py::_canal_configurado`) pero la UI no lo oculta, para que
+         quede siempre claro qué canal está listo de un vistazo. -#}
       <form method="post" action="/administracion/notificaciones/probar" class="space-y-2 mt-4 pt-4 border-t border-gray-100">
         <input type="hidden" name="evento" value="{{ fila.evento.value }}">
         <input type="hidden" name="motivo" value="{{ fila.motivo or '' }}">
@@ -175,7 +179,6 @@
         <p class="text-xs text-slate-500">{{ nombres_canal[c.canal.value] }} no está configurado todavía.</p>
         {%- endif %}
       </form>
-      {%- endif %}
     </div>
     {%- endfor %}
   {% endcall %}
