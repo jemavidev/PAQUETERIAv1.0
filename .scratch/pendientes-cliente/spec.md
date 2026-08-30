@@ -237,3 +237,59 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `200` — `/administracion/notificaciones`: layout de acordeón (`<details>` nativo) — elegido tras prototipar 3 alternativas en vivo (`?variant=a/b/d`) sobre la ruta real; el cliente pidió explícitamente ver algo visual, no más texto — **implementado**
 - `201` — Bug real (`/diagnosing-bugs`): guardar cualquier plantilla tiraba 500 — migración 0034 se editó in-place después de ya haber corrido contra el Postgres local, dejando la tabla física con `creado_en` mientras el código esperaba `created_at`. Corregido hacia adelante con migración 0035 (condicional, segura en ambos escenarios) — **implementado**
 - `202` — Acordeón de `/administracion/notificaciones` ahora exclusivo (1 abierto a la vez, `<details name="notif-acordeon">` nativo) + "Anunciado · Staff" eliminado (una sola plantilla ANUNCIADO, sin distinguir quién anunció — pedido explícito del cliente) — **implementado**
+- `203` — `/administracion/notificaciones`: cada fila abre en modal, no acordeón — **implementado**
+- `204` — `/administracion/notificaciones`: quitar vista previa de Email — **implementado**
+- `205` — `/otp/perfil`: redirigir a `/mis-datos` — **implementado**
+- `206` — `/mis-paquetes`: timeline acordeón exclusivo — **implementado**
+- `207` — `/mis-paquetes`: píldora de "Código de acceso" visible antes de expandir — **implementado**
+- `208` — `/mis-paquetes`: búsqueda por código de acceso o nombre del residente — **implementado**
+- `209` — `/mis-datos`: cambiar texto de autorización — **implementado**
+- `210` — `/mis-datos`: agregar enlace a términos y condiciones — **implementado**
+- `211` — `/mis-datos` tab Datos: gestionar el WhatsApp propio — **implementado**
+- `212` — `/mis-datos`: no se ve cómo crear un residente/ocupante — investigado, el formulario existe y funciona; queda **pendiente** confirmación del cliente de si el tab "Residentes" era visible en su caso
+- `213` — Ocupante: permitir Teléfono Y WhatsApp simultáneos (cliente + staff) — diagnosticado como bug real de dominio, resuelto por las funciones `agregar_telefono_a_persona_de_ocupante`/`agregar_whatsapp_a_persona_de_ocupante` de [[217]]/[[233]] — **implementado**
+- `214` — `/mis-datos` tab Notificaciones: quitar texto de restricción SMS — **implementado**
+- `215` — `/mis-datos` tab Residentes: acortar texto de encabezado — **implementado**
+- `216` — `/mis-datos` tab Residentes: acciones de fila más claras (chips ícono+palabra) — **implementado**
+- `217` — `/mis-datos` tab Residentes: sugerir agregar el canal que falta (Teléfono/WhatsApp) — **implementado**
+- `218` — `/mis-datos` tab Residentes: mejor visibilidad de quién es el principal — **implementado**
+- `219` — `/mis-datos` tab Residentes: quitar el 🗑️ del botón Eliminar/Rechazar — **implementado**
+- `220` — `/mis-datos`: modal de "Convertir en principal" igual al de `/residentes` — **implementado**
+- `221` — `/mis-datos` tab Notificaciones: activar columna WhatsApp, a la derecha de SMS — **implementado**
+- `222` — `/paquetes`: mensaje pre-cargado del botón WhatsApp + gate por preferencia — **implementado**
+- `223` — `/residentes` tab Notificaciones: igualar a `/mis-datos` (WhatsApp activo, orden de columnas) — **implementado**
+- `224` — `/residentes` tab Residentes: igualar a `/mis-datos` + navegar entre fichas por nombre (`?tab=residentes`, mismo mecanismo que [[100]]/[[172]]) — **implementado**
+- `225` — `/residentes`: ancho de tabs unificado con `/mis-datos` + renombrar "⭐ Principal" a "⭐ Promover" — **implementado**
+- `226` — `/mis-datos` tab Residentes: editar nombre/email y notificaciones por residente — **implementado**
+- `227` — `/mis-datos` tab Residentes: unificar edición (Nombre/Email/Teléfono/WhatsApp) en un solo panel — **implementado**
+- `228` — `/mis-datos` tab Residentes: "Editar" con un solo botón + acordeón exclusivo con Notificaciones — **implementado**
+- `229` — `/mis-datos` tab Residentes: Editar/Notificaciones como modal + bug real de canal doble encontrado en vivo (arreglado a fondo en [[233]]) — **implementado**
+- `230` — `/mis-datos` tab Residentes: modal de Notificaciones menos compacto — **implementado**
+- `231` — `/mis-datos` y `/residentes`: alineación del modal de Notificaciones + textos de placeholders/badge — **implementado**
+- `232` — Mobile: modales tapados por el `site-footer-mobile` fijo (z-index) — **implementado**
+- `233` — Revisión de código de dos ejes (Standards + Spec) sobre toda la sección Residentes: bug real corregido (colisión de canal doble con Persona huérfana en `editar_telefono_ocupante`/`editar_whatsapp_ocupante`), 17 tests nuevos cubriendo lo que solo se probaba a mano, y 2 refactors de Standards (`badge_ocupante()` con `texto` opcional, nuevo macro `chip_accion()`) — **implementado**
+- `234` — `/mis-datos`: botón y confirmación de autodescarte "Salir de este apartamento" → "Mudarse de este apartamento" — **implementado**
+- `235` — `/mis-paquetes`: el alcance de TODA la unidad ([[57]] de `mis-paquetes-vista-apartamento`) pasa a ser exclusivo del Ocupante Principal — un no-Principal vuelve a ver solo lo propio (lista y conteos por pestaña) — **implementado**
+- `236` — `/mis-datos`: "Quitar mi Teléfono" pasa de `<details>` inline a modal (`modal_confirmacion`) + texto nuevo del aviso y del checkbox — **implementado**
+- `237` — `/mis-datos`: "Mudarse de este apartamento" pasa de `confirm()` nativo a modal (`modal_confirmacion`) — el único `confirm()` que quedaba en toda la sección Residentes — **implementado**
+- `238` — `/mis-paquetes`: bug real reportado en vivo tras [[235]] — un no-Principal que anunció un paquete PARA otro residente de su unidad seguía viéndolo (por `announced_by_phone`); ahora "lo propio" para un no-Principal es estrictamente `recipient_phone` — **implementado**
+- `239` — `/mis-paquetes`: la barra de búsqueda también recalcula el `· N` de cada tab (por estado, entre las tarjetas que calzan el término) — **implementado**
+- `240` — `/mis-datos`: el modal "Mudarse de este apartamento" ([[237]]) nombra la Torre/Apartamento que se está dejando — **implementado**
+- `241` — Seguimiento a [[240]]: "TORRE" pasa a texto fijo (filtro `torre_sin_prefijo` para no duplicar la palabra) en vez de interpolar el valor completo con "el " — **implementado**
+- `242` — Botón "Volver" → "Regresar" en `modal_confirmacion` (afecta todos los modales de confirmación de la app, no solo Residentes) — **implementado**
+- `243` — `/mis-paquetes`: código de acceso movido al lado derecho de Torre/Apto (`ml-auto`), antes vivía junto al nombre — **implementado**
+- `244` — `/residentes/{id}`: título con el nombre del residente — **implementado** (superado por [[247]])
+- `245` — `/residentes/{id}`: badge "✓ Recepción automática" → "Auto", unificado con la tabla — **implementado**
+- `246` — `/residentes/{id}`: texto del checkbox de recepción automática acortado a "Recibir paquetes sin autorización" — **implementado**
+- `247` — Seguimiento a [[244]]: el título deja solo el nombre, sin el prefijo "Ficha de residente - " — **implementado**
+- `248` — `/residentes/{id}`: badge Principal/Secundario junto a "Auto", ahora siempre visible (antes solo Principal, issue 69) — **implementado** (parcialmente revertido por [[249]])
+- `249` — Seguimiento a [[248]]: no mostrar badge "Secundario" -- vuelve al criterio de issue 69 (solo Principal), texto corto "Principal" se queda — **implementado**
+- `250` — `/residentes/{id}`: quitado el acento rojo (`border-l-4 border-red-400`, issue 71) de las 4 tabs -- el badge "Principal" en la cabecera ya alcanza como señal, variable `es_secundario` eliminada por quedar sin uso — **implementado**
+- `251` — `/residentes/{id}` tab Residentes: modal "Editar" unificado para Teléfono/WhatsApp (mismo patrón que [[227]]-[[229]] de `/mis-datos`), reemplaza los botones sueltos ✕/+ Teléfono/WhatsApp/Actualizar -- luego ampliado con Nombre/Email y un link de Notificaciones a la ficha propia — **implementado**
+- `252` — `/residentes/{id}` tab Residentes: tanda de 7 ajustes (tab dice "Residentes" siempre, badge Principal solo "⭐" ~15% más grande, Editar/Notificaciones también para el Principal -- reposicionados junto al badge tras feedback en vivo --, resaltado de la ficha actual (texto "(ficha actual)" retirado luego, se queda solo el `ring`), textos "Agregar Residente"/"Residentes TORRE N APT M", texto de ayuda de issue 157 retirado) — **implementado**
+- `253` — `/residentes/{id}` tab Residentes: la fila de cada tarjeta desbordaba en mobile (issue 252 le sumó hasta 4 chips al bloque de acciones sin que el nombre pudiera encoger) -- pasa a apilarse (`flex-col`) por debajo de `lg:`, `min-w-0`+`truncate` en el nombre — **implementado** (el apilado se revirtió después, ver [[255]])
+- `254` — `/residentes/{id}` tab Residentes: chips de acción pasan a ícono/emoji solo (nuevo macro `chip_icono`, más contraste que `chip_accion`), Eliminar gana ícono ❌, badge de estado (⭐/Confirmado/Pendiente) pasa a estar en línea junto al nombre — **implementado**
+- `255` — Seguimiento a [[254]]: "⭐ Promover" se une al resto de íconos, la fila vuelve a ser una sola línea (`flex-wrap`, ya no apilada como [[253]]), Eliminar se reordena al final — **implementado**
+- `256` — Seguimiento a [[254]]: el badge de Principal en el roster vuelve a decir "Principal" (texto), en vez de solo "⭐" — **implementado**
+- `257` — `/residentes/{id}`: modal "Convertir en residente principal" pasa de `variant='warning'` (naranja) a la nueva `variant='info'` (azul) en `modal_confirmacion` — **implementado**
+- `258` — `/residentes/{id}` tab Residentes: `mt-1` entre el renglón nombre+badge y el teléfono, antes pegados — **implementado**
