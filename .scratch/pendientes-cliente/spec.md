@@ -293,3 +293,7 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `256` — Seguimiento a [[254]]: el badge de Principal en el roster vuelve a decir "Principal" (texto), en vez de solo "⭐" — **implementado**
 - `257` — `/residentes/{id}`: modal "Convertir en residente principal" pasa de `variant='warning'` (naranja) a la nueva `variant='info'` (azul) en `modal_confirmacion` — **implementado**
 - `258` — `/residentes/{id}` tab Residentes: `mt-1` entre el renglón nombre+badge y el teléfono, antes pegados — **implementado**
+- `259` — `/residentes/{id}` tab Residentes: el botón ❌ Eliminar y su modal ahora también aparecen en la fila del Principal (el dominio ya bloqueaba la baja si quedan otros Ocupantes activos, solo faltaba quitar el guard de la vista) — **implementado**
+- `260` — Seguimiento a [[259]]: staff puede eliminar al Principal aunque queden otros Ocupantes activos -- promueve automáticamente al más antiguo con contacto propio (mismo patrón que `mover_ocupante`, [[159]]), exclusivo de staff, autoservicio (`/mis-datos`) mantiene su restricción original — **implementado**
+- `261` — Email pasa a semántica de 3 estados en `update_datos_personales` (dejarlo vacío y guardar lo borra), mismo contrato que ya tenía WhatsApp (issue 69) -- se encontró y arregló un bug real de FastAPI `Form(None)` colapsando "" a `None` en el camino — **implementado**
+- `262` — `GET /otp`: con sesión de cliente ya activa, redirige a `/mis-datos` en vez de mostrar el login de nuevo — **implementado**
