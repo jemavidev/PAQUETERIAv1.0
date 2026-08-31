@@ -163,14 +163,15 @@
                .scratch/pendientes-cliente, pedido explícito) -- mismo peso
                que usa `/paquetes` en su columna equivalente ("Cliente",
                `<td class="... font-medium">` en `packages/_resultados.html`). #}
-            {# Issue 279 (.scratch/pendientes-cliente, pedido explícito del
-               cliente): el nombre ya NO se trunca -- el truncado de
-               [[277]]/[[278]] se retira, el espacio que liberó bajar
-               Auto/Principal a su propia fila ([[278]]) alcanza para
-               mostrarlo completo. Puede volver a generar scroll lateral
-               en nombres muy largos -- aceptado explícitamente por el
-               cliente ("ya existe mas espacio"). #}
-            <a href="/residentes/{{ p.id }}" class="font-medium text-blue-800 hover:underline whitespace-nowrap">{{ p.nombre }}</a>
+            {# Issue 280 (.scratch/pendientes-cliente, pedido explícito del
+               cliente): en mobile, nombre acotado a 2-3 palabras
+               completas ([[279]] había quitado el truncado por
+               caracteres porque cortaba a mitad de palabra -- esta es
+               la regla que lo reemplaza, sin "…" en ningún lado). El
+               nombre en base de datos no cambia, solo lo que se
+               muestra acá. Desde `sm:`, nombre completo de siempre. #}
+            <a href="/residentes/{{ p.id }}" class="sm:hidden font-medium text-blue-800 hover:underline whitespace-nowrap">{{ nombre_mobile(p.nombre) }}</a>
+            <a href="/residentes/{{ p.id }}" class="hidden sm:inline font-medium text-blue-800 hover:underline whitespace-nowrap">{{ p.nombre }}</a>
             {% if p.autoriza_recepcion_automatica or (p.ocupante and p.ocupante.es_principal) %}
             {# `sm:contents` (issue 278): en mobile es una fila propia
                (segunda línea, `flex items-center gap-1`); desde `sm:`

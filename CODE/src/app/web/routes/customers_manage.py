@@ -447,6 +447,7 @@ def customers_manage_search(
             "url_whatsapp": url_whatsapp,
             "url_llamada": url_llamada,
             "etiqueta_torre_apto": _etiqueta_torre_apto,
+            "nombre_mobile": _nombre_mobile,
         },
     )
 
@@ -468,6 +469,29 @@ def _etiqueta_torre_apto(apartamento, fallback: str, *, compacto: bool = False) 
     if compacto:
         return f"{torre_corta.replace(' ', '')}-{apartamento.apartamento}"
     return f"{torre_corta} - APT {apartamento.apartamento}"
+
+
+_NOMBRE_MOBILE_MAX_PALABRAS = 3
+_NOMBRE_MOBILE_MAX_CHARS = 20
+
+
+def _nombre_mobile(nombre: str) -> str:
+    """Nombre acotado a palabras completas para la columna Nombre en
+    mobile (issue 280, pedido explícito: "solo permite maximo 2 o 3
+    palabras" -- nunca corta a mitad de palabra como el `truncate`/"…"
+    que tenía antes, ver [[279]]). No modifica `nombre` en base de
+    datos, solo lo que se muestra acá.
+
+    2 palabras o menos: se muestra completo. 3 o más: las primeras 3 si
+    esas 3 juntas no pasan de `_NOMBRE_MOBILE_MAX_CHARS`, si no las
+    primeras 2 -- "según corresponda" del pedido original."""
+    palabras = nombre.split()
+    if len(palabras) <= 2:
+        return nombre
+    primeras_tres = " ".join(palabras[:_NOMBRE_MOBILE_MAX_PALABRAS])
+    if len(primeras_tres) <= _NOMBRE_MOBILE_MAX_CHARS:
+        return primeras_tres
+    return " ".join(palabras[:2])
 
 
 def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
