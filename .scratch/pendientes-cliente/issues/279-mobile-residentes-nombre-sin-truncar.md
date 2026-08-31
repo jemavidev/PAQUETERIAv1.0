@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "perfecto, ahora no cortes el nombre de
 los cliente so residentes con los '...', ya exciste mas espacio"
 
-**Status:** implementado (con una advertencia -- ver Verificación)
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co -- advertencia de [[280]] sigue aplicando para nombres de 3+ palabras, ver Verificación)
 
 ## Alcance
 

@@ -9,7 +9,7 @@ contenido del nombre del cliente en la base de datos, solamente el como
 se muestra en esta vista y en version dispositivo movil y si el tamaño
 alcanza o no"
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co)
 
 ## Alcance
 

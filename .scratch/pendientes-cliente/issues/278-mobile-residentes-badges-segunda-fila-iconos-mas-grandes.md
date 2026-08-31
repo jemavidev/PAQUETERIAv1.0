@@ -6,7 +6,7 @@ segunda fila, permitiendo un poco mas de espacio y unos iconos de accion
 un poco mas grandes, de que forma lo puedes hacer lo mas ajustable
 posible orientado a dispositivos moviles"
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co)
 
 ## Alcance
 

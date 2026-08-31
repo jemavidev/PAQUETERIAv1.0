@@ -6,7 +6,7 @@ contacto, adicional de que forma se podría comprimir Torre y Apartamento,
 la idea de esto es que en una sola línea no sea necesario hacer scroll
 lateral y que se pueda tener acceso a los iconos de acción"
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co)
 
 ## Alcance
 
