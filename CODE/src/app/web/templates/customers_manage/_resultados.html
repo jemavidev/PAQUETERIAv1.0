@@ -131,22 +131,39 @@
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-xs text-slate-700 uppercase tracking-wide">
       <tr>
-        <th class="px-4 py-2.5 text-left font-semibold">Nombre</th>
-        <th class="px-4 py-2.5 text-left font-semibold">Teléfono de contacto</th>
-        <th class="px-4 py-2.5 text-left font-semibold">Torre y Apartamento</th>
-        <th class="px-4 py-2.5 text-left font-semibold">Acciones</th>
+        <th class="px-1 sm:px-4 py-2.5 text-left font-semibold">Nombre</th>
+        {# Issue 277 (.scratch/pendientes-cliente, pedido explícito del
+           cliente): oculta en mobile -- meta es que la fila quepa en una
+           sola línea sin scroll lateral y con Acciones alcanzable. #}
+        <th class="hidden sm:table-cell px-4 py-2.5 text-left font-semibold">Teléfono de contacto</th>
+        {# Issue 277: en `table-auto` (layout por defecto de esta tabla) el
+           ANCHO de una columna lo define el contenido más ancho entre
+           `<th>` y `<td>` -- el título completo forzaba el ancho de la
+           columna en mobile aunque las celdas ya mostraran el formato
+           compacto. Mismo patrón de 2 `<span>` que las celdas. #}
+        <th class="px-1 sm:px-4 py-2.5 text-left font-semibold">
+          <span class="sm:hidden">Torre/Apto</span>
+          <span class="hidden sm:inline">Torre y Apartamento</span>
+        </th>
+        <th class="px-1 sm:px-4 py-2.5 text-left font-semibold">Acciones</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
       {% for p in resultados %}
       <tr class="hover:bg-slate-50">
-        <td class="px-4 py-2.5">
+        <td class="px-1 sm:px-4 py-2.5">
           <div class="flex flex-wrap items-center gap-1.5">
             {# `font-medium`, no `font-semibold`/negrilla (issue 184,
                .scratch/pendientes-cliente, pedido explícito) -- mismo peso
                que usa `/paquetes` en su columna equivalente ("Cliente",
                `<td class="... font-medium">` en `packages/_resultados.html`). #}
-            <a href="/residentes/{{ p.id }}" class="font-medium text-blue-800 hover:underline whitespace-nowrap">{{ p.nombre }}</a>
+            {# Issue 277: en mobile, nombre truncado a un ancho fijo (con
+               "…") -- sin esto, un nombre largo por sí solo ya fuerza
+               scroll lateral aunque el resto de la fila se comprima; el
+               nombre completo sigue disponible al tocarlo (va a la ficha).
+               Desde `sm:` vuelve a `whitespace-nowrap` sin límite, como
+               antes. #}
+            <a href="/residentes/{{ p.id }}" class="font-medium text-blue-800 hover:underline truncate inline-block align-bottom max-w-[90px] sm:max-w-none sm:whitespace-nowrap" title="{{ p.nombre }}">{{ p.nombre }}</a>
             {% if p.autoriza_recepcion_automatica %}
             <span class="inline-flex items-center bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap">Auto</span>
             {% endif %}
@@ -155,7 +172,8 @@
             {% endif %}
           </div>
         </td>
-        <td class="px-4 py-2.5 whitespace-nowrap text-slate-700">{{ p.telefono or 'N/D' }}</td>
+        {# Issue 277: oculta en mobile (ver comentario del `<th>` de arriba). #}
+        <td class="hidden sm:table-cell px-4 py-2.5 whitespace-nowrap text-slate-700">{{ p.telefono or 'N/D' }}</td>
         {# `uppercase` (issue 183, .scratch/pendientes-cliente, pedido
            explícito: "unifica las mayúsculas entre /paquetes y
            /residentes") -- mismo criterio que la columna Dirección de
@@ -165,23 +183,33 @@
            literal en el Python), así que no cambia nada visible -- pero
            deja el mismo criterio explícito en las dos vistas, no uno
            implícito en una y explícito en la otra. #}
-        <td class="px-4 py-2.5 whitespace-nowrap text-slate-700 uppercase">{{ etiqueta_torre_apto(p.apartamento, 'No Asignado') }}</td>
-        <td class="px-4 py-2.5 whitespace-nowrap">
+        <td class="px-1 sm:px-4 py-2.5 whitespace-nowrap text-slate-700 uppercase">
+          {# Issue 277: en mobile, formato compacto ("T05-102" en vez de
+             "T 05 - APT 102") -- misma info, ~la mitad de caracteres, para
+             que la fila quepa sin scroll lateral. #}
+          <span class="sm:hidden">{{ etiqueta_torre_apto(p.apartamento, 'No Asig.', compacto=True) }}</span>
+          <span class="hidden sm:inline">{{ etiqueta_torre_apto(p.apartamento, 'No Asignado') }}</span>
+        </td>
+        <td class="px-1 sm:px-4 py-2.5 whitespace-nowrap">
           {# Issue 275 (.scratch/pendientes-cliente, pedido explícito del
              cliente): mismo estilo de ícono que ya usa la tab "Residentes"
              de la ficha (`chip_icono`, círculo 32px con fondo de color) --
              antes eran íconos sueltos, solo cambiaban de color al hover,
              sin fondo. Los SVG en sí no cambian (mismo `iconos_nav`), solo
              el envoltorio. #}
-          <div class="flex items-center gap-1.5">
+          {# Issue 277: círculos `h-7 w-7` en mobile (vs `h-8 w-8` desde
+             `sm:`) + `gap-1` (vs `gap-1.5`) -- recupera ~22px del ancho de
+             esta columna, parte del objetivo de que la fila quepa sin
+             scroll lateral. #}
+          <div class="flex items-center gap-1 sm:gap-1.5">
             {# WhatsApp/llamada reubicados acá (issue 68) -- antes vivían en
                la columna Teléfono. Prioriza `whatsapp_usuario` (username de
                WhatsApp) por sobre el teléfono, ver `persona_service.url_whatsapp`. #}
-            <a href="{{ url_whatsapp(p) }}" target="_blank" rel="noopener noreferrer" class="{{ chip_icono('green') }}" aria-label="Abrir WhatsApp con {{ p.nombre }}" title="WhatsApp">
+            <a href="{{ url_whatsapp(p) }}" target="_blank" rel="noopener noreferrer" class="{{ chip_icono('green', tam='h-7 w-7 sm:h-8 sm:w-8') }}" aria-label="Abrir WhatsApp con {{ p.nombre }}" title="WhatsApp">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg>
             </a>
             {%- if p.telefono %}
-            <a href="{{ url_llamada(p) }}" class="{{ chip_icono('blue') }}" aria-label="Llamar a {{ p.nombre }}" title="Llamar">
+            <a href="{{ url_llamada(p) }}" class="{{ chip_icono('blue', tam='h-7 w-7 sm:h-8 sm:w-8') }}" aria-label="Llamar a {{ p.nombre }}" title="Llamar">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ iconos_nav.telefono|safe }}</svg>
             </a>
             {%- else %}
@@ -189,7 +217,7 @@
                deshabilitado propio (siempre pensado para una acción real),
                así que este caso puntual arma su propia clase, mismo
                tamaño/forma pero sin hover (no es clickeable). #}
-            <span class="inline-flex items-center justify-center h-8 w-8 shrink-0 rounded-full text-base bg-slate-50 text-slate-300 border border-slate-100" title="Sin teléfono registrado" aria-hidden="true">
+            <span class="inline-flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 shrink-0 rounded-full text-base bg-slate-50 text-slate-300 border border-slate-100" title="Sin teléfono registrado" aria-hidden="true">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">{{ iconos_nav.telefono|safe }}</svg>
             </span>
             {%- endif %}
@@ -198,14 +226,14 @@
                (issue 160, .scratch/pendientes-cliente) -- mismo mecanismo
                `?tab=` ya usado en el resto de la app. #}
             {%- if p.comparte_apartamento %}
-            <a href="/residentes/{{ p.id }}?tab=residentes" class="{{ chip_icono('indigo') }}" aria-label="Ver residentes de la unidad de {{ p.nombre }}" title="Comparte apartamento con otros residentes -- ver residentes de la unidad">👫</a>
+            <a href="/residentes/{{ p.id }}?tab=residentes" class="{{ chip_icono('indigo', tam='h-7 w-7 sm:h-8 sm:w-8') }}" aria-label="Ver residentes de la unidad de {{ p.nombre }}" title="Comparte apartamento con otros residentes -- ver residentes de la unidad">👫</a>
             {%- endif %}
             {# Issue 276 (.scratch/pendientes-cliente, pedido explícito del
                cliente): "Ver ficha" se retira -- el nombre del residente,
                en esta misma fila, ya enlaza a la misma URL, hacía el
                ícono redundante ("no creo que sea muy útil"). #}
             {% if staff.rol.value == "ADMIN" %}
-            <button type="button" class="{{ chip_icono('red') }}" data-open="modal-eliminar-{{ p.id }}" aria-label="Eliminar a {{ p.nombre }}" title="Eliminar residente">
+            <button type="button" class="{{ chip_icono('red', tam='h-7 w-7 sm:h-8 sm:w-8') }}" data-open="modal-eliminar-{{ p.id }}" aria-label="Eliminar a {{ p.nombre }}" title="Eliminar residente">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ iconos_nav.eliminar|safe }}</svg>
             </button>
             {% endif %}

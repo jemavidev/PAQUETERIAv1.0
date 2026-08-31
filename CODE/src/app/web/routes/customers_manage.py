@@ -454,14 +454,19 @@ def customers_manage_search(
 _NUMERO_TORRE_RE = re.compile(r"(\d+)")
 
 
-def _etiqueta_torre_apto(apartamento, fallback: str) -> str:
+def _etiqueta_torre_apto(apartamento, fallback: str, *, compacto: bool = False) -> str:
     """Referencia compacta de una unidad (ej. "T 05 - APT 102", issue 69/70)
     -- `fallback` si no hay Apartamento asignado (distinto en la ficha,
-    "Residentes", que en la tabla de la lista, "No Asignado")."""
+    "Residentes", que en la tabla de la lista, "No Asignado").
+
+    `compacto=True` (issue 277, mobile en la tabla de `/residentes`): sin
+    espacios ni "APT" ("T05-102") -- misma info, ~la mitad de caracteres."""
     if apartamento is None:
         return fallback
     numero = _NUMERO_TORRE_RE.search(apartamento.torre)
     torre_corta = f"T {int(numero.group()):02d}" if numero else apartamento.torre
+    if compacto:
+        return f"{torre_corta.replace(' ', '')}-{apartamento.apartamento}"
     return f"{torre_corta} - APT {apartamento.apartamento}"
 
 
