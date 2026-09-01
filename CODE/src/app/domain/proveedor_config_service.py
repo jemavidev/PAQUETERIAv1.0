@@ -43,6 +43,21 @@ def listar_config(session: Session, canal: CanalNotificacion) -> list[ProveedorC
     )
 
 
+def habilitado_orden_efectivos(config: ProveedorConfig | None) -> tuple[bool, int | None]:
+    """`(habilitado, orden)` efectivos de `config` -- `None` (sin fila en BD
+    para un proveedor del catálogo; no debería pasar en producción, la
+    migración de siembra los crea todos, pero cubre un proveedor agregado al
+    catálogo después de esa migración, antes de su primer guardado
+    explícito) se asume `habilitado=True`, `orden=None` -- mismo
+    comportamiento implícito que existía antes de esta feature (la sola
+    presencia de credenciales bastaba). Fuente única para `armar_candidatos`
+    (cadena real de envío) y `admin_proveedores._filas_proveedores` (lo que
+    se muestra en pantalla) -- las dos deben coincidir siempre."""
+    if config is None:
+        return True, None
+    return config.habilitado, config.orden
+
+
 def armar_candidatos(
     session: Session,
     canal: CanalNotificacion,
@@ -59,31 +74,24 @@ def armar_candidatos(
     `.env`) -- ver `.scratch/administracion-proveedores/spec.md`, decisión
     "habilitado (BD) Y configurado (.env)".
 
-    Sin fila en BD para un proveedor del catálogo (no debería pasar en
-    producción -- la migración de siembra los crea todos -- pero cubre un
-    proveedor agregado al catálogo después de esa migración, antes de su
-    primer guardado explícito): se asume habilitado por defecto, mismo
-    comportamiento implícito que existía antes de esta feature (la sola
-    presencia de credenciales bastaba). Sin `orden` explícito (fila ausente
-    o `orden=NULL`), el proveedor conserva su posición relativa en
-    `proveedores` -- el sort de Python es estable, así que los empates caen
-    de vuelta al orden del catálogo sin necesidad de consultarlo aparte."""
+    Sin `orden` explícito (ver `habilitado_orden_efectivos`), el proveedor
+    conserva su posición relativa en `proveedores` -- el sort de Python es
+    estable, así que los empates caen de vuelta al orden del catálogo sin
+    necesidad de consultarlo aparte."""
     config_por_proveedor = {
         c.proveedor: c for c in listar_config(session, canal)
     }
 
     def _clave_orden(item: tuple[str, bool, _T]) -> tuple[bool, int]:
         clave, _esta_configurado, _sender = item
-        config = config_por_proveedor.get(clave)
-        orden = config.orden if config is not None else None
+        _habilitado, orden = habilitado_orden_efectivos(config_por_proveedor.get(clave))
         return (orden is None, orden if orden is not None else 0)
 
     ordenados = sorted(proveedores, key=_clave_orden)
 
     resultado = []
     for clave, esta_configurado, sender in ordenados:
-        config = config_por_proveedor.get(clave)
-        habilitado = config.habilitado if config is not None else True
+        habilitado, _orden = habilitado_orden_efectivos(config_por_proveedor.get(clave))
         resultado.append((habilitado and esta_configurado, sender))
     return resultado
 

@@ -18,6 +18,7 @@ from app.domain.proveedor_config_historial import ProveedorConfigHistorial
 from app.domain.proveedor_config_service import (
     armar_candidatos,
     guardar_habilitado_orden,
+    habilitado_orden_efectivos,
     listar_config,
 )
 from app.domain.usuario import RolUsuario, Usuario
@@ -209,3 +210,14 @@ def test_armar_candidatos_sin_fila_en_bd_asume_habilitado_por_defecto(db_session
     resultado = armar_candidatos(db_session, CanalNotificacion.SMS, proveedores)
 
     assert resultado == [(True, "otro")]
+
+
+def test_habilitado_orden_efectivos_sin_config_asume_habilitado_true_orden_none():
+    assert habilitado_orden_efectivos(None) == (True, None)
+
+
+def test_habilitado_orden_efectivos_con_config_devuelve_sus_valores(db_session):
+    config = guardar_habilitado_orden(
+        db_session, CanalNotificacion.SMS, "AWS_SNS", habilitado=False, orden=2
+    )
+    assert habilitado_orden_efectivos(config) == (False, 2)
