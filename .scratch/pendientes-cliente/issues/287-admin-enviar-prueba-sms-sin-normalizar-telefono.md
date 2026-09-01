@@ -10,8 +10,8 @@ ADMIN a pedido del cliente para poder usar "Enviar prueba" en
 `/administracion/notificaciones` → el botón mostró "Mensaje de prueba
 enviado a 3002596319" pero tampoco llegó.
 
-**Status:** implementado — pendiente que el cliente confirme recepción
-tras el deploy (verificado).
+**Status:** verificado — desplegado a test.papyrus.com.co y confirmado
+por el cliente ("si llego") tras un envío real post-deploy.
 
 ## Investigación
 
