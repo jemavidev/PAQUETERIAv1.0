@@ -131,7 +131,7 @@
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-xs text-slate-700 uppercase tracking-wide">
       <tr>
-        <th class="px-1 sm:px-4 py-2.5 text-left font-semibold">Nombre</th>
+        <th class="px-2 sm:px-4 py-2.5 text-left font-semibold">Nombre</th>
         {# Issue 277 (.scratch/pendientes-cliente, pedido explícito del
            cliente): oculta en mobile -- meta es que la fila quepa en una
            sola línea sin scroll lateral y con Acciones alcanzable. #}
@@ -143,13 +143,13 @@
            darle más aire al nombre y a Acciones. Mismo patrón que
            Teléfono desde [[277]]. #}
         <th class="hidden sm:table-cell px-4 py-2.5 text-left font-semibold">Torre y Apartamento</th>
-        <th class="px-1 sm:px-4 py-2.5 text-left font-semibold">Acciones</th>
+        <th class="px-2 sm:px-4 py-2.5 text-left font-semibold">Acciones</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
       {% for p in resultados %}
       <tr class="hover:bg-slate-50">
-        <td class="px-1 sm:px-4 py-2.5">
+        <td class="px-2 sm:px-4 py-2.5">
           {# Issue 278 (.scratch/pendientes-cliente, pedido explícito del
              cliente): en mobile, Auto/Principal bajan a su propia
              segunda fila -- ya no compiten con el nombre por ancho en la
@@ -221,7 +221,7 @@
         {# Issue 281: columna oculta en mobile -- su valor ahora vive
            como píldora en la celda Nombre (arriba). #}
         <td class="hidden sm:table-cell px-4 py-2.5 whitespace-nowrap text-slate-700 uppercase">{{ etiqueta_torre_apto(p.apartamento, 'No Asignado') }}</td>
-        <td class="px-1 sm:px-4 py-2.5 whitespace-nowrap">
+        <td class="px-2 sm:px-4 py-2.5 whitespace-nowrap">
           {# Issue 275 (.scratch/pendientes-cliente, pedido explícito del
              cliente): mismo estilo de ícono que ya usa la tab "Residentes"
              de la ficha (`chip_icono`, círculo 32px con fondo de color) --
