@@ -31,7 +31,6 @@ from app.domain.notificacion_service import (
 from app.domain.paquete import EstadoPaquete, MotivoCancelacion
 from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
-from app.domain.telefono import normalizar_telefono
 from app.domain.staff_service import (
     create_staff,
     editar_staff,
@@ -39,6 +38,7 @@ from app.domain.staff_service import (
     resetear_password,
     set_activo_staff,
 )
+from app.domain.telefono import normalizar_telefono
 from app.domain.usuario import RolUsuario, Usuario
 
 from ..config import public_base_url
