@@ -34,6 +34,12 @@ por qué dos envíos de prueba no mostraban rastro en CloudWatch.
 5. De paso: la plantilla RECIBIDO/SMS en la base de test tenía un " 123"
    colado (artefacto de una prueba manual guardada sin querer durante
    este mismo diagnóstico) -- se retiró junto con el fix de tildes.
+6. Verificado que el problema NO se resolvía del todo con solo limpiar la
+   plantilla: `{recipient_name}` es dato libre -- un nombre real como
+   "María"/"Andrés" (comunísimos) reintroduce el mismo carácter fuera de
+   GSM-7 y vuelve a forzar UCS-2/3 segmentos, aunque la plantilla en sí ya
+   esté limpia. `normalizar_nombre()` (`texto.py`) solo mayúscula, no
+   retira tildes.
 
 ## Corrección (implementada)
 
@@ -53,15 +59,22 @@ por qué dos envíos de prueba no mostraban rastro en CloudWatch.
   (135 caracteres, bajo el límite de 160) en vez de 3 UCS-2 -- de
   minutos de demora a la entrega casi instantánea que ya se veía en los
   mensajes de una sola parte.
+- `app/domain/notificacion_service.py::_sin_tildes()` + aplicada al
+  final de `construir_mensaje()`: retira diacríticos (NFKD + encode/
+  decode ascii) del mensaje YA armado -- cubre `{recipient_name}` (dato
+  libre) además de la plantilla estática. Solo toca el SMS real
+  (`construir_mensaje` es exclusivo de ese canal, Email/WhatsApp usan su
+  propio camino y conservan tildes donde no hay límite de segmento).
 
 ## Verificación
 
 - `tests/web/test_admin_notificaciones.py`,
   `tests/data_model/test_plantilla_notificacion_multicanal.py`,
-  `tests/data_model/test_notificacion_service.py`: 71 passed (las 2
-  suites con asserts sobre el texto default, actualizados de `"está
-  {estado}"` a `"esta {estado}"`).
-- Suite completa: 1262 passed, sin regresiones.
+  `tests/data_model/test_notificacion_service.py`: 72 passed (asserts de
+  texto default actualizados de `"está {estado}"` a `"esta {estado}"`;
+  nuevo test `test_mensaje_sin_tildes_aunque_el_nombre_del_destinatario_
+  las_tenga` fija el caso de `{recipient_name}` con tilde real).
+- Suite completa: 1263 passed, sin regresiones.
 - Desplegado a test.papyrus.com.co. Pendiente que el cliente confirme
   con una prueba real que el próximo SMS de RECIBIDO llega casi al
   instante (verificado).
