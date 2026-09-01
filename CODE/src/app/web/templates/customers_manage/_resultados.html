@@ -192,16 +192,17 @@
                  mobile (oculta arriba). `sm:hidden` PROPIO (no solo el
                  del padre): desde `sm:` esta píldora puntual desaparece
                  -- ahí Torre/Apto sigue viviendo en su columna de
-                 siempre, mostrarla acá también sería duplicarla.
-                 Issue 282 (pedido explícito del cliente): color
-                 `indigo` en vez de `slate` -- mismo color que ya usa el
-                 ícono 👫 "comparte apartamento" en esta misma vista para
-                 todo lo relacionado a unidad/apartamento. Sin
+                 siempre, mostrarla acá también sería duplicarla. Sin
                  apartamento asignado, la píldora ya NO se muestra (antes
-                 decía "No Asig.") -- `{% if p.apartamento %}` en vez de
-                 pasarle un fallback a `etiqueta_torre_apto`. #}
+                 decía "No Asig.", issue 282) -- `{% if p.apartamento %}`
+                 en vez de pasarle un fallback a `etiqueta_torre_apto`.
+                 Color `amber` (issue 285, pedido explícito del cliente):
+                 el `indigo` de issue 282 se confundía con el azul de
+                 "Principal" en un badge tan chico -- ámbar es cálido,
+                 se distingue de un vistazo tanto del azul de Principal
+                 como del verde de Auto. #}
               {% if p.apartamento %}
-              <span class="sm:hidden inline-flex items-center bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap uppercase">{{ etiqueta_torre_apto(p.apartamento, '', compacto=True) }}</span>
+              <span class="sm:hidden inline-flex items-center bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap uppercase">{{ etiqueta_torre_apto(p.apartamento, '', compacto=True) }}</span>
               {% endif %}
             </div>
             {% endif %}
