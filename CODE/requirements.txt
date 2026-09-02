@@ -31,6 +31,10 @@ celery==5.3.4
 boto3==1.34.0
 requests==2.31.0
 httpx==0.25.2
+# SSH puro-Python (issue 04, .scratch/administracion-proveedores/spec.md) --
+# sin binario `ssh`/`openssh-client` en la imagen, evita tocar el Dockerfile
+# del repo de deploy.
+paramiko==5.0.0
 
 # Utilidades
 python-dotenv==1.0.0
