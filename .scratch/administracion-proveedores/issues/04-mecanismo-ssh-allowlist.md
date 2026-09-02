@@ -12,8 +12,9 @@ para las alternativas descartadas — GitHub Actions, socket de Docker).
 
 **Blocked by:** 01 (deriva el allowlist del catálogo de proveedores en código)
 
-**Status:** implementado -- sin caller todavía (issue 05), no hay nada que verificar
-en vivo hasta que la pantalla lo use de verdad.
+**Status:** verificado -- probado de punta a punta contra el servidor real (issue 06)
+el 2026-09-02. Ver `docs/ops/deploy-ssh-credenciales.md` para el detalle completo de
+lo encontrado en la verificación en vivo.
 
 - [x] `app/infra/deploy_ssh.py::aplicar_credenciales_proveedor(cambios: dict[str,
       str]) -> None` -- módulo nuevo `app/infra/` (fuera de `app/domain`, respeta el
@@ -55,3 +56,13 @@ siquiera conecta. (3) 4 clases falsas en los tests colapsadas a 2 (`_EjecucionFa
 `test_sns_sender.py`/`test_liwa_sender.py`.
 
 **Verificación:** suite completa (1298 passed) tras los fixes del code review.
+
+**Bug encontrado en la verificación en vivo contra el servidor real (2026-09-02):**
+`load_system_host_keys()` sin argumento NO hace fallback a `/etc/ssh/ssh_known_hosts`
+como asumía la nota de arriba -- solo revisa `~/.ssh/known_hosts` del usuario que
+corre el proceso (root en el contenedor, sin ese archivo). Toda conexión real fallaba
+con `Server ... not found in known_hosts` pese a que el `known_hosts` montado era
+correcto. Corregido pasando la ruta explícita (commit `fix(proveedores): cargar
+known_hosts con ruta explícita en deploy_ssh`) -- ver `docs/ops/
+deploy-ssh-credenciales.md` para el detalle completo. Suite completa: 1310 passed
+tras el fix.

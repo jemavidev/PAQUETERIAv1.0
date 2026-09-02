@@ -10,9 +10,10 @@ Implementation Decisions "Formulario de credenciales").
 
 **Blocked by:** 03, 04
 
-**Status:** implementado -- sin desplegar; el servidor real necesita también el
-ticket 06 (script remoto + llave restringida) para que un guardado real funcione,
-no solo devuelva el error de configuración incompleta.
+**Status:** verificado -- desplegado y confirmado en vivo contra el servidor real
+(issue 06) el 2026-09-02, incluyendo un guardado real que efectivamente cambia
+`.env` y sobrevive el reinicio del contenedor. Ver nota de riesgo conocido abajo y
+`docs/ops/deploy-ssh-credenciales.md` (Bug 3).
 
 - [x] Cada proveedor muestra un campo por variable declarada en su catálogo (ticket
       01): `type=password` para las marcadas `secreto=True`; `tipo="booleano"`
@@ -56,3 +57,16 @@ sola lista de `_CambioCredencial` (NamedTuple). Spec: 0 scope creep, no tocó
 del camino de error real (sin mocks): guardar una credencial sin `DEPLOY_SSH_HOST`/
 `DEPLOY_SSH_KEY_PATH` configurados falla con el mensaje exacto de configuración
 incompleta, sin dejar auditoría -- confirma la tubería completa de punta a punta.
+
+**Riesgo conocido encontrado en la verificación en vivo (2026-09-02, ver Bug 3 en
+`docs/ops/deploy-ssh-credenciales.md`):** el reinicio del contenedor que dispara un
+guardado exitoso mata la propia petición HTTP que lo pidió (el contenedor que se cae
+es el que sirve esa petición) -- ANTES de escribir `registrar_cambio_credencial`
+(línea de este archivo) y de responder al navegador. Mitigado (no eliminado del
+todo) backgroundeando el reinicio en el script remoto -- reduce la ventana de varios
+segundos a milisegundos. La auditoría del CAMBIO en `.env` (hecha por el script
+mismo) siempre queda bien, pero la fila de `ProveedorCredencialHistorial` de este
+ticket puede perderse en el caso límite en que la petición SÍ muera a mitad de
+camino. No se agregó test para este caso (requeriría simular el kill real del
+proceso, no algo practicable con paramiko mockeado) -- queda como limitación
+documentada, no bloqueante para cerrar issues 04/05/06.
