@@ -13,7 +13,7 @@ Decisions y User Stories 1, 2, 15-19, 21) para el diseño completo acordado.
 
 **Blocked by:** Ninguno — puede arrancar ya.
 
-**Status:** implementado
+**Status:** verificado
 
 - [x] Registro de proveedores en código (ubicación sugerida: junto a
       `app/domain/sms_failover.py`, o un módulo nuevo) declara, por canal, la lista

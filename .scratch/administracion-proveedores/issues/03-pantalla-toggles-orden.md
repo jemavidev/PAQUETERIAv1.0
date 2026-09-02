@@ -10,7 +10,7 @@ Ver `.scratch/administracion-proveedores/spec.md` (User Stories 1-5, 12, 20, 22)
 
 **Blocked by:** 01, 02
 
-**Status:** implementado
+**Status:** verificado
 
 - [x] Ruta `/administracion/proveedores`, protegida por `require_admin` (mismo patrón
       que `admin_conjunto_form`/`admin_conjunto_guardar`) — un OPERADOR recibe 403 en

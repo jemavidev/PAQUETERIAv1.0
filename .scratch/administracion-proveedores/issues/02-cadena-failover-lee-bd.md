@@ -16,7 +16,7 @@ Decisions "Refactor de la cadena de failover existente").
 
 **Blocked by:** 01
 
-**Status:** implementado
+**Status:** verificado
 
 - [x] `_sender_base()` arma su lista de candidatos leyendo el orden/habilitado desde
       `proveedor_config_service.armar_candidatos()` en vez de la constante fija,
