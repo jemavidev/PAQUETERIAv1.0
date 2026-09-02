@@ -6,9 +6,15 @@ realiza pruebas con el numero 3002596319" → (no llegó) → "no ha
 llegado, corrije lo relacionado a las credenciales, actualiza lo
 necesario" → (envío directo por AWS CLI SÍ llegó) "Sí me llegó"
 
-**Status:** diagnosticado -- causa raíz encontrada y confirmada;
-corrección de código (logging) implementada; **falta la corrección de
-infraestructura, fuera de mi alcance (ver Seguimiento)**.
+**Status:** verificado -- causa raíz confirmada y corregida de punta a punta.
+La sección "Seguimiento" de abajo quedó resuelta poco después de escrita:
+[[287]] y [[288]] corrigieron los dos bugs reales de la app (teléfono sin
+normalizar en "Enviar prueba"; plantillas con tildes forzando 3 segmentos
+UCS-2), y `AWS_REGION=us-east-1` fue confirmado en el `.env` real del
+servidor -- ya con acceso SSH directo (ver `docs/ops/
+deploy-ssh-credenciales.md`, aprovisionado el 2026-09-01 para el mecanismo
+de administración de proveedores). SMS confirmado llegando en producción
+(Tigo Colombia, ~1.5-1.8s vía CloudWatch delivery logs).
 
 ## Investigación
 
