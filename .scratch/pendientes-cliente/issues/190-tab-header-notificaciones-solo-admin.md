@@ -38,3 +38,7 @@ dentro de ese bloque, mismo patrón que los demás enlaces ahí (`Paquetes`,
 - Verificado en vivo contra el servidor de dev local: el tab aparece en el
   header para el admin logueado, con el email actualizado (ver issue 191).
 - Pendiente: deploy a test.papyrus.com.co.
+
+**Nota (seguimiento [[295]]):** el tab visible en `.site-nav` que este
+issue agregó se retiró después -- la entrada queda solo en el menú de
+cuenta, tal como estaba antes de este issue.
