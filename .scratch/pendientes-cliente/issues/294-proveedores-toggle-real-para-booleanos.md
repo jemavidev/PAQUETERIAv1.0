@@ -52,5 +52,6 @@ Spec) sin hallazgos pendientes tras limpiar el import muerto de
 `input_select`, borrar un comentario duplicado que quedó huérfano del
 refactor, y anotar en el docstring del módulo la excepción booleana a
 "vacío = no cambiar". Verificado visualmente en el navegador (Usar TLS/Usar
-SSL cada uno en su fila, clic cambia el estado real del checkbox). Pendiente
-confirmar en vivo contra `test.papyrus.com.co`.
+SSL cada uno en su fila, clic cambia el estado real del checkbox).
+Desplegado a `test.papyrus.com.co` el 2026-09-03 (commit `f5de6d0`, repo de
+deploy). Pendiente confirmar en vivo.

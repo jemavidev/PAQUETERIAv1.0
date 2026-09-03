@@ -50,4 +50,6 @@ un POST manual con el nombre del campo oculto se ignora, incluso cuando
 coincide con un cambio real de `habilitado`). Code review (Standards +
 Spec) sin hallazgos pendientes tras extraer `_config_por_clave` y mover la
 documentación de `sincroniza_habilitado_con` al docstring de la clase.
-Pendiente confirmar en vivo contra `test.papyrus.com.co`.
+Desplegado a `test.papyrus.com.co` el 2026-09-03 (commit `f5de6d0`, repo de
+deploy -- había quedado sin sincronizar desde su implementación). Pendiente
+confirmar en vivo.
