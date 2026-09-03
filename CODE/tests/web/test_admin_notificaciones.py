@@ -159,10 +159,12 @@ def test_notificar_anunciado_usa_la_misma_plantilla_sin_importar_quien_anuncio(c
 # SMS/Email/WhatsApp por evento.
 # --------------------------------------------------------------------------- #
 def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_4_filas(client):
-    # 4 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x1 (el catálogo
-    # editable nace con un solo motivo genérico, "Otro" -- reducido de 4 a 1
-    # en vivo el 2026-09-03, `.scratch/motivos-cancelacion-catalogo`; ANUNCIADO
-    # dejó de distinguir Cliente/Staff en issue 202, .scratch/pendientes-cliente).
+    # 4 filas fijas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO -- un solo
+    # mensaje por evento, CANCELADO incluido (pedido explícito del cliente
+    # en vivo, 2026-09-03, `.scratch/motivos-cancelacion-catalogo`: el motivo
+    # elegido al cancelar ya no selecciona una plantilla distinta, `{motivo}`
+    # lo resuelve dentro del único mensaje). ANUNCIADO dejó de distinguir
+    # Cliente/Staff en issue 202 (.scratch/pendientes-cliente).
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
     assert r.status_code == 200
@@ -252,14 +254,29 @@ def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
 # --------------------------------------------------------------------------- #
 def _tag_modal_de(html_text, titulo):
     """El `<div id="modal-notif-N" ...>` cuyo `<h2>` de título contiene
-    `titulo` (ej. 'RECIBIDO' o 'CANCELADO · Otro'). El mismo texto
-    aparece antes en el botón de la lista compacta -- se toma la ÚLTIMA
-    ocurrencia, que es el `<h2>` del modal (el template emite la lista de
-    botones primero y los modales después, igual que admin/staff.html)."""
+    `titulo` (ej. 'RECIBIDO' o 'CANCELADO'). El mismo texto aparece antes
+    en el botón de la lista compacta -- se toma la ÚLTIMA ocurrencia, que
+    es el `<h2>` del modal (el template emite la lista de botones primero
+    y los modales después, igual que admin/staff.html). Devuelve SOLO la
+    etiqueta de apertura del `<div>` (para mirar si trae `hidden`), no su
+    contenido -- para eso ver `_segmento_modal`."""
     i = html_text.rindex(f">{titulo}<")
     inicio = html_text.rindex('<div id="modal-notif-', 0, i)
     fin = html_text.index(">", inicio)
     return html_text[inicio : fin + 1]
+
+
+def _segmento_modal(texto, modal_id):
+    """El HTML de UN modal, desde su `<div id="<modal_id>"` hasta el
+    siguiente `<div id="modal-...` (el próximo modal, cualquiera que sea) o
+    el final del documento -- a diferencia de `_tag_modal_de`, incluye el
+    CONTENIDO del modal (ej. la lista "Motivos seleccionables" dentro del
+    modal CANCELADO, `.scratch/motivos-cancelacion-catalogo`), no solo su
+    etiqueta de apertura. Mismo helper que `tests/web/test_packages.py`."""
+    inicio = texto.index(f'<div id="{modal_id}"')
+    resto = texto[inicio:]
+    fin = resto.find('<div id="modal-', 1)
+    return resto if fin == -1 else resto[:fin]
 
 
 def test_todas_las_filas_cerradas_por_defecto(client):
@@ -615,13 +632,17 @@ def test_operador_no_puede_eliminar_motivo(client):
     assert client.db.get(type(motivo), motivo.id) is not None
 
 
-def test_crear_motivo_aparece_en_las_filas_cancelado(client):
+def test_crear_motivo_aparece_en_la_lista_de_motivos_seleccionables(client):
+    # `.scratch/motivos-cancelacion-catalogo`, conversación en vivo
+    # 2026-09-03: un solo mensaje de CANCELADO (no una fila por motivo) --
+    # crear un motivo lo agrega a la lista "Motivos seleccionables" DENTRO
+    # del modal CANCELADO, no a una fila/modal propia.
     _login_admin(client)
     etiqueta = "Motivo web crear"
 
     r = client.post("/administracion/notificaciones/motivos", data={"etiqueta": etiqueta})
     assert r.status_code == 200
-    assert f"CANCELADO · {etiqueta}" in r.text
+    assert etiqueta in _segmento_modal(r.text, "modal-notif-4")
 
     client.db.expire_all()
     creado = next(m for m in listar_motivos(client.db) if m.etiqueta == etiqueta)
@@ -651,7 +672,7 @@ def test_crear_motivo_duplicado_rechaza_sin_alterar_catalogo(client):
     assert len(listar_motivos(client.db)) == antes
 
 
-def test_editar_motivo_actualiza_el_titulo_mostrado(client):
+def test_editar_motivo_actualiza_la_lista_de_motivos_seleccionables(client):
     _login_admin(client)
     motivo = _crear_motivo_dominio(client, "Motivo web editar original")
 
@@ -660,8 +681,9 @@ def test_editar_motivo_actualiza_el_titulo_mostrado(client):
         data={"etiqueta": "Motivo web editar nuevo"},
     )
     assert r.status_code == 200
-    assert "CANCELADO · Motivo web editar nuevo" in r.text
-    assert "CANCELADO · Motivo web editar original" not in r.text
+    segmento = _segmento_modal(r.text, "modal-notif-4")
+    assert "Motivo web editar nuevo" in segmento
+    assert "Motivo web editar original" not in segmento
 
     _eliminar_motivo_dominio(client, motivo.id)
 
@@ -683,14 +705,14 @@ def test_editar_motivo_a_etiqueta_duplicada_rechaza(client):
     _eliminar_motivo_dominio(client, motivo.id)
 
 
-def test_borrar_motivo_lo_quita_de_las_filas_cancelado(client):
+def test_borrar_motivo_lo_quita_de_la_lista_de_motivos_seleccionables(client):
     _login_admin(client)
     etiqueta = "Motivo web borrar"
     motivo = _crear_motivo_dominio(client, etiqueta)
 
     r = client.post(f"/administracion/notificaciones/motivos/{motivo.id}/eliminar")
     assert r.status_code == 200
-    assert f"CANCELADO · {etiqueta}" not in r.text
+    assert etiqueta not in _segmento_modal(r.text, "modal-notif-4")
 
     client.db.expire_all()
     assert etiqueta not in [m.etiqueta for m in listar_motivos(client.db)]
@@ -712,7 +734,7 @@ def test_no_se_puede_borrar_el_ultimo_motivo(client):
     restantes = listar_motivos(client.db)
     assert len(restantes) == 1
     assert restantes[0].etiqueta == ultimo_etiqueta
-    assert f"CANCELADO · {ultimo_etiqueta}" in r.text
+    assert ultimo_etiqueta in _segmento_modal(r.text, "modal-notif-4")
 
     # Restaura el catálogo tal como estaba -- no se trunca entre tests (ver
     # comentario de sección arriba).

@@ -253,7 +253,14 @@ def construir_mensaje(
     session: Session, evento: EstadoPaquete, paquete: Paquete, base_url: str = None
 ) -> str:
     """El texto del mensaje para `evento` — personalizado si hay una
-    `PlantillaNotificacion` para `(evento, motivo)`, si no el default.
+    `PlantillaNotificacion` para ese evento, si no el default. Un solo
+    mensaje por evento, CANCELADO incluido (pedido explícito del cliente en
+    vivo, 2026-09-03, `.scratch/motivos-cancelacion-catalogo`): el motivo
+    elegido al cancelar no selecciona una plantilla distinta -- ya se
+    resuelve dentro del texto vía la variable `{motivo}` (`_variables`),
+    igual que `{recipient_name}`/`{access_code}`. El catálogo de motivos
+    (`motivo_cancelacion_service`) solo alimenta el picker de `/paquetes`,
+    sin relación con esta búsqueda.
 
     `base_url` resuelve `{link}` a una URL absoluta (ver `_link_consultar`) --
     opcional, para no romper callers (tests de dominio) que no lo tienen a
@@ -265,14 +272,8 @@ def construir_mensaje(
     if evento not in _EVENTOS_QUE_NOTIFICAN:
         raise ValueError(f"El evento {evento!r} no dispara notificación.")
 
-    motivo_buscado = paquete.cancel_reason if evento is EstadoPaquete.CANCELADO else None
-
-    plantilla = _buscar_plantilla(session, evento, motivo_buscado, CanalNotificacion.SMS)
-    texto = (
-        plantilla.texto
-        if plantilla is not None
-        else plantilla_por_defecto(evento, motivo_buscado)
-    )
+    plantilla = _buscar_plantilla(session, evento, None, CanalNotificacion.SMS)
+    texto = plantilla.texto if plantilla is not None else plantilla_por_defecto(evento)
     mensaje = texto.format(**_variables(paquete, evento, base_url))
     return _sin_tildes(mensaje)
 
@@ -463,7 +464,7 @@ def mensaje_de_prueba(
 ) -> tuple[str, str | None]:
     """`(texto, asunto)` para un ENVÍO DE PRUEBA real de `/administracion/
     notificaciones` (.scratch/notificaciones-enviar-prueba, ticket 02) — la
-    plantilla YA GUARDADA de `(evento, motivo, canal)` (nunca un borrador sin
+    plantilla YA GUARDADA de `(evento, canal)` (nunca un borrador sin
     guardar), con sus variables resueltas a datos de ejemplo
     (`variables_ejemplo`) igual que hacía el preview de Email ya retirado
     (issue 204, `.scratch/pendientes-cliente`) -- mismas piezas
@@ -471,16 +472,25 @@ def mensaje_de_prueba(
     ahora en el dominio en vez de la capa web porque el envío real también
     las necesita, no solo una vista.
 
+    `motivo` YA NO selecciona una plantilla distinta (`.scratch/motivos-
+    cancelacion-catalogo`, pedido explícito del cliente en vivo 2026-09-03:
+    un solo mensaje de CANCELADO alcanza, `{motivo}` lo resuelve) -- solo
+    aporta el valor de ejemplo que reemplaza `{motivo}` en la vista previa,
+    igual que `recipient_name`/`access_code` son siempre de ejemplo. El
+    caller (`admin.py`) le pasa una etiqueta real del catálogo cuando
+    `evento is CANCELADO`; `None` para el resto de eventos, que no
+    referencian `{motivo}`.
+
     `base_url` (issue 222) resuelve `{link}` a una URL absoluta real, igual
     que `preparar_notificacion`.
 
     `asunto` es `None` para SMS/WhatsApp (sin equivalente en esos canales,
     mismo criterio que `obtener_asunto_actual`)."""
     variables = variables_ejemplo(motivo, base_url)
-    texto = resolver_plantilla(obtener_texto_actual(session, evento, motivo, canal), variables)
+    texto = resolver_plantilla(obtener_texto_actual(session, evento, None, canal), variables)
     asunto = None
     if canal is CanalNotificacion.EMAIL:
-        asunto = resolver_plantilla(obtener_asunto_actual(session, evento, motivo), variables)
+        asunto = resolver_plantilla(obtener_asunto_actual(session, evento, None), variables)
     return texto, asunto
 
 
