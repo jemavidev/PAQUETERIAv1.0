@@ -327,17 +327,9 @@ def test_campo_secreto_muestra_icono_de_candado(client):
     assert 'd="M8 11V8a4 4 0 118 0v3"' in r.text
 
 
-def test_campo_booleano_tambien_muestra_icono(client):
-    # Code review: "ícono en TODO campo" (la variante que eligió el
-    # cliente) se aplicaba solo a los campos de texto -- los booleanos
-    # (nunca secretos) se quedaban sin ícono. El rayo debe aparecer justo
-    # antes del primer `<select>` de la página (SMTP_USE_TLS -- issue 293
-    # ocultó AWS_SNS_SMS_ENABLED, que antes era el primer booleano).
-    _login_admin(client)
-    r = client.get("/administracion/proveedores")
-    idx = r.text.index("<select")
-    ventana = r.text[max(0, idx - 500) : idx]
-    assert 'd="M13 10V3L4 14h7v7l9-11h-7z"' in ventana
+# Issue 294 retiró el `<select>` de los booleanos (ver tests de toggle más
+# abajo) -- el ícono en todo campo (issue 291bis) sigue aplicando a los
+# campos de texto, cubierto por los dos tests de abajo.
 
 
 def test_campo_no_secreto_muestra_icono_de_rayo(client):
@@ -472,53 +464,89 @@ def test_guardar_credencial_que_falla_no_bloquea_el_habilitado_orden(client, mon
     assert fila is False
 
 
-def test_campo_booleano_se_muestra_como_select_no_como_texto_libre(client):
-    # Issue 01 ya prometía (docstring de `CampoProveedor.tipo`) que "tipo"
-    # gobernaría el input de esta Fase 2 -- SMTP_USE_TLS es
-    # `tipo="booleano"`, code review issue 05: no debía quedar como texto
-    # libre sin validar. (AWS_SNS_SMS_ENABLED, el otro booleano histórico de
-    # este catálogo, dejó de mostrarse -- issue 293, ver tests de
-    # sincronización más abajo.)
+def test_campo_booleano_es_un_toggle_no_un_select(client):
+    # Issue 294, pedido explícito del cliente ("para Usar TLS y Usar SSL
+    # crea un toggle para cada uno"): reemplaza el dropdown de 3 estados
+    # ("No cambiar"/true/false) por un switch real, mismo componente que ya
+    # usa el toggle `habilitado` de arriba.
     _login_admin(client)
 
     r = client.get("/administracion/proveedores")
 
-    assert '<select' in r.text
-    assert 'name="SMTP_USE_TLS"' in r.text
-    assert 'value="true"' in r.text
-    assert 'value="false"' in r.text
-    # El input de texto libre viejo para este campo específico ya no existe.
-    assert 'name="SMTP_USE_TLS" type="text"' not in r.text
+    assert "<select" not in r.text  # ya no queda ningún booleano como select
+    m = re.search(r'<input[^>]*name="SMTP_USE_TLS"[^>]*>', r.text)
+    assert m and 'type="checkbox"' in m.group(0)
 
 
-def test_campo_booleano_configurado_muestra_actual_como_ayuda_no_en_el_placeholder(client, monkeypatch):
-    # Corrección en vivo del cliente (issue 291): "No cambiar (actual:
-    # true)" apretado en el placeholder del dropdown se veía irregular --
-    # separado en un `help_text` corto debajo, placeholder simplificado a
-    # "No cambiar" a secas.
+def test_campo_booleano_toggle_refleja_el_valor_real_configurado(client, monkeypatch):
+    # El switch arranca en la posición que de verdad tiene `.env` -- no hay
+    # un tercer estado "sin configurar" posible en un toggle real, así que
+    # sin configurar se muestra apagado (mismo criterio que la comparación
+    # de `_campo_cambio`: sin configurar equivale a "false").
     monkeypatch.setenv("SMTP_USE_TLS", "true")
     _login_admin(client)
 
     r = client.get("/administracion/proveedores")
 
-    assert "Actual: true" in r.text
-    assert "No cambiar (actual:" not in r.text
-    m = re.search(r'<option value=""[^>]*>([^<]*)</option>', r.text)
-    assert m and m.group(1).strip() == "No cambiar"
+    m = re.search(r'<input[^>]*name="SMTP_USE_TLS"[^>]*>', r.text)
+    assert m and "checked" in m.group(0)
+    m = re.search(r'<input[^>]*name="SMTP_USE_SSL"[^>]*>', r.text)  # nunca configurado en este test
+    assert m and "checked" not in m.group(0)
 
 
-def test_campo_booleano_con_valor_nuevo_se_manda_al_mecanismo_ssh(client, monkeypatch):
+def test_prender_toggle_booleano_dispara_ssh_solo_con_ese_campo(client, monkeypatch):
+    # SMTP_USE_TLS pasa de "sin configurar" (~ false) a encendido -- cambio
+    # real. SMTP_USE_SSL se queda apagado (ausente del form, como manda un
+    # checkbox real sin marcar) -- sin configurar tampoco, sigue
+    # equivaliendo a "false": no debe aparecer en el cambio.
     llamadas = []
     monkeypatch.setattr(admin_proveedores_mod, "aplicar_credenciales_proveedor", llamadas.append)
     _login_admin(client)
 
     r = client.post(
         "/administracion/proveedores/EMAIL",
-        data={"SMTP_habilitado": "on", "SMTP_USE_TLS": "true"},
+        data={"SMTP_habilitado": "on", "SMTP_USE_TLS": "on"},
     )
 
     assert r.status_code == 200
     assert llamadas == [{"SMTP_USE_TLS": "true"}]
+
+
+def test_guardar_toggle_booleano_sin_cambiar_no_dispara_ssh(client, monkeypatch):
+    # El punto entero de comparar contra el valor real (issue 294): un
+    # guardado que no tocó el switch no debe reiniciar el servidor.
+    monkeypatch.setenv("SMTP_USE_TLS", "true")
+
+    def _no_debe_llamarse(cambios):
+        raise AssertionError(f"No debía llamarse aplicar_credenciales_proveedor({cambios!r})")
+
+    monkeypatch.setattr(admin_proveedores_mod, "aplicar_credenciales_proveedor", _no_debe_llamarse)
+    _login_admin(client)
+
+    # El switch ya está prendido (SMTP_USE_TLS=true) -- se manda tal cual
+    # estaba, SMTP_USE_SSL se deja apagado tal cual estaba (ausente).
+    r = client.post(
+        "/administracion/proveedores/EMAIL",
+        data={"SMTP_habilitado": "on", "SMTP_USE_TLS": "on"},
+    )
+
+    assert r.status_code == 200
+
+
+def test_apagar_toggle_booleano_ya_configurado_dispara_ssh_con_false(client, monkeypatch):
+    monkeypatch.setenv("SMTP_USE_SSL", "true")
+    llamadas = []
+    monkeypatch.setattr(admin_proveedores_mod, "aplicar_credenciales_proveedor", llamadas.append)
+    _login_admin(client)
+
+    # SMTP_USE_SSL ausente del form -- checkbox real sin marcar.
+    r = client.post(
+        "/administracion/proveedores/EMAIL",
+        data={"SMTP_habilitado": "on"},
+    )
+
+    assert r.status_code == 200
+    assert llamadas == [{"SMTP_USE_SSL": "false"}]
 
 
 # --------------------------------------------------------------------------- #

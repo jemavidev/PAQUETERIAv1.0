@@ -39,10 +39,14 @@ no toda") la pantalla SÍ lee el valor real de `.env` -- pero nunca lo manda
 completo al navegador: un campo `secreto` configurado muestra un
 enmascarado parcial (`_enmascarar_secreto`), uno no-secreto muestra el
 valor real completo (ver `_valor_actual`). El `value=` del input sigue
-SIEMPRE vacío -- lo que cambió es solo el `placeholder`. Un campo vacío al
-guardar significa "no cambiar esa credencial" -- solo los campos con contenido
-nuevo se mandan a `app/infra/deploy_ssh.py::aplicar_credenciales_proveedor`
-(issue 04). Esa llamada es SÍNCRONA a propósito: la ruta espera su
+SIEMPRE vacío -- lo que cambió es solo el `placeholder`. Un campo de TEXTO
+vacío al guardar significa "no cambiar esa credencial" -- solo los campos
+con contenido nuevo se mandan a `app/infra/deploy_ssh.py::
+aplicar_credenciales_proveedor` (issue 04). Un campo BOOLEANO (issue 294) no
+tiene esa opción -- un `<input type=checkbox>` real siempre manda su
+posición actual, nunca "no cambiar" -- así que ahí se compara contra el
+valor YA presente en `.env` y solo se manda si de verdad difiere (ver
+`_campo_cambio`). Esa llamada es SÍNCRONA a propósito: la ruta espera su
 confirmación real (éxito/fallo) antes de responder, igual que
 `admin.py::admin_notificaciones_probar` -- nunca un "guardado" optimista.
 Si falla, el toggle/orden del mismo formulario YA se guardó (son
@@ -66,10 +70,11 @@ from typing import NamedTuple
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
+from starlette.datastructures import FormData
 from sqlalchemy.orm import Session
 
 from app.domain.preferencia_notificacion import CanalNotificacion
-from app.domain.proveedores_catalogo import CATALOGO, CampoProveedor
+from app.domain.proveedores_catalogo import CATALOGO, CampoProveedor, ProveedorInfo
 from app.domain.proveedor_config_service import (
     guardar_habilitado_orden,
     habilitado_orden_efectivos,
@@ -99,6 +104,39 @@ class _CambioCredencial(NamedTuple):
     proveedor: str
     variable_env: str
     valor: str
+
+
+def _campo_cambio(proveedor: ProveedorInfo, campo: CampoProveedor, form: FormData) -> _CambioCredencial | None:
+    """`None` si `campo` no cambió en este submit -- si cambió, el
+    `_CambioCredencial` a aplicar.
+
+    Texto: "vacío = no cambiar" (ticket 05) -- un valor no vacío siempre
+    cuenta como cambio, sin comparar contra lo que ya había (ese contrato
+    no cambia acá).
+
+    Booleano (issue 294, pedido explícito del cliente: "crea un toggle
+    para cada uno"): un `<input type=checkbox>` real no tiene forma de
+    decir "no cambiar" -- siempre manda su posición actual (o nada, si está
+    apagado). Por eso se compara esa posición contra el valor YA presente
+    en `.env` (no contra lo que se cargó al abrir el formulario) -- mismo
+    criterio que la sincronización de `sincroniza_habilitado_con` (issue
+    293): solo cuenta como cambio si de verdad difiere, para no reaplicar
+    (y reiniciar el servidor) en cada guardado que no tocó el switch. Sin
+    configurar en `.env` se trata como "false" para esta comparación --
+    mismo default que ya usa la plantilla para dibujar el switch apagado
+    (`campo.valor_actual` vacío -> `checked=False`) -- si no, el primer
+    guardado de un campo nunca antes tocado se vería como "cambio" aunque
+    el switch se haya dejado tal cual estaba (apagado)."""
+    if campo.tipo == "booleano":
+        nuevo = "true" if form.get(campo.variable_env) is not None else "false"
+        actual = (os.environ.get(campo.variable_env) or "false").strip().lower()
+        if nuevo == actual:
+            return None
+        return _CambioCredencial(proveedor.clave, campo.variable_env, nuevo)
+    valor_nuevo = (form.get(campo.variable_env) or "").strip()
+    if not valor_nuevo:
+        return None
+    return _CambioCredencial(proveedor.clave, campo.variable_env, valor_nuevo)
 
 
 _CARACTERES_VISIBLES = 4
@@ -295,7 +333,7 @@ async def admin_proveedores_guardar(
     # toggle ni se tocó), se agrega a la MISMA lista de `_CambioCredencial`
     # de más abajo -- una sola llamada a `aplicar_credenciales_proveedor`,
     # un solo reinicio, para todo lo que cambió en este submit.
-    config_por_clave = {c.proveedor: c for c in listar_config(db, canal_enum)}
+    config_por_clave = _config_por_clave(db, canal_enum)
     sincronizaciones: list[_CambioCredencial] = []
     for proveedor in proveedores_catalogo:
         if not proveedor.disponible:
@@ -318,17 +356,18 @@ async def admin_proveedores_guardar(
                 )
             )
 
-    # Credenciales: solo los campos con contenido nuevo -- vacío = no
-    # cambiar. Una sola lista de `_CambioCredencial` (arrancando con las
-    # sincronizaciones de arriba); `cambios`/la auditoría son vistas
-    # derivadas de ella, nunca colecciones separadas.
+    # Credenciales: `_campo_cambio` decide qué cuenta como cambio (texto:
+    # vacío = no cambiar; booleano -- issue 294 -- comparado contra el
+    # valor real de `.env`). Una sola lista de `_CambioCredencial`
+    # (arrancando con las sincronizaciones de arriba); `cambios`/la
+    # auditoría son vistas derivadas de ella, nunca colecciones separadas.
     credenciales_cambiadas = sincronizaciones + [
-        _CambioCredencial(proveedor.clave, campo.variable_env, valor_nuevo)
+        cambio
         for proveedor in proveedores_catalogo
         if proveedor.disponible
         for campo in proveedor.campos
         if not campo.oculto
-        if (valor_nuevo := (form.get(campo.variable_env) or "").strip())
+        if (cambio := _campo_cambio(proveedor, campo, form)) is not None
     ]
 
     if credenciales_cambiadas:
