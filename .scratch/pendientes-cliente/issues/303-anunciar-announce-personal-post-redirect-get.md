@@ -6,7 +6,7 @@ codigo un nuevo pquete es anunciado, esto no deberia pasar... que me
 sugieres para controlar esto" + "y cualquier otro caso similar que se
 presente" (pedido explícito de extender el barrido/fix a toda la app).
 
-**Status:** implementado
+**Status:** verificado
 
 ## Diagnóstico
 
@@ -55,3 +55,11 @@ GET -- nunca reenvía el formulario, nunca duplica nada.
   **148 passed**, sin cambios necesarios en las aserciones -- `TestClient`
   sigue los redirects por defecto, así que `r.text`/`r.status_code` tras un
   `client.post(...)` siguen viendo la página final de siempre.
+- Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run
+  33814965989, tests + deploy success) y confirmado en vivo con un POST
+  real a `/anunciar`: responde `303` con `Location: /anunciar/confirmacion?
+  codigo=VDPG`, y ese GET sí muestra la confirmación. **Nota:** esa prueba
+  creó un Paquete real de prueba ("PRUEBA DEPLOY", código `VDPG`) en el
+  servidor -- sin borrar (no tengo credenciales reales de ese staff), queda
+  pendiente que alguien con acceso lo cancele/elimine desde `/paquetes` si
+  molesta.

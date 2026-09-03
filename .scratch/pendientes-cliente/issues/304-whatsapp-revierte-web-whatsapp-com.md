@@ -5,7 +5,7 @@ que los enlaces de WhatsApp no abrían la app -- ni desde Chrome de
 escritorio, ni desde Android con WhatsApp nativo instalado. Confirmó
 ambos casos explícitamente al preguntársele.
 
-**Status:** implementado
+**Status:** verificado
 
 ## Causa -- la premisa de [[301]] era la inversa de la realidad
 
@@ -57,6 +57,8 @@ el problema, sigue siendo la práctica correcta.
   phone=...`) para el residente solo-teléfono; usuarios con
   `whatsapp_usuario` siguen intactos en `wa.me/<user>`.
 
-Pendiente: confirmar en `test.papyrus.com.co` tras el deploy (junto con
-[[303]]), y que el cliente confirme en su propio Android que ya abre la
-app de verdad.
+Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run
+33814965989, tests + deploy success) y confirmado en vivo: el enlace
+público del footer (`/anunciar`) ya resuelve a `wa.me/573334004007`.
+Pendiente: que el cliente confirme en su propio Android que ya abre la
+app de verdad (esa parte no se puede probar por curl).
