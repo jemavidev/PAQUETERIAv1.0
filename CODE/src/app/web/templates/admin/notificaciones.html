@@ -2,7 +2,8 @@
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
-{% from "components/_modales.html" import modal %}
+{% from "components/_modales.html" import modal, modal_confirmacion %}
+{% from "components/_tablas.html" import accion_icono %}
 {% block title %}Plantillas de notificación — PAQUETEX{% endblock %}
 {% block content %}
 {#- Pedido en vivo 2026-08-26 (.scratch/plantillas-notificacion-multicanal,
@@ -18,6 +19,67 @@
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
   {% if guardado %}{{ toast('Plantilla guardada.', variant='success') }}{% endif %}
   {% if prueba_ok %}{{ toast('Mensaje de prueba enviado a ' ~ prueba_destino ~ '.', variant='success') }}{% endif %}
+  {% if motivo_creado %}{{ toast('Motivo creado: ' ~ motivo_creado ~ '.', variant='success') }}{% endif %}
+  {% if motivo_editado %}{{ toast('Motivo actualizado: ' ~ motivo_editado ~ '.', variant='success') }}{% endif %}
+  {% if motivo_eliminado %}{{ toast('Motivo borrado.', variant='success') }}{% endif %}
+
+  {#- Catálogo editable de motivos de cancelación (`.scratch/motivos-
+     cancelacion-catalogo`) -- CRUD simple embebido en esta misma pantalla
+     (decisión explícita del cliente: sin pantalla propia), porque el único
+     consumidor de este catálogo además del picker de `/paquetes` son las
+     filas CANCELADO de acá abajo. Solo la etiqueta importa -- sin código
+     interno, sin activo/inactivo, sin orden manual (siempre orden de
+     creación). El ícono "Borrar" se OMITE (no se deshabilita) cuando solo
+     queda un motivo -- cancelar un paquete sigue exigiendo un motivo
+     obligatorio, así que el picker nunca puede quedar sin ninguna opción;
+     evita un viaje redondo al servidor solo para recibir el error
+     esperado. #}
+  <div class="rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 class="text-base font-bold text-slate-900">Motivos de cancelación</h2>
+      {{ boton('Agregar', size='sm', extra_attrs='data-open="modal-motivo-crear"') }}
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for m in motivos %}
+      <li class="flex items-center justify-between gap-3 py-2">
+        <span class="text-sm text-slate-900 break-words">{{ m.etiqueta }}</span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          {{ accion_icono('editar', 'Editar', extra_attrs='data-open="modal-motivo-editar-' ~ m.id ~ '"') }}
+          {%- if motivos|length > 1 %}
+          {{ accion_icono('eliminar', 'Borrar', extra_attrs='data-open="modal-motivo-eliminar-' ~ m.id ~ '"') }}
+          {%- endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% call modal('motivo-crear', 'Agregar motivo', abierto=(motivo_crear_error|default(False))) %}
+  <form method="post" action="/administracion/notificaciones/motivos">
+    {{ input_texto('Motivo', name='etiqueta', value=motivo_crear_valor|default(''),
+                    error=(error if motivo_crear_error|default(False) else none),
+                    extra_attrs='maxlength="40"') }}
+    {{ boton('Crear', type='submit', size='sm') }}
+  </form>
+  {% endcall %}
+
+  {% for m in motivos %}
+  {% call modal('motivo-editar-' ~ m.id, 'Editar motivo',
+                 abierto=(motivo_editar_error_id|default(none) == m.id|string)) %}
+  <form method="post" action="/administracion/notificaciones/motivos/{{ m.id }}/editar">
+    {{ input_texto('Motivo', name='etiqueta', value=m.etiqueta,
+                    error=(error if motivo_editar_error_id|default(none) == m.id|string else none),
+                    extra_attrs='maxlength="40"') }}
+    {{ boton('Guardar', type='submit', size='sm') }}
+  </form>
+  {% endcall %}
+
+  {% call modal_confirmacion('motivo-eliminar-' ~ m.id, 'Borrar motivo',
+                              '¿Borrar "' ~ m.etiqueta ~ '"? Esta acción no se puede deshacer.',
+                              'Borrar', action='/administracion/notificaciones/motivos/' ~ m.id ~ '/eliminar',
+                              variant='danger') %}
+  {% endcall %}
+  {% endfor %}
 
   {#- Clases de Tailwind ESCRITAS LITERAL (no concatenadas en Jinja): el
      escaneo de contenido de Tailwind lee este archivo como texto plano y
@@ -61,7 +123,12 @@
   <div class="space-y-2">
   {% for fila in filas %}
   {%- set fila_id = loop.index -%}
-  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '') -%}
+  {#- `fila.motivo` ya es la etiqueta legible del catálogo (`.scratch/
+     motivos-cancelacion-catalogo`) -- sin transformación encima, para no
+     alterar el texto que el ADMIN eligió a propósito (antes era el código
+     crudo del enum, `NO_RECLAMADO`, y sí necesitaba `.replace('_',' ')|
+     capitalize` para verse presentable). -#}
+  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo) if fila.motivo else '') -%}
   <button type="button" data-open="modal-notif-{{ fila_id }}"
           class="w-full flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm hover:bg-slate-50 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
     <span class="text-lg font-bold text-slate-900">{{ titulo_fila }}</span>
@@ -102,7 +169,12 @@
   {%- else -%}
     {%- set canal_activo = 'SMS' -%}
   {%- endif -%}
-  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo.replace('_', ' ')|capitalize) if fila.motivo else '') -%}
+  {#- `fila.motivo` ya es la etiqueta legible del catálogo (`.scratch/
+     motivos-cancelacion-catalogo`) -- sin transformación encima, para no
+     alterar el texto que el ADMIN eligió a propósito (antes era el código
+     crudo del enum, `NO_RECLAMADO`, y sí necesitaba `.replace('_',' ')|
+     capitalize` para verse presentable). -#}
+  {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo) if fila.motivo else '') -%}
 
   {% call modal('notif-' ~ fila_id, titulo_fila, ancho='lg', abierto=fila_abierta) %}
 

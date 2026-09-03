@@ -126,7 +126,8 @@ def plantilla_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
 
     `motivo` no distingue nada acá -- todo motivo de un mismo evento
     comparte el mismo default (solo importa para PERSONALIZAR, ej. cada
-    `MotivoCancelacion` puede tener su propio texto guardado). Se mantiene
+    motivo del catálogo editable, `.scratch/motivos-cancelacion-catalogo`,
+    puede tener su propio texto guardado). Se mantiene
     el parámetro por compatibilidad con los callers existentes
     (`obtener_texto_actual`, etc.), aunque ya no se lee.
     """
@@ -139,12 +140,6 @@ def asunto_por_defecto(evento: EstadoPaquete, motivo: str = None) -> str:
     para SMS/WhatsApp (no tienen asunto); usado solo cuando `canal == EMAIL`.
     """
     return _default_de(evento, ASUNTOS_DEFAULT)
-
-
-def _motivo_legible(motivo: str) -> str:
-    """`NO_RECLAMADO` -> `No reclamado` -- compartido por `_variables` y
-    `variables_ejemplo`, mismo texto en ambos."""
-    return (motivo or "").replace("_", " ").capitalize()
 
 
 def _estado_legible(estado: EstadoPaquete) -> str:
@@ -171,7 +166,14 @@ def _variables(paquete: Paquete, evento: EstadoPaquete, base_url: str = None) ->
     return {
         "recipient_name": paquete.recipient_name,
         "access_code": paquete.access_code,
-        "motivo": _motivo_legible(paquete.cancel_reason),
+        # `cancel_reason` ya es la etiqueta legible del catálogo editable de
+        # motivos (`.scratch/motivos-cancelacion-catalogo`), o el texto libre
+        # que el STAFF tecleó vía "Otro" -- sin transformación encima, para
+        # no alterar lo que se eligió/escribió a propósito. `or ""` cubre el
+        # caso normal de un evento que no es CANCELADO (`cancel_reason` es
+        # `None`, la plantilla de ese evento simplemente no referencia
+        # `{motivo}`).
+        "motivo": paquete.cancel_reason or "",
         # `evento` (el que se está notificando AHORA), no `paquete.estado`
         # (el estado YA persistido) -- normalmente coinciden, pero
         # `construir_mensaje` se puede llamar para construir el texto de un
@@ -194,7 +196,7 @@ def variables_ejemplo(motivo: str = None, base_url: str = None) -> dict:
     return {
         "recipient_name": "Juan Pérez",
         "access_code": "AB12CD",
-        "motivo": _motivo_legible(motivo),
+        "motivo": motivo or "",
         "estado": "Recibido",
         "link": _link_consultar("AB12CD", base_url),
     }

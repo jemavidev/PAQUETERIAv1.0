@@ -419,7 +419,7 @@ def test_cancel_notifica_con_motivo(client):
 
     espia = _SenderEspia()
     client.app.dependency_overrides[get_notification_sender] = lambda: espia
-    client.post(f"/paquetes/{p.id}/cancelar", data={"motivo": "NO_RECLAMADO"})
+    client.post(f"/paquetes/{p.id}/cancelar", data={"motivo": "No reclamado"})
 
     assert len(espia.enviados) == 1
     assert "no reclamado" in espia.enviados[0][1].lower()

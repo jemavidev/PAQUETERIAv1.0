@@ -8,6 +8,11 @@ por defecto; guardar persiste la plantilla personalizada.
 """
 
 from app.domain.email_sender import ConsoleEmailSender
+from app.domain.motivo_cancelacion_service import (
+    crear_motivo,
+    eliminar_motivo,
+    listar_motivos,
+)
 from app.domain.notification_sender import ConsoleNotificationSender
 from app.domain.notificacion_service import obtener_asunto_actual, obtener_texto_actual
 from app.domain.paquete import EstadoPaquete
@@ -154,9 +159,10 @@ def test_notificar_anunciado_usa_la_misma_plantilla_sin_importar_quien_anuncio(c
 # SMS/Email/WhatsApp por evento.
 # --------------------------------------------------------------------------- #
 def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_7_filas(client):
-    # 7 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x4 (un
-    # MotivoCancelacion cada una) -- ANUNCIADO dejó de distinguir
-    # Cliente/Staff en issue 202 (.scratch/pendientes-cliente).
+    # 7 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x4 (un motivo del
+    # catálogo editable cada una, `.scratch/motivos-cancelacion-catalogo`) --
+    # ANUNCIADO dejó de distinguir Cliente/Staff en issue 202 (.scratch/
+    # pendientes-cliente).
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
     assert r.status_code == 200
@@ -552,3 +558,163 @@ def test_guardar_texto_de_whatsapp_sigue_funcionando_con_el_boton_de_prueba_desh
         obtener_texto_actual(client.db, EstadoPaquete.RECIBIDO, canal=CanalNotificacion.WHATSAPP)
         == "Ya llegó tu paquete por WhatsApp."
     )
+
+
+# --------------------------------------------------------------------------- #
+# `.scratch/motivos-cancelacion-catalogo`, ticket 02 -- CRUD del catálogo de
+# motivos de cancelación, embebido en esta misma pantalla.
+#
+# `motivos_cancelacion` NO se trunca entre tests (mismo criterio que
+# `apartamentos` en `tests/web/conftest.py`: la migración lo siembra UNA sola
+# vez por sesión de test, y truncarlo lo dejaría vacío para siempre después
+# del primer test que corra) -- cada test de acá abajo es responsable de
+# dejar el catálogo EXACTAMENTE como lo encontró, sin importar en qué orden
+# corra frente a otros tests de este archivo (ej. `test_pantalla_muestra_
+# 3_pestanas_por_cada_una_de_las_7_filas`, que cuenta filas de forma exacta).
+# --------------------------------------------------------------------------- #
+def _crear_motivo_dominio(client, etiqueta):
+    m = crear_motivo(client.db, etiqueta)
+    client.db.commit()
+    return m
+
+
+def _eliminar_motivo_dominio(client, motivo_id):
+    eliminar_motivo(client.db, motivo_id)
+    client.db.commit()
+
+
+def test_operador_no_puede_crear_motivo(client):
+    _login_operador(client)
+    r = client.post("/administracion/notificaciones/motivos", data={"etiqueta": "Motivo nuevo"})
+    assert r.status_code == 403
+
+    client.db.expire_all()
+    assert "Motivo nuevo" not in [m.etiqueta for m in listar_motivos(client.db)]
+
+
+def test_operador_no_puede_editar_motivo(client):
+    _login_operador(client)
+    motivo = listar_motivos(client.db)[0]
+    r = client.post(
+        f"/administracion/notificaciones/motivos/{motivo.id}/editar",
+        data={"etiqueta": "Cambiado"},
+    )
+    assert r.status_code == 403
+
+    client.db.expire_all()
+    assert client.db.get(type(motivo), motivo.id).etiqueta == motivo.etiqueta
+
+
+def test_operador_no_puede_eliminar_motivo(client):
+    _login_operador(client)
+    motivo = listar_motivos(client.db)[0]
+    r = client.post(f"/administracion/notificaciones/motivos/{motivo.id}/eliminar")
+    assert r.status_code == 403
+
+    client.db.expire_all()
+    assert client.db.get(type(motivo), motivo.id) is not None
+
+
+def test_crear_motivo_aparece_en_las_filas_cancelado(client):
+    _login_admin(client)
+    etiqueta = "Motivo web crear"
+
+    r = client.post("/administracion/notificaciones/motivos", data={"etiqueta": etiqueta})
+    assert r.status_code == 200
+    assert f"CANCELADO · {etiqueta}" in r.text
+
+    client.db.expire_all()
+    creado = next(m for m in listar_motivos(client.db) if m.etiqueta == etiqueta)
+    _eliminar_motivo_dominio(client, creado.id)  # deja el catálogo como estaba
+
+
+def test_crear_motivo_vacio_rechaza_sin_alterar_catalogo(client):
+    _login_admin(client)
+    antes = {m.etiqueta for m in listar_motivos(client.db)}
+
+    r = client.post("/administracion/notificaciones/motivos", data={"etiqueta": "   "})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert {m.etiqueta for m in listar_motivos(client.db)} == antes
+
+
+def test_crear_motivo_duplicado_rechaza_sin_alterar_catalogo(client):
+    _login_admin(client)
+    existente = listar_motivos(client.db)[0].etiqueta
+    antes = len(listar_motivos(client.db))
+
+    r = client.post("/administracion/notificaciones/motivos", data={"etiqueta": existente})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert len(listar_motivos(client.db)) == antes
+
+
+def test_editar_motivo_actualiza_el_titulo_mostrado(client):
+    _login_admin(client)
+    motivo = _crear_motivo_dominio(client, "Motivo web editar original")
+
+    r = client.post(
+        f"/administracion/notificaciones/motivos/{motivo.id}/editar",
+        data={"etiqueta": "Motivo web editar nuevo"},
+    )
+    assert r.status_code == 200
+    assert "CANCELADO · Motivo web editar nuevo" in r.text
+    assert "CANCELADO · Motivo web editar original" not in r.text
+
+    _eliminar_motivo_dominio(client, motivo.id)
+
+
+def test_editar_motivo_a_etiqueta_duplicada_rechaza(client):
+    _login_admin(client)
+    existente = listar_motivos(client.db)[0].etiqueta
+    motivo = _crear_motivo_dominio(client, "Motivo web editar duplicado")
+
+    r = client.post(
+        f"/administracion/notificaciones/motivos/{motivo.id}/editar",
+        data={"etiqueta": existente},
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(type(motivo), motivo.id).etiqueta == "Motivo web editar duplicado"
+
+    _eliminar_motivo_dominio(client, motivo.id)
+
+
+def test_borrar_motivo_lo_quita_de_las_filas_cancelado(client):
+    _login_admin(client)
+    etiqueta = "Motivo web borrar"
+    motivo = _crear_motivo_dominio(client, etiqueta)
+
+    r = client.post(f"/administracion/notificaciones/motivos/{motivo.id}/eliminar")
+    assert r.status_code == 200
+    assert f"CANCELADO · {etiqueta}" not in r.text
+
+    client.db.expire_all()
+    assert etiqueta not in [m.etiqueta for m in listar_motivos(client.db)]
+
+
+def test_no_se_puede_borrar_el_ultimo_motivo(client):
+    _login_admin(client)
+    originales = [(m.id, m.etiqueta) for m in listar_motivos(client.db)]
+
+    # Deja solo uno, borrando el resto directo en dominio.
+    for mid, _ in originales[1:]:
+        _eliminar_motivo_dominio(client, mid)
+
+    ultimo_id, ultimo_etiqueta = originales[0]
+    r = client.post(f"/administracion/notificaciones/motivos/{ultimo_id}/eliminar")
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    restantes = listar_motivos(client.db)
+    assert len(restantes) == 1
+    assert restantes[0].etiqueta == ultimo_etiqueta
+    assert f"CANCELADO · {ultimo_etiqueta}" in r.text
+
+    # Restaura el catálogo tal como estaba -- no se trunca entre tests (ver
+    # comentario de sección arriba).
+    for _, etiqueta in originales[1:]:
+        _crear_motivo_dominio(client, etiqueta)

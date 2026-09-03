@@ -22,13 +22,19 @@ from app.domain.configuracion_conjunto_service import (
 )
 from app.domain.email_sender import EmailSender
 from app.domain.notification_sender import NotificationSender
+from app.domain.motivo_cancelacion_service import (
+    crear_motivo,
+    editar_motivo,
+    eliminar_motivo,
+    listar_motivos,
+)
 from app.domain.notificacion_service import (
     guardar_plantilla,
     mensaje_de_prueba,
     obtener_asunto_actual,
     obtener_texto_actual,
 )
-from app.domain.paquete import EstadoPaquete, MotivoCancelacion
+from app.domain.paquete import EstadoPaquete
 from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import (
@@ -62,6 +68,13 @@ def _get_usuario_o_404(db: Session, usuario_id: str) -> Usuario:
     if usuario is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Cuenta no encontrada")
     return usuario
+
+
+def _uuid_motivo_o_404(motivo_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(motivo_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Motivo no encontrado")
 
 
 @router.get("/administracion/personal", response_class=HTMLResponse)
@@ -300,8 +313,9 @@ def _canales_de(db: Session, evento: EstadoPaquete, motivo: str):
 def _filas_plantillas(db: Session):
     """Una fila por cada evento sin motivo (ANUNCIADO/RECIBIDO/ENTREGADO --
     ANUNCIADO dejó de distinguir Cliente/Staff en issue 202, `.scratch/
-    pendientes-cliente`) y una por cada `MotivoCancelacion` para `CANCELADO`
-    — cada una con sus 3 canales (`_canales_de`)."""
+    pendientes-cliente`) y una por cada motivo del catálogo editable
+    (`.scratch/motivos-cancelacion-catalogo`) para `CANCELADO` — cada una
+    con sus 3 canales (`_canales_de`)."""
     filas = [
         {
             "evento": e,
@@ -310,12 +324,12 @@ def _filas_plantillas(db: Session):
         }
         for e in _EVENTOS_SIN_MOTIVO
     ]
-    for m in MotivoCancelacion:
+    for m in listar_motivos(db):
         filas.append(
             {
                 "evento": EstadoPaquete.CANCELADO,
-                "motivo": m.value,
-                "canales": _canales_de(db, EstadoPaquete.CANCELADO, m.value),
+                "motivo": m.etiqueta,
+                "canales": _canales_de(db, EstadoPaquete.CANCELADO, m.etiqueta),
             }
         )
     return filas
@@ -327,7 +341,12 @@ def admin_notificaciones_form(
 ):
     return templates.TemplateResponse(
         "admin/notificaciones.html",
-        {"request": request, "admin": admin, "filas": _filas_plantillas(db)},
+        {
+            "request": request,
+            "admin": admin,
+            "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
+        },
     )
 
 
@@ -349,6 +368,7 @@ def admin_notificaciones_guardar(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
+                "motivos": listar_motivos(db),
                 "error": mensaje,
                 # Identifica CUÁL de las N filas × 3 canales (cada uno su
                 # propio <form>) falló, para marcar solo esa pestaña/textarea
@@ -407,6 +427,7 @@ def admin_notificaciones_guardar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
             "guardado": True,
             "guardado_evento": evento,
             "guardado_motivo": motivo or None,
@@ -447,6 +468,7 @@ def admin_notificaciones_probar(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
+                "motivos": listar_motivos(db),
                 "error": mensaje,
                 "prueba_error_evento": evento if marcar_fila else None,
                 "prueba_error_motivo": (motivo or None) if marcar_fila else None,
@@ -508,11 +530,133 @@ def admin_notificaciones_probar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
             "prueba_ok": True,
             "prueba_destino": destino_limpio,
             "prueba_ok_evento": evento,
             "prueba_ok_motivo": motivo or None,
             "prueba_ok_canal": canal,
+        },
+    )
+
+
+@router.post("/administracion/notificaciones/motivos", response_class=HTMLResponse)
+def admin_motivos_crear(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    etiqueta: str = Form(None),
+):
+    try:
+        motivo = crear_motivo(db, etiqueta)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/notificaciones.html",
+            {
+                "request": request,
+                "admin": admin,
+                "filas": _filas_plantillas(db),
+                "motivos": listar_motivos(db),
+                "error": str(exc),
+                # Reabre el modal "Agregar motivo" con lo ya tecleado --
+                # mismo criterio que `email`/`nombre` en `admin_staff_submit`.
+                "motivo_crear_error": True,
+                "motivo_crear_valor": etiqueta or "",
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/notificaciones.html",
+        {
+            "request": request,
+            "admin": admin,
+            "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
+            "motivo_creado": motivo.etiqueta,
+        },
+    )
+
+
+@router.post(
+    "/administracion/notificaciones/motivos/{motivo_id}/editar", response_class=HTMLResponse
+)
+def admin_motivos_editar(
+    motivo_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    etiqueta: str = Form(None),
+):
+    mid = _uuid_motivo_o_404(motivo_id)
+    try:
+        motivo = editar_motivo(db, mid, etiqueta)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/notificaciones.html",
+            {
+                "request": request,
+                "admin": admin,
+                "filas": _filas_plantillas(db),
+                "motivos": listar_motivos(db),
+                "error": str(exc),
+                # Identifica CUÁL motivo falló, para reabrir su propio modal
+                # "Editar motivo" (mismo criterio que `error_evento`/
+                # `error_canal` en `admin_notificaciones_guardar`).
+                "motivo_editar_error_id": motivo_id,
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/notificaciones.html",
+        {
+            "request": request,
+            "admin": admin,
+            "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
+            "motivo_editado": motivo.etiqueta,
+        },
+    )
+
+
+@router.post(
+    "/administracion/notificaciones/motivos/{motivo_id}/eliminar", response_class=HTMLResponse
+)
+def admin_motivos_eliminar(
+    motivo_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    mid = _uuid_motivo_o_404(motivo_id)
+    try:
+        eliminar_motivo(db, mid)
+    except ValueError as exc:
+        # Sin modal que reabrir: `modal_confirmacion` (a diferencia de
+        # `modal`) no soporta `abierto` -- mismo criterio que el resto de la
+        # app ya acepta para esa confirmación (ej. "Cancelar paquete" en
+        # `packages.py`), el toast de arriba alcanza para explicar por qué.
+        return templates.TemplateResponse(
+            "admin/notificaciones.html",
+            {
+                "request": request,
+                "admin": admin,
+                "filas": _filas_plantillas(db),
+                "motivos": listar_motivos(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/notificaciones.html",
+        {
+            "request": request,
+            "admin": admin,
+            "filas": _filas_plantillas(db),
+            "motivos": listar_motivos(db),
+            "motivo_eliminado": True,
         },
     )
 
