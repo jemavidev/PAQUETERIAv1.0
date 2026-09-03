@@ -49,6 +49,16 @@ Si falla, el toggle/orden del mismo formulario YA se guardó (son
 operaciones independientes; ver `admin_proveedores_guardar`) pero ninguna
 credencial cambia, y no queda auditoría de un cambio que en realidad no
 pasó.
+
+**Campos ocultos sincronizados con el toggle (issue 293)**: un proveedor
+puede declarar `sincroniza_habilitado_con` (ej. `AWS_SNS_SMS_ENABLED` en
+`AWS_SNS`) -- corrección en vivo del cliente, que encontró confuso tener
+dos controles de "encendido" en la misma tarjeta (el toggle `habilitado` de
+BD, y un segundo campo booleano de `.env` heredado de antes de este
+feature). Ese campo (`CampoProveedor.oculto=True`) deja de mostrarse; el
+toggle lo mantiene en sync solo, y SOLO cuando `habilitado` cambia de
+valor -- nunca en cada guardado, para no reiniciar el servidor sin
+necesidad.
 """
 
 import os
@@ -120,6 +130,14 @@ def _valor_actual(campo: CampoProveedor, valor_real: str | None) -> str | None:
     return _enmascarar_secreto(valor_real) if campo.secreto else valor_real
 
 
+def _config_por_clave(db: Session, canal_enum: CanalNotificacion) -> dict[str, object]:
+    """`{proveedor.clave: ProveedorConfig}` de `canal_enum` -- compartido
+    por `_filas_proveedores` (qué mostrar) y `admin_proveedores_guardar`
+    (el `habilitado` efectivo ANTES de guardar, para detectar si
+    `sincroniza_habilitado_con` debe dispararse)."""
+    return {c.proveedor: c for c in listar_config(db, canal_enum)}
+
+
 def _filas_proveedores(db: Session) -> list[dict]:
     """Un `dict` por canal del catálogo (`canal`, `etiqueta_canal`,
     `multiples` -- gobierna si se muestra el campo de orden, solo tiene
@@ -150,13 +168,19 @@ def _filas_proveedores(db: Session) -> list[dict]:
     vivo con el cliente hasta esta versión final: la tab queda presente,
     pero sus campos se muestran deshabilitados -- ver `disponible` en cada
     `dict` de `proveedores`, que la plantilla usa para el atributo HTML
-    `disabled` y el badge "Próximamente")."""
+    `disabled` y el badge "Próximamente").
+
+    Un `CampoProveedor.oculto=True` (issue 293) NUNCA llega a `campos` --
+    sigue en el allowlist SSH (`variables_permitidas()`, derivado
+    directamente del catálogo, no de esta función), pero
+    `admin_proveedores_guardar` lo sincroniza solo con el toggle
+    `habilitado` en vez de pedírselo al admin como campo aparte."""
     resultado = []
     for canal_str, proveedores_catalogo in CATALOGO.items():
         if not proveedores_catalogo:
             continue
         canal_enum = CanalNotificacion(canal_str)
-        config_por_clave = {c.proveedor: c for c in listar_config(db, canal_enum)}
+        config_por_clave = _config_por_clave(db, canal_enum)
         filas = []
         for p in proveedores_catalogo:
             habilitado, orden = habilitado_orden_efectivos(config_por_clave.get(p.clave))
@@ -170,6 +194,7 @@ def _filas_proveedores(db: Session) -> list[dict]:
                     "valor_actual": _valor_actual(campo, os.environ.get(campo.variable_env)),
                 }
                 for campo in p.campos
+                if not campo.oculto
             ]
             filas.append(
                 {
@@ -261,24 +286,48 @@ async def admin_proveedores_guardar(
     # `disabled` en el HTML (un input `disabled` ni se manda al hacer
     # submit), pero un POST armado a mano no debe poder colar un cambio a
     # un proveedor que la pantalla muestra bloqueado.
+    #
+    # `sincroniza_habilitado_con` (issue 293, pedido explícito del cliente:
+    # "el toggle debe hacer las 2 cosas"): además de guardar en BD, si el
+    # proveedor declara una variable de entorno para sincronizar Y su
+    # `habilitado` CAMBIÓ de valor (nunca en cada guardado -- aplicar una
+    # credencial reinicia el contenedor, no hay que pagar ese costo si el
+    # toggle ni se tocó), se agrega a la MISMA lista de `_CambioCredencial`
+    # de más abajo -- una sola llamada a `aplicar_credenciales_proveedor`,
+    # un solo reinicio, para todo lo que cambió en este submit.
+    config_por_clave = {c.proveedor: c for c in listar_config(db, canal_enum)}
+    sincronizaciones: list[_CambioCredencial] = []
     for proveedor in proveedores_catalogo:
         if not proveedor.disponible:
             continue
+        habilitado_anterior, _orden_anterior = habilitado_orden_efectivos(
+            config_por_clave.get(proveedor.clave)
+        )
         habilitado = form.get(f"{proveedor.clave}_habilitado") is not None
         orden_bruto = (form.get(f"{proveedor.clave}_orden") or "").strip()
         orden = int(orden_bruto) if orden_bruto.isdigit() else None
         guardar_habilitado_orden(
             db, canal_enum, proveedor.clave, habilitado, orden, usuario_id=admin.id
         )
+        if proveedor.sincroniza_habilitado_con and habilitado != habilitado_anterior:
+            sincronizaciones.append(
+                _CambioCredencial(
+                    proveedor.clave,
+                    proveedor.sincroniza_habilitado_con,
+                    "true" if habilitado else "false",
+                )
+            )
 
     # Credenciales: solo los campos con contenido nuevo -- vacío = no
-    # cambiar. Una sola lista de `_CambioCredencial`; `cambios`/la auditoría
-    # son vistas derivadas de ella, nunca dos colecciones separadas.
-    credenciales_cambiadas = [
+    # cambiar. Una sola lista de `_CambioCredencial` (arrancando con las
+    # sincronizaciones de arriba); `cambios`/la auditoría son vistas
+    # derivadas de ella, nunca colecciones separadas.
+    credenciales_cambiadas = sincronizaciones + [
         _CambioCredencial(proveedor.clave, campo.variable_env, valor_nuevo)
         for proveedor in proveedores_catalogo
         if proveedor.disponible
         for campo in proveedor.campos
+        if not campo.oculto
         if (valor_nuevo := (form.get(campo.variable_env) or "").strip())
     ]
 
