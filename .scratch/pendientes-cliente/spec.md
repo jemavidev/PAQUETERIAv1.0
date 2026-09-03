@@ -328,3 +328,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `297` — Seguimiento a [[296]]: el catálogo de motivos se reduce de 4 a un solo motivo genérico ("Otro", con texto libre) -- migración `0040_motivos_solo_otro` — **implementado**
 - `298` — Seguimiento a [[297]]: CANCELADO pasa a un solo mensaje por canal (como los demás eventos) -- el catálogo de motivos solo alimenta el picker de `/paquetes`, `{motivo}` resuelve cuál se eligió dentro del único mensaje -- migración `0041_cancelado_una_plantilla` — **implementado**
 - `299` — Seguimiento a [[298]]: se retira la nota "El mensaje de abajo es uno solo..." del modal CANCELADO en `/administracion/notificaciones` — **implementado**
+- `300` — `/residentes` mobile: íconos de Acciones más grandes y distribuidos en toda la columna (la píldora de 3 badges era lo que inflaba Nombre, no el nombre en sí) + bug preexistente de overflow a 320-340px reducido de paso — **implementado**
