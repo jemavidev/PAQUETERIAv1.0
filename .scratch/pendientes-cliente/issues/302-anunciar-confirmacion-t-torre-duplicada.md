@@ -37,6 +37,11 @@ patrón roto.
 
 ## Verificación
 
+- Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run
+  33810514014, tests + deploy success). Sin verificación visual en vivo con
+  un anuncio real ahí (a propósito -- habría creado un Paquete de prueba
+  espurio en el servidor compartido); confiado en la suite local + el
+  mismo código ya corriendo en producción.
 - Regression test agregado a la suite real (no un test descartable):
   `test_confirmacion_muestra_apartamento_cuando_el_anunciante_ya_tiene`
   (`tests/web/test_announce.py`) -- reproducido en rojo antes del fix

@@ -7,7 +7,7 @@ que todo enlace de WhatsApp use `https://web.whatsapp.com/send?phone=...&text=..
 de WhatsApp instalada en Chrome capture la navegación en vez de abrir una
 pestaña del navegador con la web intermedia.
 
-**Status:** implementado
+**Status:** verificado
 
 ## Conflicto real encontrado (antes de implementar)
 
@@ -68,5 +68,6 @@ aparte (qué texto tendría sentido sin contexto de paquete), no incluida acá.
   - Cero ocurrencias de `target="_blank"` en enlaces de WhatsApp de
     `/paquetes` y `/residentes`.
 
-Falta el paso final: confirmar en `test.papyrus.com.co` (solo cuando se pida
-el deploy explícitamente).
+Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run
+33810514014, tests + deploy success) y confirmado en vivo: el enlace público
+del footer (`/anunciar`) ya resuelve a `web.whatsapp.com/send?phone=...`.
