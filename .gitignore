@@ -58,6 +58,19 @@ CODE/**/.env
 .env.test.local
 
 # ========================================
+# Credenciales DynamiaERP expuestas en texto plano
+# (sacadas del tracking el 2026-09-03 tras detectarlas commiteadas)
+# ========================================
+DYNAMIA API/
+CODE/docs/DYNAMIA_CREDENCIALES.md
+CODE/docs/DYNAMIA_DATOS_CUENTA.md
+CODE/docs/DYNAMIA_INVENTARIO_GUIA.md
+CODE/docs/DYNAMIA_INVENTARIO_RESUMEN.md
+CODE/docs/DYNAMIA_NOTAS_REFERENCIA.md
+CODE/docs/DYNAMIA_RESUMEN_COMPLETO.md
+CODE/docs/README_DYNAMIA.md
+
+# ========================================
 # IDE & Editor
 # ========================================
 .vscode/
