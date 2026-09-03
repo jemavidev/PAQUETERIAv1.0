@@ -627,12 +627,14 @@ def test_entregar_sin_sesion_redirige_a_login(client):
 # Cancelar (ticket 03)
 # --------------------------------------------------------------------------- #
 def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):
+    # El catálogo hoy solo tiene "Otro" (`.scratch/motivos-cancelacion-
+    # catalogo`, reducido de 4 a 1 motivo genérico en vivo el 2026-09-03).
     staff = _login_staff(client)
     p = _anunciar(client)
 
     r = client.post(
         f"/paquetes/{p.id}/cancelar",
-        data={"motivo": "Anuncio erróneo"},
+        data={"motivo": "Otro"},
         follow_redirects=False,
     )
     assert r.status_code == 303
@@ -641,7 +643,7 @@ def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):
     p2 = client.db.get(Paquete, p.id)
     assert p2.estado == EstadoPaquete.CANCELADO
     assert p2.cancelled_by_usuario_id == staff.id
-    assert p2.cancel_reason == "Anuncio erróneo"
+    assert p2.cancel_reason == "Otro"
 
 
 def test_cancelar_desde_recibido(client):
@@ -651,7 +653,7 @@ def test_cancelar_desde_recibido(client):
 
     r = client.post(
         f"/paquetes/{p.id}/cancelar",
-        data={"motivo": "Devuelto al transportador"},
+        data={"motivo": "Otro"},
         follow_redirects=False,
     )
     assert r.status_code == 303
@@ -4340,8 +4342,9 @@ def test_modal_cancelar_muestra_motivos_como_lista_vertical(client):
     assert 'role="radiogroup"' in modal_cancelar
     assert "space-y-2" in modal_cancelar  # apilado vertical, no fila envuelta
     assert "flex flex-wrap gap-2" not in modal_cancelar  # ya no es grupo_chips
-    for texto in ("Anuncio erróneo", "Devuelto al transportador", "No reclamado", "Otro"):
-        assert texto in modal_cancelar
+    # El catálogo hoy solo tiene "Otro" (`.scratch/motivos-cancelacion-
+    # catalogo`, reducido de 4 a 1 motivo genérico en vivo el 2026-09-03).
+    assert "Otro" in modal_cancelar
 
 
 def test_modal_cancelar_boton_dice_cancelar_y_no_tiene_regresar(client):

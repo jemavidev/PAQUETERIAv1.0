@@ -3,7 +3,6 @@
 {% from "components/_botones.html" import boton %}
 {% from "components/_toast.html" import toast %}
 {% from "components/_modales.html" import modal, modal_confirmacion %}
-{% from "components/_tablas.html" import accion_icono %}
 {% block title %}Plantillas de notificación — PAQUETEX{% endblock %}
 {% block content %}
 {#- Pedido en vivo 2026-08-26 (.scratch/plantillas-notificacion-multicanal,
@@ -24,36 +23,15 @@
   {% if motivo_eliminado %}{{ toast('Motivo borrado.', variant='success') }}{% endif %}
 
   {#- Catálogo editable de motivos de cancelación (`.scratch/motivos-
-     cancelacion-catalogo`) -- CRUD simple embebido en esta misma pantalla
-     (decisión explícita del cliente: sin pantalla propia), porque el único
-     consumidor de este catálogo además del picker de `/paquetes` son las
-     filas CANCELADO de acá abajo. Solo la etiqueta importa -- sin código
-     interno, sin activo/inactivo, sin orden manual (siempre orden de
-     creación). El ícono "Borrar" se OMITE (no se deshabilita) cuando solo
-     queda un motivo -- cancelar un paquete sigue exigiendo un motivo
-     obligatorio, así que el picker nunca puede quedar sin ninguna opción;
-     evita un viaje redondo al servidor solo para recibir el error
-     esperado. #}
-  <div class="rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm">
-    <div class="flex items-center justify-between gap-3 mb-3">
-      <h2 class="text-base font-bold text-slate-900">Motivos de cancelación</h2>
-      {{ boton('Agregar', size='sm', extra_attrs='data-open="modal-motivo-crear"') }}
-    </div>
-    <ul class="divide-y divide-slate-100">
-      {% for m in motivos %}
-      <li class="flex items-center justify-between gap-3 py-2">
-        <span class="text-sm text-slate-900 break-words">{{ m.etiqueta }}</span>
-        <div class="flex items-center gap-1.5 shrink-0">
-          {{ accion_icono('editar', 'Editar', extra_attrs='data-open="modal-motivo-editar-' ~ m.id ~ '"') }}
-          {%- if motivos|length > 1 %}
-          {{ accion_icono('eliminar', 'Borrar', extra_attrs='data-open="modal-motivo-eliminar-' ~ m.id ~ '"') }}
-          {%- endif %}
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-
+     cancelacion-catalogo`) -- unificado dentro del mismo módulo que ya
+     edita las plantillas de CANCELADO (conversación en vivo 2026-09-03,
+     pedido explícito del cliente: antes eran dos secciones desconectadas
+     de esta pantalla -- una para renombrar/borrar el motivo, otra para su
+     contenido). Renombrar/borrar viven ahora DENTRO del modal grande de
+     cada fila CANCELADO (ver el loop principal más abajo); acá arriba solo
+     queda el modal de "Agregar motivo" (no hay todavía una fila/modal a la
+     que atarlo -- nace al crearlo) y su botón disparador, como última fila
+     de la lista compacta. #}
   {% call modal('motivo-crear', 'Agregar motivo', abierto=(motivo_crear_error|default(False))) %}
   <form method="post" action="/administracion/notificaciones/motivos">
     {{ input_texto('Motivo', name='etiqueta', value=motivo_crear_valor|default(''),
@@ -62,24 +40,6 @@
     {{ boton('Crear', type='submit', size='sm') }}
   </form>
   {% endcall %}
-
-  {% for m in motivos %}
-  {% call modal('motivo-editar-' ~ m.id, 'Editar motivo',
-                 abierto=(motivo_editar_error_id|default(none) == m.id|string)) %}
-  <form method="post" action="/administracion/notificaciones/motivos/{{ m.id }}/editar">
-    {{ input_texto('Motivo', name='etiqueta', value=m.etiqueta,
-                    error=(error if motivo_editar_error_id|default(none) == m.id|string else none),
-                    extra_attrs='maxlength="40"') }}
-    {{ boton('Guardar', type='submit', size='sm') }}
-  </form>
-  {% endcall %}
-
-  {% call modal_confirmacion('motivo-eliminar-' ~ m.id, 'Borrar motivo',
-                              '¿Borrar "' ~ m.etiqueta ~ '"? Esta acción no se puede deshacer.',
-                              'Borrar', action='/administracion/notificaciones/motivos/' ~ m.id ~ '/eliminar',
-                              variant='danger') %}
-  {% endcall %}
-  {% endfor %}
 
   {#- Clases de Tailwind ESCRITAS LITERAL (no concatenadas en Jinja): el
      escaneo de contenido de Tailwind lee este archivo como texto plano y
@@ -135,6 +95,14 @@
     <svg class="h-5 w-5 text-slate-400 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
   </button>
   {% endfor %}
+  {#- Última fila del listado CANCELADO -- crea el motivo y (al guardar
+     con éxito) abre directo su modal ya listo para personalizar las 3
+     plantillas, ver `es_fila_motivo_afectada` más abajo. #}
+  <button type="button" data-open="modal-motivo-crear"
+          class="w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-4 text-sm font-medium text-blue-800 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2">
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg>
+    Agregar motivo de cancelación
+  </button>
   </div>
 
   {#- Pedido en vivo (issue 202, heredado): si hay una fila con
@@ -146,6 +114,12 @@
      misma respuesta (cada uno es el resultado de un POST distinto).
      `prueba_error`/`prueba_ok` (ticket 02, .scratch/notificaciones-enviar-
      prueba) siguen el mismo criterio que ya usaban error/guardado. -#}
+  {#- Cancelar un paquete sigue exigiendo un motivo obligatorio -- el botón
+     "Borrar este motivo" (dentro de cada modal CANCELADO, más abajo) se
+     OMITE cuando solo queda uno, para no ofrecer una acción que el
+     servidor va a rechazar igual (`motivo_cancelacion_service.
+     eliminar_motivo`). -#}
+  {%- set total_motivos = filas|selectattr('motivo_id')|list|length -%}
   {% for fila in filas %}
   {%- set fila_id = loop.index -%}
   {%- set motivo_fila = fila.motivo or none -%}
@@ -153,11 +127,25 @@
   {%- set es_fila_guardada = (guardado_evento|default(none)) == fila.evento.value and (guardado_motivo|default(none)) == motivo_fila -%}
   {%- set es_fila_prueba_error = (prueba_error_evento|default(none)) == fila.evento.value and (prueba_error_motivo|default(none)) == motivo_fila -%}
   {%- set es_fila_prueba_ok = (prueba_ok_evento|default(none)) == fila.evento.value and (prueba_ok_motivo|default(none)) == motivo_fila -%}
+  {#- Unificación del catálogo dentro de este mismo modal (conversación en
+     vivo 2026-09-03, `.scratch/motivos-cancelacion-catalogo`): crear/editar/
+     borrar el motivo se identifica por `motivo_id` (no por texto -- más
+     robusto, y ya lo tenemos disponible en cada fila CANCELADO), así que
+     reabre este modal grande sin importar si el cambio vino del botón
+     "Agregar" (última fila de la lista) o del formulario de renombrar que
+     vive más abajo, dentro del propio modal. -#}
+  {%- set fila_id_motivo = fila.motivo_id|string if fila.motivo_id else none -%}
+  {%- set es_fila_motivo_afectada = fila_id_motivo is not none and fila_id_motivo in [
+        motivo_editar_error_id|default(none),
+        motivo_editado_id|default(none),
+        motivo_creado_id|default(none),
+        motivo_eliminar_error_id|default(none),
+      ] -%}
   {#- Autofocus de texto/asunto SOLO en aperturas de Guardar -- una
      reapertura por prueba enfoca el campo de destino en su lugar (ver
      `fila_con_error_prueba` más abajo), nunca el textarea. -#}
   {%- set fila_abierta_guardar = es_fila_error or es_fila_guardada -%}
-  {%- set fila_abierta = fila_abierta_guardar or es_fila_prueba_error or es_fila_prueba_ok -%}
+  {%- set fila_abierta = fila_abierta_guardar or es_fila_prueba_error or es_fila_prueba_ok or es_fila_motivo_afectada -%}
   {%- if es_fila_error -%}
     {%- set canal_activo = error_canal|default('SMS') -%}
   {%- elif es_fila_guardada -%}
@@ -177,6 +165,29 @@
   {%- set titulo_fila = fila.evento.value ~ ((' · ' ~ fila.motivo) if fila.motivo else '') -%}
 
   {% call modal('notif-' ~ fila_id, titulo_fila, ancho='lg', abierto=fila_abierta) %}
+
+    {%- if fila.motivo_id %}
+    {#- Renombrar/borrar el motivo -- unificado dentro del mismo modal que
+       ya edita sus 3 plantillas (conversación en vivo 2026-09-03, pedido
+       explícito del cliente: antes vivía en una sección aparte de la
+       pantalla, desconectada de esto). -#}
+    <div class="mb-4 pb-4 border-b border-gray-100">
+      <form method="post" action="/administracion/notificaciones/motivos/{{ fila.motivo_id }}/editar" class="flex items-end gap-2">
+        <div class="flex-1">
+          {{ input_texto('Motivo', name='etiqueta', value=fila.motivo,
+                          error=(error if motivo_editar_error_id|default(none) == fila_id_motivo else none),
+                          extra_attrs='maxlength="40"') }}
+        </div>
+        {{ boton('Renombrar', type='submit', size='sm') }}
+      </form>
+      {%- if total_motivos > 1 %}
+      <button type="button" data-open="modal-motivo-eliminar-{{ fila.motivo_id }}"
+              class="mt-2 text-xs font-medium text-red-600 hover:text-red-700 focus-visible:outline-none focus-visible:underline">
+        Borrar este motivo
+      </button>
+      {%- endif %}
+    </div>
+    {%- endif %}
 
     {#- `sr-only` (no `.hidden`/`display:none`, mismo criterio que
        `grupo_chips` en `components/_modales.html`): un radio real, oculto
@@ -255,6 +266,14 @@
     </div>
     {%- endfor %}
   {% endcall %}
+
+  {%- if fila.motivo_id and total_motivos > 1 %}
+  {% call modal_confirmacion('motivo-eliminar-' ~ fila.motivo_id, 'Borrar motivo',
+                              '¿Borrar "' ~ fila.motivo ~ '"? Esta acción no se puede deshacer.',
+                              'Borrar', action='/administracion/notificaciones/motivos/' ~ fila.motivo_id ~ '/eliminar',
+                              variant='danger') %}
+  {% endcall %}
+  {%- endif %}
   {% endfor %}
 </div>
 <script>

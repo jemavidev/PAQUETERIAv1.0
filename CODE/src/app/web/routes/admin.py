@@ -320,6 +320,7 @@ def _filas_plantillas(db: Session):
         {
             "evento": e,
             "motivo": None,
+            "motivo_id": None,
             "canales": _canales_de(db, e, None),
         }
         for e in _EVENTOS_SIN_MOTIVO
@@ -329,6 +330,11 @@ def _filas_plantillas(db: Session):
             {
                 "evento": EstadoPaquete.CANCELADO,
                 "motivo": m.etiqueta,
+                # Identifica la fila para el CRUD del catálogo unificado
+                # dentro de su propio modal (renombrar/borrar) -- ver
+                # `admin/notificaciones.html`, `.scratch/motivos-
+                # cancelacion-catalogo`, conversación en vivo 2026-09-03.
+                "motivo_id": m.id,
                 "canales": _canales_de(db, EstadoPaquete.CANCELADO, m.etiqueta),
             }
         )
@@ -345,7 +351,6 @@ def admin_notificaciones_form(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
         },
     )
 
@@ -368,7 +373,6 @@ def admin_notificaciones_guardar(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
-                "motivos": listar_motivos(db),
                 "error": mensaje,
                 # Identifica CUÁL de las N filas × 3 canales (cada uno su
                 # propio <form>) falló, para marcar solo esa pestaña/textarea
@@ -427,7 +431,6 @@ def admin_notificaciones_guardar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
             "guardado": True,
             "guardado_evento": evento,
             "guardado_motivo": motivo or None,
@@ -468,7 +471,6 @@ def admin_notificaciones_probar(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
-                "motivos": listar_motivos(db),
                 "error": mensaje,
                 "prueba_error_evento": evento if marcar_fila else None,
                 "prueba_error_motivo": (motivo or None) if marcar_fila else None,
@@ -530,7 +532,6 @@ def admin_notificaciones_probar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
             "prueba_ok": True,
             "prueba_destino": destino_limpio,
             "prueba_ok_evento": evento,
@@ -556,7 +557,6 @@ def admin_motivos_crear(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
-                "motivos": listar_motivos(db),
                 "error": str(exc),
                 # Reabre el modal "Agregar motivo" con lo ya tecleado --
                 # mismo criterio que `email`/`nombre` en `admin_staff_submit`.
@@ -572,8 +572,12 @@ def admin_motivos_crear(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
             "motivo_creado": motivo.etiqueta,
+            # Abre directo el modal grande del motivo recién creado --
+            # unificado (ver docstring del módulo, `.scratch/motivos-
+            # cancelacion-catalogo`): ya queda listo para personalizar sus
+            # 3 plantillas de una vez, sin un paso intermedio.
+            "motivo_creado_id": str(motivo.id),
         },
     )
 
@@ -598,11 +602,10 @@ def admin_motivos_editar(
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
-                "motivos": listar_motivos(db),
                 "error": str(exc),
-                # Identifica CUÁL motivo falló, para reabrir su propio modal
-                # "Editar motivo" (mismo criterio que `error_evento`/
-                # `error_canal` en `admin_notificaciones_guardar`).
+                # Identifica CUÁL motivo falló, para reabrir el modal grande
+                # de esa fila CANCELADO (el formulario de renombrar vive
+                # DENTRO de él -- unificado, ver docstring del módulo).
                 "motivo_editar_error_id": motivo_id,
             },
             status_code=400,
@@ -614,8 +617,8 @@ def admin_motivos_editar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
             "motivo_editado": motivo.etiqueta,
+            "motivo_editado_id": str(motivo.id),
         },
     )
 
@@ -633,18 +636,21 @@ def admin_motivos_eliminar(
     try:
         eliminar_motivo(db, mid)
     except ValueError as exc:
-        # Sin modal que reabrir: `modal_confirmacion` (a diferencia de
-        # `modal`) no soporta `abierto` -- mismo criterio que el resto de la
-        # app ya acepta para esa confirmación (ej. "Cancelar paquete" en
-        # `packages.py`), el toast de arriba alcanza para explicar por qué.
+        # El botón "Borrar este motivo" vive DENTRO del modal grande de esa
+        # fila (unificado) -- reabrirlo deja al admin exactamente donde
+        # estaba, con el error visible arriba. El sub-modal de confirmación
+        # en sí (`modal_confirmacion`, a diferencia de `modal`) no soporta
+        # `abierto` y no se reabre solo -- mismo límite ya aceptado en el
+        # resto de la app (ej. "Cancelar paquete" en `packages.py`); el
+        # modal grande + el toast de arriba alcanzan para explicar qué pasó.
         return templates.TemplateResponse(
             "admin/notificaciones.html",
             {
                 "request": request,
                 "admin": admin,
                 "filas": _filas_plantillas(db),
-                "motivos": listar_motivos(db),
                 "error": str(exc),
+                "motivo_eliminar_error_id": motivo_id,
             },
             status_code=400,
         )
@@ -655,7 +661,6 @@ def admin_motivos_eliminar(
             "request": request,
             "admin": admin,
             "filas": _filas_plantillas(db),
-            "motivos": listar_motivos(db),
             "motivo_eliminado": True,
         },
     )

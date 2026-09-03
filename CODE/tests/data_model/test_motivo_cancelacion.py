@@ -4,10 +4,13 @@ Seam A — Catálogo editable de motivos de cancelación.
 
 Comportamiento observable: crear/editar/borrar un motivo, las validaciones
 (vacío, duplicado exacto, no borrar el último), y que el listado respete el
-orden de creación. La migración `0039_motivos_cancelacion` siembra 4 filas
-("Anuncio erróneo", "Devuelto al transportador", "No reclamado", "Otro") --
-`db_session` arranca con esas ya presentes, así que los tests no asumen un
-catálogo vacío.
+orden de creación. La migración `0039_motivos_cancelacion` sembró 4 filas
+("Anuncio erróneo", "Devuelto al transportador", "No reclamado", "Otro"),
+reducidas a solo "Otro" por `0040_motivos_solo_otro` (pedido explícito del
+cliente en vivo, 2026-09-03: un motivo genérico alcanza) -- `db_session`
+arranca con "Otro" ya presente, así que los tests no asumen un catálogo
+vacío, pero tampoco un tamaño fijo (ver `crear_motivo`/`eliminar_motivo` de
+más abajo, que solo razonan en relativo a lo que ya exista).
 """
 
 import pytest

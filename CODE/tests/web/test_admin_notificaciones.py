@@ -158,16 +158,16 @@ def test_notificar_anunciado_usa_la_misma_plantilla_sin_importar_quien_anuncio(c
 # `.scratch/plantillas-notificacion-multicanal`, ticket 02 — pestañas
 # SMS/Email/WhatsApp por evento.
 # --------------------------------------------------------------------------- #
-def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_7_filas(client):
-    # 7 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x4 (un motivo del
-    # catálogo editable cada una, `.scratch/motivos-cancelacion-catalogo`) --
-    # ANUNCIADO dejó de distinguir Cliente/Staff en issue 202 (.scratch/
-    # pendientes-cliente).
+def test_pantalla_muestra_3_pestanas_por_cada_una_de_las_4_filas(client):
+    # 4 filas: ANUNCIADO + RECIBIDO + ENTREGADO + CANCELADO x1 (el catálogo
+    # editable nace con un solo motivo genérico, "Otro" -- reducido de 4 a 1
+    # en vivo el 2026-09-03, `.scratch/motivos-cancelacion-catalogo`; ANUNCIADO
+    # dejó de distinguir Cliente/Staff en issue 202, .scratch/pendientes-cliente).
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
     assert r.status_code == 200
     for canal in ("SMS", "EMAIL", "WHATSAPP"):
-        assert r.text.count(f'data-canal="{canal}"') == 7
+        assert r.text.count(f'data-canal="{canal}"') == 4
 
 
 def test_guardar_email_no_afecta_el_sms_del_mismo_evento(client):
@@ -237,10 +237,10 @@ def test_canal_invalido_rechaza(client):
 def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    assert r.text.count('aria-label="Asunto"') == 7
+    assert r.text.count('aria-label="Asunto"') == 4
     # "Variables disponibles" solo se muestra en SMS/WhatsApp -- 2 de los 3
-    # canales, en cada una de las 7 filas.
-    assert r.text.count("Variables disponibles") == 14
+    # canales, en cada una de las 4 filas.
+    assert r.text.count("Variables disponibles") == 8
 
 
 # --------------------------------------------------------------------------- #
@@ -252,7 +252,7 @@ def test_pestana_email_tiene_asunto_y_no_la_lista_de_variables(client):
 # --------------------------------------------------------------------------- #
 def _tag_modal_de(html_text, titulo):
     """El `<div id="modal-notif-N" ...>` cuyo `<h2>` de título contiene
-    `titulo` (ej. 'RECIBIDO' o 'CANCELADO · No reclamado'). El mismo texto
+    `titulo` (ej. 'RECIBIDO' o 'CANCELADO · Otro'). El mismo texto
     aparece antes en el botón de la lista compacta -- se toma la ÚLTIMA
     ocurrencia, que es el `<h2>` del modal (el template emite la lista de
     botones primero y los modales después, igual que admin/staff.html)."""
@@ -480,12 +480,12 @@ def test_probar_exito_abre_su_propio_modal(client, monkeypatch):
 
 def test_boton_deshabilitado_cuando_ningun_proveedor_esta_configurado(client):
     # Entorno de test: sin credenciales de ningún proveedor -- SMS y Email
-    # aparecen deshabilitados en las 7 filas (mismo patrón que reutilizará
+    # aparecen deshabilitados en las 4 filas (mismo patrón que reutilizará
     # el botón de WhatsApp en el ticket 03).
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    assert r.text.count("SMS no está configurado todavía.") == 7
-    assert r.text.count("Email no está configurado todavía.") == 7
+    assert r.text.count("SMS no está configurado todavía.") == 4
+    assert r.text.count("Email no está configurado todavía.") == 4
 
 
 def test_boton_habilitado_cuando_el_canal_esta_configurado(client, monkeypatch):
@@ -494,7 +494,7 @@ def test_boton_habilitado_cuando_el_canal_esta_configurado(client, monkeypatch):
     r = client.get("/administracion/notificaciones")
     assert "SMS no está configurado todavía." not in r.text
     # Email sigue sin proveedor -- solo SMS se forzó.
-    assert r.text.count("Email no está configurado todavía.") == 7
+    assert r.text.count("Email no está configurado todavía.") == 4
 
 
 def test_destino_preellenado_con_telefono_y_email_del_admin(client):
@@ -521,10 +521,10 @@ def test_destino_preellenado_con_telefono_y_email_del_admin(client):
 def test_whatsapp_muestra_boton_de_prueba_deshabilitado_con_nota(client):
     _login_admin(client)
     r = client.get("/administracion/notificaciones")
-    # 7 filas × 3 canales (SMS/Email/WhatsApp) ahora tienen su propio campo
-    # de destino -- antes del ticket 03 solo SMS/Email lo tenían (14).
-    assert r.text.count('name="destino"') == 21
-    assert r.text.count("WhatsApp no está configurado todavía.") == 7
+    # 4 filas × 3 canales (SMS/Email/WhatsApp) tienen su propio campo de
+    # destino.
+    assert r.text.count('name="destino"') == 12
+    assert r.text.count("WhatsApp no está configurado todavía.") == 4
 
 
 def test_whatsapp_destino_preellenado_con_el_whatsapp_del_admin(client):
