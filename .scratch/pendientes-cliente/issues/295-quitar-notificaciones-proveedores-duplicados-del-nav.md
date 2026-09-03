@@ -4,7 +4,7 @@
 "ya 'Notificaciones y Proveedores' existen en la clase 'site-actions', lo
 que necesito es que los remuevas de 'site-brand-group'"
 
-**Status:** implementado
+**Status:** verificado
 
 ## Contexto — revierte parte de [[190]]
 
@@ -38,4 +38,5 @@ el menú de cuenta (`bloque_staff`), sin cambios ahí.
   -- confirma que ADMIN ya NO ve ninguno de los dos en `.site-nav`, pero sí
   los sigue viendo en algún lugar de la página (el menú de cuenta).
 - Suite `tests/web/test_layout.py`: 27 tests, todos pasan.
-- Pendiente: deploy a test.papyrus.com.co.
+- Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run 33803818157, tests +
+  deploy success).

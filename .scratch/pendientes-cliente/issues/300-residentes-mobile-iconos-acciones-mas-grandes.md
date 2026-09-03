@@ -6,7 +6,7 @@ los icono esten distribuido en todo el espacio de esa columna ya que veo que el 
 sobra es entre un 10 a 15 % del total de vista total, analiza y dime que puedes hacer para que
 estos iconos se vean mas grande y que no se afecte la columna de Nombre"
 
-**Status:** implementado
+**Status:** verificado
 
 ## Análisis
 
@@ -65,5 +65,5 @@ usuario admin real, datos reales incluyendo el caso de 3 píldoras "JESUS VILLAL
 - Desktop verificado sin cambios (screenshot 1280px, íconos agrupados a la izquierda, 32px fijo,
   igual que siempre).
 
-Falta el paso final: confirmar en `test.papyrus.com.co` tras el próximo deploy (solo se hace
-cuando se pida explícitamente, ver `deploy-solo-cuando-se-pide`).
+Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run 33803818157, tests +
+deploy success) y confirmado en el CSS servido en producción (`7.8vw,2.15rem` presente).
