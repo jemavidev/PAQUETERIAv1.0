@@ -71,3 +71,11 @@ aparte (qué texto tendría sentido sin contexto de paquete), no incluida acá.
 Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run
 33810514014, tests + deploy success) y confirmado en vivo: el enlace público
 del footer (`/anunciar`) ya resuelve a `web.whatsapp.com/send?phone=...`.
+
+**Nota (seguimiento [[304]]):** el cliente reportó en vivo, ya desplegado,
+que `web.whatsapp.com` no abría la app en ningún dispositivo probado (ni
+Android nativo, ni Chrome de escritorio sin la configuración manual de 3
+pasos) -- la premisa del documento original resultó ser la inversa de la
+realidad. El dominio del camino de teléfono se revirtió a `wa.me` en [[304]];
+el resto de este issue (`target="_blank"` retirado, dominio de username sin
+tocar) sigue vigente sin cambios.

@@ -332,3 +332,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `301` — Enlaces de WhatsApp: `web.whatsapp.com/send?phone=` en vez de `wa.me` para teléfono (usuario de WhatsApp real -- alfanumérico, no teléfono -- se queda en `wa.me`, único mecanismo que soporta), sin `target="_blank"` en ninguno de los 6 enlaces — **verificado**
 - `302` — `/anunciar` confirmación: "T TORRE 2" duplicaba el prefijo (mismo bug que [[152]], call site nuevo sin `torre_sin_prefijo`) — **implementado**
 - `303` — Post/Redirect/Get en `/anunciar`, `/announce` y `/administracion/personal` -- recargar la página tras un POST exitoso reenviaba el formulario y duplicaba lo creado (Paquete, Paquete, Usuario respectivamente) — **implementado**
+- `304` — Revierte parte de [[301]]: `web.whatsapp.com` no abría la app en ningún dispositivo probado (Android nativo, Chrome sin configurar) -- dominio de teléfono vuelve a `wa.me` — **implementado**
