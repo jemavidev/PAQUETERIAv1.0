@@ -330,3 +330,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `299` — Seguimiento a [[298]]: se retira la nota "El mensaje de abajo es uno solo..." del modal CANCELADO en `/administracion/notificaciones` — **implementado**
 - `300` — `/residentes` mobile: íconos de Acciones más grandes y distribuidos en toda la columna (la píldora de 3 badges era lo que inflaba Nombre, no el nombre en sí) + bug preexistente de overflow a 320-340px reducido de paso — **verificado**
 - `301` — Enlaces de WhatsApp: `web.whatsapp.com/send?phone=` en vez de `wa.me` para teléfono (usuario de WhatsApp real -- alfanumérico, no teléfono -- se queda en `wa.me`, único mecanismo que soporta), sin `target="_blank"` en ninguno de los 6 enlaces — **implementado**
+- `302` — `/anunciar` confirmación: "T TORRE 2" duplicaba el prefijo (mismo bug que [[152]], call site nuevo sin `torre_sin_prefijo`) — **implementado**
