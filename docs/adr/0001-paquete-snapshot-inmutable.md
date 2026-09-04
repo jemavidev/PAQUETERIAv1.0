@@ -39,3 +39,29 @@ esta excepción, cada una con su propio guard de estado acotado y el mismo rastr
    "Corregir destinatario"). `ENTREGADO`/`CANCELADO` siguen bloqueados. Comparte las mismas columnas
    de auditoría que `corregir_destinatario` — el esquema no distingue cuál de las dos correcciones
    ocurrió.
+3. **`paquetes_hermanos_confirmados` + `aplicar_snapshot_de_persona`** (`paquete_sincronizacion_
+   service.py`, 2026-09; `sincronizar_snapshot_a_hermanos` las encadena en un solo paso para
+   callers seguros, ver su docstring) — caso real reportado en vivo ("TOMAS LIBANO"): varios
+   Paquetes ANUNCIADO/RECIBIDO del mismo destinatario pueden divergir en apartamento/teléfono/
+   nombre cuando una corrección (`corregir_apartamento`, o un cambio de datos en `/residentes`)
+   solo toca UNO de ellos. Copia `recipient_name`/`recipient_phone`/la terna de apartamento
+   (`Persona.apartamento_actual_id`) a los paquetes "hermanos" — mismo Guard: `ESTADOS_
+   CORREGIBLES`. Identidad restringida a destinatario ya CONFIRMADO a esa Persona ESPECÍFICA
+   (`persona_confirmada_del_destinatario`, nunca el match heurístico de teléfono/nombre que usa la
+   UI para sugerencias, ni "confirmado a cualquier candidato real" -- ver bug real documentado en
+   el docstring de `paquetes_hermanos_confirmados`: un Anunciante que anuncia para varios
+   residentes reales distintos de la misma unidad NO debe contaminar el paquete de uno con los
+   datos del otro) — evita mezclar datos de dos Personas reales distintas (issue 163, "teléfono
+   prestado" del Principal).
+
+   Partida en 2 funciones (resolver / aplicar) en vez de una sola, a propósito: la confirmación
+   compara el snapshot YA CONGELADO de cada Paquete contra el estado ACTUAL de la Persona/su
+   padrón de Ocupante — si se resolviera DESPUÉS de mutar ese estado, el propio cambio invalidaría
+   la confirmación de los paquetes que justo necesitan actualizarse (`persona_service.
+   update_datos_personales` ya propaga un renombre a `Ocupante.nombre` en cascada, issue 189, así
+   que el nombre viejo del Paquete deja de "coincidir" apenas se resuelve tarde). Los 3 triggers de
+   `/paquetes` (que corrigen el PAQUETE, nunca a la Persona) pueden usar el atajo de un solo paso;
+   los 3 de `/residentes` (que sí mutan a la Persona) resuelven ANTES de su propio cambio y aplican
+   DESPUÉS. Invocada explícitamente desde las rutas de ambas vistas (nunca desde dentro de
+   `ocupante_service`/`persona_service`, que siguen sin saber que `Paquete` existe). Comparte las
+   mismas columnas de auditoría que las dos excepciones anteriores.
