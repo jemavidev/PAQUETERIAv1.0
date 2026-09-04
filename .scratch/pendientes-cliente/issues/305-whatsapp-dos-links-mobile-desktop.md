@@ -4,7 +4,7 @@
 no en Chrome de escritorio donde tiene WhatsApp instalado como PWA -- "de que forma puedes dejar
 que existan 2 links uno para mobiles y otro para el desktop?"
 
-**Status:** implementado
+**Status:** verificado
 
 ## Contexto -- por qué hacen falta 2 links (no 1)
 
@@ -66,5 +66,7 @@ instalar la PWA una vez), mientras que residentes -- la mayoría -- usan celular
   residente solo-teléfono (`wa.me/573008103849` y `web.whatsapp.com/send?phone=573008103849`);
   los residentes con username siguen solo en `wa.me/<user>`.
 
-Pendiente: confirmar en `test.papyrus.com.co` tras el deploy, y que el cliente confirme en su
-propio escritorio con la PWA instalada que ahora sí abre la ventana de la app.
+Desplegado a `test.papyrus.com.co` 2026-09-03 (CI `jemavidev/PaqueteX` run 33826552096, tests +
+deploy success) y confirmado en vivo: el footer público (`/anunciar`) ya sirve los 2 links --
+`wa.me/573334004007` y `web.whatsapp.com/send?phone=573334004007`. Pendiente: que el cliente
+confirme en su propio escritorio con la PWA instalada que ahora sí abre la ventana de la app.
