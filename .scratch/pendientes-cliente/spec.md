@@ -333,3 +333,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `302` — `/anunciar` confirmación: "T TORRE 2" duplicaba el prefijo (mismo bug que [[152]], call site nuevo sin `torre_sin_prefijo`) — **implementado**
 - `303` — Post/Redirect/Get en `/anunciar`, `/announce` y `/administracion/personal` -- recargar la página tras un POST exitoso reenviaba el formulario y duplicaba lo creado (Paquete, Paquete, Usuario respectivamente) — **verificado**
 - `304` — Revierte parte de [[301]]: `web.whatsapp.com` no abría la app en ningún dispositivo probado (Android nativo, Chrome sin configurar) -- dominio de teléfono vuelve a `wa.me` — **verificado**
+- `305` — Enlaces de WhatsApp: 2 links coexisten en el HTML (mobile `wa.me` / desktop `web.whatsapp.com` para PWA de Chrome), CSS decide cuál se ve según breakpoint, sin JS — **implementado**
