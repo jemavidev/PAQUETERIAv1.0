@@ -3,12 +3,18 @@
 Ruta `/anunciar` — anunciar un paquete (vista pública, sin privilegios).
 
 Simplificada (Grupo 1 de `ajustes-post-referencia-funcional/REQUERIMIENTOS.md`):
-el cliente solo declara Nombre + Teléfono + Términos y Condiciones — no elige
-"a nombre de quién llega". El nombre declarado se guarda tal cual
-(`Destinatario.declarado_por_cliente`); si no coincide con el nombre ya
-registrado del Anunciante, el staff lo verá señalado en `/paquetes` y lo
-resuelve desde `/announce` (rebanada aparte). Sin captura de guía del
-transportador (la captura el staff al recibir).
+Teléfono + Términos y Condiciones son SIEMPRE obligatorios; el cliente no
+elige "a nombre de quién llega". El campo Nombre es CONDICIONAL
+(`.scratch/anunciar-atajo-telefono-conocido`, pedido explícito del cliente):
+si el Teléfono ya tiene al menos 1 paquete `ENTREGADO` histórico ("cliente
+conocido" -- reusa `es_primera_entrega_a_telefono`, issue 314, negada), se
+anuncia directo con `Destinatario.yo_mismo()` (nombre YA REGISTRADO), sin
+pedirlo nunca. Si no es conocido, el campo Nombre aparece (`mostrar_nombre`
+en el contexto de la plantilla) y el flujo sigue igual que siempre --
+`Destinatario.declarado_por_cliente(nombre)`, guardado tal cual; si no
+coincide con el nombre ya registrado del Anunciante, el staff lo verá
+señalado en `/paquetes` y lo resuelve desde `/announce` (rebanada aparte).
+Sin captura de guía del transportador (la captura el staff al recibir).
 
 Límite de anuncios activos por Teléfono (`.scratch/pendientes-cliente`,
 grillado con el cliente): evita que un error o abuso dispare una ráfaga de
@@ -21,6 +27,7 @@ activos_de_telefono` (cuenta SOLO `ANUNCIADO`, la cola real):
     códigos de acceso de esos anuncios existentes, solo el conteo.
   - >= MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO: tope duro, no hay confirmación
     que lo supere -- mismo espíritu que `MAX_OCUPANTES_ACTIVOS`.
+  Aplica igual para el atajo de cliente conocido y para el flujo completo.
 """
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
@@ -35,6 +42,7 @@ from app.domain.paquete_service import (
     Destinatario,
     announce,
     contar_anunciados_activos_de_telefono,
+    es_primera_entrega_a_telefono,
 )
 from app.domain.telefono import normalizar_telefono
 
@@ -48,7 +56,9 @@ router = APIRouter()
 
 @router.get("/anunciar", response_class=HTMLResponse)
 def announce_form(request: Request):
-    return templates.TemplateResponse("announce/form.html", {"request": request})
+    return templates.TemplateResponse(
+        "announce/form.html", {"request": request, "mostrar_nombre": False}
+    )
 
 
 @router.get("/anunciar/confirmacion", response_class=HTMLResponse)
@@ -88,39 +98,61 @@ def announce_submit(
     telefono: str = Form(None),
     acepta_tyc: str = Form(None),
     confirmar_multiple: str = Form(None),
+    mostrar_nombre: str = Form(None),
 ):
     # Valores para re-renderizar conservando lo que el usuario escribió.
     valores = {"nombre": nombre or "", "telefono": telefono or ""}
+
+    # "Pegajoso" una vez que el campo Nombre aparece (ver `mostrar_nombre`
+    # oculto en el template): sigue en `True` en cualquier resubmit
+    # posterior de ESTA misma vuelta, aunque el cliente tropiece con OTRO
+    # campo (ej. destildó Términos) antes de llegar a escribir su nombre --
+    # nunca "desaparece" un campo que el cliente ya empezó a llenar, ni
+    # aunque todavía no haya tecleado nada en él.
+    mostrar_nombre = bool((nombre or "").strip()) or bool(mostrar_nombre)
 
     def _error(mensaje: str, campo: str = None):
         # `campo` marca el input específico en rojo (retroalimentación en
         # vivo 2026-08-02: antes solo se veía el toast genérico arriba, sin
         # señalar cuál campo tenía el problema) -- `None` para errores sin
         # un campo natural al que anclarse (hoy no hay ninguno acá, pero el
-        # parámetro se deja simétrico con el resto de las rutas).
+        # parámetro se deja simétrico con el resto de las rutas). Cierra
+        # sobre `mostrar_nombre` de más arriba -- ningún call site puede
+        # "olvidarse" de pasarlo y ocultar por error un campo ya revelado.
         errores = {"error_nombre": None, "error_telefono": None, "error_tyc": None}
         if campo:
             errores[f"error_{campo}"] = mensaje
         return templates.TemplateResponse(
             "announce/form.html",
-            {"request": request, "error": mensaje, **valores, **errores},
+            {
+                "request": request,
+                "error": mensaje,
+                "mostrar_nombre": mostrar_nombre,
+                **valores,
+                **errores,
+            },
             status_code=400,
         )
 
-    # --- Validación de campos obligatorios --------------------------------- #
-    if not (nombre or "").strip():
-        return _error("El nombre es obligatorio.", campo="nombre")
+    # --- Validación de campos SIEMPRE obligatorios --------------------------- #
     if not (telefono or "").strip():
         return _error("El teléfono es obligatorio.", campo="telefono")
     if not acepta_tyc:
         return _error("Debes aceptar los Términos y Condiciones.", campo="tyc")
 
-    # --- Límite de anuncios activos (ver docstring del módulo) -------------- #
     try:
         telefono_canonico = normalizar_telefono(telefono)
     except ValueError as exc:
         return _error(str(exc), campo="telefono")
 
+    # --- Atajo de cliente conocido (.scratch/anunciar-atajo-telefono-
+    # conocido, ver docstring del módulo) ------------------------------------ #
+    conocido = not es_primera_entrega_a_telefono(db, telefono_canonico)
+    if not conocido and not mostrar_nombre:
+        mostrar_nombre = True
+        return _error("Cuéntanos tu nombre para continuar.", campo="nombre")
+
+    # --- Límite de anuncios activos (ver docstring del módulo) -------------- #
     activos = contar_anunciados_activos_de_telefono(db, telefono_canonico)
     if activos >= MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO:
         return _error(
@@ -136,10 +168,11 @@ def announce_submit(
         )
 
     # --- Anunciar ----------------------------------------------------------- #
+    destinatario = (
+        Destinatario.yo_mismo() if conocido else Destinatario.declarado_por_cliente(nombre)
+    )
     try:
-        paquete = announce(
-            db, telefono, nombre, Destinatario.declarado_por_cliente(nombre)
-        )
+        paquete = announce(db, telefono, nombre, destinatario)
     except ValueError as exc:
         db.rollback()
         return _error(str(exc), campo="telefono")

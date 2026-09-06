@@ -80,7 +80,9 @@ La unidad física gestionada. Tiene su Contexto de entrega (snapshot), un **Esta
 `Anunciado` → `Recibido` → `Entregado`, o `Cancelado`. Transiciones controladas por una **máquina de estados** (a detallar en el spec). Cada transición registra **quién** la hizo (desde la sesión real, nunca un id hardcodeado) y **cuándo**.
 
 ### Anuncio
-El acto/registro por el que un cliente declara que espera un paquete (nombre + teléfono + a nombre de quién). Da origen a un Paquete en estado `Anunciado`. **No** captura número de guía.
+El acto/registro por el que un cliente declara que espera un paquete (teléfono + a nombre de quién). Da origen a un Paquete en estado `Anunciado`. **No** captura número de guía.
+
+El nombre es **condicional**, no siempre se pide (`.scratch/anunciar-atajo-telefono-conocido`): si el Teléfono ya tiene al menos un Paquete `Entregado` histórico ("cliente conocido"), se anuncia directo bajo el nombre YA REGISTRADO de esa Persona, sin volver a pedirlo. Solo un Teléfono sin ningún `Entregado` previo pide el Nombre.
 
 ### Guía (`guide_number`)
 Número del transportador. **Opcional** — no todos los operadores la usan hoy. Se captura al **Recibir**, escaneando el código de barras del paquete físico (referencia). El **emparejamiento** anuncio↔paquete físico se hace **por nombre/teléfono** del destinatario, no por la guía. El diseño deja espacio para **promover la guía a llave de emparejamiento a futuro** sin romper el esquema.
