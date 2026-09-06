@@ -5,9 +5,10 @@ apartamento con ese esquema) en la barra de búsqueda, el botón "Agrupar por ap
 activar SOLO -- sin tener que clickearlo aparte -- para llegar en un solo paso al grid fijo de 10
 Torres de issue 317. Debe funcionar así para cualquier número.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome
-confirmada NO conectada en esta sesión -- no se pudo probar el comportamiento de JS en un
-navegador real, solo revisión de código + smoke test de que la página sigue cargando bien).
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+pendiente que el cliente lo confirme visualmente (extensión de Chrome confirmada NO conectada en
+esta sesión -- no se pudo probar el comportamiento de JS en un navegador real, solo revisión de
+código + smoke test de que la página sigue cargando bien).
 
 ## Implementación
 

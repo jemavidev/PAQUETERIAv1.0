@@ -9,11 +9,14 @@ siguentes datos en la busqueda 'telefono, email o usuario de whatsapp' mostrando
 paquetes de este cliente, como ya esta funcionando actualmente. Esta pildora debe ser similar a
 las existentes 'Auto, Principal y Torre/Apt'."
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
-disponible en esta sesión). Verificado contra el servidor real (residente real "JESUS VILLALOBOS",
-+573002596319: píldora mostró "6", `/paquetes?q=%2B573002596319` devolvió exactamente 6 paquetes)
-y 6 tests nuevos, suite completa (`test_packages.py`, `test_layout.py`, `test_customers_manage.py`,
-`test_search.py`) en verde.
+**Status:** implementado (color fucsia, ver amendment abajo), desplegado a test.papyrus.com.co
+(2026-09-05, commit `bcac30d`) -- pendiente que el cliente lo confirme visualmente (extensión de
+Chrome no disponible en esta sesión). Verificado contra el servidor real de desarrollo (residente
+real "JESUS VILLALOBOS", +573002596319: píldora mostró "6", `/paquetes?q=%2B573002596319` devolvió
+exactamente 6 paquetes) y 6 tests nuevos, suite completa (`test_packages.py`, `test_layout.py`,
+`test_customers_manage.py`, `test_search.py`) en verde. En producción (test.papyrus.com.co) se
+confirmó sin login que el CSS correcto (`?v=91`, con las clases fucsia) ya se sirve -- la
+verificación de comportamiento (login + ver la píldora en un residente real) la hará el cliente.
 
 ## Diseño
 

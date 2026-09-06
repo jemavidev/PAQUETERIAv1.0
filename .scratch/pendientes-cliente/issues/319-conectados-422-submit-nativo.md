@@ -4,8 +4,9 @@
 /paquetes este dato se filtra de inmediato, pero si presiono enter aparece algo asi como esto
 `{"detail":[{"type":"bool_parsing","loc":["query","conectados"],...}]}`".
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome
-confirmada no conectada en esta sesión). Reproducido y corregido contra el servidor real.
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+pendiente que el cliente lo confirme visualmente (extensión de Chrome confirmada no conectada en
+esta sesión). Reproducido y corregido contra el servidor real.
 
 ## Diagnóstico
 

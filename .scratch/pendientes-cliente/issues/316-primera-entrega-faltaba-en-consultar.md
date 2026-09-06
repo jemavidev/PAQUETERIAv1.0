@@ -4,8 +4,9 @@
 'modal-entregar-consultar' no me aparece el mensaje indicando que es un usuario nuevo, analiza y
 dime se hace falta en algun otro lugar."
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
-disponible en esta sesión).
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
+sesión).
 
 ## Diagnóstico
 

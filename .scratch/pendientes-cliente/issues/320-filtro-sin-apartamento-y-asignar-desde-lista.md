@@ -5,9 +5,10 @@
 asociarle uno directo desde ahí. Pidió sugerencia de diseño que se vea consistente con el resto
 del aplicativo.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
-disponible en esta sesión). Verificado contra el servidor real (residente de prueba insertado y
-eliminado en la misma verificación) y 8 tests nuevos, suite completa en verde.
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
+sesión). Verificado contra el servidor real (residente de prueba insertado y eliminado en la
+misma verificación) y 8 tests nuevos, suite completa en verde.
 
 ## Diseño (mensaje al cliente antes de implementar)
 

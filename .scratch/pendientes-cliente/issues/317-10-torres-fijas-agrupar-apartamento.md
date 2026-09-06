@@ -8,8 +8,9 @@ vacío -- T10 centrada). Pidió sugerencias de LOOK: cards, acordeón, secciones
 y cómo tratar a los residentes sin apartamento asignado (que YA tienen su propio tratamiento
 hoy, separado del agrupado).
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
-disponible en esta sesión). Cliente eligió **Variante A** ("me parece perfecta en todas las
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
+sesión). Cliente eligió **Variante A** ("me parece perfecta en todas las
 vistas") sobre acordeón/secciones. Prototipo (código + ruta throwaway) BORRADO tras plegar la
 variante ganadora al código real, según el proceso de la skill `prototype` -- este archivo queda
 como el registro de las 3 variantes y la decisión (no se armó una rama git aparte para el
