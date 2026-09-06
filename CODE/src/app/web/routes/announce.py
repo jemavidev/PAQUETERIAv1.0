@@ -57,7 +57,8 @@ router = APIRouter()
 @router.get("/anunciar", response_class=HTMLResponse)
 def announce_form(request: Request):
     return templates.TemplateResponse(
-        "announce/form.html", {"request": request, "mostrar_nombre": False}
+        "announce/form.html",
+        {"request": request, "mostrar_nombre": False, "acepta_tyc": False},
     )
 
 
@@ -100,8 +101,16 @@ def announce_submit(
     confirmar_multiple: str = Form(None),
     mostrar_nombre: str = Form(None),
 ):
-    # Valores para re-renderizar conservando lo que el usuario escribió.
-    valores = {"nombre": nombre or "", "telefono": telefono or ""}
+    # Valores para re-renderizar conservando lo que el usuario escribió --
+    # incluye `acepta_tyc` (bug real reportado en vivo: el checkbox NUNCA
+    # se preservaba en un re-render con error, así que pedir el Nombre tras
+    # aceptar Términos lo mostraba destildado otra vez, aunque la
+    # aceptación ya había pasado la validación de arriba).
+    valores = {
+        "nombre": nombre or "",
+        "telefono": telefono or "",
+        "acepta_tyc": bool(acepta_tyc),
+    }
 
     # "Pegajoso" una vez que el campo Nombre aparece (ver `mostrar_nombre`
     # oculto en el template): sigue en `True` en cualquier resubmit
@@ -150,7 +159,7 @@ def announce_submit(
     conocido = not es_primera_entrega_a_telefono(db, telefono_canonico)
     if not conocido and not mostrar_nombre:
         mostrar_nombre = True
-        return _error("Cuéntanos tu nombre para continuar.", campo="nombre")
+        return _error("Ingresa tu nombre para continuar.", campo="nombre")
 
     # --- Límite de anuncios activos (ver docstring del módulo) -------------- #
     activos = contar_anunciados_activos_de_telefono(db, telefono_canonico)

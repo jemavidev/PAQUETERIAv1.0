@@ -36,7 +36,13 @@
     {%- endif %}
     <div>
       <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg {{ 'ring-1 ring-red-600' if error_tyc|default(none) }}">
+        {#- Bug real reportado en vivo: este checkbox nunca preservaba su
+           estado en un re-render con error -- pedir el Nombre tras aceptar
+           Términos (issue .scratch/anunciar-atajo-telefono-conocido) lo
+           mostraba destildado otra vez, aunque la aceptación ya había
+           pasado la validación. #}
         <input type="checkbox" name="acepta_tyc" value="on" required id="acepta_tyc"
+               {% if acepta_tyc|default(false) %}checked{% endif %}
                {% if error_tyc|default(none) %}aria-invalid="true" aria-describedby="acepta_tyc-error"{% endif %}
                class="mt-0.5 rounded border-slate-300 text-blue-800 focus-visible:ring-blue-300">
         <label for="acepta_tyc" class="text-sm text-slate-800">

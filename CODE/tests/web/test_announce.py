@@ -13,6 +13,8 @@ según el camino, la pantalla de éxito con los datos nuevos, y las
 validaciones sin efecto en la BD.
 """
 
+import re
+
 from app.domain.apartamento_service import (
     resolver_apartamento,
     set_apartamento_actual,
@@ -20,6 +22,12 @@ from app.domain.apartamento_service import (
 from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.persona import Persona
 from app.domain.persona_service import get_or_create_persona
+
+
+def _acepta_tyc_marcado(html: str) -> bool:
+    match = re.search(r'<input[^>]*id="acepta_tyc"[^>]*>', html)
+    assert match, "no se encontró el checkbox de Términos y Condiciones"
+    return "checked" in match.group(0)
 
 
 def _cuenta_paquetes(client) -> int:
@@ -158,6 +166,32 @@ def test_post_sin_tyc_no_crea_paquete(client):
     )
     assert r.status_code == 400
     assert _cuenta_paquetes(client) == 0
+
+
+# --------------------------------------------------------------------------- #
+# Bug real reportado en vivo: el checkbox de Términos aparecía destildado en
+# CUALQUIER re-render con error, aunque ya se hubiera aceptado -- notorio
+# ahora que pedir el Nombre (teléfono no conocido) es el camino esperado
+# tras aceptar Términos, no solo un error de usuario.
+# --------------------------------------------------------------------------- #
+def test_acepta_tyc_permanece_marcado_al_pedir_nombre(client):
+    r = client.post(
+        "/anunciar", data={"telefono": "3001234567", "acepta_tyc": "on"}
+    )
+    assert r.status_code == 400
+    assert 'name="nombre"' in r.text.lower()
+    assert _acepta_tyc_marcado(r.text)
+
+
+def test_acepta_tyc_no_marcado_en_carga_limpia(client):
+    r = client.get("/anunciar")
+    assert not _acepta_tyc_marcado(r.text)
+
+
+def test_acepta_tyc_no_marcado_si_no_se_acepto(client):
+    r = client.post("/anunciar", data={"telefono": "3001234567"})
+    assert r.status_code == 400
+    assert not _acepta_tyc_marcado(r.text)
 
 
 def test_post_sin_telefono_no_crea_paquete(client):
