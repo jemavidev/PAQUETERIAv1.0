@@ -6,7 +6,8 @@ que por lo general si tienen 3 paquetes recibidos, la idea es que al consultar u
 paquetes se muestren los otros paquetes de este mismo cliente o los residentes del apartamento, se
 esta forma se puedan mostrar todos los paquetes con una sola consulta."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-06, commits `bf2e54f`/`3b4e544`
+en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Decisiones de alcance (confirmadas con el cliente antes de implementar)
 

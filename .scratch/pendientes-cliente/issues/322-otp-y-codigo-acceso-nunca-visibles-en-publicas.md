@@ -16,7 +16,8 @@ Tras el análisis, dos correcciones puntuales derivadas:
 > codigo. En caso que en una vista publica se consulte un codigo de acceso es porque ya este se
 > conoce y se podra interactuar con este, pero nunca revelarlo en vistas publicas."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-06, commits `bf2e54f`/`3b4e544`
+en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Análisis (OTP)
 
