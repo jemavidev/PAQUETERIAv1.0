@@ -113,7 +113,7 @@ class CustomerPortalService:
                 is_test=False
             )
 
-            logger.info(f"✅ OTP enviado a {phone} (código: {otp.otp_code})")
+            logger.info(f"✅ OTP enviado a {phone}")
 
             return OTPResponse(
                 success=True,
@@ -155,7 +155,7 @@ class CustomerPortalService:
                 )
 
             # Verificar código
-            logger.info(f"🔍 Verificando código - Recibido: '{request.code}' (len={len(request.code)}) vs Esperado: '{otp.otp_code}' (len={len(otp.otp_code)})")
+            logger.info(f"🔍 Verificando código OTP para {phone}")
             
             # Si el código es correcto, resetear intentos de OTPs anteriores del mismo teléfono
             if otp.otp_code == request.code:

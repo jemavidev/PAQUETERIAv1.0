@@ -30,6 +30,8 @@ activos_de_telefono` (cuenta SOLO `ANUNCIADO`, la cola real):
   Aplica igual para el atajo de cliente conocido y para el flujo completo.
 """
 
+import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -63,16 +65,31 @@ def announce_form(request: Request):
 
 
 @router.get("/anunciar/confirmacion", response_class=HTMLResponse)
-def announce_confirmacion(request: Request, codigo: str, db: Session = Depends(get_db)):
+def announce_confirmacion(request: Request, id: str, db: Session = Depends(get_db)):
     """Post/Redirect/Get -- bug real reportado en vivo: antes el POST de
     `/anunciar` renderizaba esta misma confirmación como respuesta directa,
     así que recargar la página reenviaba el formulario y anunciaba OTRO
     paquete con código nuevo. `announce_submit` ahora redirige acá con el
-    `access_code` recién creado; recargar este GET solo vuelve a buscarlo,
-    nunca crea nada. Código inexistente/inválido (URL manipulada a mano) ->
-    de vuelta al formulario, sin más explicación (mismo criterio que
-    cualquier otro estado imposible de esta vista pública)."""
-    paquete = db.query(Paquete).filter(Paquete.access_code == codigo).one_or_none()
+    `id` (UUID interno) del Paquete recién creado; recargar este GET solo
+    vuelve a buscarlo, nunca crea nada.
+
+    Se usa `id`, NO `access_code`, como llave de esta URL (pedido explícito
+    del cliente: el código de acceso nunca debe ser visible/circular en una
+    vista pública no autenticada -- ni en pantalla ni en la propia URL, que
+    queda en historial del navegador y en logs de acceso del servidor. El
+    código real solo llega por SMS/WhatsApp/Email, vía `preparar_notificacion`
+    en `announce_submit`). `id` no sirve como llave en ningún otro endpoint
+    público (`/consultar` solo busca por `access_code`/`guide_number`), así
+    que no reemplaza ni debilita esa llave.
+
+    Id inexistente/inválido (URL manipulada a mano) -> de vuelta al
+    formulario, sin más explicación (mismo criterio que cualquier otro
+    estado imposible de esta vista pública)."""
+    try:
+        paquete_id = uuid.UUID(id)
+    except (ValueError, TypeError, AttributeError):
+        return RedirectResponse("/anunciar", status_code=303)
+    paquete = db.query(Paquete).filter(Paquete.id == paquete_id).one_or_none()
     if paquete is None:
         return RedirectResponse("/anunciar", status_code=303)
     return templates.TemplateResponse(
@@ -81,7 +98,6 @@ def announce_confirmacion(request: Request, codigo: str, db: Session = Depends(g
             "request": request,
             "nombre": paquete.recipient_name,
             "telefono": paquete.announced_by_phone,
-            "access_code": paquete.access_code,
             "snapshot_conjunto": paquete.snapshot_conjunto,
             "snapshot_torre": paquete.snapshot_torre,
             "snapshot_apartamento": paquete.snapshot_apartamento,
@@ -194,6 +210,8 @@ def announce_submit(
     # renderizaba `announce/confirmacion.html` directo, así que recargar la
     # página reenviaba el POST y anunciaba OTRO paquete. Redirige a
     # `GET /anunciar/confirmacion` (arriba), que reconstruye la misma
-    # pantalla a partir del `access_code` -- recargar el GET nunca crea
-    # nada nuevo.
-    return RedirectResponse(f"/anunciar/confirmacion?codigo={paquete.access_code}", status_code=303)
+    # pantalla a partir del `id` -- recargar el GET nunca crea nada nuevo.
+    # `id`, no `access_code`, a propósito (ver docstring de
+    # `announce_confirmacion`): el código nunca debe circular en una vista
+    # pública ni en su URL.
+    return RedirectResponse(f"/anunciar/confirmacion?id={paquete.id}", status_code=303)

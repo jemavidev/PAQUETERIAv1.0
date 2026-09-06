@@ -105,7 +105,7 @@ def test_post_crea_paquete_anunciado_con_el_nombre_declarado(client):
     assert p.announced_by_phone == "+573001234567"
 
 
-def test_confirmacion_muestra_nombre_telefono_codigo_y_enlaces(client):
+def test_confirmacion_muestra_nombre_telefono_y_enlaces_pero_nunca_el_codigo(client):
     r = client.post(
         "/anunciar",
         data={"nombre": "Ana", "telefono": "3001234567", "acepta_tyc": "on"},
@@ -114,7 +114,13 @@ def test_confirmacion_muestra_nombre_telefono_codigo_y_enlaces(client):
     p = client.db.query(Paquete).one()
     assert "ANA" in r.text
     assert "+573001234567" in r.text
-    assert p.access_code in r.text
+    # El código de acceso NUNCA se muestra en esta vista pública (pedido
+    # explícito del cliente) -- llega solo por SMS/WhatsApp/Email. Tampoco
+    # debe viajar en la URL de la propia página (queda en historial del
+    # navegador y en logs de acceso del servidor).
+    assert p.access_code not in r.text
+    assert p.access_code not in str(r.url)
+    assert str(p.id) in str(r.url)
     assert 'href="/consultar"' in r.text
     assert 'href="/otp"' in r.text
 
@@ -336,7 +342,10 @@ def test_segundo_anuncio_muestra_pantalla_intermedia_sin_crear_el_paquete(client
 def test_pantalla_intermedia_nunca_menciona_el_codigo_de_acceso_existente(client):
     r1 = _anunciar(client)
     p1 = client.db.query(Paquete).one()
-    assert p1.access_code in r1.text  # sí aparece en SU propia confirmación
+    # El código de acceso no aparece en NINGUNA vista pública -- ni en la
+    # propia confirmación (llega por SMS/WhatsApp/Email, no en pantalla) ni,
+    # con más razón, en el aviso del segundo intento sobre un paquete ajeno.
+    assert p1.access_code not in r1.text
 
     r2 = _anunciar(client)
     assert p1.access_code not in r2.text  # pero NUNCA en el aviso del 2do intento
