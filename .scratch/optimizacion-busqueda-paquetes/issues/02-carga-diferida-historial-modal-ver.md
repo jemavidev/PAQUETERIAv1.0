@@ -1,7 +1,8 @@
 # 02 — Carga diferida (lazy) del historial en el modal "Ver" de `/paquetes`
 
-**Status:** implementado y verificado localmente. Solo localhost -- no desplegado a
-test.papyrus.com.co (pedido explícito del cliente: "implementa en localhost").
+**Status:** implementado, verificado localmente, y **desplegado a test.papyrus.com.co (2026-09-07)**
+junto con derecho al olvido y baja administrativa -- el pedido original era solo localhost
+("implementa en localhost"), pero el cliente pidió explícitamente el despliegue completo después.
 
 ## Origen
 
@@ -117,8 +118,8 @@ identificada y evitable sin tocar la semántica de búsqueda/paginación/filtros
   tiempo de parseo/render de un documento grande en el navegador, que es lo que este ticket reduce.
   Si el cliente sigue viendo lentitud tras esta verificación, vale la pena repetir la medición en
   localhost con este cambio antes de considerar un rediseño de carga por streaming/SSR incremental.
-- **No desplegado** a test.papyrus.com.co -- el pedido fue explícito de solo localhost. Antes de
-  desplegar convendría re-medir el peso real de payload con datos de producción (no los 50.000
-  sintéticos de la issue 01, que no se usaron para este ticket).
+- **Desplegado** a test.papyrus.com.co (2026-09-07) sin re-medir el peso real de payload con datos
+  de producción (no los 50.000 sintéticos de la issue 01, que no se usaron para este ticket) --
+  pendiente confirmar en vivo si la mejora se siente igual que en localhost.
 - Unificar el patrón de carga diferida a otras vistas (`/residentes`, `/administracion`) no se
   evaluó -- el cliente solo reportó lentitud en `/paquetes`.

@@ -1,4 +1,5 @@
-Status: ready-for-agent
+Status: implementado (tickets 01-04) y desplegado a test.papyrus.com.co (2026-09-07), pendiente que
+el cliente lo confirme visualmente.
 
 # Baja administrativa reversible de un residente
 

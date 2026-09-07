@@ -1,5 +1,8 @@
 # Derecho al olvido (Ley 1581 de 2012) + fix del gap de "eliminar residente"
 
+**Status:** implementado y **desplegado a test.papyrus.com.co (2026-09-07)**, pendiente que el
+cliente lo confirme visualmente.
+
 **Origen:** el 2026-09-07 el cliente eliminó a un residente real ("JESUS VILLALOBOS") desde
 `/residentes` y pidió analizar qué se reflejaba en el sistema. El análisis encontró un bug real
 (ver issue 01) y llevó a una conversación de diseño más amplia: el cliente pidió separar el
