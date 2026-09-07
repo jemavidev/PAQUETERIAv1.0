@@ -990,6 +990,162 @@ def test_eliminar_id_inexistente_da_404(client):
 
 
 # --------------------------------------------------------------------------- #
+# Baja administrativa reversible (.scratch/baja-administrativa, ticket 01) --
+# cualquier rol de staff, NUNCA toca datos personales, distinta de "Eliminar"
+# (derecho al olvido, irreversible, solo ADMIN).
+# --------------------------------------------------------------------------- #
+def test_operador_da_de_baja_sin_tocar_datos_personales(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/residentes/{p.id}/baja-administrativa", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Persona, p.id)
+    assert p2.baja_administrativa_en is not None
+    assert p2.nombre == "ANA"
+    assert p2.telefono == "+573001234567"
+    assert p2.eliminado_en is None
+
+
+def test_dar_de_baja_es_idempotente(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    client.post(f"/residentes/{p.id}/baja-administrativa")
+    client.db.expire_all()
+    primera_fecha = client.db.get(Persona, p.id).baja_administrativa_en
+
+    client.post(f"/residentes/{p.id}/baja-administrativa")
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).baja_administrativa_en == primera_fecha
+
+
+def test_dar_de_baja_desvincula_al_principal_activo_y_promueve_sucesor(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    principal = agregar_ocupante(client.db, apto, "Ana", "3001234567")
+    sucesor = agregar_ocupante(client.db, apto, "Sucesor", "3009999999")
+    client.db.commit()
+    _login_operador(client)
+    admin = client.db.query(Usuario).filter(Usuario.rol == RolUsuario.ADMIN).one()
+    confirmar_ocupante(client.db, principal, admin)
+    confirmar_ocupante(client.db, sucesor, admin)
+    client.db.commit()
+    assert principal.es_principal is True
+
+    r = client.post(
+        f"/residentes/{principal.persona_id}/baja-administrativa", follow_redirects=False
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Ocupante, principal.id).desvinculado_en is not None
+    assert client.db.get(Ocupante, sucesor.id).es_principal is True
+
+
+def test_reactivar_limpia_el_estado_sin_reconectar_ocupante(client):
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    principal = agregar_ocupante(client.db, apto, "Ana", "3001234567")
+    client.db.commit()
+    _login_operador(client)
+    admin = client.db.query(Usuario).filter(Usuario.rol == RolUsuario.ADMIN).one()
+    confirmar_ocupante(client.db, principal, admin)
+    client.db.commit()
+
+    client.post(f"/residentes/{principal.persona_id}/baja-administrativa")
+    r = client.post(f"/residentes/{principal.persona_id}/reactivar", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    p2 = client.db.get(Persona, principal.persona_id)
+    assert p2.baja_administrativa_en is None
+    # No reconecta el Ocupante -- queda desvinculado, es una acción aparte del staff.
+    assert client.db.get(Ocupante, principal.id).desvinculado_en is not None
+
+
+def test_reactivar_a_alguien_que_no_esta_de_baja_no_hace_nada(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/residentes/{p.id}/reactivar", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).baja_administrativa_en is None
+
+
+def test_ficha_muestra_badge_de_baja(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+    client.post(f"/residentes/{p.id}/baja-administrativa")
+
+    r = client.get(f"/residentes/{p.id}")
+    assert ">De baja</span>" in r.text
+
+
+def test_ficha_no_muestra_badge_de_baja_para_residente_activo(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.get(f"/residentes/{p.id}")
+    assert ">De baja</span>" not in r.text
+
+
+def test_listado_por_defecto_incluye_residente_de_baja(client):
+    # A diferencia de "Eliminado" (derecho al olvido, issue 67), un residente
+    # de baja administrativa NO se excluye del listado por defecto -- sigue
+    # siendo el mismo cliente, solo pausado.
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+    client.post(f"/residentes/{p.id}/baja-administrativa")
+
+    r = client.get("/residentes")
+    assert r.status_code == 200
+    assert "ANA" in r.text
+    assert ">De baja</span>" in r.text
+
+
+def test_baja_administrativa_id_inexistente_da_404(client):
+    _login_operador(client)
+    import uuid
+
+    r = client.post(f"/residentes/{uuid.uuid4()}/baja-administrativa")
+    assert r.status_code == 404
+
+
+def test_reactivar_id_inexistente_da_404(client):
+    _login_operador(client)
+    import uuid
+
+    r = client.post(f"/residentes/{uuid.uuid4()}/reactivar")
+    assert r.status_code == 404
+
+
+def test_baja_administrativa_sin_sesion_redirige_a_login_de_staff(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+
+    r = client.post(f"/residentes/{p.id}/baja-administrativa", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/ingresar")
+
+
+# --------------------------------------------------------------------------- #
 # Notificaciones desde la ficha de staff (issue 67: matriz completa Canal ×
 # Evento, reemplaza el toggle simplificado de SMS que tenía antes esta ficha
 # -- ver ticket 02 de notification-preferences para el estado anterior).

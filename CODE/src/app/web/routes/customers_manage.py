@@ -64,6 +64,8 @@ from app.domain.persona_service import (
     WHATSAPP_USUARIO_RE,
     anonimizar_persona,
     cambiar_telefono_propio,
+    dar_de_baja_administrativa,
+    reactivar_persona,
     set_autoriza_recepcion_automatica,
     update_datos_personales,
     url_llamada,
@@ -1520,4 +1522,43 @@ def customers_manage_delete(
     anonimizar_persona(db, persona)
     return RedirectResponse(
         "/residentes?eliminado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/residentes/{persona_id}/baja-administrativa")
+def customers_manage_baja_administrativa(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    """Baja administrativa reversible (.scratch/baja-administrativa) --
+    cualquier rol de staff (a diferencia de `/eliminar`, exclusivo de ADMIN):
+    es reversible y NUNCA toca datos personales, así que el riesgo que
+    justifica restringir el derecho al olvido a ADMIN no aplica acá.
+
+    Desvincula el Ocupante activo ANTES de marcar la baja (mismo orden que
+    `customers_manage_delete`), promoviendo un sucesor con contacto propio
+    si corresponde -- reusa exactamente el mismo mecanismo best-effort del
+    derecho al olvido."""
+    persona = _get_persona_o_404(db, persona_id)
+    desvincular_ocupante_activo_de_persona(db, persona)
+    dar_de_baja_administrativa(db, persona)
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/residentes/{persona_id}/reactivar")
+def customers_manage_reactivar(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    """Revierte una baja administrativa (.scratch/baja-administrativa) --
+    cualquier rol de staff. NO reconecta ningún Ocupante (queda a cargo del
+    staff, aparte, si corresponde -- ver docstring de `reactivar_persona`)."""
+    persona = _get_persona_o_404(db, persona_id)
+    reactivar_persona(db, persona)
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
     )

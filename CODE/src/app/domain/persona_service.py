@@ -327,6 +327,41 @@ def anonimizar_persona(session: Session, persona: Persona) -> Persona:
     return persona
 
 
+def dar_de_baja_administrativa(session: Session, persona: Persona) -> Persona:
+    """Da de baja ADMINISTRATIVAMENTE a `persona` (.scratch/baja-administrativa,
+    reversible) -- NUNCA toca ningún dato personal, a diferencia de
+    `anonimizar_persona` (derecho al olvido, irreversible). Solo marca
+    `baja_administrativa_en`; el caller es responsable de desvincular su
+    Ocupante activo aparte (`ocupante_service.desvincular_ocupante_activo_
+    de_persona`) si corresponde.
+
+    Idempotente: si ya estaba de baja, no hace nada (no reescribe la fecha
+    original)."""
+    if persona.baja_administrativa_en is not None:
+        return persona
+
+    persona.baja_administrativa_en = datetime.now(timezone.utc)
+    session.flush()
+    return persona
+
+
+def reactivar_persona(session: Session, persona: Persona) -> Persona:
+    """Revierte una baja administrativa (.scratch/baja-administrativa):
+    limpia `baja_administrativa_en` -- vuelve a ser notificable, y ya no
+    muestra el badge "De baja". NO reconecta ningún Ocupante a ninguna
+    unidad (queda como acción aparte del staff, si corresponde) -- alguien
+    más pudo haber sido promovido en su lugar mientras estaba de baja, o
+    pudo haberse mudado de verdad.
+
+    Idempotente: si no estaba de baja, no hace nada."""
+    if persona.baja_administrativa_en is None:
+        return persona
+
+    persona.baja_administrativa_en = None
+    session.flush()
+    return persona
+
+
 def set_notificaciones_activas(session: Session, persona: Persona, activas: bool) -> Persona:
     """Activa o desactiva las notificaciones de evento (Recibido/Entregado/
     Cancelado) de una Persona. NUNCA afecta el envío del OTP — es el mecanismo
