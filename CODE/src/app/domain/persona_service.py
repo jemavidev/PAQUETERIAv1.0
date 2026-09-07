@@ -16,6 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .ocupante import Ocupante
+from .paquete import Paquete
 from .persona import Persona
 from .telefono import normalizar_telefono
 from .texto import normalizar_nombre
@@ -360,6 +361,41 @@ def reactivar_persona(session: Session, persona: Persona) -> Persona:
     persona.baja_administrativa_en = None
     session.flush()
     return persona
+
+
+def reactivar_al_recibir(session: Session, paquete: Paquete) -> Persona | None:
+    """Dispara la reactivación automática de una baja administrativa
+    (.scratch/baja-administrativa, ticket 02): si el destinatario de
+    `paquete` -- resuelto por `recipient_phone`, mismo patrón que
+    `notificacion_service.resolver_destino_notificable` -- está de baja, se
+    reactiva en el momento (`reactivar_persona`). Llamada por `paquete_
+    lifecycle.receive()` después de una transición exitosa; nunca falla ni
+    bloquea el recibo en sí -- sin destinatario resuelto, o resuelto pero
+    no de baja, no hace nada.
+
+    A diferencia de `ocupante_service.promover_al_recibir` (que resuelve el
+    Ocupante ACTIVO del destinatario), acá NO se puede reusar ese mecanismo:
+    alguien de baja administrativa, por definición, ya no tiene ningún
+    Ocupante activo -- se desvinculó al darlo de baja (`desvincular_
+    ocupante_activo_de_persona`). Se resuelve la Persona directo por
+    teléfono en su lugar, que la baja administrativa nunca cambia.
+
+    NO reconecta ningún Ocupante a ninguna unidad -- ver docstring de
+    `reactivar_persona`.
+
+    Returns:
+        La Persona reactivada, o `None` si no se disparó ninguna reactivación.
+    """
+    if not paquete.recipient_phone:
+        return None
+    persona = (
+        session.query(Persona)
+        .filter(Persona.telefono == paquete.recipient_phone)
+        .one_or_none()
+    )
+    if persona is None or persona.baja_administrativa_en is None:
+        return None
+    return reactivar_persona(session, persona)
 
 
 def set_notificaciones_activas(session: Session, persona: Persona, activas: bool) -> Persona:
