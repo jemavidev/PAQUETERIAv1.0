@@ -37,12 +37,12 @@ from app.domain.ocupante_service import (
     asociar_telefono_a_ocupante,
     asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
-    dar_de_baja_ocupante,
+    dar_de_baja_ocupante_como_staff,
+    desvincular_ocupante_activo_de_persona,
     desvincular_telefono_ocupante,
     desvincular_whatsapp_ocupante,
     editar_telefono_ocupante,
     editar_whatsapp_ocupante,
-    hay_otro_ocupante_activo,
     identificar_contacto_para_unidad,
     listar_ocupantes,
     mensaje_ya_ocupante_activo,
@@ -1417,38 +1417,16 @@ def customers_manage_ocupante_dar_de_baja(
     """Issue 259/260 (.scratch/pendientes-cliente, pedido explícito del
     cliente): a diferencia del autoservicio (`customer_ocupante_salir`),
     acá el staff SÍ puede eliminar al Principal aunque queden otros
-    Ocupantes activos -- promueve automáticamente al más antiguo de ellos
-    con Teléfono o WhatsApp propio (`created_at` ascendente) ANTES de dar
-    de baja, mismo patrón/orden que `mover_ocupante` (issue 159), también
-    exclusivo de staff. `dar_de_baja_ocupante` mantiene su guard estricto
-    para el resto de sus llamadores (ver su docstring)."""
+    Ocupantes activos -- `dar_de_baja_ocupante_como_staff` promueve
+    automáticamente al más antiguo de ellos con Teléfono o WhatsApp propio
+    ANTES de dar de baja, mismo patrón/orden que `mover_ocupante` (issue
+    159), también exclusivo de staff. `dar_de_baja_ocupante` a secas
+    mantiene su guard estricto para el resto de sus llamadores (ver su
+    docstring)."""
     persona = _get_persona_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
-    if ocupante.es_principal:
-        candidato = (
-            db.query(Ocupante)
-            .filter(
-                Ocupante.apartamento_id == ocupante.apartamento_id,
-                Ocupante.id != ocupante.id,
-                Ocupante.desvinculado_en.is_(None),
-                Ocupante.persona_id.isnot(None),
-            )
-            .order_by(Ocupante.created_at.asc())
-            .first()
-        )
-        if candidato is not None:
-            promover_a_principal(db, candidato)  # degrada a `ocupante` en el acto
-        elif hay_otro_ocupante_activo(db, ocupante.apartamento_id, ocupante.id):
-            return _render_detalle_con_error(
-                request, db, staff, persona,
-                "Es Principal y ninguno de los otros Residentes activos de su "
-                "unidad tiene Teléfono ni WhatsApp propio para sucederlo -- "
-                "agregale contacto a alguno desde tab Residentes antes de "
-                "eliminarlo.",
-                tab_inicial="residentes",
-            )
     try:
-        dar_de_baja_ocupante(db, ocupante)
+        dar_de_baja_ocupante_como_staff(db, ocupante)
     except ValueError as exc:
         return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
     return RedirectResponse(
@@ -1525,9 +1503,20 @@ def customers_manage_delete(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
-    """Elimina (anonimiza) un residente. **Solo ADMIN** — acción destructiva
-    (ADR-0005); la ruta se protege server-side, la UI no es la única barrera."""
+    """Elimina (anonimiza) un residente -- derecho al olvido (Ley 1581 de
+    2012, `.scratch/derecho-al-olvido`), ejercido acá por el staff en
+    representación del cliente (ej. solicitud recibida por otro canal).
+    **Solo ADMIN** — acción destructiva (ADR-0005); la ruta se protege
+    server-side, la UI no es la única barrera.
+
+    `desvincular_ocupante_activo_de_persona` ANTES de anonimizar (gap real
+    encontrado en producción, 2026-09-07): sin esto, un residente Principal
+    quedaba como "Ocupante fantasma" -- nombre congelado, activo, bloqueando
+    el cupo de Principal de su unidad indefinidamente -- porque
+    `anonimizar_persona` solo toca la fila de `Persona`, nunca su vínculo de
+    `Ocupante`."""
     persona = _get_persona_o_404(db, persona_id)
+    desvincular_ocupante_activo_de_persona(db, persona)
     anonimizar_persona(db, persona)
     return RedirectResponse(
         "/residentes?eliminado=1", status_code=status.HTTP_303_SEE_OTHER

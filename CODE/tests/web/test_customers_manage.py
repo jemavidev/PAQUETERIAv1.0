@@ -924,6 +924,41 @@ def test_admin_elimina_anonimiza_al_cliente(client):
     assert p2.eliminado_en is not None
 
 
+def test_admin_elimina_desvincula_al_principal_activo_de_su_unidad(client):
+    # Gap real encontrado en producción (2026-09-07, caso real "JESUS
+    # VILLALOBOS", .scratch/derecho-al-olvido): antes de este fix,
+    # `customers_manage_delete` solo llamaba a `anonimizar_persona`, que
+    # nunca toca `Ocupante` -- la Persona quedaba anonimizada pero su
+    # Ocupante Principal seguía ACTIVO indefinidamente, bloqueando el cupo
+    # de Principal de la unidad para cualquier residente real nuevo.
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante, confirmar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    principal = agregar_ocupante(client.db, apto, "JESUS VILLALOBOS", "3001234567")
+    sucesor = agregar_ocupante(client.db, apto, "Sucesor", "3009999999")
+    client.db.commit()
+    _login_admin(client)
+    admin = client.db.query(Usuario).filter(Usuario.rol == RolUsuario.ADMIN).one()
+    confirmar_ocupante(client.db, principal, admin)
+    confirmar_ocupante(client.db, sucesor, admin)
+    client.db.commit()
+    assert principal.es_principal is True  # primero confirmado, quedó Principal
+
+    persona_id = principal.persona_id
+
+    r = client.post(f"/residentes/{persona_id}/eliminar", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Ocupante, principal.id).desvinculado_en is not None
+    # El sucesor (único otro Ocupante activo con contacto propio) queda
+    # promovido a Principal -- mismo criterio que ya usa el staff al dar de
+    # baja manualmente a un Principal (issue 259/260).
+    assert client.db.get(Ocupante, sucesor.id).es_principal is True
+
+
 def test_operador_no_puede_eliminar(client):
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
@@ -1145,6 +1180,49 @@ def test_ficha_muestra_badge_de_recepcion_automatica(client):
 
     r = client.get(f"/residentes/{p.id}")
     assert ">Auto</span>" in r.text
+
+
+def test_ficha_muestra_badge_de_eliminado(client):
+    # Derecho al olvido (.scratch/derecho-al-olvido, pedido explícito del
+    # cliente, 2026-09-07): esta ficha es alcanzable con la URL directa
+    # aunque la Persona ya no aparezca en ningún listado de /residentes
+    # (issue 67) -- sin este badge, "Cliente eliminado" como nombre es la
+    # única pista.
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_admin(client)
+    client.post(f"/residentes/{p.id}/eliminar")
+
+    r = client.get(f"/residentes/{p.id}")
+    assert ">Eliminado</span>" in r.text
+
+
+def test_ficha_no_muestra_badge_de_eliminado_para_residente_activo(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.get(f"/residentes/{p.id}")
+    assert ">Eliminado</span>" not in r.text
+
+
+def test_busqueda_muestra_badge_de_eliminado(client):
+    # `_buscar_residentes` NO filtra `eliminado_en` (a diferencia del
+    # listado por defecto, issue 67) -- una búsqueda por "eliminado" SÍ
+    # puede encontrar a un cliente anonimizado; el badge evita que se vea
+    # como un residente activo cualquiera. `_login_operador` ya crea su
+    # propio ADMIN internamente (`create_initial_admin`) -- reusarlo evita
+    # el RuntimeError de "ya existe un ADMIN" al intentar crear un segundo.
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+    client.post("/ingresar", data={"email": "admin@club.com", "password": _PW})
+    client.post(f"/residentes/{p.id}/eliminar")
+    client.post("/ingresar", data={"email": "op@club.com", "password": _PW})
+
+    r = client.get("/residentes", params={"q": "Cliente eliminado"})
+    assert r.status_code == 200
+    assert ">Eliminado</span>" in r.text
 
 
 def test_ficha_no_muestra_badge_cuando_recepcion_es_manual(client):
