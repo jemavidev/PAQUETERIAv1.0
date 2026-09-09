@@ -36,6 +36,7 @@ from app.domain import cobro  # noqa: F401  (registra 'cobros' en Base.metadata)
 from app.domain import tarifa_cobro  # noqa: F401  (registra 'tarifas_cobro' en Base.metadata)
 from app.domain import motivo_anulacion_cobro  # noqa: F401  (registra 'motivos_anulacion_cobro' en Base.metadata)
 from app.domain import contacto_externo  # noqa: F401  (registra 'contactos_externos'/'contactos_externos_telefonos' en Base.metadata)
+from app.domain import motivo_bloqueo  # noqa: F401  (registra 'motivos_bloqueo' en Base.metadata)
 
 pytestmark = pytest.mark.integration
 

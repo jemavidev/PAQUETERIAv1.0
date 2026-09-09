@@ -63,6 +63,8 @@ from app.domain.persona import Persona
 from app.domain.persona_service import (
     WHATSAPP_USUARIO_RE,
     anonimizar_persona,
+    autorizar_desbloqueo,
+    bloquear_persona,
     cambiar_telefono_propio,
     dar_de_baja_administrativa,
     reactivar_persona,
@@ -72,6 +74,7 @@ from app.domain.persona_service import (
     url_whatsapp,
     url_whatsapp_desktop,
 )
+from app.domain.motivo_bloqueo_service import listar_motivos_bloqueo
 from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.preferencia_notificacion_service import (
     EVENTOS,
@@ -642,6 +645,9 @@ def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
         # nunca "declaró unidad"/se agregó como Residente (no aplica).
         "mi_ocupante": mi_ocupante,
         "limite_ocupantes": MAX_OCUPANTES_ACTIVOS,
+        # .scratch/bloquear-clientes, ticket 01: catálogo para el selector
+        # del modal "Bloquear".
+        "motivos_bloqueo": listar_motivos_bloqueo(db),
         "url_whatsapp": url_whatsapp,
         "url_llamada": url_llamada,
         # Qué tab queda activa al (re)mostrar la ficha (issue 67) -- 'datos'
@@ -1559,6 +1565,47 @@ def customers_manage_reactivar(
     staff, aparte, si corresponde -- ver docstring de `reactivar_persona`)."""
     persona = _get_persona_o_404(db, persona_id)
     reactivar_persona(db, persona)
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/residentes/{persona_id}/bloquear")
+def customers_manage_bloquear(
+    persona_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    motivo_bloqueo: str = Form(None),
+):
+    """Bloquea a un residente (.scratch/bloquear-clientes, reversible) --
+    cualquier rol de staff, mismo criterio que baja administrativa: no toca
+    ningún dato personal ni ningún paquete ya existente."""
+    persona = _get_persona_o_404(db, persona_id)
+    try:
+        bloquear_persona(db, persona, motivo_bloqueo)
+    except ValueError as exc:
+        return _render_detalle_con_error(request, db, staff, persona, str(exc))
+    return RedirectResponse(
+        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@router.post("/residentes/{persona_id}/autorizar-desbloqueo")
+def customers_manage_autorizar_desbloqueo(
+    persona_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    """Autoriza que un residente bloqueado reintente (habilita su OTP, sin
+    restaurar el servicio de paquetes todavía -- ver `autorizar_desbloqueo`).
+    Cualquier rol de staff."""
+    persona = _get_persona_o_404(db, persona_id)
+    try:
+        autorizar_desbloqueo(db, persona)
+    except ValueError as exc:
+        return _render_detalle_con_error(request, db, staff, persona, str(exc))
     return RedirectResponse(
         f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
     )

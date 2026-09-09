@@ -17,6 +17,7 @@ from . import (  # noqa: E402,F401
     cobro,
     contacto_externo,
     motivo_anulacion_cobro,
+    motivo_bloqueo,
     motivo_cancelacion,
     ocupante,
     otp_cliente,
