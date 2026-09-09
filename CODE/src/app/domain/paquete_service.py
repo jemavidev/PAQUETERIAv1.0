@@ -56,6 +56,19 @@ from .texto import normalizar_nombre
 from .usuario import Usuario
 
 
+class ClienteBloqueadoError(Exception):
+    """Se intentó anunciar un paquete a nombre de una Persona bloqueada
+    (.scratch/bloquear-clientes) -- el anuncio se rechaza por completo, sin
+    crear ningún Paquete."""
+
+    def __init__(self, persona: "Persona"):
+        self.persona = persona
+        super().__init__(
+            f"No se puede anunciar: {persona.nombre} está bloqueado "
+            f"(motivo: {persona.motivo_bloqueo})."
+        )
+
+
 class _TipoDestinatario(enum.Enum):
     YO_MISMO = "YO_MISMO"
     PERSONA_REGISTRADA = "PERSONA_REGISTRADA"
@@ -327,6 +340,20 @@ def announce(
         if match_por_nombre is not None:
             recipient_name = match_por_nombre.nombre
             recipient_phone = telefono_notificacion_ocupante(session, match_por_nombre)
+
+    # Guard de bloqueo (.scratch/bloquear-clientes, ticket 02) -- ÚNICO punto
+    # de enganche, ya centralizado acá para las 4 ramas que resuelven
+    # `recipient_phone` (YO_MISMO/PERSONA_REGISTRADA/OCUPANTE/DECLARADO_POR_
+    # CLIENTE). Cubre la cascada a Ocupantes sin Persona propia GRATIS: ese
+    # caso ya resuelve `recipient_phone` al teléfono del Principal de su
+    # unidad (`telefono_notificacion_ocupante`, issue 163) -- sin ninguna
+    # consulta nueva de "quién depende de quién". `SOLO_NOMBRE` queda fuera
+    # a propósito: `recipient_phone` es siempre `None` ahí, no hay ninguna
+    # Persona que consultar (ver glosario, "Nombre sin teléfono").
+    if recipient_phone is not None:
+        persona_destinataria = _persona_por_telefono(session, recipient_phone)
+        if persona_destinataria is not None and persona_destinataria.bloqueado_en is not None:
+            raise ClienteBloqueadoError(persona_destinataria)
 
     # Normaliza SIEMPRE, aunque en YO_MISMO/PERSONA_REGISTRADA ya venga
     # normalizado desde su propia Persona -- idempotente, un solo punto de
