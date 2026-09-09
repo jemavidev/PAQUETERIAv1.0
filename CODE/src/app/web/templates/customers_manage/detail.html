@@ -130,6 +130,20 @@
   </div>
   {% endif %}
 
+  {# Saldo a favor para pago contra entrega (.scratch/dinero-contra-entrega,
+     ticket 02) -- registro de depósito/recuperación en cualquier momento,
+     sin depender de ningún paquete puntual. #}
+  <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
+    <p class="text-sm text-slate-700">Saldo a favor (contra entrega): <strong class="{{ 'text-red-600' if saldo_contra_entrega < 0 else 'text-slate-900' }}">${{ "{:,}".format(saldo_contra_entrega) }}</strong></p>
+    <form method="post" action="/residentes/{{ persona.id }}/saldo-contra-entrega/movimiento" class="mt-2 flex items-end gap-2">
+      <div class="flex-1">
+        <label class="block text-xs font-medium text-slate-600 mb-1" for="monto-saldo-{{ persona.id }}">Registrar depósito/recuperación</label>
+        <input type="number" name="monto" id="monto-saldo-{{ persona.id }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Monto">
+      </div>
+      <button type="submit" class="rounded-lg bg-slate-900 text-white text-sm font-medium px-4 py-2">Registrar</button>
+    </form>
+  </div>
+
   {% if error %}<div class="mt-4">{{ toast(error, variant='danger') }}</div>{% endif %}
   {% if guardado %}<div class="mt-4">{{ toast('Datos guardados.', variant='success') }}</div>{% endif %}
   {% if ocupante_guardado %}<div class="mt-4">{{ toast('Cambios guardados.', variant='success') }}</div>{% endif %}

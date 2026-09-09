@@ -48,6 +48,26 @@ def saldo_de_persona(session: Session, persona_id) -> int:
     return int(total)
 
 
+def personas_con_saldo_no_cero(session: Session, q: str = None) -> list[tuple[Persona, int]]:
+    """`[(Persona, saldo)]` para toda Persona cuyo saldo (suma de sus
+    movimientos) sea distinto de cero -- una sola consulta agregada (nunca
+    un `saldo_de_persona` por cada residente del padrón), para el listado
+    de `/residentes/saldos-contra-entrega`. `q` filtra por nombre parcial."""
+    query = (
+        session.query(Persona, func.sum(MovimientoSaldoContraEntrega.monto))
+        .join(
+            MovimientoSaldoContraEntrega,
+            MovimientoSaldoContraEntrega.persona_id == Persona.id,
+        )
+        .group_by(Persona.id)
+        .having(func.sum(MovimientoSaldoContraEntrega.monto) != 0)
+        .order_by(Persona.nombre.asc())
+    )
+    if q:
+        query = query.filter(Persona.nombre.ilike(f"%{q}%"))
+    return [(persona, int(saldo)) for persona, saldo in query.all()]
+
+
 def personas_con_historial_en_apartamento(session: Session, apartamento_id) -> list[Persona]:
     """Personas del apartamento ACTUAL dado (no un snapshot congelado de
     ningún paquete) que tienen al menos un movimiento de saldo registrado --
