@@ -47,6 +47,27 @@ def test_admin_ve_los_valores_por_defecto(client):
     assert "1000" in r.text
 
 
+def test_las_4_tarifas_tienen_etiqueta_siempre_visible(client):
+    # Encontrado en pruebas manuales en navegador: `input_texto` solo
+    # muestra su `label` como placeholder -- desaparece en cuanto el campo
+    # tiene un valor (limitación del propio HTML, no del componente), y
+    # este formulario SIEMPRE llega con los 4 campos ya llenos. Sin una
+    # etiqueta persistente, un admin ve 4 números sueltos sin saber cuál es
+    # cuál. Mismo patrón ya usado en `admin/proveedores.html` (corrección en
+    # vivo del cliente): un <label> propio de esta pantalla, sin tocar
+    # `_inputs.html`.
+    _login_admin(client)
+    r = client.get("/administracion/tarifas-cobro")
+    assert r.status_code == 200
+    # `placeholder`/`aria-label` de `input_texto` YA contienen este texto
+    # (no desaparecen del HTML, solo de la vista una vez el campo tiene
+    # valor) -- lo que hay que confirmar es un <label> real, persistente.
+    assert ">Cargo base — Normal</label>" in r.text
+    assert ">Cargo base — Extra-dimensionado" in r.text
+    assert ">Bodegaje / 24h — Normal</label>" in r.text
+    assert ">Bodegaje / 24h — Extra-dimensionado" in r.text
+
+
 def test_admin_edita_las_4_tarifas(client):
     _login_admin(client)
     r = client.post(
