@@ -1648,14 +1648,16 @@ def customers_manage_saldo_movimiento(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     monto: int = Form(...),
+    paquete_id: str = Form(None),
 ):
     """Registra un depósito (monto positivo) o una recuperación (también
     positivo -- el pago al mensajero en Recibir es el único camino que
-    registra negativo) para `persona_id`, en cualquier momento, sin
-    depender de ningún paquete puntual (.scratch/dinero-contra-entrega,
-    ticket 02). Cualquier rol de staff."""
+    registra negativo) para `persona_id`, en cualquier momento, opcionalmente
+    asociado a un paquete puntual si el staff lo sabe de antemano
+    (.scratch/dinero-contra-entrega, spec.md línea 125-126: "acepta monto
+    ... y paquete_id opcional"). Cualquier rol de staff."""
     persona = _get_persona_o_404(db, persona_id)
-    registrar_movimiento_saldo(db, persona.id, monto, staff)
+    registrar_movimiento_saldo(db, persona.id, monto, staff, paquete_id=paquete_id or None)
     return RedirectResponse(
         f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
     )
