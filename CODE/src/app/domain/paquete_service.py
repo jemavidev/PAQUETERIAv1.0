@@ -35,8 +35,9 @@ ADR-0001). El Paquete nace en `ANUNCIADO`.
 import enum
 import re
 import secrets
+from dataclasses import dataclass
 
-from sqlalchemy import and_, false, func, or_
+from sqlalchemy import and_, extract, false, func, or_
 from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento
@@ -700,3 +701,53 @@ def tiene_paquete_en_curso(session: Session, persona: Persona) -> bool:
         .first()
         is not None
     )
+
+
+@dataclass(frozen=True)
+class ResumenMigracion:
+    """Resultado de `migrar_codigos_del_anio` -- `total` es cuántos paquetes
+    son elegibles (con `ejecutar=False`) o cuántos se migraron de verdad
+    (con `ejecutar=True`, el default)."""
+
+    total: int
+
+
+def migrar_codigos_del_anio(session: Session, anio: int, ejecutar: bool = True) -> ResumenMigracion:
+    """Migra (agrega el sufijo de 2 dígitos del año) el `access_code` de todo
+    paquete que haya llegado a un estado terminal en `anio`
+    (.scratch/migracion-por-anio):
+
+    - `ENTREGADO` por `delivered_at`.
+    - `CANCELADO` por `cancelled_at` (nunca tiene `delivered_at`).
+
+    Un paquete `ANUNCIADO`/`RECIBIDO` (activo) NUNCA se migra, sin importar
+    su antigüedad -- migrarlo le rompería el enlace público vigente. Solo
+    toca paquetes cuyo `access_code` todavía tiene 4 caracteres -- una
+    segunda corrida para el mismo año es un no-op seguro (no re-sufija lo
+    ya migrado).
+
+    Con `ejecutar=False`, solo cuenta los elegibles sin modificar ninguna
+    fila (vista previa para el admin antes de confirmar).
+    """
+    candidatos = session.query(Paquete).filter(
+        func.length(Paquete.access_code) == 4,
+        or_(
+            and_(
+                Paquete.estado == EstadoPaquete.ENTREGADO,
+                extract("year", Paquete.delivered_at) == anio,
+            ),
+            and_(
+                Paquete.estado == EstadoPaquete.CANCELADO,
+                extract("year", Paquete.cancelled_at) == anio,
+            ),
+        )
+    )
+
+    total = candidatos.count()
+    if ejecutar and total:
+        sufijo = str(anio)[-2:]
+        for paquete in candidatos.all():
+            paquete.access_code = paquete.access_code + sufijo
+        session.flush()
+
+    return ResumenMigracion(total=total)

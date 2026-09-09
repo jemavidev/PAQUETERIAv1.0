@@ -45,6 +45,7 @@ from app.domain.notificacion_service import (
     obtener_texto_actual,
 )
 from app.domain.paquete import EstadoPaquete
+from app.domain.paquete_service import migrar_codigos_del_anio
 from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
 from app.domain.staff_service import (
@@ -921,5 +922,35 @@ def admin_contactos_externos(
             "total_paginas": total_paginas,
             "pagina": pagina,
             "q": q or "",
+        },
+    )
+
+
+@router.get("/administracion/migrar-anio", response_class=HTMLResponse)
+def admin_migrar_anio_form(
+    request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    anio_anterior = datetime.now(timezone.utc).year - 1
+    resumen = migrar_codigos_del_anio(db, anio_anterior, ejecutar=False)
+    return templates.TemplateResponse(
+        "admin/migrar_anio.html",
+        {"request": request, "admin": admin, "anio": anio_anterior, "total": resumen.total},
+    )
+
+
+@router.post("/administracion/migrar-anio", response_class=HTMLResponse)
+def admin_migrar_anio_ejecutar(
+    request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    anio_anterior = datetime.now(timezone.utc).year - 1
+    resumen = migrar_codigos_del_anio(db, anio_anterior, ejecutar=True)
+    return templates.TemplateResponse(
+        "admin/migrar_anio.html",
+        {
+            "request": request,
+            "admin": admin,
+            "anio": anio_anterior,
+            "total": resumen.total,
+            "migrado": True,
         },
     )
