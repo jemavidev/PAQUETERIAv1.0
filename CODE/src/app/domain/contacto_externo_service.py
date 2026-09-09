@@ -184,3 +184,56 @@ def importar_contactos_externos(session, filas_nuevas: list[FilaFuenteContacto])
 
     session.flush()
     return ResumenImportacion(creados=creados, enriquecidos=enriquecidos, conflictos=conflictos)
+
+
+_POR_PAGINA = 20
+
+
+def buscar_contactos_externos(session, q: str = None, pagina: int = 1):
+    """Lista paginada de `ContactoExterno`, opcionalmente filtrada por `q`
+    (coincidencia parcial de nombre, o el teléfono completo en cualquier
+    formato de entrada). Devuelve `(contactos, total_paginas)` -- cada
+    `ContactoExterno` trae sus teléfonos precargados en `.telefonos_cargados`
+    (evita N+1 al listar)."""
+    query = session.query(ContactoExterno)
+
+    termino = (q or "").strip()
+    if termino:
+        telefono_normalizado = None
+        try:
+            telefono_normalizado = normalizar_telefono(termino)
+        except ValueError:
+            pass
+
+        if telefono_normalizado is not None:
+            ids_por_telefono = [
+                row.contacto_externo_id
+                for row in session.query(ContactoExternoTelefono.contacto_externo_id)
+                .filter(ContactoExternoTelefono.telefono == telefono_normalizado)
+                .all()
+            ]
+            query = query.filter(ContactoExterno.id.in_(ids_por_telefono))
+        else:
+            query = query.filter(ContactoExterno.nombre.ilike(f"%{termino}%"))
+
+    total = query.count()
+    total_paginas = max(1, -(-total // _POR_PAGINA))
+    contactos = (
+        query.order_by(ContactoExterno.nombre.asc())
+        .offset((pagina - 1) * _POR_PAGINA)
+        .limit(_POR_PAGINA)
+        .all()
+    )
+
+    if contactos:
+        telefonos_por_contacto: dict = {c.id: [] for c in contactos}
+        for row in (
+            session.query(ContactoExternoTelefono)
+            .filter(ContactoExternoTelefono.contacto_externo_id.in_(telefonos_por_contacto.keys()))
+            .all()
+        ):
+            telefonos_por_contacto[row.contacto_externo_id].append(row.telefono)
+        for c in contactos:
+            c.telefonos_cargados = telefonos_por_contacto.get(c.id, [])
+
+    return contactos, total_paginas

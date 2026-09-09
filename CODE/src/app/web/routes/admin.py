@@ -29,6 +29,7 @@ from app.domain.configuracion_conjunto_service import (
     obtener_nombre_conjunto,
     renombrar_conjunto,
 )
+from app.domain.contacto_externo_service import buscar_contactos_externos
 from app.domain.email_sender import EmailSender
 from app.domain.notification_sender import NotificationSender
 from app.domain.motivo_cancelacion_service import (
@@ -898,5 +899,27 @@ def admin_estadisticas_cobro(
             "stats": stats,
             "desde": fecha_desde.isoformat(),
             "hasta": fecha_hasta.isoformat(),
+        },
+    )
+
+
+@router.get("/administracion/contactos-externos", response_class=HTMLResponse)
+def admin_contactos_externos(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    q: str = None,
+    pagina: int = 1,
+):
+    contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
+    return templates.TemplateResponse(
+        "admin/contactos_externos.html",
+        {
+            "request": request,
+            "admin": admin,
+            "contactos": contactos,
+            "total_paginas": total_paginas,
+            "pagina": pagina,
+            "q": q or "",
         },
     )
