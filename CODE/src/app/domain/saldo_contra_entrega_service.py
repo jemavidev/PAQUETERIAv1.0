@@ -84,3 +84,47 @@ def personas_con_historial_en_apartamento(session: Session, apartamento_id) -> l
         .distinct()
         .all()
     )
+
+
+def saldos_de_personas(session: Session, persona_ids) -> dict:
+    """`{persona_id: saldo}` para un lote de ids -- UNA sola consulta
+    agrupada (mismo criterio "un puñado fijo de consultas" que el resto de
+    `packages.py::_listar`), en vez de `saldo_de_persona` por cada paquete
+    RECIBIDO de la página."""
+    ids = list(persona_ids)
+    if not ids:
+        return {}
+    filas = (
+        session.query(
+            MovimientoSaldoContraEntrega.persona_id,
+            func.sum(MovimientoSaldoContraEntrega.monto),
+        )
+        .filter(MovimientoSaldoContraEntrega.persona_id.in_(ids))
+        .group_by(MovimientoSaldoContraEntrega.persona_id)
+        .all()
+    )
+    return {persona_id: int(total) for persona_id, total in filas}
+
+
+def personas_con_historial_por_apartamentos(session: Session, apartamento_ids) -> dict:
+    """`{apartamento_id: [Persona, ...]}` para un lote de apartamentos --
+    UNA sola consulta (mismo criterio que `saldos_de_personas`), en vez de
+    `personas_con_historial_en_apartamento` por cada paquete ANUNCIADO de
+    la página."""
+    ids = list(apartamento_ids)
+    if not ids:
+        return {}
+    personas = (
+        session.query(Persona)
+        .join(
+            MovimientoSaldoContraEntrega,
+            MovimientoSaldoContraEntrega.persona_id == Persona.id,
+        )
+        .filter(Persona.apartamento_actual_id.in_(ids))
+        .distinct()
+        .all()
+    )
+    resultado: dict = {aid: [] for aid in ids}
+    for persona in personas:
+        resultado[persona.apartamento_actual_id].append(persona)
+    return resultado

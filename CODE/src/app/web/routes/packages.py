@@ -90,8 +90,9 @@ from app.domain.paquete_service import (
     paquetes_relacionados_por_codigo,
 )
 from app.domain.saldo_contra_entrega_service import (
-    personas_con_historial_en_apartamento,
+    personas_con_historial_por_apartamentos,
     registrar_movimiento_saldo,
+    saldos_de_personas,
 )
 from app.domain.paquete_sincronizacion_service import sincronizar_snapshot_a_hermanos
 from app.domain.paquete_timeline_service import timeline_de_paquete
@@ -722,6 +723,22 @@ def _listar(
             for c in db.query(Cobro).filter(Cobro.paquete_id.in_(ids_entregado)).all()
         }
 
+    # .scratch/dinero-contra-entrega, ticket 03/04: batch ANTES del loop
+    # (mismo criterio "un puñado fijo de consultas") -- nunca una consulta
+    # de saldo por cada paquete de la página.
+    apartamentos_anunciado = set()
+    persona_ids_recibido = set()
+    for p in paquetes:
+        persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
+        if persona_destino is None:
+            continue
+        if p.estado == EstadoPaquete.ANUNCIADO and persona_destino.apartamento_actual_id is not None:
+            apartamentos_anunciado.add(persona_destino.apartamento_actual_id)
+        elif p.estado == EstadoPaquete.RECIBIDO:
+            persona_ids_recibido.add(persona_destino.id)
+    personas_por_apartamento = personas_con_historial_por_apartamentos(db, apartamentos_anunciado)
+    saldos_por_persona = saldos_de_personas(db, persona_ids_recibido)
+
     for p in paquetes:
         # Atributos transitorios (no persistidos), solo para la plantilla.
         # `candidatos_correccion` ANTES de `advertencia_nombre` -- issue 189,
@@ -765,9 +782,18 @@ def _listar(
         if p.estado == EstadoPaquete.ANUNCIADO:
             persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
             if persona_destino is not None and persona_destino.apartamento_actual_id is not None:
-                p.personas_con_saldo = personas_con_historial_en_apartamento(
-                    db, persona_destino.apartamento_actual_id
+                p.personas_con_saldo = personas_por_apartamento.get(
+                    persona_destino.apartamento_actual_id, []
                 )
+        # .scratch/dinero-contra-entrega, ticket 04: saldo pendiente (si
+        # quedó negativo) para ofrecer el ajuste opcional al Entregar.
+        p.saldo_pendiente = None
+        if p.estado == EstadoPaquete.RECIBIDO:
+            persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
+            if persona_destino is not None:
+                saldo = saldos_por_persona.get(persona_destino.id, 0)
+                if saldo < 0:
+                    p.saldo_pendiente = -saldo
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
         # con el teléfono del Principal de la unidad (o del Anunciante)
@@ -1450,6 +1476,11 @@ def deliver_action(
     # cliente.
     anular: str = Form(None),
     motivo_anulacion: str = Form(None),
+    # .scratch/dinero-contra-entrega, ticket 04: ajuste opcional del saldo
+    # contra entrega -- si el destinatario tiene saldo negativo, el staff
+    # puede registrar acá que pagó (todo o parte) en este mismo momento.
+    # Nunca bloquea la entrega si se deja vacío.
+    pago_saldo: int = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     # `origen="consultar"` (issue 124): el botón "Entregar" de /consultar
@@ -1501,6 +1532,20 @@ def deliver_action(
         staff,
         motivo_anulacion=motivo_anulacion if anula else None,
     )
+
+    # .scratch/dinero-contra-entrega, ticket 04: ajuste opcional, atómico
+    # con la entrega -- si el destinatario tiene Persona propia y el staff
+    # completó el monto, se registra el pago; si se deja vacío, la entrega
+    # ya ocurrió igual (arriba) y la deuda queda pendiente por fuera del
+    # sistema.
+    if pago_saldo and paquete.recipient_phone:
+        persona_destinataria = (
+            db.query(Persona).filter(Persona.telefono == paquete.recipient_phone).one_or_none()
+        )
+        if persona_destinataria is not None:
+            registrar_movimiento_saldo(
+                db, persona_destinataria.id, pago_saldo, staff, paquete_id=paquete.id
+            )
 
     _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.ENTREGADO, sender)
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)

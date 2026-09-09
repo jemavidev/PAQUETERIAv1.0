@@ -3105,14 +3105,17 @@ def test_lista_no_dispara_una_query_de_persona_o_usuario_por_paquete(client):
     # página tenían teléfono) --, `_conteos_pendientes` -- issue 126, badges
     # de Anunciado/Recibido en la barra de filtros --, `preferencias_activas_por_
     # persona` -- issue 222, .scratch/pendientes-cliente: gate del botón de
-    # WhatsApp por preferencia --, y `listar_motivos` -- `.scratch/motivos-
+    # WhatsApp por preferencia --, `listar_motivos` -- `.scratch/motivos-
     # cancelacion-catalogo`, ticket 03: opciones del picker de "Cancelar
     # paquete", lee el catálogo en vez del enum fijo (antes 0 queries,
-    # iteración de un enum Python en memoria): cada una 1 query agrupada
-    # FIJA, no por paquete) pero muy por debajo de lo que daría 1+ query por
-    # cada uno de los 8 paquetes -- si el N+1 se reintrodujera, este número
-    # saltaría con la cantidad de paquetes, no se quedaría fijo.
-    assert len(queries) <= 16, (
+    # iteración de un enum Python en memoria) --, `obtener_tarifas_vigentes`
+    # + el batch de `Cobro` -- .scratch/cobro-bodegaje, tickets 02/05 --, y
+    # `personas_con_historial_por_apartamentos` + `saldos_de_personas` --
+    # .scratch/dinero-contra-entrega, tickets 03/04: cada una 1 query
+    # agrupada FIJA, no por paquete) pero muy por debajo de lo que daría 1+
+    # query por cada uno de los 8 paquetes -- si el N+1 se reintrodujera,
+    # este número saltaría con la cantidad de paquetes, no se quedaría fijo.
+    assert len(queries) <= 20, (
         f"{len(queries)} queries para 8 paquetes -- parece que volvió el N+1 "
         "(ver _listar en packages.py)"
     )
