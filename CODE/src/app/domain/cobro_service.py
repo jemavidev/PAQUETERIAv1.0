@@ -16,6 +16,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -255,3 +256,72 @@ def registrar_cobro(
     session.add(cobro)
     session.flush()
     return cobro
+
+
+@dataclass(frozen=True)
+class FilaEstadisticaApartamento:
+    torre: str | None
+    apartamento: str | None
+    cantidad: int
+    monto_total: int
+
+
+@dataclass(frozen=True)
+class EstadisticasCobro:
+    """Agregados de `Cobro` para un rango de fechas (.scratch/cobro-bodegaje,
+    ticket 06) -- `desde`/`hasta` filtran por `Cobro.cobrado_en`."""
+
+    cantidad: int
+    monto_total: int
+    por_apartamento: list[FilaEstadisticaApartamento]
+    tiempo_promedio_bodegaje_horas: float | None
+
+
+def estadisticas_cobro(session: Session, desde: datetime, hasta: datetime) -> EstadisticasCobro:
+    """Agregados de cobros entre `desde` y `hasta` (ambos inclusive,
+    `Cobro.cobrado_en`) -- cantidad y monto total, desglose por
+    Torre/Apartamento (snapshot del Paquete, ADR-0001 -- nunca la unidad
+    ACTUAL de un residente que se haya mudado después), y tiempo promedio de
+    bodegaje (horas reales entre Recibido y Entregado, solo sobre paquetes
+    que sí tuvieron bodegaje -- `bloques_bodegaje > 0`)."""
+    base = session.query(Cobro).join(Paquete, Cobro.paquete_id == Paquete.id).filter(
+        Cobro.cobrado_en >= desde, Cobro.cobrado_en <= hasta
+    )
+
+    cantidad = base.count()
+    monto_total = base.with_entities(func.coalesce(func.sum(Cobro.monto_total), 0)).scalar()
+
+    por_apartamento_rows = (
+        base.with_entities(
+            Paquete.snapshot_torre,
+            Paquete.snapshot_apartamento,
+            func.count(Cobro.id),
+            func.coalesce(func.sum(Cobro.monto_total), 0),
+        )
+        .group_by(Paquete.snapshot_torre, Paquete.snapshot_apartamento)
+        .order_by(func.sum(Cobro.monto_total).desc())
+        .all()
+    )
+    por_apartamento = [
+        FilaEstadisticaApartamento(torre=torre, apartamento=apto, cantidad=cant, monto_total=monto)
+        for torre, apto, cant, monto in por_apartamento_rows
+    ]
+
+    tiempo_promedio = (
+        base.filter(Cobro.bloques_bodegaje > 0)
+        .with_entities(
+            func.avg(
+                func.extract("epoch", Paquete.delivered_at - Paquete.received_at) / 3600.0
+            )
+        )
+        .scalar()
+    )
+
+    return EstadisticasCobro(
+        cantidad=cantidad,
+        monto_total=int(monto_total),
+        por_apartamento=por_apartamento,
+        tiempo_promedio_bodegaje_horas=(
+            float(tiempo_promedio) if tiempo_promedio is not None else None
+        ),
+    )

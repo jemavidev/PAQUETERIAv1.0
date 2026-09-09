@@ -10,6 +10,7 @@ esta rebanada es solo el cableado HTTP.
 """
 
 import uuid
+from datetime import date, datetime, time, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -20,6 +21,7 @@ from app.domain.cobro_service import (
     crear_motivo_anulacion,
     editar_tarifas,
     eliminar_motivo_anulacion,
+    estadisticas_cobro,
     listar_motivos_anulacion,
     obtener_tarifas_vigentes,
 )
@@ -861,4 +863,40 @@ def admin_motivos_anulacion_cobro_eliminar(
     return templates.TemplateResponse(
         "admin/motivos_anulacion_cobro.html",
         {"request": request, "admin": admin, "motivos": listar_motivos_anulacion(db), "eliminado": True},
+    )
+
+
+@router.get("/administracion/estadisticas-cobro", response_class=HTMLResponse)
+def admin_estadisticas_cobro(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    desde: str = None,
+    hasta: str = None,
+):
+    """Sin `desde`/`hasta` (primera carga): el día de hoy, en UTC -- rango
+    mínimo con sentido, el admin ajusta desde el selector si quiere otro."""
+    hoy = datetime.now(timezone.utc).date()
+    try:
+        fecha_desde = date.fromisoformat(desde) if desde else hoy
+    except ValueError:
+        fecha_desde = hoy
+    try:
+        fecha_hasta = date.fromisoformat(hasta) if hasta else hoy
+    except ValueError:
+        fecha_hasta = hoy
+
+    inicio = datetime.combine(fecha_desde, time.min, tzinfo=timezone.utc)
+    fin = datetime.combine(fecha_hasta, time.max, tzinfo=timezone.utc)
+
+    stats = estadisticas_cobro(db, inicio, fin)
+    return templates.TemplateResponse(
+        "admin/estadisticas_cobro.html",
+        {
+            "request": request,
+            "admin": admin,
+            "stats": stats,
+            "desde": fecha_desde.isoformat(),
+            "hasta": fecha_hasta.isoformat(),
+        },
     )
