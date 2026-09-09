@@ -15,9 +15,12 @@ ahora SÍ muestra quién lo hizo. Solo el nombre, sin "(cliente)"/"(staff)"
 (Anunció/Recibió/Entregó/Canceló) ya deja claro el rol.
 """
 
+from app.domain.apartamento_service import resolver_apartamento, set_apartamento_actual
 from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.paquete_lifecycle import cancel, deliver, receive
 from app.domain.paquete_service import Destinatario, announce
+from app.domain.persona_service import get_or_create_persona
+from app.domain.saldo_contra_entrega_service import registrar_movimiento_saldo
 from app.domain.staff_service import create_initial_admin
 
 _PW = "Contrasena1"
@@ -491,6 +494,71 @@ def test_recibir_desde_consultar_en_error_tambien_vuelve_a_consultar(client):
     )
     assert r.status_code == 303
     assert r.headers["location"] == f"/consultar?q={p.access_code}"
+
+
+# --------------------------------------------------------------------------- #
+# Dinero contra entrega (.scratch/dinero-contra-entrega) -- paridad con
+# /paquetes: `packages.py::_listar` calcula esto en batch para su propia
+# lista, /consultar solo maneja UN paquete, sin batch (código found by
+# code-review: faltaba por completo, /consultar nunca mostraba ni el
+# selector de Recibir ni el ajuste de Entregar, aunque el endpoint POST
+# subyacente ya los procesaba si se enviaban).
+# --------------------------------------------------------------------------- #
+def test_consultar_recibir_con_historial_muestra_el_selector(client):
+    staff = _staff(client)
+    _login_staff(client, staff)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    persona = get_or_create_persona(client.db, "3001234567", "Ana")
+    set_apartamento_actual(client.db, "3001234567", apto)
+    registrar_movimiento_saldo(client.db, persona.id, 5000, staff)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Pago contra entrega" in r.text
+    assert 'name="persona_saldo_id"' in r.text
+
+
+def test_consultar_recibir_sin_historial_no_muestra_el_selector(client):
+    staff = _staff(client)
+    _login_staff(client, staff)
+    p = _anunciar(client)
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Pago contra entrega" not in r.text
+
+
+def test_consultar_entregar_con_saldo_negativo_muestra_el_ajuste(client):
+    staff = _staff(client)
+    _login_staff(client, staff)
+    persona = get_or_create_persona(client.db, "3001234567", "Ana")
+    registrar_movimiento_saldo(client.db, persona.id, -5000, staff)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+    receive(client.db, p, staff)
+    client.db.commit()
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Saldo pendiente" in r.text
+    assert "5,000" in r.text
+    assert 'name="pago_saldo"' in r.text
+
+
+def test_consultar_entregar_sin_saldo_no_muestra_el_ajuste(client):
+    staff = _staff(client)
+    _login_staff(client, staff)
+    p = _anunciar(client)
+    receive(client.db, p, staff)
+    client.db.commit()
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Saldo pendiente" not in r.text
 
 
 # --------------------------------------------------------------------------- #

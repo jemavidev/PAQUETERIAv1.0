@@ -42,6 +42,11 @@ from app.domain.paquete_correccion_service import candidatos_correccion
 from app.domain.paquete_foto_service import listar_fotos
 from app.domain.paquete_service import es_primera_entrega_a_telefono
 from app.domain.paquete_timeline_service import dias_desde_recibido, timeline_de_paquete
+from app.domain.persona import Persona
+from app.domain.saldo_contra_entrega_service import (
+    personas_con_historial_en_apartamento,
+    saldo_de_persona,
+)
 
 from ..db import get_db
 from ..rate_limit import rate_limit
@@ -106,6 +111,19 @@ def search(
                     "candidatos_correccion": candidatos_correccion(db, paquete),
                 }
             )
+            # .scratch/dinero-contra-entrega, ticket 03: mismo criterio que
+            # `packages.py::_listar` (issue de paridad encontrado en
+            # code-review) -- acá solo hay UN paquete, se resuelve directo
+            # sin batch.
+            persona_destino = (
+                db.query(Persona)
+                .filter(Persona.telefono == paquete.recipient_phone)
+                .one_or_none()
+            )
+            if persona_destino is not None and persona_destino.apartamento_actual_id is not None:
+                contexto["personas_con_saldo"] = personas_con_historial_en_apartamento(
+                    db, persona_destino.apartamento_actual_id
+                )
         # Issue 314/316 (.scratch/pendientes-cliente): el modal Entregar de
         # esta vista es un DUPLICADO del de `/paquetes` (`packages.py::
         # _listar` calcula esto mismo en batch para su propia lista) -- acá
@@ -125,6 +143,18 @@ def search(
                 paquete.primera_entrega_a_telefono,
             )
             contexto["motivos_anulacion_cobro"] = listar_motivos_anulacion(db)
+            # .scratch/dinero-contra-entrega, ticket 04: mismo criterio que
+            # arriba -- acá solo hay UN paquete, se resuelve directo sin
+            # batch (issue de paridad encontrado en code-review).
+            persona_destino = (
+                db.query(Persona)
+                .filter(Persona.telefono == paquete.recipient_phone)
+                .one_or_none()
+            )
+            if persona_destino is not None:
+                saldo = saldo_de_persona(db, persona_destino.id)
+                if saldo < 0:
+                    paquete.saldo_pendiente = -saldo
         return templates.TemplateResponse("search/form.html", contexto)
 
     return templates.TemplateResponse(
