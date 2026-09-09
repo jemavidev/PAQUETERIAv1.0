@@ -37,6 +37,7 @@ from app.domain.apartamento_service import (
 )
 from app.domain.contacto import clasificar_contacto
 from app.domain.foto_storage import FotoStorage
+from app.domain.cobro import Cobro
 from app.domain.cobro_service import (
     DesgloseCobro,
     calcular_cobro,
@@ -706,6 +707,16 @@ def _listar(
     # función) -- cada paquete RECIBIDO reusa la misma fila.
     tarifas_cobro = obtener_tarifas_vigentes(db)
     ahora_cobro = datetime.now(timezone.utc)
+    # .scratch/cobro-bodegaje, ticket 05: Cobro ya registrado, para paquetes
+    # ENTREGADO de esta página -- un solo query batch, mismo criterio que el
+    # resto de esta función.
+    ids_entregado = [p.id for p in paquetes if p.estado == EstadoPaquete.ENTREGADO]
+    cobros_por_paquete = {}
+    if ids_entregado:
+        cobros_por_paquete = {
+            c.paquete_id: c
+            for c in db.query(Cobro).filter(Cobro.paquete_id.in_(ids_entregado)).all()
+        }
 
     for p in paquetes:
         # Atributos transitorios (no persistidos), solo para la plantilla.
@@ -738,6 +749,10 @@ def _listar(
             if p.estado == EstadoPaquete.RECIBIDO
             else None
         )
+        # .scratch/cobro-bodegaje, ticket 05: visible en el modal "Ver" para
+        # cualquier staff (no exclusivo de admin, a diferencia de
+        # estadísticas/tarifas).
+        p.cobro = cobros_por_paquete.get(p.id)
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
         # con el teléfono del Principal de la unidad (o del Anunciante)

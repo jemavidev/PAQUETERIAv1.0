@@ -728,6 +728,53 @@ def test_entregar_sin_recibido_no_crea_cobro(client):
 
 
 # --------------------------------------------------------------------------- #
+# Cobro visible en el detalle del paquete (.scratch/cobro-bodegaje, ticket 05)
+# --------------------------------------------------------------------------- #
+def test_modal_ver_muestra_el_monto_cobrado(client):
+    staff = _login_staff(client)
+    p_previo = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p_previo)
+    dom_deliver(client.db, p_previo, staff)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+    client.post(f"/paquetes/{p.id}/entregar")
+
+    r = client.get("/paquetes")
+    modal = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "1,500" in modal
+
+
+def test_modal_ver_muestra_motivo_de_anulacion(client):
+    staff = _login_staff(client)
+    motivo = MotivoAnulacionCobro(etiqueta="Reclamo del cliente")
+    client.db.add(motivo)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+    client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Reclamo del cliente"},
+    )
+
+    r = client.get("/paquetes")
+    modal = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "Reclamo del cliente" in modal
+
+
+def test_modal_ver_sin_cobro_no_menciona_nada(client):
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    _recibir(client, staff, p)  # se queda en RECIBIDO, sin Cobro todavía
+
+    r = client.get("/paquetes")
+    modal = _segmento_modal(r.text, f"modal-ver-{p.id}")
+    assert "Cobro" not in modal
+
+
+# --------------------------------------------------------------------------- #
 # Cancelar (ticket 03)
 # --------------------------------------------------------------------------- #
 def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):

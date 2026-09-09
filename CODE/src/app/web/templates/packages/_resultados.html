@@ -335,6 +335,19 @@
           {%- endif %}
         </div>
       </div>
+      {%- if p.cobro %}
+      {# .scratch/cobro-bodegaje, ticket 05: visible para cualquier staff,
+         solo si el paquete ya tiene un Cobro registrado (siempre que esté
+         ENTREGADO). #}
+      <p class="text-sm text-slate-700 mb-3">
+        {%- if p.cobro.motivo_anulacion %}
+        <span class="font-semibold text-slate-900">Cobro anulado</span> — {{ p.cobro.motivo_anulacion }}
+        {%- else %}
+        <span class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(p.cobro.monto_total) }}</span>
+        {%- if p.cobro.monto_bodegaje %} (incluye bodegaje: ${{ "{:,}".format(p.cobro.monto_bodegaje) }}){%- endif %}
+        {%- endif %}
+      </p>
+      {%- endif %}
       {# Issue 189 (.scratch/pendientes-cliente): `p.residentes_unidad` por sí
          solo NO significa que el destinatario esté realmente vinculado a
          ellos -- `_apartamento_id_residentes` (routes/packages.py) cae al
