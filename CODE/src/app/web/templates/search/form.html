@@ -142,7 +142,9 @@
   {%- endif %}
   {%- if request.session.get(SESSION_KEY) and paquete.estado.value == 'RECIBIDO' %}
   {% call modal("entregar-consultar", "Entregar paquete") %}
-    <p class="text-sm text-slate-700">Entregar a <strong>{{ paquete.recipient_name }}</strong>{% if paquete.snapshot_apartamento %} — {{ paquete.snapshot_conjunto }} · Torre {{ paquete.snapshot_torre|torre_sin_prefijo }} · Apto {{ paquete.snapshot_apartamento }}{% endif %}.</p>
+    {# Pedido explícito del cliente: "Entregar a" es redundante -- el modal
+       ya se titula "Entregar paquete". #}
+    <p class="text-sm text-slate-700"><strong>{{ paquete.recipient_name }}</strong>{% if paquete.snapshot_apartamento %} — {{ paquete.snapshot_conjunto }} · Torre {{ paquete.snapshot_torre|torre_sin_prefijo }} · Apto {{ paquete.snapshot_apartamento }}{% endif %}.</p>
     {%- if paquete.primera_entrega_a_telefono %}
     {#- Issue 314/316 (.scratch/pendientes-cliente): este modal es un
        DUPLICADO del de `/paquetes` -- la bandera se había quedado solo en
@@ -170,13 +172,17 @@
       {# .scratch/cobro-bodegaje, ticket 02: mismo bloque que `_resultados.html`
          (DUPLICADO a propósito, ver issue 316) -- este modal vive en la
          misma familia de duplicación que "primera entrega". #}
+      {# Pedido explícito del cliente (.scratch/pendientes-cliente):
+         "Total"/"Servicio"/"Bodegaje (N días)" en vez de "Cobro"/
+         "Paquete"/"Bodegaje (N bloques de 24h)" -- mismo desglose, wording
+         más claro para el staff. #}
       <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
-        <p class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(cobro_desglose.monto_total) }}</p>
+        <p class="font-semibold text-slate-900">Total: ${{ "{:,}".format(cobro_desglose.monto_total) }}</p>
         {%- if cobro_desglose.monto_base %}
-        <p>Paquete: ${{ "{:,}".format(cobro_desglose.monto_base) }}</p>
+        <p>Servicio: ${{ "{:,}".format(cobro_desglose.monto_base) }}</p>
         {%- endif %}
         {%- if cobro_desglose.monto_bodegaje %}
-        <p>Bodegaje ({{ cobro_desglose.bloques_bodegaje }} bloque{{ "s" if cobro_desglose.bloques_bodegaje != 1 else "" }} de 24h): ${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</p>
+        <p>Bodegaje ({{ cobro_desglose.bloques_bodegaje }} día{{ "s" if cobro_desglose.bloques_bodegaje != 1 else "" }}): ${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</p>
         {%- endif %}
       </div>
       <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">

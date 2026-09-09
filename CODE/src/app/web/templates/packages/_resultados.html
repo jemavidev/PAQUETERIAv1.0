@@ -768,7 +768,9 @@
        `/paquetes?entregar=<id>` (ej. desde /announce) abre este modal
        directo, sin que el staff tenga que buscarlo en la lista. #}
     {% call modal("deliver-" ~ p.id, "Entregar paquete", abierto=(entregar_paquete_id|default(none) == p.id|string)) %}
-      <p class="text-sm text-slate-700">Entregar a <strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre|torre_sin_prefijo }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
+      {# Pedido explícito del cliente: "Entregar a" es redundante -- el
+         modal ya se titula "Entregar paquete". #}
+      <p class="text-sm text-slate-700"><strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre|torre_sin_prefijo }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
       {%- if p.primera_entrega_a_telefono %}
       {#- Issue 314/316 (.scratch/pendientes-cliente): bandera visual cuando
          es la PRIMERA vez que se entrega un paquete a este número de
@@ -794,12 +796,16 @@
            checkbox + wrap oculto que ya usa "Otro" en el modal Cancelar
            de este mismo archivo. #}
         <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
-          <p class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(p.cobro_desglose.monto_total) }}</p>
+          {# Pedido explícito del cliente (.scratch/pendientes-cliente):
+             "Total"/"Servicio"/"Bodegaje (N días)" en vez de "Cobro"/
+             "Paquete"/"Bodegaje (N bloques de 24h)" -- mismo desglose,
+             wording más claro para el staff. #}
+          <p class="font-semibold text-slate-900">Total: ${{ "{:,}".format(p.cobro_desglose.monto_total) }}</p>
           {%- if p.cobro_desglose.monto_base %}
-          <p>Paquete: ${{ "{:,}".format(p.cobro_desglose.monto_base) }}</p>
+          <p>Servicio: ${{ "{:,}".format(p.cobro_desglose.monto_base) }}</p>
           {%- endif %}
           {%- if p.cobro_desglose.monto_bodegaje %}
-          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} bloque{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }} de 24h): ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</p>
+          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</p>
           {%- endif %}
         </div>
         <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
@@ -835,6 +841,16 @@
           <input type="number" name="pago_saldo" id="pago-saldo-{{ p.id }}" class="w-full rounded-lg border border-amber-300 px-3.5 py-2.5 text-sm" placeholder="$0">
         </div>
         {%- endif %}
+        {# Bug real reportado en vivo (pedido explícito del cliente): con
+           el contenido nuevo de cobro/saldo pendiente, este modal pasa a
+           medir más que `max-h-[85vh]` -- `position: sticky` sin espacio
+           reservado abajo hace que el botón quede pegado al fondo del
+           viewport visible DESDE EL PRIMER RENDER (antes de scrollear
+           siquiera), tapando la última parte del contenido en vez de
+           aparecer recién después de él. Este spacer reserva esa altura
+           (aprox. la del propio botón + su padding) para que el scroll
+           revele todo el contenido ANTES de que el botón se superponga. #}
+        <div class="h-20" aria-hidden="true"></div>
         {# Issue 306 (.scratch/pendientes-cliente): botón flotante, sin
            fondo propio, glow violeta -- mismo patrón validado en
            "Recibir". #}
