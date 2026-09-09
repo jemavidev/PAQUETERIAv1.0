@@ -15,6 +15,7 @@ en CI sin arrastrar el mundo viejo.
 from . import (  # noqa: E402,F401
     apartamento,
     cobro,
+    contacto_externo,
     motivo_anulacion_cobro,
     motivo_cancelacion,
     ocupante,

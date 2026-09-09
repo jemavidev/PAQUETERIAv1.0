@@ -13,7 +13,8 @@ Cada rebanada nueva importa aquí su modelo para que quede registrado en
 `Base.metadata` y el guard cubra su tabla (hoy: `personas`, `apartamentos`,
 `usuarios`, `paquetes`, `otps_cliente`, `password_resets`,
 `configuracion_conjunto`, `ocupantes`, `paquete_fotos`, `cobros`,
-`tarifas_cobro`, `motivos_anulacion_cobro`).
+`tarifas_cobro`, `motivos_anulacion_cobro`, `contactos_externos`,
+`contactos_externos_telefonos`).
 """
 
 import pytest
@@ -34,6 +35,7 @@ from app.domain import paquete_foto  # noqa: F401  (registra 'paquete_fotos' en 
 from app.domain import cobro  # noqa: F401  (registra 'cobros' en Base.metadata)
 from app.domain import tarifa_cobro  # noqa: F401  (registra 'tarifas_cobro' en Base.metadata)
 from app.domain import motivo_anulacion_cobro  # noqa: F401  (registra 'motivos_anulacion_cobro' en Base.metadata)
+from app.domain import contacto_externo  # noqa: F401  (registra 'contactos_externos'/'contactos_externos_telefonos' en Base.metadata)
 
 pytestmark = pytest.mark.integration
 
