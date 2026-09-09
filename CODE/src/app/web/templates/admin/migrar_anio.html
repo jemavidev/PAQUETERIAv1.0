@@ -3,7 +3,7 @@
 {% block title %}Migrar año — PAQUETEX{% endblock %}
 {% block content %}
 <div class="max-w-md mx-auto px-4 py-8 space-y-4">
-  {% if migrado %}{{ toast('Migración completada: ' ~ total ~ ' paquete(s) del ' ~ anio ~ '.', variant='success') }}{% endif %}
+  {% if migrado %}{{ toast('Migración completada: ' ~ total_migrados ~ ' paquete(s) del ' ~ anio ~ '.', variant='success') }}{% endif %}
 
   <div class="bg-white rounded-xl border border-slate-200 px-4 py-5 space-y-3">
     <h1 class="text-lg font-semibold text-slate-900">Migrar año {{ anio }}</h1>

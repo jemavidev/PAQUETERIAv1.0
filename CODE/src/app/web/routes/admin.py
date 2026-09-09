@@ -948,15 +948,25 @@ def admin_migrar_anio_ejecutar(
     request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
 ):
     anio_anterior = datetime.now(timezone.utc).year - 1
-    resumen = migrar_codigos_del_anio(db, anio_anterior, ejecutar=True)
+    migrados = migrar_codigos_del_anio(db, anio_anterior, ejecutar=True)
+    # `total` de la plantilla es "N paquetes elegibles" -- encontrado en
+    # pruebas manuales en navegador: reusar `migrados.total` (cuántos se
+    # ACABAN de migrar) ahí hacía que, justo debajo del toast de éxito, la
+    # misma pantalla dijera "Migración completada: 1 paquete(s)" Y "1
+    # paquete elegible", como si el que se acababa de migrar siguiera
+    # pendiente. Se recalcula sin ejecutar para reflejar lo que de verdad
+    # queda por migrar (0, salvo que algo nuevo haya quedado elegible entre
+    # medio).
+    restantes = migrar_codigos_del_anio(db, anio_anterior, ejecutar=False)
     return templates.TemplateResponse(
         "admin/migrar_anio.html",
         {
             "request": request,
             "admin": admin,
             "anio": anio_anterior,
-            "total": resumen.total,
+            "total": restantes.total,
             "migrado": True,
+            "total_migrados": migrados.total,
         },
     )
 

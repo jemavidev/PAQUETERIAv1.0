@@ -82,3 +82,17 @@ def test_post_ejecuta_y_confirma_cuantos_se_migraron(client):
     migrado = client.db.get(Paquete, p.id)
     assert migrado.access_code != codigo_original
     assert len(migrado.access_code) == 6
+
+
+def test_post_actualiza_el_conteo_de_elegibles_tras_migrar(client):
+    # Encontrado en pruebas manuales en navegador: la respuesta del POST
+    # reusaba `resumen.total` (cuántos se ACABAN de migrar) también para
+    # "N paquetes elegibles" -- justo debajo del toast de éxito, la misma
+    # pantalla decía "Migración completada: 1 paquete(s)" Y "1 paquete
+    # elegible", como si el que se acababa de migrar siguiera pendiente.
+    _login_admin(client)
+    _entregado_del_anio_anterior(client)
+
+    r = client.post("/administracion/migrar-anio")
+    assert r.status_code == 200
+    assert "0 paquetes elegibles" in r.text
