@@ -115,6 +115,31 @@ def test_estadisticas_desglosa_por_apartamento(db_session):
     assert fila.monto_total == 1500
 
 
+def test_estadisticas_no_mezcla_distintos_clientes_del_mismo_apartamento(db_session):
+    # spec.md línea 145-146: "desglose por cliente/apartamento (agrupando
+    # por los campos snapshot snapshot_torre/snapshot_apartamento/
+    # recipient_phone...)" -- encontrado en code-review sin recipient_phone
+    # en el group_by, dos clientes distintos del mismo apartamento se
+    # mezclaban en una sola fila.
+    staff = _usuario(db_session)
+    apto = db_session.query(Apartamento).first()
+    ahora = datetime.now(timezone.utc)
+    _entregar_con_cobro(db_session, staff, 1500, tel="3001111111", apartamento=apto)
+    _entregar_con_cobro(db_session, staff, 2000, tel="3002222222", apartamento=apto)
+    db_session.commit()
+
+    stats = estadisticas_cobro(
+        db_session, ahora - timedelta(hours=1), ahora + timedelta(hours=1)
+    )
+    assert len(stats.por_apartamento) == 2
+    telefonos = {fila.recipient_phone for fila in stats.por_apartamento}
+    assert telefonos == {"+573001111111", "+573002222222"}
+    for fila in stats.por_apartamento:
+        assert fila.torre == apto.torre
+        assert fila.apartamento == apto.apartamento
+        assert fila.cantidad == 1
+
+
 def test_estadisticas_incluye_cobros_anulados_en_el_total(db_session):
     staff = _usuario(db_session)
     ahora = datetime.now(timezone.utc)

@@ -262,6 +262,7 @@ def registrar_cobro(
 class FilaEstadisticaApartamento:
     torre: str | None
     apartamento: str | None
+    recipient_phone: str | None
     cantidad: int
     monto_total: int
 
@@ -280,10 +281,13 @@ class EstadisticasCobro:
 def estadisticas_cobro(session: Session, desde: datetime, hasta: datetime) -> EstadisticasCobro:
     """Agregados de cobros entre `desde` y `hasta` (ambos inclusive,
     `Cobro.cobrado_en`) -- cantidad y monto total, desglose por
-    Torre/Apartamento (snapshot del Paquete, ADR-0001 -- nunca la unidad
-    ACTUAL de un residente que se haya mudado después), y tiempo promedio de
-    bodegaje (horas reales entre Recibido y Entregado, solo sobre paquetes
-    que sí tuvieron bodegaje -- `bloques_bodegaje > 0`)."""
+    cliente/apartamento (snapshot del Paquete, ADR-0001 -- nunca la unidad
+    ACTUAL de un residente que se haya mudado después; `recipient_phone` en
+    el group_by además de Torre/Apartamento, spec.md línea 145-146 -- sin
+    esto, dos clientes distintos del mismo apartamento se mezclaban en una
+    sola fila), y tiempo promedio de bodegaje (horas reales entre Recibido y
+    Entregado, solo sobre paquetes que sí tuvieron bodegaje --
+    `bloques_bodegaje > 0`)."""
     base = session.query(Cobro).join(Paquete, Cobro.paquete_id == Paquete.id).filter(
         Cobro.cobrado_en >= desde, Cobro.cobrado_en <= hasta
     )
@@ -295,16 +299,23 @@ def estadisticas_cobro(session: Session, desde: datetime, hasta: datetime) -> Es
         base.with_entities(
             Paquete.snapshot_torre,
             Paquete.snapshot_apartamento,
+            Paquete.recipient_phone,
             func.count(Cobro.id),
             func.coalesce(func.sum(Cobro.monto_total), 0),
         )
-        .group_by(Paquete.snapshot_torre, Paquete.snapshot_apartamento)
+        .group_by(Paquete.snapshot_torre, Paquete.snapshot_apartamento, Paquete.recipient_phone)
         .order_by(func.sum(Cobro.monto_total).desc())
         .all()
     )
     por_apartamento = [
-        FilaEstadisticaApartamento(torre=torre, apartamento=apto, cantidad=cant, monto_total=monto)
-        for torre, apto, cant, monto in por_apartamento_rows
+        FilaEstadisticaApartamento(
+            torre=torre,
+            apartamento=apto,
+            recipient_phone=telefono,
+            cantidad=cant,
+            monto_total=monto,
+        )
+        for torre, apto, telefono, cant, monto in por_apartamento_rows
     ]
 
     tiempo_promedio = (
