@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from .cobro import Cobro
+from .motivo_anulacion_cobro import MotivoAnulacionCobro
 from .paquete import Paquete, TipoPaquete
 from .tarifa_cobro import ID_SINGLETON, TarifaCobro
 from .usuario import Usuario
@@ -107,6 +108,33 @@ def calcular_cobro(
         bloques_bodegaje=bloques_bodegaje,
         monto_bodegaje=monto_bodegaje,
         monto_total=monto_base + monto_bodegaje,
+    )
+
+
+def listar_motivos_anulacion(session: Session) -> list[MotivoAnulacionCobro]:
+    """Todos los motivos del catálogo de anulación, en orden de creación --
+    mismo criterio que `motivo_cancelacion_service.listar_motivos`, para el
+    selector que aparece al marcar "$0" en el modal Entregar."""
+    return (
+        session.query(MotivoAnulacionCobro)
+        .order_by(MotivoAnulacionCobro.creado_en.asc())
+        .all()
+    )
+
+
+def motivo_anulacion_valido(session: Session, etiqueta: str) -> bool:
+    """¿Existe hoy en el catálogo un motivo de anulación con este texto
+    exacto? -- usado por `packages.py::deliver_action` para rechazar
+    server-side un motivo que ya no existe (ej. borrado por otro ADMIN justo
+    antes del submit), mismo criterio que
+    `motivo_cancelacion_service.motivo_valido`."""
+    if not etiqueta:
+        return False
+    return (
+        session.query(MotivoAnulacionCobro)
+        .filter(MotivoAnulacionCobro.etiqueta == etiqueta)
+        .first()
+        is not None
     )
 
 

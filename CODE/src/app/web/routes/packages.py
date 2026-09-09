@@ -37,6 +37,14 @@ from app.domain.apartamento_service import (
 )
 from app.domain.contacto import clasificar_contacto
 from app.domain.foto_storage import FotoStorage
+from app.domain.cobro_service import (
+    DesgloseCobro,
+    calcular_cobro,
+    listar_motivos_anulacion,
+    motivo_anulacion_valido,
+    obtener_tarifas_vigentes,
+    registrar_cobro,
+)
 from app.domain.motivo_cancelacion_service import listar_motivos, motivo_valido
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
@@ -75,7 +83,11 @@ from app.domain.paquete_lifecycle import (
     deliver,
     receive,
 )
-from app.domain.paquete_service import condiciones_busqueda_paquetes, paquetes_relacionados_por_codigo
+from app.domain.paquete_service import (
+    condiciones_busqueda_paquetes,
+    es_primera_entrega_a_telefono,
+    paquetes_relacionados_por_codigo,
+)
 from app.domain.paquete_sincronizacion_service import sincronizar_snapshot_a_hermanos
 from app.domain.paquete_timeline_service import timeline_de_paquete
 from app.domain.persona import Persona
@@ -689,6 +701,12 @@ def _listar(
             .all()
         }
 
+    # .scratch/cobro-bodegaje, ticket 02: tarifas UNA sola vez para toda la
+    # página (mismo criterio "un puñado fijo de consultas" del resto de esta
+    # función) -- cada paquete RECIBIDO reusa la misma fila.
+    tarifas_cobro = obtener_tarifas_vigentes(db)
+    ahora_cobro = datetime.now(timezone.utc)
+
     for p in paquetes:
         # Atributos transitorios (no persistidos), solo para la plantilla.
         # `candidatos_correccion` ANTES de `advertencia_nombre` -- issue 189,
@@ -709,6 +727,16 @@ def _listar(
             p.estado == EstadoPaquete.RECIBIDO
             and p.recipient_phone
             and p.recipient_phone not in telefonos_con_entrega_previa
+        )
+        # .scratch/cobro-bodegaje, ticket 02: desglose ya calculado para
+        # mostrarlo en el modal Entregar -- reusa `primera_entrega_a_telefono`
+        # ya resuelto arriba, sin volver a consultar. El monto real que se
+        # cobra se RECALCULA server-side al confirmar (`deliver_action`) --
+        # esto es solo para mostrarlo antes de que el staff confirme.
+        p.cobro_desglose = (
+            calcular_cobro(p, tarifas_cobro, ahora_cobro, p.primera_entrega_a_telefono)
+            if p.estado == EstadoPaquete.RECIBIDO
+            else None
         )
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
@@ -978,6 +1006,7 @@ def _render_lista(
         "error": error,
         "aviso": aviso,
         "motivos": listar_motivos(db),
+        "motivos_anulacion_cobro": listar_motivos_anulacion(db),
         "tipos": list(TipoPaquete),
         "condiciones": list(CondicionPaquete),
         "estados": list(EstadoPaquete),
@@ -1369,6 +1398,13 @@ def deliver_action(
     sender: NotificationSender = Depends(get_notification_sender),
     origen: str = Form(None),
     q: str = Form(None),
+    # .scratch/cobro-bodegaje, ticket 02: "anular" marca el cobro completo a
+    # "$0 pesos" -- exige un motivo del catálogo (`MotivoAnulacionCobro`),
+    # distinto de un $0 por cálculo (primera entrega). Sin `anular`, el monto
+    # se RECALCULA server-side siempre -- nunca se confía un monto del
+    # cliente.
+    anular: str = Form(None),
+    motivo_anulacion: str = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     # `origen="consultar"` (issue 124): el botón "Entregar" de /consultar
@@ -1376,12 +1412,51 @@ def deliver_action(
     # búsqueda) en vez de al listado de staff, tanto si funciona como si
     # no (la vista simplemente refleja el estado real del paquete).
     destino = f"/consultar?q={quote(q)}" if origen == "consultar" and q else "/paquetes"
+
+    anula = bool(anular)
+    if anula and not motivo_anulacion_valido(db, motivo_anulacion):
+        if destino != "/paquetes":
+            return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
+        return _render_lista(
+            request,
+            db,
+            staff,
+            error="Elegí un motivo válido para anular el cobro.",
+            status_code=400,
+        )
+
+    # Resuelto ANTES de `deliver()` a propósito: `es_primera_entrega_a_telefono`
+    # busca un ENTREGADO previo a este teléfono -- si se calculara después,
+    # este mismo paquete (ya ENTREGADO) se contaría a sí mismo como "entrega
+    # previa", negando la exención en el primer paquete real de un cliente.
+    if anula:
+        desglose = DesgloseCobro(monto_base=0, bloques_bodegaje=0, monto_bodegaje=0, monto_total=0)
+    else:
+        tarifas = obtener_tarifas_vigentes(db)
+        primera_entrega = es_primera_entrega_a_telefono(db, paquete.recipient_phone)
+        desglose = calcular_cobro(
+            paquete, tarifas, datetime.now(timezone.utc), primera_entrega
+        )
+
     try:
         deliver(db, paquete, staff)
     except TransicionInvalida as exc:
         if destino != "/paquetes":
             return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
+
+    # Atómico con la entrega (.scratch/cobro-bodegaje, ticket 02, pedido
+    # explícito del cliente): el mismo submit que transiciona el paquete
+    # registra el Cobro correspondiente -- nunca se entrega sin dejarlo
+    # resuelto.
+    registrar_cobro(
+        db,
+        paquete,
+        desglose,
+        staff,
+        motivo_anulacion=motivo_anulacion if anula else None,
+    )
+
     _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.ENTREGADO, sender)
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 

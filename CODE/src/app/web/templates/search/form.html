@@ -148,6 +148,42 @@
     <form method="post" action="/paquetes/{{ paquete.id }}/entregar" class="mt-4">
       <input type="hidden" name="origen" value="consultar">
       <input type="hidden" name="q" value="{{ q }}">
+      {%- if cobro_desglose %}
+      {# .scratch/cobro-bodegaje, ticket 02: mismo bloque que `_resultados.html`
+         (DUPLICADO a propósito, ver issue 316) -- este modal vive en la
+         misma familia de duplicación que "primera entrega". #}
+      <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
+        <p class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(cobro_desglose.monto_total) }}</p>
+        {%- if cobro_desglose.monto_base %}
+        <p>Paquete: ${{ "{:,}".format(cobro_desglose.monto_base) }}</p>
+        {%- endif %}
+        {%- if cobro_desglose.monto_bodegaje %}
+        <p>Bodegaje ({{ cobro_desglose.bloques_bodegaje }} bloque{{ "s" if cobro_desglose.bloques_bodegaje != 1 else "" }} de 24h): ${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</p>
+        {%- endif %}
+      </div>
+      <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" name="anular" id="anular-consultar" value="on" class="rounded border-slate-300 text-red-600 focus-visible:ring-red-300">
+        Anular cobro ($0 pesos)
+      </label>
+      <div id="anular-motivo-wrap-consultar" class="mt-2" hidden>
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="anular-motivo-consultar">Motivo</label>
+        <select name="motivo_anulacion" id="anular-motivo-consultar" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+          <option value="">Elegí un motivo</option>
+          {%- for m in motivos_anulacion_cobro %}
+          <option value="{{ m.etiqueta }}">{{ m.etiqueta }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <script>
+      (function () {
+        var check = document.getElementById('anular-consultar');
+        var wrap = document.getElementById('anular-motivo-wrap-consultar');
+        check.addEventListener('change', function () {
+          wrap.hidden = !check.checked;
+        });
+      })();
+      </script>
+      {%- endif %}
       <button type="submit" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Entregar</button>
     </form>
   {% endcall %}

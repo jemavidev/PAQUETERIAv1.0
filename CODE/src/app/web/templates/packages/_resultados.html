@@ -767,6 +767,44 @@
       <p class="guia-check-msg" hidden></p>
       {% endif %}
       <form method="post" action="/paquetes/{{ p.id }}/entregar" class="mt-4">
+        {%- if p.cobro_desglose %}
+        {# .scratch/cobro-bodegaje, ticket 02: desglose ya calculado
+           (`packages.py::_listar`) -- solo informativo, el monto real se
+           recalcula server-side al confirmar. Mismo mecanismo de
+           checkbox + wrap oculto que ya usa "Otro" en el modal Cancelar
+           de este mismo archivo. #}
+        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
+          <p class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(p.cobro_desglose.monto_total) }}</p>
+          {%- if p.cobro_desglose.monto_base %}
+          <p>Paquete: ${{ "{:,}".format(p.cobro_desglose.monto_base) }}</p>
+          {%- endif %}
+          {%- if p.cobro_desglose.monto_bodegaje %}
+          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} bloque{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }} de 24h): ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</p>
+          {%- endif %}
+        </div>
+        <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="anular" id="anular-{{ p.id }}" value="on" class="rounded border-slate-300 text-red-600 focus-visible:ring-red-300">
+          Anular cobro ($0 pesos)
+        </label>
+        <div id="anular-motivo-wrap-{{ p.id }}" class="mt-2" hidden>
+          <label class="block text-sm font-medium text-slate-700 mb-1" for="anular-motivo-{{ p.id }}">Motivo</label>
+          <select name="motivo_anulacion" id="anular-motivo-{{ p.id }}" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+            <option value="">Elegí un motivo</option>
+            {%- for m in motivos_anulacion_cobro %}
+            <option value="{{ m.etiqueta }}">{{ m.etiqueta }}</option>
+            {%- endfor %}
+          </select>
+        </div>
+        <script>
+        (function () {
+          var check = document.getElementById('anular-{{ p.id }}');
+          var wrap = document.getElementById('anular-motivo-wrap-{{ p.id }}');
+          check.addEventListener('change', function () {
+            wrap.hidden = !check.checked;
+          });
+        })();
+        </script>
+        {%- endif %}
         {# Issue 306 (.scratch/pendientes-cliente): botón flotante, sin
            fondo propio, glow violeta -- mismo patrón validado en
            "Recibir". #}

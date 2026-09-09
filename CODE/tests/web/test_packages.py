@@ -624,6 +624,110 @@ def test_entregar_sin_sesion_redirige_a_login(client):
 
 
 # --------------------------------------------------------------------------- #
+# Entregar + cobro (.scratch/cobro-bodegaje, ticket 02)
+# --------------------------------------------------------------------------- #
+from app.domain.cobro import Cobro  # noqa: E402
+from app.domain.motivo_anulacion_cobro import MotivoAnulacionCobro  # noqa: E402
+
+
+def test_entregar_primera_entrega_crea_cobro_en_cero_sin_motivo(client):
+    """Primer paquete entregado a este teléfono -- el cargo base se exime
+    por `es_primera_entrega_a_telefono`, no por anulación del staff."""
+    staff = _login_staff(client)
+    p = _anunciar(client)
+    _recibir(client, staff, p)
+
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
+    assert r.status_code == 303
+
+    cobro = client.db.query(Cobro).filter(Cobro.paquete_id == p.id).one()
+    assert cobro.monto_base == 0
+    assert cobro.monto_total == 0
+    assert cobro.motivo_anulacion is None
+
+
+def test_entregar_sin_primera_entrega_cobra_la_tarifa_base(client):
+    staff = _login_staff(client)
+    # Paquete previo al mismo teléfono, ya Entregado -- rompe la condición
+    # de "primera entrega".
+    p_previo = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p_previo)
+    dom_deliver(client.db, p_previo, staff)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
+    assert r.status_code == 303
+
+    cobro = client.db.query(Cobro).filter(Cobro.paquete_id == p.id).one()
+    assert cobro.monto_base == 1500
+    assert cobro.monto_total == 1500
+
+
+def test_entregar_anular_sin_motivo_se_rechaza_sin_efecto(client):
+    staff = _login_staff(client)
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+
+    r = client.post(f"/paquetes/{p.id}/entregar", data={"anular": "on"})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
+    assert client.db.query(Cobro).filter(Cobro.paquete_id == p.id).first() is None
+
+
+def test_entregar_anular_con_motivo_valido_crea_cobro_en_cero(client):
+    staff = _login_staff(client)
+    motivo = MotivoAnulacionCobro(etiqueta="Reclamo del cliente")
+    client.db.add(motivo)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Reclamo del cliente"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
+    cobro = client.db.query(Cobro).filter(Cobro.paquete_id == p.id).one()
+    assert cobro.monto_total == 0
+    assert cobro.motivo_anulacion == "Reclamo del cliente"
+
+
+def test_entregar_anular_con_motivo_inexistente_se_rechaza(client):
+    staff = _login_staff(client)
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Motivo que no existe"},
+    )
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
+    assert client.db.query(Cobro).filter(Cobro.paquete_id == p.id).first() is None
+
+
+def test_entregar_sin_recibido_no_crea_cobro(client):
+    _login_staff(client)
+    p = _anunciar(client)  # sigue ANUNCIADO
+
+    r = client.post(f"/paquetes/{p.id}/entregar")
+    assert r.status_code == 400
+    assert client.db.query(Cobro).filter(Cobro.paquete_id == p.id).first() is None
+
+
+# --------------------------------------------------------------------------- #
 # Cancelar (ticket 03)
 # --------------------------------------------------------------------------- #
 def test_cancelar_desde_anunciado_registra_actor_y_motivo(client):

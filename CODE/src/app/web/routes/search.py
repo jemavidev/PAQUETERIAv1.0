@@ -22,6 +22,8 @@ en la inmensa mayoría de las consultas, que son de residentes anónimos sin
 sesión.
 """
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
@@ -29,6 +31,11 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import or_
 
 from app.domain.apartamento_service import listar_catalogo_por_torre
+from app.domain.cobro_service import (
+    calcular_cobro,
+    listar_motivos_anulacion,
+    obtener_tarifas_vigentes,
+)
 from app.domain.ocupante_service import residentes_por_torre_apartamento
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from app.domain.paquete_correccion_service import candidatos_correccion
@@ -90,6 +97,15 @@ def search(request: Request, q: str = None, db: Session = Depends(get_db)):
             paquete.primera_entrega_a_telefono = es_primera_entrega_a_telefono(
                 db, paquete.recipient_phone
             )
+            # .scratch/cobro-bodegaje, ticket 02: mismo criterio que arriba
+            # -- acá solo hay UN paquete, se resuelve directo sin batch.
+            contexto["cobro_desglose"] = calcular_cobro(
+                paquete,
+                obtener_tarifas_vigentes(db),
+                datetime.now(timezone.utc),
+                paquete.primera_entrega_a_telefono,
+            )
+            contexto["motivos_anulacion_cobro"] = listar_motivos_anulacion(db)
         return templates.TemplateResponse("search/form.html", contexto)
 
     return templates.TemplateResponse(
