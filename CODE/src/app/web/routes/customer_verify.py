@@ -55,6 +55,7 @@ from app.domain.ocupante_service import (
 from app.domain.notificacion_service import es_cliente_verificado
 from app.domain.paquete_service import tiene_paquete_en_curso
 from app.domain.persona import Persona
+from app.domain.saldo_contra_entrega_service import movimientos_de_persona, saldo_de_persona
 from app.domain.persona_service import (
     aceptar_terminos_y_desbloquear,
     anonimizar_persona,
@@ -176,6 +177,10 @@ def _contexto_base(db: Session, persona: Persona) -> dict:
         "persona": persona,
         "apartamento": _apartamento_actual(db, persona),
         "nombre_conjunto": obtener_nombre_conjunto(db),
+        # .scratch/dinero-contra-entrega, ticket 05: SOLO el propio saldo/
+        # historial de esta Persona, nunca el de un compañero de apartamento.
+        "saldo_contra_entrega": saldo_de_persona(db, persona.id),
+        "movimientos_saldo_contra_entrega": movimientos_de_persona(db, persona.id),
         # Orden de columnas (issue 221, .scratch/pendientes-cliente): WhatsApp
         # inmediatamente a la derecha de SMS -- distinto del orden canónico
         # del enum (SMS/EMAIL/LLAMADA/WHATSAPP), que sigue igual en el resto

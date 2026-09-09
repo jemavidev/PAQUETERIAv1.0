@@ -48,6 +48,20 @@ def saldo_de_persona(session: Session, persona_id) -> int:
     return int(total)
 
 
+def movimientos_de_persona(session: Session, persona_id) -> list[MovimientoSaldoContraEntrega]:
+    """Historial de movimientos de `persona_id`, más recientes primero --
+    para que el propio residente vea a qué paquete se aplicó cada uno
+    (.scratch/dinero-contra-entrega, ticket 05). NUNCA el de otro
+    residente, aunque comparta apartamento -- el saldo es utilizable por
+    compañeros de unidad, pero le pertenece a quien lo depositó."""
+    return (
+        session.query(MovimientoSaldoContraEntrega)
+        .filter(MovimientoSaldoContraEntrega.persona_id == persona_id)
+        .order_by(MovimientoSaldoContraEntrega.created_at.desc())
+        .all()
+    )
+
+
 def personas_con_saldo_no_cero(session: Session, q: str = None) -> list[tuple[Persona, int]]:
     """`[(Persona, saldo)]` para toda Persona cuyo saldo (suma de sus
     movimientos) sea distinto de cero -- una sola consulta agregada (nunca
