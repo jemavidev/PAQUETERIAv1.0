@@ -89,6 +89,10 @@ from app.domain.paquete_service import (
     es_primera_entrega_a_telefono,
     paquetes_relacionados_por_codigo,
 )
+from app.domain.saldo_contra_entrega_service import (
+    personas_con_historial_en_apartamento,
+    registrar_movimiento_saldo,
+)
 from app.domain.paquete_sincronizacion_service import sincronizar_snapshot_a_hermanos
 from app.domain.paquete_timeline_service import timeline_de_paquete
 from app.domain.persona import Persona
@@ -753,6 +757,17 @@ def _listar(
         # cualquier staff (no exclusivo de admin, a diferencia de
         # estadísticas/tarifas).
         p.cobro = cobros_por_paquete.get(p.id)
+        # .scratch/dinero-contra-entrega, ticket 03: el selector de pago al
+        # mensajero en Recibir solo aparece si el destinatario (o algún
+        # compañero de su apartamento ACTUAL) ya tiene historial de saldo --
+        # si no, Recibir se ve exactamente igual que hoy.
+        p.personas_con_saldo = []
+        if p.estado == EstadoPaquete.ANUNCIADO:
+            persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
+            if persona_destino is not None and persona_destino.apartamento_actual_id is not None:
+                p.personas_con_saldo = personas_con_historial_en_apartamento(
+                    db, persona_destino.apartamento_actual_id
+                )
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
         # con el teléfono del Principal de la unidad (o del Anunciante)
@@ -1237,6 +1252,12 @@ async def receive_action(
     mover_de_otra_unidad: str = Form(None),
     origen: str = Form(None),
     q: str = Form(None),
+    # .scratch/dinero-contra-entrega, ticket 03: pago al mensajero desde el
+    # saldo a favor -- ambos opcionales, solo se usan si el modal mostró el
+    # selector (porque el destinatario o algún compañero de apartamento ya
+    # tenía historial de saldo).
+    persona_saldo_id: str = Form(None),
+    monto_pagado_mensajero: int = Form(None),
 ):
     paquete = _get_paquete_o_404(db, paquete_id)
     guia = (guide_number or "").strip() or None
@@ -1362,6 +1383,15 @@ async def receive_action(
         if destino != "/paquetes":
             return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
+
+    # .scratch/dinero-contra-entrega, ticket 03: pago al mensajero, atómico
+    # con la recepción -- solo si el staff completó el selector (opcional,
+    # el modal lo muestra únicamente cuando ya hay historial de saldo).
+    if persona_saldo_id and monto_pagado_mensajero:
+        registrar_movimiento_saldo(
+            db, persona_saldo_id, -monto_pagado_mensajero, staff, paquete_id=paquete.id
+        )
+
     # Commit explícito ACÁ (no esperar al commit normal del `get_db` al
     # cerrar el request): el BackgroundTask de fotos abre su PROPIA sesión y
     # busca este Paquete por id -- FastAPI no garantiza que el commit de la
