@@ -21,7 +21,7 @@ from app.domain.apartamento_service import (
 )
 from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.persona import Persona
-from app.domain.persona_service import get_or_create_persona
+from app.domain.persona_service import bloquear_persona, get_or_create_persona
 
 
 def _acepta_tyc_marcado(html: str) -> bool:
@@ -453,4 +453,23 @@ def test_mostrar_nombre_no_desaparece_si_falla_otro_campo_primero(client):
     )
     assert r2.status_code == 400
     assert 'name="nombre"' in r2.text.lower()
+    assert _cuenta_paquetes(client) == 0
+
+
+def test_post_a_telefono_bloqueado_se_rechaza_sin_crear_paquete(client):
+    # .scratch/bloquear-clientes, ticket 02: el guard de `announce()` vive
+    # en el dominio y se dispara para las 4 ramas que resuelven
+    # `recipient_phone` -- acá el Anunciante y el Destinatario son la misma
+    # Persona (YO_MISMO/DECLARADO_POR_CLIENTE), así que bloquear su propio
+    # teléfono debe rechazar el POST con un error legible, NUNCA un 500.
+    persona = get_or_create_persona(client.db, "3001234567", "Ana")
+    bloquear_persona(client.db, persona, "Motivo")
+    client.db.commit()
+
+    r = client.post(
+        "/anunciar",
+        data={"nombre": "Ana", "telefono": "3001234567", "acepta_tyc": "on"},
+    )
+    assert r.status_code == 400
+    assert "bloqueado" in r.text.lower()
     assert _cuenta_paquetes(client) == 0

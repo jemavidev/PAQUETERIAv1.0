@@ -56,10 +56,18 @@ from .texto import normalizar_nombre
 from .usuario import Usuario
 
 
-class ClienteBloqueadoError(Exception):
+class ClienteBloqueadoError(ValueError):
     """Se intentó anunciar un paquete a nombre de una Persona bloqueada
     (.scratch/bloquear-clientes) -- el anuncio se rechaza por completo, sin
-    crear ningún Paquete."""
+    crear ningún Paquete.
+
+    Subclase de `ValueError` (no `Exception` a secas) a propósito: los 3
+    call sites de `announce()` (`announce.py`, y las 3 ramas de
+    `announce_new.py::announce_submit`) ya atrapan `ValueError` para
+    convertirlo en la respuesta de error propia de cada ruta -- que este
+    guard use ese mismo canal evita tener que enganchar un `except` nuevo
+    en cada call site (bug real: quedó sin atrapar en los 3 hasta que
+    code-review lo encontró, producía un 500 en vivo)."""
 
     def __init__(self, persona: "Persona"):
         self.persona = persona
