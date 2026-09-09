@@ -32,6 +32,11 @@ from app.domain.configuracion_conjunto_service import (
 from app.domain.contacto_externo_service import buscar_contactos_externos
 from app.domain.email_sender import EmailSender
 from app.domain.notification_sender import NotificationSender
+from app.domain.motivo_bloqueo_service import (
+    crear_motivo_bloqueo,
+    eliminar_motivo_bloqueo,
+    listar_motivos_bloqueo,
+)
 from app.domain.motivo_cancelacion_service import (
     crear_motivo,
     editar_motivo,
@@ -953,4 +958,69 @@ def admin_migrar_anio_ejecutar(
             "total": resumen.total,
             "migrado": True,
         },
+    )
+
+
+@router.get("/administracion/motivos-bloqueo", response_class=HTMLResponse)
+def admin_motivos_bloqueo_lista(
+    request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    return templates.TemplateResponse(
+        "admin/motivos_bloqueo.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_bloqueo(db)},
+    )
+
+
+@router.post("/administracion/motivos-bloqueo", response_class=HTMLResponse)
+def admin_motivos_bloqueo_crear(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    etiqueta: str = Form(None),
+):
+    try:
+        crear_motivo_bloqueo(db, etiqueta)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/motivos_bloqueo.html",
+            {
+                "request": request,
+                "admin": admin,
+                "motivos": listar_motivos_bloqueo(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/motivos_bloqueo.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_bloqueo(db), "creado": True},
+    )
+
+
+@router.post("/administracion/motivos-bloqueo/{motivo_id}/eliminar", response_class=HTMLResponse)
+def admin_motivos_bloqueo_eliminar(
+    motivo_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    mid = _uuid_motivo_anulacion_o_404(motivo_id)
+    try:
+        eliminar_motivo_bloqueo(db, mid)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/motivos_bloqueo.html",
+            {
+                "request": request,
+                "admin": admin,
+                "motivos": listar_motivos_bloqueo(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/motivos_bloqueo.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_bloqueo(db), "eliminado": True},
     )
