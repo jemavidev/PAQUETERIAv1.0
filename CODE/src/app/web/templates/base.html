@@ -516,6 +516,27 @@
       });
     });
 
+    // Pedido explícito del cliente: Escape cierra cualquier modal abierto.
+    // Global acá (no en el script de cada página, distinto por página --
+    // `recursos_recibir()`, `admin/staff.html`, etc.) porque TODO modal de
+    // la app pasa por `components/_modales.html` (`modal`/
+    // `modal_confirmacion`), que ya marca `role="dialog"` -- un solo
+    // listener cubre cualquier página sin depender de que cada una haya
+    // copiado su propio script de apertura/cierre (bug real encontrado en
+    // code-review: 2 páginas nuevas se habían olvidado de incluirlo).
+    // Dispara CLICK sobre el propio `[data-close]` del modal (el botón ✕ o
+    // el fondo oscuro) en vez de esconder el diálogo directo -- así reusa
+    // cualquier limpieza extra que ya tenga esa página (ej. detener la
+    // cámara del escáner de guía en `recursos_recibir()`), en vez de
+    // saltársela.
+    document.addEventListener('keydown', function (evento) {
+      if (evento.key !== 'Escape') return;
+      document.querySelectorAll('[role="dialog"]:not([hidden])').forEach(function (dialogo) {
+        var cerrar = dialogo.querySelector('[data-close="' + dialogo.id + '"]');
+        if (cerrar) cerrar.click();
+      });
+    });
+
     window.paqueteXInicPaginacionFlotante = function () {
       var sentinel = document.getElementById('paginacion-sentinel');
       var pildora = document.getElementById('paginacion-flotante');
