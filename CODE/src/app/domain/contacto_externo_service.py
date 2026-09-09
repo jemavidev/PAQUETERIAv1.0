@@ -12,6 +12,7 @@ sin sesión de BD ni HTTP de por medio.
 
 from dataclasses import dataclass
 
+from .contacto_externo import ContactoExterno, ContactoExternoTelefono
 from .telefono import normalizar_telefono
 
 # Tags de fuente conocidos -- usados tanto por el script de importación como
@@ -114,3 +115,72 @@ def fusionar_fuentes(filas: list[FilaFuenteContacto]) -> list[ContactoExternoCon
             )
         )
     return resultado
+
+
+@dataclass(frozen=True)
+class ResumenImportacion:
+    """Resultado de `importar_contactos_externos` -- para que el script (o
+    quien lo invoque) sepa qué pasó, incluyendo los casos que necesitan
+    revisión manual (`conflictos`)."""
+
+    creados: int
+    enriquecidos: int
+    conflictos: list
+
+
+def importar_contactos_externos(session, filas_nuevas: list[FilaFuenteContacto]) -> ResumenImportacion:
+    """Fusiona `filas_nuevas` (`fusionar_fuentes`) y cruza cada grupo contra
+    los `ContactoExternoTelefono` YA existentes en la tabla:
+
+    - Ningún teléfono existe -> crea un `ContactoExterno` nuevo.
+    - Coincide con exactamente uno existente -> lo enriquece (suma teléfonos
+      y fuentes nuevas, NUNCA sobreescribe `nombre`).
+    - Coincide con más de uno existente y distinto -> NO se fusionan
+      automáticamente; se reporta en `conflictos` para revisión manual.
+
+    Reimportar el mismo lote es un no-op real (no crea filas nuevas, todo ya
+    coincide con teléfonos existentes).
+    """
+    consolidados = fusionar_fuentes(filas_nuevas)
+    creados = 0
+    enriquecidos = 0
+    conflictos = []
+
+    for c in consolidados:
+        existentes = (
+            session.query(ContactoExternoTelefono)
+            .filter(ContactoExternoTelefono.telefono.in_(c.telefonos))
+            .all()
+        )
+        ids_existentes = {row.contacto_externo_id for row in existentes}
+
+        if not ids_existentes:
+            contacto = ContactoExterno(nombre=c.nombre, fuentes=sorted(c.fuentes))
+            session.add(contacto)
+            session.flush()
+            for tel in c.telefonos:
+                session.add(
+                    ContactoExternoTelefono(contacto_externo_id=contacto.id, telefono=tel)
+                )
+            creados += 1
+        elif len(ids_existentes) == 1:
+            contacto_id = next(iter(ids_existentes))
+            contacto = session.get(ContactoExterno, contacto_id)
+            fuentes_actuales = set(contacto.fuentes or [])
+            fuentes_nuevas = fuentes_actuales | c.fuentes
+            if fuentes_nuevas != fuentes_actuales:
+                contacto.fuentes = sorted(fuentes_nuevas)
+            telefonos_actuales = {row.telefono for row in existentes}
+            for tel in c.telefonos - telefonos_actuales:
+                session.add(
+                    ContactoExternoTelefono(contacto_externo_id=contacto_id, telefono=tel)
+                )
+            enriquecidos += 1
+        else:
+            conflictos.append(
+                f"Los teléfonos {sorted(c.telefonos)} conectan {len(ids_existentes)} "
+                "contactos ya existentes y distintos -- requiere revisión manual."
+            )
+
+    session.flush()
+    return ResumenImportacion(creados=creados, enriquecidos=enriquecidos, conflictos=conflictos)
