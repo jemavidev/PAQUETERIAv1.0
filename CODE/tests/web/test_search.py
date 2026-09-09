@@ -562,6 +562,70 @@ def test_consultar_entregar_sin_saldo_no_muestra_el_ajuste(client):
 
 
 # --------------------------------------------------------------------------- #
+# Cobro visible en el detalle del paquete (.scratch/cobro-bodegaje, ticket 05)
+# -- mismo hallazgo de paridad que arriba: /paquetes ya lo muestra (modal
+# "Ver"), /consultar nunca lo mostró para un paquete ya Entregado.
+# --------------------------------------------------------------------------- #
+def test_consultar_entregado_muestra_el_monto_cobrado(client):
+    # 1er paquete a este teléfono agota la exención de "primera entrega"
+    # (mismo patrón que `test_packages.py::test_modal_ver_muestra_el_monto_
+    # cobrado`) -- el 2do sí genera un cobro real de $1,500.
+    staff = _staff(client)
+    _login_staff(client, staff)
+    p_previo = _anunciar(client, tel="3001234567")
+    receive(client.db, p_previo, staff)
+    client.db.commit()
+    client.post(f"/paquetes/{p_previo.id}/entregar")
+
+    p = _anunciar(client, tel="3001234567")
+    receive(client.db, p, staff)
+    client.db.commit()
+    client.post(f"/paquetes/{p.id}/entregar")
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "1,500" in r.text
+
+
+def test_consultar_entregado_muestra_motivo_de_anulacion(client):
+    from app.domain.motivo_anulacion_cobro import MotivoAnulacionCobro
+
+    staff = _staff(client)
+    _login_staff(client, staff)
+    client.db.add(MotivoAnulacionCobro(etiqueta="Reclamo del cliente"))
+    client.db.commit()
+
+    p = _anunciar(client, tel="3001234567")
+    receive(client.db, p, staff)
+    client.db.commit()
+    client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Reclamo del cliente"},
+    )
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "Reclamo del cliente" in r.text
+
+
+def test_consultar_entregado_sin_sesion_de_staff_no_muestra_el_cobro(client):
+    staff = _staff(client)
+    _login_staff(client, staff)
+    p = _anunciar(client, tel="3001234567")
+    receive(client.db, p, staff)
+    client.db.commit()
+    client.post(f"/paquetes/{p.id}/entregar")
+    client.post("/salir")
+
+    r = client.get("/consultar", params={"q": p.access_code})
+    assert r.status_code == 200
+    assert "1,500" not in r.text
+    assert "Cobro" not in r.text
+
+
+
+
+# --------------------------------------------------------------------------- #
 # Rate-limit (.scratch/migracion-por-anio, ticket 02)
 # --------------------------------------------------------------------------- #
 def test_10_consultas_por_minuto_pasan_con_normalidad(client):

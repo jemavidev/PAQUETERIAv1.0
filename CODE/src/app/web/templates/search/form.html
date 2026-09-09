@@ -73,6 +73,20 @@
        `Depends(current_staff)` del endpoint. #}
     <button type="button" data-open="modal-entregar-consultar" class="w-full justify-center mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-base font-medium px-6 py-3 shadow-sm transition">Entregar</button>
     {%- endif %}
+    {%- if cobro %}
+    {# .scratch/cobro-bodegaje, ticket 05: mismo bloque que `_resultados.html`
+       (DUPLICADO a propósito, misma familia de duplicación que el resto de
+       este modal/vista) -- visible para cualquier staff, solo si el
+       paquete ya tiene un Cobro registrado. #}
+    <p class="text-sm text-slate-700 mt-4">
+      {%- if cobro.motivo_anulacion %}
+      <span class="font-semibold text-slate-900">Cobro anulado</span> — {{ cobro.motivo_anulacion }}
+      {%- else %}
+      <span class="font-semibold text-slate-900">Cobro: ${{ "{:,}".format(cobro.monto_total) }}</span>
+      {%- if cobro.monto_bodegaje %} (incluye bodegaje: ${{ "{:,}".format(cobro.monto_bodegaje) }}){%- endif %}
+      {%- endif %}
+    </p>
+    {%- endif %}
 
     <div class="mt-5 uppercase">
       {# Solo la línea de tiempo en mayúsculas (corrección en vivo

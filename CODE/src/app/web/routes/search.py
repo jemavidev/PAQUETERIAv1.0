@@ -31,6 +31,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import or_
 
 from app.domain.apartamento_service import listar_catalogo_por_torre
+from app.domain.cobro import Cobro
 from app.domain.cobro_service import (
     calcular_cobro,
     listar_motivos_anulacion,
@@ -155,6 +156,16 @@ def search(
                 saldo = saldo_de_persona(db, persona_destino.id)
                 if saldo < 0:
                     paquete.saldo_pendiente = -saldo
+        # .scratch/cobro-bodegaje, ticket 05: "visible para cualquier
+        # current_staff" (spec.md) -- gated a sesión de staff, igual que el
+        # resto de este archivo, a propósito NUNCA visible en la consulta
+        # pública/anónima ni en el portal del propio residente (issue de
+        # paridad encontrado en code-review: /paquetes ya lo mostraba en su
+        # modal "Ver", /consultar nunca lo mostró).
+        if request.session.get(SESSION_KEY) and paquete.estado == EstadoPaquete.ENTREGADO:
+            contexto["cobro"] = (
+                db.query(Cobro).filter(Cobro.paquete_id == paquete.id).one_or_none()
+            )
         return templates.TemplateResponse("search/form.html", contexto)
 
     return templates.TemplateResponse(
