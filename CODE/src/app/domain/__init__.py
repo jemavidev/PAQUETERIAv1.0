@@ -26,6 +26,7 @@ from . import (  # noqa: E402,F401
     persona,
     plantilla_notificacion,
     preferencia_notificacion,
+    saldo_contra_entrega,
     tarifa_cobro,
     usuario,
 )

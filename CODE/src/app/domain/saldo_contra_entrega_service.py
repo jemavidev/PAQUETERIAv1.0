@@ -1,0 +1,66 @@
+# -*- coding: utf-8 -*-
+"""
+Servicio de dominio de `MovimientoSaldoContraEntrega` (módulo "Gestión de
+dinero contra entrega", `.scratch/dinero-contra-entrega`).
+"""
+
+from datetime import datetime, timezone
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from .persona import Persona
+from .saldo_contra_entrega import MovimientoSaldoContraEntrega
+from .usuario import Usuario
+
+
+def registrar_movimiento_saldo(
+    session: Session,
+    persona_id,
+    monto: int,
+    staff: Usuario,
+    paquete_id=None,
+) -> MovimientoSaldoContraEntrega:
+    """Registra un movimiento de saldo -- único punto que crea uno, reusado
+    igual para depósito, pago a mensajero (`monto` negativo), ajuste en
+    Entregar, y recuperación posterior. NO valida el signo del saldo
+    resultante: puede quedar negativo (una deuda) sin bloquear nada."""
+    movimiento = MovimientoSaldoContraEntrega(
+        persona_id=persona_id,
+        monto=monto,
+        paquete_id=paquete_id,
+        registrado_por_usuario_id=staff.id,
+        created_at=datetime.now(timezone.utc),
+    )
+    session.add(movimiento)
+    session.flush()
+    return movimiento
+
+
+def saldo_de_persona(session: Session, persona_id) -> int:
+    """La suma de todos los movimientos de `persona_id` -- 0 si nunca tuvo
+    ninguno. Sin campo desnormalizado: siempre se recalcula."""
+    total = (
+        session.query(func.coalesce(func.sum(MovimientoSaldoContraEntrega.monto), 0))
+        .filter(MovimientoSaldoContraEntrega.persona_id == persona_id)
+        .scalar()
+    )
+    return int(total)
+
+
+def personas_con_historial_en_apartamento(session: Session, apartamento_id) -> list[Persona]:
+    """Personas del apartamento ACTUAL dado (no un snapshot congelado de
+    ningún paquete) que tienen al menos un movimiento de saldo registrado --
+    para poblar el selector "de quién se descuenta" en Recibir. Si el
+    residente se muda, deja de aparecer acá para su unidad vieja y empieza a
+    aparecer para la nueva, aunque el saldo en sí siga siendo suyo."""
+    return (
+        session.query(Persona)
+        .join(
+            MovimientoSaldoContraEntrega,
+            MovimientoSaldoContraEntrega.persona_id == Persona.id,
+        )
+        .filter(Persona.apartamento_actual_id == apartamento_id)
+        .distinct()
+        .all()
+    )
