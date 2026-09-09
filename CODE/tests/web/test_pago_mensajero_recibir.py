@@ -141,3 +141,59 @@ def test_recibir_sin_completar_el_selector_no_crea_movimiento(client):
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
     assert saldo_de_persona(client.db, persona.id) == 5000
+
+
+# --------------------------------------------------------------------------- #
+# "Saldo: $X" debajo del destinatario, en Recibir (pedido explícito del
+# cliente) -- verde a favor, rojo en contra.
+# --------------------------------------------------------------------------- #
+def test_recibir_muestra_saldo_a_favor_en_verde(client):
+    staff = _login_staff(client)
+    persona = get_or_create_persona(client.db, "3001234567", "Ana")
+    registrar_movimiento_saldo(client.db, persona.id, 5000, staff)
+    client.db.commit()
+
+    announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert "Saldo: $5,000" in r.text
+    assert "text-emerald-600" in r.text
+
+
+def test_recibir_muestra_saldo_en_contra_en_rojo(client):
+    staff = _login_staff(client)
+    persona = get_or_create_persona(client.db, "3001234567", "Ana")
+    registrar_movimiento_saldo(client.db, persona.id, -3000, staff)
+    client.db.commit()
+
+    announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert "Saldo: $-3,000" in r.text
+    assert "text-red-600" in r.text
+
+
+def test_recibir_sin_saldo_no_muestra_la_linea(client):
+    _login_staff(client)
+    announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert "Saldo: $" not in r.text

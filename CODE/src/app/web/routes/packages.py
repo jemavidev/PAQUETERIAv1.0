@@ -727,17 +727,22 @@ def _listar(
     # (mismo criterio "un puñado fijo de consultas") -- nunca una consulta
     # de saldo por cada paquete de la página.
     apartamentos_anunciado = set()
-    persona_ids_recibido = set()
+    persona_ids_con_saldo = set()
     for p in paquetes:
         persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
         if persona_destino is None:
             continue
+        # Pedido explícito del cliente: "Saldo: $X" (a favor o en contra)
+        # visible debajo del destinatario tanto en Recibir como en
+        # Entregar -- a diferencia de `saldo_pendiente` (solo la magnitud
+        # de una deuda, únicamente para RECIBIDO), acá se necesita el
+        # saldo real con signo del destinatario para AMBOS estados, así
+        # que el batch cubre ambos (antes solo cubría RECIBIDO).
+        persona_ids_con_saldo.add(persona_destino.id)
         if p.estado == EstadoPaquete.ANUNCIADO and persona_destino.apartamento_actual_id is not None:
             apartamentos_anunciado.add(persona_destino.apartamento_actual_id)
-        elif p.estado == EstadoPaquete.RECIBIDO:
-            persona_ids_recibido.add(persona_destino.id)
     personas_por_apartamento = personas_con_historial_por_apartamentos(db, apartamentos_anunciado)
-    saldos_por_persona = saldos_de_personas(db, persona_ids_recibido)
+    saldos_por_persona = saldos_de_personas(db, persona_ids_con_saldo)
 
     for p in paquetes:
         # Atributos transitorios (no persistidos), solo para la plantilla.
@@ -796,15 +801,28 @@ def _listar(
                 p.personas_con_saldo = personas_por_apartamento.get(
                     persona_destino.apartamento_actual_id, []
                 )
-        # .scratch/dinero-contra-entrega, ticket 04: saldo pendiente (si
-        # quedó negativo) para ofrecer el ajuste opcional al Entregar.
-        p.saldo_pendiente = None
-        if p.estado == EstadoPaquete.RECIBIDO:
+        # Pedido explícito del cliente: "Saldo: $X" (a favor o en contra)
+        # del propio destinatario, debajo de su nombre, en Recibir Y
+        # Entregar -- con signo (positivo = a favor, negativo = en
+        # contra), a diferencia de `saldo_pendiente` de abajo (solo la
+        # magnitud de una deuda). `None` (no se muestra nada) si el saldo
+        # es exactamente $0 o no hay Persona resuelta.
+        p.saldo_actual = None
+        if p.estado in (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO):
             persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
             if persona_destino is not None:
                 saldo = saldos_por_persona.get(persona_destino.id, 0)
-                if saldo < 0:
-                    p.saldo_pendiente = -saldo
+                if saldo != 0:
+                    p.saldo_actual = saldo
+        # .scratch/dinero-contra-entrega, ticket 04: saldo pendiente (si
+        # quedó negativo) para ofrecer el ajuste opcional al Entregar --
+        # deriva de `saldo_actual` (mismo dato, ya resuelto arriba) en vez
+        # de volver a mirar `saldos_por_persona`.
+        p.saldo_pendiente = (
+            -p.saldo_actual
+            if p.estado == EstadoPaquete.RECIBIDO and p.saldo_actual is not None and p.saldo_actual < 0
+            else None
+        )
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
         # con el teléfono del Principal de la unidad (o del Anunciante)

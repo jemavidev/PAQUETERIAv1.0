@@ -30,7 +30,7 @@
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_picker_apartamento.html" import picker_apartamento %}
 
-{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, personas_con_saldo=None) %}
+{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, personas_con_saldo=None, saldo_actual=None) %}
 {%- set opciones_tipo = [] -%}
 {%- for t in tipos %}{% set _ = opciones_tipo.append((t.value, t.value.replace('_', ' ')|capitalize)) %}{% endfor -%}
 {%- set opciones_condicion = [] -%}
@@ -42,6 +42,16 @@
     {%- endif %}
     {%- if q %}
     <input type="hidden" name="q" value="{{ q }}">
+    {%- endif %}
+    {%- if saldo_actual %}
+    {#- Pedido explícito del cliente: "Saldo: $X" (a favor o en contra) del
+       destinatario, arriba del todo -- verde+negrilla si es a favor
+       (positivo), rojo+negrilla si está en contra (negativo, una deuda).
+       Puramente informativo acá (Recibir no registra ningún movimiento de
+       saldo por sí solo, a diferencia de Entregar). #}
+    <p class="mb-3 {{ 'text-emerald-600' if saldo_actual > 0 else 'text-red-600' }} font-bold">
+      Saldo: ${{ "{:,}".format(saldo_actual) }}
+    </p>
     {%- endif %}
     {#- Paso nuevo, opcional (.scratch/ocupante-principal-escenarios, ticket
         05): declarar la unidad si el destinatario todavía no tiene, y/o

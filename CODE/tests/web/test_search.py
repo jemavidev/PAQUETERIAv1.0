@@ -544,7 +544,7 @@ def test_consultar_entregar_con_saldo_negativo_muestra_el_ajuste(client):
 
     r = client.get("/consultar", params={"q": p.access_code})
     assert r.status_code == 200
-    assert "Saldo pendiente" in r.text
+    assert "Saldo: $" in r.text
     assert "5,000" in r.text
     assert 'name="pago_saldo"' in r.text
 
@@ -558,7 +558,7 @@ def test_consultar_entregar_sin_saldo_no_muestra_el_ajuste(client):
 
     r = client.get("/consultar", params={"q": p.access_code})
     assert r.status_code == 200
-    assert "Saldo pendiente" not in r.text
+    assert "Saldo: $" not in r.text
 
 
 # --------------------------------------------------------------------------- #

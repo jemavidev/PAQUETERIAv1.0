@@ -121,10 +121,17 @@ def search(
                 .filter(Persona.telefono == paquete.recipient_phone)
                 .one_or_none()
             )
-            if persona_destino is not None and persona_destino.apartamento_actual_id is not None:
-                contexto["personas_con_saldo"] = personas_con_historial_en_apartamento(
-                    db, persona_destino.apartamento_actual_id
-                )
+            if persona_destino is not None:
+                # Pedido explícito del cliente: "Saldo: $X" (a favor o en
+                # contra) del propio destinatario, debajo de su nombre --
+                # mismo criterio que `packages.py::_listar`.
+                saldo = saldo_de_persona(db, persona_destino.id)
+                if saldo != 0:
+                    paquete.saldo_actual = saldo
+                if persona_destino.apartamento_actual_id is not None:
+                    contexto["personas_con_saldo"] = personas_con_historial_en_apartamento(
+                        db, persona_destino.apartamento_actual_id
+                    )
         # Issue 314/316 (.scratch/pendientes-cliente): el modal Entregar de
         # esta vista es un DUPLICADO del de `/paquetes` (`packages.py::
         # _listar` calcula esto mismo en batch para su propia lista) -- acá
@@ -154,6 +161,10 @@ def search(
             )
             if persona_destino is not None:
                 saldo = saldo_de_persona(db, persona_destino.id)
+                if saldo != 0:
+                    # Pedido explícito del cliente: mismo dato que arriba
+                    # (ANUNCIADO/Recibir), acá para Entregar.
+                    paquete.saldo_actual = saldo
                 if saldo < 0:
                     paquete.saldo_pendiente = -saldo
         # .scratch/cobro-bodegaje, ticket 05: "visible para cualquier
