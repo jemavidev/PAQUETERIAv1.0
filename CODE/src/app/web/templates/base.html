@@ -527,8 +527,8 @@
     // Dispara CLICK sobre el propio `[data-close]` del modal (el botón ✕ o
     // el fondo oscuro) en vez de esconder el diálogo directo -- así reusa
     // cualquier limpieza extra que ya tenga esa página (ej. detener la
-    // cámara del escáner de guía en `recursos_recibir()`), en vez de
-    // saltársela.
+    // cámara del escáner de código de barras en `recursos_recibir()`), en
+    // vez de saltársela.
     document.addEventListener('keydown', function (evento) {
       if (evento.key !== 'Escape') return;
       document.querySelectorAll('[role="dialog"]:not([hidden])').forEach(function (dialogo) {
