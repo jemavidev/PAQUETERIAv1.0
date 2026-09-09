@@ -372,7 +372,7 @@ def test_entregar_desde_consultar_redirige_de_vuelta_con_el_mismo_termino(client
 # (`packages/_resultados.html`); reportado en vivo por el cliente que la
 # bandera no aparecía acá, solo en el original.
 # --------------------------------------------------------------------------- #
-_BANDERA_PRIMERA_ENTREGA = "Primera entrega a este número de teléfono"
+_BANDERA_PRIMERA_ENTREGA = "Primera entrega a este cliente"
 
 
 def test_consultar_muestra_bandera_primera_entrega(client):

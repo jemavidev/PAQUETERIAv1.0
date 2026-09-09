@@ -4902,7 +4902,7 @@ def test_sin_conexiones_no_muestra_badge(client):
 # modal Entregar -- primera vez que se entrega un paquete a ESE número de
 # teléfono, sin importar con qué otros residentes viva.
 # --------------------------------------------------------------------------- #
-_BANDERA_PRIMERA_ENTREGA = "Primera entrega a este número de teléfono"
+_BANDERA_PRIMERA_ENTREGA = "Primera entrega a este cliente"
 
 
 def test_primera_entrega_muestra_bandera_en_el_modal(client):
