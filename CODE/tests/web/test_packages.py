@@ -1167,6 +1167,52 @@ def test_advertencia_no_aparece_cuando_el_nombre_coincide(client):
     assert "no coincide" not in r.text.lower()
 
 
+def test_prohibido_aparece_cuando_el_destinatario_fue_eliminado(client):
+    # Pedido explícito del cliente (.scratch/pendientes-cliente): si la
+    # Persona del destinatario ya no existe (derecho al olvido), un ícono
+    # "prohibido" distinto del de "advertencia" -- señal más fuerte, sin
+    # acción de "corregir" (no hay a quién resolver).
+    from app.domain.persona import Persona
+    from app.domain.persona_service import anonimizar_persona
+
+    _login_staff(client)
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+    persona = client.db.query(Persona).filter(Persona.telefono == "+573001234567").one()
+    anonimizar_persona(client.db, persona)
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "ya no existe" in r.text.lower()
+
+
+def test_prohibido_no_aparece_cuando_el_destinatario_existe(client):
+    _login_staff(client)
+    _anunciar(client, tel="3001234567", nombre="Ana")
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "ya no existe" not in r.text.lower()
+
+
+def test_prohibido_no_aparece_sin_telefono_de_destinatario(client):
+    # SOLO_NOMBRE nunca tiene `recipient_phone` -- no hay a quién resolver
+    # (ver docstring de `announce()`), así que nunca debe leerse como
+    # "eliminado" (sería un falso positivo).
+    _login_staff(client)
+    announce(
+        client.db,
+        anunciante_telefono="3001234567",
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.solo_nombre("Otra Persona"),
+    )
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "ya no existe" not in r.text.lower()
+
+
 def test_advertencia_es_clickeable_y_abre_corregir_destinatario_en_anunciado(client):
     # Conversación 2026-08-15 (pedido explícito): el ícono de advertencia
     # debe ser clickeable y abrir el modal "Corregir destinatario" -- mismo

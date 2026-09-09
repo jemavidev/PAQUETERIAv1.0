@@ -747,6 +747,17 @@ def _listar(
         p.advertencia_nombre = _destinatario_sin_confirmar(
             p, p.candidatos_correccion, personas.get(p.announced_by_persona_id)
         )
+        # Pedido explícito del cliente (.scratch/pendientes-cliente): ícono
+        # "prohibido" cuando el destinatario YA NO EXISTE (derecho al
+        # olvido/anonimizada) -- distinto de `advertencia_nombre` (nombre
+        # sin confirmar, pero la Persona sigue existiendo). Reusa
+        # `personas_por_telefono_destinatario`, ya resuelto en batch más
+        # arriba -- sin query nueva. `recipient_phone` vacío (SOLO_NOMBRE)
+        # nunca cuenta acá: nunca hubo a quién resolver, no es un error.
+        p.destinatario_eliminado = bool(
+            p.recipient_phone
+            and personas_por_telefono_destinatario.get(p.recipient_phone) is None
+        )
         p.actor_ultima_accion = _actor_ultima_accion(p, usuarios, personas)
         p.fecha_ultima_accion = _fecha_ultima_accion(p)
         p.duracion_transcurrida = _duracion_transcurrida(p)

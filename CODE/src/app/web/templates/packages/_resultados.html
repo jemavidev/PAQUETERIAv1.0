@@ -105,7 +105,14 @@
         <td class="px-4 py-2.5 font-medium">
           {# Pedido explícito: "Cliente" clic == botón "Ver" (mismo modal). #}
           <button type="button" data-open="modal-ver-{{ p.id }}" class="text-blue-800 hover:underline text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded">{{ p.recipient_name }}</button>
-          {%- if p.advertencia_nombre %}
+          {%- if p.destinatario_eliminado %}
+          {# Pedido explícito del cliente (.scratch/pendientes-cliente):
+             la Persona del destinatario ya no existe (derecho al
+             olvido/anonimizada) -- prioridad sobre `advertencia_nombre`,
+             es la señal más fuerte de las dos. Sin acción de "corregir"
+             acá: no hay a quién resolver, el residente ya no está. #}
+          <svg class="inline h-4 w-4 text-red-600 align-text-bottom ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><title>El destinatario ya no existe (cuenta eliminada)</title>{{ iconos_nav.prohibido|safe }}</svg>
+          {%- elif p.advertencia_nombre %}
           {%- if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
           {# Clickeable -- pedido explícito (conversación 2026-08-15): abre
              "Corregir destinatario" directo, mismo modal que el ícono
