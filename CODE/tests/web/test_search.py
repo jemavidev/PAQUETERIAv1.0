@@ -491,3 +491,20 @@ def test_recibir_desde_consultar_en_error_tambien_vuelve_a_consultar(client):
     )
     assert r.status_code == 303
     assert r.headers["location"] == f"/consultar?q={p.access_code}"
+
+
+# --------------------------------------------------------------------------- #
+# Rate-limit (.scratch/migracion-por-anio, ticket 02)
+# --------------------------------------------------------------------------- #
+def test_10_consultas_por_minuto_pasan_con_normalidad(client):
+    for _ in range(10):
+        r = client.get("/consultar", params={"q": "ZZZZ"})
+        assert r.status_code == 200
+
+
+def test_la_11a_consulta_en_el_mismo_minuto_responde_429(client):
+    for _ in range(10):
+        client.get("/consultar", params={"q": "ZZZZ"})
+
+    r = client.get("/consultar", params={"q": "ZZZZ"})
+    assert r.status_code == 429

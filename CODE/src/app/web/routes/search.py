@@ -44,14 +44,33 @@ from app.domain.paquete_service import es_primera_entrega_a_telefono
 from app.domain.paquete_timeline_service import dias_desde_recibido, timeline_de_paquete
 
 from ..db import get_db
+from ..rate_limit import rate_limit
 from ..security import SESSION_KEY
 from ..templating import templates
 
 router = APIRouter()
 
+_MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nuevo."
+
 
 @router.get("/consultar", response_class=HTMLResponse)
-def search(request: Request, q: str = None, db: Session = Depends(get_db)):
+def search(
+    request: Request,
+    q: str = None,
+    db: Session = Depends(get_db),
+    # .scratch/migracion-por-anio, ticket 02: 10/60s por IP, mismo mecanismo
+    # genérico ya usado en OTP/login/restablecer contraseña -- mitigación
+    # parcial del riesgo aceptado de reciclar access_code entre años (ver
+    # spec.md).
+    permitido: bool = Depends(rate_limit("consultar_publico", 10, 60)),
+):
+    if not permitido:
+        return templates.TemplateResponse(
+            "search/form.html",
+            {"request": request, "q": q or "", "error": _MENSAJE_RATE_LIMIT},
+            status_code=429,
+        )
+
     termino = (q or "").strip()
     if not termino:
         return templates.TemplateResponse(

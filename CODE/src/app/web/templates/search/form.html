@@ -8,6 +8,7 @@
 {% from "components/_visor_fotos.html" import galeria_fotos %}
 {% from "components/_modales.html" import modal %}
 {% from "components/_recibir_paquete.html" import recursos_recibir, modal_recibir %}
+{% from "components/_toast.html" import toast %}
 {% block title %}Consultar paquete — PAQUETEX{% endblock %}
 {% block content %}
 <div class="max-w-[480px] lg:max-w-[860px] mx-auto px-4 py-8">
@@ -17,6 +18,8 @@
   <img src="/static/branding/papyrus-logo.png" alt="PAPYRUS"
        class="mx-auto w-full max-w-xs h-auto object-contain mb-6"
        style="max-height:120px;min-height:80px;">
+
+  {% if error %}{{ toast(error, variant='danger') }}{% endif %}
 
   {% call formulario_flujo('Consultar mi paquete', action='/consultar', boton_texto='Consultar', subtitulo='Ingresa tu código de acceso o número de guía', method='get', boton_icono=iconos_nav.buscar_campo) %}
     {# Foco condicional (versión móvil, `.scratch/pendientes-cliente`): a
