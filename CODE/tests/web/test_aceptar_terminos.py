@@ -96,3 +96,23 @@ def test_aceptar_limpia_el_estado_y_permite_volver_al_portal(client):
 
     r2 = client.get("/mis-paquetes")
     assert r2.status_code == 200
+
+
+def test_bloqueado_con_desbloqueo_autorizado_es_redirigido_desde_post_mis_datos(client):
+    # code-review sobre .scratch/bloquear-clientes: `gate_bloqueado` solo
+    # estaba cableado en el GET de /mis-datos y en /mis-paquetes -- las
+    # rutas POST (editar perfil, ocupantes) no lo llamaban, así que un
+    # residente en "desbloqueo autorizado" (OTP habilitado, términos SIN
+    # aceptar) podía seguir editando su perfil por POST directo, aunque el
+    # spec diga que el portal debe quedar restringido a aceptar términos.
+    _login_cliente(client)
+    persona = client.db.query(Persona).filter(Persona.telefono == _CANON).one()
+    bloquear_persona(client.db, persona, "Motivo")
+    autorizar_desbloqueo(client.db, persona)
+    client.db.commit()
+
+    r = client.post(
+        "/mis-datos", data={"nombre": "Cliente de prueba"}, follow_redirects=False
+    )
+    assert r.status_code == 303
+    assert r.headers["location"] == "/mis-datos/aceptar-terminos"
