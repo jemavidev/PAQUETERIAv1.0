@@ -26,4 +26,21 @@
     {% endfor %}
   </div>
 </div>
+{# Bug real encontrado en pruebas manuales en navegador: sin este script,
+   "Eliminar" nunca abría el modal de confirmación (el toggle data-open/
+   data-close de `_modales.html` NO es automático -- cada página que usa
+   el componente necesita este mismo script inline, mismo patrón que
+   `admin/staff.html`). Sin él, un motivo no se podía borrar nunca desde
+   la UI, aunque la ruta POST /eliminar sí funcionaba. #}
+<script>
+  (function () {
+    function toggle(id, hidden) { var m = document.getElementById(id); if (m) m.hidden = hidden; }
+    document.querySelectorAll('[data-open]').forEach(function (b) {
+      b.addEventListener('click', function () { toggle(b.dataset.open, false); });
+    });
+    document.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () { toggle(b.dataset.close, true); });
+    });
+  })();
+</script>
 {% endblock %}
