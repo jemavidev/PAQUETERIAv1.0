@@ -25,7 +25,7 @@ Ocupantes de esa unidad (crear, asociar/desvincular teléfono, dar de baja) —
 aplica. Un Ocupante no-principal (ticket 05) NO ve este bloque.
 """
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -56,6 +56,7 @@ from app.domain.notificacion_service import es_cliente_verificado
 from app.domain.paquete_service import tiene_paquete_en_curso
 from app.domain.persona import Persona
 from app.domain.persona_service import (
+    aceptar_terminos_y_desbloquear,
     anonimizar_persona,
     cambiar_telefono_propio,
     desvincular_telefono_propio,
@@ -72,7 +73,12 @@ from app.domain.preferencia_notificacion_service import (
 )
 
 from ..db import get_db
-from ..security import CUSTOMER_NOMBRE_SESSION_KEY, CUSTOMER_SESSION_KEY, current_customer
+from ..security import (
+    CUSTOMER_NOMBRE_SESSION_KEY,
+    CUSTOMER_SESSION_KEY,
+    current_customer,
+    gate_bloqueado,
+)
 from ..templating import templates
 
 _CANALES_SIN_PROVEEDOR = {CanalNotificacion.LLAMADA}
@@ -244,6 +250,12 @@ def customer_verify_form(
     persona: Persona = Depends(current_customer),
     db: Session = Depends(get_db),
 ):
+    # .scratch/bloquear-clientes, ticket 04: antes que cualquier otro gate --
+    # una Persona bloqueada no ve su portal normal hasta que acepte los
+    # términos del servicio.
+    gate = gate_bloqueado(persona)
+    if gate is not None:
+        return gate
     gate = _gate_no_verificado(request, db, persona)
     if gate is not None:
         return gate
@@ -252,6 +264,44 @@ def customer_verify_form(
     contexto["guardado"] = request.query_params.get("guardado") == "1"
     contexto["ocupante_guardado"] = request.query_params.get("ocupante_guardado") == "1"
     return templates.TemplateResponse("customer/verify.html", contexto)
+
+
+@router.get("/mis-datos/aceptar-terminos", response_class=HTMLResponse)
+def aceptar_terminos_form(
+    request: Request,
+    persona: Persona = Depends(current_customer),
+):
+    """.scratch/bloquear-clientes, ticket 04 -- a propósito NO usa
+    `gate_bloqueado`: esta es la ÚNICA pantalla del portal accesible
+    mientras `bloqueado_en` sigue seteado (la vía de salida de ese
+    estado). Alguien que YA no está bloqueado (aceptó hace rato, o nunca
+    estuvo bloqueado) simplemente ve la pantalla igual, sin efecto -- no
+    hace falta un guard extra para ese caso."""
+    return templates.TemplateResponse(
+        "customer/aceptar_terminos.html", {"request": request, "persona": persona}
+    )
+
+
+@router.post("/mis-datos/aceptar-terminos", response_class=HTMLResponse)
+def aceptar_terminos_submit(
+    request: Request,
+    persona: Persona = Depends(current_customer),
+    db: Session = Depends(get_db),
+    acepto: str = Form(None),
+):
+    if not acepto:
+        return templates.TemplateResponse(
+            "customer/aceptar_terminos.html",
+            {
+                "request": request,
+                "persona": persona,
+                "error": "Tenés que confirmar que leíste y aceptás los términos para continuar.",
+            },
+            status_code=400,
+        )
+
+    aceptar_terminos_y_desbloquear(db, persona)
+    return RedirectResponse("/mis-datos", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/mis-datos", response_class=HTMLResponse)
