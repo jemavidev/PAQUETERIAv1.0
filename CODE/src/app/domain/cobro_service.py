@@ -16,6 +16,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .cobro import Cobro
@@ -111,6 +112,38 @@ def calcular_cobro(
     )
 
 
+def editar_tarifas(
+    session: Session,
+    base_normal: int,
+    base_extra_dimensionado: int,
+    bodegaje_normal_24h: int,
+    bodegaje_extra_dimensionado_24h: int,
+) -> TarifaCobro:
+    """Edita las 4 tarifas fijas -- valores fijos, no un catálogo abierto
+    (no se puede agregar un quinto tipo de cobro ni eliminar ninguno de los
+    4). Cambiar una tarifa acá nunca reescribe un `Cobro` ya registrado
+    (snapshot en el momento de cobrar).
+
+    Raises:
+        ValueError: si algún valor es negativo.
+    """
+    valores = {
+        "base_normal": base_normal,
+        "base_extra_dimensionado": base_extra_dimensionado,
+        "bodegaje_normal_24h": bodegaje_normal_24h,
+        "bodegaje_extra_dimensionado_24h": bodegaje_extra_dimensionado_24h,
+    }
+    for nombre, valor in valores.items():
+        if valor < 0:
+            raise ValueError(f"{nombre} no puede ser negativo.")
+
+    fila = obtener_tarifas_vigentes(session)
+    for nombre, valor in valores.items():
+        setattr(fila, nombre, valor)
+    session.flush()
+    return fila
+
+
 def listar_motivos_anulacion(session: Session) -> list[MotivoAnulacionCobro]:
     """Todos los motivos del catálogo de anulación, en orden de creación --
     mismo criterio que `motivo_cancelacion_service.listar_motivos`, para el
@@ -136,6 +169,59 @@ def motivo_anulacion_valido(session: Session, etiqueta: str) -> bool:
         .first()
         is not None
     )
+
+
+_MAX_LEN_ETIQUETA = 40
+
+
+def crear_motivo_anulacion(session: Session, etiqueta: str) -> MotivoAnulacionCobro:
+    """Crea un motivo nuevo en el catálogo de anulación -- mismo criterio que
+    `motivo_cancelacion_service.crear_motivo`, sin la restricción de "no
+    dejar el catálogo vacío" (anular a "$0" es opcional, a diferencia de
+    cancelar un paquete, que exige motivo siempre).
+
+    Raises:
+        ValueError: si la etiqueta queda vacía tras `strip()`, supera los 40
+            caracteres, o ya existe otro motivo con el mismo texto exacto.
+    """
+    limpio = (etiqueta or "").strip()
+    if not limpio:
+        raise ValueError("El motivo no puede quedar vacío.")
+    if len(limpio) > _MAX_LEN_ETIQUETA:
+        raise ValueError(f"El motivo no puede superar los {_MAX_LEN_ETIQUETA} caracteres.")
+
+    ya_existe = (
+        session.query(MotivoAnulacionCobro)
+        .filter(MotivoAnulacionCobro.etiqueta == limpio)
+        .first()
+        is not None
+    )
+    if ya_existe:
+        raise ValueError(f'Ya existe un motivo con el texto "{limpio}".')
+
+    motivo = MotivoAnulacionCobro(etiqueta=limpio)
+    session.add(motivo)
+    try:
+        session.flush()
+    except IntegrityError:
+        session.rollback()
+        raise ValueError(f'Ya existe un motivo con el texto "{limpio}".')
+    return motivo
+
+
+def eliminar_motivo_anulacion(session: Session, motivo_id) -> None:
+    """Borra un motivo del catálogo de anulación (borrado duro -- no toca
+    ningún `Cobro` ya anulado con su texto, mismo criterio que
+    `motivo_cancelacion_service.eliminar_motivo`).
+
+    Raises:
+        ValueError: si `motivo_id` no existe.
+    """
+    motivo = session.get(MotivoAnulacionCobro, motivo_id)
+    if motivo is None:
+        raise ValueError("Motivo no encontrado.")
+    session.delete(motivo)
+    session.flush()
 
 
 def registrar_cobro(

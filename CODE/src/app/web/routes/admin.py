@@ -16,6 +16,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.domain import smtp_email_sender
+from app.domain.cobro_service import (
+    crear_motivo_anulacion,
+    editar_tarifas,
+    eliminar_motivo_anulacion,
+    listar_motivos_anulacion,
+    obtener_tarifas_vigentes,
+)
 from app.domain.configuracion_conjunto_service import (
     obtener_nombre_conjunto,
     renombrar_conjunto,
@@ -731,4 +738,127 @@ def admin_conjunto_guardar(
             "nombre": nombre_guardado,
             "guardado": True,
         },
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Cobro y bodegaje (.scratch/cobro-bodegaje, tickets 03/04)
+# --------------------------------------------------------------------------- #
+@router.get("/administracion/tarifas-cobro", response_class=HTMLResponse)
+def admin_tarifas_cobro_form(
+    request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    return templates.TemplateResponse(
+        "admin/tarifas_cobro.html",
+        {"request": request, "admin": admin, "tarifas": obtener_tarifas_vigentes(db)},
+    )
+
+
+@router.post("/administracion/tarifas-cobro", response_class=HTMLResponse)
+def admin_tarifas_cobro_guardar(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    base_normal: int = Form(...),
+    base_extra_dimensionado: int = Form(...),
+    bodegaje_normal_24h: int = Form(...),
+    bodegaje_extra_dimensionado_24h: int = Form(...),
+):
+    try:
+        tarifas = editar_tarifas(
+            db,
+            base_normal,
+            base_extra_dimensionado,
+            bodegaje_normal_24h,
+            bodegaje_extra_dimensionado_24h,
+        )
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/tarifas_cobro.html",
+            {
+                "request": request,
+                "admin": admin,
+                "tarifas": obtener_tarifas_vigentes(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/tarifas_cobro.html",
+        {"request": request, "admin": admin, "tarifas": tarifas, "guardado": True},
+    )
+
+
+def _uuid_motivo_anulacion_o_404(motivo_id: str):
+    try:
+        return uuid.UUID(motivo_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Motivo no encontrado")
+
+
+@router.get("/administracion/motivos-anulacion-cobro", response_class=HTMLResponse)
+def admin_motivos_anulacion_cobro_lista(
+    request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    return templates.TemplateResponse(
+        "admin/motivos_anulacion_cobro.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_anulacion(db)},
+    )
+
+
+@router.post("/administracion/motivos-anulacion-cobro", response_class=HTMLResponse)
+def admin_motivos_anulacion_cobro_crear(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    etiqueta: str = Form(None),
+):
+    try:
+        crear_motivo_anulacion(db, etiqueta)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/motivos_anulacion_cobro.html",
+            {
+                "request": request,
+                "admin": admin,
+                "motivos": listar_motivos_anulacion(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/motivos_anulacion_cobro.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_anulacion(db), "creado": True},
+    )
+
+
+@router.post(
+    "/administracion/motivos-anulacion-cobro/{motivo_id}/eliminar", response_class=HTMLResponse
+)
+def admin_motivos_anulacion_cobro_eliminar(
+    motivo_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    mid = _uuid_motivo_anulacion_o_404(motivo_id)
+    try:
+        eliminar_motivo_anulacion(db, mid)
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/motivos_anulacion_cobro.html",
+            {
+                "request": request,
+                "admin": admin,
+                "motivos": listar_motivos_anulacion(db),
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/motivos_anulacion_cobro.html",
+        {"request": request, "admin": admin, "motivos": listar_motivos_anulacion(db), "eliminado": True},
     )
