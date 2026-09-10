@@ -835,10 +835,11 @@
           <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- endif %}
         </div>
-        {%- if p.cobro_desglose.monto_total %}
-        {# Pedido explícito del cliente: si el Total ya es $0 (primera
-           entrega + sin bodegaje), "Anular cobro" no cambiaría nada --
-           se oculta el toggle entero en ese caso. #}
+        {%- if p.cobro_desglose.monto_base %}
+        {# Pedido explícito del cliente: "Anular cobro" solo exonera
+           Servicio (Bodegaje nunca se anula) -- si Servicio ya está en $0
+           (ej. primera entrega, con o sin bodegaje acumulado), el toggle
+           no cambiaría nada, así que se oculta entero. #}
         <div class="mt-2">
           {%- call toggle(name='anular', id='anular-' ~ p.id, checked=este_error_anular) %}
             Anular cobro
