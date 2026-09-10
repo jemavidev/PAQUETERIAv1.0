@@ -42,7 +42,7 @@ def test_saldo_negativo_muestra_el_campo_de_ajuste(client):
     _recibido_con_saldo_negativo(client, staff)
 
     r = client.get("/paquetes")
-    assert "Saldo: $" in r.text
+    assert "Saldo pendiente: $" in r.text
 
 
 def test_completar_el_ajuste_crea_el_movimiento_positivo(client):
@@ -103,7 +103,7 @@ def test_saldo_negativo_se_muestra_en_rojo(client):
     _recibido_con_saldo_negativo(client, staff, saldo_inicial=-2000)
 
     r = client.get("/paquetes")
-    assert "Saldo: $-2,000" in r.text
+    assert "Saldo pendiente: $-2,000" in r.text
     assert "text-red-600" in r.text
 
 
@@ -127,4 +127,4 @@ def test_saldo_a_favor_se_muestra_en_verde_sin_campo_de_ajuste(client):
     r = client.get("/paquetes")
     assert "Saldo: $4,000" in r.text
     assert "text-emerald-600" in r.text
-    assert '¿Pagó ahora?' not in r.text
+    assert 'Valor a abonar' not in r.text

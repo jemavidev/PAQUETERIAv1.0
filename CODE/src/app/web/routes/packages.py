@@ -1502,6 +1502,12 @@ def deliver_action(
     sender: NotificationSender = Depends(get_notification_sender),
     origen: str = Form(None),
     q: str = Form(None),
+    # Pedido explícito del cliente, reportado en vivo: sin este campo, al
+    # reabrir el modal tras el error de "Anular cobro" se perdía el filtro
+    # de estado activo (ej. "RECIBIDO") -- la lista reabierta mezclaba
+    # paquetes de TODOS los estados en vez de solo el filtro que el staff
+    # tenía puesto, mucho más contenido del esperado en esa respuesta.
+    estado: str = Form(None),
     # .scratch/cobro-bodegaje, ticket 02: "anular" exonera el Servicio --
     # exige un motivo del catálogo (`MotivoAnulacionCobro`), distinto de un
     # $0 por cálculo (primera entrega). El Bodegaje NUNCA se exonera (pedido
@@ -1550,6 +1556,7 @@ def deliver_action(
             error="Elegí un motivo válido para anular el cobro.",
             status_code=400,
             q=q,
+            estado=estado,
             entregar_paquete_id=str(paquete.id),
             error_paquete_id=str(paquete.id),
             error_campo="motivo_anulacion",

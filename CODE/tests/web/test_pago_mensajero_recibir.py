@@ -181,7 +181,7 @@ def test_recibir_muestra_saldo_en_contra_en_rojo(client):
     client.db.commit()
 
     r = client.get("/paquetes")
-    assert "Saldo: $-3,000" in r.text
+    assert "Saldo pendiente: $-3,000" in r.text
     assert "text-red-600" in r.text
 
 

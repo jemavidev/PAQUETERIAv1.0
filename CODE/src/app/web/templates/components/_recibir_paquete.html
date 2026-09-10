@@ -44,13 +44,14 @@
     <input type="hidden" name="q" value="{{ q }}">
     {%- endif %}
     {%- if saldo_actual %}
-    {#- Pedido explícito del cliente: "Saldo: $X" (a favor o en contra) del
-       destinatario, arriba del todo -- verde+negrilla si es a favor
+    {#- Pedido explícito del cliente: "Saldo: $X" a favor, o "Saldo
+       pendiente: $X" en contra, del destinatario, arriba del todo --
+       verde+negrilla si es a favor
        (positivo), rojo+negrilla si está en contra (negativo, una deuda).
        Puramente informativo acá (Recibir no registra ningún movimiento de
        saldo por sí solo, a diferencia de Entregar). #}
     <p class="mb-3 {{ 'text-emerald-600' if saldo_actual > 0 else 'text-red-600' }} font-bold">
-      Saldo: ${{ "{:,}".format(saldo_actual) }}
+      {{ 'Saldo' if saldo_actual > 0 else 'Saldo pendiente' }}: ${{ "{:,}".format(saldo_actual) }}
     </p>
     {%- endif %}
     {#- Paso nuevo, opcional (.scratch/ocupante-principal-escenarios, ticket
