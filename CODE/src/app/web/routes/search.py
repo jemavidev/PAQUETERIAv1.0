@@ -44,10 +44,7 @@ from app.domain.paquete_foto_service import listar_fotos
 from app.domain.paquete_service import es_primera_entrega_a_telefono
 from app.domain.paquete_timeline_service import dias_desde_recibido, timeline_de_paquete
 from app.domain.persona import Persona
-from app.domain.saldo_contra_entrega_service import (
-    personas_con_historial_en_apartamento,
-    saldo_de_persona,
-)
+from app.domain.saldo_contra_entrega_service import saldo_de_persona
 
 from ..db import get_db
 from ..rate_limit import rate_limit
@@ -150,10 +147,13 @@ def renderizar_busqueda(
                 saldo = saldo_de_persona(db, persona_destino.id)
                 if saldo != 0:
                     paquete.saldo_actual = saldo
-                if persona_destino.apartamento_actual_id is not None:
-                    contexto["personas_con_saldo"] = personas_con_historial_en_apartamento(
-                        db, persona_destino.apartamento_actual_id
-                    )
+                # Pedido explícito del cliente, reportado en vivo: mismo
+                # criterio que `packages.py::_listar` -- la caja siempre se
+                # habilita para el destinatario de ESTE paquete (tenga o no
+                # historial/apartamento). "Descontar del saldo de" (elegir
+                # a OTRA persona) se removió (pedido explícito) -- el monto
+                # siempre se registra contra este mismo destinatario.
+                contexto["persona_destino_saldo_id"] = persona_destino.id
         # Issue 314/316 (.scratch/pendientes-cliente): el modal Entregar de
         # esta vista es un DUPLICADO del de `/paquetes` (`packages.py::
         # _listar` calcula esto mismo en batch para su propia lista) -- acá

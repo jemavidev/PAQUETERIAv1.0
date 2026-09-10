@@ -138,7 +138,7 @@
                     snapshot_apartamento=paquete.snapshot_apartamento,
                     residentes_por_unidad=residentes_por_unidad,
                     origen='consultar', q=q,
-                    personas_con_saldo=personas_con_saldo,
+                    persona_destino_saldo_id=persona_destino_saldo_id|default(none),
                     saldo_actual=paquete.saldo_actual) }}
   {%- endif %}
   {%- if request.session.get(SESSION_KEY) and paquete.estado.value == 'RECIBIDO' %}

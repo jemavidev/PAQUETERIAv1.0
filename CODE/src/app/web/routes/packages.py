@@ -90,7 +90,6 @@ from app.domain.paquete_service import (
     paquetes_relacionados_por_codigo,
 )
 from app.domain.saldo_contra_entrega_service import (
-    personas_con_historial_por_apartamentos,
     registrar_movimiento_saldo,
     saldos_de_personas,
 )
@@ -730,7 +729,6 @@ def _listar(
     # .scratch/dinero-contra-entrega, ticket 03/04: batch ANTES del loop
     # (mismo criterio "un puñado fijo de consultas") -- nunca una consulta
     # de saldo por cada paquete de la página.
-    apartamentos_anunciado = set()
     persona_ids_con_saldo = set()
     for p in paquetes:
         persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
@@ -743,9 +741,6 @@ def _listar(
         # saldo real con signo del destinatario para AMBOS estados, así
         # que el batch cubre ambos (antes solo cubría RECIBIDO).
         persona_ids_con_saldo.add(persona_destino.id)
-        if p.estado == EstadoPaquete.ANUNCIADO and persona_destino.apartamento_actual_id is not None:
-            apartamentos_anunciado.add(persona_destino.apartamento_actual_id)
-    personas_por_apartamento = personas_con_historial_por_apartamentos(db, apartamentos_anunciado)
     saldos_por_persona = saldos_de_personas(db, persona_ids_con_saldo)
 
     for p in paquetes:
@@ -794,17 +789,21 @@ def _listar(
         # cualquier staff (no exclusivo de admin, a diferencia de
         # estadísticas/tarifas).
         p.cobro = cobros_por_paquete.get(p.id)
-        # .scratch/dinero-contra-entrega, ticket 03: el selector de pago al
-        # mensajero en Recibir solo aparece si el destinatario (o algún
-        # compañero de su apartamento ACTUAL) ya tiene historial de saldo --
-        # si no, Recibir se ve exactamente igual que hoy.
-        p.personas_con_saldo = []
+        # Pedido explícito del cliente, reportado en vivo: antes el selector
+        # de pago contra entrega en Recibir exigía DOS candados a la vez --
+        # historial de saldo Y apartamento ya asignado -- que casi nunca
+        # coinciden en el caso real (un contra entrega de un cliente nuevo,
+        # sin ninguno de los dos todavía). Ahora la caja se habilita siempre
+        # que haya un destinatario resuelto para ESTE paquete, sin importar
+        # historial/apartamento. "Descontar del saldo de" (elegir a OTRA
+        # persona) se removió (pedido explícito, "sería mejor manejar esto
+        # de otra forma") -- el monto siempre se registra contra este mismo
+        # destinatario, sin selector.
+        p.persona_destino_saldo_id = None
         if p.estado == EstadoPaquete.ANUNCIADO:
             persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
-            if persona_destino is not None and persona_destino.apartamento_actual_id is not None:
-                p.personas_con_saldo = personas_por_apartamento.get(
-                    persona_destino.apartamento_actual_id, []
-                )
+            if persona_destino is not None:
+                p.persona_destino_saldo_id = persona_destino.id
         # Pedido explícito del cliente: "Saldo: $X" (a favor o en contra)
         # del propio destinatario, debajo de su nombre, en Recibir Y
         # Entregar -- con signo (positivo = a favor, negativo = en
