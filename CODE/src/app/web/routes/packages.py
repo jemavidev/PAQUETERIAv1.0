@@ -728,10 +728,28 @@ def _listar(
 
     # .scratch/dinero-contra-entrega, ticket 03/04: batch ANTES del loop
     # (mismo criterio "un puñado fijo de consultas") -- nunca una consulta
-    # de saldo por cada paquete de la página.
+    # de saldo por cada paquete de la página. Pedido explícito del cliente,
+    # reportado en vivo: resolver SOLO por `recipient_phone` dejaba afuera a
+    # cualquier destinatario identificado por WhatsApp (sin teléfono propio)
+    # -- teléfono y WhatsApp son los 2 canales esenciales, ninguno debería
+    # quedar sin esta función. Se reusa la MISMA identidad robusta que ya
+    # resuelve el link/título del modal "Ver" más abajo (`persona_destino`):
+    # por teléfono con verificación de nombre (para no confiar en un
+    # teléfono prestado, issue 101), o por nombre solo si no hay teléfono o
+    # no coincidió -- ese camino por nombre es justo el que SÍ encuentra a
+    # un destinatario solo-WhatsApp. Resuelto UNA vez acá y reusado más
+    # abajo (`persona_destino_por_paquete`), en vez de recalcularlo dos
+    # veces por paquete.
+    persona_destino_por_paquete = {}
     persona_ids_con_saldo = set()
     for p in paquetes:
-        persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
+        contacto = personas_por_telefono_destinatario.get(p.recipient_phone)
+        if contacto is None and not p.recipient_phone:
+            contacto = personas_por_nombre_destinatario.get(p.recipient_name)
+        persona_destino = contacto
+        if persona_destino is None or persona_destino.nombre != p.recipient_name:
+            persona_destino = personas_por_nombre_destinatario.get(p.recipient_name)
+        persona_destino_por_paquete[p.id] = persona_destino
         if persona_destino is None:
             continue
         # Pedido explícito del cliente: "Saldo: $X" (a favor o en contra)
@@ -801,9 +819,9 @@ def _listar(
         # destinatario, sin selector.
         p.persona_destino_saldo_id = None
         if p.estado == EstadoPaquete.ANUNCIADO:
-            persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
-            if persona_destino is not None:
-                p.persona_destino_saldo_id = persona_destino.id
+            persona_destino_saldo = persona_destino_por_paquete.get(p.id)
+            if persona_destino_saldo is not None:
+                p.persona_destino_saldo_id = persona_destino_saldo.id
         # Pedido explícito del cliente: "Saldo: $X" (a favor o en contra)
         # del propio destinatario, debajo de su nombre, en Recibir Y
         # Entregar -- con signo (positivo = a favor, negativo = en
@@ -812,9 +830,9 @@ def _listar(
         # es exactamente $0 o no hay Persona resuelta.
         p.saldo_actual = None
         if p.estado in (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO):
-            persona_destino = personas_por_telefono_destinatario.get(p.recipient_phone)
-            if persona_destino is not None:
-                saldo = saldos_por_persona.get(persona_destino.id, 0)
+            persona_destino_saldo = persona_destino_por_paquete.get(p.id)
+            if persona_destino_saldo is not None:
+                saldo = saldos_por_persona.get(persona_destino_saldo.id, 0)
                 if saldo != 0:
                     p.saldo_actual = saldo
         # .scratch/dinero-contra-entrega, ticket 04: saldo pendiente (si
@@ -852,10 +870,10 @@ def _listar(
         # también cubre "con teléfono, pero prestado". Sin ningún match,
         # `None` (ej. `declarado_por_cliente` sin ningún co-residente que
         # coincida) -- el nombre se queda como texto plano, no hay a dónde
-        # enlazarlo (más seguro que enlazar a la persona equivocada).
-        persona_destino = persona_destino_contacto
-        if persona_destino is None or persona_destino.nombre != p.recipient_name:
-            persona_destino = personas_por_nombre_destinatario.get(p.recipient_name)
+        # enlazarlo (más seguro que enlazar a la persona equivocada). Ya
+        # resuelto arriba (`persona_destino_por_paquete`, mismo algoritmo)
+        # -- se reusa en vez de recalcularlo dos veces por paquete.
+        persona_destino = persona_destino_por_paquete.get(p.id)
         p.persona_destino_id = persona_destino.id if persona_destino else None
         # WhatsApp del ícono de Acciones -- ver `_persona_para_notificar`
         # para la prioridad completa (issue 101, .scratch/pendientes-

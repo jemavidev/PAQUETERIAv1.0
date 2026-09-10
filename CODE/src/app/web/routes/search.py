@@ -56,6 +56,38 @@ router = APIRouter()
 _MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nuevo."
 
 
+def _resolver_persona_destino(db: Session, paquete: Paquete):
+    """La misma identidad robusta que ya resuelve `packages.py::_listar`
+    para el título del modal "Ver" -- por teléfono, pero SOLO si el nombre
+    de esa Persona coincide con `recipient_name` (issue 101: un teléfono
+    "prestado" -- ej. el Principal de la unidad -- no debe hacer pasar a
+    otra Persona por el destinatario real); si no coincide, o no hay
+    teléfono, se cae a buscar por nombre. Pedido explícito del cliente,
+    reportado en vivo: teléfono y WhatsApp son los 2 canales esenciales --
+    resolver SOLO por teléfono dejaba afuera a un destinatario
+    identificado por WhatsApp (sin teléfono propio); el camino por nombre
+    es justo el que SÍ lo encuentra."""
+    # `.first()`, no `.one_or_none()` -- mismo riesgo aceptado que ya
+    # documenta `packages.py::_personas_por_nombre` (dos Personas con el
+    # mismo nombre completo resuelven a una cualquiera, caso borde) en vez
+    # de reventar la página con `MultipleResultsFound`.
+    contacto = None
+    if paquete.recipient_phone:
+        contacto = (
+            db.query(Persona)
+            .filter(Persona.telefono == paquete.recipient_phone)
+            .first()
+        )
+    persona_destino = contacto
+    if persona_destino is None or persona_destino.nombre != paquete.recipient_name:
+        persona_destino = (
+            db.query(Persona)
+            .filter(Persona.nombre == paquete.recipient_name)
+            .first()
+        )
+    return persona_destino
+
+
 @router.get("/consultar", response_class=HTMLResponse)
 def search(
     request: Request,
@@ -135,11 +167,7 @@ def renderizar_busqueda(
             # `packages.py::_listar` (issue de paridad encontrado en
             # code-review) -- acá solo hay UN paquete, se resuelve directo
             # sin batch.
-            persona_destino = (
-                db.query(Persona)
-                .filter(Persona.telefono == paquete.recipient_phone)
-                .one_or_none()
-            )
+            persona_destino = _resolver_persona_destino(db, paquete)
             if persona_destino is not None:
                 # Pedido explícito del cliente: "Saldo: $X" (a favor o en
                 # contra) del propio destinatario, debajo de su nombre --
@@ -176,11 +204,7 @@ def renderizar_busqueda(
             # .scratch/dinero-contra-entrega, ticket 04: mismo criterio que
             # arriba -- acá solo hay UN paquete, se resuelve directo sin
             # batch (issue de paridad encontrado en code-review).
-            persona_destino = (
-                db.query(Persona)
-                .filter(Persona.telefono == paquete.recipient_phone)
-                .one_or_none()
-            )
+            persona_destino = _resolver_persona_destino(db, paquete)
             if persona_destino is not None:
                 saldo = saldo_de_persona(db, persona_destino.id)
                 if saldo != 0:
