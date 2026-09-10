@@ -1498,11 +1498,13 @@ def deliver_action(
     sender: NotificationSender = Depends(get_notification_sender),
     origen: str = Form(None),
     q: str = Form(None),
-    # .scratch/cobro-bodegaje, ticket 02: "anular" marca el cobro completo a
-    # "$0 pesos" -- exige un motivo del catálogo (`MotivoAnulacionCobro`),
-    # distinto de un $0 por cálculo (primera entrega). Sin `anular`, el monto
-    # se RECALCULA server-side siempre -- nunca se confía un monto del
-    # cliente.
+    # .scratch/cobro-bodegaje, ticket 02: "anular" exonera el Servicio --
+    # exige un motivo del catálogo (`MotivoAnulacionCobro`), distinto de un
+    # $0 por cálculo (primera entrega). El Bodegaje NUNCA se exonera (pedido
+    # explícito del cliente, .scratch/pendientes-cliente) -- si hay bodegaje
+    # acumulado, sigue cobrándose aunque el cobro esté "anulado". Sin
+    # `anular`, el monto se RECALCULA server-side siempre -- nunca se confía
+    # un monto del cliente.
     anular: str = Form(None),
     motivo_anulacion: str = Form(None),
     # .scratch/dinero-contra-entrega, ticket 04: ajuste opcional del saldo
@@ -1534,13 +1536,22 @@ def deliver_action(
     # busca un ENTREGADO previo a este teléfono -- si se calculara después,
     # este mismo paquete (ya ENTREGADO) se contaría a sí mismo como "entrega
     # previa", negando la exención en el primer paquete real de un cliente.
+    tarifas = obtener_tarifas_vigentes(db)
+    primera_entrega = es_primera_entrega_a_telefono(db, paquete.recipient_phone)
+    desglose = calcular_cobro(
+        paquete, tarifas, datetime.now(timezone.utc), primera_entrega
+    )
     if anula:
-        desglose = DesgloseCobro(monto_base=0, bloques_bodegaje=0, monto_bodegaje=0, monto_total=0)
-    else:
-        tarifas = obtener_tarifas_vigentes(db)
-        primera_entrega = es_primera_entrega_a_telefono(db, paquete.recipient_phone)
-        desglose = calcular_cobro(
-            paquete, tarifas, datetime.now(timezone.utc), primera_entrega
+        # Pedido explícito del cliente: "anular cobro" exonera únicamente el
+        # Servicio -- el Bodegaje (costo real de almacenamiento acumulado)
+        # se sigue cobrando igual, mismo criterio que ya aplica la exención
+        # de "primera entrega" (ver comentario de `calcular_cobro`: el
+        # bodegaje "NUNCA" se exonera).
+        desglose = DesgloseCobro(
+            monto_base=0,
+            bloques_bodegaje=desglose.bloques_bodegaje,
+            monto_bodegaje=desglose.monto_bodegaje,
+            monto_total=desglose.monto_bodegaje,
         )
 
     try:

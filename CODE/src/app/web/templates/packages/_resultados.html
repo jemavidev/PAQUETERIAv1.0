@@ -809,20 +809,24 @@
              "Total"/"Servicio"/"Bodegaje (N días)" en vez de "Cobro"/
              "Paquete"/"Bodegaje (N bloques de 24h)" -- mismo desglose,
              wording más claro para el staff. #}
-          <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_total) }}</span><span id="cobro-total-cero-{{ p.id }}" class="text-red-600" hidden> $0</span></p>
+          {# Pedido explícito del cliente: el monto que efectivamente se va
+             a cobrar siempre queda en verde (con o sin "Anular cobro"
+             activado) -- al anular, el monto original queda tachado en
+             rojo y el nuevo monto (verde) aparece al lado. Bodegaje NUNCA
+             se anula (mismo criterio que la exención de "primera entrega"
+             en `calcular_cobro`) -- se cobra igual, así que no cambia con
+             el toggle. #}
+          <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-{{ p.id }}" class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_total) }}</span><span id="cobro-total-nuevo-{{ p.id }}" class="text-emerald-600" hidden> ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- if p.cobro_desglose.monto_base %}
-          <p>Servicio: <span id="cobro-servicio-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_base) }}</span><span id="cobro-servicio-cero-{{ p.id }}" class="text-red-600" hidden> $0</span></p>
+          <p>Servicio: <span id="cobro-servicio-monto-{{ p.id }}" class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_base) }}</span><span id="cobro-servicio-nuevo-{{ p.id }}" class="text-emerald-600" hidden> $0</span></p>
           {%- endif %}
           {%- if p.cobro_desglose.monto_bodegaje %}
-          {# Pedido explícito del cliente: al anular, Bodegaje NO pasa a
-             "$0" (a diferencia de Total/Servicio) -- solo queda tachado en
-             rojo, mostrando el valor calculado como referencia. #}
-          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span id="cobro-bodegaje-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
+          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- endif %}
         </div>
         <div class="mt-2">
           {%- call toggle(name='anular', id='anular-' ~ p.id) %}
-            Anular cobro ($0 pesos)
+            Anular cobro (exonera el servicio)
           {%- endcall %}
         </div>
         <div id="anular-motivo-wrap-{{ p.id }}" class="mt-2" hidden>
@@ -839,19 +843,19 @@
           var check = document.getElementById('anular-{{ p.id }}');
           var wrap = document.getElementById('anular-motivo-wrap-{{ p.id }}');
           var totalMonto = document.getElementById('cobro-total-monto-{{ p.id }}');
-          var totalCero = document.getElementById('cobro-total-cero-{{ p.id }}');
+          var totalNuevo = document.getElementById('cobro-total-nuevo-{{ p.id }}');
           var servicioMonto = document.getElementById('cobro-servicio-monto-{{ p.id }}');
-          var servicioCero = document.getElementById('cobro-servicio-cero-{{ p.id }}');
-          var bodegajeMonto = document.getElementById('cobro-bodegaje-monto-{{ p.id }}');
+          var servicioNuevo = document.getElementById('cobro-servicio-nuevo-{{ p.id }}');
           check.addEventListener('change', function () {
             wrap.hidden = !check.checked;
-            [totalMonto, servicioMonto, bodegajeMonto].forEach(function (el) {
+            [totalMonto, servicioMonto].forEach(function (el) {
               if (!el) return;
               el.classList.toggle('line-through', check.checked);
               el.classList.toggle('text-red-600', check.checked);
+              el.classList.toggle('text-emerald-600', !check.checked);
             });
-            if (totalCero) totalCero.hidden = !check.checked;
-            if (servicioCero) servicioCero.hidden = !check.checked;
+            if (totalNuevo) totalNuevo.hidden = !check.checked;
+            if (servicioNuevo) servicioNuevo.hidden = !check.checked;
           });
         })();
         </script>

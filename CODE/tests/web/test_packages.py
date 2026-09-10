@@ -702,6 +702,39 @@ def test_entregar_anular_con_motivo_valido_crea_cobro_en_cero(client):
     assert cobro.motivo_anulacion == "Reclamo del cliente"
 
 
+def test_entregar_anular_no_exime_el_bodegaje_acumulado(client):
+    """Pedido explícito del cliente: "anular cobro" solo exonera el
+    Servicio -- el Bodegaje (costo real de almacenamiento) se sigue
+    cobrando igual que la exención de "primera entrega" en `calcular_cobro`
+    nunca lo exime a él tampoco."""
+    from datetime import datetime, timedelta, timezone
+
+    staff = _login_staff(client)
+    motivo = MotivoAnulacionCobro(etiqueta="Reclamo del cliente")
+    client.db.add(motivo)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+    p_db = client.db.get(Paquete, p.id)
+    p_db.received_at = datetime.now(timezone.utc) - timedelta(hours=100)
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Reclamo del cliente"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    cobro = client.db.query(Cobro).filter(Cobro.paquete_id == p.id).one()
+    assert cobro.monto_base == 0
+    assert cobro.monto_bodegaje > 0
+    assert cobro.monto_total == cobro.monto_bodegaje
+    assert cobro.motivo_anulacion == "Reclamo del cliente"
+
+
 def test_entregar_anular_con_motivo_inexistente_se_rechaza(client):
     staff = _login_staff(client)
     p = _anunciar(client, tel="3009998888")
