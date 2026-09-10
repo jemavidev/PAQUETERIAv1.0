@@ -49,7 +49,7 @@
 {% from "components/_modales.html" import modal, modal_confirmacion %}
 {% from "components/_recibir_paquete.html" import modal_recibir %}
 {% from "components/_estado_vacio.html" import estado_vacio %}
-{% from "components/_inputs.html" import input_texto %}
+{% from "components/_inputs.html" import input_texto, toggle %}
 {% from "components/_badge.html" import badge, badge_ocupante, bandera_primera_entrega %}
 {% from "components/_picker_apartamento.html" import picker_apartamento %}
 {% from "packages/_acciones.html" import acciones_iconos, fecha_corta %}
@@ -809,18 +809,22 @@
              "Total"/"Servicio"/"Bodegaje (N días)" en vez de "Cobro"/
              "Paquete"/"Bodegaje (N bloques de 24h)" -- mismo desglose,
              wording más claro para el staff. #}
-          <p class="font-semibold text-slate-900">Total: ${{ "{:,}".format(p.cobro_desglose.monto_total) }}</p>
+          <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_total) }}</span><span id="cobro-total-cero-{{ p.id }}" class="text-red-600" hidden> $0</span></p>
           {%- if p.cobro_desglose.monto_base %}
-          <p>Servicio: ${{ "{:,}".format(p.cobro_desglose.monto_base) }}</p>
+          <p>Servicio: <span id="cobro-servicio-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_base) }}</span><span id="cobro-servicio-cero-{{ p.id }}" class="text-red-600" hidden> $0</span></p>
           {%- endif %}
           {%- if p.cobro_desglose.monto_bodegaje %}
-          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</p>
+          {# Pedido explícito del cliente: al anular, Bodegaje NO pasa a
+             "$0" (a diferencia de Total/Servicio) -- solo queda tachado en
+             rojo, mostrando el valor calculado como referencia. #}
+          <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span id="cobro-bodegaje-monto-{{ p.id }}">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- endif %}
         </div>
-        <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" name="anular" id="anular-{{ p.id }}" value="on" class="rounded border-slate-300 text-red-600 focus-visible:ring-red-300">
-          Anular cobro ($0 pesos)
-        </label>
+        <div class="mt-2">
+          {%- call toggle(name='anular', id='anular-' ~ p.id) %}
+            Anular cobro ($0 pesos)
+          {%- endcall %}
+        </div>
         <div id="anular-motivo-wrap-{{ p.id }}" class="mt-2" hidden>
           <label class="block text-sm font-medium text-slate-700 mb-1" for="anular-motivo-{{ p.id }}">Motivo</label>
           <select name="motivo_anulacion" id="anular-motivo-{{ p.id }}" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
@@ -834,8 +838,20 @@
         (function () {
           var check = document.getElementById('anular-{{ p.id }}');
           var wrap = document.getElementById('anular-motivo-wrap-{{ p.id }}');
+          var totalMonto = document.getElementById('cobro-total-monto-{{ p.id }}');
+          var totalCero = document.getElementById('cobro-total-cero-{{ p.id }}');
+          var servicioMonto = document.getElementById('cobro-servicio-monto-{{ p.id }}');
+          var servicioCero = document.getElementById('cobro-servicio-cero-{{ p.id }}');
+          var bodegajeMonto = document.getElementById('cobro-bodegaje-monto-{{ p.id }}');
           check.addEventListener('change', function () {
             wrap.hidden = !check.checked;
+            [totalMonto, servicioMonto, bodegajeMonto].forEach(function (el) {
+              if (!el) return;
+              el.classList.toggle('line-through', check.checked);
+              el.classList.toggle('text-red-600', check.checked);
+            });
+            if (totalCero) totalCero.hidden = !check.checked;
+            if (servicioCero) servicioCero.hidden = !check.checked;
           });
         })();
         </script>
