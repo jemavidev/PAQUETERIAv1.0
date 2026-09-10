@@ -798,12 +798,18 @@
       <p class="guia-check-msg" hidden></p>
       {% endif %}
       <form method="post" action="/paquetes/{{ p.id }}/entregar" class="mt-4">
+        {# Pedido explícito del cliente, reportado en vivo: si "Anular
+           cobro" falla por falta de motivo, este `q` es lo que permite
+           reabrir el modal SIN perder la búsqueda que trajo hasta acá
+           (ver `este_error_anular` más abajo / `deliver_action`). #}
+        <input type="hidden" name="q" value="{{ filtro_q }}">
         {%- if p.cobro_desglose %}
         {# .scratch/cobro-bodegaje, ticket 02: desglose ya calculado
            (`packages.py::_listar`) -- solo informativo, el monto real se
            recalcula server-side al confirmar. Mismo mecanismo de
            checkbox + wrap oculto que ya usa "Otro" en el modal Cancelar
            de este mismo archivo. #}
+        {%- set este_error_anular = (error_paquete_id|default(none) == p.id|string) and (error_campo|default(none) == 'motivo_anulacion') -%}
         <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
           {# Pedido explícito del cliente (.scratch/pendientes-cliente):
              "Total"/"Servicio"/"Bodegaje (N días)" en vez de "Cobro"/
@@ -811,12 +817,17 @@
              wording más claro para el staff. #}
           {# Pedido explícito del cliente: el monto que efectivamente se va
              a cobrar siempre queda en verde (con o sin "Anular cobro"
-             activado) -- al anular, el monto original queda tachado en
-             rojo y el nuevo monto (verde) aparece al lado. Bodegaje NUNCA
-             se anula (mismo criterio que la exención de "primera entrega"
-             en `calcular_cobro`) -- se cobra igual, así que no cambia con
-             el toggle. #}
-          <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-{{ p.id }}" class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_total) }}</span><span id="cobro-total-nuevo-{{ p.id }}" class="text-emerald-600" hidden> ${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
+             activado). Total SIEMPRE es un solo valor en verde (nunca
+             tachado) -- alterna su propio texto entre el total normal y el
+             total con Servicio exento (pedido explícito del cliente: dos
+             montos lado a lado se veían raro cuando coincidían, ej.
+             primera entrega + bodegaje). Servicio sí queda tachado en rojo
+             al anular, con el nuevo monto ($0) en verde al lado -- ahí los
+             dos valores sí difieren. Bodegaje NUNCA se anula (mismo
+             criterio que la exención de "primera entrega" en
+             `calcular_cobro`) -- se cobra igual, así que no cambia con el
+             toggle. #}
+          <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-{{ p.id }}" class="text-emerald-600" data-normal="${{ "{:,}".format(p.cobro_desglose.monto_total) }}" data-anulado="${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}">${{ "{:,}".format(p.cobro_desglose.monto_total) }}</span></p>
           {%- if p.cobro_desglose.monto_base %}
           <p>Servicio: <span id="cobro-servicio-monto-{{ p.id }}" class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_base) }}</span><span id="cobro-servicio-nuevo-{{ p.id }}" class="text-emerald-600" hidden> $0</span></p>
           {%- endif %}
@@ -824,41 +835,62 @@
           <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- endif %}
         </div>
+        {%- if p.cobro_desglose.monto_total %}
+        {# Pedido explícito del cliente: si el Total ya es $0 (primera
+           entrega + sin bodegaje), "Anular cobro" no cambiaría nada --
+           se oculta el toggle entero en ese caso. #}
         <div class="mt-2">
-          {%- call toggle(name='anular', id='anular-' ~ p.id) %}
+          {%- call toggle(name='anular', id='anular-' ~ p.id, checked=este_error_anular) %}
             Anular cobro
           {%- endcall %}
         </div>
-        <div id="anular-motivo-wrap-{{ p.id }}" class="mt-2" hidden>
+        {# `este_error_anular` (pedido explícito del cliente, reportado en
+           vivo): antes, someter sin elegir motivo recargaba TODA la lista
+           (perdiendo la búsqueda) y mostraba el error como un toast
+           genérico, con el modal cerrado -- había que reabrirlo y repetir
+           todo. Ahora `entregar_paquete_id`/`error_paquete_id`/`error_campo`
+           (mismo mecanismo ya usado por "Corregir destinatario") reabren
+           ESTE modal con el checkbox marcado y el error inline junto al
+           select, sin perder la búsqueda (`q` viaja también). #}
+        <div id="anular-motivo-wrap-{{ p.id }}" class="mt-2" {{ 'hidden' if not este_error_anular else '' }}>
           <label class="block text-sm font-medium text-slate-700 mb-1" for="anular-motivo-{{ p.id }}">Motivo</label>
-          <select name="motivo_anulacion" id="anular-motivo-{{ p.id }}" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+          <select name="motivo_anulacion" id="anular-motivo-{{ p.id }}" class="w-full rounded-lg border {{ 'border-red-600' if este_error_anular else 'border-slate-300' }} px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
             <option value="">Elegí un motivo</option>
             {%- for m in motivos_anulacion_cobro %}
             <option value="{{ m.etiqueta }}">{{ m.etiqueta }}</option>
             {%- endfor %}
           </select>
+          {%- if este_error_anular %}
+          <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 0010 5z" clip-rule="evenodd"/></svg>
+            {{ error }}
+          </p>
+          {%- endif %}
         </div>
         <script>
         (function () {
           var check = document.getElementById('anular-{{ p.id }}');
           var wrap = document.getElementById('anular-motivo-wrap-{{ p.id }}');
           var totalMonto = document.getElementById('cobro-total-monto-{{ p.id }}');
-          var totalNuevo = document.getElementById('cobro-total-nuevo-{{ p.id }}');
           var servicioMonto = document.getElementById('cobro-servicio-monto-{{ p.id }}');
           var servicioNuevo = document.getElementById('cobro-servicio-nuevo-{{ p.id }}');
-          check.addEventListener('change', function () {
+          function aplicarEstadoAnulado() {
             wrap.hidden = !check.checked;
-            [totalMonto, servicioMonto].forEach(function (el) {
-              if (!el) return;
-              el.classList.toggle('line-through', check.checked);
-              el.classList.toggle('text-red-600', check.checked);
-              el.classList.toggle('text-emerald-600', !check.checked);
-            });
-            if (totalNuevo) totalNuevo.hidden = !check.checked;
+            if (totalMonto) {
+              totalMonto.textContent = check.checked ? totalMonto.dataset.anulado : totalMonto.dataset.normal;
+            }
+            if (servicioMonto) {
+              servicioMonto.classList.toggle('line-through', check.checked);
+              servicioMonto.classList.toggle('text-red-600', check.checked);
+              servicioMonto.classList.toggle('text-emerald-600', !check.checked);
+            }
             if (servicioNuevo) servicioNuevo.hidden = !check.checked;
-          });
+          }
+          check.addEventListener('change', aplicarEstadoAnulado);
+          aplicarEstadoAnulado();
         })();
         </script>
+        {%- endif %}
         {%- endif %}
         {%- if p.saldo_pendiente %}
         {# .scratch/dinero-contra-entrega, ticket 04: informativo, NUNCA

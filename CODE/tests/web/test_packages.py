@@ -679,6 +679,24 @@ def test_entregar_anular_sin_motivo_se_rechaza_sin_efecto(client):
     assert client.db.query(Cobro).filter(Cobro.paquete_id == p.id).first() is None
 
 
+def test_entregar_anular_sin_motivo_reabre_el_modal_sin_perder_la_busqueda(client):
+    """Pedido explícito del cliente, reportado en vivo: antes esto recargaba
+    toda la lista con el modal cerrado y la búsqueda perdida -- ahora
+    reabre el modal de ESE paquete, con el error inline, sin perder `q`."""
+    staff = _login_staff(client)
+    p = _anunciar(client, tel="3009998888")
+    _recibir(client, staff, p)
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "q": "3009998888"},
+    )
+    assert r.status_code == 400
+    assert 'value="3009998888"' in r.text
+    assert f'id="modal-deliver-{p.id}"' in r.text
+    assert "Elegí un motivo válido para anular el cobro." in r.text
+
+
 def test_entregar_anular_con_motivo_valido_crea_cobro_en_cero(client):
     staff = _login_staff(client)
     motivo = MotivoAnulacionCobro(etiqueta="Reclamo del cliente")

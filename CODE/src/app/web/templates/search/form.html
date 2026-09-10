@@ -187,13 +187,18 @@
          "Paquete"/"Bodegaje (N bloques de 24h)" -- mismo desglose, wording
          más claro para el staff. #}
       {# Pedido explícito del cliente: el monto que efectivamente se va a
-         cobrar siempre queda en verde (con o sin "Anular cobro" activado)
-         -- al anular, el monto original queda tachado en rojo y el nuevo
-         monto (verde) aparece al lado. Bodegaje NUNCA se anula (mismo
-         criterio que la exención de "primera entrega" en `calcular_cobro`)
-         -- se cobra igual, así que no cambia con el toggle. #}
+         cobrar siempre queda en verde (con o sin "Anular cobro" activado).
+         Total SIEMPRE es un solo valor en verde (nunca tachado) -- alterna
+         su propio texto entre el total normal y el total con Servicio
+         exento (pedido explícito del cliente: dos montos lado a lado se
+         veían raro cuando coincidían, ej. primera entrega + bodegaje).
+         Servicio sí queda tachado en rojo al anular, con el nuevo monto
+         ($0) en verde al lado -- ahí los dos valores sí difieren. Bodegaje
+         NUNCA se anula (mismo criterio que la exención de "primera
+         entrega" en `calcular_cobro`) -- se cobra igual, así que no cambia
+         con el toggle. #}
       <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">
-        <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-consultar" class="text-emerald-600">${{ "{:,}".format(cobro_desglose.monto_total) }}</span><span id="cobro-total-nuevo-consultar" class="text-emerald-600" hidden> ${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</span></p>
+        <p class="font-semibold text-slate-900">Total: <span id="cobro-total-monto-consultar" class="text-emerald-600" data-normal="${{ "{:,}".format(cobro_desglose.monto_total) }}" data-anulado="${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}">${{ "{:,}".format(cobro_desglose.monto_total) }}</span></p>
         {%- if cobro_desglose.monto_base %}
         <p>Servicio: <span id="cobro-servicio-monto-consultar" class="text-emerald-600">${{ "{:,}".format(cobro_desglose.monto_base) }}</span><span id="cobro-servicio-nuevo-consultar" class="text-emerald-600" hidden> $0</span></p>
         {%- endif %}
@@ -201,6 +206,10 @@
         <p>Bodegaje ({{ cobro_desglose.bloques_bodegaje }} día{{ "s" if cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</span></p>
         {%- endif %}
       </div>
+      {%- if cobro_desglose.monto_total %}
+      {# Pedido explícito del cliente: si el Total ya es $0 (primera
+         entrega + sin bodegaje), "Anular cobro" no cambiaría nada -- se
+         oculta el toggle entero en ese caso. #}
       <div class="mt-2">
         {%- call toggle(name='anular', id='anular-consultar') %}
           Anular cobro
@@ -220,22 +229,23 @@
         var check = document.getElementById('anular-consultar');
         var wrap = document.getElementById('anular-motivo-wrap-consultar');
         var totalMonto = document.getElementById('cobro-total-monto-consultar');
-        var totalNuevo = document.getElementById('cobro-total-nuevo-consultar');
         var servicioMonto = document.getElementById('cobro-servicio-monto-consultar');
         var servicioNuevo = document.getElementById('cobro-servicio-nuevo-consultar');
         check.addEventListener('change', function () {
           wrap.hidden = !check.checked;
-          [totalMonto, servicioMonto].forEach(function (el) {
-            if (!el) return;
-            el.classList.toggle('line-through', check.checked);
-            el.classList.toggle('text-red-600', check.checked);
-            el.classList.toggle('text-emerald-600', !check.checked);
-          });
-          if (totalNuevo) totalNuevo.hidden = !check.checked;
+          if (totalMonto) {
+            totalMonto.textContent = check.checked ? totalMonto.dataset.anulado : totalMonto.dataset.normal;
+          }
+          if (servicioMonto) {
+            servicioMonto.classList.toggle('line-through', check.checked);
+            servicioMonto.classList.toggle('text-red-600', check.checked);
+            servicioMonto.classList.toggle('text-emerald-600', !check.checked);
+          }
           if (servicioNuevo) servicioNuevo.hidden = !check.checked;
         });
       })();
       </script>
+      {%- endif %}
       {%- endif %}
       {%- if paquete.saldo_pendiente %}
       {# .scratch/dinero-contra-entrega, ticket 04: mismo bloque que

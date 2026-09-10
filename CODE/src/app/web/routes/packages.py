@@ -1524,12 +1524,22 @@ def deliver_action(
     if anula and not motivo_anulacion_valido(db, motivo_anulacion):
         if destino != "/paquetes":
             return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
+        # Pedido explícito del cliente, reportado en vivo: antes esto
+        # recargaba TODA la lista (perdiendo `q`) con el modal cerrado --
+        # había que rebuscar y reabrir "Entregar" desde cero. Mismo
+        # mecanismo que ya reabre "Corregir destinatario" en error
+        # (`error_paquete_id`/`error_campo`), sumando `entregar_paquete_id`
+        # para reabrir ESTE modal puntual y `q` para no perder la búsqueda.
         return _render_lista(
             request,
             db,
             staff,
             error="Elegí un motivo válido para anular el cobro.",
             status_code=400,
+            q=q,
+            entregar_paquete_id=str(paquete.id),
+            error_paquete_id=str(paquete.id),
+            error_campo="motivo_anulacion",
         )
 
     # Resuelto ANTES de `deliver()` a propósito: `es_primera_entrega_a_telefono`
