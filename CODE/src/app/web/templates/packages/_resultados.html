@@ -857,10 +857,12 @@
            reservado abajo hace que el botón quede pegado al fondo del
            viewport visible DESDE EL PRIMER RENDER (antes de scrollear
            siquiera), tapando la última parte del contenido en vez de
-           aparecer recién después de él. Este spacer reserva esa altura
-           (aprox. la del propio botón + su padding) para que el scroll
-           revele todo el contenido ANTES de que el botón se superponga. #}
-        <div class="h-20" aria-hidden="true"></div>
+           aparecer recién después de él. Este spacer reserva un poco de
+           esa altura para que el scroll revele todo el contenido ANTES de
+           que el botón se superponga -- pedido explícito del cliente: el
+           h-20 original dejaba un espacio en blanco demasiado grande entre
+           el contenido y el botón en el caso común. #}
+        <div class="h-6" aria-hidden="true"></div>
         {# Issue 306 (.scratch/pendientes-cliente): botón flotante, sin
            fondo propio, glow violeta -- mismo patrón validado en
            "Recibir". #}

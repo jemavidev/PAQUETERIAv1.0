@@ -321,10 +321,11 @@
        abajo hace que el botón quede pegado al fondo del viewport visible
        DESDE EL PRIMER RENDER (antes de scrollear siquiera), tapando la
        última parte del contenido en vez de aparecer recién después de él.
-       Este spacer reserva esa altura (aprox. la del propio botón + su
-       padding) para que el scroll revele todo el contenido ANTES de que
-       el botón se superponga. #}
-    <div class="h-20" aria-hidden="true"></div>
+       Este spacer reserva un poco de esa altura para que el scroll revele
+       todo el contenido ANTES de que el botón se superponga -- pedido
+       explícito del cliente: el h-20 original dejaba un espacio en blanco
+       demasiado grande entre el contenido y el botón en el caso común. #}
+    <div class="h-6" aria-hidden="true"></div>
     <div class="sticky bottom-0 -mx-5 -mb-5 mt-4 px-5 py-3">
       <button type="submit" class="w-full justify-center inline-flex items-center gap-2 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-base font-medium px-6 py-3 shadow-[0_0_18px_rgba(139,92,246,0.65)] transition">Recibir</button>
     </div>
