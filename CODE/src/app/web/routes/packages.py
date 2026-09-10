@@ -112,6 +112,10 @@ from ..fotos import get_foto_storage, subir_fotos_diferido
 from ..notifications import enviar_en_segundo_plano, get_notification_sender
 from ..security import current_staff, require_admin
 from ..templating import templates
+# `deliver_action` reusa el render de `/consultar` (pedido explícito del
+# cliente, reportado en vivo) en vez de un `RedirectResponse` ciego cuando
+# ese origen falla la validación de "Anular cobro" -- ver su docstring.
+from .search import renderizar_busqueda
 
 router = APIRouter()
 
@@ -1522,14 +1526,23 @@ def deliver_action(
 
     anula = bool(anular)
     if anula and not motivo_anulacion_valido(db, motivo_anulacion):
-        if destino != "/paquetes":
-            return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
         # Pedido explícito del cliente, reportado en vivo: antes esto
-        # recargaba TODA la lista (perdiendo `q`) con el modal cerrado --
-        # había que rebuscar y reabrir "Entregar" desde cero. Mismo
-        # mecanismo que ya reabre "Corregir destinatario" en error
+        # redirigía o recargaba TODA la lista (perdiendo `q`) con el modal
+        # cerrado -- había que rebuscar y reabrir "Entregar" desde cero.
+        # Mismo mecanismo que ya reabre "Corregir destinatario" en error
         # (`error_paquete_id`/`error_campo`), sumando `entregar_paquete_id`
-        # para reabrir ESTE modal puntual y `q` para no perder la búsqueda.
+        # para reabrir ESTE modal puntual y `q` para no perder la búsqueda
+        # -- para el origen `/consultar`, `renderizar_busqueda` hace lo
+        # mismo (esa vista solo maneja un paquete, sin necesitar un id).
+        if destino != "/paquetes":
+            return renderizar_busqueda(
+                request,
+                db,
+                q,
+                error="Elegí un motivo válido para anular el cobro.",
+                status_code=400,
+                entregar_error_motivo=True,
+            )
         return _render_lista(
             request,
             db,

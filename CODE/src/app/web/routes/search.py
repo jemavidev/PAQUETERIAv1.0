@@ -76,7 +76,27 @@ def search(
             {"request": request, "q": q or "", "error": _MENSAJE_RATE_LIMIT},
             status_code=429,
         )
+    return renderizar_busqueda(request, db, q)
 
+
+def renderizar_busqueda(
+    request: Request,
+    db: Session,
+    q: str,
+    error: str = None,
+    status_code: int = 200,
+    entregar_error_motivo: bool = False,
+) -> HTMLResponse:
+    """Cuerpo de `/consultar` (GET), extraído para reusarse desde
+    `packages.py::deliver_action` (pedido explícito del cliente, reportado
+    en vivo): antes, un error de validación al "Entregar" desde ESTA vista
+    (ej. "Anular cobro" sin motivo) hacía un `RedirectResponse` puro de
+    vuelta a `/consultar?q=...` -- perdía el error por completo (ni
+    siquiera se mostraba) y el modal quedaba cerrado, la vista "se
+    reiniciaba" sin ninguna pista de qué pasó. Ahora `deliver_action`
+    llama esta función DIRECTO (sin redirect) pasando `error` +
+    `entregar_error_motivo=True`, así el modal reabre con el error inline,
+    igual que ya hace `/paquetes`."""
     termino = (q or "").strip()
     if not termino:
         return templates.TemplateResponse(
@@ -98,6 +118,8 @@ def search(
             "timeline": timeline_de_paquete(db, paquete),
             "fotos": listar_fotos(db, paquete),
             "dias_desde_recibido": dias_desde_recibido(paquete),
+            "error": error,
+            "entregar_error_motivo": entregar_error_motivo,
         }
         # Issue 171 (.scratch/pendientes-cliente): mismo contexto que ya
         # arma `packages.py` para el modal `modal_recibir` compartido --
@@ -177,7 +199,9 @@ def search(
             contexto["cobro"] = (
                 db.query(Cobro).filter(Cobro.paquete_id == paquete.id).one_or_none()
             )
-        return templates.TemplateResponse("search/form.html", contexto)
+        return templates.TemplateResponse(
+            "search/form.html", contexto, status_code=status_code
+        )
 
     return templates.TemplateResponse(
         "search/form.html", {"request": request, "q": termino, "sin_resultados": True}

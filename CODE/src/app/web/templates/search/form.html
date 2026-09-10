@@ -142,7 +142,13 @@
                     saldo_actual=paquete.saldo_actual) }}
   {%- endif %}
   {%- if request.session.get(SESSION_KEY) and paquete.estado.value == 'RECIBIDO' %}
-  {% call modal("entregar-consultar", "Entregar paquete") %}
+  {# `entregar_error_motivo` (pedido explícito del cliente, reportado en
+     vivo): reabre este modal con el error de "Anular cobro sin motivo"
+     inline -- mismo mecanismo que ya usa `/paquetes` (`este_error_anular`
+     en `_resultados.html`), acá simplificado porque esta vista solo
+     maneja UN paquete a la vez (sin necesidad de un `_paquete_id` para
+     desambiguar). #}
+  {% call modal("entregar-consultar", "Entregar paquete", abierto=entregar_error_motivo|default(False)) %}
     {# Pedido explícito del cliente: "Entregar a" es redundante -- el modal
        ya se titula "Entregar paquete". #}
     <p class="text-sm text-slate-700"><strong>{{ paquete.recipient_name }}</strong>{% if paquete.snapshot_apartamento %} — {{ paquete.snapshot_conjunto }} · Torre {{ paquete.snapshot_torre|torre_sin_prefijo }} · Apto {{ paquete.snapshot_apartamento }}{% endif %}.</p>
@@ -212,18 +218,24 @@
          (ej. primera entrega, con o sin bodegaje acumulado), el toggle no
          cambiaría nada, así que se oculta entero. #}
       <div class="mt-2">
-        {%- call toggle(name='anular', id='anular-consultar') %}
+        {%- call toggle(name='anular', id='anular-consultar', checked=entregar_error_motivo|default(False)) %}
           Anular cobro
         {%- endcall %}
       </div>
-      <div id="anular-motivo-wrap-consultar" class="mt-2" hidden>
+      <div id="anular-motivo-wrap-consultar" class="mt-2" {{ 'hidden' if not entregar_error_motivo else '' }}>
         <label class="block text-sm font-medium text-slate-700 mb-1" for="anular-motivo-consultar">Motivo</label>
-        <select name="motivo_anulacion" id="anular-motivo-consultar" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
+        <select name="motivo_anulacion" id="anular-motivo-consultar" class="w-full rounded-lg border {{ 'border-red-600' if entregar_error_motivo else 'border-slate-300' }} px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">
           <option value="">Elegí un motivo</option>
           {%- for m in motivos_anulacion_cobro %}
           <option value="{{ m.etiqueta }}">{{ m.etiqueta }}</option>
           {%- endfor %}
         </select>
+        {%- if entregar_error_motivo %}
+        <p class="text-xs text-red-600 mt-1 flex items-center gap-1">
+          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v3a1 1 0 11-2 0V9zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 0010 5z" clip-rule="evenodd"/></svg>
+          {{ error }}
+        </p>
+        {%- endif %}
       </div>
       <script>
       (function () {
@@ -232,7 +244,7 @@
         var totalMonto = document.getElementById('cobro-total-monto-consultar');
         var servicioMonto = document.getElementById('cobro-servicio-monto-consultar');
         var servicioNuevo = document.getElementById('cobro-servicio-nuevo-consultar');
-        check.addEventListener('change', function () {
+        function aplicarEstadoAnulado() {
           wrap.hidden = !check.checked;
           if (totalMonto) {
             totalMonto.textContent = check.checked ? totalMonto.dataset.anulado : totalMonto.dataset.normal;
@@ -243,7 +255,9 @@
             servicioMonto.classList.toggle('text-emerald-600', !check.checked);
           }
           if (servicioNuevo) servicioNuevo.hidden = !check.checked;
-        });
+        }
+        check.addEventListener('change', aplicarEstadoAnulado);
+        aplicarEstadoAnulado();
       })();
       </script>
       {%- endif %}

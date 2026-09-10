@@ -369,6 +369,38 @@ def test_entregar_desde_consultar_redirige_de_vuelta_con_el_mismo_termino(client
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
 
 
+def test_entregar_desde_consultar_anular_sin_motivo_reabre_el_modal_con_el_error(client):
+    """Pedido explícito del cliente, reportado en vivo: antes esto hacía un
+    `RedirectResponse` ciego de vuelta a /consultar -- perdía el error por
+    completo y el modal quedaba cerrado. Ahora renderiza /consultar directo
+    con el error inline y el modal reabierto (mismo mecanismo que
+    `/paquetes`, ver `search.py::renderizar_busqueda`)."""
+    staff = _staff(client)
+    _login_staff(client, staff)
+    # Paquete previo ENTREGADO al mismo teléfono -- rompe "primera entrega"
+    # para que Servicio > 0 y el toggle "Anular cobro" aparezca.
+    p_previo = _anunciar(client, tel="3009998888")
+    receive(client.db, p_previo, staff)
+    deliver(client.db, p_previo, staff)
+    client.db.commit()
+
+    p = _anunciar(client, tel="3009998888")
+    receive(client.db, p, staff)
+    client.db.commit()
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"origen": "consultar", "q": p.access_code, "anular": "on"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 400
+    assert "Elegí un motivo válido para anular el cobro." in r.text
+    assert 'id="modal-entregar-consultar"' in r.text
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.RECIBIDO
+
+
 # --------------------------------------------------------------------------- #
 # Bandera "primera entrega" en el modal Entregar (issue 314/316, .scratch/
 # pendientes-cliente) -- este modal es un duplicado del de `/paquetes`
