@@ -187,6 +187,30 @@ def _personas_por_nombre(db: Session, nombres: set) -> dict:
     return {p.nombre: p for p in db.query(Persona).filter(Persona.nombre.in_(nombres)).all()}
 
 
+def _resolver_persona_destino(db: Session, paquete: Paquete):
+    """Versión sin-batch de la resolución robusta que arriba hace
+    `_listar` (`persona_destino_por_paquete`) -- mismo algoritmo, y mismo
+    duplicado que ya vive en `search.py::_resolver_persona_destino` (un
+    solo Paquete acá, no vale la pena armar los dicts por-teléfono/por-
+    nombre para uno solo). Necesaria en `deliver_action`: escribir el
+    ajuste de saldo contra-entrega (`pago_saldo`) buscando SOLO por
+    `Paquete.recipient_phone` dejaba sin efecto, en silencio, el ajuste de
+    un destinatario solo-WhatsApp -- el campo SÍ se mostraba (ya usaba
+    esta misma resolución para decidir `saldo_pendiente`), pero el submit
+    no encontraba a nadie a quien registrarle el movimiento."""
+    contacto = None
+    if paquete.recipient_phone:
+        contacto = (
+            db.query(Persona).filter(Persona.telefono == paquete.recipient_phone).first()
+        )
+    persona_destino = contacto
+    if persona_destino is None or persona_destino.nombre != paquete.recipient_name:
+        persona_destino = (
+            db.query(Persona).filter(Persona.nombre == paquete.recipient_name).first()
+        )
+    return persona_destino
+
+
 def _whatsapp_url_destinatario(
     paquete: Paquete, persona: Persona | None, *, desktop: bool = False
 ) -> str | None:
@@ -1624,11 +1648,13 @@ def deliver_action(
     # con la entrega -- si el destinatario tiene Persona propia y el staff
     # completó el monto, se registra el pago; si se deja vacío, la entrega
     # ya ocurrió igual (arriba) y la deuda queda pendiente por fuera del
-    # sistema.
-    if pago_saldo and paquete.recipient_phone:
-        persona_destinataria = (
-            db.query(Persona).filter(Persona.telefono == paquete.recipient_phone).one_or_none()
-        )
+    # sistema. Resolución robusta (no solo por teléfono, ver
+    # `_resolver_persona_destino`): un destinatario solo-WhatsApp no tiene
+    # `recipient_phone`, así que la búsqueda por teléfono nunca lo
+    # encontraba -- el campo SÍ se mostraba (`saldo_pendiente` ya usa esta
+    # misma resolución), pero el ajuste se perdía en silencio al guardar.
+    if pago_saldo:
+        persona_destinataria = _resolver_persona_destino(db, paquete)
         if persona_destinataria is not None:
             registrar_movimiento_saldo(
                 db, persona_destinataria.id, pago_saldo, staff, paquete_id=paquete.id
