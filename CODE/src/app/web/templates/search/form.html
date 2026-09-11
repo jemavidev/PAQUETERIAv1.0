@@ -217,6 +217,13 @@
         {%- if cobro_desglose.monto_bodegaje %}
         <p>Bodegaje ({{ cobro_desglose.bloques_bodegaje }} día{{ "s" if cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(cobro_desglose.monto_bodegaje) }}</span></p>
         {%- endif %}
+        {%- if paquete.conciliacion_cobro_texto %}
+        {# .scratch/dinero-contra-entrega, ticket 06: mismo bloque que
+           `_resultados.html` (DUPLICADO a propósito) -- si el destinatario
+           dejó saldo a favor, se indica ACÁ MISMO que este cobro se cubre
+           (todo o en parte) con ese saldo. #}
+        <p class="mt-2 pt-2 border-t border-slate-200 text-emerald-700" id="cobro-conciliacion-consultar" data-normal="{{ paquete.conciliacion_cobro_texto }}" data-anulado="{{ paquete.conciliacion_cobro_texto_anulado or paquete.conciliacion_cobro_texto }}">{{ paquete.conciliacion_cobro_texto }}</p>
+        {%- endif %}
       </div>
       {%- if cobro_desglose.monto_base %}
       {# Pedido explícito del cliente: "Anular cobro" solo exonera
@@ -249,6 +256,7 @@
         var totalMonto = document.getElementById('cobro-total-monto-consultar');
         var servicioMonto = document.getElementById('cobro-servicio-monto-consultar');
         var servicioNuevo = document.getElementById('cobro-servicio-nuevo-consultar');
+        var conciliacionTexto = document.getElementById('cobro-conciliacion-consultar');
         function aplicarEstadoAnulado() {
           wrap.hidden = !check.checked;
           if (totalMonto) {
@@ -260,6 +268,9 @@
             servicioMonto.classList.toggle('text-emerald-600', !check.checked);
           }
           if (servicioNuevo) servicioNuevo.hidden = !check.checked;
+          if (conciliacionTexto) {
+            conciliacionTexto.textContent = check.checked ? conciliacionTexto.dataset.anulado : conciliacionTexto.dataset.normal;
+          }
         }
         check.addEventListener('change', aplicarEstadoAnulado);
         aplicarEstadoAnulado();

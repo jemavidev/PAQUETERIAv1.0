@@ -4,7 +4,9 @@ Capa web — ajuste opcional del saldo contra entrega al Entregar
 (`.scratch/dinero-contra-entrega`, ticket 04).
 """
 
+from app.domain.motivo_anulacion_cobro import MotivoAnulacionCobro
 from app.domain.paquete import EstadoPaquete, Paquete
+from app.domain.paquete_lifecycle import deliver as dom_deliver
 from app.domain.paquete_lifecycle import receive as dom_receive
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.persona_service import get_or_create_persona, get_or_create_persona_por_whatsapp
@@ -165,3 +167,112 @@ def test_saldo_a_favor_se_muestra_en_verde_sin_campo_de_ajuste(client):
     assert "Saldo: $4,000" in r.text
     assert "text-emerald-600" in r.text
     assert 'Valor a abonar' not in r.text
+
+
+def _recibido_con_saldo_a_favor(client, staff, tel="3001234567", saldo_inicial=35000):
+    # Paquete previo al mismo teléfono, ya Entregado -- rompe "primera
+    # entrega" (mismo mecanismo que `test_entregar_sin_primera_entrega_
+    # cobra_la_tarifa_base` en test_packages.py). Sin esto, el Servicio de
+    # ESTE paquete daría $0 por esa exención -- no por la conciliación que
+    # se está probando.
+    p_previo = announce(
+        client.db,
+        anunciante_telefono=tel,
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    dom_receive(client.db, p_previo, staff)
+    dom_deliver(client.db, p_previo, staff)
+    client.db.commit()
+
+    persona = get_or_create_persona(client.db, tel, "Ana")
+    registrar_movimiento_saldo(client.db, persona.id, saldo_inicial, staff)
+    p = announce(
+        client.db,
+        anunciante_telefono=tel,
+        anunciante_nombre="Ana",
+        destinatario=Destinatario.yo_mismo(),
+    )
+    dom_receive(client.db, p, staff)
+    client.db.commit()
+    return p, persona
+
+
+def test_saldo_a_favor_muestra_el_preview_de_conciliacion(client):
+    # Pedido explícito del cliente (.scratch/dinero-contra-entrega, ticket
+    # 06): "que se pueda indicar que la cuenta total es de $X" ANTES de
+    # confirmar la entrega -- entrega inmediata, sin bodegaje: solo
+    # Servicio ($1.500, tarifa por defecto).
+    staff = _login_staff(client)
+    _recibido_con_saldo_a_favor(client, staff, saldo_inicial=35000)
+
+    r = client.get("/paquetes")
+    assert "Se cubre completo con el saldo a favor" in r.text
+    assert "saldo resultante: $33,500" in r.text
+
+
+def test_saldo_a_favor_cubre_automaticamente_el_cobro_al_entregar(client):
+    # El ejemplo del cliente (a escala de este test, sin Bodegaje: entrega
+    # inmediata): saldo a favor $5.000 cubre un cobro de Servicio $1.500,
+    # dejando $3.500 de saldo a favor -- sin que el staff tenga que
+    # restarlo a mano.
+    staff = _login_staff(client)
+    p, persona = _recibido_con_saldo_a_favor(client, staff, saldo_inicial=5000)
+
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
+    assert saldo_de_persona(client.db, persona.id) == 5000 - 1500
+    mov = (
+        client.db.query(MovimientoSaldoContraEntrega)
+        .filter(MovimientoSaldoContraEntrega.paquete_id == p.id)
+        .one()
+    )
+    assert mov.monto == -1500
+
+
+def test_saldo_a_favor_insuficiente_aplica_lo_disponible_y_deja_saldo_en_cero(client):
+    staff = _login_staff(client)
+    p, persona = _recibido_con_saldo_a_favor(client, staff, saldo_inicial=1000)
+
+    r = client.post(f"/paquetes/{p.id}/entregar", follow_redirects=False)
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ENTREGADO
+    assert saldo_de_persona(client.db, persona.id) == 0
+    mov = (
+        client.db.query(MovimientoSaldoContraEntrega)
+        .filter(MovimientoSaldoContraEntrega.paquete_id == p.id)
+        .one()
+    )
+    assert mov.monto == -1000
+
+
+def test_anular_cobro_sin_bodegaje_no_toca_el_saldo_a_favor(client):
+    # Si "Anular cobro" deja el total en $0 (Servicio exento, sin Bodegaje
+    # acumulado), la conciliación automática no debe descontar nada del
+    # saldo -- no hay nada que cubrir.
+    staff = _login_staff(client)
+    motivo = MotivoAnulacionCobro(etiqueta="Reclamo del cliente")
+    client.db.add(motivo)
+    client.db.commit()
+    p, persona = _recibido_con_saldo_a_favor(client, staff, saldo_inicial=5000)
+
+    r = client.post(
+        f"/paquetes/{p.id}/entregar",
+        data={"anular": "on", "motivo_anulacion": "Reclamo del cliente"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+
+    client.db.expire_all()
+    assert saldo_de_persona(client.db, persona.id) == 5000
+    assert (
+        client.db.query(MovimientoSaldoContraEntrega)
+        .filter(MovimientoSaldoContraEntrega.paquete_id == p.id)
+        .first()
+        is None
+    )

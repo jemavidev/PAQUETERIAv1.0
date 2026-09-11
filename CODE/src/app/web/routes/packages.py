@@ -90,7 +90,9 @@ from app.domain.paquete_service import (
     paquetes_relacionados_por_codigo,
 )
 from app.domain.saldo_contra_entrega_service import (
+    conciliar_saldo_con_cobro,
     registrar_movimiento_saldo,
+    saldo_de_persona,
     saldos_de_personas,
 )
 from app.domain.paquete_sincronizacion_service import sincronizar_snapshot_a_hermanos
@@ -209,6 +211,20 @@ def _resolver_persona_destino(db: Session, paquete: Paquete):
             db.query(Persona).filter(Persona.nombre == paquete.recipient_name).first()
         )
     return persona_destino
+
+
+def _texto_conciliacion(conciliacion) -> str:
+    """Texto ya armado para el preview del modal Entregar (pedido explícito
+    del cliente: "que se pueda indicar que la cuenta total es de $X") --
+    mismo criterio que el resto de valores derivados en `_listar`
+    (`duracion_transcurrida`, `direccion_corta`): la aritmética/formato vive
+    en Python, la plantilla solo lo imprime."""
+    aplicado = "{:,}".format(conciliacion.monto_aplicado_del_saldo)
+    if conciliacion.monto_pendiente_efectivo:
+        pendiente = "{:,}".format(conciliacion.monto_pendiente_efectivo)
+        return f"Se cubren ${aplicado} con el saldo a favor -- quedan ${pendiente} pendientes en efectivo."
+    nuevo_saldo = "{:,}".format(conciliacion.nuevo_saldo)
+    return f"Se cubre completo con el saldo a favor -- saldo resultante: ${nuevo_saldo}."
 
 
 def _whatsapp_url_destinatario(
@@ -868,6 +884,30 @@ def _listar(
             if p.estado == EstadoPaquete.RECIBIDO and p.saldo_actual is not None and p.saldo_actual < 0
             else None
         )
+        # .scratch/dinero-contra-entrega, ticket 06: preview de la
+        # conciliación automática que hará `deliver_action` (pedido
+        # explícito del cliente: "que se pueda indicar que la cuenta total
+        # es de $X" ANTES de confirmar) -- solo aplica con saldo a FAVOR
+        # (`saldo_actual` > 0, nunca con `saldo_pendiente`, que es la
+        # dirección opuesta -- una deuda). Dos variantes (normal/anulado)
+        # para que el mismo swap de JS que ya alterna el "Total" al marcar
+        # "Anular cobro" alterne este texto también, sin quedar
+        # desactualizado.
+        p.conciliacion_cobro_texto = None
+        p.conciliacion_cobro_texto_anulado = None
+        if (
+            p.estado == EstadoPaquete.RECIBIDO
+            and p.cobro_desglose is not None
+            and p.saldo_actual is not None
+            and p.saldo_actual > 0
+        ):
+            p.conciliacion_cobro_texto = _texto_conciliacion(
+                conciliar_saldo_con_cobro(p.cobro_desglose.monto_total, p.saldo_actual)
+            )
+            if p.cobro_desglose.monto_base:
+                p.conciliacion_cobro_texto_anulado = _texto_conciliacion(
+                    conciliar_saldo_con_cobro(p.cobro_desglose.monto_bodegaje, p.saldo_actual)
+                )
         # Contacto "prestado" -- lo que `recipient_phone` trae congelado tal
         # cual, sin importar de quién sea: issue 163 lo llena a propósito
         # con el teléfono del Principal de la unidad (o del Anunciante)
@@ -1644,21 +1684,44 @@ def deliver_action(
         motivo_anulacion=motivo_anulacion if anula else None,
     )
 
+    persona_destinataria = _resolver_persona_destino(db, paquete)
+    if persona_destinataria is not None:
+        # .scratch/dinero-contra-entrega, ticket 06: el cobro de
+        # servicio+bodegaje que se acaba de registrar se cubre
+        # AUTOMÁTICAMENTE con el saldo a favor vigente del destinatario --
+        # pedido explícito del cliente ("si no se modifica nada, se pueda
+        # indicar que la cuenta total es de $X"): si dejó saldo a favor (de
+        # un contra-entrega pre-pagado, un depósito, o cualquier otro
+        # motivo), no debería hacer falta que el staff reste el cobro del
+        # saldo a mano. Si no alcanza, se aplica lo disponible y el resto
+        # queda pendiente en efectivo (`conciliar_saldo_con_cobro`, pura,
+        # ver docstring) -- nunca profundiza un saldo negativo por esta
+        # vía.
+        saldo_antes = saldo_de_persona(db, persona_destinataria.id)
+        conciliacion = conciliar_saldo_con_cobro(desglose.monto_total, saldo_antes)
+        if conciliacion.monto_aplicado_del_saldo:
+            registrar_movimiento_saldo(
+                db,
+                persona_destinataria.id,
+                -conciliacion.monto_aplicado_del_saldo,
+                staff,
+                paquete_id=paquete.id,
+            )
+
     # .scratch/dinero-contra-entrega, ticket 04: ajuste opcional, atómico
     # con la entrega -- si el destinatario tiene Persona propia y el staff
-    # completó el monto, se registra el pago; si se deja vacío, la entrega
-    # ya ocurrió igual (arriba) y la deuda queda pendiente por fuera del
-    # sistema. Resolución robusta (no solo por teléfono, ver
+    # completó el monto, se registra el pago (salda una deuda existente,
+    # dirección opuesta a la conciliación de arriba); si se deja vacío, la
+    # entrega ya ocurrió igual (arriba) y la deuda queda pendiente por
+    # fuera del sistema. Resolución robusta (no solo por teléfono, ver
     # `_resolver_persona_destino`): un destinatario solo-WhatsApp no tiene
     # `recipient_phone`, así que la búsqueda por teléfono nunca lo
     # encontraba -- el campo SÍ se mostraba (`saldo_pendiente` ya usa esta
     # misma resolución), pero el ajuste se perdía en silencio al guardar.
-    if pago_saldo:
-        persona_destinataria = _resolver_persona_destino(db, paquete)
-        if persona_destinataria is not None:
-            registrar_movimiento_saldo(
-                db, persona_destinataria.id, pago_saldo, staff, paquete_id=paquete.id
-            )
+    if pago_saldo and persona_destinataria is not None:
+        registrar_movimiento_saldo(
+            db, persona_destinataria.id, pago_saldo, staff, paquete_id=paquete.id
+        )
 
     _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.ENTREGADO, sender)
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
