@@ -44,7 +44,7 @@ from app.domain.paquete_foto_service import listar_fotos
 from app.domain.paquete_service import es_primera_entrega_a_telefono
 from app.domain.paquete_timeline_service import dias_desde_recibido, timeline_de_paquete
 from app.domain.persona import Persona
-from app.domain.saldo_contra_entrega_service import conciliar_saldo_con_cobro, saldo_de_persona
+from app.domain.saldo_contra_entrega_service import saldo_de_persona
 
 from ..db import get_db
 from ..rate_limit import rate_limit
@@ -86,19 +86,6 @@ def _resolver_persona_destino(db: Session, paquete: Paquete):
             .first()
         )
     return persona_destino
-
-
-def _texto_conciliacion(conciliacion) -> str:
-    """Mismo texto que ya arma `packages.py::_texto_conciliacion` -- mismo
-    duplicado deliberado que el resto de este archivo (`_resolver_persona_
-    destino`): acá solo hay UN paquete, no vale la pena importar el helper
-    privado de otro módulo para esto."""
-    aplicado = "{:,}".format(conciliacion.monto_aplicado_del_saldo)
-    if conciliacion.monto_pendiente_efectivo:
-        pendiente = "{:,}".format(conciliacion.monto_pendiente_efectivo)
-        return f"Se cubren ${aplicado} con el saldo a favor -- quedan ${pendiente} pendientes en efectivo."
-    nuevo_saldo = "{:,}".format(conciliacion.nuevo_saldo)
-    return f"Se cubre completo con el saldo a favor -- saldo resultante: ${nuevo_saldo}."
 
 
 @router.get("/consultar", response_class=HTMLResponse)
@@ -226,20 +213,6 @@ def renderizar_busqueda(
                     paquete.saldo_actual = saldo
                 if saldo < 0:
                     paquete.saldo_pendiente = -saldo
-                # .scratch/dinero-contra-entrega, ticket 06: mismo preview
-                # de conciliación automática que ya arma `packages.py::
-                # _listar` -- acá solo hay UN paquete, se resuelve directo
-                # sin batch.
-                if saldo > 0:
-                    paquete.conciliacion_cobro_texto = _texto_conciliacion(
-                        conciliar_saldo_con_cobro(contexto["cobro_desglose"].monto_total, saldo)
-                    )
-                    if contexto["cobro_desglose"].monto_base:
-                        paquete.conciliacion_cobro_texto_anulado = _texto_conciliacion(
-                            conciliar_saldo_con_cobro(
-                                contexto["cobro_desglose"].monto_bodegaje, saldo
-                            )
-                        )
         # .scratch/cobro-bodegaje, ticket 05: "visible para cualquier
         # current_staff" (spec.md) -- gated a sesión de staff, igual que el
         # resto de este archivo, a propósito NUNCA visible en la consulta

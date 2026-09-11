@@ -584,35 +584,6 @@ def test_consultar_entregar_sin_saldo_no_muestra_el_ajuste(client):
     assert "Saldo: $" not in r.text
 
 
-def test_consultar_entregar_con_saldo_a_favor_muestra_el_preview_de_conciliacion(client):
-    # .scratch/dinero-contra-entrega, ticket 06 (mismo preview que ya
-    # cubre `test_ajuste_saldo_entregar.py` para /paquetes) -- pedido
-    # explícito del cliente: indicar ANTES de confirmar que el cobro se
-    # cubre (todo o en parte) con el saldo a favor vigente.
-    staff = _staff(client)
-    _login_staff(client, staff)
-    # Paquete previo al mismo teléfono, ya Entregado -- rompe "primera
-    # entrega" (sin esto, el Servicio de este paquete daría $0 por esa
-    # exención, no por la conciliación que se está probando).
-    p_previo = _anunciar(client, tel="3001234567", nombre="Ana")
-    receive(client.db, p_previo, staff)
-    deliver(client.db, p_previo, staff)
-    client.db.commit()
-
-    persona = get_or_create_persona(client.db, "3001234567", "Ana")
-    registrar_movimiento_saldo(client.db, persona.id, 35000, staff)
-    client.db.commit()
-
-    p = _anunciar(client, tel="3001234567", nombre="Ana")
-    receive(client.db, p, staff)
-    client.db.commit()
-
-    r = client.get("/consultar", params={"q": p.access_code})
-    assert r.status_code == 200
-    assert "Se cubre completo con el saldo a favor" in r.text
-    assert "saldo resultante: $33,500" in r.text
-
-
 # --------------------------------------------------------------------------- #
 # Cobro visible en el detalle del paquete (.scratch/cobro-bodegaje, ticket 05)
 # -- mismo hallazgo de paridad que arriba: /paquetes ya lo muestra (modal

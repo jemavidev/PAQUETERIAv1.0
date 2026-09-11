@@ -849,15 +849,6 @@
           {%- if p.cobro_desglose.monto_bodegaje %}
           <p>Bodegaje ({{ p.cobro_desglose.bloques_bodegaje }} día{{ "s" if p.cobro_desglose.bloques_bodegaje != 1 else "" }}): <span class="text-emerald-600">${{ "{:,}".format(p.cobro_desglose.monto_bodegaje) }}</span></p>
           {%- endif %}
-          {%- if p.conciliacion_cobro_texto %}
-          {# .scratch/dinero-contra-entrega, ticket 06: pedido explícito del
-             cliente -- si el destinatario dejó saldo a favor, se le indica
-             ACÁ MISMO, antes de confirmar, que ese cobro se cubre (todo o
-             en parte) con su saldo, y cuál queda de resultado. Dos textos
-             (normal/anulado) para que el mismo JS de abajo que alterna
-             "Total" al marcar "Anular cobro" alterne este también. #}
-          <p class="mt-2 pt-2 border-t border-slate-200 text-emerald-700" id="cobro-conciliacion-{{ p.id }}" data-normal="{{ p.conciliacion_cobro_texto }}" data-anulado="{{ p.conciliacion_cobro_texto_anulado or p.conciliacion_cobro_texto }}">{{ p.conciliacion_cobro_texto }}</p>
-          {%- endif %}
         </div>
         {%- if p.cobro_desglose.monto_base %}
         {# Pedido explícito del cliente: "Anular cobro" solo exonera
@@ -898,7 +889,6 @@
           var totalMonto = document.getElementById('cobro-total-monto-{{ p.id }}');
           var servicioMonto = document.getElementById('cobro-servicio-monto-{{ p.id }}');
           var servicioNuevo = document.getElementById('cobro-servicio-nuevo-{{ p.id }}');
-          var conciliacionTexto = document.getElementById('cobro-conciliacion-{{ p.id }}');
           function aplicarEstadoAnulado() {
             wrap.hidden = !check.checked;
             if (totalMonto) {
@@ -910,9 +900,6 @@
               servicioMonto.classList.toggle('text-emerald-600', !check.checked);
             }
             if (servicioNuevo) servicioNuevo.hidden = !check.checked;
-            if (conciliacionTexto) {
-              conciliacionTexto.textContent = check.checked ? conciliacionTexto.dataset.anulado : conciliacionTexto.dataset.normal;
-            }
           }
           check.addEventListener('change', aplicarEstadoAnulado);
           aplicarEstadoAnulado();

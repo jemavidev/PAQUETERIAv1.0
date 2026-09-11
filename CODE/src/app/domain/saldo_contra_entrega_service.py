@@ -4,7 +4,6 @@ Servicio de dominio de `MovimientoSaldoContraEntrega` (módulo "Gestión de
 dinero contra entrega", `.scratch/dinero-contra-entrega`).
 """
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from sqlalchemy import func
@@ -13,42 +12,6 @@ from sqlalchemy.orm import Session
 from .persona import Persona
 from .saldo_contra_entrega import MovimientoSaldoContraEntrega
 from .usuario import Usuario
-
-
-@dataclass(frozen=True)
-class ConciliacionCobro:
-    """Resultado de `conciliar_saldo_con_cobro` -- listo para mostrarse en
-    el modal Entregar y para persistirse tal cual (mismo criterio que
-    `DesgloseCobro`/`calcular_cobro`: dataclass inmutable, función pura sin
-    sesión de BD, toda la aritmética queda testeable con solo enteros)."""
-
-    monto_aplicado_del_saldo: int
-    monto_pendiente_efectivo: int
-    nuevo_saldo: int
-
-
-def conciliar_saldo_con_cobro(monto_cobro: int, saldo_actual: int) -> ConciliacionCobro:
-    """Aplica AUTOMÁTICAMENTE el saldo a favor vigente del destinatario (si
-    lo hay) contra el cobro de servicio+bodegaje del Entregar -- pedido
-    explícito del cliente (.scratch/dinero-contra-entrega): si dejó saldo a
-    favor (de un contra-entrega pre-pagado, un depósito, o cualquier otro
-    motivo), ese saldo cubre el nuevo cobro sin que el staff tenga que
-    restarlo a mano ("si no se modifica nada, se pueda indicar que la
-    cuenta total es de $X").
-
-    Si el saldo no alcanza a cubrir el total, se aplica lo que haya
-    disponible (nunca más de `saldo_actual`) y el resto queda pendiente en
-    efectivo -- pedido explícito del cliente, mismo criterio que ya usa el
-    ajuste manual existente para saldar una deuda parcial. Un saldo
-    NEGATIVO nunca se profundiza por esta vía (`max(saldo_actual, 0)`) --
-    eso es un asunto aparte, el ajuste manual de Entregar (`pago_saldo`)
-    que ya existe para que el residente salde una deuda pendiente."""
-    aplicado = min(monto_cobro, max(saldo_actual, 0))
-    return ConciliacionCobro(
-        monto_aplicado_del_saldo=aplicado,
-        monto_pendiente_efectivo=monto_cobro - aplicado,
-        nuevo_saldo=saldo_actual - aplicado,
-    )
 
 
 def registrar_movimiento_saldo(
