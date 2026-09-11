@@ -293,8 +293,7 @@
       </div>
       <div id="contra-entrega-wrap-{{ paquete_id }}" hidden>
         <input type="hidden" name="persona_saldo_id" value="{{ persona_destino_saldo_id }}">
-        <label class="block text-xs font-medium text-slate-600 mb-1" for="monto-mensajero-{{ paquete_id }}">Valor pagado por el contra entrega</label>
-        <input type="number" name="monto_pagado_mensajero" id="monto-mensajero-{{ paquete_id }}" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm" placeholder="$0">
+        <input type="number" name="monto_pagado_mensajero" id="monto-mensajero-{{ paquete_id }}" aria-label="Valor pagado por el contra entrega" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm" placeholder="$0">
       </div>
       <script>
       (function () {
