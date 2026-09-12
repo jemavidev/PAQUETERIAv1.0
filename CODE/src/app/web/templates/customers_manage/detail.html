@@ -379,7 +379,19 @@
                  del cliente): `mt-1` -- antes esta línea quedaba pegada
                  al renglón de nombre+badge de arriba, sin ningún espacio
                  entre las dos. #}
-              {% if o.telefono %}<p class="text-xs text-slate-700 truncate mt-1">{{ o.telefono }}</p>{% endif %}
+              {% if o.telefono %}
+              <p class="text-xs text-slate-700 truncate mt-1">{{ o.telefono }}</p>
+              {% elif o.contacto_prestado %}
+              {# Pedido explícito del cliente, probado en vivo (ver
+                 `_ocupantes_de`): un Ocupante SIN Teléfono/WhatsApp propio
+                 sigue siendo alcanzable a través del Principal ACTIVO de
+                 su unidad -- gris (no `text-slate-700`, el mismo tono que
+                 un contacto propio) para que quede claro que NO es un dato
+                 propio de este Ocupante, y "de {{ nombre }}" en vez de
+                 solo el número, para que nunca se confunda con el de él
+                 mismo. #}
+              <p class="text-xs text-slate-500 truncate mt-1">{{ o.contacto_prestado.telefono or ('@' ~ o.contacto_prestado.whatsapp_usuario) }} · de {{ o.contacto_prestado.nombre }}</p>
+              {% endif %}
             </div>
             {# Issue 254 (.scratch/pendientes-cliente, pedido explícito del
                cliente, "hagamos algo mejor"): solo ícono/emoji, sin la

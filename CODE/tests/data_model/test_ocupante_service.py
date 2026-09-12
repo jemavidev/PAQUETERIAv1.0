@@ -855,9 +855,57 @@ def test_desvincular_telefono_de_ocupante_no_principal(db_session):
     assert hija.persona_id is None
 
 
-def test_desvincular_telefono_del_principal_falla(db_session):
+def test_desvincular_telefono_del_principal_sin_sucesor_lo_deja_solo_nombre(db_session):
+    # Pedido explícito del cliente, probado en vivo (conversación
+    # 2026-09-11): antes esto bloqueaba en seco -- ahora, sin nadie más en
+    # la unidad a quien promover, se permite igual (caso "sin nadie en el
+    # apartamento", que el cliente resuelve con la opción de eliminar --
+    # soft delete -- ya existente en /residentes, no bloqueando el
+    # desvincular).
     apto = _apto(db_session)
     papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+
+    desvincular_telefono_ocupante(db_session, papa, permitir_sin_sucesor=True)
+
+    assert papa.persona_id is None
+    assert papa.es_principal is False
+
+
+def test_desvincular_telefono_del_principal_sin_sucesor_autoservicio_falla(db_session):
+    # `permitir_sin_sucesor` es EXCLUSIVO de staff -- el default (`False`,
+    # el que usa `/mis-datos`) sigue bloqueando: un cliente removiendo su
+    # único contacto se dejaría sin forma de volver a entrar, sin ningún
+    # staff supervisando (mismo comportamiento que existía antes de este
+    # pedido, ahora solo para autoservicio).
+    apto = _apto(db_session)
+    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+
+    with pytest.raises(ValueError):
+        desvincular_telefono_ocupante(db_session, papa)
+
+
+def test_desvincular_telefono_del_principal_con_sucesor_lo_promueve(db_session):
+    # Pedido explícito del cliente: el Principal SÍ tiene con quién
+    # sucederlo (otro Ocupante activo con contacto propio) -- se promueve
+    # automáticamente en vez de bloquear, mismo mecanismo que ya usa
+    # `dar_de_baja_ocupante_como_staff`.
+    apto = _apto(db_session)
+    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
+
+    desvincular_telefono_ocupante(db_session, papa)
+
+    assert papa.persona_id is None
+    assert papa.es_principal is False
+    assert hija.es_principal is True
+
+
+def test_desvincular_telefono_del_principal_sin_sucesor_con_contacto_falla(db_session):
+    # Hay otro Ocupante activo, pero SIN contacto propio -- no hay a quién
+    # promover, así que sigue bloqueando (mismo mensaje que antes).
+    apto = _apto(db_session)
+    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
+    agregar_ocupante(db_session, apto, "Hija")
 
     with pytest.raises(ValueError):
         desvincular_telefono_ocupante(db_session, papa)
@@ -1043,13 +1091,40 @@ def test_desvincular_whatsapp_de_ocupante_no_principal(db_session):
     assert hija.persona_id is None
 
 
-def test_desvincular_whatsapp_del_principal_falla(db_session):
+def test_desvincular_whatsapp_del_principal_sin_sucesor_lo_deja_solo_nombre(db_session):
+    # Mismo criterio (y mismo pedido explícito del cliente) que la
+    # contraparte de Teléfono.
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
+    confirmar_ocupante(db_session, papa, _staff(db_session))
+
+    desvincular_whatsapp_ocupante(db_session, papa, permitir_sin_sucesor=True)
+
+    assert papa.persona_id is None
+    assert papa.es_principal is False
+
+
+def test_desvincular_whatsapp_del_principal_sin_sucesor_autoservicio_falla(db_session):
+    # Mismo criterio que la contraparte de Teléfono.
     apto = _apto(db_session)
     papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
     confirmar_ocupante(db_session, papa, _staff(db_session))
 
     with pytest.raises(ValueError):
         desvincular_whatsapp_ocupante(db_session, papa)
+
+
+def test_desvincular_whatsapp_del_principal_con_sucesor_lo_promueve(db_session):
+    apto = _apto(db_session)
+    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
+    confirmar_ocupante(db_session, papa, _staff(db_session))
+    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
+
+    desvincular_whatsapp_ocupante(db_session, papa)
+
+    assert papa.persona_id is None
+    assert papa.es_principal is False
+    assert hija.es_principal is True
 
 
 def test_maximo_ocupantes_activos_por_apartamento(db_session):

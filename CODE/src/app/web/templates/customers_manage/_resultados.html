@@ -488,6 +488,27 @@
         </td>
       </tr>
       {% endfor %}
+      {# Pedido explícito del cliente, probado en vivo con "Daniela" (sin
+         Teléfono/WhatsApp propio, viviendo con "Jesús" de Principal):
+         sigue siendo parte real de su unidad, así que el listado plano
+         por defecto la muestra igual -- SOLO acá (sin término de
+         búsqueda, sin `vista`), ver `_residentes_sin_persona_activos`.
+         Fila deliberadamente SIN ninguna de las acciones de arriba
+         (Eliminar/Asignar apartamento/👫/📞) -- esta fila no tiene `id`
+         propio: reusar el del Principal prestado ahí haría que esas
+         acciones actuaran, por error, sobre él en vez de sobre nadie. El
+         nombre lleva a la ficha del Principal (tab Residentes), que es
+         donde hoy SÍ se gestiona a este Ocupante. #}
+      {% for f in residentes_sin_persona %}
+      <tr class="hover:bg-slate-50 bg-slate-50/50">
+        <td class="px-2 sm:px-4 py-2.5">
+          <a href="/residentes/{{ f.vive_con_persona_id }}?tab=residentes" class="font-medium text-blue-800 hover:underline whitespace-nowrap">{{ f.nombre }}</a>
+        </td>
+        <td class="hidden sm:table-cell px-4 py-2.5 whitespace-nowrap text-slate-500"><a href="/residentes/{{ f.vive_con_persona_id }}?tab=residentes" class="hover:underline hover:text-blue-800">{{ f.vive_con_nombre }}</a></td>
+        <td class="hidden sm:table-cell px-4 py-2.5 whitespace-nowrap text-slate-700 uppercase">{{ etiqueta_torre_apto(f.apartamento, 'No Asignado') }}</td>
+        <td class="px-2 sm:px-4 py-2.5 whitespace-nowrap text-xs text-slate-400">Sin ficha propia</td>
+      </tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>

@@ -34,6 +34,7 @@ from app.domain.ocupante_service import (
     agregar_ocupante,
     agregar_telefono_a_persona_de_ocupante,
     agregar_whatsapp_a_persona_de_ocupante,
+    anunciante_para_ocupante,
     asociar_telefono_a_ocupante,
     asociar_whatsapp_a_ocupante,
     confirmar_ocupante,
@@ -135,6 +136,23 @@ def _ocupantes_de(db: Session, apartamento):
         # Email (issue 251 seguimiento, .scratch/pendientes-cliente): el
         # modal "Editar" de la tab Residentes ahora también edita Email.
         o.email = persona.email if persona else None
+        # Contacto prestado del Principal (pedido explícito del cliente,
+        # probado en vivo: "Daniela" sin Teléfono/WhatsApp propio,
+        # viviendo con "Jesús" de Principal en la misma unidad -- "que
+        # siga existiendo bajo un número o usuario de WhatsApp del
+        # Principal"). Reusa `anunciante_para_ocupante` (ya resuelve
+        # exactamente esto: propia si tiene, si no la del Principal
+        # ACTIVO, cualquier canal -- ya usado para el Anunciante de
+        # /announce) en vez de duplicar la resolución acá.
+        #
+        # A propósito SEPARADO de `o.telefono`/`o.whatsapp_usuario`
+        # (arriba, SIEMPRE los propios, nunca prestados): esos dos
+        # siguen alimentando el modal "Editar" y "Quitar teléfono"/
+        # "Quitar WhatsApp" -- mezclar el prestado ahí haría parecer
+        # editable/removible un contacto que en realidad es de otra
+        # Persona (el submit fallaría contra ella, o peor, confundiría al
+        # staff sobre a quién le está tocando el contacto).
+        o.contacto_prestado = None if persona is not None else anunciante_para_ocupante(db, o)
     return ocupantes
 
 
@@ -326,6 +344,55 @@ def _listar_todos_los_residentes(db: Session, pagina: int = 1):
     return personas, pagina, total_paginas
 
 
+def _residentes_sin_persona_activos(db: Session) -> list[dict]:
+    """Ocupantes ACTIVOS sin Persona propia ("solo nombre", `agregar_
+    ocupante` sin Teléfono/WhatsApp) -- pedido explícito del cliente,
+    probado en vivo con "Daniela" (sin contacto propio, viviendo con
+    "Jesús" de Principal en Torre 1 · 302): sigue siendo parte real de su
+    unidad, así que el listado PLANO por defecto de /residentes (sin
+    término de búsqueda) debe mostrarlo igual, aunque no tenga ficha
+    propia. Solo para ESE listado -- issue 176 se queda intacto a
+    propósito (confirmado de nuevo en esta conversación): buscar su nombre
+    en la caja de búsqueda sigue sin encontrarlo, "Agrupar por apartamento"
+    sigue siendo el lugar para ver a todos los de una unidad juntos.
+
+    Dict liviano, NUNCA una Persona ni un stub que comparta `id` con una --
+    a propósito: si esta fila reusara el `id` del Principal prestado, un
+    click en "Eliminar residente"/"Asignar apartamento" de ESTA fila
+    terminaría actuando sobre el Principal, no sobre nadie -- por eso la
+    plantilla la pinta en un bloque separado, sin ninguna de esas acciones.
+    """
+    ocupantes = (
+        db.query(Ocupante)
+        .filter(Ocupante.persona_id.is_(None), Ocupante.desvinculado_en.is_(None))
+        .all()
+    )
+    filas = []
+    for o in ocupantes:
+        # Mismo criterio que ya usa `_ocupantes_de` (tab "Residentes" de la
+        # ficha) para el contacto prestado -- reusa `anunciante_para_
+        # ocupante`, ya resuelve "propia si tiene, si no la del Principal
+        # ACTIVO, cualquier canal" (Teléfono o WhatsApp).
+        contacto = anunciante_para_ocupante(db, o)
+        if contacto is None:
+            # Nadie alcanzable todavía en su unidad -- caso borde (el
+            # primer Ocupante de una unidad vacía SIEMPRE trae Teléfono o
+            # WhatsApp, por regla de `agregar_ocupante`; esto solo pasaría
+            # si esa Persona se anonimizó/eliminó después). Sin a quién
+            # enlazar, se omite en vez de mostrar una fila rota.
+            continue
+        filas.append(
+            {
+                "nombre": o.nombre,
+                "apartamento": db.get(Apartamento, o.apartamento_id),
+                "vive_con_persona_id": contacto.id,
+                "vive_con_nombre": contacto.nombre,
+            }
+        )
+    filas.sort(key=lambda f: f["nombre"])
+    return filas
+
+
 def _todos_los_residentes_activos(db: Session) -> list[Persona]:
     """TODOS los residentes activos, SIN paginar (issue 174, .scratch/
     pendientes-cliente) -- a diferencia de `_listar_todos_los_residentes`,
@@ -508,6 +575,7 @@ def customers_manage_search(
     grupos = sin_apartamento = resultados = None
     grid_10_torres = False
     numero_apartamento = None
+    residentes_sin_persona = []
     if vista == "agrupado":
         # Issue 317 (.scratch/pendientes-cliente, pedido explícito):
         # buscar un número de apartamento EXACTO (`apt<número>`) +
@@ -552,6 +620,14 @@ def customers_manage_search(
             pagina_actual, total_paginas = 1, 1
         else:
             resultados, pagina_actual, total_paginas = _listar_todos_los_residentes(db, pagina)
+            # Pedido explícito del cliente, probado en vivo: SOLO en este
+            # listado plano por defecto (sin término, sin `vista`) -- ver
+            # docstring de `_residentes_sin_persona_activos`. Solo en la
+            # página 1 (mismo criterio que `sin_apartamento` en
+            # `_agrupar_por_apartamento`): no se pagina junto al resto --
+            # repetirla en cada página sería más ruido que ayuda.
+            if pagina_actual == 1:
+                residentes_sin_persona = _residentes_sin_persona_activos(db)
         _adjuntar_apartamentos(db, resultados)
         _adjuntar_ocupante(db, resultados)
         _adjuntar_comparte_apartamento(db, resultados)
@@ -569,6 +645,7 @@ def customers_manage_search(
             "q": termino or "",
             "vista": vista or "",
             "resultados": resultados,
+            "residentes_sin_persona": residentes_sin_persona,
             "grupos": grupos,
             "grid_10_torres": grid_10_torres,
             "numero_apartamento": numero_apartamento,
@@ -767,15 +844,13 @@ def customers_manage_detail(
 
 
 @router.post("/residentes/{persona_id}", response_class=HTMLResponse)
-def customers_manage_update(
+async def customers_manage_update(
     persona_id: str,
     request: Request,
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     nombre: str = Form(None),
-    telefono: str = Form(None),
     email: str = Form(None),
-    whatsapp_usuario: str = Form(None),
     autoriza_recepcion_automatica: str = Form(None),
 ):
     """Datos del residente (tab "Datos", issue 67) -- nombre/email/usuario
@@ -795,8 +870,34 @@ def customers_manage_update(
     # nunca se podía vaciar una vez tenía un valor -- bug real reportado en
     # vivo). Ver el contrato de 3 estados en
     # `persona_service.update_datos_personales`.
-    whatsapp_v = (whatsapp_usuario or "").strip()
     email_v = (email or "").strip()
+
+    # Teléfono y WhatsApp leídos del form CRUDO, no de un parámetro
+    # `Form(...)` (pedido explícito del cliente, reportado en vivo): a
+    # diferencia de Email (arriba, un campo suelto sin más implicaciones),
+    # estos dos SÍ hace falta distinguir "el campo no vino en este submit"
+    # (otros callers de esta misma ruta mandan solo un subconjunto de
+    # campos, `test_editar_guarda_parcialmente`) de "vino vacío a
+    # propósito" (el staff vació la caja) -- y `Form(None)` NO alcanza para
+    # eso: FastAPI entrega `None` en AMBOS casos por igual (comprobado en
+    # vivo), así que `_blank_to_none(...)` nunca podría diferenciarlos.
+    # `request.form()` sí preserva la diferencia (la clave está o no está
+    # en el multidict crudo).
+    form = await request.form()
+    telefono_enviado = "telefono" in form
+    telefono = form.get("telefono")
+    whatsapp_enviado = "whatsapp_usuario" in form
+    whatsapp_usuario = form.get("whatsapp_usuario")
+    whatsapp_v = (whatsapp_usuario or "").strip()
+    # Vaciado a propósito (mismo bug que Teléfono, ver más abajo): si vino
+    # vacío Y la Persona SÍ tenía WhatsApp, `update_datos_personales` NO
+    # debe tocarlo -- se maneja aparte, después, con la lógica consciente
+    # de Ocupante (`desvincular_whatsapp_ocupante`), no con un simple
+    # `persona.whatsapp_usuario = None` que podría dejarla sin NINGÚN
+    # canal (viola `ck_personas_telefono_o_whatsapp`, un crash real
+    # reportado en vivo si `telefono` ya era `None`, ej. un Principal
+    # solo-WhatsApp).
+    limpiar_whatsapp = whatsapp_enviado and not whatsapp_v and persona.whatsapp_usuario is not None
 
     # Resuelto ANTES de tocar nada (.scratch/paquetes-residentes-conexion,
     # ADR-0001 excepción 3) -- la confirmación compara el snapshot YA
@@ -814,7 +915,7 @@ def customers_manage_update(
             persona,
             nombre=_blank_to_none(nombre),
             email=email_v,
-            whatsapp_usuario=whatsapp_v,
+            whatsapp_usuario=None if limpiar_whatsapp else whatsapp_v,
         )
     except ValueError as exc:
         # Dos posibles orígenes ahora (ver persona_service.
@@ -853,6 +954,100 @@ def customers_manage_update(
             return templates.TemplateResponse(
                 "customers_manage/detail.html", contexto, status_code=400
             )
+    elif telefono_enviado and persona.telefono is not None:
+        # Campo vaciado a propósito (pedido explícito del cliente,
+        # reportado en vivo): "Quitar teléfono" también debe funcionar
+        # desde el tab Datos, no solo desde el tab Residentes -- antes, un
+        # `telefono=""` se trataba en silencio como "no tocar" (mismo bug
+        # que ya se arregló para WhatsApp/Email -- issues 69/261 arriba --
+        # nunca extendido a Teléfono). `telefono_enviado` (leído del form
+        # crudo, ver arriba) es lo que distingue esto de un submit parcial
+        # que simplemente no menciona Teléfono (`test_editar_guarda_
+        # parcialmente`) -- sin esa distinción, CUALQUIER submit que
+        # omitiera el campo (ej. solo cambiar el Email) borraría el
+        # Teléfono existente sin que nadie lo pidiera.
+        #
+        # Si esta Persona es Ocupante activo de alguna unidad, reusa la
+        # misma lógica de dominio que ya usa "Quitar teléfono" del tab
+        # Residentes (`desvincular_telefono_ocupante`: canal doble,
+        # sucesión de Principal) en vez de un simple `persona.telefono =
+        # None` a mano -- nunca deja a la unidad sin Principal contactable.
+        ocupante = ocupante_activo_de_persona(db, persona.id)
+        if ocupante is not None:
+            try:
+                desvincular_telefono_ocupante(db, ocupante, permitir_sin_sucesor=True)
+            except ValueError as exc:
+                db.rollback()
+                contexto = _contexto_detalle(db, staff, persona)
+                contexto.update(
+                    {"request": request, "error": str(exc), "error_telefono": str(exc)}
+                )
+                return templates.TemplateResponse(
+                    "customers_manage/detail.html", contexto, status_code=400
+                )
+            # `desvincular_telefono_ocupante` preserva el Teléfono en la
+            # Persona huérfana a propósito (reutilizable si vuelve, ver su
+            # docstring) -- NUNCA se limpia también acá "por prolijidad":
+            # esta Persona sigue existiendo como fila real, y sin ningún
+            # Teléfono/WhatsApp de respaldo, vaciarla igual violaría
+            # `ck_personas_telefono_o_whatsapp` (probado en vivo: crashea
+            # con `IntegrityError`). El tab Datos puede seguir mostrando
+            # este valor tras recargar -- correcto: sigue siendo el
+            # Teléfono real de la Persona, solo que ya no representa a
+            # nadie en ninguna unidad.
+        elif persona.whatsapp_usuario is None:
+            # Sin Ocupante activo (residente "sin apartamento") Y sin
+            # WhatsApp de respaldo -- vaciar dejaría a la Persona sin
+            # NINGÚN canal, prohibido por ADR-0007.
+            db.rollback()
+            contexto = _contexto_detalle(db, staff, persona)
+            mensaje = "No se puede quitar el único contacto de esta Persona."
+            contexto.update({"request": request, "error": mensaje, "error_telefono": mensaje})
+            return templates.TemplateResponse(
+                "customers_manage/detail.html", contexto, status_code=400
+            )
+        else:
+            persona.telefono = None
+            db.flush()
+
+    if limpiar_whatsapp:
+        # Mismo criterio que Teléfono arriba (ver `limpiar_whatsapp` y su
+        # comentario) -- delega en la lógica de dominio consciente de
+        # Ocupante en vez de un `persona.whatsapp_usuario = None` a mano.
+        ocupante = ocupante_activo_de_persona(db, persona.id)
+        if ocupante is not None:
+            try:
+                desvincular_whatsapp_ocupante(db, ocupante, permitir_sin_sucesor=True)
+            except ValueError as exc:
+                db.rollback()
+                contexto = _contexto_detalle(db, staff, persona)
+                contexto.update(
+                    {"request": request, "error": str(exc), "error_whatsapp_usuario": str(exc)}
+                )
+                return templates.TemplateResponse(
+                    "customers_manage/detail.html", contexto, status_code=400
+                )
+            # Mismo criterio que Teléfono arriba: el dominio preserva el
+            # WhatsApp en la Persona huérfana a propósito -- vaciarlo
+            # también acá violaría `ck_personas_telefono_o_whatsapp`
+            # (probado en vivo, `IntegrityError`) si no tiene Teléfono de
+            # respaldo.
+        elif persona.telefono is None:
+            # Sin Ocupante activo Y sin Teléfono de respaldo -- vaciar
+            # dejaría a la Persona sin NINGÚN canal, prohibido por
+            # ADR-0007 (`ck_personas_telefono_o_whatsapp`).
+            db.rollback()
+            contexto = _contexto_detalle(db, staff, persona)
+            mensaje = "No se puede quitar el único contacto de esta Persona."
+            contexto.update(
+                {"request": request, "error": mensaje, "error_whatsapp_usuario": mensaje}
+            )
+            return templates.TemplateResponse(
+                "customers_manage/detail.html", contexto, status_code=400
+            )
+        else:
+            persona.whatsapp_usuario = None
+            db.flush()
 
     set_autoriza_recepcion_automatica(db, persona, autoriza_recepcion_automatica is not None)
 
@@ -1216,7 +1411,7 @@ def customers_manage_ocupante_desvincular_telefono(
     persona = _get_persona_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
-        desvincular_telefono_ocupante(db, ocupante)
+        desvincular_telefono_ocupante(db, ocupante, permitir_sin_sucesor=True)
     except ValueError as exc:
         return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
     return RedirectResponse(
@@ -1436,7 +1631,7 @@ def customers_manage_ocupante_desvincular_whatsapp(
     persona = _get_persona_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
-        desvincular_whatsapp_ocupante(db, ocupante)
+        desvincular_whatsapp_ocupante(db, ocupante, permitir_sin_sucesor=True)
     except ValueError as exc:
         return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
     return RedirectResponse(

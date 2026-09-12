@@ -795,14 +795,22 @@ def _listar(
         )
         # Pedido explícito del cliente (.scratch/pendientes-cliente): ícono
         # "prohibido" cuando el destinatario YA NO EXISTE (derecho al
-        # olvido/anonimizada) -- distinto de `advertencia_nombre` (nombre
-        # sin confirmar, pero la Persona sigue existiendo). Reusa
-        # `personas_por_telefono_destinatario`, ya resuelto en batch más
-        # arriba -- sin query nueva. `recipient_phone` vacío (SOLO_NOMBRE)
-        # nunca cuenta acá: nunca hubo a quién resolver, no es un error.
+        # olvido/anonimizada -- "Eliminar residente", nunca más visible en
+        # /residentes) -- distinto de `advertencia_nombre` (nombre sin
+        # confirmar, pero la Persona sigue existiendo). Bug real reportado
+        # en vivo (conversación 2026-09-11): la versión anterior comparaba
+        # SOLO por teléfono exacto -- un residente que simplemente CAMBIÓ o
+        # QUITÓ su teléfono (sigue activo, ej. pasó a solo-WhatsApp) ya no
+        # aparecía en ese diccionario, y el ícono se disparaba igual,
+        # aunque la cuenta NUNCA se eliminó. `persona_destino_por_paquete`
+        # (resuelto en batch más arriba, mismo algoritmo robusto que ya usa
+        # el resto de esta función) SÍ sigue encontrándolo por nombre --
+        # `anonimizar_persona` es la única forma real de que ni el
+        # teléfono NI el nombre lleven a ningún lado (ambos se sobrescriben
+        # ahí). `recipient_phone` vacío (SOLO_NOMBRE) nunca cuenta acá:
+        # nunca hubo a quién resolver, no es un error.
         p.destinatario_eliminado = bool(
-            p.recipient_phone
-            and personas_por_telefono_destinatario.get(p.recipient_phone) is None
+            p.recipient_phone and persona_destino_por_paquete.get(p.id) is None
         )
         p.actor_ultima_accion = _actor_ultima_accion(p, usuarios, personas)
         p.fecha_ultima_accion = _fecha_ultima_accion(p)

@@ -880,6 +880,97 @@ def test_staff_edita_telefono_repetido_rechaza_sin_persistir(client):
     assert client.db.get(Persona, p.id).telefono == "+573001234567"  # sin cambios
 
 
+def test_staff_quita_el_telefono_desde_tab_datos_de_un_ocupante_activo(client):
+    # Pedido explícito del cliente, reportado en vivo (conversación
+    # 2026-09-11): mismo bug que ya se arregló para WhatsApp/Email (issues
+    # 69/261 arriba) -- un `telefono=""` se trataba en silencio como "no
+    # tocar", sin ninguna forma de vaciarlo desde el tab Datos (solo
+    # existía "Quitar teléfono" en el tab Residentes). Ahora delega en la
+    # misma lógica de dominio (`desvincular_telefono_ocupante`): sin
+    # WhatsApp de respaldo, el Ocupante queda "solo nombre".
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    ocupante = agregar_ocupante(client.db, apto, "Ana", telefono="3001234567")
+    persona_id = ocupante.persona_id
+    _login_operador(client)
+    _confirmar(client, ocupante)
+
+    r = client.post(f"/residentes/{persona_id}", data={"telefono": ""})
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    # El Teléfono queda preservado en la Persona huérfana (mismo criterio
+    # que "Quitar teléfono" del tab Residentes, `desvincular_telefono_
+    # ocupante`) -- sin WhatsApp de respaldo, vaciarlo también acá
+    # violaría `ck_personas_telefono_o_whatsapp` (probado en vivo). Lo que
+    # importa para este pedido es que el OCUPANTE (el residente de esta
+    # unidad) quede "solo nombre" -- eso sí cambia.
+    assert client.db.get(Persona, persona_id).telefono == "+573001234567"
+    from app.domain.ocupante import Ocupante
+
+    ocupante_db = client.db.get(Ocupante, ocupante.id)
+    assert ocupante_db.persona_id is None
+
+
+def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal(client):
+    # Sin Ocupante activo (residente sin apartamento) y sin WhatsApp de
+    # respaldo -- vaciar el Teléfono la dejaría sin ningún canal, prohibido
+    # (ADR-0007).
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/residentes/{p.id}", data={"telefono": ""})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).telefono == "+573001234567"
+
+
+def test_staff_quita_el_whatsapp_desde_tab_datos_de_un_ocupante_activo(client):
+    # Pedido explícito del cliente, reportado en vivo (conversación
+    # 2026-09-11): mismo bug/fix que Teléfono arriba, para WhatsApp -- antes
+    # ni siquiera se podía intentar (`update_datos_personales` haría un
+    # `persona.whatsapp_usuario = None` a mano, sin revisar si hay Teléfono
+    # de respaldo -- crash real reportado en vivo contra
+    # `ck_personas_telefono_o_whatsapp` cuando no lo había, ej. un
+    # Principal solo-WhatsApp como "Jesús").
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
+    from app.domain.ocupante_service import agregar_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    ocupante = agregar_ocupante(client.db, apto, "Ana", whatsapp_usuario="ana.whats")
+    persona_id = ocupante.persona_id
+    _login_operador(client)
+    _confirmar(client, ocupante)
+
+    r = client.post(f"/residentes/{persona_id}", data={"whatsapp_usuario": ""})
+    assert r.status_code == 200
+
+    client.db.expire_all()
+    # Mismo criterio que Teléfono -- el WhatsApp queda preservado en la
+    # Persona huérfana (sin Teléfono de respaldo, vaciarlo violaría
+    # `ck_personas_telefono_o_whatsapp`); lo que cambia es el OCUPANTE.
+    assert client.db.get(Persona, persona_id).whatsapp_usuario == "ana.whats"
+    ocupante_db = client.db.get(Ocupante, ocupante.id)
+    assert ocupante_db.persona_id is None
+
+
+def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal_whatsapp(client):
+    p = get_or_create_persona_por_whatsapp(client.db, "ana.whats", "Ana")
+    client.db.commit()
+    _login_operador(client)
+
+    r = client.post(f"/residentes/{p.id}", data={"whatsapp_usuario": ""})
+    assert r.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).whatsapp_usuario == "ana.whats"
+
+
 def test_email_invalido_rechaza_sin_persistir(client):
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
@@ -3309,7 +3400,12 @@ def test_editar_nombre_del_residente_propaga_a_su_paquete_abierto(client):
     _login_operador(client)
     r = client.post(
         f"/residentes/{p.id}",
-        data={"nombre": "Ana Perez Actualizada", "telefono": "", "email": "", "whatsapp_usuario": ""},
+        # Sin `telefono`/`email`/`whatsapp_usuario` a propósito -- este test
+        # es sobre la propagación del NOMBRE, no sobre vaciar contacto,
+        # y esta Persona no tiene Ocupante ni WhatsApp de respaldo (un
+        # `telefono=""` real intentaría quitarlo, dejándola sin ningún
+        # canal -- rechazado por ADR-0007, ver `customers_manage_update`).
+        data={"nombre": "Ana Perez Actualizada"},
     )
     assert r.status_code == 200
 

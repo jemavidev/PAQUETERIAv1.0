@@ -1264,6 +1264,29 @@ def test_prohibido_no_aparece_sin_telefono_de_destinatario(client):
     assert "ya no existe" not in r.text.lower()
 
 
+def test_prohibido_no_aparece_si_el_destinatario_solo_cambio_de_telefono(client):
+    # Bug real reportado en vivo (conversación 2026-09-11): antes se
+    # comparaba SOLO por teléfono exacto -- un residente que simplemente
+    # cambió (o quitó) su teléfono, sin que su cuenta se eliminara, hacía
+    # que este ícono se disparara igual (falso positivo real: "Jesús
+    # Villalobos" seguía activo, solo pasó a solo-WhatsApp). A diferencia
+    # de `anonimizar_persona` (que sobrescribe nombre Y teléfono), acá el
+    # nombre sigue intacto -- debe resolverse por nombre
+    # (`persona_destino_por_paquete`) y NO leerse como "eliminado".
+    from app.domain.persona import Persona
+    from app.domain.persona_service import cambiar_telefono_propio
+
+    _login_staff(client)
+    _anunciar(client, tel="3001234567", nombre="Ana")
+    persona = client.db.query(Persona).filter(Persona.telefono == "+573001234567").one()
+    cambiar_telefono_propio(client.db, persona, "3009999999")
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    assert "ya no existe" not in r.text.lower()
+
+
 def test_advertencia_es_clickeable_y_abre_corregir_destinatario_en_anunciado(client):
     # Conversación 2026-08-15 (pedido explícito): el ícono de advertencia
     # debe ser clickeable y abrir el modal "Corregir destinatario" -- mismo
