@@ -700,10 +700,13 @@ def test_tabla_de_residentes_incluye_link_de_llamada(client):
     assert "tel:+573001234567" in r.text
 
 
-def test_tabla_de_residentes_sin_telefono_no_filtra_none(client):
-    # Persona solo-WhatsApp (ADR-0007): sin Teléfono, la columna debe mostrar
-    # "N/D" en vez del literal "None", y el ícono de Llamar debe quedar
-    # inactivo (sin armar un link roto "tel:None").
+def test_tabla_de_residentes_sin_telefono_muestra_whatsapp(client):
+    # Persona solo-WhatsApp (ADR-0007): sin Teléfono, la columna "Teléfono
+    # de contacto" cae a mostrar su WhatsApp -- pedido explícito del
+    # cliente, reportado en vivo: antes mostraba "N/D" aunque SÍ hubiera un
+    # canal real. Nunca el literal "None", y el ícono de Llamar queda
+    # inactivo igual (sin armar un link roto "tel:None") -- sigue sin
+    # Teléfono, solo que ahora la columna no lo esconde detrás de "N/D".
     get_or_create_persona_por_whatsapp(client.db, "ana.whats", "Ana")
     client.db.commit()
     _login_operador(client)
@@ -711,7 +714,7 @@ def test_tabla_de_residentes_sin_telefono_no_filtra_none(client):
     r = client.get("/residentes")
     assert "tel:None" not in r.text
     assert ">None<" not in r.text
-    assert "N/D" in r.text
+    assert "@ana.whats" in r.text
     assert "Sin teléfono registrado" in r.text
 
 
@@ -828,6 +831,33 @@ def test_staff_borra_el_usuario_de_whatsapp_ya_seteado(client):
     assert client.db.get(Persona, p.id).whatsapp_usuario is None
 
 
+def test_staff_borra_el_telefono_ya_seteado_con_whatsapp_de_respaldo(client):
+    # Contraparte del test anterior, para Teléfono: canal doble (conversación
+    # 2026-09-13) -- vaciar Teléfono cuando la Persona TAMBIÉN tiene
+    # WhatsApp sigue permitido desde esta tab, sin restricción nueva --
+    # solo se bloquea cuando ES el único canal (ver los tests "no_puede_
+    # quitar" de abajo).
+    from app.domain.persona_service import update_datos_personales
+
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    update_datos_personales(client.db, p, whatsapp_usuario="ana.whats")
+    client.db.commit()
+    _login_operador(client)
+
+    # `whatsapp_usuario` va CON su valor actual sin cambios -- mismo
+    # criterio del formulario real (`<input>` normal, siempre se manda en
+    # cada submit, ver contrato de 3 estados de `update_datos_personales`):
+    # omitirlo simularía un submit parcial que la UI real nunca produce.
+    r = client.post(
+        f"/residentes/{p.id}", data={"telefono": "", "whatsapp_usuario": "ana.whats"}
+    )
+    assert r.status_code == 200
+    client.db.expire_all()
+    persona_db = client.db.get(Persona, p.id)
+    assert persona_db.telefono is None
+    assert persona_db.whatsapp_usuario == "ana.whats"
+
+
 def test_staff_borra_el_email_ya_seteado(client):
     # Issue 261: mismo bug/fix que issue 69 arriba, pero para email --
     # antes, una vez seteado, el campo no se podía vaciar desde acá.
@@ -880,15 +910,19 @@ def test_staff_edita_telefono_repetido_rechaza_sin_persistir(client):
     assert client.db.get(Persona, p.id).telefono == "+573001234567"  # sin cambios
 
 
-def test_staff_quita_el_telefono_desde_tab_datos_de_un_ocupante_activo(client):
-    # Pedido explícito del cliente, reportado en vivo (conversación
-    # 2026-09-11): mismo bug que ya se arregló para WhatsApp/Email (issues
-    # 69/261 arriba) -- un `telefono=""` se trataba en silencio como "no
-    # tocar", sin ninguna forma de vaciarlo desde el tab Datos (solo
-    # existía "Quitar teléfono" en el tab Residentes). Ahora delega en la
-    # misma lógica de dominio (`desvincular_telefono_ocupante`): sin
-    # WhatsApp de respaldo, el Ocupante queda "solo nombre".
+def test_staff_no_puede_quitar_el_telefono_desde_tab_datos_de_un_ocupante_activo(client):
+    # REVIERTE el comportamiento anterior de esta misma sesión (issue de
+    # conversación 2026-09-11: "Quitar teléfono' también debe funcionar
+    # desde el tab Datos") -- pedido explícito posterior del cliente
+    # (conversación 2026-09-13): esta tab mezclaba "editar" con "eliminar"
+    # en el mismo botón "Guardar", la única de las 3 vistas que tocan
+    # Teléfono/WhatsApp con ese problema (el modal "Editar" de la tab
+    # Residentes y `/mis-datos` ya separaban ambas acciones). Ahora un
+    # valor YA existente solo se puede MODIFICAR desde acá, nunca
+    # eliminar -- "Quitar teléfono" sigue viviendo, sin cambios, en la tab
+    # Residentes.
     from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
 
     apto = resolver_apartamento(client.db, "TORRE 1", "101")
@@ -898,26 +932,22 @@ def test_staff_quita_el_telefono_desde_tab_datos_de_un_ocupante_activo(client):
     _confirmar(client, ocupante)
 
     r = client.post(f"/residentes/{persona_id}", data={"telefono": ""})
-    assert r.status_code == 200
+    assert r.status_code == 400
+    assert "no se puede quitar el teléfono desde esta pantalla" in r.text.lower()
 
     client.db.expire_all()
-    # El Teléfono queda preservado en la Persona huérfana (mismo criterio
-    # que "Quitar teléfono" del tab Residentes, `desvincular_telefono_
-    # ocupante`) -- sin WhatsApp de respaldo, vaciarlo también acá
-    # violaría `ck_personas_telefono_o_whatsapp` (probado en vivo). Lo que
-    # importa para este pedido es que el OCUPANTE (el residente de esta
-    # unidad) quede "solo nombre" -- eso sí cambia.
-    assert client.db.get(Persona, persona_id).telefono == "+573001234567"
-    from app.domain.ocupante import Ocupante
-
+    persona_db = client.db.get(Persona, persona_id)
+    assert persona_db.telefono == "+573001234567"
+    assert persona_db.desvinculada_en is None
     ocupante_db = client.db.get(Ocupante, ocupante.id)
-    assert ocupante_db.persona_id is None
+    assert ocupante_db.persona_id == persona_id
 
 
 def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal(client):
-    # Sin Ocupante activo (residente sin apartamento) y sin WhatsApp de
-    # respaldo -- vaciar el Teléfono la dejaría sin ningún canal, prohibido
-    # (ADR-0007).
+    # Sin Ocupante activo (residente sin apartamento) -- vaciar el Teléfono
+    # desde esta tab está bloqueado sin importar el canal de respaldo (ver
+    # test de arriba: acá la tab NUNCA elimina, no solo cuando dejaría a la
+    # Persona sin ningún canal).
     p = get_or_create_persona(client.db, "3001234567", "Ana")
     client.db.commit()
     _login_operador(client)
@@ -929,14 +959,9 @@ def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal(clien
     assert client.db.get(Persona, p.id).telefono == "+573001234567"
 
 
-def test_staff_quita_el_whatsapp_desde_tab_datos_de_un_ocupante_activo(client):
-    # Pedido explícito del cliente, reportado en vivo (conversación
-    # 2026-09-11): mismo bug/fix que Teléfono arriba, para WhatsApp -- antes
-    # ni siquiera se podía intentar (`update_datos_personales` haría un
-    # `persona.whatsapp_usuario = None` a mano, sin revisar si hay Teléfono
-    # de respaldo -- crash real reportado en vivo contra
-    # `ck_personas_telefono_o_whatsapp` cuando no lo había, ej. un
-    # Principal solo-WhatsApp como "Jesús").
+def test_staff_no_puede_quitar_el_whatsapp_desde_tab_datos_de_un_ocupante_activo(client):
+    # Mismo criterio que Teléfono arriba (conversación 2026-09-13, pedido
+    # explícito del cliente).
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
@@ -948,18 +973,20 @@ def test_staff_quita_el_whatsapp_desde_tab_datos_de_un_ocupante_activo(client):
     _confirmar(client, ocupante)
 
     r = client.post(f"/residentes/{persona_id}", data={"whatsapp_usuario": ""})
-    assert r.status_code == 200
+    assert r.status_code == 400
+    assert "no se puede quitar el whatsapp desde esta pantalla" in r.text.lower()
 
     client.db.expire_all()
-    # Mismo criterio que Teléfono -- el WhatsApp queda preservado en la
-    # Persona huérfana (sin Teléfono de respaldo, vaciarlo violaría
-    # `ck_personas_telefono_o_whatsapp`); lo que cambia es el OCUPANTE.
-    assert client.db.get(Persona, persona_id).whatsapp_usuario == "ana.whats"
+    persona_db = client.db.get(Persona, persona_id)
+    assert persona_db.whatsapp_usuario == "ana.whats"
+    assert persona_db.desvinculada_en is None
     ocupante_db = client.db.get(Ocupante, ocupante.id)
-    assert ocupante_db.persona_id is None
+    assert ocupante_db.persona_id == persona_id
 
 
 def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal_whatsapp(client):
+    # Mismo criterio: esta tab nunca elimina, no solo cuando dejaría a la
+    # Persona sin ningún canal.
     p = get_or_create_persona_por_whatsapp(client.db, "ana.whats", "Ana")
     client.db.commit()
     _login_operador(client)
@@ -3465,6 +3492,46 @@ def test_lista_busca_sin_apartamento_asignado_con_termino(client):
     # picker de otro residente, se confirma por el link de perfil.
     assert f'href="/residentes/{persona_con_apto.id}"' not in r.text
     assert f'href="/residentes/{p_sin_apto.id}"' in r.text
+
+
+def test_persona_desvinculada_en_no_aparece_en_ningun_listado(client):
+    # Pedido explícito del cliente (conversación 2026-09-12, probado en
+    # vivo con "Daniela"/"Angélica"): una Persona que quedó `desvinculada_en`
+    # (perdió su único contacto sin respaldo) NO debe verse como un
+    # residente más -- ni en el listado plano por defecto, ni en la vista
+    # "sin apartamento asignado" (issue 320 -- comparte el mismo criterio
+    # `apartamento_actual_id IS NULL`, así que hace falta el filtro extra
+    # para no colarse ahí), ni en una búsqueda por su nombre o teléfono real
+    # (su Teléfono/WhatsApp NUNCA se anonimiza, a diferencia de "Eliminado").
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import agregar_ocupante, desvincular_telefono_ocupante
+
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    principal = agregar_ocupante(client.db, apto, "Principal", telefono="3001112222")
+    ocupante = agregar_ocupante(client.db, apto, "Daniela Huerfana", telefono="3009998888")
+    persona_id = ocupante.persona_id
+    _login_operador(client)
+    _confirmar(client, principal)
+    _confirmar(client, ocupante)
+
+    desvincular_telefono_ocupante(client.db, ocupante)
+    client.db.commit()
+
+    r = client.get("/residentes")
+    assert r.status_code == 200
+    assert f'href="/residentes/{persona_id}"' not in r.text
+
+    r = client.get("/residentes", params={"vista": "sin_apartamento"})
+    assert r.status_code == 200
+    assert f'href="/residentes/{persona_id}"' not in r.text
+
+    r = client.get("/residentes", params={"q": "Daniela Huerfana"})
+    assert r.status_code == 200
+    assert f'href="/residentes/{persona_id}"' not in r.text
+
+    r = client.get("/residentes", params={"q": "3009998888"})
+    assert r.status_code == 200
+    assert f'href="/residentes/{persona_id}"' not in r.text
 
 
 def test_lista_muestra_boton_asignar_apartamento_para_quien_no_tiene(client):

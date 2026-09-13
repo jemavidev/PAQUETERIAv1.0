@@ -3680,6 +3680,69 @@ def test_modal_ver_whatsapp_cae_al_contacto_prestado_sin_canal_propio(client):
     assert 'href="https://web.whatsapp.com/send?phone=573004444444&amp;text=' in r.text
 
 
+def test_whatsapp_de_contacto_prestado_no_cae_a_una_persona_desvinculada_homonima(client):
+    # Bug real encontrado en vivo (conversación 2026-09-12, familia
+    # "Arrazola"): un destinatario de contacto prestado (Ocupante solo-
+    # nombre, sin Persona propia -- mismo caso del test anterior) resolvía
+    # por error al WhatsApp de una Persona TOTALMENTE distinta y huérfana
+    # (`desvinculada_en`, ver `ocupante_service.desvincular_telefono_
+    # ocupante`), solo porque compartía el nombre completo -- ese ícono, y
+    # el de "cuenta eliminada" (`destinatario_eliminado`), terminaban
+    # apuntando a alguien sin ninguna relación real con este paquete.
+    from app.domain.apartamento_service import resolver_apartamento
+    from app.domain.ocupante_service import (
+        agregar_ocupante,
+        confirmar_ocupante,
+        desvincular_telefono_ocupante,
+    )
+    from app.domain.persona import Persona
+
+    staff = _login_staff(client)
+
+    # Persona huérfana, sin ninguna relación real: mismo nombre completo,
+    # otro teléfono, en OTRA unidad -- perdió su único canal y quedó
+    # `desvinculada_en`.
+    otro_apto = resolver_apartamento(client.db, "TORRE 9", "901")
+    fantasma = agregar_ocupante(client.db, otro_apto, "Daniela Arrazola", telefono="3009990000")
+    confirmar_ocupante(client.db, fantasma, staff)
+    client.db.commit()
+    desvincular_telefono_ocupante(client.db, fantasma, permitir_sin_sucesor=True)
+    client.db.commit()
+    persona_huerfana = client.db.query(Persona).filter(Persona.telefono == "+573009990000").one()
+    assert persona_huerfana.desvinculada_en is not None
+
+    # La unidad REAL del paquete: Principal con teléfono propio, y un
+    # Ocupante "Daniela Arrazola" solo-nombre -- mismo nombre EXACTO que
+    # la huérfana de arriba, coincidencia de apellido de familia.
+    apto = resolver_apartamento(client.db, "TORRE 1", "302")
+    principal = agregar_ocupante(client.db, apto, "Jesus Villalobos", telefono="3002596319")
+    confirmar_ocupante(client.db, principal, staff)
+    daniela = agregar_ocupante(client.db, apto, "Daniela Arrazola")
+    confirmar_ocupante(client.db, daniela, staff)
+    client.db.commit()
+
+    p = announce(
+        client.db,
+        anunciante_telefono="3002596319",
+        anunciante_nombre="Jesus Villalobos",
+        destinatario=Destinatario.ocupante(daniela.id),
+    )
+    client.db.commit()
+
+    assert p.recipient_name == "DANIELA ARRAZOLA"
+    assert p.recipient_phone == "+573002596319"  # contacto prestado del Principal
+
+    r = client.get("/paquetes")
+    assert r.status_code == 200
+    # El WhatsApp debe usar el teléfono del Principal (contacto prestado)
+    # -- NUNCA el de la Persona huérfana no relacionada.
+    assert 'href="https://wa.me/573002596319?text=' in r.text
+    assert "573009990000" not in r.text
+    # Nunca debe leerse como "cuenta eliminada" -- nadie se eliminó, es un
+    # contacto prestado legítimo.
+    assert "ya no existe" not in r.text.lower()
+
+
 def test_modal_ver_residentes_de_la_unidad_sigue_al_destinatario_que_se_mudo(client):
     # Tercer seguimiento el mismo día de issue 101 (.scratch/pendientes-
     # cliente, pedido explícito del cliente en vivo, ejemplo real

@@ -80,9 +80,14 @@ def _resolver_persona_destino(db: Session, paquete: Paquete):
         )
     persona_destino = contacto
     if persona_destino is None or persona_destino.nombre != paquete.recipient_name:
+        # Excluye `desvinculada_en` -- mismo bug/criterio que
+        # `packages.py::_personas_por_nombre` (ver su docstring): sin este
+        # filtro, un destinatario de contacto prestado puede resolver por
+        # error a una Persona huérfana sin relación real con este Paquete,
+        # solo por compartir nombre.
         persona_destino = (
             db.query(Persona)
-            .filter(Persona.nombre == paquete.recipient_name)
+            .filter(Persona.nombre == paquete.recipient_name, Persona.desvinculada_en.is_(None))
             .first()
         )
     return persona_destino

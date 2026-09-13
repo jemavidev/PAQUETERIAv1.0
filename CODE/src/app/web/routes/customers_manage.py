@@ -228,7 +228,17 @@ def _buscar_residentes(db: Session, termino: str) -> list[Persona]:
         filtros_persona.append(Persona.telefono == telefono)
     elif termino.strip().isdigit():
         filtros_persona.append(Persona.telefono.ilike(f"%{termino.strip()}%"))
-    _agregar_todas(db.query(Persona).filter(or_(*filtros_persona)).all())
+    # `desvinculada_en` (conversación 2026-09-12, pedido explícito del
+    # cliente): a diferencia de `eliminado_en` (que no hacía falta filtrar
+    # acá -- una Persona anonimizada nunca coincide con un término real, sus
+    # campos quedaron sintéticos), esta marca SÍ deja el nombre/teléfono/
+    # WhatsApp reales intactos -- sin este filtro, seguiría siendo
+    # encontrable por búsqueda aunque no aparezca en el listado por defecto.
+    _agregar_todas(
+        db.query(Persona)
+        .filter(or_(*filtros_persona), Persona.desvinculada_en.is_(None))
+        .all()
+    )
 
     match_apto = _ESQUEMA_APARTAMENTO_RE.match(termino.strip())
     if match_apto:
@@ -335,8 +345,17 @@ def _listar_todos_los_residentes(db: Session, pagina: int = 1):
     Excluye eliminados (issue 67): ya están anonimizados (nombre/teléfono
     reales borrados por `anonimizar_persona`), así que no aportan nada al
     día a día del staff -- y de todos modos casi nunca calzarían con una
-    búsqueda por su nombre/teléfono real."""
-    query = db.query(Persona).filter(Persona.eliminado_en.is_(None)).order_by(Persona.nombre)
+    búsqueda por su nombre/teléfono real. Excluye también `desvinculada_en`
+    (conversación 2026-09-12, pedido explícito del cliente): perdió su
+    único contacto y quedó sin ningún Ocupante que la referencie -- a
+    diferencia de "Eliminado", su Teléfono/WhatsApp real sigue intacto (se
+    reconecta sola si vuelve a asociarse, ver `agregar_ocupante`), pero
+    mientras tanto no debe verse como un residente más."""
+    query = (
+        db.query(Persona)
+        .filter(Persona.eliminado_en.is_(None), Persona.desvinculada_en.is_(None))
+        .order_by(Persona.nombre)
+    )
     total = query.count()
     total_paginas = max(1, -(-total // _POR_PAGINA))  # ceil sin importar float
     pagina = max(1, min(pagina, total_paginas))
@@ -401,7 +420,12 @@ def _todos_los_residentes_activos(db: Session) -> list[Persona]:
     `_agrupar_por_apartamento` cuando no hay término de búsqueda: hace
     falta el universo completo de Personas para saber qué Apartamentos
     agrupar ANTES de paginar por apartamento, no por persona."""
-    return db.query(Persona).filter(Persona.eliminado_en.is_(None)).order_by(Persona.nombre).all()
+    return (
+        db.query(Persona)
+        .filter(Persona.eliminado_en.is_(None), Persona.desvinculada_en.is_(None))
+        .order_by(Persona.nombre)
+        .all()
+    )
 
 
 def _listar_principales(db: Session, pagina: int = 1):
@@ -416,6 +440,7 @@ def _listar_principales(db: Session, pagina: int = 1):
         .join(Ocupante, Ocupante.persona_id == Persona.id)
         .filter(
             Persona.eliminado_en.is_(None),
+            Persona.desvinculada_en.is_(None),
             Ocupante.es_principal.is_(True),
             Ocupante.desvinculado_en.is_(None),
         )
@@ -447,7 +472,11 @@ def _listar_sin_apartamento(db: Session, pagina: int = 1):
     paginar, mismo criterio que el resto de esta sección."""
     query = (
         db.query(Persona)
-        .filter(Persona.eliminado_en.is_(None), Persona.apartamento_actual_id.is_(None))
+        .filter(
+            Persona.eliminado_en.is_(None),
+            Persona.desvinculada_en.is_(None),
+            Persona.apartamento_actual_id.is_(None),
+        )
         .order_by(Persona.nombre)
     )
     total = query.count()
@@ -955,99 +984,55 @@ async def customers_manage_update(
                 "customers_manage/detail.html", contexto, status_code=400
             )
     elif telefono_enviado and persona.telefono is not None:
-        # Campo vaciado a propósito (pedido explícito del cliente,
-        # reportado en vivo): "Quitar teléfono" también debe funcionar
-        # desde el tab Datos, no solo desde el tab Residentes -- antes, un
-        # `telefono=""` se trataba en silencio como "no tocar" (mismo bug
-        # que ya se arregló para WhatsApp/Email -- issues 69/261 arriba --
-        # nunca extendido a Teléfono). `telefono_enviado` (leído del form
-        # crudo, ver arriba) es lo que distingue esto de un submit parcial
-        # que simplemente no menciona Teléfono (`test_editar_guarda_
-        # parcialmente`) -- sin esa distinción, CUALQUIER submit que
-        # omitiera el campo (ej. solo cambiar el Email) borraría el
-        # Teléfono existente sin que nadie lo pidiera.
-        #
-        # Si esta Persona es Ocupante activo de alguna unidad, reusa la
-        # misma lógica de dominio que ya usa "Quitar teléfono" del tab
-        # Residentes (`desvincular_telefono_ocupante`: canal doble,
-        # sucesión de Principal) en vez de un simple `persona.telefono =
-        # None` a mano -- nunca deja a la unidad sin Principal contactable.
-        ocupante = ocupante_activo_de_persona(db, persona.id)
-        if ocupante is not None:
-            try:
-                desvincular_telefono_ocupante(db, ocupante, permitir_sin_sucesor=True)
-            except ValueError as exc:
-                db.rollback()
-                contexto = _contexto_detalle(db, staff, persona)
-                contexto.update(
-                    {"request": request, "error": str(exc), "error_telefono": str(exc)}
-                )
-                return templates.TemplateResponse(
-                    "customers_manage/detail.html", contexto, status_code=400
-                )
-            # `desvincular_telefono_ocupante` preserva el Teléfono en la
-            # Persona huérfana a propósito (reutilizable si vuelve, ver su
-            # docstring) -- NUNCA se limpia también acá "por prolijidad":
-            # esta Persona sigue existiendo como fila real, y sin ningún
-            # Teléfono/WhatsApp de respaldo, vaciarla igual violaría
-            # `ck_personas_telefono_o_whatsapp` (probado en vivo: crashea
-            # con `IntegrityError`). El tab Datos puede seguir mostrando
-            # este valor tras recargar -- correcto: sigue siendo el
-            # Teléfono real de la Persona, solo que ya no representa a
-            # nadie en ninguna unidad.
-        elif persona.whatsapp_usuario is None:
-            # Sin Ocupante activo (residente "sin apartamento") Y sin
-            # WhatsApp de respaldo -- vaciar dejaría a la Persona sin
-            # NINGÚN canal, prohibido por ADR-0007.
+        if persona.whatsapp_usuario is not None:
+            # Canal doble (issue 213/217, muy anterior a todo lo de abajo):
+            # limpiar SOLO este campo es inocuo -- la Persona se queda con
+            # su WhatsApp intacto, no hay ningún Ocupante que desvincular
+            # ni ninguna de las complejidades de "quedarse sin canal" de
+            # más abajo. Se mantiene permitido, igual que siempre.
+            persona.telefono = None
+            db.flush()
+        else:
+            # Este SÍ es su único canal -- rechazado de plano (conversación
+            # 2026-09-13, pedido explícito del cliente -- REVIERTE el
+            # comportamiento anterior de esta misma sesión, "también debe
+            # funcionar desde el tab Datos"): esta tab mezclaba "editar"
+            # con "eliminar" en el mismo botón "Guardar", la única vista de
+            # las 3 que tocan Teléfono/WhatsApp con ese problema -- el
+            # modal "Editar" de la tab Residentes y `/mis-datos` YA
+            # separan ambas acciones (un campo vaciado ahí se ignora en
+            # silencio; "Quitar teléfono" vive aparte, deliberado). Acá, en
+            # cambio, se rechaza de plano: un único canal existente solo se
+            # puede MODIFICAR (a otro valor) desde esta pantalla, nunca
+            # eliminar -- para eso, "Quitar teléfono" en la tab Residentes.
             db.rollback()
             contexto = _contexto_detalle(db, staff, persona)
-            mensaje = "No se puede quitar el único contacto de esta Persona."
+            mensaje = "No se puede quitar el Teléfono desde esta pantalla -- usa 'Quitar teléfono' en la tab Residentes."
             contexto.update({"request": request, "error": mensaje, "error_telefono": mensaje})
             return templates.TemplateResponse(
                 "customers_manage/detail.html", contexto, status_code=400
             )
-        else:
-            persona.telefono = None
-            db.flush()
 
     if limpiar_whatsapp:
-        # Mismo criterio que Teléfono arriba (ver `limpiar_whatsapp` y su
-        # comentario) -- delega en la lógica de dominio consciente de
-        # Ocupante en vez de un `persona.whatsapp_usuario = None` a mano.
-        ocupante = ocupante_activo_de_persona(db, persona.id)
-        if ocupante is not None:
-            try:
-                desvincular_whatsapp_ocupante(db, ocupante, permitir_sin_sucesor=True)
-            except ValueError as exc:
-                db.rollback()
-                contexto = _contexto_detalle(db, staff, persona)
-                contexto.update(
-                    {"request": request, "error": str(exc), "error_whatsapp_usuario": str(exc)}
-                )
-                return templates.TemplateResponse(
-                    "customers_manage/detail.html", contexto, status_code=400
-                )
-            # Mismo criterio que Teléfono arriba: el dominio preserva el
-            # WhatsApp en la Persona huérfana a propósito -- vaciarlo
-            # también acá violaría `ck_personas_telefono_o_whatsapp`
-            # (probado en vivo, `IntegrityError`) si no tiene Teléfono de
-            # respaldo.
-        elif persona.telefono is None:
-            # Sin Ocupante activo Y sin Teléfono de respaldo -- vaciar
-            # dejaría a la Persona sin NINGÚN canal, prohibido por
-            # ADR-0007 (`ck_personas_telefono_o_whatsapp`).
+        if persona.telefono is not None:
+            # Canal doble -- mismo criterio que Teléfono arriba: inocuo,
+            # se mantiene permitido.
+            persona.whatsapp_usuario = None
+            db.flush()
+        else:
+            # Único canal -- mismo criterio y mismo motivo que Teléfono
+            # arriba (conversación 2026-09-13, pedido explícito del
+            # cliente): rechaza de plano en vez de desvincular -- esta tab
+            # ya no elimina un único canal, solo modifica.
             db.rollback()
             contexto = _contexto_detalle(db, staff, persona)
-            mensaje = "No se puede quitar el único contacto de esta Persona."
+            mensaje = "No se puede quitar el WhatsApp desde esta pantalla -- usa 'Quitar WhatsApp' en la tab Residentes."
             contexto.update(
                 {"request": request, "error": mensaje, "error_whatsapp_usuario": mensaje}
             )
             return templates.TemplateResponse(
                 "customers_manage/detail.html", contexto, status_code=400
             )
-        else:
-            persona.whatsapp_usuario = None
-            db.flush()
 
     set_autoriza_recepcion_automatica(db, persona, autoriza_recepcion_automatica is not None)
 

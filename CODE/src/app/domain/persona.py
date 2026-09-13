@@ -117,6 +117,20 @@ class Persona(Base):
     # (irreversible, derecho al olvido).
     baja_administrativa_en = Column(DateTime(timezone=True), nullable=True)
 
+    # Se quedó sin Ocupante que la referencie por perder su único contacto
+    # (Teléfono/WhatsApp) vía `desvincular_telefono_ocupante`/`desvincular_
+    # whatsapp_ocupante` -- .scratch/dinero-contra-entrega, conversación
+    # 2026-09-12, pedido explícito del cliente (probado en vivo con
+    # "Daniela"/"Angélica"). DISTINTO de `eliminado_en` (derecho al olvido,
+    # deliberado) y de `baja_administrativa_en` (pausa reversible, acción
+    # explícita): esto es incidental, nunca un pedido de "olvidarla" -- el
+    # Teléfono/WhatsApp real NUNCA se toca (a diferencia de `anonimizar_
+    # persona`), para que la misma Persona se reconecte sola si el mismo
+    # contacto vuelve a asociarse a un Ocupante (`agregar_ocupante` limpia
+    # esta marca en ese momento). Mientras esté puesta, no aparece en
+    # ningún listado de `/residentes`.
+    desvinculada_en = Column(DateTime(timezone=True), nullable=True)
+
     # Preferencia de notificaciones de evento (Recibido/Entregado/Cancelado).
     # Activada por defecto (preserva el comportamiento existente). NUNCA
     # afecta el envío del OTP (mecanismo de login, no una notificación opcional).

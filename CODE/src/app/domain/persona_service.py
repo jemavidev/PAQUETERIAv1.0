@@ -302,9 +302,17 @@ def update_datos_personales(
 
 def anonimizar_persona(session: Session, persona: Persona) -> Persona:
     """Anonimiza una Persona (ADR-0005): limpia sus datos personales y
-    reemplaza su Teléfono por un valor sintético no reutilizable — sin borrar
-    la fila (la FK real `fk_paquetes_anunciante` desde `paquetes` nunca se
-    rompe). Idempotente: si ya estaba anonimizada, no hace nada.
+    reemplaza su Teléfono Y su usuario de WhatsApp por valores sintéticos no
+    reutilizables — sin borrar la fila (la FK real `fk_paquetes_anunciante`
+    desde `paquetes` nunca se rompe). Idempotente: si ya estaba anonimizada,
+    no hace nada.
+
+    El WhatsApp también se sobrescribe (bug real encontrado en vivo,
+    .scratch/dinero-contra-entrega/conversación 2026-09-12): esta función es
+    de antes de ADR-0007 (Teléfono o WhatsApp) y solo tocaba Teléfono --
+    anonimizar a una Persona solo-WhatsApp dejaba su usuario real intacto,
+    nunca liberado para reasociarse después (y, dependiendo del caller,
+    visible en datos que se asumían ya "borrados").
 
     Desvincula del Apartamento asignando `apartamento_actual_id = None`
     directamente (no a través de `move_resident`, que la re-buscaría por
@@ -322,6 +330,7 @@ def anonimizar_persona(session: Session, persona: Persona) -> Persona:
     persona.documento = None
     persona.tipo_documento = None
     persona.telefono = _ANONIMIZADO_PREFIJO + uuid.uuid4().hex[:16]
+    persona.whatsapp_usuario = _ANONIMIZADO_PREFIJO + uuid.uuid4().hex[:16]
     persona.eliminado_en = datetime.now(timezone.utc)
 
     session.flush()

@@ -483,8 +483,26 @@ def desvincular_telefono_ocupante(
     (ADR-0007: nunca puede quedar sin ningún canal). Si no tiene WhatsApp de
     respaldo, comportamiento histórico: el Ocupante queda sin Persona propia
     ("registro liviano", solo nombre) -- la Persona sigue existiendo, con su
-    Teléfono intacto, solo huérfana de este Ocupante (disponible para
-    "Eliminar residente" -- soft delete -- si nadie más la referencia).
+    Teléfono intacto (NUNCA anonimizada acá -- ver nota de diseño abajo),
+    marcada `desvinculada_en` y excluida de todo listado de `/residentes`.
+
+    Nota de diseño (conversación 2026-09-12, pedido explícito del cliente,
+    2 vueltas hasta llegar acá): a propósito NO se anonimiza (a diferencia
+    de "Eliminar residente", `anonimizar_persona`, acción deliberada del
+    staff -- derecho al olvido real) NI se deja visible como "sin
+    apartamento" (primer intento, descartado en vivo: dejaba dos filas
+    visibles con el mismo nombre -- confuso, "no me estás ayudando").
+    Quedarse sin canal por esta vía es incidental, casi siempre la MISMA
+    persona real que probablemente vuelva con el mismo Teléfono/WhatsApp
+    después -- por eso el contacto real NUNCA se toca (a diferencia de
+    anonimizar, que lo sobrescribe) y en cambio se marca `desvinculada_en`:
+    desaparece de todo listado (`_listar_todos_los_residentes`,
+    `_buscar_residentes`, `_listar_sin_apartamento`, ...), pero si el mismo
+    contacto reaparece, `get_or_create_persona`/`_por_whatsapp` (que NO
+    filtran por esta marca) encuentran esta MISMA fila -- el historial de
+    paquetes (`announced_by_persona_id`) ya está asociado, sin reconectar
+    nada -- y `agregar_ocupante` limpia la marca en ese momento (vuelve a
+    ser una Persona visible normal).
 
     Si `ocupante` es el Principal (pedido explícito del cliente, probado en
     vivo): en vez de bloquear en seco, promueve automáticamente al Ocupante
@@ -542,8 +560,10 @@ def desvincular_telefono_ocupante(
             persona.telefono = None
             session.flush()
             return ocupante
-        if persona is not None and persona.apartamento_actual_id == ocupante.apartamento_id:
-            persona.apartamento_actual_id = None
+        if persona is not None:
+            if persona.apartamento_actual_id == ocupante.apartamento_id:
+                persona.apartamento_actual_id = None
+            persona.desvinculada_en = _utcnow()
 
     ocupante.persona_id = None
     session.flush()
@@ -748,7 +768,9 @@ def desvincular_whatsapp_ocupante(
     `desvincular_telefono_ocupante`: si su Persona TAMBIÉN tiene Teléfono,
     solo se limpia el campo WhatsApp, el Ocupante sigue vinculado a la
     MISMA Persona. Sin Teléfono de respaldo, comportamiento histórico: el
-    Ocupante queda sin Persona propia (registro liviano, solo nombre).
+    Ocupante queda sin Persona propia (registro liviano, solo nombre) --
+    esa Persona NUNCA se anonimiza acá, ver la nota de diseño completa en
+    `desvincular_telefono_ocupante`.
 
     Si `ocupante` es el Principal, mismo criterio (y mismo motivo, pedido
     explícito del cliente) que `desvincular_telefono_ocupante`: promueve
@@ -790,8 +812,10 @@ def desvincular_whatsapp_ocupante(
             persona.whatsapp_usuario = None
             session.flush()
             return ocupante
-        if persona is not None and persona.apartamento_actual_id == ocupante.apartamento_id:
-            persona.apartamento_actual_id = None
+        if persona is not None:
+            if persona.apartamento_actual_id == ocupante.apartamento_id:
+                persona.apartamento_actual_id = None
+            persona.desvinculada_en = _utcnow()
 
     ocupante.persona_id = None
     session.flush()
@@ -929,6 +953,14 @@ def agregar_ocupante(
         # que resuelve el snapshot del apartamento a partir de este campo)
         # dependen de él, no solo la vista de `/mis-datos`.
         persona.apartamento_actual_id = apartamento.id
+        # Reconexión (conversación 2026-09-12, pedido explícito del
+        # cliente): si este contacto pertenecía a una Persona que se había
+        # quedado `desvinculada_en` (perdió su único canal en otra unidad,
+        # o en esta misma, ver `desvincular_telefono_ocupante`), reaparecer
+        # con el mismo Teléfono/WhatsApp la reactiva -- vuelve a ser una
+        # Persona visible normal en /residentes, con su historial de
+        # paquetes de siempre (nunca se cortó, esa marca solo ocultaba).
+        persona.desvinculada_en = None
     else:
         # Issue 263 (.scratch/pendientes-cliente): SIN contacto, un Teléfono/
         # WhatsApp no está disponible para distinguir "es la misma persona
