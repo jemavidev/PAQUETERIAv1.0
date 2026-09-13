@@ -55,13 +55,17 @@ from app.domain.ocupante_service import (
     reasignar_apartamento,
     residentes_por_torre_apartamento,
 )
+from app.domain.paquete import Paquete
 from app.domain.paquete_service import contar_paquetes_de_persona
 from app.domain.paquete_sincronizacion_service import (
     aplicar_snapshot_de_persona,
     paquetes_hermanos_confirmados,
 )
 from app.domain.persona import Persona
+from app.domain.saldo_contra_entrega import MovimientoSaldoContraEntrega
 from app.domain.saldo_contra_entrega_service import (
+    listar_movimientos_saldo,
+    movimientos_de_persona,
     personas_con_saldo_no_cero,
     registrar_movimiento_saldo,
     saldo_de_persona,
@@ -739,6 +743,25 @@ def _nombre_mobile(nombre: str) -> str:
     return " ".join(palabras[:2])
 
 
+def _movimientos_saldo_para_ficha(db: Session, persona_id) -> list[MovimientoSaldoContraEntrega]:
+    """Historial de movimientos de saldo contra entrega de esta Persona, ya
+    con el nombre de quién lo registró y el código de acceso del paquete
+    asociado resueltos como atributos transitorios (.scratch/dinero-contra-
+    entrega-control, ticket 01) -- para el modal "Saldo" de su propia ficha.
+    Un solo residente a la vez (no una lista paginada de muchos, a diferencia
+    del ledger global del ticket 02), así que un `db.get` por movimiento acá
+    es aceptable -- no hay ningún N+1 real que evitar en esta escala."""
+    movimientos = movimientos_de_persona(db, persona_id)
+    for movimiento in movimientos:
+        usuario = db.get(Usuario, movimiento.registrado_por_usuario_id)
+        movimiento.registrado_por_nombre = usuario.nombre if usuario else None
+        movimiento.paquete_access_code = None
+        if movimiento.paquete_id is not None:
+            paquete = db.get(Paquete, movimiento.paquete_id)
+            movimiento.paquete_access_code = paquete.access_code if paquete else None
+    return movimientos
+
+
 def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
     """Contexto común a la ficha de residente y a cualquier re-render tras un
     error o una acción sobre Ocupantes/Notificaciones (.scratch/mis-datos,
@@ -763,6 +786,9 @@ def _contexto_detalle(db: Session, staff: Usuario, persona: Persona) -> dict:
         # para que el staff sepa cuánto tiene antes de registrar un
         # movimiento nuevo.
         "saldo_contra_entrega": saldo_de_persona(db, persona.id),
+        # .scratch/dinero-contra-entrega-control, ticket 01: historial
+        # completo de movimientos de esta Persona, para el modal "Saldo".
+        "movimientos_saldo_contra_entrega": _movimientos_saldo_para_ficha(db, persona.id),
         "url_whatsapp": url_whatsapp,
         "url_llamada": url_llamada,
         # Qué tab queda activa al (re)mostrar la ficha (issue 67) -- 'datos'
@@ -841,6 +867,39 @@ def customers_manage_saldos_contra_entrega(
     return templates.TemplateResponse(
         "customers_manage/saldos_contra_entrega.html",
         {"request": request, "staff": staff, "filas": filas, "q": q or ""},
+    )
+
+
+# .scratch/dinero-contra-entrega-control, ticket 02: mismo cuidado de orden
+# de registro que la ruta de arriba -- ESTÁTICA, ANTES de `/residentes/
+# {persona_id}`.
+@router.get("/residentes/movimientos-saldo-contra-entrega", response_class=HTMLResponse)
+def customers_manage_movimientos_saldo_contra_entrega(
+    request: Request,
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+    q: str = None,
+    tipo: str = None,
+    pagina: int = 1,
+):
+    """Ledger global de TODOS los movimientos de saldo contra entrega, de
+    TODOS los residentes -- accesible a cualquier rol de staff, mismo
+    criterio que el resumen (`/residentes/saldos-contra-entrega`, que enlaza
+    hacia acá con "Ver historial completo")."""
+    movimientos, total_paginas = listar_movimientos_saldo(
+        db, q=_blank_to_none(q), tipo=_blank_to_none(tipo), pagina=pagina
+    )
+    return templates.TemplateResponse(
+        "customers_manage/movimientos_saldo_contra_entrega.html",
+        {
+            "request": request,
+            "staff": staff,
+            "movimientos": movimientos,
+            "q": q or "",
+            "tipo": tipo or "",
+            "pagina": pagina,
+            "total_paginas": total_paginas,
+        },
     )
 
 
