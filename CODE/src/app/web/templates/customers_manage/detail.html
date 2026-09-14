@@ -59,17 +59,6 @@
        usa el resto del sistema para esta misma señal (`/paquetes`). #}
     <span class="inline-flex items-center gap-1 bg-red-600 text-white border border-red-700 rounded-full px-3 py-1.5 text-sm font-semibold">Eliminado</span>
     {% endif %}
-    {% if persona.desvinculada_en %}
-    {# `desvinculada_en` (conversación 2026-09-12, pedido explícito del
-       cliente): esta ficha es alcanzable con la URL directa aunque no
-       aparezca en ningún listado de /residentes (ver `_listar_todos_los_
-       residentes`, etc.) -- sin este badge, no había NINGUNA pista en la
-       página de por qué "no se puede quitar el único contacto" bloqueaba
-       acá (confusión real reportada en vivo: se veía como un residente
-       normal). Gris/neutro a propósito -- distinto del rojo "Eliminado"
-       (esto no es una eliminación, es incidental y reversible solo). #}
-    <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-300 rounded-full px-3 py-1.5 text-sm font-semibold" title="Perdió su único Teléfono/WhatsApp y quedó sin apartamento -- no aparece en ningún listado de Residentes">Oculto (sin apartamento)</span>
-    {% endif %}
     {% if persona.baja_administrativa_en %}
     {# Baja administrativa reversible (.scratch/baja-administrativa) --
        ámbar, NO rojo: a propósito distinto de "Eliminado" para no confundir
@@ -124,19 +113,6 @@
        píldora en particular. #}
     <button type="button" title="Saldo a favor" data-open="modal-saldo" class="inline-flex items-center gap-1 {{ 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' if saldo_contra_entrega >= 0 else 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' }} border rounded-full px-3 py-1.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 {{ 'focus-visible:ring-emerald-300' if saldo_contra_entrega >= 0 else 'focus-visible:ring-red-300' }}">Saldo: {{ '${:,}'.format(saldo_contra_entrega) if saldo_contra_entrega >= 0 else '-${:,}'.format(-saldo_contra_entrega) }}</button>
   </div>
-
-  {% if persona.desvinculada_en %}
-  {# Explica el estado "Oculto" del badge de arriba EN PROSA -- pedido
-     implícito del cliente (confusión real reportada en vivo, conversación
-     2026-09-12: "no se puede quitar el único contacto" bloqueaba acá sin
-     ninguna pista de por qué, en una ficha que se veía igual a la de
-     cualquier residente activo). Menciona el bloqueo de "quitar el único
-     contacto" explícitamente -- es la acción concreta que trajo a staff
-     hasta acá confundido. #}
-  <p class="mt-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-    Este residente perdió su único Teléfono/WhatsApp y quedó sin ningún apartamento asociado -- por eso no aparece en ningún listado de Residentes, aunque esta ficha siga siendo accesible por enlace directo. Su Teléfono/WhatsApp real se conservó intacto (nunca se borra): si el mismo dato vuelve a asociarse a un apartamento, esta misma ficha se reactiva sola, con su historial de paquetes intacto. Por eso tampoco se puede quitarle este último contacto desde acá -- lo dejaría sin ningún dato en absoluto.
-  </p>
-  {% endif %}
 
   {# Baja administrativa reversible (.scratch/baja-administrativa) --
      cualquier rol de staff (sin gate de ADMIN, a diferencia de "Eliminar
@@ -600,28 +576,17 @@
                 </div>
                 {# Issue 306 (.scratch/pendientes-cliente): botón flotante,
                    sin fondo propio, glow violeta -- mismo patrón validado
-                   en "Recibir" (/paquetes). Los de "Quitar teléfono"/
-                   "Quitar WhatsApp" de abajo se quedan igual -- son enlaces
-                   de texto secundarios, no la acción de confirmar de este
-                   modal. #}
+                   en "Recibir" (/paquetes). #}
                 <div class="sticky bottom-0 -mx-5 -mb-5 mt-3 px-5 py-3">
                   <button type="submit" class="w-full text-xs bg-blue-800 hover:bg-blue-700 text-white rounded-lg px-3 py-2 font-semibold shadow-[0_0_18px_rgba(139,92,246,0.65)]">Guardar</button>
                 </div>
               </form>
-              {% if o.telefono or o.whatsapp_usuario %}
-              <div class="flex flex-wrap gap-3 pt-3 mt-3 border-t border-slate-100">
-                {% if o.telefono %}
-                <form method="post" action="/residentes/{{ persona.id }}/ocupantes/{{ o.id }}/desvincular-telefono">
-                  <button type="submit" class="text-xs text-red-600 hover:underline">Quitar teléfono</button>
-                </form>
-                {% endif %}
-                {% if o.whatsapp_usuario %}
-                <form method="post" action="/residentes/{{ persona.id }}/ocupantes/{{ o.id }}/desvincular-whatsapp">
-                  <button type="submit" class="text-xs text-red-600 hover:underline">Quitar WhatsApp</button>
-                </form>
-                {% endif %}
-              </div>
-              {% endif %}
+              {# "Quitar teléfono"/"Quitar WhatsApp" se retiraron por
+                 completo (issue 333, .scratch/pendientes-cliente, pedido
+                 explícito: "los numeros de telefono despues de ingresados
+                 no puedan ser eliminados, solo editados") -- ni siquiera
+                 con canal doble. Editar a un valor nuevo con "Guardar"
+                 arriba sigue siendo el único camino. #}
             {% endcall %}
             {% if o.persona_id and not o.es_principal %}
             {# Mismo texto que el modal "Promover a otro residente" de

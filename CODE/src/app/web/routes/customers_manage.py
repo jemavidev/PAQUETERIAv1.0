@@ -40,8 +40,6 @@ from app.domain.ocupante_service import (
     confirmar_ocupante,
     dar_de_baja_ocupante_como_staff,
     desvincular_ocupante_activo_de_persona,
-    desvincular_telefono_ocupante,
-    desvincular_whatsapp_ocupante,
     editar_telefono_ocupante,
     editar_whatsapp_ocupante,
     identificar_contacto_para_unidad,
@@ -71,6 +69,7 @@ from app.domain.saldo_contra_entrega_service import (
     saldo_de_persona,
 )
 from app.domain.persona_service import (
+    MENSAJE_NO_SE_PUEDE_ELIMINAR,
     WHATSAPP_USUARIO_RE,
     anonimizar_persona,
     autorizar_desbloqueo,
@@ -171,6 +170,25 @@ def _get_persona_o_404(db: Session, persona_id: str) -> Persona:
     return persona
 
 
+def _get_persona_editable_o_404(db: Session, persona_id: str) -> Persona:
+    """Como `_get_persona_o_404`, pero además rechaza cualquier intento de
+    MUTAR una Persona ya eliminada (`anonimizar_persona`, ADR-0005) --
+    issue 334, .scratch/pendientes-cliente (hallazgo en vivo, conversación
+    2026-09-14: la ficha de un eliminado seguía 100% editable por link
+    directo o desde el ledger de saldos, como si nunca se hubiera
+    eliminado). La ficha (GET) se queda consultable como rastro histórico
+    -- ese link del ledger no debe romperse -- pero ningún POST puede
+    volver a tocarla. Usar en TODA ruta POST de esta ficha; la ruta GET
+    de la ficha sigue usando `_get_persona_o_404` sin este chequeo."""
+    persona = _get_persona_o_404(db, persona_id)
+    if persona.eliminado_en is not None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Este residente fue eliminado -- ya no se puede editar.",
+        )
+    return persona
+
+
 _ESQUEMA_APARTAMENTO_RE = re.compile(r"^apt\s*(\d+)$", re.IGNORECASE)
 
 
@@ -232,17 +250,7 @@ def _buscar_residentes(db: Session, termino: str) -> list[Persona]:
         filtros_persona.append(Persona.telefono == telefono)
     elif termino.strip().isdigit():
         filtros_persona.append(Persona.telefono.ilike(f"%{termino.strip()}%"))
-    # `desvinculada_en` (conversación 2026-09-12, pedido explícito del
-    # cliente): a diferencia de `eliminado_en` (que no hacía falta filtrar
-    # acá -- una Persona anonimizada nunca coincide con un término real, sus
-    # campos quedaron sintéticos), esta marca SÍ deja el nombre/teléfono/
-    # WhatsApp reales intactos -- sin este filtro, seguiría siendo
-    # encontrable por búsqueda aunque no aparezca en el listado por defecto.
-    _agregar_todas(
-        db.query(Persona)
-        .filter(or_(*filtros_persona), Persona.desvinculada_en.is_(None))
-        .all()
-    )
+    _agregar_todas(db.query(Persona).filter(or_(*filtros_persona)).all())
 
     match_apto = _ESQUEMA_APARTAMENTO_RE.match(termino.strip())
     if match_apto:
@@ -349,15 +357,10 @@ def _listar_todos_los_residentes(db: Session, pagina: int = 1):
     Excluye eliminados (issue 67): ya están anonimizados (nombre/teléfono
     reales borrados por `anonimizar_persona`), así que no aportan nada al
     día a día del staff -- y de todos modos casi nunca calzarían con una
-    búsqueda por su nombre/teléfono real. Excluye también `desvinculada_en`
-    (conversación 2026-09-12, pedido explícito del cliente): perdió su
-    único contacto y quedó sin ningún Ocupante que la referencie -- a
-    diferencia de "Eliminado", su Teléfono/WhatsApp real sigue intacto (se
-    reconecta sola si vuelve a asociarse, ver `agregar_ocupante`), pero
-    mientras tanto no debe verse como un residente más."""
+    búsqueda por su nombre/teléfono real."""
     query = (
         db.query(Persona)
-        .filter(Persona.eliminado_en.is_(None), Persona.desvinculada_en.is_(None))
+        .filter(Persona.eliminado_en.is_(None))
         .order_by(Persona.nombre)
     )
     total = query.count()
@@ -426,7 +429,7 @@ def _todos_los_residentes_activos(db: Session) -> list[Persona]:
     agrupar ANTES de paginar por apartamento, no por persona."""
     return (
         db.query(Persona)
-        .filter(Persona.eliminado_en.is_(None), Persona.desvinculada_en.is_(None))
+        .filter(Persona.eliminado_en.is_(None))
         .order_by(Persona.nombre)
         .all()
     )
@@ -444,7 +447,6 @@ def _listar_principales(db: Session, pagina: int = 1):
         .join(Ocupante, Ocupante.persona_id == Persona.id)
         .filter(
             Persona.eliminado_en.is_(None),
-            Persona.desvinculada_en.is_(None),
             Ocupante.es_principal.is_(True),
             Ocupante.desvinculado_en.is_(None),
         )
@@ -478,7 +480,6 @@ def _listar_sin_apartamento(db: Session, pagina: int = 1):
         db.query(Persona)
         .filter(
             Persona.eliminado_en.is_(None),
-            Persona.desvinculada_en.is_(None),
             Persona.apartamento_actual_id.is_(None),
         )
         .order_by(Persona.nombre)
@@ -951,7 +952,7 @@ async def customers_manage_update(
     el form cuando está marcado, así que "ausente" ES "no autoriza" (no
     "no tocar") -- `is not None` es la forma correcta de leer un booleano
     así, no `_blank_to_none`."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     # "" explícito (no None -- issue 69, extendido a email por issue 261):
     # este formulario SIEMPRE manda estos campos, así que acá "vacío" tiene
     # que poder significar "bórralo", no "no lo toques" (con `_blank_to_none`
@@ -974,18 +975,8 @@ async def customers_manage_update(
     form = await request.form()
     telefono_enviado = "telefono" in form
     telefono = form.get("telefono")
-    whatsapp_enviado = "whatsapp_usuario" in form
     whatsapp_usuario = form.get("whatsapp_usuario")
     whatsapp_v = (whatsapp_usuario or "").strip()
-    # Vaciado a propósito (mismo bug que Teléfono, ver más abajo): si vino
-    # vacío Y la Persona SÍ tenía WhatsApp, `update_datos_personales` NO
-    # debe tocarlo -- se maneja aparte, después, con la lógica consciente
-    # de Ocupante (`desvincular_whatsapp_ocupante`), no con un simple
-    # `persona.whatsapp_usuario = None` que podría dejarla sin NINGÚN
-    # canal (viola `ck_personas_telefono_o_whatsapp`, un crash real
-    # reportado en vivo si `telefono` ya era `None`, ej. un Principal
-    # solo-WhatsApp).
-    limpiar_whatsapp = whatsapp_enviado and not whatsapp_v and persona.whatsapp_usuario is not None
 
     # Resuelto ANTES de tocar nada (.scratch/paquetes-residentes-conexion,
     # ADR-0001 excepción 3) -- la confirmación compara el snapshot YA
@@ -1003,17 +994,21 @@ async def customers_manage_update(
             persona,
             nombre=_blank_to_none(nombre),
             email=email_v,
-            whatsapp_usuario=None if limpiar_whatsapp else whatsapp_v,
+            whatsapp_usuario=whatsapp_v,
         )
     except ValueError as exc:
         # Dos posibles orígenes ahora (ver persona_service.
         # update_datos_personales): email o usuario de WhatsApp -- se
         # revalida acá cuál de los dos es para marcar el campo correcto en
-        # rojo (la excepción en sí no distingue de dónde vino).
+        # rojo (la excepción en sí no distingue de dónde vino). Un
+        # WhatsApp vacío nunca puede fallar por formato (la validación se
+        # salta valores vacíos) -- si `whatsapp_v` vino vacío, cualquier
+        # error acá SOLO puede ser el intento de vaciarlo (issue 333,
+        # `MENSAJE_NO_SE_PUEDE_ELIMINAR`), nunca de Email.
         db.rollback()
         contexto = _contexto_detalle(db, staff, persona)
         whatsapp_sin_arroba = whatsapp_v.lstrip("@")
-        es_whatsapp = bool(whatsapp_sin_arroba) and not WHATSAPP_USUARIO_RE.match(whatsapp_sin_arroba)
+        es_whatsapp = not whatsapp_sin_arroba or not WHATSAPP_USUARIO_RE.match(whatsapp_sin_arroba)
         campo = "whatsapp_usuario" if es_whatsapp else "email"
         contexto.update({"request": request, "error": str(exc), f"error_{campo}": str(exc)})
         return templates.TemplateResponse(
@@ -1043,55 +1038,27 @@ async def customers_manage_update(
                 "customers_manage/detail.html", contexto, status_code=400
             )
     elif telefono_enviado and persona.telefono is not None:
-        if persona.whatsapp_usuario is not None:
-            # Canal doble (issue 213/217, muy anterior a todo lo de abajo):
-            # limpiar SOLO este campo es inocuo -- la Persona se queda con
-            # su WhatsApp intacto, no hay ningún Ocupante que desvincular
-            # ni ninguna de las complejidades de "quedarse sin canal" de
-            # más abajo. Se mantiene permitido, igual que siempre.
-            persona.telefono = None
-            db.flush()
-        else:
-            # Este SÍ es su único canal -- rechazado de plano (conversación
-            # 2026-09-13, pedido explícito del cliente -- REVIERTE el
-            # comportamiento anterior de esta misma sesión, "también debe
-            # funcionar desde el tab Datos"): esta tab mezclaba "editar"
-            # con "eliminar" en el mismo botón "Guardar", la única vista de
-            # las 3 que tocan Teléfono/WhatsApp con ese problema -- el
-            # modal "Editar" de la tab Residentes y `/mis-datos` YA
-            # separan ambas acciones (un campo vaciado ahí se ignora en
-            # silencio; "Quitar teléfono" vive aparte, deliberado). Acá, en
-            # cambio, se rechaza de plano: un único canal existente solo se
-            # puede MODIFICAR (a otro valor) desde esta pantalla, nunca
-            # eliminar -- para eso, "Quitar teléfono" en la tab Residentes.
-            db.rollback()
-            contexto = _contexto_detalle(db, staff, persona)
-            mensaje = "No se puede quitar el Teléfono desde esta pantalla -- usa 'Quitar teléfono' en la tab Residentes."
-            contexto.update({"request": request, "error": mensaje, "error_telefono": mensaje})
-            return templates.TemplateResponse(
-                "customers_manage/detail.html", contexto, status_code=400
-            )
-
-    if limpiar_whatsapp:
-        if persona.telefono is not None:
-            # Canal doble -- mismo criterio que Teléfono arriba: inocuo,
-            # se mantiene permitido.
-            persona.whatsapp_usuario = None
-            db.flush()
-        else:
-            # Único canal -- mismo criterio y mismo motivo que Teléfono
-            # arriba (conversación 2026-09-13, pedido explícito del
-            # cliente): rechaza de plano en vez de desvincular -- esta tab
-            # ya no elimina un único canal, solo modifica.
-            db.rollback()
-            contexto = _contexto_detalle(db, staff, persona)
-            mensaje = "No se puede quitar el WhatsApp desde esta pantalla -- usa 'Quitar WhatsApp' en la tab Residentes."
-            contexto.update(
-                {"request": request, "error": mensaje, "error_whatsapp_usuario": mensaje}
-            )
-            return templates.TemplateResponse(
-                "customers_manage/detail.html", contexto, status_code=400
-            )
+        # Vaciar el Teléfono ya nunca se permite (issue 333, .scratch/
+        # pendientes-cliente, pedido explícito del cliente: "los numeros de
+        # telefono despues de ingresados no puedan ser eliminados, solo
+        # editados") -- ni siquiera con WhatsApp de respaldo (canal doble).
+        # Ninguna Persona puede llegar a cero canales desde ningún lado del
+        # sistema tampoco (esa regla es anterior, conversación 2026-09-14);
+        # acá simplemente se extiende a "ni siquiera con respaldo". El
+        # único camino para cambiar el Teléfono es escribir uno nuevo
+        # directamente acá, en el mismo submit.
+        db.rollback()
+        contexto = _contexto_detalle(db, staff, persona)
+        contexto.update(
+            {
+                "request": request,
+                "error": MENSAJE_NO_SE_PUEDE_ELIMINAR,
+                "error_telefono": MENSAJE_NO_SE_PUEDE_ELIMINAR,
+            }
+        )
+        return templates.TemplateResponse(
+            "customers_manage/detail.html", contexto, status_code=400
+        )
 
     set_autoriza_recepcion_automatica(db, persona, autoriza_recepcion_automatica is not None)
 
@@ -1125,7 +1092,7 @@ async def customers_manage_notificaciones(
     filas que este `staff` no puede tocar, para no pisarlas a `False` por
     simple omisión (ej. un ADMIN dejó SMS×Recibido activo, un Operador
     guarda otro cambio de la misma ficha sin querer tocar eso)."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     form = await request.form()
     es_admin = staff.rol == RolUsuario.ADMIN
 
@@ -1189,7 +1156,7 @@ def customers_manage_asignar_apartamento(
     garantizando esas mismas funciones, no un guard aparte acá). El picker
     (issue 147) sigue siendo solo informativo -- muestra quién vive en cada
     unidad, nunca deshabilita la selección."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     # Resuelto ANTES de mover/reasignar nada (.scratch/paquetes-residentes-
     # conexion, ADR-0001 excepción 3) -- ver el comentario largo en
     # `customers_manage_update` (mismo motivo: la confirmación se
@@ -1345,7 +1312,7 @@ def customers_manage_ocupante_crear(
     no-principal de OTRA unidad, mueve a esa persona (con su identidad
     real, no un registro nuevo con el `nombre` recién tecleado) en vez de
     solo bloquear -- el `nombre` tecleado se ignora en ese caso."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     apto = _apartamento_actual(db, persona)
     nombre_v = _blank_to_none(nombre)
     if apto is None or not nombre_v:
@@ -1412,7 +1379,7 @@ def customers_manage_ocupante_asociar_telefono(
     staff: Usuario = Depends(current_staff),
     telefono: str = Form(None),
 ):
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     telefono_v = _blank_to_none(telefono)
     if not telefono_v:
@@ -1442,28 +1409,6 @@ def customers_manage_ocupante_asociar_telefono(
 
 
 @router.post(
-    "/residentes/{persona_id}/ocupantes/{ocupante_id}/desvincular-telefono",
-    response_class=HTMLResponse,
-)
-def customers_manage_ocupante_desvincular_telefono(
-    persona_id: str,
-    ocupante_id: str,
-    request: Request,
-    db: Session = Depends(get_db),
-    staff: Usuario = Depends(current_staff),
-):
-    persona = _get_persona_o_404(db, persona_id)
-    ocupante = _ocupante_o_404(db, ocupante_id)
-    try:
-        desvincular_telefono_ocupante(db, ocupante, permitir_sin_sucesor=True)
-    except ValueError as exc:
-        return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
-    return RedirectResponse(
-        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
-    )
-
-
-@router.post(
     "/residentes/{persona_id}/ocupantes/{ocupante_id}/contacto", response_class=HTMLResponse
 )
 def customers_manage_ocupante_asociar_contacto(
@@ -1479,7 +1424,7 @@ def customers_manage_ocupante_asociar_contacto(
     escenarios`, ticket 06), mismo criterio que "agregar Residente" y que
     `/announce`. Una vez asociado, editarlo pasa por `/telefono` o
     `/whatsapp` (según cuál haya quedado), no por acá."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     contacto_v = (contacto or "").strip()
     if not contacto_v:
@@ -1520,7 +1465,7 @@ def customers_manage_ocupante_asociar_whatsapp(
     """Asociar/editar WhatsApp de un Ocupante -- mismo patrón que
     `customers_manage_ocupante_asociar_telefono`
     (`.scratch/ocupante-principal-escenarios`, ticket 06)."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     whatsapp_v = _blank_to_none(whatsapp_usuario)
     if not whatsapp_v:
@@ -1587,7 +1532,7 @@ def customers_manage_ocupante_editar(
     persona_id` a una Persona distinta (issue 35) -- Nombre/Email deben
     aplicarse a la Persona VIGENTE al final, mismo criterio que
     `customer_ocupante_editar`."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
 
     nombre_v = _blank_to_none(nombre)
@@ -1661,28 +1606,6 @@ def customers_manage_ocupante_editar(
     )
 
 
-@router.post(
-    "/residentes/{persona_id}/ocupantes/{ocupante_id}/desvincular-whatsapp",
-    response_class=HTMLResponse,
-)
-def customers_manage_ocupante_desvincular_whatsapp(
-    persona_id: str,
-    ocupante_id: str,
-    request: Request,
-    db: Session = Depends(get_db),
-    staff: Usuario = Depends(current_staff),
-):
-    persona = _get_persona_o_404(db, persona_id)
-    ocupante = _ocupante_o_404(db, ocupante_id)
-    try:
-        desvincular_whatsapp_ocupante(db, ocupante, permitir_sin_sucesor=True)
-    except ValueError as exc:
-        return _render_detalle_con_error(request, db, staff, persona, str(exc), tab_inicial="residentes")
-    return RedirectResponse(
-        f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
-    )
-
-
 @router.post("/residentes/{persona_id}/ocupantes/{ocupante_id}/baja", response_class=HTMLResponse)
 def customers_manage_ocupante_dar_de_baja(
     persona_id: str,
@@ -1700,7 +1623,7 @@ def customers_manage_ocupante_dar_de_baja(
     159), también exclusivo de staff. `dar_de_baja_ocupante` a secas
     mantiene su guard estricto para el resto de sus llamadores (ver su
     docstring)."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
         dar_de_baja_ocupante_como_staff(db, ocupante)
@@ -1725,7 +1648,7 @@ def customers_manage_ocupante_confirmar(
     confirmacion`, ticket 07) — cualquier rol de staff, sin restricción
     (mismo patrón que el resto de esta gestión). Si es el primero de su
     Apartamento, queda como principal en el mismo acto (`confirmar_ocupante`)."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
         confirmar_ocupante(db, ocupante, staff)
@@ -1756,7 +1679,7 @@ def customers_manage_ocupante_promover(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
 ):
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     ocupante = _ocupante_o_404(db, ocupante_id)
     try:
         promover_a_principal(db, ocupante)
@@ -1777,6 +1700,7 @@ def customers_manage_ocupante_promover(
 @router.post("/residentes/{persona_id}/eliminar")
 def customers_manage_delete(
     persona_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
@@ -1791,8 +1715,25 @@ def customers_manage_delete(
     quedaba como "Ocupante fantasma" -- nombre congelado, activo, bloqueando
     el cupo de Principal de su unidad indefinidamente -- porque
     `anonimizar_persona` solo toca la fila de `Persona`, nunca su vínculo de
-    `Ocupante`."""
-    persona = _get_persona_o_404(db, persona_id)
+    `Ocupante`.
+
+    Rechaza si tiene saldo contra entrega pendiente (issue 334, .scratch/
+    pendientes-cliente -- hallazgo en vivo, conversación 2026-09-14):
+    `anonimizar_persona` no toca `movimientos_saldo_contra_entrega`, así
+    que ese saldo quedaba huérfano bajo el nombre genérico "Cliente
+    eliminado" en el ledger (`/residentes/saldos-contra-entrega`), sin
+    ninguna forma de saber a quién pertenecía. Exige saldar la cuenta
+    (dejarla en $0) ANTES de eliminar -- mismo criterio que ya exige
+    `customer_eliminar_cuenta` (autoservicio) para "paquete en curso"."""
+    persona = _get_persona_editable_o_404(db, persona_id)
+    saldo = saldo_de_persona(db, persona.id)
+    if saldo != 0:
+        signo = "a favor" if saldo > 0 else "en contra"
+        mensaje = (
+            f"No se puede eliminar -- tiene saldo contra entrega pendiente "
+            f"(${abs(saldo):,} {signo}). Salda la cuenta antes de eliminar."
+        )
+        return _render_detalle_con_error(request, db, admin, persona, mensaje)
     desvincular_ocupante_activo_de_persona(db, persona)
     anonimizar_persona(db, persona)
     return RedirectResponse(
@@ -1815,7 +1756,7 @@ def customers_manage_baja_administrativa(
     `customers_manage_delete`), promoviendo un sucesor con contacto propio
     si corresponde -- reusa exactamente el mismo mecanismo best-effort del
     derecho al olvido."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     desvincular_ocupante_activo_de_persona(db, persona)
     dar_de_baja_administrativa(db, persona)
     return RedirectResponse(
@@ -1832,7 +1773,7 @@ def customers_manage_reactivar(
     """Revierte una baja administrativa (.scratch/baja-administrativa) --
     cualquier rol de staff. NO reconecta ningún Ocupante (queda a cargo del
     staff, aparte, si corresponde -- ver docstring de `reactivar_persona`)."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     reactivar_persona(db, persona)
     return RedirectResponse(
         f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER
@@ -1850,7 +1791,7 @@ def customers_manage_bloquear(
     """Bloquea a un residente (.scratch/bloquear-clientes, reversible) --
     cualquier rol de staff, mismo criterio que baja administrativa: no toca
     ningún dato personal ni ningún paquete ya existente."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     try:
         bloquear_persona(db, persona, motivo_bloqueo)
     except ValueError as exc:
@@ -1870,7 +1811,7 @@ def customers_manage_autorizar_desbloqueo(
     """Autoriza que un residente bloqueado reintente (habilita su OTP, sin
     restaurar el servicio de paquetes todavía -- ver `autorizar_desbloqueo`).
     Cualquier rol de staff."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     try:
         autorizar_desbloqueo(db, persona)
     except ValueError as exc:
@@ -1895,7 +1836,7 @@ def customers_manage_saldo_movimiento(
     asociado a un paquete puntual si el staff lo sabe de antemano
     (.scratch/dinero-contra-entrega, spec.md línea 125-126: "acepta monto
     ... y paquete_id opcional"). Cualquier rol de staff."""
-    persona = _get_persona_o_404(db, persona_id)
+    persona = _get_persona_editable_o_404(db, persona_id)
     registrar_movimiento_saldo(db, persona.id, monto, staff, paquete_id=paquete_id or None)
     return RedirectResponse(
         f"/residentes/{persona.id}?ocupante_guardado=1", status_code=status.HTTP_303_SEE_OTHER

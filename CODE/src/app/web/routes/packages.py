@@ -180,29 +180,11 @@ def _personas_por_nombre(db: Session, nombres: set) -> dict:
     la excepción. Riesgo aceptado y no resuelto acá: dos Personas
     distintas con el mismo nombre completo registrado resolverían a la
     última que devuelva la consulta -- caso borde, no la norma (nombres
-    completos, no apodos).
-
-    Excluye `desvinculada_en` (bug real encontrado en vivo, conversación
-    2026-09-12, familia "Arrazola"): esa marca preserva el nombre real a
-    propósito (para reconectar por Teléfono/WhatsApp, ver `ocupante_
-    service.desvincular_telefono_ocupante`) -- sin este filtro, un
-    paquete con "contacto prestado" (destinatario solo-nombre, Teléfono
-    del Principal de su unidad) cuyo nombre coincida con el de una
-    Persona huérfana de ESE MISMO apellido/familia resuelve por error a
-    esa Persona oculta y sin ninguna relación real con el paquete --
-    tanto el link de WhatsApp como la atribución de saldo contra-entrega
-    (`deliver_action`) terminaban apuntando a la Persona equivocada. A
-    diferencia de `eliminado_en` (que no hace falta excluir acá --
-    `anonimizar_persona` ya sobreescribe el nombre, nunca coincide)."""
+    completos, no apodos)."""
     nombres = {n for n in nombres if n}
     if not nombres:
         return {}
-    return {
-        p.nombre: p
-        for p in db.query(Persona)
-        .filter(Persona.nombre.in_(nombres), Persona.desvinculada_en.is_(None))
-        .all()
-    }
+    return {p.nombre: p for p in db.query(Persona).filter(Persona.nombre.in_(nombres)).all()}
 
 
 def _resolver_persona_destino(db: Session, paquete: Paquete):
@@ -223,14 +205,8 @@ def _resolver_persona_destino(db: Session, paquete: Paquete):
         )
     persona_destino = contacto
     if persona_destino is None or persona_destino.nombre != paquete.recipient_name:
-        # Excluye `desvinculada_en` -- mismo bug/criterio que `_personas_por_
-        # nombre` arriba (ver su docstring): sin este filtro, un destinatario
-        # de contacto prestado puede resolver por error a una Persona huérfana
-        # sin relación real con este Paquete, solo por compartir nombre.
         persona_destino = (
-            db.query(Persona)
-            .filter(Persona.nombre == paquete.recipient_name, Persona.desvinculada_en.is_(None))
-            .first()
+            db.query(Persona).filter(Persona.nombre == paquete.recipient_name).first()
         )
     return persona_destino
 
@@ -845,8 +821,8 @@ def _listar(
         # Persona propia, `recipient_phone` = Teléfono del Principal de su
         # unidad) -- si nadie más coincide por nombre, `persona_destino`
         # queda `None` aunque el destinatario jamás se haya eliminado
-        # (nunca tuvo Persona propia, o la perdió por `desvinculada_en`,
-        # ninguna de las dos es "derecho al olvido"). La distinción real:
+        # (nunca tuvo Persona propia -- no es "derecho al olvido"). La
+        # distinción real:
         # en el caso GENUINAMENTE eliminado, ni el propio Teléfono
         # resuelve a NADIE (`anonimizar_persona` lo sobreescribe) -- en
         # cambio acá el Teléfono SÍ resuelve a alguien real (el Principal),

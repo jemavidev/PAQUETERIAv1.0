@@ -462,6 +462,14 @@ def editar_telefono_ocupante(session: Session, ocupante: Ocupante, nuevo_telefon
             "Persona con su propio WhatsApp -- no se puede combinar automáticamente."
         )
 
+    # `persona_actual` queda como historial (comentario de arriba), pero ya
+    # no vive en este Apartamento -- mismo criterio que `dar_de_baja_
+    # ocupante`, sin el cual seguía apareciendo como residente activo
+    # (fantasma) en `/residentes` junto a `persona` (bug real, conversación
+    # 2026-09-14).
+    if persona_actual.apartamento_actual_id == ocupante.apartamento_id:
+        persona_actual.apartamento_actual_id = None
+
     ocupante.persona_id = persona.id
     persona.apartamento_actual_id = ocupante.apartamento_id
     try:
@@ -469,104 +477,6 @@ def editar_telefono_ocupante(session: Session, ocupante: Ocupante, nuevo_telefon
     except IntegrityError:
         session.rollback()
         raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
-    return ocupante
-
-
-def desvincular_telefono_ocupante(
-    session: Session, ocupante: Ocupante, *, permitir_sin_sucesor: bool = False
-) -> Ocupante:
-    """Quita el Teléfono de `ocupante`.
-
-    Si su Persona TAMBIÉN tiene WhatsApp (issue 213/217, .scratch/
-    pendientes-cliente -- canal doble), solo se limpia el campo Teléfono de
-    esa Persona; el Ocupante sigue vinculado a la MISMA Persona por WhatsApp
-    (ADR-0007: nunca puede quedar sin ningún canal). Si no tiene WhatsApp de
-    respaldo, comportamiento histórico: el Ocupante queda sin Persona propia
-    ("registro liviano", solo nombre) -- la Persona sigue existiendo, con su
-    Teléfono intacto (NUNCA anonimizada acá -- ver nota de diseño abajo),
-    marcada `desvinculada_en` y excluida de todo listado de `/residentes`.
-
-    Nota de diseño (conversación 2026-09-12, pedido explícito del cliente,
-    2 vueltas hasta llegar acá): a propósito NO se anonimiza (a diferencia
-    de "Eliminar residente", `anonimizar_persona`, acción deliberada del
-    staff -- derecho al olvido real) NI se deja visible como "sin
-    apartamento" (primer intento, descartado en vivo: dejaba dos filas
-    visibles con el mismo nombre -- confuso, "no me estás ayudando").
-    Quedarse sin canal por esta vía es incidental, casi siempre la MISMA
-    persona real que probablemente vuelva con el mismo Teléfono/WhatsApp
-    después -- por eso el contacto real NUNCA se toca (a diferencia de
-    anonimizar, que lo sobrescribe) y en cambio se marca `desvinculada_en`:
-    desaparece de todo listado (`_listar_todos_los_residentes`,
-    `_buscar_residentes`, `_listar_sin_apartamento`, ...), pero si el mismo
-    contacto reaparece, `get_or_create_persona`/`_por_whatsapp` (que NO
-    filtran por esta marca) encuentran esta MISMA fila -- el historial de
-    paquetes (`announced_by_persona_id`) ya está asociado, sin reconectar
-    nada -- y `agregar_ocupante` limpia la marca en ese momento (vuelve a
-    ser una Persona visible normal).
-
-    Si `ocupante` es el Principal (pedido explícito del cliente, probado en
-    vivo): en vez de bloquear en seco, promueve automáticamente al Ocupante
-    activo más antiguo con contacto propio de la misma unidad (mismo
-    mecanismo que ya usa `dar_de_baja_ocupante_como_staff`,
-    `_promover_sucesor_si_hace_falta`) ANTES de desvincular -- el propio
-    `ocupante` queda "solo nombre" igual que cualquier otro, alcanzable a
-    través del nuevo Principal (`anunciante_para_ocupante`).
-
-    `permitir_sin_sucesor` (uso EXCLUSIVO de staff, `customers_manage.py`):
-    si es Principal y NINGÚN otro Ocupante de la unidad tiene NI
-    Teléfono/WhatsApp propio para sucederlo (incluido el caso "está solo en
-    la unidad"), `False` (default -- autoservicio, `/mis-datos`) sigue
-    bloqueando: un cliente removiendo su ÚNICO contacto se dejaría sin
-    forma de volver a entrar, sin ningún staff supervisando. `True` lo
-    permite igual (queda "solo nombre", deja de ser Principal) -- el caso
-    "sin nadie en el apartamento" que el cliente pidió resolver con la
-    opción de eliminar (soft delete) desde `/residentes`, nunca desde
-    autoservicio.
-
-    Raises:
-        ValueError: si `ocupante` es el Principal y no hay sucesor -- ya
-            sea porque otros Ocupantes activos existen pero ninguno tiene
-            contacto propio (agregale contacto a alguno primero, cualquier
-            caller), o porque está solo en la unidad y `permitir_sin_
-            sucesor` es `False` (autoservicio).
-    """
-    if ocupante.es_principal:
-        candidato = _promover_sucesor_si_hace_falta(session, ocupante)
-        if candidato is None:
-            if hay_otro_ocupante_activo(session, ocupante.apartamento_id, ocupante.id):
-                raise ValueError(
-                    "Es Principal y ninguno de los otros Residentes activos de "
-                    "su unidad tiene Teléfono ni WhatsApp propio para "
-                    "sucederlo -- agregale contacto a alguno desde tab "
-                    "Residentes antes de quitarle el suyo."
-                )
-            if not permitir_sin_sucesor:
-                raise ValueError(
-                    "El teléfono del principal no puede desvincularse "
-                    "directamente -- promové a otro Ocupante con teléfono "
-                    "primero."
-                )
-            # Nadie más en la unidad, y `permitir_sin_sucesor` lo permite
-            # (staff, ver docstring) -- `ocupante` deja de ser Principal
-            # (nadie sin contacto propio puede serlo, mismo invariante que
-            # ya exige `promover_a_principal`), queda "solo nombre", sin
-            # nadie a quien prestarle contacto (`anunciante_para_ocupante`
-            # devuelve `None`), y su Persona queda huérfana.
-            ocupante.es_principal = False
-
-    if ocupante.persona_id is not None:
-        persona = session.get(Persona, ocupante.persona_id)
-        if persona is not None and persona.whatsapp_usuario is not None:
-            persona.telefono = None
-            session.flush()
-            return ocupante
-        if persona is not None:
-            if persona.apartamento_actual_id == ocupante.apartamento_id:
-                persona.apartamento_actual_id = None
-            persona.desvinculada_en = _utcnow()
-
-    ocupante.persona_id = None
-    session.flush()
     return ocupante
 
 
@@ -751,6 +661,11 @@ def editar_whatsapp_ocupante(
             "con su propio Teléfono -- no se puede combinar automáticamente."
         )
 
+    # Ver el mismo comentario en `editar_telefono_ocupante`: `persona_actual`
+    # queda como historial pero ya no vive acá.
+    if persona_actual.apartamento_actual_id == ocupante.apartamento_id:
+        persona_actual.apartamento_actual_id = None
+
     ocupante.persona_id = persona.id
     persona.apartamento_actual_id = ocupante.apartamento_id
     try:
@@ -758,67 +673,6 @@ def editar_whatsapp_ocupante(
     except IntegrityError:
         session.rollback()
         raise ValueError(MENSAJE_YA_OCUPANTE_ACTIVO)
-    return ocupante
-
-
-def desvincular_whatsapp_ocupante(
-    session: Session, ocupante: Ocupante, *, permitir_sin_sucesor: bool = False
-) -> Ocupante:
-    """Quita el WhatsApp de `ocupante`. Mismo patrón (canal doble) que
-    `desvincular_telefono_ocupante`: si su Persona TAMBIÉN tiene Teléfono,
-    solo se limpia el campo WhatsApp, el Ocupante sigue vinculado a la
-    MISMA Persona. Sin Teléfono de respaldo, comportamiento histórico: el
-    Ocupante queda sin Persona propia (registro liviano, solo nombre) --
-    esa Persona NUNCA se anonimiza acá, ver la nota de diseño completa en
-    `desvincular_telefono_ocupante`.
-
-    Si `ocupante` es el Principal, mismo criterio (y mismo motivo, pedido
-    explícito del cliente) que `desvincular_telefono_ocupante`: promueve
-    automáticamente a un sucesor con contacto propio antes de desvincular,
-    en vez de bloquear en seco. `permitir_sin_sucesor`: mismo contrato que
-    la contraparte de Teléfono (uso EXCLUSIVO de staff -- ver esa
-    docstring para el detalle completo).
-
-    Raises:
-        ValueError: si `ocupante` es el Principal y no hay sucesor -- ya
-            sea porque otros Ocupantes activos existen pero ninguno tiene
-            contacto propio, o porque está solo en la unidad y `permitir_
-            sin_sucesor` es `False` (autoservicio).
-    """
-    if ocupante.es_principal:
-        candidato = _promover_sucesor_si_hace_falta(session, ocupante)
-        if candidato is None:
-            if hay_otro_ocupante_activo(session, ocupante.apartamento_id, ocupante.id):
-                raise ValueError(
-                    "Es Principal y ninguno de los otros Residentes activos de "
-                    "su unidad tiene Teléfono ni WhatsApp propio para "
-                    "sucederlo -- agregale contacto a alguno desde tab "
-                    "Residentes antes de quitarle el suyo."
-                )
-            if not permitir_sin_sucesor:
-                raise ValueError(
-                    "El WhatsApp del principal no puede desvincularse "
-                    "directamente -- promové a otro Ocupante con contacto "
-                    "primero."
-                )
-            # Nadie más en la unidad, y `permitir_sin_sucesor` lo permite
-            # (staff) -- mismo criterio que `desvincular_telefono_
-            # ocupante`: se permite igual, pero deja de ser Principal.
-            ocupante.es_principal = False
-
-    if ocupante.persona_id is not None:
-        persona = session.get(Persona, ocupante.persona_id)
-        if persona is not None and persona.telefono is not None:
-            persona.whatsapp_usuario = None
-            session.flush()
-            return ocupante
-        if persona is not None:
-            if persona.apartamento_actual_id == ocupante.apartamento_id:
-                persona.apartamento_actual_id = None
-            persona.desvinculada_en = _utcnow()
-
-    ocupante.persona_id = None
-    session.flush()
     return ocupante
 
 
@@ -953,14 +807,6 @@ def agregar_ocupante(
         # que resuelve el snapshot del apartamento a partir de este campo)
         # dependen de él, no solo la vista de `/mis-datos`.
         persona.apartamento_actual_id = apartamento.id
-        # Reconexión (conversación 2026-09-12, pedido explícito del
-        # cliente): si este contacto pertenecía a una Persona que se había
-        # quedado `desvinculada_en` (perdió su único canal en otra unidad,
-        # o en esta misma, ver `desvincular_telefono_ocupante`), reaparecer
-        # con el mismo Teléfono/WhatsApp la reactiva -- vuelve a ser una
-        # Persona visible normal en /residentes, con su historial de
-        # paquetes de siempre (nunca se cortó, esa marca solo ocultaba).
-        persona.desvinculada_en = None
     else:
         # Issue 263 (.scratch/pendientes-cliente): SIN contacto, un Teléfono/
         # WhatsApp no está disponible para distinguir "es la misma persona

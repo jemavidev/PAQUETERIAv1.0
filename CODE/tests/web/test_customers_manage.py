@@ -816,9 +816,12 @@ def test_ficha_muestra_el_checkbox_de_recepcion_automatica_marcado(client):
     assert 'name="autoriza_recepcion_automatica" checked' in r.text
 
 
-def test_staff_borra_el_usuario_de_whatsapp_ya_seteado(client):
-    # Issue 69: bug real -- una vez seteado, el campo no se podía vaciar
-    # (el form manda "" y antes se trataba como "no tocar").
+def test_staff_no_puede_borrar_el_whatsapp_ya_seteado_ni_con_respaldo(client):
+    # Issue 69 (histórico): "" pasó a borrar el WhatsApp (antes se trataba
+    # como "no tocar"). Issue 333 (.scratch/pendientes-cliente, pedido
+    # explícito del cliente, 2026-09-14) revirtió ESE efecto: "" con un
+    # WhatsApp ya cargado ahora se rechaza, incluso con Teléfono de respaldo
+    # (canal doble) -- ya no hay ningún camino que vacíe el campo.
     from app.domain.persona_service import update_datos_personales
 
     p = get_or_create_persona(client.db, "3001234567", "Ana")
@@ -826,17 +829,17 @@ def test_staff_borra_el_usuario_de_whatsapp_ya_seteado(client):
     client.db.commit()
     _login_operador(client)
 
-    client.post(f"/residentes/{p.id}", data={"whatsapp_usuario": ""})
+    r = client.post(f"/residentes/{p.id}", data={"whatsapp_usuario": ""})
+    assert r.status_code == 400
+    assert "no es posible eliminar este dato" in r.text.lower()
     client.db.expire_all()
-    assert client.db.get(Persona, p.id).whatsapp_usuario is None
+    assert client.db.get(Persona, p.id).whatsapp_usuario == "ana.whats"
 
 
-def test_staff_borra_el_telefono_ya_seteado_con_whatsapp_de_respaldo(client):
-    # Contraparte del test anterior, para Teléfono: canal doble (conversación
-    # 2026-09-13) -- vaciar Teléfono cuando la Persona TAMBIÉN tiene
-    # WhatsApp sigue permitido desde esta tab, sin restricción nueva --
-    # solo se bloquea cuando ES el único canal (ver los tests "no_puede_
-    # quitar" de abajo).
+def test_staff_no_puede_borrar_el_telefono_ya_seteado_ni_con_whatsapp_de_respaldo(client):
+    # Contraparte del test anterior, para Teléfono: issue 333 cerró también
+    # el camino que antes permitía vaciar Teléfono con WhatsApp de respaldo
+    # (canal doble, conversación 2026-09-13) -- ahora se rechaza siempre.
     from app.domain.persona_service import update_datos_personales
 
     p = get_or_create_persona(client.db, "3001234567", "Ana")
@@ -851,10 +854,11 @@ def test_staff_borra_el_telefono_ya_seteado_con_whatsapp_de_respaldo(client):
     r = client.post(
         f"/residentes/{p.id}", data={"telefono": "", "whatsapp_usuario": "ana.whats"}
     )
-    assert r.status_code == 200
+    assert r.status_code == 400
+    assert "no es posible eliminar este dato" in r.text.lower()
     client.db.expire_all()
     persona_db = client.db.get(Persona, p.id)
-    assert persona_db.telefono is None
+    assert persona_db.telefono == "+573001234567"
     assert persona_db.whatsapp_usuario == "ana.whats"
 
 
@@ -911,16 +915,11 @@ def test_staff_edita_telefono_repetido_rechaza_sin_persistir(client):
 
 
 def test_staff_no_puede_quitar_el_telefono_desde_tab_datos_de_un_ocupante_activo(client):
-    # REVIERTE el comportamiento anterior de esta misma sesión (issue de
-    # conversación 2026-09-11: "Quitar teléfono' también debe funcionar
-    # desde el tab Datos") -- pedido explícito posterior del cliente
-    # (conversación 2026-09-13): esta tab mezclaba "editar" con "eliminar"
-    # en el mismo botón "Guardar", la única de las 3 vistas que tocan
-    # Teléfono/WhatsApp con ese problema (el modal "Editar" de la tab
-    # Residentes y `/mis-datos` ya separaban ambas acciones). Ahora un
-    # valor YA existente solo se puede MODIFICAR desde acá, nunca
-    # eliminar -- "Quitar teléfono" sigue viviendo, sin cambios, en la tab
-    # Residentes.
+    # Pedido explícito del cliente (conversación 2026-09-13, extendido por
+    # issue 333 el 2026-09-14): un Teléfono YA existente solo se puede
+    # MODIFICAR desde acá, nunca eliminar -- ni siquiera con WhatsApp de
+    # respaldo (canal doble). "Quitar teléfono" (tab Residentes) se retiró
+    # por completo, mismo criterio en todas las vistas.
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
@@ -933,12 +932,11 @@ def test_staff_no_puede_quitar_el_telefono_desde_tab_datos_de_un_ocupante_activo
 
     r = client.post(f"/residentes/{persona_id}", data={"telefono": ""})
     assert r.status_code == 400
-    assert "no se puede quitar el teléfono desde esta pantalla" in r.text.lower()
+    assert "no es posible eliminar este dato" in r.text.lower()
 
     client.db.expire_all()
     persona_db = client.db.get(Persona, persona_id)
     assert persona_db.telefono == "+573001234567"
-    assert persona_db.desvinculada_en is None
     ocupante_db = client.db.get(Ocupante, ocupante.id)
     assert ocupante_db.persona_id == persona_id
 
@@ -960,8 +958,8 @@ def test_staff_no_puede_dejar_una_persona_sin_apartamento_sin_ningun_canal(clien
 
 
 def test_staff_no_puede_quitar_el_whatsapp_desde_tab_datos_de_un_ocupante_activo(client):
-    # Mismo criterio que Teléfono arriba (conversación 2026-09-13, pedido
-    # explícito del cliente).
+    # Mismo criterio que Teléfono arriba (conversación 2026-09-13, extendido
+    # por issue 333 el 2026-09-14).
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
@@ -974,12 +972,11 @@ def test_staff_no_puede_quitar_el_whatsapp_desde_tab_datos_de_un_ocupante_activo
 
     r = client.post(f"/residentes/{persona_id}", data={"whatsapp_usuario": ""})
     assert r.status_code == 400
-    assert "no se puede quitar el whatsapp desde esta pantalla" in r.text.lower()
+    assert "no es posible eliminar este dato" in r.text.lower()
 
     client.db.expire_all()
     persona_db = client.db.get(Persona, persona_id)
     assert persona_db.whatsapp_usuario == "ana.whats"
-    assert persona_db.desvinculada_en is None
     ocupante_db = client.db.get(Ocupante, ocupante.id)
     assert ocupante_db.persona_id == persona_id
 
@@ -1105,6 +1102,65 @@ def test_eliminar_id_inexistente_da_404(client):
 
     r = client.post(f"/residentes/{uuid.uuid4()}/eliminar")
     assert r.status_code == 404
+
+
+def test_admin_no_puede_eliminar_con_saldo_pendiente(client):
+    # Issue 334 (.scratch/pendientes-cliente, hallazgo en vivo, conversación
+    # 2026-09-14): antes de este fix, `anonimizar_persona` no tocaba
+    # `movimientos_saldo_contra_entrega` -- el saldo quedaba huérfano bajo
+    # el nombre genérico "Cliente eliminado" en el ledger, sin forma de
+    # saber a quién pertenecía. Ahora se exige saldar la cuenta primero.
+    from app.domain.saldo_contra_entrega_service import registrar_movimiento_saldo
+
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_admin(client)
+    admin = client.db.query(Usuario).filter(Usuario.rol == RolUsuario.ADMIN).one()
+    registrar_movimiento_saldo(client.db, p.id, 20000, admin)
+    client.db.commit()
+
+    r = client.post(f"/residentes/{p.id}/eliminar", follow_redirects=False)
+    assert r.status_code == 400
+    assert "saldo" in r.text.lower()
+
+    client.db.expire_all()
+    p2 = client.db.get(Persona, p.id)
+    assert p2.nombre == "ANA"  # sin cambios -- no se anonimizó
+    assert p2.eliminado_en is None
+
+
+def test_admin_no_puede_eliminar_dos_veces(client):
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_admin(client)
+
+    client.post(f"/residentes/{p.id}/eliminar")
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).eliminado_en is not None
+
+    r = client.post(f"/residentes/{p.id}/eliminar")
+    assert r.status_code == 400
+
+
+def test_no_se_puede_editar_datos_de_un_residente_ya_eliminado(client):
+    # Issue 334: la ficha de un eliminado sigue siendo consultable (GET,
+    # ej. desde el link del ledger de saldos), pero ningún POST puede
+    # volver a tocarla -- antes de este fix, era 100% editable como si
+    # nunca se hubiera eliminado.
+    p = get_or_create_persona(client.db, "3001234567", "Ana")
+    client.db.commit()
+    _login_admin(client)
+    client.post(f"/residentes/{p.id}/eliminar")
+    client.db.expire_all()
+
+    r = client.get(f"/residentes/{p.id}")
+    assert r.status_code == 200  # la ficha sigue viéndose
+
+    r2 = client.post(f"/residentes/{p.id}", data={"telefono": "3009998877"})
+    assert r2.status_code == 400
+
+    client.db.expire_all()
+    assert client.db.get(Persona, p.id).telefono.startswith("DEL-")  # sin cambios
 
 
 # --------------------------------------------------------------------------- #
@@ -2645,25 +2701,6 @@ def test_staff_agrega_telefono_a_ocupante_que_ya_tiene_whatsapp(client):
     assert persona_hija.whatsapp_usuario == "hija.whats"  # sigue intacto
 
 
-def test_staff_desvincula_telefono_de_ocupante(client):
-    from app.domain.ocupante import Ocupante
-    from app.domain.ocupante_service import agregar_ocupante
-
-    persona, apto = _persona_con_apartamento(client)
-    hija = agregar_ocupante(client.db, apto, "Hija", telefono="3021112233")
-    client.db.commit()
-
-    _login_operador(client)
-    r = client.post(
-        f"/residentes/{persona.id}/ocupantes/{hija.id}/desvincular-telefono",
-        follow_redirects=False,
-    )
-    assert r.status_code == 303
-
-    client.db.expire_all()
-    assert client.db.get(Ocupante, hija.id).persona_id is None
-
-
 def test_staff_agrega_ocupante_con_whatsapp_desde_agregar_residente(client):
     """.scratch/ocupante-principal-escenarios, ticket 06 -- input único
     autoclasificado en "agregar Residente"."""
@@ -3101,25 +3138,6 @@ def test_staff_edita_ocupante_choca_con_persona_huerfana_canal_doble_falla(clien
     assert r.status_code == 400
 
 
-def test_staff_desvincula_whatsapp_de_ocupante(client):
-    from app.domain.ocupante import Ocupante
-    from app.domain.ocupante_service import agregar_ocupante
-
-    persona, apto = _persona_con_apartamento(client)
-    hija = agregar_ocupante(client.db, apto, "Hija", whatsapp_usuario="hija.whats")
-    client.db.commit()
-
-    _login_operador(client)
-    r = client.post(
-        f"/residentes/{persona.id}/ocupantes/{hija.id}/desvincular-whatsapp",
-        follow_redirects=False,
-    )
-    assert r.status_code == 303
-
-    client.db.expire_all()
-    assert client.db.get(Ocupante, hija.id).persona_id is None
-
-
 def test_staff_da_de_baja_ocupante(client):
     from app.domain.ocupante import Ocupante
     from app.domain.ocupante_service import agregar_ocupante
@@ -3492,46 +3510,6 @@ def test_lista_busca_sin_apartamento_asignado_con_termino(client):
     # picker de otro residente, se confirma por el link de perfil.
     assert f'href="/residentes/{persona_con_apto.id}"' not in r.text
     assert f'href="/residentes/{p_sin_apto.id}"' in r.text
-
-
-def test_persona_desvinculada_en_no_aparece_en_ningun_listado(client):
-    # Pedido explícito del cliente (conversación 2026-09-12, probado en
-    # vivo con "Daniela"/"Angélica"): una Persona que quedó `desvinculada_en`
-    # (perdió su único contacto sin respaldo) NO debe verse como un
-    # residente más -- ni en el listado plano por defecto, ni en la vista
-    # "sin apartamento asignado" (issue 320 -- comparte el mismo criterio
-    # `apartamento_actual_id IS NULL`, así que hace falta el filtro extra
-    # para no colarse ahí), ni en una búsqueda por su nombre o teléfono real
-    # (su Teléfono/WhatsApp NUNCA se anonimiza, a diferencia de "Eliminado").
-    from app.domain.apartamento_service import resolver_apartamento
-    from app.domain.ocupante_service import agregar_ocupante, desvincular_telefono_ocupante
-
-    apto = resolver_apartamento(client.db, "TORRE 1", "101")
-    principal = agregar_ocupante(client.db, apto, "Principal", telefono="3001112222")
-    ocupante = agregar_ocupante(client.db, apto, "Daniela Huerfana", telefono="3009998888")
-    persona_id = ocupante.persona_id
-    _login_operador(client)
-    _confirmar(client, principal)
-    _confirmar(client, ocupante)
-
-    desvincular_telefono_ocupante(client.db, ocupante)
-    client.db.commit()
-
-    r = client.get("/residentes")
-    assert r.status_code == 200
-    assert f'href="/residentes/{persona_id}"' not in r.text
-
-    r = client.get("/residentes", params={"vista": "sin_apartamento"})
-    assert r.status_code == 200
-    assert f'href="/residentes/{persona_id}"' not in r.text
-
-    r = client.get("/residentes", params={"q": "Daniela Huerfana"})
-    assert r.status_code == 200
-    assert f'href="/residentes/{persona_id}"' not in r.text
-
-    r = client.get("/residentes", params={"q": "3009998888"})
-    assert r.status_code == 200
-    assert f'href="/residentes/{persona_id}"' not in r.text
 
 
 def test_lista_muestra_boton_asignar_apartamento_para_quien_no_tiene(client):

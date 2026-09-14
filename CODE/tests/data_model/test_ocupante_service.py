@@ -24,8 +24,6 @@ from app.domain.ocupante_service import (
     cambios_recientes_de_apartamento,
     confirmar_ocupante,
     dar_de_baja_ocupante,
-    desvincular_telefono_ocupante,
-    desvincular_whatsapp_ocupante,
     editar_telefono_ocupante,
     editar_whatsapp_ocupante,
     hay_otro_ocupante_activo,
@@ -588,18 +586,6 @@ def test_asociar_telefono_sincroniza_apartamento_actual(db_session):
     assert persona.apartamento_actual_id == apto.id
 
 
-def test_desvincular_telefono_limpia_apartamento_actual(db_session):
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
-    persona_id = hija.persona_id
-
-    desvincular_telefono_ocupante(db_session, hija)
-
-    persona = db_session.get(Persona, persona_id)
-    assert persona.apartamento_actual_id is None
-
-
 def test_dar_de_baja_limpia_apartamento_actual(db_session):
     apto = _apto(db_session)
     agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
@@ -718,6 +704,23 @@ def test_editar_telefono_ocupante_cambia_la_persona_ligada(db_session):
     persona = db_session.get(Persona, hijo.persona_id)
     assert persona.telefono == "+573029998877"
     assert persona.apartamento_actual_id == apto.id
+
+
+def test_editar_telefono_ocupante_limpia_apartamento_de_la_persona_vieja(db_session):
+    # Bug real encontrado en vivo (conversación 2026-09-14): la Persona
+    # vieja quedaba huérfana pero con `apartamento_actual_id` intacto --
+    # seguía apareciendo en `/residentes` como residente activo (fantasma)
+    # del mismo apartamento, junto a la Persona nueva.
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hijo = agregar_ocupante(db_session, apto, "Hijo", telefono="3021112233")
+    persona_vieja_id = hijo.persona_id
+
+    editar_telefono_ocupante(db_session, hijo, "3029998877")
+
+    assert hijo.persona_id != persona_vieja_id
+    persona_vieja = db_session.get(Persona, persona_vieja_id)
+    assert persona_vieja.apartamento_actual_id is None
 
 
 def test_editar_telefono_ocupante_canal_doble_no_pierde_whatsapp(db_session):
@@ -845,122 +848,6 @@ def test_editar_telefono_ocupante_ya_activo_en_otro_apartamento_falla(db_session
         editar_telefono_ocupante(db_session, hijo, "3029998877")
 
 
-def test_desvincular_telefono_de_ocupante_no_principal(db_session):
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
-
-    desvincular_telefono_ocupante(db_session, hija)
-
-    assert hija.persona_id is None
-
-
-def test_desvincular_telefono_sin_respaldo_preserva_y_oculta_la_persona_huerfana(db_session):
-    # Pedido explícito del cliente (conversación 2026-09-12, tras discutir
-    # y descartar la anonimización automática, y luego un segundo intento
-    # que preservaba SIN ocultar -- probado en vivo con "Daniela", dejaba
-    # dos filas visibles con el mismo nombre, confuso): quedarse sin canal
-    # por esta vía es incidental, casi siempre la MISMA persona real que
-    # puede volver con el mismo Teléfono más adelante -- si se anonimizara,
-    # `get_or_create_persona` ya no la encontraría (su contacto quedó
-    # sobrescrito) y el historial de paquetes quedaría "huérfano" de una
-    # Persona nueva sin relación. Preservada intacta pero marcada `desvinculada_en`,
-    # el mismo contacto reasociado encuentra esta MISMA fila (el historial
-    # ya está asociado, sin reconectar nada) Y no aparece en ningún listado
-    # de /residentes mientras tanto.
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
-    persona_id = hija.persona_id
-
-    desvincular_telefono_ocupante(db_session, hija)
-
-    persona = db_session.get(Persona, persona_id)
-    assert persona.eliminado_en is None
-    assert persona.telefono == "+573021112233"
-    assert persona.apartamento_actual_id is None
-    assert persona.desvinculada_en is not None
-
-
-def test_el_mismo_telefono_reaparecido_reconecta_la_persona_desvinculada(db_session):
-    # Pedido explícito del cliente (conversación 2026-09-12): a diferencia
-    # de `anonimizar_persona` (donde el mismo Teléfono real SÍ crea una
-    # Persona nueva, ver test_anonimizar_persona.py), acá el contacto real
-    # nunca se tocó -- `get_or_create_persona` la encuentra por su propio
-    # Teléfono y `agregar_ocupante` limpia la marca, reusando la MISMA fila
-    # (continuidad del historial de paquetes, sin reconectar nada a mano).
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
-    persona_id = hija.persona_id
-    desvincular_telefono_ocupante(db_session, hija)
-    assert db_session.get(Persona, persona_id).desvinculada_en is not None
-
-    otro_apto = resolver_apartamento(db_session, "TORRE 1", "102")
-    reaparecida = agregar_ocupante(db_session, otro_apto, "Hija", telefono="3021112233")
-
-    assert reaparecida.persona_id == persona_id
-    persona = db_session.get(Persona, persona_id)
-    assert persona.desvinculada_en is None
-    assert persona.apartamento_actual_id == otro_apto.id
-
-
-def test_desvincular_telefono_del_principal_sin_sucesor_lo_deja_solo_nombre(db_session):
-    # Pedido explícito del cliente, probado en vivo (conversación
-    # 2026-09-11): antes esto bloqueaba en seco -- ahora, sin nadie más en
-    # la unidad a quien promover, se permite igual (caso "sin nadie en el
-    # apartamento", que el cliente resuelve con la opción de eliminar --
-    # soft delete -- ya existente en /residentes, no bloqueando el
-    # desvincular).
-    apto = _apto(db_session)
-    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
-
-    desvincular_telefono_ocupante(db_session, papa, permitir_sin_sucesor=True)
-
-    assert papa.persona_id is None
-    assert papa.es_principal is False
-
-
-def test_desvincular_telefono_del_principal_sin_sucesor_autoservicio_falla(db_session):
-    # `permitir_sin_sucesor` es EXCLUSIVO de staff -- el default (`False`,
-    # el que usa `/mis-datos`) sigue bloqueando: un cliente removiendo su
-    # único contacto se dejaría sin forma de volver a entrar, sin ningún
-    # staff supervisando (mismo comportamiento que existía antes de este
-    # pedido, ahora solo para autoservicio).
-    apto = _apto(db_session)
-    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
-
-    with pytest.raises(ValueError):
-        desvincular_telefono_ocupante(db_session, papa)
-
-
-def test_desvincular_telefono_del_principal_con_sucesor_lo_promueve(db_session):
-    # Pedido explícito del cliente: el Principal SÍ tiene con quién
-    # sucederlo (otro Ocupante activo con contacto propio) -- se promueve
-    # automáticamente en vez de bloquear, mismo mecanismo que ya usa
-    # `dar_de_baja_ocupante_como_staff`.
-    apto = _apto(db_session)
-    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", telefono="3021112233")
-
-    desvincular_telefono_ocupante(db_session, papa)
-
-    assert papa.persona_id is None
-    assert papa.es_principal is False
-    assert hija.es_principal is True
-
-
-def test_desvincular_telefono_del_principal_sin_sucesor_con_contacto_falla(db_session):
-    # Hay otro Ocupante activo, pero SIN contacto propio -- no hay a quién
-    # promover, así que sigue bloqueando (mismo mensaje que antes).
-    apto = _apto(db_session)
-    papa = _agregar_confirmado(db_session, apto, "Papá", "3001234567")
-    agregar_ocupante(db_session, apto, "Hija")
-
-    with pytest.raises(ValueError):
-        desvincular_telefono_ocupante(db_session, papa)
-
-
 # --------------------------------------------------------------------------- #
 # WhatsApp (.scratch/ocupante-principal-escenarios, ticket 06) -- mismo
 # patrón que Teléfono arriba, resuelto por WhatsApp.
@@ -1006,6 +893,20 @@ def test_editar_whatsapp_ocupante_cambia_la_persona_ligada(db_session):
     persona = db_session.get(Persona, hijo.persona_id)
     assert persona.whatsapp_usuario == "hijo.nuevo"
     assert persona.apartamento_actual_id == apto.id
+
+
+def test_editar_whatsapp_ocupante_limpia_apartamento_de_la_persona_vieja(db_session):
+    # Mismo bug real que `editar_telefono_ocupante`, del lado de WhatsApp.
+    apto = _apto(db_session)
+    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
+    hijo = agregar_ocupante(db_session, apto, "Hijo", whatsapp_usuario="hijo.viejo")
+    persona_vieja_id = hijo.persona_id
+
+    editar_whatsapp_ocupante(db_session, hijo, "hijo.nuevo")
+
+    assert hijo.persona_id != persona_vieja_id
+    persona_vieja = db_session.get(Persona, persona_vieja_id)
+    assert persona_vieja.apartamento_actual_id is None
 
 
 def test_editar_whatsapp_ocupante_canal_doble_no_pierde_telefono(db_session):
@@ -1129,69 +1030,6 @@ def test_editar_whatsapp_ocupante_ya_activo_en_otro_apartamento_falla(db_session
 
     with pytest.raises(ValueError):
         editar_whatsapp_ocupante(db_session, hijo, "mama.whats")
-
-
-def test_desvincular_whatsapp_de_ocupante_no_principal(db_session):
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
-
-    desvincular_whatsapp_ocupante(db_session, hija)
-
-    assert hija.persona_id is None
-
-
-def test_desvincular_whatsapp_sin_respaldo_preserva_y_oculta_la_persona_huerfana(db_session):
-    # Mismo criterio (y mismo pedido explícito del cliente) que la
-    # contraparte de Teléfono.
-    apto = _apto(db_session)
-    agregar_ocupante(db_session, apto, "Papá", telefono="3001234567")
-    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
-    persona_id = hija.persona_id
-
-    desvincular_whatsapp_ocupante(db_session, hija)
-
-    persona = db_session.get(Persona, persona_id)
-    assert persona.eliminado_en is None
-    assert persona.whatsapp_usuario == "hija.whats"
-    assert persona.apartamento_actual_id is None
-    assert persona.desvinculada_en is not None
-
-
-def test_desvincular_whatsapp_del_principal_sin_sucesor_lo_deja_solo_nombre(db_session):
-    # Mismo criterio (y mismo pedido explícito del cliente) que la
-    # contraparte de Teléfono.
-    apto = _apto(db_session)
-    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
-    confirmar_ocupante(db_session, papa, _staff(db_session))
-
-    desvincular_whatsapp_ocupante(db_session, papa, permitir_sin_sucesor=True)
-
-    assert papa.persona_id is None
-    assert papa.es_principal is False
-
-
-def test_desvincular_whatsapp_del_principal_sin_sucesor_autoservicio_falla(db_session):
-    # Mismo criterio que la contraparte de Teléfono.
-    apto = _apto(db_session)
-    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
-    confirmar_ocupante(db_session, papa, _staff(db_session))
-
-    with pytest.raises(ValueError):
-        desvincular_whatsapp_ocupante(db_session, papa)
-
-
-def test_desvincular_whatsapp_del_principal_con_sucesor_lo_promueve(db_session):
-    apto = _apto(db_session)
-    papa = agregar_ocupante(db_session, apto, "Papá", whatsapp_usuario="papa.whats")
-    confirmar_ocupante(db_session, papa, _staff(db_session))
-    hija = agregar_ocupante(db_session, apto, "Hija", whatsapp_usuario="hija.whats")
-
-    desvincular_whatsapp_ocupante(db_session, papa)
-
-    assert papa.persona_id is None
-    assert papa.es_principal is False
-    assert hija.es_principal is True
 
 
 def test_maximo_ocupantes_activos_por_apartamento(db_session):

@@ -1184,19 +1184,22 @@ def test_entregar_sigue_funcionando_sin_confirmar_la_guia(client):
 # --------------------------------------------------------------------------- #
 # Advertencia de nombre no coincide (Grupo 1, ticket 03) — se calcula al leer.
 # --------------------------------------------------------------------------- #
-def test_advertencia_aparece_cuando_el_nombre_no_coincide_con_el_registrado(client):
-    _login_staff(client)
-    # Ana ya está registrada; alguien anuncia con su teléfono pero declara un
-    # nombre distinto (typo o tercero) -- `solo_nombre` (no
-    # `declarado_por_cliente`: desde la conversación 2026-08-15 ese
+def test_advertencia_no_aparece_aunque_el_nombre_no_coincida(client):
+    # Issue 332 (.scratch/pendientes-cliente, pedido explícito: "esto ya no
+    # es necesario") -- la advertencia visual naranja se retiró por
+    # completo, incluso en el escenario de mismatch que antes la disparaba
+    # (Ana ya está registrada; alguien anuncia con su teléfono pero declara
+    # un nombre distinto -- `solo_nombre`, no `declarado_por_cliente`: ese
     # constructor SOLO honra nombres de co-residentes de la misma unidad,
     # cae al propio Anunciante si no hay match -- no serviría para este
-    # escenario de mismatch).
+    # escenario). "Corregir destinatario" sigue disponible por "Modificar"
+    # (columna Acciones), que nunca dependió de esta advertencia.
     from app.domain.persona_service import get_or_create_persona
 
+    _login_staff(client)
     get_or_create_persona(client.db, "3001234567", "Ana Perez")
     client.db.commit()
-    announce(
+    p = announce(
         client.db,
         anunciante_telefono="3001234567",
         anunciante_nombre="Ana Perez",
@@ -1206,7 +1209,8 @@ def test_advertencia_aparece_cuando_el_nombre_no_coincide_con_el_registrado(clie
 
     r = client.get("/paquetes")
     assert r.status_code == 200
-    assert "no coincide" in r.text.lower()
+    assert "no coincide" not in r.text.lower()
+    assert f'data-open="modal-correct-{p.id}"' in r.text
 
 
 def test_advertencia_no_aparece_cuando_el_nombre_coincide(client):
@@ -1340,35 +1344,6 @@ def test_advertencia_es_clickeable_en_recibido_no_en_entregado(client):
 
     r = client.get("/paquetes")
     assert r.status_code == 200
-    assert f'data-open="modal-correct-{p.id}"' not in r.text
-
-
-def test_advertencia_no_es_clickeable_en_cancelado(client):
-    # CANCELADO queda fuera de `ESTADOS_CORREGIBLES` (igual que ENTREGADO,
-    # ver el test de arriba) -- no tiene sentido de negocio corregir a
-    # quién le iba a llegar un paquete que nunca se entregó. El modal
-    # "Corregir destinatario" ni existe en el DOM ahí, así que el ícono se
-    # queda plano, sin `data-open`.
-    staff = _login_staff(client)
-    from app.domain.persona_service import get_or_create_persona
-
-    get_or_create_persona(client.db, "3001234567", "Ana Perez")
-    client.db.commit()
-    p = announce(
-        client.db,
-        anunciante_telefono="3001234567",
-        anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.solo_nombre("Ana Peres"),
-    )
-    client.db.commit()
-    from app.domain.paquete_lifecycle import cancel as dom_cancel
-
-    dom_cancel(client.db, p, staff, "NO_RECLAMADO")
-    client.db.commit()
-
-    r = client.get("/paquetes")
-    assert r.status_code == 200
-    assert "no coincide" in r.text.lower()
     assert f'data-open="modal-correct-{p.id}"' not in r.text
 
 
@@ -1539,11 +1514,13 @@ def test_asignar_apartamento_a_si_mismo_autocompleta_como_residente(client):
     assert nuevo.persona_id is not None
 
 
-def test_asignar_apartamento_sin_ser_yo_mismo_sigue_con_advertencia(client):
+def test_asignar_apartamento_sin_ser_yo_mismo_no_autocompleta(client):
     # Issue 189 (ronda 5): el autocompletado SOLO aplica a "para mí mismo"
     # -- un destinatario declarado como un tercero (sin coincidir con el
     # Anunciante) sigue sin confirmar y reabre "Corregir destinatario",
-    # mismo criterio de la ronda 2.
+    # mismo criterio de la ronda 2. La advertencia visual (issue 332) ya no
+    # existe para verificarlo, así que el criterio queda en que NO se haya
+    # autocompletado: sin "Residentes de la unidad", sin link a ficha real.
     from app.domain.apartamento_service import resolver_apartamento
     from app.domain.ocupante_service import agregar_ocupante
 
@@ -1570,37 +1547,10 @@ def test_asignar_apartamento_sin_ser_yo_mismo_sigue_con_advertencia(client):
     r2 = client.get("/paquetes")
     assert r2.status_code == 200
     modal_ver = _segmento_modal(r2.text, f"modal-ver-{p.id}")
-    assert "no coincide" in r2.text.lower()
     assert "Residentes de la unidad" not in modal_ver
     assert "ANGELICA ARRAZOLA" not in modal_ver
     # Issue 189 (ronda 3): tampoco enlaza a una ficha real pero vacía.
     assert '<a href="/residentes/' not in modal_ver
-
-
-def test_modal_ver_muestra_boton_corregir_solo_si_hay_advertencia(client):
-    # Conversación 2026-08-16 (pedido explícito): botón "Corregir" al lado
-    # del botón de siguiente estado, dentro del modal "Ver" -- solo cuando
-    # hay advertencia de nombre Y el estado sigue en `ESTADOS_CORREGIBLES`.
-    staff = _login_staff(client)
-    from app.domain.persona_service import get_or_create_persona
-
-    get_or_create_persona(client.db, "3001234567", "Ana Perez")
-    client.db.commit()
-    con_advertencia = announce(
-        client.db,
-        anunciante_telefono="3001234567",
-        anunciante_nombre="Ana Perez",
-        destinatario=Destinatario.solo_nombre("Ana Peres"),
-    )
-    sin_advertencia = _anunciar(client, tel="3009999999", nombre="Beto")
-    client.db.commit()
-
-    r = client.get("/paquetes")
-    assert r.status_code == 200
-    modal_con = _segmento_modal(r.text, f"modal-ver-{con_advertencia.id}")
-    modal_sin = _segmento_modal(r.text, f"modal-ver-{sin_advertencia.id}")
-    assert f'data-open="modal-correct-{con_advertencia.id}"' in modal_con
-    assert f'data-open="modal-correct-{sin_advertencia.id}"' not in modal_sin
 
 
 def test_corregir_desde_ver_regresa_al_modal_ver(client):
@@ -3678,69 +3628,6 @@ def test_modal_ver_whatsapp_cae_al_contacto_prestado_sin_canal_propio(client):
     # el atributo `href` (HTML válido, el navegador lo interpreta como `&`)
     # y `web.whatsapp.com/send?phone=` ya trae su propio `?`.
     assert 'href="https://web.whatsapp.com/send?phone=573004444444&amp;text=' in r.text
-
-
-def test_whatsapp_de_contacto_prestado_no_cae_a_una_persona_desvinculada_homonima(client):
-    # Bug real encontrado en vivo (conversación 2026-09-12, familia
-    # "Arrazola"): un destinatario de contacto prestado (Ocupante solo-
-    # nombre, sin Persona propia -- mismo caso del test anterior) resolvía
-    # por error al WhatsApp de una Persona TOTALMENTE distinta y huérfana
-    # (`desvinculada_en`, ver `ocupante_service.desvincular_telefono_
-    # ocupante`), solo porque compartía el nombre completo -- ese ícono, y
-    # el de "cuenta eliminada" (`destinatario_eliminado`), terminaban
-    # apuntando a alguien sin ninguna relación real con este paquete.
-    from app.domain.apartamento_service import resolver_apartamento
-    from app.domain.ocupante_service import (
-        agregar_ocupante,
-        confirmar_ocupante,
-        desvincular_telefono_ocupante,
-    )
-    from app.domain.persona import Persona
-
-    staff = _login_staff(client)
-
-    # Persona huérfana, sin ninguna relación real: mismo nombre completo,
-    # otro teléfono, en OTRA unidad -- perdió su único canal y quedó
-    # `desvinculada_en`.
-    otro_apto = resolver_apartamento(client.db, "TORRE 9", "901")
-    fantasma = agregar_ocupante(client.db, otro_apto, "Daniela Arrazola", telefono="3009990000")
-    confirmar_ocupante(client.db, fantasma, staff)
-    client.db.commit()
-    desvincular_telefono_ocupante(client.db, fantasma, permitir_sin_sucesor=True)
-    client.db.commit()
-    persona_huerfana = client.db.query(Persona).filter(Persona.telefono == "+573009990000").one()
-    assert persona_huerfana.desvinculada_en is not None
-
-    # La unidad REAL del paquete: Principal con teléfono propio, y un
-    # Ocupante "Daniela Arrazola" solo-nombre -- mismo nombre EXACTO que
-    # la huérfana de arriba, coincidencia de apellido de familia.
-    apto = resolver_apartamento(client.db, "TORRE 1", "302")
-    principal = agregar_ocupante(client.db, apto, "Jesus Villalobos", telefono="3002596319")
-    confirmar_ocupante(client.db, principal, staff)
-    daniela = agregar_ocupante(client.db, apto, "Daniela Arrazola")
-    confirmar_ocupante(client.db, daniela, staff)
-    client.db.commit()
-
-    p = announce(
-        client.db,
-        anunciante_telefono="3002596319",
-        anunciante_nombre="Jesus Villalobos",
-        destinatario=Destinatario.ocupante(daniela.id),
-    )
-    client.db.commit()
-
-    assert p.recipient_name == "DANIELA ARRAZOLA"
-    assert p.recipient_phone == "+573002596319"  # contacto prestado del Principal
-
-    r = client.get("/paquetes")
-    assert r.status_code == 200
-    # El WhatsApp debe usar el teléfono del Principal (contacto prestado)
-    # -- NUNCA el de la Persona huérfana no relacionada.
-    assert 'href="https://wa.me/573002596319?text=' in r.text
-    assert "573009990000" not in r.text
-    # Nunca debe leerse como "cuenta eliminada" -- nadie se eliminó, es un
-    # contacto prestado legítimo.
-    assert "ya no existe" not in r.text.lower()
 
 
 def test_modal_ver_residentes_de_la_unidad_sigue_al_destinatario_que_se_mudo(client):

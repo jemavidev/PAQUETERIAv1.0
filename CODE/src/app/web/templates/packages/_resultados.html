@@ -112,22 +112,17 @@
              es la señal más fuerte de las dos. Sin acción de "corregir"
              acá: no hay a quién resolver, el residente ya no está. #}
           <svg class="inline h-4 w-4 text-red-600 align-text-bottom ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><title>El destinatario ya no existe (cuenta eliminada)</title>{{ iconos_nav.prohibido|safe }}</svg>
-          {%- elif p.advertencia_nombre %}
-          {%- if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
-          {# Clickeable -- pedido explícito (conversación 2026-08-15): abre
-             "Corregir destinatario" directo, mismo modal que el ícono
-             "Modificar" de Acciones. Mientras el estado esté en
-             `ESTADOS_CORREGIBLES` -- incluyó ENTREGADO un rato (2026-08-16),
-             se retiró al día siguiente (2026-08-17, pedido explícito: no
-             debía verse en paquetes ya Entregados) -- ese modal ni existe
-             en el DOM para ENTREGADO/CANCELADO. #}
-          <button type="button" data-open="modal-correct-{{ p.id }}" onclick="document.getElementById('corregir-origen-{{ p.id }}').value = ''" class="inline-flex align-text-bottom ml-1 text-orange-600 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 rounded" aria-label="Corregir: el destinatario todavía no coincide con ningún residente registrado" title="El destinatario todavía no coincide con ningún residente registrado -- click para corregir">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.alerta|safe }}</svg>
-          </button>
-          {%- else %}
-          <svg class="inline h-4 w-4 text-orange-600 align-text-bottom ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><title>El destinatario todavía no coincide con ningún residente registrado</title>{{ iconos_nav.alerta|safe }}</svg>
           {%- endif %}
-          {%- endif %}
+          {# La advertencia naranja "el destinatario todavía no coincide con
+             ningún residente registrado" (issue 332, .scratch/pendientes-
+             cliente, pedido explícito: "esto ya no es necesario") se retiró
+             de acá y del modal "Ver" -- "Corregir destinatario" sigue
+             accesible por "Modificar" (columna Acciones,
+             `packages/_acciones.html`), que nunca dependió de
+             `advertencia_nombre` (solo del estado ANUNCIADO/RECIBIDO). La
+             variable `p.advertencia_nombre` en sí NO se retiró -- sigue
+             gateando el link de Torre/Apto y la lista `residentes_unidad`
+             más abajo, sin relación con esta advertencia visual. #}
           {# Código de acceso (conversación 2026-08-15) -- visible para
              STAFF acá (esta pantalla es staff-only, `current_staff`); el
              cliente sigue sin verlo en /consultar ni /mis-paquetes, eso no
@@ -303,25 +298,12 @@
           {% endif %}
         </div>
         <div class="flex items-center gap-2">
-          {# Corregir destinatario, al lado del botón de estado (conversación
-             2026-08-16, pedido explícito) -- SOLO si hay advertencia de
-             nombre Y el estado sigue en `ESTADOS_CORREGIBLES` (mismo criterio
-             que el ícono de advertencia de la columna Cliente y "Modificar"
-             de Acciones). Sin `data-close="modal-ver-<id>"` a propósito: NO
-             cierra Ver al abrir Corregir -- "encima" (los dos hidden=False a
-             la vez), ya que Corregir se define DESPUÉS de Ver en el DOM y
-             ambos comparten z-50, así que pinta arriba sin CSS extra. El
-             onclick pone 'ver' en el campo oculto del form de Corregir --
-             así SOLO esta entrada regresa a Ver al terminar; las otras dos
-             entradas al mismo modal (advertencia de la columna Cliente,
-             "Modificar" de Acciones) lo dejan en '' explícitamente, para que
-             el comportamiento de siempre (volver a la lista) no dependa de
-             qué se haya clickeado antes en la misma carga de página. #}
-          {%- if p.advertencia_nombre and p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
-          <button type="button" data-open="modal-correct-{{ p.id }}" onclick="document.getElementById('corregir-origen-{{ p.id }}').value = 'ver'" class="shrink-0 inline-flex items-center justify-center h-12 w-12 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300" aria-label="Corregir destinatario" title="El destinatario todavía no coincide con ningún residente registrado -- click para corregir">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{{ iconos_nav.alerta|safe }}</svg>
-          </button>
-          {%- endif %}
+          {# El botón "Corregir destinatario" que vivía acá (visible SOLO con
+             `p.advertencia_nombre`) se retiró -- issue 332, .scratch/
+             pendientes-cliente, pedido explícito: "esto ya no es necesario".
+             "Corregir destinatario" sigue accesible por "Modificar"
+             (columna Acciones, `packages/_acciones.html`), que nunca
+             dependió de `advertencia_nombre`. #}
           {# Ícono de "siguiente estado" (conversación 2026-08-14) -- Recibir
              en ANUNCIADO, Entregar en RECIBIDO; terminales sin ícono.
              `data-close="modal-ver-<id>"` junto a `data-open` en el MISMO
