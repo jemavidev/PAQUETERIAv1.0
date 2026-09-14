@@ -60,3 +60,16 @@ para buscar `"Sin apartamento asignado</h3>"` (el cierre de la etiqueta específ
 sola -- uno de los dos (`test_agrupar_por_numero_exacto_nunca_muestra_sin_apartamento`) directamente
 FALLABA con el cambio; el otro (`test_agrupar_por_apartamento_incluye_sin_apartamento_asignado`)
 seguía pasando pero había dejado de probar lo que decía probar.
+
+## Amendment 2026-09-06 — ícono cambiado de `alerta` a `vacio` (círculo tachado)
+
+Pedido explícito del cliente: "cambia el icono sin apartamentos". El botón de filtro usaba
+`iconos_nav.alerta` (exclamación) prestado de otro contexto -- ese mismo ícono ya significa "algo
+anda mal" en `/paquetes` (destinatario sin confirmar, avisos de `announce`), pisarlo acá confundía
+"falta un dato" (neutral) con "hay un problema" (alerta real). Tampoco se reusó `iconos_nav.casa`
+(ya usado por "Agrupar por apartamento", issue 317) para no verse como una variante del mismo
+botón. Se agregó `iconos_nav.vacio` -- círculo tachado (Heroicons "no-symbol"), el símbolo estándar
+de "ninguno/vacío", visualmente distinto de los otros 2 botones de la misma fila (estrella=
+Principales, casa=Agrupado). Cambio puramente de ícono -- mismo layout/comportamiento/tests
+(ningún test asertaba el path SVG de este botón), verificado en vivo contra el servidor real de
+desarrollo.

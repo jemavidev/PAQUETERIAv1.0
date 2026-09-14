@@ -576,3 +576,314 @@ PWA de escritorio aunque esté instalada; o (ii) detectar el caso -- por ejemplo
 señal), sabiendo que eso reintroduce exactamente el problema que cerró el issue 304 para todo
 dispositivo que no tenga la PWA instalada (la mayoría). No hay una tercera opción documentada por
 Chrome o Meta que evite ese trade-off.
+
+---
+
+## Caso sin resolver: captura configurada correctamente pero no dispara
+
+**Contexto de esta sección:** siguiendo la conclusión (a)/(b) de la sección anterior, PaqueteX generó
+para este cliente puntual un enlace `https://web.whatsapp.com/send?phone=573022555723&text=...` (sin
+`target="_blank"`, sin JS interceptando el clic -- confirmado leyendo el HTML real que el cliente
+pegó). El cliente confirmó en `chrome://apps` -> configuración de la PWA -> **"Opening supported
+links"** -> **"web.whatsapp.com/\*"** listado, seleccionó explícitamente **"Open in WhatsApp Web"**,
+reinició Chrome, probó en `localhost:8010` y en `https://test.papyrus.com.co` (mismo resultado en
+ambos), y tiene un solo perfil de Chrome. A pesar de eso, el link sigue abriendo como pestaña normal.
+Esta sección investiga, contra fuentes primarias adicionales, por qué el mecanismo descrito arriba no
+dispara pese a que todas las precondiciones documentadas parecen cumplirse.
+
+**Nota de metodología:** `issues.chromium.org` (el tracker nuevo, alias de `bugs.chromium.org`) exige
+sesión iniciada para renderizar el contenido de un issue -- se intentó tanto `WebFetch` directo como a
+través de un proxy de renderizado (`r.jina.ai`, el mismo mecanismo que ya se usó en la sección anterior
+para las SPA de `developer.chrome.com`) y **ambos devuelven únicamente la pantalla de login**, sin el
+cuerpo del reporte. Esto es una limitación real de acceso, no ausencia de bugs -- donde no se pudo leer
+el cuerpo completo de un issue, se cita solo lo que quedó confirmado por otra vía (snippet de búsqueda,
+o mención del mismo número de issue desde un documento sí accesible). Adicionalmente, se hizo una
+verificación de primera mano nueva para esta sección: se leyó el manifest real servido hoy por
+`web.whatsapp.com` (`https://web.whatsapp.com/manifest.json`, 2026-09-04) -- mismo tipo de evidencia
+directa que la sección anterior usó para los HTTP 302 de `wa.me`.
+
+### 1. Bugs conocidos en el issue tracker oficial de Chromium
+
+Se encontró un issue con título y número que calzan casi exactamente con el síntoma buscado:
+
+- **[crbug.com/330282442](https://issues.chromium.org/issues/330282442) -- "External links don't open
+  in PWA".** Confirmado vía snippet de búsqueda: `Status: New`, `Priority: P3`, `Severity: S4` (no se
+  pudo leer el cuerpo completo por el muro de login descrito arriba). Sigue abierto, sin fecha de
+  resolución.
+
+  **Pero este issue no es el caso de PaqueteX.** Se encontró referenciado, con contexto que sí se pudo
+  leer completo, en el documento de diseño oficial del propio equipo de Chrome (Google Doc publicado
+  por el equipo de navigation capturing, enlazado desde la documentación pública de
+  `developer.chrome.com`):
+  [Navigation Management into Installed PWAs: Techniques and Best Practices](https://docs.google.com/document/d/e/2PACX-1vSqYzAmiLr-58OgSWBITtAAu6_2XUpjjNEdMvc6IdZn9DjQCeVrE0SKViumyly0cpryxAONMq62zwHw/pub),
+  que dice textualmente: *"Desktop will consider URL launches from the OS when
+  https://crbug.com/330282442 is fixed, targeting 2025."* Es decir, ese bug específico es sobre
+  **lanzar la PWA desde un link clicado FUERA del navegador** (otra app nativa, el explorador de
+  archivos, una notificación del sistema) -- no sobre un link clicado DENTRO de una pestaña de Chrome
+  ya abierta, que es exactamente el caso de PaqueteX (el cliente hace clic en un `<a href>` dentro de
+  `test.papyrus.com.co`, ya cargado en Chrome). El mismo documento confirma que la ruta "clic dentro
+  del navegador" es la que ya se documentó como shippeada en M133/M134 (ver Pregunta 2) -- un mecanismo
+  distinto e independiente del que bloquea crbug 330282442.
+- **crbug.com/392106502** (mencionado en el mismo documento de diseño): sobre que los contextos
+  auxiliares abiertos desde una ventana de PWA "se vuelven popups" -- tampoco aplica, es sobre
+  navegación *dentro* de una PWA ya abierta, no sobre capturar un link externo.
+- **Chrome 151 (aún no shippeado a la fecha de esta investigación):** un hilo de respuesta en la lista
+  `blink-dev` (Nate Chapin, equipo de Chrome,
+  [mail-archive.com/blink-dev@chromium.org/msg16864.html](http://www.mail-archive.com/blink-dev@chromium.org/msg16864.html))
+  anuncia que a partir de Chrome 151 `window.open()` **desde dentro de una PWA** hacia una URL en su
+  propio scope podrá capturarse -- de nuevo, un caso distinto (navegación *originada* dentro de la
+  PWA), no el de un link externo en una página cualquiera.
+
+**No se encontró ningún issue abierto en el tracker de Chromium cuyo título o descripción calce con
+"link externo, scope correcto, usuario ya opt-in, sigue sin capturar en un clic normal dentro del
+navegador".** Esto no prueba que no exista (el muro de login impidió una búsqueda exhaustiva del cuerpo
+de cientos de issues relacionados con "link capturing"/"navigation capturing"), pero de los candidatos
+más prometedores encontrados por título, ninguno resultó ser el caso de PaqueteX una vez leído en
+contexto.
+
+### 2. Requisito de manifest -- ¿hace falta `launch_handler` declarado?
+
+Este resultó ser el hallazgo más importante de la investigación, con un giro: **hasta hace relativamente
+poco, sí era un requisito real -- ya no lo es, según la documentación vigente.**
+
+El PSA oficial del cambio, publicado por el propio equipo de Chrome en la lista `blink-dev`
+([groups.google.com/a/chromium.org/g/blink-dev/c/xl1hGAfxlA0](https://groups.google.com/a/chromium.org/g/blink-dev/c/xl1hGAfxlA0),
+Dibyajyoti Pal, equipo de Chrome, 2 de abril de 2025) dice textualmente:
+
+> "Initially, only installed web apps having the launch_handler field specified in the manifest are
+> automatically opted into this behavior. [...] Windows, Mac, and Linux received this in M134. [...]
+> The rollout plan targets M135 for enabling this by default across all installed PWAs" [una vez
+> completado el testing con partners].
+
+Es decir: en M134 (early 2025), un `<a>` normal solo activaba la captura si la PWA declaraba
+`launch_handler` explícitamente en su manifest -- si no lo declaraba, el link **nunca** capturaba,
+sin importar cuán bien configurado estuviera todo lo demás. Esto habría sido una explicación perfecta
+del síntoma.
+
+**Pero la documentación vigente (la misma ya citada en la sección anterior,
+[pwa-navigation-management](https://developer.chrome.com/docs/capabilities/pwa-navigation-management),
+publicada en agosto de 2025 para Chrome 139) ya no lo condiciona:** confirma explícitamente que la
+captura funciona *"automatically... without requiring explicit manifest declaration"* y que el único
+requisito real es que el link caiga dentro del `scope`. `launch_handler` pasó a ser, según ese mismo
+texto, un *"optional enhancement"* que solo decide *cómo* se lanza la ventana una vez que ya se decidió
+capturar -- no *si* se captura. Esto es consistente con lo que ya estaba citado arriba (Pregunta 1 de
+la sección anterior): el documento vigente no menciona en ningún punto que `launch_handler` sea
+obligatorio.
+
+**Verificación de primera mano nueva para esta sección (2026-09-04):** se leyó el manifest real que
+`web.whatsapp.com` sirve hoy:
+
+```json
+{
+  "name": "WhatsApp Web",
+  "short_name": "WhatsApp Web",
+  "start_url": ".",
+  "display": "standalone",
+  "description": "Quickly send and receive WhatsApp messages right from your computer.",
+  "background_color": "#f0f2f5",
+  "theme_color": "#f0f2f5"
+}
+```
+
+**WhatsApp Web no declara `launch_handler`, no declara `capture_links`, y no declara `scope`
+explícito.** Bajo la regla de M134 esto habría bloqueado la captura para **todos** los usuarios de
+WhatsApp Web PWA en el mundo -- no solo este cliente -- lo cual habría sido un hallazgo enorme (justo
+el tipo de "algo en el manifest de WhatsApp que rompe la captura para todos sus usuarios" que pedía el
+encargo). Pero dado que la versión de Chrome de cualquier cliente actualizado hoy (ver Pregunta 5 más
+abajo, Chrome estable ronda la versión 152 en septiembre 2026) está muy por delante de M135, la regla
+vigente ya no debería exigirlo. El `scope` por default, al no estar declarado, se calcula como el
+directorio de `start_url` resuelto contra la URL del manifest -- con `start_url: "."` y el manifest
+servido en la raíz de `web.whatsapp.com`, eso resuelve a `https://web.whatsapp.com/`, que cubre `/send`
+sin problema.
+
+**Conclusión de este punto:** la ausencia de estos campos en el manifest de WhatsApp es una pista que
+vale la pena tener presente (y que efectivamente habría sido la causa bajo M134), pero según la
+documentación vigente **no debería** ser la causa hoy. Se deja documentado explícitamente porque es
+exactamente el tipo de "requisito de manifest no obvio" que pedía el encargo, aunque la evidencia actual
+apunte a que ya no aplica.
+
+### 3. Flags en `chrome://flags`
+
+No se encontró ningún flag que, según la documentación oficial, siga condicionando el mecanismo base de
+navigation capturing de Chrome 139+ -- los artículos de `developer.chrome.com` lo presentan como
+comportamiento por defecto incondicional, sin mención de ningún flag para activarlo. Se revisaron los
+candidatos más plausibles:
+
+- **`#enable-desktop-pwas-link-capturing`**: existe, pero es el flag del mecanismo *viejo* y
+  deprecado (`capture_links` declarativo, Pregunta 1 de la sección anterior) -- *"To experiment with
+  Declarative Link Capturing locally, without an origin trial token, enable the
+  #enable-desktop-pwas-link-capturing flag"*. No es el mecanismo vigente.
+- **`#enable-desktop-pwas-url-handling`**: existe, pero es para la API cross-origin *PWAs as URL
+  Handlers* (Pregunta 6 de la sección anterior) -- no aplica, WhatsApp Web/PaqueteX son mismo origen.
+- **`#enable-desktop-pwas-tab-strip-link-capturing`**: existe hoy en Chrome, pero gobierna una función
+  distinta y más angosta -- cómo se capturan links **dentro** de la interfaz de pestañas propia de una
+  PWA que usa *tab strip* (una PWA que se comporta como mini-navegador con sus propias pestañas), no el
+  mecanismo base de "¿esta URL activa la PWA en absoluto?".
+
+**No se encontró evidencia de un rollout porcentual (Finch) activo hoy que retenga el mecanismo base
+para una fracción de usuarios ya en Chrome 139+.** Los documentos oficiales presentan M135 (abril/mayo
+2025) como el punto en que terminó el testing con partners y se generalizó a todas las PWA instaladas;
+no se encontró ningún comunicado posterior anunciando una reversión o un nuevo gating. Esto no es
+prueba absoluta de que no exista -- Google no siempre anuncia públicamente cada experimento de Finch --
+pero no hay ninguna señal documental de que lo haya. **Acción concreta y gratuita para el cliente:**
+igual vale la pena que abra `chrome://flags` y busque "capturing" -- es un chequeo de segundos y, si
+por alguna razón local ese Chrome tiene alguno de estos flags tocado a mano, se vería ahí mismo.
+
+### 4. `chrome://web-app-internals` como vía de diagnóstico
+
+**Sí es una página oficial real**, referenciada por la propia documentación de `developer.chrome.com`
+(en el contexto de Isolated Web Apps, que la usan para instalar/inspeccionar apps vía
+`chrome://web-app-internals`) y por documentación interna de Chromium (`docs/webapps/`) que describe que
+los comandos internos del sistema de Web Apps exponen un método `ToDebugValue()` cuyo resultado
+*"is logged on completion and exposed in the chrome://web-app-internals[,] which can be very helpful
+for debugging and bug reports"*. Es decir: es la página que el propio equipo de Chrome le pide a la
+gente que revise antes de reportar un bug de PWA -- exactamente el tipo de vía oficial que pedía el
+encargo.
+
+**Lo que NO se pudo confirmar con una fuente primaria** (documentación pública real, no interpretación):
+el nombre literal de cada campo que aparece en pantalla para la sección de un app instalada (no se
+encontró ningún artículo oficial de Google, ni una captura de pantalla documentada en fuente primaria,
+que liste explícitamente etiquetas como "capture_links", "scope" o "display_mode" tal como aparecen en
+esa UI). Esto se anota como vacío de documentación, igual que otros ya señalados en este archivo -- no
+se rellena con nombres inventados.
+
+**Lo que sí se pudo confirmar con una fuente primaria distinta, y es directamente accionable:** el
+Chrome DevTools Protocol -- la API oficial que Chrome expone para herramientas de desarrollo, documentada
+en [chromedevtools.github.io/devtools-protocol/tot/PWA/](https://chromedevtools.github.io/devtools-protocol/tot/PWA/)
+-- confirma que existe, a nivel interno del navegador, una preferencia booleana exacta llamada
+**`linkCapturing`** por cada app instalada, modificable vía el método `PWA.changeAppUserSettings` (el
+mismo mecanismo que hay detrás del toggle de "Open supported links"/"App info > Settings" que el cliente
+ya usó). Y el detalle más importante de ese mismo documento:
+
+> "the API does not support resetting the linkCapturing to the initial value, **uninstalling and
+> installing the web app again will reset it**."
+
+Esto es una confirmación oficial de que **no hay una vía documentada para forzar un reset limpio de esa
+preferencia salvo desinstalar y reinstalar la PWA** -- ni siquiera a través de la propia API que Chrome
+expone a las DevTools. Si el toggle que el cliente activó no tomó efecto realmente (por ejemplo, si
+Chrome ya tenía cacheado un estado "false" de una sesión anterior, antes de que el cliente lo activara),
+esto explicaría por qué "activar el ajuste" no bastó -- el ajuste de UI puede no estar re-sincronizando
+un estado interno que quedó mal cacheado, y la única vía confirmada oficialmente para limpiarlo es
+reinstalar.
+
+**Cómo llegar a la sección de WhatsApp en `chrome://web-app-internals` (pasos para el cliente):**
+
+1. Abrir una pestaña nueva de Chrome y escribir `chrome://web-app-internals` en la barra de
+   direcciones.
+2. La página lista los web apps instalados. Buscar (Ctrl+F del navegador funciona sobre la página) por
+   "WhatsApp" o por `web.whatsapp.com`.
+3. Expandir la entrada -- debería mostrar un bloque de datos (JSON o texto estructurado) con, como
+   mínimo, el manifest procesado (`start_url`, `scope`, `display`) y el estado de instalación. Revisar
+   ahí que el `scope` registrado sea efectivamente `https://web.whatsapp.com/` (o algo que cubra
+   `/send`) -- si quedó registrado un scope distinto o vacío desde una instalación vieja, sería visible
+   ahí.
+4. Si existe una sección de "preferencias" o "settings" del usuario para esa app (dado que
+   `linkCapturing` existe como preferencia interna confirmada por DevTools Protocol arriba), revisarla
+   ahí -- el nombre exacto en pantalla no está confirmado por fuente primaria, pero un valor booleano
+   asociado a "link capturing" o "capturing" debería ser reconocible por contexto.
+5. Relacionado pero distinto: `chrome://app-service-internals` (mencionado en la guía oficial de
+   herramientas de PWA de `web.dev`,
+   [web.dev/learn/pwa/tools-and-debug](https://web.dev/learn/pwa/tools-and-debug): *"a debug version
+   [of the installed-apps list] by browsing to about:app-service-internals"*) es una vista más general
+   del App Service de Chrome (no específica de PWA), también vale la pena revisarla si
+   `web-app-internals` no aclara nada.
+
+### 5. Diferencias por sistema operativo
+
+No se encontró ningún bug o comportamiento adicional específico por SO más allá de lo ya documentado en
+la sección anterior (Pregunta 4: Windows/Mac/Linux desde Chrome 139, ChromeOS con mecanismo distinto).
+Dos hipótesis específicas de esta sección se investigaron y se pudieron **descartar** con evidencia:
+
+- **¿Hace falta que Chrome sea el navegador default del sistema operativo?** Se investigó porque
+  Microsoft documenta explícitamente ese requisito para Edge en el caso de links clicados *fuera* del
+  navegador (*"the OS automatically launches a PWA for links within its scope when [...] Microsoft Edge
+  is the default browser on the device"*) -- pero ese es el caso "OS surface" (equivalente al
+  crbug 330282442 de la Pregunta 1), no el de un clic dentro de una pestaña ya abierta. La documentación
+  interna de Chromium sobre integración de PWA en Windows
+  ([chromium.googlesource.com/.../docs/windows_pwa_integration.md](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/windows_pwa_integration.md))
+  no menciona ningún requisito de navegador-default para el registro de shortcuts/file handlers de PWA,
+  y no hay ninguna mención de ese requisito en los artículos de navigation capturing. Se descarta como
+  causa para el caso de PaqueteX (el link se clickea dentro de una pestaña de Chrome ya abierta).
+- **¿Puede una política empresarial (Chrome/Edge administrado) forzar la desactivación silenciosa de
+  link capturing para un origen?** Existe una política real, `WebAppSettings`, documentada de forma
+  legible en el espejo de Microsoft
+  ([learn.microsoft.com/.../webappsettings](https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/webappsettings),
+  actualizado 2026 -- misma política de Chromium, no específica de Edge). Pero **su esquema documentado
+  hoy solo incluye `manifest_id`, `run_on_os_login`, `prevent_close_after_run_on_os_login` y
+  `force_unregister_os_integration`** -- no existe, en la documentación actual, ningún campo de esa
+  política relacionado con link capturing. Se descarta como causa (salvo que el computador del cliente
+  esté además bajo una política de terceros no estándar, algo que ninguna fuente pública puede
+  confirmar o descartar).
+
+### 6. Mejor hipótesis, rankeada
+
+**Antes de rankear: la versión de Chrome del cliente casi seguro no es el problema.** Chrome estable
+alcanzó la versión ~152 en septiembre 2026
+([chromereleases.googleblog.com/2026/09](https://chromereleases.googleblog.com/2026/09/), verificado
+para esta investigación) -- muy por delante de Chrome 139 (agosto 2025), que es el mínimo para
+navigation capturing en Windows/Mac/Linux. Cualquier Chrome con auto-actualización activa ya lo tiene.
+
+1. **(Hipótesis con más respaldo, y la única variable que el propio encargo marcó como no 100%
+   descartada) El clic del cliente no es una "navegación capturable" en el sentido técnico exacto que
+   exige el mecanismo.** El paso 1 del algoritmo, ya citado en la sección anterior de este archivo
+   (Pregunta 1): *"a navigation is considered capturable if it creates a new frame and does not open in
+   an auxiliary browsing context."* El estándar HTML de WHATWG
+   ([html.spec.whatwg.org/multipage/document-sequences.html](https://html.spec.whatwg.org/multipage/document-sequences.html))
+   confirma que un contexto de navegación auxiliar (hoy descrito como un nuevo "top-level traversable")
+   es precisamente lo que se crea cuando *"the user agent has been configured such that in this
+   instance it will create a new top-level traversable"* -- la redacción normativa que cubre,
+   exactamente, Ctrl+clic, Cmd+clic, clic central, o "Abrir enlace en pestaña nueva" desde el menú
+   contextual. Si el cliente probó con cualquiera de esos gestos (incluso sin darse cuenta -- es un
+   hábito común en usuarios que ya andaban revisando ajustes técnicos de Chrome), el link **nunca**
+   podría capturar, sin importar que scope, opt-in, reinicio, HTTPS y perfil único estén perfectos --
+   coincidiría exactamente con el síntoma reportado ("abre una pestaña normal"). Es la explicación más
+   barata de probar (treinta segundos) y la que mejor calza con el hueco explícito que el encargo dejó
+   abierto.
+2. **La preferencia interna `linkCapturing` quedó en un estado no sincronizado que el toggle de UI no
+   corrigió.** Respaldado directamente por la documentación oficial del Chrome DevTools Protocol citada
+   en la Pregunta 4: no hay vía soportada para resetear esa preferencia salvo desinstalar y reinstalar
+   la PWA. Si Chrome cacheó "false" antes de que el cliente activara el ajuste (por ejemplo, si probó el
+   link una vez antes de configurar nada, lo cual generalmente fija la preferencia a "no capturar" de
+   forma persistente), el toggle posterior podría no haber limpiado ese estado.
+3. **Edge case de scope/manifest específico de esa instalación.** Baja probabilidad dado que el manifest
+   actual (verificado en vivo, Pregunta 2) es simple y no debería fallar, pero si la PWA se instaló hace
+   mucho tiempo bajo una versión distinta del manifest o con un scope calculado distinto, reinstalar
+   (que cubre también la Hipótesis 2) fuerza un refetch limpio.
+4. **Honestidad sobre el límite de esta investigación:** si las hipótesis 1-3 se descartan en vivo (clic
+   normal confirmado sin modificadores, reinstalación completa de la PWA, y `chrome://web-app-internals`
+   mostrando scope y preferencias correctas) y el link *sigue* sin capturar, esto excede lo que la
+   documentación pública explica. En ese punto el camino real ya no es leer más documentación, es
+   diagnóstico interno del navegador de ese cliente puntual -- o, en última instancia, reportar un bug
+   nuevo en `issues.chromium.org` con toda la evidencia reunida (sería, hasta donde esta investigación
+   pudo confirmar, un caso no cubierto por ningún issue existente encontrado).
+
+---
+
+## Qué probar en el navegador real del cliente (priorizado)
+
+1. **Confirmar que el clic es un clic izquierdo simple, sin Ctrl/Cmd/clic central, y sin "Abrir en
+   pestaña nueva" del menú contextual.** Pedirle al cliente que, con la ventana de WhatsApp Web PWA
+   *cerrada* de antemano, haga un clic izquierdo normal y observe si se abre una ventana nueva con cara
+   de app (sin barra de direcciones) en vez de una pestaña de Chrome. Es la hipótesis #1 de arriba, y no
+   cuesta nada probarla primero.
+2. **Desinstalar y reinstalar la PWA de WhatsApp Web**, luego repetir el paso 1. Esto fuerza tanto un
+   refetch limpio del manifest (Hipótesis 3) como un reset de la preferencia interna `linkCapturing`
+   (Hipótesis 2) -- es la única vía que Chrome documenta oficialmente para resetear esa preferencia. Tras
+   reinstalar, verificar de nuevo `chrome://apps` -> configuración -> "Opening supported links" -> que
+   quede en "Open in WhatsApp Web" (puede volver al default tras reinstalar).
+3. **Abrir `chrome://web-app-internals`, buscar la entrada de WhatsApp Web, y revisar el `scope`
+   registrado.** Confirmar que sea `https://web.whatsapp.com/` (o equivalente que cubra `/send`) y no
+   algo vacío o distinto. Ver pasos detallados en la Pregunta 4 arriba.
+4. **Revisar `chrome://flags` buscando "capturing"** y confirmar que ninguno de los flags relacionados
+   esté tocado a mano (debería estar todo en "Default"). Chequeo gratuito, aunque de baja probabilidad
+   según la Pregunta 3.
+5. **Confirmar la versión exacta de Chrome en `chrome://version`** -- de baja prioridad dado que
+   cualquier Chrome actualizado en septiembre 2026 debería estar muy por delante del mínimo (Chrome 139),
+   pero descarta por completo cualquier duda sobre versión desactualizada en un minuto.
+6. **Si nada de lo anterior lo resuelve:** documentar el `scope`/manifest exacto que mostró
+   `chrome://web-app-internals` en el paso 3, más la versión de Chrome del paso 5, y considerar que el
+   caso ya excede lo que la documentación pública cubre (Hipótesis 4) -- en ese punto, evaluar si vale la
+   pena para el cliente seguir invirtiendo tiempo en esto dado que PaqueteX no puede arreglar un bug del
+   navegador del cliente, y que Android/`wa.me` (ya confirmado funcional en la sección anterior una vez
+   se resuelva la verificación pendiente) sigue siendo la vía principal y ya correcta para el resto de
+   los usuarios.
