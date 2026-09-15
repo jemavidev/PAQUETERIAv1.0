@@ -10,7 +10,7 @@ esta rebanada es solo el cableado HTTP.
 """
 
 import uuid
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.domain import smtp_email_sender
 from app.domain.cobro_service import (
+    FiltrosEstadisticasCobro,
     crear_motivo_anulacion,
     editar_tarifas,
     eliminar_motivo_anulacion,
@@ -49,7 +50,7 @@ from app.domain.notificacion_service import (
     obtener_asunto_actual,
     obtener_texto_actual,
 )
-from app.domain.paquete import EstadoPaquete
+from app.domain.paquete import EstadoPaquete, TipoPaquete
 from app.domain.paquete_service import migrar_codigos_del_anio
 from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
@@ -873,6 +874,19 @@ def admin_motivos_anulacion_cobro_eliminar(
     )
 
 
+def _peticion_en_vivo_estadisticas_cobro(request: Request) -> bool:
+    """Mismo mecanismo que `packages._peticion_en_vivo`/
+    `customers_manage._peticion_en_vivo` (duplicado a propósito, cada
+    módulo/vista tiene el suyo) -- el JS propio de
+    `admin/estadisticas_cobro.html` (no `_busqueda_filtros.html`, ver su
+    docstring: esta vista tiene más filtros de los que ese macro compartido
+    sabe construir) marca cada petición en segundo plano con este header."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO = 29  # 30 días inclusive (hoy - 29 .. hoy)
+
+
 @router.get("/administracion/estadisticas-cobro", response_class=HTMLResponse)
 def admin_estadisticas_cobro(
     request: Request,
@@ -880,14 +894,33 @@ def admin_estadisticas_cobro(
     admin: Usuario = Depends(require_admin),
     desde: str = None,
     hasta: str = None,
+    tipo: str = None,
+    estado_cobro: str = None,
+    usuario_id: str = None,
+    pagina_apartamento: int = 1,
+    pagina_usuario: int = 1,
+    pagina_diario: int = 1,
 ):
-    """Sin `desde`/`hasta` (primera carga): el día de hoy, en UTC -- rango
-    mínimo con sentido, el admin ajusta desde el selector si quiere otro."""
+    """Solo lectura, exclusiva de admin (`.scratch/cobro-bodegaje` ticket 06,
+    rediseño interactivo en `.scratch/estadisticas-cobro-interactivas`).
+
+    Sin `desde`/`hasta` (primera carga): últimos 30 días en UTC (antes: solo
+    hoy -- ampliado porque la serie diaria y los desgloses nuevos necesitan
+    cuerpo para tener sentido de entrada, decisión explícita del `grilling`).
+
+    `tipo`/`estado_cobro`/`usuario_id` combinan (AND) entre sí y con el
+    rango -- valores inválidos o que no matchean ningún `TipoPaquete`/UUID
+    se ignoran en silencio (mismo criterio laxo que `estado` en
+    `packages.py::_listar`), no producen error 400."""
     hoy = datetime.now(timezone.utc).date()
     try:
-        fecha_desde = date.fromisoformat(desde) if desde else hoy
+        fecha_desde = (
+            date.fromisoformat(desde)
+            if desde
+            else hoy - timedelta(days=_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO)
+        )
     except ValueError:
-        fecha_desde = hoy
+        fecha_desde = hoy - timedelta(days=_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO)
     try:
         fecha_hasta = date.fromisoformat(hasta) if hasta else hoy
     except ValueError:
@@ -896,17 +929,54 @@ def admin_estadisticas_cobro(
     inicio = datetime.combine(fecha_desde, time.min, tzinfo=timezone.utc)
     fin = datetime.combine(fecha_hasta, time.max, tzinfo=timezone.utc)
 
-    stats = estadisticas_cobro(db, inicio, fin)
-    return templates.TemplateResponse(
-        "admin/estadisticas_cobro.html",
-        {
-            "request": request,
-            "admin": admin,
-            "stats": stats,
-            "desde": fecha_desde.isoformat(),
-            "hasta": fecha_hasta.isoformat(),
-        },
+    tipo_valores = {t.value for t in TipoPaquete}
+    tipo_enum = TipoPaquete(tipo) if tipo in tipo_valores else None
+
+    anulado = {"cobrado": False, "anulado": True}.get(estado_cobro)
+
+    try:
+        usuario_uuid = uuid.UUID(usuario_id) if usuario_id else None
+    except ValueError:
+        usuario_uuid = None
+
+    filtros = FiltrosEstadisticasCobro(
+        desde=inicio,
+        hasta=fin,
+        tipo=tipo_enum,
+        anulado=anulado,
+        usuario_id=usuario_uuid,
+        pagina_apartamento=max(1, pagina_apartamento),
+        pagina_usuario=max(1, pagina_usuario),
+        pagina_diario=max(1, pagina_diario),
     )
+    stats = estadisticas_cobro(db, filtros)
+
+    en_vivo = _peticion_en_vivo_estadisticas_cobro(request)
+    plantilla = (
+        "admin/_estadisticas_cobro_resultados.html"
+        if en_vivo
+        else "admin/estadisticas_cobro.html"
+    )
+    contexto = {
+        "request": request,
+        "admin": admin,
+        "stats": stats,
+        "desde": fecha_desde.isoformat(),
+        "hasta": fecha_hasta.isoformat(),
+        "filtro_tipo": tipo_enum.value if tipo_enum else "",
+        "filtro_estado_cobro": estado_cobro or "",
+        "filtro_usuario_id": str(usuario_uuid) if usuario_uuid else "",
+        "pagina_apartamento": filtros.pagina_apartamento,
+        "pagina_usuario": filtros.pagina_usuario,
+        "pagina_diario": filtros.pagina_diario,
+    }
+    if not en_vivo:
+        # Lista de staff para el `<select>` de Usuario -- vive en la barra
+        # de filtros, FUERA del fragmento que el fetch en vivo reemplaza, así
+        # que no hace falta recalcularla en cada actualización (mismo
+        # criterio que `conteos_estado` en `packages.py::_render_lista`).
+        contexto["staff_lista"] = db.query(Usuario).order_by(Usuario.nombre).all()
+    return templates.TemplateResponse(plantilla, contexto)
 
 
 @router.get("/administracion/contactos-externos", response_class=HTMLResponse)
