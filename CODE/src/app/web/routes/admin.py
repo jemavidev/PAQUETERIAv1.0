@@ -9,11 +9,13 @@ activar/desactivar) sobre `staff_service`, ya probado a nivel de dominio —
 esta rebanada es solo el cableado HTTP.
 """
 
+import csv
+import io
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.domain import smtp_email_sender
@@ -30,7 +32,15 @@ from app.domain.configuracion_conjunto_service import (
     obtener_nombre_conjunto,
     renombrar_conjunto,
 )
-from app.domain.contacto_externo_service import buscar_contactos_externos
+from app.domain.contacto_externo_service import (
+    COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS,
+    buscar_contactos_externos,
+    contactos_externos_a_filas_plantilla,
+    fila_plantilla_a_fila_fuente,
+    fuentes_existentes,
+    importar_contactos_externos,
+    listar_todos_los_contactos_externos,
+)
 from app.domain.email_sender import EmailSender
 from app.domain.notification_sender import NotificationSender
 from app.domain.motivo_bloqueo_service import (
@@ -875,12 +885,12 @@ def admin_motivos_anulacion_cobro_eliminar(
 
 
 def _peticion_en_vivo_estadisticas_cobro(request: Request) -> bool:
-    """Mismo mecanismo que `packages._peticion_en_vivo`/
-    `customers_manage._peticion_en_vivo` (duplicado a propósito, cada
-    módulo/vista tiene el suyo) -- el JS propio de
-    `admin/estadisticas_cobro.html` (no `_busqueda_filtros.html`, ver su
-    docstring: esta vista tiene más filtros de los que ese macro compartido
-    sabe construir) marca cada petición en segundo plano con este header."""
+    """Mismo mecanismo que `_peticion_en_vivo_contactos_externos` de acá
+    mismo (duplicado a propósito, cada módulo/vista tiene el suyo) -- el JS
+    propio de `admin/estadisticas_cobro.html` (no `_busqueda_filtros.html`,
+    ver su docstring: esta vista tiene más filtros de los que ese macro
+    compartido sabe construir) marca cada petición en segundo plano con
+    este header."""
     return request.headers.get("X-Requested-With") == "fetch"
 
 
@@ -979,6 +989,37 @@ def admin_estadisticas_cobro(
     return templates.TemplateResponse(plantilla, contexto)
 
 
+def _peticion_en_vivo_contactos_externos(request: Request) -> bool:
+    """Mismo mecanismo que `customers_manage._peticion_en_vivo`/
+    `packages._peticion_en_vivo` (duplicado a propósito, cada módulo de rutas
+    tiene el suyo) -- el JS de `_busqueda_filtros.html` marca cada petición
+    en segundo plano con este header."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def _contexto_contactos_externos(
+    request: Request, admin: Usuario, db: Session, q: str, pagina: int
+) -> dict:
+    """Contexto base compartido por la página completa de `/administracion/
+    contactos-externos` (GET) y por el resultado del import (POST, que
+    re-renderiza la misma plantilla) -- un solo lugar para que ambas nunca
+    diverjan en qué le pasan a `admin/contactos_externos.html`."""
+    contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
+    return {
+        "request": request,
+        "admin": admin,
+        "contactos": contactos,
+        "total_paginas": total_paginas,
+        "pagina": pagina,
+        "q": q or "",
+        # `fuentes`: puebla el `<select>` del formulario de import, no
+        # cambia con la búsqueda -- solo hace falta fuera del fragmento en
+        # vivo (ver `admin_contactos_externos`), pero acá siempre es la
+        # página completa, así que siempre se incluye.
+        "fuentes": fuentes_existentes(db),
+    }
+
+
 @router.get("/administracion/contactos-externos", response_class=HTMLResponse)
 def admin_contactos_externos(
     request: Request,
@@ -987,17 +1028,96 @@ def admin_contactos_externos(
     q: str = None,
     pagina: int = 1,
 ):
-    contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
-    return templates.TemplateResponse(
-        "admin/contactos_externos.html",
-        {
-            "request": request,
-            "admin": admin,
-            "contactos": contactos,
-            "total_paginas": total_paginas,
-            "pagina": pagina,
-            "q": q or "",
-        },
+    if _peticion_en_vivo_contactos_externos(request):
+        contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
+        return templates.TemplateResponse(
+            "admin/_contactos_externos_resultados.html",
+            {
+                "request": request,
+                "admin": admin,
+                "contactos": contactos,
+                "total_paginas": total_paginas,
+                "pagina": pagina,
+                "q": q or "",
+            },
+        )
+    contexto = _contexto_contactos_externos(request, admin, db, q, pagina)
+    return templates.TemplateResponse("admin/contactos_externos.html", contexto)
+
+
+# Valor de `fuente` en el `<select>` del formulario de import cuando el
+# admin elige escribir una fuente nueva a mano en vez de reusar una ya
+# existente (`.scratch/contactos-externos-import-export`).
+_FUENTE_OTRA = "__otra__"
+
+
+@router.post("/administracion/contactos-externos/importar", response_class=HTMLResponse)
+async def admin_contactos_externos_importar(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    archivo: UploadFile = File(...),
+    fuente: str = Form(...),
+    fuente_otra: str = Form(None),
+):
+    fuente_valor = (fuente_otra or "").strip() if fuente == _FUENTE_OTRA else fuente.strip()
+    error_importacion = None
+    resumen_importacion = None
+
+    if not fuente_valor:
+        error_importacion = "Elegí o escribí una fuente para este archivo."
+    else:
+        contenido = await archivo.read()
+        try:
+            texto = contenido.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            error_importacion = "El archivo no es un CSV de texto válido (UTF-8)."
+        else:
+            lector = csv.DictReader(io.StringIO(texto))
+            columnas = set(lector.fieldnames or [])
+            if columnas != set(COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS):
+                error_importacion = (
+                    "El archivo no tiene las columnas de la plantilla ("
+                    + ", ".join(COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS)
+                    + ")."
+                )
+            else:
+                filas = [fila_plantilla_a_fila_fuente(fila, fuente_valor) for fila in lector]
+                resumen_importacion = importar_contactos_externos(db, filas)
+                db.commit()
+
+    contexto = _contexto_contactos_externos(request, admin, db, None, 1)
+    contexto["resumen_importacion"] = resumen_importacion
+    contexto["error_importacion"] = error_importacion
+    return templates.TemplateResponse("admin/contactos_externos.html", contexto)
+
+
+@router.get("/administracion/contactos-externos/plantilla")
+def admin_contactos_externos_plantilla(admin: Usuario = Depends(require_admin)):
+    buffer = io.StringIO()
+    escritor = csv.DictWriter(buffer, fieldnames=COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS)
+    escritor.writeheader()
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=plantilla-contactos-externos.csv"},
+    )
+
+
+@router.get("/administracion/contactos-externos/exportar")
+def admin_contactos_externos_exportar(
+    db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    contactos = listar_todos_los_contactos_externos(db)
+    filas = contactos_externos_a_filas_plantilla(contactos)
+    buffer = io.StringIO()
+    escritor = csv.DictWriter(buffer, fieldnames=COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS)
+    escritor.writeheader()
+    escritor.writerows(filas)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=contactos-externos.csv"},
     )
 
 

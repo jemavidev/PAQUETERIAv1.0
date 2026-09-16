@@ -70,7 +70,6 @@ from app.domain.saldo_contra_entrega_service import (
 )
 from app.domain.persona_service import (
     MENSAJE_NO_SE_PUEDE_ELIMINAR,
-    WHATSAPP_USUARIO_RE,
     anonimizar_persona,
     autorizar_desbloqueo,
     bloquear_persona,
@@ -95,6 +94,7 @@ from app.domain.preferencia_notificacion_service import (
 from app.domain.telefono import normalizar_telefono
 from app.domain.texto import normalizar_nombre
 from app.domain.usuario import RolUsuario, Usuario
+from app.domain.whatsapp import WHATSAPP_USUARIO_RE
 
 from ..db import get_db
 from ..security import current_staff, require_admin
