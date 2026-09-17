@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: implementado, verificado en vivo en local (`localhost:8010`, migración aplicada); pendiente desplegar y correr `alembic upgrade head` en `test.papyrus.com.co`/producción
 Feature: contactos-externos-import-export
 Branch: PaqueteXv.2
 Fuente de verdad: sesión de `/grilling` con el cliente (esta conversación) · módulo previo

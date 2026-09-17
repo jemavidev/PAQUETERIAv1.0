@@ -111,6 +111,29 @@ def test_con_whatsapp_muestra_el_usuario(client):
     assert "ana.whatsapp" in r.text
 
 
+def test_muestra_el_total_de_contactos(client):
+    _login_admin(client)
+    _sembrar(
+        client,
+        [
+            FilaFuenteContacto(nombre="Juan Perez", telefonos=("3001111111",), fuente=FUENTE_GOOGLE_CONTACTS),
+            FilaFuenteContacto(nombre="Ana Gomez", telefonos=("3002222222",), fuente=FUENTE_GOOGLE_CONTACTS),
+        ],
+    )
+    r = client.get("/administracion/contactos-externos")
+    assert "2 contactos" in r.text
+
+
+def test_muestra_el_total_aunque_quepan_en_una_sola_pagina(client):
+    # `paginacion()` no renderiza nada con 1 sola página -- el total tiene
+    # que seguir viéndose igual (issue 338, .scratch/pendientes-cliente).
+    _login_admin(client)
+    _sembrar(client, [FilaFuenteContacto(nombre="Juan Perez", telefonos=("3001111111",), fuente=FUENTE_GOOGLE_CONTACTS)])
+    r = client.get("/administracion/contactos-externos")
+    assert "1 contacto" in r.text
+    assert "1 contactos" not in r.text
+
+
 def test_peticion_en_vivo_devuelve_solo_el_fragmento(client):
     # Búsqueda en vivo (mismo mecanismo que /paquetes y /residentes, ver
     # test_customers_manage.py): el fetch de `_busqueda_filtros.html` marca

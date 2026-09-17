@@ -332,9 +332,13 @@ def buscar_contactos_externos(session, q: str = None, pagina: int = 1):
     """Lista paginada de `ContactoExterno`, opcionalmente filtrada por `q`
     (coincidencia parcial de nombre, o el teléfono completo en cualquier
     formato de entrada -- sin cambios, el buscador no se extendió a
-    WhatsApp). Devuelve `(contactos, total_paginas)` -- cada `ContactoExterno`
-    trae sus teléfonos y usuarios de WhatsApp precargados en
-    `.telefonos_cargados`/`.whatsapps_cargados` (evita N+1 al listar)."""
+    WhatsApp). Devuelve `(contactos, total_paginas, total)` -- `total` es la
+    cantidad real de contactos que matchean `q` (.scratch/pendientes-
+    cliente, issue 338: la paginación de la vista necesitaba mostrarlo, y
+    ya se calculaba acá para derivar `total_paginas`, solo que se
+    descartaba). Cada `ContactoExterno` trae sus teléfonos y usuarios de
+    WhatsApp precargados en `.telefonos_cargados`/`.whatsapps_cargados`
+    (evita N+1 al listar)."""
     query = session.query(ContactoExterno)
 
     termino = (q or "").strip()
@@ -366,7 +370,7 @@ def buscar_contactos_externos(session, q: str = None, pagina: int = 1):
     )
 
     _precargar_telefonos_y_whatsapps(session, contactos)
-    return contactos, total_paginas
+    return contactos, total_paginas, total
 
 
 COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS = ("Nombre", "Teléfonos", "WhatsApp")

@@ -15,6 +15,13 @@
 {% from "components/_estado_vacio.html" import estado_vacio %}
 {% from "components/_paginacion.html" import paginacion %}
 {% if contactos %}
+{# `paginacion()` no renderiza nada con 1 sola página (`total_paginas <= 1`,
+   ver su propio macro) -- este total va POR FUERA de esa condición para que
+   siga viéndose incluso con pocos contactos (issue 338, .scratch/
+   pendientes-cliente, pedido explícito del cliente). #}
+<p class="text-sm text-slate-600 mt-1 mb-1">
+  {{ total_contactos }} contacto{{ 's' if total_contactos != 1 else '' }}{{ ' encontrado' ~ ('s' if total_contactos != 1 else '') if q else '' }}
+</p>
 {{ paginacion(pagina, total_paginas, '/administracion/contactos-externos', params={'q': q}) }}
 {% set fuente_label = {'google_contacts': 'Google Contacts', 'produccion_v1': 'Producción v1'} %}
 <div class="mt-2 overflow-x-auto rounded-lg border border-slate-200 bg-white">

@@ -1004,12 +1004,13 @@ def _contexto_contactos_externos(
     contactos-externos` (GET) y por el resultado del import (POST, que
     re-renderiza la misma plantilla) -- un solo lugar para que ambas nunca
     diverjan en qué le pasan a `admin/contactos_externos.html`."""
-    contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
+    contactos, total_paginas, total_contactos = buscar_contactos_externos(db, q, pagina)
     return {
         "request": request,
         "admin": admin,
         "contactos": contactos,
         "total_paginas": total_paginas,
+        "total_contactos": total_contactos,
         "pagina": pagina,
         "q": q or "",
         # `fuentes`: puebla el `<select>` del formulario de import, no
@@ -1029,7 +1030,7 @@ def admin_contactos_externos(
     pagina: int = 1,
 ):
     if _peticion_en_vivo_contactos_externos(request):
-        contactos, total_paginas = buscar_contactos_externos(db, q, pagina)
+        contactos, total_paginas, total_contactos = buscar_contactos_externos(db, q, pagina)
         return templates.TemplateResponse(
             "admin/_contactos_externos_resultados.html",
             {
@@ -1037,6 +1038,7 @@ def admin_contactos_externos(
                 "admin": admin,
                 "contactos": contactos,
                 "total_paginas": total_paginas,
+                "total_contactos": total_contactos,
                 "pagina": pagina,
                 "q": q or "",
             },
