@@ -474,3 +474,10 @@ test_optimizacion.sh
 FEATURE_ORDENAMIENTO_ULTIMA_ACTUALIZACION.md
 .claude/cache/
 .claude/backups/
+
+# Datos reales de clientes/contactos usados como insumo de trabajo (PII real:
+# nombres y teléfonos) -- nunca deben commitearse, ver deploy 2026-09-18.
+CODE/docs/plantilla-contactos-externos.csv
+CODE/docs/plantilla-contactos-externos-produccion.csv
+CODE/docs/produccion-v1/
+CODE/docs/whatsapp/
