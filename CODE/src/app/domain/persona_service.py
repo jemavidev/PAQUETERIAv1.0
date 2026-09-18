@@ -20,6 +20,7 @@ from .paquete import Paquete
 from .persona import Persona
 from .telefono import normalizar_telefono
 from .texto import normalizar_nombre
+from .usuario import Usuario
 from .whatsapp import normalizar_whatsapp_usuario, validar_whatsapp_usuario
 
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -564,5 +565,38 @@ def aceptar_terminos_y_desbloquear(session: Session, persona: Persona) -> Person
     persona.bloqueado_en = None
     persona.desbloqueo_autorizado_en = None
     persona.motivo_bloqueo = None
+    session.flush()
+    return persona
+
+
+def liberar_bloqueo(session: Session, persona: Persona, staff: Usuario) -> Persona:
+    """Libera el bloqueo de `persona` directamente desde staff (.scratch/
+    bloquear-clientes, seguimiento 2026-09-15, `codebase-design`) -- la vía
+    de escape para cuando el residente no puede o no quiere autoservirse
+    por el portal (OTP + `aceptar_terminos_y_desbloquear`). Deja a
+    `persona` en el mismo estado 3 (Activo) que esa aceptación real,
+    EXCEPTO que deliberadamente NO toca `terminos_aceptados_en` -- ese
+    campo es un registro de consentimiento genuino, solo lo escribe el
+    residente al aceptar él mismo; que un click de staff lo dejara en
+    `now()` sería un "aceptó los términos" falso en la base de datos.
+
+    En su lugar queda `bloqueo_liberado_en`/`bloqueo_liberado_por_usuario_id`
+    -- quién lo liberó y cuándo, para poder responder esa pregunta más
+    adelante. Se sobreescriben en cada liberación (mismo criterio que
+    `terminos_aceptados_en`: solo la más reciente, sin tabla de historial
+    aparte).
+
+    Idempotente: si no estaba bloqueada, no hace nada (nunca pisa un
+    `bloqueo_liberado_en` previo con una liberación que no liberó nada).
+    """
+    if persona.bloqueado_en is None:
+        return persona
+
+    ahora = datetime.now(timezone.utc)
+    persona.bloqueado_en = None
+    persona.desbloqueo_autorizado_en = None
+    persona.motivo_bloqueo = None
+    persona.bloqueo_liberado_en = ahora
+    persona.bloqueo_liberado_por_usuario_id = staff.id
     session.flush()
     return persona
