@@ -95,17 +95,44 @@ class TiemposPromedio:
 
 
 @dataclass(frozen=True)
+class Tendencia:
+    """Tendencia de un trío de Panorama (ticket 08): la variación
+    porcentual de cada columna contra el MISMO TRAMO del periodo anterior
+    -- Hoy contra ayer hasta esta misma hora, Semana contra la semana
+    anterior hasta el mismo día de la semana y hora, Mes contra el mes
+    anterior hasta el mismo día del mes y hora (recortado a su último día
+    si es más corto) -- nunca el tramo COMPLETO anterior, para no comparar
+    un día/semana/mes entero contra lo que va corrido de hoy (issue que
+    motivó este ticket). `None` cuando el tramo anterior valió 0 (evita un
+    porcentaje infinito o un "0%" engañoso -- no se muestra nada).
+    `serie_7_dias` es la cifra diaria de los últimos 7 días (hoy incluido,
+    en hora de Colombia), del más viejo al más reciente, para el
+    minigráfico -- el color (bien/mal) según suba o baje es una decisión
+    de presentación, no de este dataclass (depende de la métrica: en
+    Ingresos/Entregados subir es bueno, en Cancelados es al revés)."""
+
+    variacion_hoy: float | None
+    variacion_semana: float | None
+    variacion_mes: float | None
+    serie_7_dias: tuple[int, ...]
+
+
+@dataclass(frozen=True)
 class Panorama:
     """Zona fija del tablero. Se completa ticket a ticket (01: Ingresos;
     06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia).
     `entregados`/`cancelados` cuentan por la fecha de SU PROPIO evento
     (entrega/cancelación) -- tarjetas separadas, nunca sumadas en un solo
-    "procesados" (spec.md, ticket 06)."""
+    "procesados" (spec.md, ticket 06). `tendencia_*` acompaña a Ingresos/
+    Entregados/Cancelados (ticket 08) -- Tiempos promedio no lleva."""
 
     ingresos: TrioHoySemanaMes
     entregados: TrioHoySemanaMes
     cancelados: TrioHoySemanaMes
     tiempos: TiemposPromedio
+    tendencia_ingresos: Tendencia
+    tendencia_entregados: Tendencia
+    tendencia_cancelados: Tendencia
 
 
 @dataclass(frozen=True)
@@ -375,7 +402,81 @@ def _calcular_tiempos_promedio(
     )
 
 
-def _calcular_panorama(session: Session, hoy_local: date) -> Panorama:
+def _tramo_anterior_utc(hoy_local: date, ahora_local: datetime, ventana: str) -> tuple[datetime, datetime]:
+    """Límites UTC del "mismo tramo del periodo anterior" (ticket 08) para
+    `ventana` ("hoy"/"semana"/"mes") -- el mismo punto de corte de HORA que
+    `ahora_local`, nunca el tramo completo anterior. `mes` reusa
+    `_restar_meses` a propósito: ya resuelve "recortado a su último día"."""
+    if ventana == "hoy":
+        fecha_cutoff = hoy_local - timedelta(days=1)
+        fecha_inicio = fecha_cutoff
+    elif ventana == "semana":
+        inicio_actual = hoy_local - timedelta(days=hoy_local.weekday())
+        fecha_cutoff = hoy_local - timedelta(days=7)
+        fecha_inicio = inicio_actual - timedelta(days=7)
+    else:
+        fecha_cutoff = _restar_meses(hoy_local, 1)
+        fecha_inicio = _restar_meses(hoy_local.replace(day=1), 1)
+    cutoff_local = datetime.combine(fecha_cutoff, ahora_local.time(), tzinfo=ZONA_HORARIA_APP)
+    inicio_local = datetime.combine(fecha_inicio, time.min, tzinfo=ZONA_HORARIA_APP)
+    return inicio_local.astimezone(timezone.utc), cutoff_local.astimezone(timezone.utc)
+
+
+def _variacion_pct(actual: int, anterior: int) -> float | None:
+    """`None` cuando el tramo anterior valió 0 -- ni infinito ni un "0%"
+    engañoso, no se muestra ningún porcentaje (spec.md, ticket 08)."""
+    if anterior == 0:
+        return None
+    return (actual - anterior) / anterior * 100
+
+
+def _ultimos_7_dias_locales(hoy_local: date) -> list[date]:
+    return [hoy_local - timedelta(days=i) for i in range(6, -1, -1)]
+
+
+def _tendencia_ingresos(session: Session, hoy_local: date, ahora_local: datetime, trio: TrioHoySemanaMes) -> Tendencia:
+    variacion_hoy = _variacion_pct(
+        trio.hoy, _suma_ingresos_entre(session, *_tramo_anterior_utc(hoy_local, ahora_local, "hoy"))
+    )
+    variacion_semana = _variacion_pct(
+        trio.semana, _suma_ingresos_entre(session, *_tramo_anterior_utc(hoy_local, ahora_local, "semana"))
+    )
+    variacion_mes = _variacion_pct(
+        trio.mes, _suma_ingresos_entre(session, *_tramo_anterior_utc(hoy_local, ahora_local, "mes"))
+    )
+    serie = tuple(
+        _suma_ingresos_entre(session, *_limites_utc_de_dias_locales(dia, dia))
+        for dia in _ultimos_7_dias_locales(hoy_local)
+    )
+    return Tendencia(
+        variacion_hoy=variacion_hoy, variacion_semana=variacion_semana, variacion_mes=variacion_mes,
+        serie_7_dias=serie,
+    )
+
+
+def _tendencia_paquetes(
+    session: Session, columna, hoy_local: date, ahora_local: datetime, trio: TrioHoySemanaMes
+) -> Tendencia:
+    variacion_hoy = _variacion_pct(
+        trio.hoy, _contar_paquetes_entre(session, columna, *_tramo_anterior_utc(hoy_local, ahora_local, "hoy"))
+    )
+    variacion_semana = _variacion_pct(
+        trio.semana, _contar_paquetes_entre(session, columna, *_tramo_anterior_utc(hoy_local, ahora_local, "semana"))
+    )
+    variacion_mes = _variacion_pct(
+        trio.mes, _contar_paquetes_entre(session, columna, *_tramo_anterior_utc(hoy_local, ahora_local, "mes"))
+    )
+    serie = tuple(
+        _contar_paquetes_entre(session, columna, *_limites_utc_de_dias_locales(dia, dia))
+        for dia in _ultimos_7_dias_locales(hoy_local)
+    )
+    return Tendencia(
+        variacion_hoy=variacion_hoy, variacion_semana=variacion_semana, variacion_mes=variacion_mes,
+        serie_7_dias=serie,
+    )
+
+
+def _calcular_panorama(session: Session, hoy_local: date, ahora_local: datetime) -> Panorama:
     desde_hoy, hasta_hoy = _limites_utc_de_dias_locales(hoy_local, hoy_local)
     desde_semana, hasta_semana = _limites_utc_de_dias_locales(
         hoy_local - timedelta(days=hoy_local.weekday()), hoy_local
@@ -399,7 +500,15 @@ def _calcular_panorama(session: Session, hoy_local: date) -> Panorama:
     tiempos = _calcular_tiempos_promedio(
         session, desde_hoy, hasta_hoy, desde_semana, hasta_semana, desde_mes, hasta_mes
     )
-    return Panorama(ingresos=ingresos, entregados=entregados, cancelados=cancelados, tiempos=tiempos)
+    return Panorama(
+        ingresos=ingresos,
+        entregados=entregados,
+        cancelados=cancelados,
+        tiempos=tiempos,
+        tendencia_ingresos=_tendencia_ingresos(session, hoy_local, ahora_local, ingresos),
+        tendencia_entregados=_tendencia_paquetes(session, Paquete.delivered_at, hoy_local, ahora_local, entregados),
+        tendencia_cancelados=_tendencia_paquetes(session, Paquete.cancelled_at, hoy_local, ahora_local, cancelados),
+    )
 
 
 # --- Periodo seleccionado --------------------------------------------------- #
@@ -937,8 +1046,9 @@ def calcular_tablero(
     nunca `datetime.now()` acá dentro, para que las pruebas puedan fijar el
     reloj) y los `filtros` de "Periodo seleccionado". Panorama y Periodo
     resuelven "hoy" con la MISMA hora de Colombia derivada de `ahora`."""
-    hoy_local = ahora.astimezone(ZONA_HORARIA_APP).date()
+    ahora_local = ahora.astimezone(ZONA_HORARIA_APP)
+    hoy_local = ahora_local.date()
     return TableroEstadisticasCobro(
-        panorama=_calcular_panorama(session, hoy_local),
+        panorama=_calcular_panorama(session, hoy_local, ahora_local),
         periodo=_calcular_periodo(session, hoy_local, filtros),
     )

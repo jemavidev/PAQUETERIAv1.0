@@ -495,3 +495,35 @@ def test_tiempos_promedio_de_panorama_se_ven_y_no_cambian_con_filtros(client):
     inicio2 = con_filtros.index('aria-label="Panorama')
     fin2 = con_filtros.index('aria-label="Ahora')
     assert panorama == con_filtros[inicio2:fin2]
+
+
+def test_tendencia_de_panorama_se_ve_y_no_cambia_con_filtros(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    assert "Últimos 7 días" in panorama
+
+    con_filtros = client.get(
+        "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "rango": "hoy"}
+    ).text
+    inicio2 = con_filtros.index('aria-label="Panorama')
+    fin2 = con_filtros.index('aria-label="Ahora')
+    assert panorama == con_filtros[inicio2:fin2]
+
+
+def test_tendencia_sin_tramo_anterior_no_muestra_ningun_porcentaje(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    # Sin ningún cobro/entrega/cancelación "ayer" en un ambiente de pruebas
+    # recién creado -- ninguna de las tres tarjetas debería mostrar "▲"/"▼".
+    assert "▲" not in panorama
+    assert "▼" not in panorama

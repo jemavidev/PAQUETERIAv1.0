@@ -27,9 +27,9 @@
 
 <div class="space-y-4">
   {% call zona('bg-blue-600', 'Panorama: hoy, esta semana y este mes -- no cambia con los filtros de arriba') %}
-    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-3') }}
-    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-3') }}
-    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-3') }}
+    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_ingresos, bueno='sube') }}
+    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_entregados, bueno='sube') }}
+    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_cancelados, bueno='baja') }}
     {{ tarjeta_panorama_tiempos('Tiempos promedio', [
       ('Anuncio → recepción', tablero.panorama.tiempos.anuncio_recepcion),
       ('Permanencia en bodega', tablero.panorama.tiempos.permanencia_bodega),

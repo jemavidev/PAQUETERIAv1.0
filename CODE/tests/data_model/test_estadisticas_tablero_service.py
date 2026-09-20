@@ -20,6 +20,7 @@ from app.domain.cobro_service import DesgloseCobro, registrar_cobro
 from app.domain.estadisticas_tablero_service import (
     FiltrosTablero,
     _rango_por_atajo,
+    _tramo_anterior_utc,
     calcular_tablero,
 )
 from app.domain.paquete import Paquete, TipoPaquete
@@ -64,6 +65,49 @@ def test_rango_desconocido_o_ausente_es_sin_rango():
     assert _rango_por_atajo("", date(2026, 9, 20)) is None
     assert _rango_por_atajo("dias7", date(2026, 9, 20)) is None
     assert _rango_por_atajo("dias30", date(2026, 9, 20)) is None
+
+
+# --- `_tramo_anterior_utc`: función pura, sin BD (ticket 08) --------------- #
+
+
+def _naive_local(anio, mes, dia, hora=0, minuto=0):
+    """Como `_local` (más abajo), pero para llamar a `_tramo_anterior_utc`
+    directamente -- necesita un `datetime` AWARE en hora de Colombia, no un
+    instante UTC."""
+    from datetime import datetime as _dt
+
+    return _dt(anio, mes, dia, hora, minuto, tzinfo=ZONA_HORARIA_APP)
+
+
+def test_tramo_anterior_hoy_es_ayer_hasta_la_misma_hora():
+    ahora_local = _naive_local(2026, 9, 16, 10, 30)
+    inicio, cutoff = _tramo_anterior_utc(date(2026, 9, 16), ahora_local, "hoy")
+    assert inicio == _naive_local(2026, 9, 15, 0, 0).astimezone(timezone.utc)
+    assert cutoff == _naive_local(2026, 9, 15, 10, 30).astimezone(timezone.utc)
+
+
+def test_tramo_anterior_semana_es_la_semana_anterior_mismo_dia_y_hora():
+    # 2026-09-16 es miércoles; el lunes de esa semana es 2026-09-14.
+    ahora_local = _naive_local(2026, 9, 16, 10, 30)
+    inicio, cutoff = _tramo_anterior_utc(date(2026, 9, 16), ahora_local, "semana")
+    assert inicio == _naive_local(2026, 9, 7, 0, 0).astimezone(timezone.utc)  # lunes anterior
+    assert cutoff == _naive_local(2026, 9, 9, 10, 30).astimezone(timezone.utc)  # miércoles anterior, misma hora
+
+
+def test_tramo_anterior_mes_es_el_mes_anterior_mismo_dia_y_hora():
+    ahora_local = _naive_local(2026, 9, 16, 10, 30)
+    inicio, cutoff = _tramo_anterior_utc(date(2026, 9, 16), ahora_local, "mes")
+    assert inicio == _naive_local(2026, 8, 1, 0, 0).astimezone(timezone.utc)
+    assert cutoff == _naive_local(2026, 8, 16, 10, 30).astimezone(timezone.utc)
+
+
+def test_tramo_anterior_mes_se_recorta_al_ultimo_dia_de_un_mes_mas_corto():
+    # 31 de marzo -> el "mes anterior" (febrero 2026, no bisiesto) se recorta
+    # al día 28, no falla intentando construir un 31 de febrero.
+    ahora_local = _naive_local(2026, 3, 31, 9, 0)
+    inicio, cutoff = _tramo_anterior_utc(date(2026, 3, 31), ahora_local, "mes")
+    assert inicio == _naive_local(2026, 2, 1, 0, 0).astimezone(timezone.utc)
+    assert cutoff == _naive_local(2026, 2, 28, 9, 0).astimezone(timezone.utc)
 
 
 pytestmark = pytest.mark.integration
@@ -347,6 +391,147 @@ def test_tiempos_promedio_no_cambia_con_ningun_filtro(db_session):
     con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="anio")).panorama.tiempos.anuncio_recepcion.hoy
 
     assert sin_filtros == con_tipo == con_rango == pytest.approx(6.0)
+
+
+# --- Panorama: "Tendencia" -- variación + minigráfico de 7 días (ticket 08) # #
+
+
+def test_tendencia_hoy_no_se_falsea_por_la_hora_del_dia(db_session):
+    """El caso que motivó el ticket: comparar el día COMPLETO de ayer contra
+    lo que va corrido de hoy daría una caída falsa -- acá, si se comparara
+    mal, ayer (500 + 5000 = 5500) aplastaría a hoy (1000) con una caída del
+    ~82 %; comparando correctamente solo contra "ayer hasta las 10:30"
+    (500), hoy queda ARRIBA (+100 %)."""
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)  # media mañana -- el caso del ticket
+
+    hoy = _entregar_con_cobro(db_session, staff, 1000, tel="3001111111")
+    _mover_cobro_a(db_session, hoy, _local(2026, 9, 16, 8, 0))
+
+    ayer_antes_del_corte = _entregar_con_cobro(db_session, staff, 500, tel="3002222222")
+    _mover_cobro_a(db_session, ayer_antes_del_corte, _local(2026, 9, 15, 8, 0))
+    ayer_despues_del_corte = _entregar_con_cobro(db_session, staff, 5000, tel="3003333333")
+    _mover_cobro_a(db_session, ayer_despues_del_corte, _local(2026, 9, 15, 15, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos
+
+    assert tendencia.variacion_hoy == pytest.approx(100.0)  # (1000 - 500) / 500 * 100
+
+
+def test_tendencia_semana_mismo_dia_y_hora_del_tramo_anterior(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)  # miércoles
+
+    esta_semana = _entregar_con_cobro(db_session, staff, 2000, tel="3001111111")
+    _mover_cobro_a(db_session, esta_semana, _local(2026, 9, 15, 9, 0))  # martes de esta semana
+
+    # Semana anterior: antes del corte (miércoles 10:30) cuenta; después, no.
+    semana_anterior_antes = _entregar_con_cobro(db_session, staff, 1000, tel="3002222222")
+    _mover_cobro_a(db_session, semana_anterior_antes, _local(2026, 9, 9, 9, 0))
+    semana_anterior_despues = _entregar_con_cobro(db_session, staff, 9999, tel="3004444444")
+    _mover_cobro_a(db_session, semana_anterior_despues, _local(2026, 9, 9, 14, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos
+
+    assert tendencia.variacion_semana == pytest.approx((2000 - 1000) / 1000 * 100)
+
+
+def test_tendencia_mes_mismo_dia_y_hora_del_tramo_anterior(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)
+
+    este_mes = _entregar_con_cobro(db_session, staff, 2000, tel="3001111111")
+    _mover_cobro_a(db_session, este_mes, _local(2026, 9, 16, 8, 0))
+
+    # Mes anterior: antes del corte (16 de agosto, 10:30) cuenta; después, no.
+    mes_anterior_antes = _entregar_con_cobro(db_session, staff, 500, tel="3005555555")
+    _mover_cobro_a(db_session, mes_anterior_antes, _local(2026, 8, 16, 9, 0))
+    mes_anterior_despues = _entregar_con_cobro(db_session, staff, 9999, tel="3006666666")
+    _mover_cobro_a(db_session, mes_anterior_despues, _local(2026, 8, 16, 14, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos
+
+    assert tendencia.variacion_mes == pytest.approx((2000 - 500) / 500 * 100)
+
+
+def test_tendencia_none_cuando_el_tramo_anterior_vale_cero(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)
+    hoy = _entregar_con_cobro(db_session, staff, 1000, tel="3001111111")
+    _mover_cobro_a(db_session, hoy, _local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos
+
+    # Sin ningún cobro ayer -- ni infinito ni "0%", no se muestra nada.
+    assert tendencia.variacion_hoy is None
+
+
+def test_tendencia_entregados_y_cancelados_usan_su_propia_columna(db_session):
+    ahora = _local(2026, 9, 16, 10, 30)
+
+    entregado_hoy = _anunciar(db_session, "3001111111")
+    _mover(db_session, entregado_hoy, delivered_at=_local(2026, 9, 16, 8, 0))
+    entregado_ayer_antes = _anunciar(db_session, "3002222222")
+    _mover(db_session, entregado_ayer_antes, delivered_at=_local(2026, 9, 15, 8, 0))
+
+    cancelado_hoy = _anunciar(db_session, "3003333333")
+    _mover(db_session, cancelado_hoy, cancelled_at=_local(2026, 9, 16, 8, 0))
+    # Cancelado ayer, pero DESPUÉS del corte de las 10:30 -- no debe contar
+    # en el tramo anterior de "Cancelados".
+    cancelado_ayer_despues = _anunciar(db_session, "3004444444")
+    _mover(db_session, cancelado_ayer_despues, cancelled_at=_local(2026, 9, 15, 14, 0))
+    db_session.commit()
+
+    panorama = calcular_tablero(db_session, ahora).panorama
+
+    assert panorama.tendencia_entregados.variacion_hoy == pytest.approx(0.0)  # 1 vs 1
+    assert panorama.tendencia_cancelados.variacion_hoy is None  # 1 vs 0 (nada antes del corte)
+
+
+def test_tendencia_serie_7_dias_del_mas_viejo_al_mas_reciente(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)
+    hace_6_dias = _entregar_con_cobro(db_session, staff, 777, tel="3001111111")
+    _mover_cobro_a(db_session, hace_6_dias, _local(2026, 9, 10, 9, 0))
+    hoy = _entregar_con_cobro(db_session, staff, 333, tel="3002222222")
+    _mover_cobro_a(db_session, hoy, _local(2026, 9, 16, 9, 0))
+    db_session.commit()
+
+    serie = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos.serie_7_dias
+
+    assert len(serie) == 7
+    assert serie[0] == 777  # hace 6 días -- el más viejo, primero
+    assert serie[-1] == 333  # hoy -- el más reciente, último
+    assert serie[1:6] == (0, 0, 0, 0, 0)
+
+
+def test_tendencia_no_cambia_con_ningun_filtro(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 10, 30)
+    hoy = _entregar_con_cobro(db_session, staff, 1000, tel="3001111111", tipo=TipoPaquete.EXTRA_DIMENSIONADO)
+    _mover_cobro_a(db_session, hoy, _local(2026, 9, 16, 8, 0))
+    ayer = _entregar_con_cobro(db_session, staff, 500, tel="3002222222")
+    _mover_cobro_a(db_session, ayer, _local(2026, 9, 15, 8, 0))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).panorama.tendencia_ingresos
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).panorama.tendencia_ingresos
+    con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="anio")).panorama.tendencia_ingresos
+
+    assert sin_filtros == con_tipo == con_rango
+
+
+def test_tendencia_con_base_vacia_no_rompe(db_session):
+    panorama = calcular_tablero(db_session, _local(2026, 9, 16, 10, 30)).panorama
+
+    assert panorama.tendencia_ingresos.variacion_hoy is None
+    assert panorama.tendencia_ingresos.variacion_semana is None
+    assert panorama.tendencia_ingresos.variacion_mes is None
+    assert panorama.tendencia_ingresos.serie_7_dias == (0, 0, 0, 0, 0, 0, 0)
 
 
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
