@@ -5,7 +5,7 @@ aviso de privacidad] conviertan esto al mismo formato y que se vea igual las
 2 secciones, en este momento hay una que tiene diferente tipo de fuente o el
 tamaño incorrecto. Corrígelo."
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co, 2026-09-19: un solo `<label for="acepta_tyc">` con ambas partes, sin `<p>` aparte)
 
 ## Contexto
 

@@ -89,6 +89,59 @@ def test_get_announce_renderiza_el_formulario_de_2_campos_iniciales(client):
     assert "guide" not in html and "guía" not in html and 'name="guia"' not in html
 
 
+def _label_de_tyc(html: str) -> str:
+    match = re.search(r'<label for="acepta_tyc"[^>]*>.*?</label>', html, re.S)
+    assert match, "no se encontró el <label> del checkbox de Términos y Condiciones"
+    return match.group(0)
+
+
+def test_aviso_de_privacidad_vive_dentro_del_mismo_label_que_el_checkbox_de_tyc(client):
+    # Issue 351 (.scratch/pendientes-cliente): antes eran 2 elementos
+    # separados (`<label>` + `<p>`) -- pedido explícito de dejarlos como uno.
+    r = client.get("/anunciar")
+    assert r.status_code == 200
+    assert "Política de Tratamiento de Datos Personales" in _label_de_tyc(r.text)
+    assert not re.search(r"<p[^>]*>\s*Tus datos se tratan", r.text)
+
+
+def test_aviso_de_privacidad_esta_detras_de_un_link_mas(client):
+    # Issue 354: el aviso queda detrás de "más..." al final de la primera
+    # parte. Mejora progresiva a propósito -- es un aviso legal: el HTML
+    # llega con el aviso VISIBLE y el link oculto, y el script del final de
+    # la plantilla los invierte. Sin JS, se ve completo. (El clic en sí lo
+    # ejecuta JS -- pytest no lo corre -- se verifica en el navegador.)
+    r = client.get("/anunciar")
+    label = _label_de_tyc(r.text)
+
+    mas = re.search(r'<a[^>]*id="aviso-privacidad-mas"[^>]*>', label)
+    assert mas, "no se encontró el link 'más...'"
+    assert re.search(r"\bhidden\b", mas.group(0)), "sin JS el link no debe mostrarse"
+    assert 'aria-expanded="false"' in mas.group(0)
+    assert 'aria-controls="aviso-privacidad-detalle"' in mas.group(0)
+    assert ">más...</a>" in label
+
+    detalle = re.search(r'<span[^>]*id="aviso-privacidad-detalle"[^>]*>', label)
+    assert detalle, "no se encontró el contenedor del aviso"
+    assert not re.search(r"\bhidden\b", detalle.group(0)), (
+        "el aviso legal no puede venir oculto en el HTML: sin JS quedaría invisible"
+    )
+
+    # "más..." va al final de la primera parte y ANTES del aviso.
+    assert (
+        label.index("servicio de anuncios de paquetes.")
+        < label.index("más...")
+        < label.index("Tus datos se tratan")
+    )
+
+    # `hidden` no puede compartir elemento con la utilidad `block`: por
+    # cascada, la utilidad de display de Tailwind le gana a `[hidden]` y el
+    # elemento nunca se ocultaría.
+    for etiqueta in re.findall(r"<[^>]+>", label):
+        assert not (
+            re.search(r"\bhidden\b", etiqueta) and re.search(r"\bblock\b", etiqueta)
+        ), f"hidden + block en el mismo elemento: {etiqueta}"
+
+
 def test_post_crea_paquete_anunciado_con_el_nombre_declarado(client):
     r = client.post(
         "/anunciar",
