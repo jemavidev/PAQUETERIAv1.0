@@ -46,6 +46,15 @@ a `ocupante_id`/`torre`+`apartamento` (ver `_anunciar_para` más abajo). El
 camino Torre+Apto directo no cambia: ahí nunca se conoce con certeza quién
 llama, así que sigue cayendo en `anunciante_para_ocupante`.
 
+Sugerencia desde Contactos externos (`.scratch/contactos-externos-en-announce`,
+ticket 02): si el Teléfono tecleado NO existe como Persona (ni activa, ni De
+baja, ni Bloqueada) pero sí coincide con un Contacto externo, `GET /announce/
+identificar` sugiere ese nombre en vez del formulario "No encontramos a nadie"
+-- solo lectura, y solo el nombre (lo ve todo el Staff, no solo Admin). Elegir
+la tarjetita (`GET /announce/identificar-sugerencia`) muestra la tarjeta de
+siempre con Anunciar y Recibir; enviarla reutiliza el camino 1 sin cambios (la
+Persona se crea con ese nombre, como si el Staff lo hubiera escrito a mano).
+
 Los tres caminos comparten el mismo botón doble Anunciar/Recibir (ticket 06,
 `components/_persona_resuelta.html` e `_identificar_unidad.html`) -- ambos
 son `type="submit"` del MISMO form, distinguidos por `accion` (`name="accion"
@@ -77,6 +86,7 @@ from sqlalchemy.orm import Session
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import listar_catalogo_por_torre, resolver_apartamento
 from app.domain.contacto import clasificar_contacto
+from app.domain.contacto_externo_sugerencia_service import sugerir_nombre_de_contacto_externo
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion, texto_solicitud_autorizacion
 from app.domain.ocupante import Ocupante
@@ -375,6 +385,13 @@ def announce_identificar(
                         "conteo_anunciados": _conteo_anunciados_por_ocupante(db, residentes),
                     },
                 )
+        if persona is None:
+            nombre_sugerido = sugerir_nombre_de_contacto_externo(db, tipo, q)
+            if nombre_sugerido is not None:
+                return templates.TemplateResponse(
+                    "announce_new/_identificar_con_sugerencia.html",
+                    {"request": request, "tipo": tipo, "valor": q, "nombre": nombre_sugerido},
+                )
         paquetes = _paquetes_en_curso(db, persona) if persona is not None else []
         autoriza_auto, wa_url, wa_url_desktop = _info_autorizacion(db, persona)
         return templates.TemplateResponse(
@@ -410,6 +427,33 @@ def announce_identificar(
         )
 
     return HTMLResponse("")  # "ninguno" -- nada que mostrar todavía.
+
+
+@router.get("/announce/identificar-sugerencia", response_class=HTMLResponse)
+def announce_identificar_sugerencia(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    """Clic/tap sobre la tarjetita de la sugerencia de Contactos externos
+    (`.scratch/contactos-externos-en-announce`, ticket 02) -- devuelve la
+    tarjeta de siempre con el subtítulo "Contacto externo" y Anunciar/Recibir
+    listos (`_identificar_sugerencia.html`).
+
+    La sugerencia se identifica por el valor tecleado (`q`), que el servidor
+    vuelve a clasificar y a consultar -- nunca por un nombre enviado desde el
+    navegador: qué sugerencia se muestra lo decide el servidor, igual que en
+    `/announce/identificar`. (El nombre que después viaja en `POST /announce`
+    es un campo del formulario, como si el Staff lo hubiera escrito a mano.)"""
+    tipo = _clasificar(q)
+    nombre = sugerir_nombre_de_contacto_externo(db, tipo, q)
+    if nombre is None:
+        return HTMLResponse("")
+    return templates.TemplateResponse(
+        "announce_new/_identificar_sugerencia.html",
+        {"request": request, "tipo": tipo, "valor": q, "nombre": nombre},
+    )
 
 
 @router.get("/announce/identificar-contacto", response_class=HTMLResponse)

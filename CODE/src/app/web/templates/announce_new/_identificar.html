@@ -12,7 +12,9 @@
     - sin match: mini-form "Nueva persona" (Nombre) + Anunciar/Recibir --
       `components/_formulario_persona_nueva.html` (extraído acá sin cambios,
       ticket 01 de `.scratch/contactos-externos-en-announce`, para que otros
-      fragmentos lo reutilicen).
+      fragmentos lo reutilicen). Solo cuando el valor tampoco coincide con un
+      Contacto externo: si coincide, el llamador responde con
+      `_identificar_con_sugerencia.html` y no llega acá (ticket 02).
 
   El campo Nombre NO lleva `autofocus` -- este fragmento se re-renderiza en
   CADA tecleo del campo principal; la razón completa vive en el docstring del

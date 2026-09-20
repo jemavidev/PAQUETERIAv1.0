@@ -68,6 +68,11 @@ Un residente reconocido de un **Apartamento**, con nombre y **Persona propia opc
 - Si alguien anuncia con el Teléfono/WhatsApp del principal o el de otro Ocupante-con-Persona-propia, la notificación llega a esa misma identidad que anunció (si es capaz de recibir notificaciones automáticas — un WhatsApp-solo todavía no, ver ADR-0007).
 - Término evitado: "segundo contacto" (nombre coloquial usado antes de resolver el modelo) — el término del glosario es **Ocupante**.
 
+### Contacto externo
+Contacto consolidado desde fuentes externas al sistema (Google Contacts, la base de PaqueteX v1.0, WhatsApp…), **independiente de Persona y Ocupante**. Sus llaves son el **Teléfono** y el **usuario de WhatsApp**: un contacto puede tener varios de cada uno, y cada valor pertenece a un solo contacto.
+
+- Término evitado: "contacto" a secas (se confunde con el "segundo contacto" ya retirado). El texto de interfaz que pidió el cliente dice "usuario" para nombrar a una Persona ("Este usuario no registra en el sistema…"): es copy, no vocabulario de dominio — **Usuario = Staff**.
+
 ### Contexto de entrega (snapshot)
 Al **anunciar**, el Paquete **congela** una foto inmutable de `{anunciado_por (teléfono, si tiene), nombre_destinatario, teléfono_destinatario (si hay), apartamento}`. Si la Persona se muda **después**, los paquetes viejos **siguen mostrando el apartamento de entonces** — mudarse **nunca reescribe la historia**. "Los datos permanecen de principio a fin en cada paquete."
 

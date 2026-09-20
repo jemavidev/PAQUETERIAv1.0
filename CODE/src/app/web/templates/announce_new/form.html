@@ -119,9 +119,32 @@
         });
     });
 
+    // Sugerencia de un Contacto externo (.scratch/contactos-externos-en-
+    // announce, ticket 02): clic/tap en la tarjetita con el nombre sugerido
+    // (`_identificar_con_sugerencia.html`) -- mismo mecanismo y mismo
+    // contenedor que la lista de residentes de arriba. El servidor decide
+    // qué sugerencia es por el valor tecleado (`data-sugerencia-valor`),
+    // nunca por un nombre enviado desde acá.
+    resultado.addEventListener('click', function (e) {
+      var sugerencia = e.target.closest('[data-sugerencia-valor]');
+      if (!sugerencia) return;
+      var accion = document.getElementById('announce-unidad-accion');
+      if (!accion) return;
+      var params = new URLSearchParams({ q: sugerencia.dataset.sugerenciaValor });
+      fetch('/announce/identificar-sugerencia?' + params.toString(), {
+        headers: { 'X-Requested-With': 'fetch' },
+      })
+        .then(function (r) { return r.text(); })
+        .then(function (html) { accion.innerHTML = html; })
+        .catch(function (err) {
+          window.console && console.error('Identificar sugerencia falló:', err);
+        });
+    });
+
     // Bug visual reportado en vivo (.scratch/pendientes-cliente): con una
     // tarjeta ya preseleccionada/elegida (#announce-unidad-accion) Y
-    // "+ Nueva persona" (`[data-nueva-persona]`, _identificar_unidad.html)
+    // "+ Nueva persona" (`[data-nueva-persona]`, _identificar_unidad.html --
+    // y también _identificar_con_sugerencia.html, mismos ganchos)
     // abierta a la vez, aparecían DOS pares de botones Anunciar/Recibir --
     // se oculta la tarjeta mientras ese <details> esté abierto (su
     // contenido no se pierde, solo se re-muestra al cerrarlo). El evento
