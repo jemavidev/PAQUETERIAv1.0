@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_ahora_dinero, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -53,6 +53,9 @@
     {{ tarjeta_ahora_texto('Paquete más antiguo', antiguo.access_code if antiguo else none, 'lg:col-span-2', semaforo='rojo', detalle=detalle_antiguo) }}
     {{ tarjeta_ahora('Anuncios que nunca llegaron', tablero.ahora.anuncios_sin_llegar, 'int', 'lg:col-span-2', semaforo='ambar', detalle='anunciados hace más de 7 días, sin recibirse') }}
     {{ tarjeta_ahora('Clientes registrados', tablero.ahora.clientes_registrados, 'int', 'lg:col-span-2', semaforo='gris') }}
+
+    {{ tarjeta_ahora_dinero('Por cobrar en bodega', tablero.ahora.por_cobrar_en_bodega, 'cop', 'lg:col-span-3', detalle='si se entregara todo justo ahora') }}
+    {{ tarjeta_ahora_dinero('Deuda contra entrega', tablero.ahora.deuda_contra_entrega, 'cop', 'lg:col-span-3', detalle=formato(tablero.ahora.personas_con_deuda, 'int') ~ ' clientes con saldo negativo') }}
   {% endcall %}
 
   {% call zona('bg-emerald-600', 'Periodo seleccionado: responde a los filtros de arriba') %}

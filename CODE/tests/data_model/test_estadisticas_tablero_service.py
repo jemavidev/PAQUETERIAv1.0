@@ -16,7 +16,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from app.domain.cobro import Cobro
-from app.domain.cobro_service import DesgloseCobro, registrar_cobro
+from app.domain.cobro_service import DesgloseCobro, calcular_cobro, obtener_tarifas_vigentes, registrar_cobro
 from app.domain.estadisticas_tablero_service import (
     FiltrosTablero,
     _rango_por_atajo,
@@ -25,8 +25,9 @@ from app.domain.estadisticas_tablero_service import (
 )
 from app.domain.paquete import Paquete, TipoPaquete
 from app.domain.paquete_lifecycle import deliver, receive
-from app.domain.paquete_service import Destinatario, announce
+from app.domain.paquete_service import Destinatario, announce, es_primera_entrega_a_telefono
 from app.domain.persona import Persona
+from app.domain.saldo_contra_entrega_service import registrar_movimiento_saldo
 from app.domain.usuario import RolUsuario, Usuario
 from app.domain.zona_horaria import ZONA_HORARIA_APP
 
@@ -665,6 +666,92 @@ def test_ahora_con_base_vacia_no_rompe(db_session):
     assert resultado.paquete_mas_antiguo is None
     assert resultado.anuncios_sin_llegar == 0
     assert resultado.clientes_registrados == 0
+    assert resultado.por_cobrar_en_bodega == 0
+    assert resultado.deuda_contra_entrega == 0
+    assert resultado.personas_con_deuda == 0
+
+
+# --- Ahora: "Dinero" -- por cobrar en bodega y deuda contra entrega (ticket # #
+# 10) ------------------------------------------------------------------------#
+
+
+def test_por_cobrar_en_bodega_coincide_con_entregar_de_verdad(db_session):
+    """La prueba que exige el ticket: comparar la ESTIMACIÓN contra
+    entregar de verdad esos mismos paquetes en el mismo instante y sumar
+    sus cobros reales -- deben coincidir exactamente."""
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+
+    # Normal, en gracia -- sin bodegaje, primera entrega de ese teléfono.
+    p1 = _recibir(db_session, "3001111111", staff, ahora - timedelta(hours=10))
+    # Extra-dimensionado, con bodegaje corriendo (72 h = 1 bloque de 24h
+    # pasadas las 48 de gracia).
+    p2 = _anunciar(db_session, "3002222222")
+    receive(db_session, p2, staff, package_type=TipoPaquete.EXTRA_DIMENSIONADO)
+    _mover(db_session, p2, received_at=ahora - timedelta(hours=72))
+    # Mismo teléfono que un paquete YA entregado -- no es primera entrega.
+    ya_entregado = _entregar_con_cobro(db_session, staff, 1000, tel="3003333333")
+    p3 = _recibir(db_session, "3003333333", staff, ahora - timedelta(hours=5))
+    db_session.commit()
+
+    estimado = calcular_tablero(db_session, ahora).ahora.por_cobrar_en_bodega
+
+    # Ahora se entregan de verdad, en el MISMO instante, y se suman los
+    # cobros reales -- deben coincidir con la estimación de arriba.
+    tarifas = obtener_tarifas_vigentes(db_session)
+    total_real = 0
+    for p in (p1, p2, p3):
+        # `p.recipient_phone` -- ya NORMALIZADO por `announce()` (ej.
+        # "3001111111" -> "+573001111111") -- nunca el string crudo del
+        # test, que no matchearía nada guardado.
+        primera_entrega = es_primera_entrega_a_telefono(db_session, p.recipient_phone)
+        deliver(db_session, p, staff)
+        cobro = registrar_cobro(
+            db_session, p, calcular_cobro(p, tarifas, ahora, primera_entrega), staff
+        )
+        total_real += cobro.monto_total
+    db_session.commit()
+
+    assert estimado == total_real
+    assert estimado > 0  # que la prueba no pase "por accidente" con todo en 0
+
+
+def test_deuda_contra_entrega_suma_solo_saldos_negativos(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    con_deuda = Persona(nombre="Con deuda", telefono="3001111111")
+    con_deuda_2 = Persona(nombre="Con deuda 2", telefono="3002222222")
+    a_favor = Persona(nombre="A favor", telefono="3003333333")
+    db_session.add_all([con_deuda, con_deuda_2, a_favor])
+    db_session.commit()
+
+    registrar_movimiento_saldo(db_session, con_deuda.id, -5000, staff)
+    registrar_movimiento_saldo(db_session, con_deuda_2.id, -1500, staff)
+    registrar_movimiento_saldo(db_session, a_favor.id, 3000, staff)
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    # Solo los negativos -- el saldo a favor de "a_favor" NO compensa.
+    assert resultado.deuda_contra_entrega == -6500
+    assert resultado.personas_con_deuda == 2
+
+
+def test_dinero_de_ahora_no_cambia_con_ningun_filtro(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _recibir(db_session, "3001111111", staff, ahora - timedelta(hours=72))
+    persona = Persona(nombre="Con deuda", telefono="3002222222")
+    db_session.add(persona)
+    db_session.commit()
+    registrar_movimiento_saldo(db_session, persona.id, -1000, staff)
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).ahora
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).ahora
+    con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="hoy")).ahora
+
+    assert sin_filtros == con_tipo == con_rango
 
 
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #

@@ -32,9 +32,10 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from .cobro import Cobro
-from .cobro_service import _HORAS_GRACIA_BODEGAJE, obtener_tarifas_vigentes
+from .cobro_service import _HORAS_GRACIA_BODEGAJE, calcular_cobro, obtener_tarifas_vigentes
 from .paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from .persona import Persona
+from .saldo_contra_entrega import MovimientoSaldoContraEntrega
 from .tarifa_cobro import TarifaCobro
 from .usuario import Usuario
 from .zona_horaria import ZONA_HORARIA_APP
@@ -284,14 +285,23 @@ class PaqueteMasAntiguo:
 class Ahora:
     """Zona "Ahora": la FOTO DEL MOMENTO -- ignora siempre `FiltrosTablero`,
     igual que Panorama, pero a diferencia de esa zona no es una serie
-    (Hoy/Semana/Mes): es un instante. El ticket 09 la completa por primera
-    vez (pendientes y bodega); el ticket 10 le agrega las 2 tarjetas de
-    dinero.
+    (Hoy/Semana/Mes): es un instante.
 
     `en_gracia`/`con_bodegaje_corriendo` particionan los MISMOS `en_bodega`
     sin solaparse (el corte es el mismo de `cobro_service._HORAS_GRACIA_
     BODEGAJE`); `mas_de_7_dias`/`abandonados` son umbrales ACUMULATIVOS
-    (un paquete de 40 días cuenta en ambos), no una partición."""
+    (un paquete de 40 días cuenta en ambos), no una partición.
+
+    `por_cobrar_en_bodega` (ticket 10) es una ESTIMACIÓN: la suma de lo que
+    se cobraría SI cada Recibido actual se entregara justo ahora --
+    `cobro_service.calcular_cobro`, la misma aritmética (y la misma
+    exención de primera entrega) que ya usa el modal Entregar de
+    `/paquetes`, nunca reimplementada aparte; cambia solo con el paso del
+    tiempo (el bodegaje sigue corriendo), nunca con un cobro real hasta que
+    alguien de verdad entrega. `deuda_contra_entrega`/`personas_con_deuda`
+    son la suma de los saldos NEGATIVOS de `MovimientoSaldoContraEntrega`
+    agrupados por Persona -- un saldo A FAVOR no compensa la deuda de otra
+    Persona, así que nunca se netean entre sí."""
 
     pendientes: int
     pendientes_anunciados: int
@@ -304,6 +314,9 @@ class Ahora:
     paquete_mas_antiguo: PaqueteMasAntiguo | None
     anuncios_sin_llegar: int
     clientes_registrados: int
+    por_cobrar_en_bodega: int
+    deuda_contra_entrega: int
+    personas_con_deuda: int
 
 
 @dataclass(frozen=True)
@@ -584,6 +597,51 @@ def _paquete_mas_antiguo_en_bodega(session: Session, ahora: datetime) -> Paquete
     )
 
 
+def _por_cobrar_en_bodega(session: Session, ahora: datetime) -> int:
+    """La suma de lo que se cobraría SI cada Recibido actual se entregara
+    justo ahora -- reusa `calcular_cobro` (misma exención de primera
+    entrega por teléfono, mismo criterio batch "un puñado fijo de
+    consultas" que ya usa `packages.py::_listar` para el modal Entregar,
+    en vez de una consulta de "primera entrega" por paquete)."""
+    recibidos = session.query(Paquete).filter(Paquete.estado == EstadoPaquete.RECIBIDO).all()
+    if not recibidos:
+        return 0
+    telefonos_recibido = {p.recipient_phone for p in recibidos if p.recipient_phone}
+    telefonos_con_entrega_previa = set()
+    if telefonos_recibido:
+        telefonos_con_entrega_previa = {
+            fila[0]
+            for fila in session.query(Paquete.recipient_phone)
+            .filter(
+                Paquete.recipient_phone.in_(telefonos_recibido), Paquete.estado == EstadoPaquete.ENTREGADO
+            )
+            .distinct()
+            .all()
+        }
+    tarifas = obtener_tarifas_vigentes(session)
+    return sum(
+        calcular_cobro(
+            p, tarifas, ahora, bool(p.recipient_phone and p.recipient_phone not in telefonos_con_entrega_previa)
+        ).monto_total
+        for p in recibidos
+    )
+
+
+def _deuda_contra_entrega(session: Session) -> tuple[int, int]:
+    """(monto adeudado total, cantidad de Personas con saldo negativo) --
+    una sola consulta agregada por Persona (`HAVING SUM(...) < 0`); un
+    saldo A FAVOR nunca compensa la deuda de otra Persona, así que no se
+    netean entre sí (spec.md, ticket 10)."""
+    saldos_negativos = [
+        int(saldo)
+        for (saldo,) in session.query(func.sum(MovimientoSaldoContraEntrega.monto))
+        .group_by(MovimientoSaldoContraEntrega.persona_id)
+        .having(func.sum(MovimientoSaldoContraEntrega.monto) < 0)
+        .all()
+    ]
+    return sum(saldos_negativos), len(saldos_negativos)
+
+
 def _calcular_ahora(session: Session, ahora: datetime) -> Ahora:
     anunciados = _contar_estado(session, EstadoPaquete.ANUNCIADO)
     recibidos = _contar_estado(session, EstadoPaquete.RECIBIDO)
@@ -592,6 +650,7 @@ def _calcular_ahora(session: Session, ahora: datetime) -> Ahora:
     limite_7_dias = ahora - timedelta(days=_DIAS_MAS_DE_7_EN_BODEGA)
     limite_30_dias = ahora - timedelta(days=_DIAS_ABANDONADO_EN_BODEGA)
     limite_anuncio_sin_llegar = ahora - timedelta(days=_DIAS_ANUNCIO_SIN_LLEGAR)
+    deuda_total, personas_con_deuda = _deuda_contra_entrega(session)
 
     return Ahora(
         pendientes=anunciados + recibidos,
@@ -613,6 +672,9 @@ def _calcular_ahora(session: Session, ahora: datetime) -> Ahora:
             .filter(Persona.eliminado_en.is_(None), Persona.baja_administrativa_en.is_(None))
             .scalar()
         ),
+        por_cobrar_en_bodega=_por_cobrar_en_bodega(session, ahora),
+        deuda_contra_entrega=deuda_total,
+        personas_con_deuda=personas_con_deuda,
     )
 
 

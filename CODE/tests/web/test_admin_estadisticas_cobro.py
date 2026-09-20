@@ -556,3 +556,23 @@ def test_ahora_se_ve_y_no_cambia_con_filtros(client):
     inicio2 = con_filtros.index('aria-label="Ahora')
     fin2 = con_filtros.index('aria-label="Periodo seleccionado')
     assert ahora == con_filtros[inicio2:fin2]
+
+
+def test_dinero_de_ahora_se_ve_y_no_cambia_con_filtros(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Ahora')
+    fin = r.index('aria-label="Periodo seleccionado')
+    ahora = r[inicio:fin]
+    assert "Por cobrar en bodega" in ahora
+    assert "Deuda contra entrega" in ahora
+    assert "dinero" in ahora
+
+    con_filtros = client.get(
+        "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "rango": "hoy"}
+    ).text
+    inicio2 = con_filtros.index('aria-label="Ahora')
+    fin2 = con_filtros.index('aria-label="Periodo seleccionado')
+    assert ahora == con_filtros[inicio2:fin2]
