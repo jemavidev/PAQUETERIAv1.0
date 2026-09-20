@@ -7,9 +7,11 @@ refleje en las páginas públicas (ejemplo: tarifas, conjunto, NIT, dirección,
 en general todo lo que podría cambiar, este podría ser en la vista de
 `/administracion/conjunto`)."
 
-**Status:** pendiente — explícitamente fuera de alcance del trabajo actual
-(reescritura de `/ayuda`, `/terminos`, `/privacidad`, `/cookies`); anotado
-para no perderlo.
+**Status:** desplegado a test.papyrus.com.co (2026-09-19), pendiente que el
+cliente lo confirme visualmente — `ConfiguracionEmpresa` (razón social, NIT,
+dirección, contacto) + horarios de atención en `ConfiguracionConjunto`,
+editables desde `/administracion/conjunto`, reflejados en vivo en
+`/ayuda`, `/terminos`, `/privacidad`, `/cookies`.
 
 ## Contexto
 
