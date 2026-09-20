@@ -33,9 +33,10 @@ from sqlalchemy.orm import Session
 
 from .cobro import Cobro
 from .cobro_service import obtener_tarifas_vigentes
-from .paquete import Paquete, TipoPaquete
+from .paquete import CondicionPaquete, Paquete, TipoPaquete
 from .persona import Persona
 from .tarifa_cobro import TarifaCobro
+from .usuario import Usuario
 from .zona_horaria import ZONA_HORARIA_APP
 
 
@@ -170,6 +171,24 @@ class Clientes:
 
 
 @dataclass(frozen=True)
+class OperacionYCalidad:
+    """Categoría "Operación y calidad" de Periodo seleccionado. Todos los
+    porcentajes son `None` sin ningún paquete que califique (evita un "0%"
+    engañoso). `operador_top`/`dia_mas_activo` son `None` sin ninguna
+    entrega en el periodo. Empates: operador y día, por nombre/orden
+    lunes→domingo respectivamente -- deterministas entre cargas."""
+
+    operador_top_nombre: str | None
+    operador_top_cantidad: int
+    dia_mas_activo: str | None
+    dia_mas_activo_porcentaje: float | None
+    hora_pico: str | None
+    porcentaje_dentro_de_48h: float | None
+    porcentaje_extra_dimensionados: float | None
+    porcentaje_mal_estado: float | None
+
+
+@dataclass(frozen=True)
 class PeriodoSeleccionado:
     """Zona que responde a `FiltrosTablero`. `rango_activo` es la clave del
     atajo tal como quedó resuelta (`None` si no venía ninguno, o si el que
@@ -182,6 +201,7 @@ class PeriodoSeleccionado:
     paquetes: Paquetes
     ritmo: RitmoYTasas
     clientes: Clientes
+    operacion: OperacionYCalidad
 
 
 @dataclass(frozen=True)
@@ -633,13 +653,166 @@ def _calcular_clientes(session: Session, hoy_local: date, filtros: FiltrosTabler
     )
 
 
+_DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+def _formato_hora_pico(hora: int) -> str:
+    """`hora` (0-23, local) a un rango de una hora legible, ej. 18 ->
+    "6 – 7 p. m." -- usa el sufijo AM/PM de la hora de INICIO para ambos
+    extremos (simplificación aceptada: el único cruce real, 23 -> "11 – 12
+    p. m.", es un caso raro y de lectura igualmente clara)."""
+
+    def _doce_horas(h: int) -> int:
+        h12 = h % 12
+        return 12 if h12 == 0 else h12
+
+    sufijo = "a. m." if hora < 12 else "p. m."
+    return f"{_doce_horas(hora)} – {_doce_horas((hora + 1) % 24)} {sufijo}"
+
+
+def _operador_top(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> tuple[str | None, int]:
+    query = session.query(Paquete.delivered_by_usuario_id, func.count(Paquete.id)).filter(
+        Paquete.delivered_at.isnot(None)
+    )
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(Paquete.delivered_at >= desde_utc, Paquete.delivered_at <= hasta_utc)
+    if tipo is not None:
+        query = query.filter(Paquete.package_type == tipo)
+
+    candidatos = []
+    for usuario_id, cantidad in query.group_by(Paquete.delivered_by_usuario_id).all():
+        if usuario_id is None:
+            continue
+        usuario = session.get(Usuario, usuario_id)
+        if usuario is None:
+            continue
+        candidatos.append((int(cantidad), usuario.nombre))
+    if not candidatos:
+        return None, 0
+    candidatos.sort(key=lambda c: (-c[0], c[1]))  # empate: por nombre
+    cantidad, nombre = candidatos[0]
+    return nombre, cantidad
+
+
+def _dia_y_hora_pico(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> tuple[str | None, float | None, str | None]:
+    """Día de la semana y franja horaria (ambos en HORA DE COLOMBIA) con más
+    entregas del periodo -- se resuelve en Python sobre los timestamps ya
+    traídos (no en SQL), mismo criterio que el resto del servicio: nunca se
+    le pide a la base de datos que conozca zonas horarias con nombre."""
+    query = session.query(Paquete.delivered_at).filter(Paquete.delivered_at.isnot(None))
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(Paquete.delivered_at >= desde_utc, Paquete.delivered_at <= hasta_utc)
+    if tipo is not None:
+        query = query.filter(Paquete.package_type == tipo)
+    instantes = [fila[0].astimezone(ZONA_HORARIA_APP) for fila in query.all()]
+    if not instantes:
+        return None, None, None
+
+    conteo_dia = [0] * 7
+    conteo_hora = [0] * 24
+    for local in instantes:
+        conteo_dia[local.weekday()] += 1
+        conteo_hora[local.hour] += 1
+
+    mejor_dia = 0
+    for i in range(1, 7):
+        if conteo_dia[i] > conteo_dia[mejor_dia]:
+            mejor_dia = i
+    mejor_hora = 0
+    for i in range(1, 24):
+        if conteo_hora[i] > conteo_hora[mejor_hora]:
+            mejor_hora = i
+
+    total = len(instantes)
+    return (
+        _DIAS_SEMANA[mejor_dia],
+        conteo_dia[mejor_dia] / total * 100,
+        _formato_hora_pico(mejor_hora),
+    )
+
+
+def _porcentaje_dentro_de_48h(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> float | None:
+    query = session.query(Paquete.received_at, Paquete.delivered_at).filter(Paquete.delivered_at.isnot(None))
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(Paquete.delivered_at >= desde_utc, Paquete.delivered_at <= hasta_utc)
+    if tipo is not None:
+        query = query.filter(Paquete.package_type == tipo)
+    filas = query.all()
+    if not filas:
+        return None
+    dentro = sum(
+        1 for recibido, entregado in filas if recibido is not None and (entregado - recibido) <= timedelta(hours=48)
+    )
+    return dentro / len(filas) * 100
+
+
+def _porcentaje_extra_dimensionados(session: Session, rango_dias: tuple[date, date] | None) -> float | None:
+    """Sobre los RECIBIDOS del periodo -- Tipo NUNCA la acota (matriz de "no
+    aplica": filtrar por Tipo la volvería trivial, 0% o 100%)."""
+    query = session.query(Paquete.package_type).filter(Paquete.received_at.isnot(None))
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(Paquete.received_at >= desde_utc, Paquete.received_at <= hasta_utc)
+    tipos = [fila[0] for fila in query.all()]
+    if not tipos:
+        return None
+    return sum(1 for t in tipos if t == TipoPaquete.EXTRA_DIMENSIONADO) / len(tipos) * 100
+
+
+def _porcentaje_mal_estado(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> float | None:
+    query = session.query(Paquete.package_condition).filter(Paquete.received_at.isnot(None))
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(Paquete.received_at >= desde_utc, Paquete.received_at <= hasta_utc)
+    if tipo is not None:
+        query = query.filter(Paquete.package_type == tipo)
+    condiciones = [fila[0] for fila in query.all()]
+    if not condiciones:
+        return None
+    malos = sum(1 for c in condiciones if c in (CondicionPaquete.ABIERTO, CondicionPaquete.REGULAR))
+    return malos / len(condiciones) * 100
+
+
+def _calcular_operacion(session: Session, hoy_local: date, filtros: FiltrosTablero) -> OperacionYCalidad:
+    rango_dias = _rango_por_atajo(filtros.rango, hoy_local)
+    operador_nombre, operador_cantidad = _operador_top(session, rango_dias, filtros.tipo)
+    dia, dia_pct, hora = _dia_y_hora_pico(session, rango_dias, filtros.tipo)
+    return OperacionYCalidad(
+        operador_top_nombre=operador_nombre,
+        operador_top_cantidad=operador_cantidad,
+        dia_mas_activo=dia,
+        dia_mas_activo_porcentaje=dia_pct,
+        hora_pico=hora,
+        porcentaje_dentro_de_48h=_porcentaje_dentro_de_48h(session, rango_dias, filtros.tipo),
+        porcentaje_extra_dimensionados=_porcentaje_extra_dimensionados(session, rango_dias),
+        porcentaje_mal_estado=_porcentaje_mal_estado(session, rango_dias, filtros.tipo),
+    )
+
+
 def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> PeriodoSeleccionado:
     rango_activo = filtros.rango if _rango_por_atajo(filtros.rango, hoy_local) is not None else None
     recaudo = _calcular_recaudo(session, hoy_local, filtros)
     paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
     clientes = _calcular_clientes(session, hoy_local, filtros)
+    operacion = _calcular_operacion(session, hoy_local, filtros)
     return PeriodoSeleccionado(
-        rango_activo=rango_activo, recaudo=recaudo, paquetes=paquetes, ritmo=ritmo, clientes=clientes
+        rango_activo=rango_activo,
+        recaudo=recaudo,
+        paquetes=paquetes,
+        ritmo=ritmo,
+        clientes=clientes,
+        operacion=operacion,
     )
 
 

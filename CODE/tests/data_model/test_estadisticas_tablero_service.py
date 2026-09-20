@@ -682,3 +682,114 @@ def test_clientes_con_base_vacia_no_rompe(db_session):
     assert clientes.recurrentes == 0
     assert clientes.con_mas_paquetes is None
     assert clientes.con_mayor_gasto is None
+
+
+# --- Periodo seleccionado: "Operación y calidad" (ticket 05) --------------- #
+
+
+def _entregar_condicion(session, staff, tel, entregado_en, tipo=None, condicion=None, recibido_en=None):
+    from app.domain.paquete import CondicionPaquete
+
+    cobro = _entregar_con_cobro(session, staff, 100, tel=tel, tipo=tipo)
+    paquete = session.get(Paquete, cobro.paquete_id)
+    paquete.received_at = recibido_en or (entregado_en - timedelta(hours=1))
+    paquete.delivered_at = entregado_en
+    paquete.announced_at = paquete.received_at - timedelta(hours=1)
+    if condicion is not None:
+        paquete.package_condition = condicion
+    cobro.cobrado_en = entregado_en
+    session.flush()
+    return paquete
+
+
+def test_operador_con_mas_entregas_y_empate_por_nombre(db_session):
+    ana = _usuario(db_session, nombre="ANA OPERADORA")
+    beto = _usuario(db_session, nombre="BETO OPERADOR")
+    ahora = _local(2026, 9, 16, 12, 0)
+    for tel in ("3001111111", "3002222222"):
+        p = _entregar_condicion(db_session, ana, tel, _local(2026, 9, 10, 10, 0))
+        p.delivered_by_usuario_id = ana.id
+    p_beto = _entregar_condicion(db_session, beto, "3003333333", _local(2026, 9, 11, 10, 0))
+    p_beto.delivered_by_usuario_id = beto.id
+    db_session.commit()
+
+    operacion = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.operacion
+
+    assert operacion.operador_top_nombre == "ANA OPERADORA"
+    assert operacion.operador_top_cantidad == 2
+
+
+def test_dia_y_hora_pico_en_hora_de_colombia(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    # 3 entregas el martes 2026-09-08 a las 18:00 hora Colombia (6-7pm).
+    for i, tel in enumerate(["3001111111", "3002222222", "3003333333"]):
+        _entregar_condicion(db_session, staff, tel, _local(2026, 9, 8, 18, 0))
+    # 1 entrega el miércoles a otra hora.
+    _entregar_condicion(db_session, staff, "3004444444", _local(2026, 9, 9, 9, 0))
+    db_session.commit()
+
+    operacion = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.operacion
+
+    assert operacion.dia_mas_activo == "Martes"
+    assert operacion.dia_mas_activo_porcentaje == pytest.approx(75.0)
+    assert operacion.hora_pico == "6 – 7 p. m."
+
+
+def test_porcentaje_dentro_de_48h(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    rapido = _entregar_condicion(db_session, staff, "3001111111", _local(2026, 9, 10, 10, 0))
+    rapido.received_at = rapido.delivered_at - timedelta(hours=10)
+    lento = _entregar_condicion(db_session, staff, "3002222222", _local(2026, 9, 11, 10, 0))
+    lento.received_at = lento.delivered_at - timedelta(hours=72)
+    db_session.commit()
+
+    operacion = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.operacion
+
+    assert operacion.porcentaje_dentro_de_48h == pytest.approx(50.0)
+
+
+def test_porcentaje_extra_dimensionados_ignora_filtro_tipo(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _entregar_condicion(db_session, staff, "3001111111", _local(2026, 9, 10, 10, 0), tipo=TipoPaquete.NORMAL)
+    _entregar_condicion(db_session, staff, "3002222222", _local(2026, 9, 11, 10, 0), tipo=TipoPaquete.NORMAL)
+    _entregar_condicion(db_session, staff, "3003333333", _local(2026, 9, 12, 10, 0), tipo=TipoPaquete.EXTRA_DIMENSIONADO)
+    db_session.commit()
+
+    operacion_normal = calcular_tablero(
+        db_session, ahora, FiltrosTablero(rango="mes", tipo=TipoPaquete.NORMAL)
+    ).periodo.operacion
+    operacion_sin_filtro = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.operacion
+
+    # Mismo valor con o sin filtro Tipo -- nunca se acota (matriz).
+    assert operacion_normal.porcentaje_extra_dimensionados == pytest.approx(1 / 3 * 100)
+    assert operacion_sin_filtro.porcentaje_extra_dimensionados == pytest.approx(1 / 3 * 100)
+
+
+def test_porcentaje_mal_estado(db_session):
+    from app.domain.paquete import CondicionPaquete
+
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _entregar_condicion(db_session, staff, "3001111111", _local(2026, 9, 10, 10, 0), condicion=CondicionPaquete.BUENO)
+    _entregar_condicion(db_session, staff, "3002222222", _local(2026, 9, 11, 10, 0), condicion=CondicionPaquete.ABIERTO)
+    _entregar_condicion(db_session, staff, "3003333333", _local(2026, 9, 12, 10, 0), condicion=CondicionPaquete.REGULAR)
+    db_session.commit()
+
+    operacion = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.operacion
+
+    assert operacion.porcentaje_mal_estado == pytest.approx(2 / 3 * 100)
+
+
+def test_operacion_con_base_vacia_no_rompe(db_session):
+    operacion = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).periodo.operacion
+
+    assert operacion.operador_top_nombre is None
+    assert operacion.operador_top_cantidad == 0
+    assert operacion.dia_mas_activo is None
+    assert operacion.hora_pico is None
+    assert operacion.porcentaje_dentro_de_48h is None
+    assert operacion.porcentaje_extra_dimensionados is None
+    assert operacion.porcentaje_mal_estado is None

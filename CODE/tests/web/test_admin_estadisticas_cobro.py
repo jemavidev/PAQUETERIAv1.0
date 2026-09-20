@@ -397,3 +397,62 @@ def test_cobrado_anulado_atenua_paquetes_y_ritmo_pero_no_recaudo(client):
     inicio_recaudo = r.index("Total de ingresos")
     fin_recaudo = r.index("</article>", inicio_recaudo)
     assert "no depende de" not in r[inicio_recaudo:fin_recaudo]
+
+
+def test_operacion_y_calidad_se_ven_en_periodo(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    for texto in (
+        "Operador con más entregas",
+        "Día más activo",
+        "Hora pico",
+        "Entregas dentro de 48h",
+        "Extra-dimensionados",
+        "Recibidos en mal estado",
+    ):
+        assert texto in r
+
+
+def test_operacion_y_calidad_no_depende_de_cobrado_anulado(client):
+    # Ninguna tarjeta de Operación/Calidad responde a Cobrado/Anulado (matriz
+    # del ticket 05) -- al activar ese filtro, todas deben mostrar la nota.
+    admin = _login_admin(client)
+    crear_motivo_anulacion(client.db, "Reclamo")
+    client.db.commit()
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = _zona_periodo(
+        client.get("/administracion/estadisticas-cobro", params={"estado_cobro": "cobrado"}).text
+    )
+
+    def _articulo(titulo):
+        inicio = r.index(titulo)
+        return r[inicio : r.index("</article>", inicio)]
+
+    for titulo in (
+        "Operador con más entregas",
+        "Día más activo",
+        "Hora pico",
+        "Entregas dentro de 48h",
+        "Extra-dimensionados",
+        "Recibidos en mal estado",
+    ):
+        assert "no depende de Cobrado/Anulado" in _articulo(titulo)
+
+
+def test_extra_dimensionados_no_depende_de_tipo(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111", tipo=TipoPaquete.NORMAL)
+
+    r = _zona_periodo(
+        client.get("/administracion/estadisticas-cobro", params={"tipo": "NORMAL"}).text
+    )
+    inicio = r.index("Extra-dimensionados")
+    fin = r.index("</article>", inicio)
+    assert "no depende de Tipo" in r[inicio:fin]
+
+    inicio_operador = r.index("Operador con más entregas")
+    fin_operador = r.index("</article>", inicio_operador)
+    assert "no depende de" not in r[inicio_operador:fin_operador]

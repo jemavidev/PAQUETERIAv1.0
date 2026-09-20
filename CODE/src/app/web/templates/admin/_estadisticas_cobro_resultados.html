@@ -80,5 +80,15 @@
       {%- set detalle_top_gasto = (top_gasto.apartamento ~ ' · ' if top_gasto.apartamento else '') ~ formato(top_gasto.valor, 'cop') -%}
     {%- endif %}
     {{ tarjeta_periodo_texto('Cliente con mayor gasto', top_gasto.nombre if top_gasto else none, 'lg:col-span-3', 'Clientes', detalle=detalle_top_gasto, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+
+    {%- set operador_detalle = (formato(tablero.periodo.operacion.operador_top_cantidad, 'int') ~ ' entregas') if tablero.periodo.operacion.operador_top_nombre else none -%}
+    {{ tarjeta_periodo_texto('Operador con más entregas', tablero.periodo.operacion.operador_top_nombre, 'lg:col-span-4', 'Operación', detalle=operador_detalle, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {%- set dia_detalle = (formato(tablero.periodo.operacion.dia_mas_activo_porcentaje, 'pct') ~ ' de las entregas') if tablero.periodo.operacion.dia_mas_activo_porcentaje is not none else none -%}
+    {{ tarjeta_periodo_texto('Día más activo', tablero.periodo.operacion.dia_mas_activo, 'lg:col-span-4', 'Operación', detalle=dia_detalle, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo_texto('Hora pico', tablero.periodo.operacion.hora_pico, 'lg:col-span-4', 'Operación', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {{ tarjeta_periodo('Entregas dentro de 48h', tablero.periodo.operacion.porcentaje_dentro_de_48h, 'pct', 'lg:col-span-4', 'Calidad', detalle='recibido → entregado', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Extra-dimensionados', tablero.periodo.operacion.porcentaje_extra_dimensionados, 'pct', 'lg:col-span-4', 'Calidad', detalle='sobre los recibidos', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Recibidos en mal estado', tablero.periodo.operacion.porcentaje_mal_estado, 'pct', 'lg:col-span-4', 'Calidad', detalle='abiertos o regulares', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
   {% endcall %}
 </div>
