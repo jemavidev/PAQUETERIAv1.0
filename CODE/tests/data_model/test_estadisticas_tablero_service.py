@@ -837,12 +837,65 @@ def test_sms_panorama_registro_desde_es_la_fecha_del_primer_envio(db_session):
     assert sms.registro_desde == _local(2026, 9, 1, 8, 0)
 
 
+def test_sms_panorama_sin_costo_configurado_es_none(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.costo_estimado is None
+
+
+def test_sms_panorama_costo_estimado_es_cantidad_por_costo_vigente(db_session):
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("50"))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 15, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.enviados.hoy == 1
+    assert sms.enviados.semana == 2
+    assert sms.costo_estimado.hoy == pytest.approx(50.0)
+    assert sms.costo_estimado.semana == pytest.approx(100.0)
+
+
+def test_sms_panorama_costo_usa_el_valor_vigente_no_uno_congelado(db_session):
+    """Ticket 15, criterio explícito: cambiar el costo configurado y volver
+    a calcular el tablero recalcula TODO con el precio de HOY, incluidos
+    envíos viejos -- nunca un costo "congelado" al precio de cuando se
+    envió."""
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("50"))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    antes = calcular_tablero(db_session, ahora).panorama.sms_aws.costo_estimado.hoy
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("100"))
+    db_session.commit()
+    despues = calcular_tablero(db_session, ahora).panorama.sms_aws.costo_estimado.hoy
+
+    assert antes == pytest.approx(50.0)
+    assert despues == pytest.approx(100.0)
+
+
 def test_sms_panorama_con_base_vacia_no_rompe(db_session):
     sms = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).panorama.sms_aws
 
     assert sms.enviados.hoy == 0
     assert sms.enviados.semana == 0
     assert sms.enviados.mes == 0
+    assert sms.costo_estimado is None
     assert sms.registro_desde is None
 
 
@@ -1488,6 +1541,59 @@ def test_sms_periodo_no_depende_de_tipo_ni_de_cobrado_anulado(db_session):
     assert sin_filtros == con_tipo == con_anulado
 
 
+def test_sms_periodo_sin_costo_configurado_es_none(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _anunciar(db_session, "3001111111")
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).periodo.sms
+
+    assert sms.costo_estimado is None
+    assert sms.costo_por_paquete is None
+
+
+def test_sms_periodo_costo_estimado_y_por_paquete(db_session):
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("50"))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    # 2 paquetes con movimiento en el periodo -- mismo total del ticket 02.
+    p1 = _anunciar(db_session, "3001111111")
+    _mover(db_session, p1, announced_at=_local(2026, 9, 16, 8, 0))
+    p2 = _anunciar(db_session, "3002222222")
+    _mover(db_session, p2, announced_at=_local(2026, 9, 15, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.sms
+
+    assert sms.enviados_aws == 2
+    assert sms.costo_estimado == pytest.approx(100.0)  # 2 SMS x $50
+    assert sms.costo_por_paquete == pytest.approx(50.0)  # $100 / 2 paquetes
+
+
+def test_sms_periodo_costo_por_paquete_none_sin_ningun_paquete(db_session):
+    """Nunca una división por cero -- sin paquetes con movimiento en el
+    periodo, `costo_por_paquete` es `None`, no un error."""
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("50"))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.sms
+
+    assert sms.costo_estimado == pytest.approx(50.0)
+    assert sms.costo_por_paquete is None
+
+
 def test_sms_periodo_con_base_vacia_no_rompe(db_session):
     sms = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).periodo.sms
 
@@ -1495,4 +1601,6 @@ def test_sms_periodo_con_base_vacia_no_rompe(db_session):
     assert sms.avisos_aws == 0
     assert sms.codigos_aws == 0
     assert sms.fallidos == 0
+    assert sms.costo_estimado is None
+    assert sms.costo_por_paquete is None
     assert sms.registro_desde is None

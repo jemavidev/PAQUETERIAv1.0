@@ -645,3 +645,71 @@ def test_sms_de_periodo_no_depende_de_tipo_ni_cobrado_anulado(client):
 
     assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS enviados por AWS")
     assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS fallidos")
+
+
+def test_sms_costo_de_panorama_sin_configurar_ofrece_link_a_proveedores(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    assert 'href="/administracion/proveedores?tab=SMS"' in panorama
+    assert "Configura el costo" in panorama
+
+
+def test_sms_costo_de_panorama_configurado_muestra_el_monto(client):
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    admin = _login_admin(client)
+    guardar_costo_promedio_sms(client.db, "AWS_SNS", Decimal("50"))
+    client.db.commit()
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    assert "$50" in panorama
+    assert "Configura el costo" not in panorama
+
+
+def test_sms_costo_de_periodo_sin_configurar_ofrece_link_a_proveedores(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    assert "Costo estimado de SMS" in r
+    assert "Costo de SMS por paquete" in r
+    assert r.count('href="/administracion/proveedores?tab=SMS"') == 2
+
+
+def test_sms_costo_de_periodo_configurado_calcula_estimado_y_por_paquete(client):
+    from decimal import Decimal
+
+    from app.domain.proveedor_config_service import guardar_costo_promedio_sms
+
+    admin = _login_admin(client)
+    guardar_costo_promedio_sms(client.db, "AWS_SNS", Decimal("50"))
+    client.db.commit()
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+
+    def _articulo(titulo):
+        inicio = r.index(titulo)
+        return r[inicio : r.index("</article>", inicio)]
+
+    assert "$50" in _articulo("Costo estimado de SMS")
+    assert "$50" in _articulo("Costo de SMS por paquete")  # 1 SMS x $50 / 1 paquete

@@ -35,6 +35,7 @@ from .cobro import Cobro
 from .cobro_service import _HORAS_GRACIA_BODEGAJE, calcular_cobro, obtener_tarifas_vigentes
 from .paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from .persona import Persona
+from .proveedor_config_service import obtener_costo_promedio_sms
 from .registro_sms import TipoRegistroSms
 from .registro_sms_service import contar_envios, fecha_primer_registro
 from .saldo_contra_entrega import MovimientoSaldoContraEntrega
@@ -123,17 +124,38 @@ class Tendencia:
 
 
 @dataclass(frozen=True)
+class TrioCosto:
+    """Como `TrioHoySemanaMes`, pero para un costo ESTIMADO en COP (ticket
+    15) -- siempre los tres juntos: cuando el costo promedio SÍ está
+    configurado, las tres columnas son calculables a la vez (no hay una
+    ventana "sin dato" independiente de las otras, a diferencia de
+    `TrioPromedioHoras`)."""
+
+    hoy: float
+    semana: float
+    mes: float
+
+
+@dataclass(frozen=True)
 class SmsPanorama:
     """Trío Hoy/Semana/Mes de SMS enviados por AWS SNS -- Panorama, ticket
-    14 (solo cantidades; el 15 agrega costo, el 16 agrega tendencia).
+    14 (cantidades) + 15 (costo estimado); el 16 agrega tendencia.
     `enviados` es avisos de paquete + códigos de acceso JUNTOS (`RegistroSms.
     proveedor` ya resolvió cuál proveedor entregó de verdad, sin importar
     si hubo failover -- ver `notificacion_service`/`app.web.otp`, tickets
-    11-12). `registro_desde` es la fecha del primer envío que exista en el
+    11-12). `costo_estimado` es `enviados` multiplicado por el costo
+    promedio CONFIGURADO HOY (`proveedor_config_service.
+    obtener_costo_promedio_sms`) -- nunca un precio histórico: cambiar el
+    costo en Proveedores y recargar el tablero recalcula esta cifra
+    también para periodos pasados. `None` (el trío COMPLETO, no por
+    columna) cuando el ADMIN todavía no configuró ningún costo -- se pinta
+    como "—" con un enlace a Proveedores, nunca un "$0" engañoso.
+    `registro_desde` es la fecha del primer envío que exista en el
     registro -- `None` sin ninguno todavía -- para dejar claro en pantalla
     que esto NO es un histórico completo, arrancó junto con esta feature."""
 
     enviados: TrioHoySemanaMes
+    costo_estimado: TrioCosto | None
     registro_desde: datetime | None
 
 
@@ -276,23 +298,32 @@ class OperacionYCalidad:
 
 @dataclass(frozen=True)
 class SmsPeriodo:
-    """Categoría "SMS del periodo" -- ticket 14 (solo cantidades; el 15
-    agrega costo). `enviados_aws` es avisos + códigos de acceso JUNTOS
-    (`avisos_aws`/`codigos_aws` alimentan el desglose "X avisos · Y códigos
-    de acceso"); un SMS entregado tras fallar antes por otro proveedor
-    cuenta para el que SÍ lo entregó, nunca para el primero de la cadena
-    que se intentó (`RegistroSms.proveedor`, ya resuelto en los tickets
-    11-12). `fallidos` son los que NINGÚN proveedor entregó -- de
-    cualquier tipo, no solo AWS. Matriz de "no aplica": NI Tipo NI
-    Cobrado/Anulado acotan ninguna tarjeta de esta categoría -- un envío
-    SMS no tiene Tipo de paquete ni estado de cobro. `registro_desde` es
-    la misma fecha que `Panorama.SmsPanorama.registro_desde` (fuente
-    única: `registro_sms_service.fecha_primer_registro`)."""
+    """Categoría "SMS del periodo" -- ticket 14 (cantidades) + 15 (costo).
+    `enviados_aws` es avisos + códigos de acceso JUNTOS (`avisos_aws`/
+    `codigos_aws` alimentan el desglose "X avisos · Y códigos de acceso");
+    un SMS entregado tras fallar antes por otro proveedor cuenta para el
+    que SÍ lo entregó, nunca para el primero de la cadena que se intentó
+    (`RegistroSms.proveedor`, ya resuelto en los tickets 11-12). `fallidos`
+    son los que NINGÚN proveedor entregó -- de cualquier tipo, no solo AWS.
+
+    `costo_estimado` = `enviados_aws` × el costo promedio CONFIGURADO HOY
+    -- `None` sin costo configurado. `costo_por_paquete` = `costo_estimado`
+    ÷ el MISMO `Paquetes.total` del ticket 02 (paquetes con movimiento en
+    el periodo) -- `None` sin costo configurado O sin ningún paquete en el
+    periodo (evita una división por cero).
+
+    Matriz de "no aplica": NI Tipo NI Cobrado/Anulado acotan ninguna
+    tarjeta de esta categoría -- un envío SMS no tiene Tipo de paquete ni
+    estado de cobro. `registro_desde` es la misma fecha que `Panorama.
+    SmsPanorama.registro_desde` (fuente única: `registro_sms_service.
+    fecha_primer_registro`)."""
 
     enviados_aws: int
     avisos_aws: int
     codigos_aws: int
     fallidos: int
+    costo_estimado: float | None
+    costo_por_paquete: float | None
     registro_desde: datetime | None
 
 
@@ -622,7 +653,18 @@ def _calcular_sms_panorama(
         semana=_contar(desde_semana, hasta_semana),
         mes=_contar(desde_mes, hasta_mes),
     )
-    return SmsPanorama(enviados=enviados, registro_desde=fecha_primer_registro(session))
+    costo_unitario = obtener_costo_promedio_sms(session, _PROVEEDOR_SMS_CON_COSTO)
+    costo_estimado = None
+    if costo_unitario is not None:
+        costo_unitario_f = float(costo_unitario)
+        costo_estimado = TrioCosto(
+            hoy=enviados.hoy * costo_unitario_f,
+            semana=enviados.semana * costo_unitario_f,
+            mes=enviados.mes * costo_unitario_f,
+        )
+    return SmsPanorama(
+        enviados=enviados, costo_estimado=costo_estimado, registro_desde=fecha_primer_registro(session)
+    )
 
 
 # --- Ahora: foto del momento (ticket 09; el 10 le agrega dinero) ----------- #
@@ -1252,7 +1294,9 @@ def _calcular_operacion(session: Session, hoy_local: date, filtros: FiltrosTable
     )
 
 
-def _calcular_sms_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> SmsPeriodo:
+def _calcular_sms_periodo(
+    session: Session, hoy_local: date, filtros: FiltrosTablero, total_paquetes: int
+) -> SmsPeriodo:
     rango_dias = _rango_por_atajo(filtros.rango, hoy_local)
     desde_utc = hasta_utc = None
     if rango_dias is not None:
@@ -1267,11 +1311,21 @@ def _calcular_sms_periodo(session: Session, hoy_local: date, filtros: FiltrosTab
         desde=desde_utc, hasta=hasta_utc,
     )
     fallidos = contar_envios(session, exitoso=False, desde=desde_utc, hasta=hasta_utc)
+    enviados_aws = avisos + codigos
+
+    costo_unitario = obtener_costo_promedio_sms(session, _PROVEEDOR_SMS_CON_COSTO)
+    costo_estimado = float(costo_unitario) * enviados_aws if costo_unitario is not None else None
+    costo_por_paquete = (
+        costo_estimado / total_paquetes if (costo_estimado is not None and total_paquetes) else None
+    )
+
     return SmsPeriodo(
-        enviados_aws=avisos + codigos,
+        enviados_aws=enviados_aws,
         avisos_aws=avisos,
         codigos_aws=codigos,
         fallidos=fallidos,
+        costo_estimado=costo_estimado,
+        costo_por_paquete=costo_por_paquete,
         registro_desde=fecha_primer_registro(session),
     )
 
@@ -1282,7 +1336,7 @@ def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero
     paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
     clientes = _calcular_clientes(session, hoy_local, filtros)
     operacion = _calcular_operacion(session, hoy_local, filtros)
-    sms = _calcular_sms_periodo(session, hoy_local, filtros)
+    sms = _calcular_sms_periodo(session, hoy_local, filtros, paquetes.total)
     return PeriodoSeleccionado(
         rango_activo=rango_activo,
         recaudo=recaudo,

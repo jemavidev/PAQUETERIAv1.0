@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_ahora_dinero, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_panorama_sms, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_ahora_dinero, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -36,7 +36,7 @@
       ('Bodegaje cobrado', tablero.panorama.tiempos.bodegaje_cobrado),
     ], 'lg:col-span-3') }}
     {%- set sms_registro_desde = ('Registro desde el ' ~ (tablero.panorama.sms_aws.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.panorama.sms_aws.registro_desde else 'Aún sin registros' %}
-    {{ tarjeta_panorama('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, 'int', 'lg:col-span-3', nota=sms_registro_desde) }}
+    {{ tarjeta_panorama_sms('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, tablero.panorama.sms_aws.costo_estimado, 'lg:col-span-3', nota=sms_registro_desde) }}
   {% endcall %}
 
   {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba') %}
@@ -120,7 +120,30 @@
 
     {%- set sms_desde_texto = ('Registro desde el ' ~ (tablero.periodo.sms.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.periodo.sms.registro_desde else 'Aún sin registros' %}
     {%- set sms_detalle = formato(tablero.periodo.sms.avisos_aws, 'int') ~ ' avisos · ' ~ formato(tablero.periodo.sms.codigos_aws, 'int') ~ ' códigos de acceso · ' ~ sms_desde_texto %}
-    {{ tarjeta_periodo('SMS enviados por AWS', tablero.periodo.sms.enviados_aws, 'int', 'lg:col-span-6', 'SMS del periodo', detalle=sms_detalle, no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('SMS fallidos', tablero.periodo.sms.fallidos, 'int', 'lg:col-span-6', 'SMS del periodo', detalle='ningún proveedor los entregó', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('SMS enviados por AWS', tablero.periodo.sms.enviados_aws, 'int', 'lg:col-span-3', 'SMS del periodo', detalle=sms_detalle, no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('SMS fallidos', tablero.periodo.sms.fallidos, 'int', 'lg:col-span-3', 'SMS del periodo', detalle='ningún proveedor los entregó', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {%- set configura_costo_html = '<a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo en Proveedores</a>' -%}
+    {%- set sin_costo = tablero.periodo.sms.costo_estimado is none -%}
+
+    {%- set detalle_costo_estimado = none -%}
+    {%- if not sin_costo -%}
+      {%- set detalle_costo_estimado = formato(tablero.periodo.sms.enviados_aws, 'int') ~ ' SMS al costo vigente' -%}
+    {%- endif %}
+    {{ tarjeta_periodo('Costo estimado de SMS', tablero.periodo.sms.costo_estimado, 'cop', 'lg:col-span-3', 'SMS del periodo', detalle=detalle_costo_estimado, detalle_html=(configura_costo_html if sin_costo else none), no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {#- Distinto de "sin costo configurado": acá SÍ hay costo, pero cero
+       paquetes con movimiento en el periodo -- nunca confundir los dos
+       motivos de un "—" (issue de este ticket: nunca una división por
+       cero, y el mensaje tiene que decir la razón correcta). #}
+    {%- set detalle_costo_por_paquete = none -%}
+    {%- if sin_costo -%}
+      {%- set detalle_costo_por_paquete = none -%}
+    {%- elif tablero.periodo.sms.costo_por_paquete is none -%}
+      {%- set detalle_costo_por_paquete = 'sin paquetes con movimiento en el periodo' -%}
+    {%- else -%}
+      {%- set detalle_costo_por_paquete = 'costo estimado ÷ paquetes con movimiento' -%}
+    {%- endif %}
+    {{ tarjeta_periodo('Costo de SMS por paquete', tablero.periodo.sms.costo_por_paquete, 'cop', 'lg:col-span-3', 'SMS del periodo', detalle=detalle_costo_por_paquete, detalle_html=(configura_costo_html if sin_costo else none), no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
   {% endcall %}
 </div>

@@ -211,6 +211,18 @@ def guardar_costo_promedio_sms(
     return config
 
 
+def obtener_costo_promedio_sms(session: Session, proveedor: str) -> Decimal | None:
+    """El costo promedio por SMS VIGENTE de `proveedor` (canal SMS) --
+    `None` sin configurar (sin fila, o fila con el campo vacío). Fuente
+    única para el tablero de estadísticas de cobro (ticket 15, `.scratch/
+    estadisticas-cobro-dashboard`): SIEMPRE lee el valor de HOY, nunca uno
+    histórico -- cambiar el costo en Proveedores y recargar el tablero
+    recalcula todas las cifras de costo, incluidas las de periodos
+    pasados."""
+    config = _buscar_config(session, CanalNotificacion.SMS, proveedor)
+    return config.costo_promedio_sms_cop if config is not None else None
+
+
 def registrar_cambio_credencial(
     session: Session,
     canal: CanalNotificacion,

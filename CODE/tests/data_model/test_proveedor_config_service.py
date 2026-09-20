@@ -23,6 +23,7 @@ from app.domain.proveedor_config_service import (
     guardar_habilitado_orden,
     habilitado_orden_efectivos,
     listar_config,
+    obtener_costo_promedio_sms,
     registrar_cambio_credencial,
 )
 from app.domain.proveedor_credencial_historial import ProveedorCredencialHistorial
@@ -317,3 +318,20 @@ def test_guardar_costo_promedio_sms_nunca_toca_historial_de_habilitado_orden(db_
     guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("34.5"))
 
     assert db_session.query(ProveedorConfigHistorial).count() == 0
+
+
+def test_obtener_costo_promedio_sms_sin_configurar_es_none(db_session):
+    assert obtener_costo_promedio_sms(db_session, "AWS_SNS") is None
+
+
+def test_obtener_costo_promedio_sms_lee_el_valor_vigente(db_session):
+    guardar_costo_promedio_sms(db_session, "AWS_SNS", Decimal("42.5"))
+
+    assert obtener_costo_promedio_sms(db_session, "AWS_SNS") == Decimal("42.5")
+
+
+def test_obtener_costo_promedio_sms_sin_fila_es_none(db_session):
+    # Fila de otro proveedor -- nunca se confunde con AWS_SNS.
+    guardar_habilitado_orden(db_session, CanalNotificacion.SMS, "LIWA", habilitado=True, orden=1)
+
+    assert obtener_costo_promedio_sms(db_session, "AWS_SNS") is None
