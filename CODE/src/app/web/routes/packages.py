@@ -125,15 +125,28 @@ router = APIRouter()
 _POR_PAGINA = 20
 
 
-def _notificar_diferido(background_tasks, db, paquete, evento, sender):
+def _notificar_diferido(background_tasks, db, paquete, evento, sender, session_factory):
     """Resuelve destino+mensaje SÍNCRONO (rápido, solo BD) y difiere el envío
     real a un BackgroundTask -- ver `notificacion_service.preparar_notificacion`
     y `notifications.enviar_en_segundo_plano`. Compartido por
     recibir/entregar/cancelar, las 3 transiciones de este archivo que
-    notifican."""
+    notifican.
+
+    `session_factory` (ticket 11, `.scratch/estadisticas-cobro-dashboard`):
+    para que `enviar_en_segundo_plano` pueda anotar el registro de envíos
+    SMS abriendo su PROPIA sesión -- misma razón/mismo mecanismo que ya usa
+    `subir_fotos_diferido` (`db.get_session_factory`), nunca la `db` del
+    request, que puede estar cerrada para cuando el `BackgroundTask` corra."""
     resultado = preparar_notificacion(db, paquete, evento, public_base_url_relaxed())
     if resultado is not None:
-        background_tasks.add_task(enviar_en_segundo_plano, sender, *resultado)
+        background_tasks.add_task(
+            enviar_en_segundo_plano,
+            sender,
+            *resultado,
+            session_factory=session_factory,
+            paquete_id=paquete.id,
+            evento=evento,
+        )
 
 
 def _personas_por_id(db: Session, ids: set) -> dict:
@@ -1640,7 +1653,7 @@ async def receive_action(
         background_tasks.add_task(
             subir_fotos_diferido, session_factory, storage, paquete.id, archivos
         )
-    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.RECIBIDO, sender)
+    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.RECIBIDO, sender, session_factory)
     # Issue 189 (ronda 4): si llegamos hasta acá, `receive()` YA corrió --
     # el bloqueo de arriba garantiza que eso solo pasa con el destinatario
     # confirmado (o sin ninguna unidad real con la que pudiera confundirse),
@@ -1659,6 +1672,7 @@ def deliver_action(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     sender: NotificationSender = Depends(get_notification_sender),
+    session_factory: sessionmaker = Depends(get_session_factory),
     origen: str = Form(None),
     q: str = Form(None),
     # Pedido explícito del cliente, reportado en vivo: sin este campo, al
@@ -1778,7 +1792,7 @@ def deliver_action(
                 db, persona_destinataria.id, pago_saldo, staff, paquete_id=paquete.id
             )
 
-    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.ENTREGADO, sender)
+    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.ENTREGADO, sender, session_factory)
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -1790,6 +1804,7 @@ def cancel_action(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     sender: NotificationSender = Depends(get_notification_sender),
+    session_factory: sessionmaker = Depends(get_session_factory),
     motivo: str = Form(None),
     motivo_otro: str = Form(None),
 ):
@@ -1815,7 +1830,7 @@ def cancel_action(
         cancel(db, paquete, staff, motivo)
     except (TransicionInvalida, ValueError) as exc:
         return _render_lista(request, db, staff, error=str(exc), status_code=400)
-    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.CANCELADO, sender)
+    _notificar_diferido(background_tasks, db, paquete, EstadoPaquete.CANCELADO, sender, session_factory)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 

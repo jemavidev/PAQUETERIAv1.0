@@ -145,10 +145,13 @@ def test_liwa_notification_sender_delega_a_enviar_sms(monkeypatch):
     llamadas = []
     monkeypatch.setattr(mod.httpx, "post", _fake_post_ok(llamadas))
 
-    LiwaNotificationSender().enviar("+573001234567", "Tu paquete llegó")
+    resultado = LiwaNotificationSender().enviar("+573001234567", "Tu paquete llegó")
 
     _, payload, _ = llamadas[1]
     assert payload["message"] == "Tu paquete llegó"
+    # Ticket 11 (.scratch/estadisticas-cobro-dashboard): se identifica a sí
+    # mismo como proveedor -- lo que anota el registro de envíos SMS.
+    assert resultado == "LIWA"
 
 
 def test_liwa_otp_sender_arma_el_mensaje_con_el_codigo(monkeypatch):

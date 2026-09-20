@@ -89,9 +89,12 @@ def test_twilio_notification_sender_delega_a_enviar_sms(monkeypatch):
         lambda url, data=None, auth=None, timeout=None: (llamadas.append(data), _RespuestaFalsa(201))[1],
     )
 
-    TwilioNotificationSender().enviar("+573001234567", "Tu paquete llegó")
+    resultado = TwilioNotificationSender().enviar("+573001234567", "Tu paquete llegó")
 
     assert llamadas[0]["Body"] == "Tu paquete llegó"
+    # Ticket 11 (.scratch/estadisticas-cobro-dashboard): se identifica a sí
+    # mismo como proveedor -- lo que anota el registro de envíos SMS.
+    assert resultado == "TWILIO"
 
 
 def test_twilio_otp_sender_arma_el_mensaje_con_el_codigo(monkeypatch):

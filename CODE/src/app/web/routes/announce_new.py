@@ -81,7 +81,7 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.apartamento import Apartamento
 from app.domain.apartamento_service import listar_catalogo_por_torre, resolver_apartamento
@@ -113,7 +113,7 @@ from app.domain.persona_service import (
 from app.domain.usuario import Usuario
 
 from ..config import public_base_url_relaxed
-from ..db import get_db
+from ..db import get_db, get_session_factory
 from ..notifications import enviar_en_segundo_plano, get_notification_sender
 from ..security import current_staff
 from ..templating import templates
@@ -623,6 +623,7 @@ def announce_submit(
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     sender: NotificationSender = Depends(get_notification_sender),
+    session_factory: sessionmaker = Depends(get_session_factory),
     telefono: str = Form(None),
     whatsapp_usuario: str = Form(None),
     nombre: str = Form(None),
@@ -839,7 +840,14 @@ def announce_submit(
 
     resultado = preparar_notificacion(db, paquete, EstadoPaquete.ANUNCIADO, public_base_url_relaxed())
     if resultado is not None:
-        background_tasks.add_task(enviar_en_segundo_plano, sender, *resultado)
+        background_tasks.add_task(
+            enviar_en_segundo_plano,
+            sender,
+            *resultado,
+            session_factory=session_factory,
+            paquete_id=paquete.id,
+            evento=EstadoPaquete.ANUNCIADO,
+        )
 
     # Post/Redirect/Get (bug real reportado en vivo, mismo patrón que
     # `/anunciar`): antes esta respuesta renderizaba `announce_new/form.html`

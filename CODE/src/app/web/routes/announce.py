@@ -34,7 +34,7 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.notification_sender import NotificationSender
 from app.domain.notificacion_service import preparar_notificacion
@@ -51,7 +51,7 @@ from app.domain.persona_service import buscar_persona_por_telefono
 from app.domain.telefono import normalizar_telefono
 
 from ..config import public_base_url_relaxed
-from ..db import get_db
+from ..db import get_db, get_session_factory
 from ..notifications import enviar_en_segundo_plano, get_notification_sender
 from ..templating import templates
 
@@ -113,6 +113,7 @@ def announce_submit(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     sender: NotificationSender = Depends(get_notification_sender),
+    session_factory: sessionmaker = Depends(get_session_factory),
     nombre: str = Form(None),
     telefono: str = Form(None),
     acepta_tyc: str = Form(None),
@@ -252,7 +253,14 @@ def announce_submit(
 
     resultado = preparar_notificacion(db, paquete, EstadoPaquete.ANUNCIADO, public_base_url_relaxed())
     if resultado is not None:
-        background_tasks.add_task(enviar_en_segundo_plano, sender, *resultado)
+        background_tasks.add_task(
+            enviar_en_segundo_plano,
+            sender,
+            *resultado,
+            session_factory=session_factory,
+            paquete_id=paquete.id,
+            evento=EstadoPaquete.ANUNCIADO,
+        )
 
     # Post/Redirect/Get (bug real reportado en vivo): antes esta respuesta
     # renderizaba `announce/confirmacion.html` directo, así que recargar la

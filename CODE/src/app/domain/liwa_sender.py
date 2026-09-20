@@ -131,8 +131,9 @@ def _enviar_sms(destino: str, mensaje: str) -> None:
 class LiwaNotificationSender:
     """Implementación real de `NotificationSender` vía LIWA.co."""
 
-    def enviar(self, destino: str, mensaje: str) -> None:
+    def enviar(self, destino: str, mensaje: str) -> str:
         _enviar_sms(destino, mensaje)
+        return "LIWA"
 
 
 class LiwaOtpSender:
