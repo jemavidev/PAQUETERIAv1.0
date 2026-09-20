@@ -6,10 +6,27 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] El fragmento "sin coincidencia" se ve y se comporta igual que antes, tanto por Teléfono como por usuario de WhatsApp: mismo texto, campo Nombre obligatorio y que escribe en mayúsculas, **sin autofocus**, la identidad tecleada como campo oculto (`telefono` o `whatsapp_usuario`, nunca ambos) y los botones Anunciar y Recibir presentes y cableados.
-- [ ] Un solo lugar define ese formulario; el fragmento de resolución en vivo lo usa a través del componente.
-- [ ] El componente se puede incluir desde otro fragmento (por ejemplo, dentro de un desplegable) sin depender del contexto del fragmento actual: recibe todo lo que necesita como parámetros.
-- [ ] Las pruebas web existentes de `/announce` (resolución en vivo y registro por Teléfono/WhatsApp directo) pasan **sin modificarse**.
-- [ ] No hay cambios de esquema, de rutas ni de comportamiento visible.
+- [x] El fragmento "sin coincidencia" se ve y se comporta igual que antes, tanto por Teléfono como por usuario de WhatsApp: mismo texto, campo Nombre obligatorio y que escribe en mayúsculas, **sin autofocus**, la identidad tecleada como campo oculto (`telefono` o `whatsapp_usuario`, nunca ambos) y los botones Anunciar y Recibir presentes y cableados.
+- [x] Un solo lugar define ese formulario; el fragmento de resolución en vivo lo usa a través del componente.
+- [x] El componente se puede incluir desde otro fragmento (por ejemplo, dentro de un desplegable) sin depender del contexto del fragmento actual: recibe todo lo que necesita como parámetros.
+- [x] Las pruebas web existentes de `/announce` (resolución en vivo y registro por Teléfono/WhatsApp directo) pasan **sin modificarse**.
+- [x] No hay cambios de esquema, de rutas ni de comportamiento visible.
+
+## Verificación
+
+- El HTML del fragmento "sin coincidencia" (Teléfono y WhatsApp) es **idéntico
+  byte a byte** al de antes del refactor: se capturó del servidor de dev antes
+  de tocar nada y se comparó después (2072 y 2082 bytes).
+- 4 tests nuevos fijan el contrato del componente aislado, sin el contexto de
+  ningún fragmento: por Teléfono, por WhatsApp, el `intro` opcional y el
+  escape del valor tecleado. Se vieron fallar primero (componente inexistente).
+- Las pruebas existentes de `/announce` pasan sin modificarse (137 en los dos
+  archivos web de `/announce`); suite completa: 1840 pasan.
+- Decisión menor: el texto "No encontramos a nadie con ese dato — regístralo:"
+  se pasa como parámetro opcional `intro`, no vive dentro del componente --
+  así el ticket 02 puede incluir el formulario dentro de "Nueva persona" sin
+  ese aviso. Cualquier otro valor de `tipo` cae a WhatsApp, como antes.
+- Sin cambios de esquema, de rutas ni de CSS compilado. El repo no tiene
+  verificador de tipos configurado.
