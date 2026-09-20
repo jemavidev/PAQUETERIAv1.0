@@ -27,6 +27,8 @@ from app.domain.paquete import Paquete, TipoPaquete
 from app.domain.paquete_lifecycle import deliver, receive
 from app.domain.paquete_service import Destinatario, announce, es_primera_entrega_a_telefono
 from app.domain.persona import Persona
+from app.domain.registro_sms import TipoRegistroSms
+from app.domain.registro_sms_service import registrar_envio
 from app.domain.saldo_contra_entrega_service import registrar_movimiento_saldo
 from app.domain.usuario import RolUsuario, Usuario
 from app.domain.zona_horaria import ZONA_HORARIA_APP
@@ -754,6 +756,96 @@ def test_dinero_de_ahora_no_cambia_con_ningun_filtro(db_session):
     assert sin_filtros == con_tipo == con_rango
 
 
+# --- Panorama: "SMS enviados por AWS" (ticket 14) --------------------------- #
+
+
+def _registrar_sms(session, tipo, proveedor, exitoso=True, cuando=None):
+    registrar_envio(session, tipo, exitoso, proveedor=proveedor)
+    if cuando is not None:
+        from app.domain.registro_sms import RegistroSms
+
+        registro = session.query(RegistroSms).order_by(RegistroSms.created_at.desc()).first()
+        registro.created_at = cuando
+        session.flush()
+
+
+def test_sms_panorama_cuenta_avisos_y_codigos_juntos_hoy_semana_mes(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0)
+    )
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 16, 9, 0))
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 14, 8, 0)
+    )  # esta semana, no hoy
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 2, 8, 0)
+    )  # este mes, no esta semana
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.enviados.hoy == 2  # aviso + código, juntos
+    assert sms.enviados.semana == 3
+    assert sms.enviados.mes == 4
+
+
+def test_sms_panorama_no_cuenta_otros_proveedores_ni_fallidos(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "LIWA", cuando=_local(2026, 9, 16, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, None, exitoso=False, cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.enviados.hoy == 0
+
+
+def test_sms_panorama_failover_cuenta_para_quien_de_verdad_entrego(db_session):
+    """Un mensaje que falló primero por LIWA pero AWS sí entregó cuenta
+    para AWS -- `RegistroSms.proveedor` ya resolvió esto en los tickets
+    11/12, acá solo se confirma que el conteo lo respeta."""
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.enviados.hoy == 1
+
+
+def test_sms_panorama_no_cambia_con_ningun_filtro(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).panorama.sms_aws
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).panorama.sms_aws
+    con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="hoy")).panorama.sms_aws
+
+    assert sin_filtros == con_tipo == con_rango
+
+
+def test_sms_panorama_registro_desde_es_la_fecha_del_primer_envio(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 1, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 10, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).panorama.sms_aws
+
+    assert sms.registro_desde == _local(2026, 9, 1, 8, 0)
+
+
+def test_sms_panorama_con_base_vacia_no_rompe(db_session):
+    sms = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).panorama.sms_aws
+
+    assert sms.enviados.hoy == 0
+    assert sms.enviados.semana == 0
+    assert sms.enviados.mes == 0
+    assert sms.registro_desde is None
+
+
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
 
 
@@ -1333,3 +1425,74 @@ def test_operacion_con_base_vacia_no_rompe(db_session):
     assert operacion.porcentaje_dentro_de_48h is None
     assert operacion.porcentaje_extra_dimensionados is None
     assert operacion.porcentaje_mal_estado is None
+
+
+# --- Periodo seleccionado: "SMS del periodo" (ticket 14) ------------------- #
+
+
+def test_sms_periodo_desglosa_avisos_y_codigos_acotado_al_rango(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 10, 8, 0)
+    )
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 12, 8, 0)
+    )
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 14, 8, 0))
+    # Fuera del mes -- no debe contar.
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 7, 1, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.sms
+
+    assert sms.avisos_aws == 2
+    assert sms.codigos_aws == 1
+    assert sms.enviados_aws == 3
+
+
+def test_sms_periodo_sin_rango_activo_son_todos_los_datos(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2024, 1, 1, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora).periodo.sms
+
+    assert sms.enviados_aws == 2
+
+
+def test_sms_periodo_fallidos_cuenta_cualquier_proveedor(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, None, exitoso=False, cuando=_local(2026, 9, 10, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, None, exitoso=False, cuando=_local(2026, 9, 12, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "LIWA", cuando=_local(2026, 9, 12, 8, 0))
+    db_session.commit()
+
+    sms = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.sms
+
+    assert sms.fallidos == 2
+    # "Fallidos" no cuenta como "enviados por AWS" -- ni siquiera un LIWA
+    # exitoso cuenta ahí, solo AWS.
+    assert sms.enviados_aws == 0
+
+
+def test_sms_periodo_no_depende_de_tipo_ni_de_cobrado_anulado(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).periodo.sms
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).periodo.sms
+    con_anulado = calcular_tablero(db_session, ahora, FiltrosTablero(anulado=True)).periodo.sms
+
+    assert sin_filtros == con_tipo == con_anulado
+
+
+def test_sms_periodo_con_base_vacia_no_rompe(db_session):
+    sms = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).periodo.sms
+
+    assert sms.enviados_aws == 0
+    assert sms.avisos_aws == 0
+    assert sms.codigos_aws == 0
+    assert sms.fallidos == 0
+    assert sms.registro_desde is None

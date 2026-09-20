@@ -35,10 +35,14 @@ from .cobro import Cobro
 from .cobro_service import _HORAS_GRACIA_BODEGAJE, calcular_cobro, obtener_tarifas_vigentes
 from .paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from .persona import Persona
+from .registro_sms import TipoRegistroSms
+from .registro_sms_service import contar_envios, fecha_primer_registro
 from .saldo_contra_entrega import MovimientoSaldoContraEntrega
 from .tarifa_cobro import TarifaCobro
 from .usuario import Usuario
 from .zona_horaria import ZONA_HORARIA_APP
+
+_PROVEEDOR_SMS_CON_COSTO = "AWS_SNS"
 
 
 @dataclass(frozen=True)
@@ -119,13 +123,29 @@ class Tendencia:
 
 
 @dataclass(frozen=True)
+class SmsPanorama:
+    """Trío Hoy/Semana/Mes de SMS enviados por AWS SNS -- Panorama, ticket
+    14 (solo cantidades; el 15 agrega costo, el 16 agrega tendencia).
+    `enviados` es avisos de paquete + códigos de acceso JUNTOS (`RegistroSms.
+    proveedor` ya resolvió cuál proveedor entregó de verdad, sin importar
+    si hubo failover -- ver `notificacion_service`/`app.web.otp`, tickets
+    11-12). `registro_desde` es la fecha del primer envío que exista en el
+    registro -- `None` sin ninguno todavía -- para dejar claro en pantalla
+    que esto NO es un histórico completo, arrancó junto con esta feature."""
+
+    enviados: TrioHoySemanaMes
+    registro_desde: datetime | None
+
+
+@dataclass(frozen=True)
 class Panorama:
     """Zona fija del tablero. Se completa ticket a ticket (01: Ingresos;
-    06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia).
-    `entregados`/`cancelados` cuentan por la fecha de SU PROPIO evento
-    (entrega/cancelación) -- tarjetas separadas, nunca sumadas en un solo
-    "procesados" (spec.md, ticket 06). `tendencia_*` acompaña a Ingresos/
-    Entregados/Cancelados (ticket 08) -- Tiempos promedio no lleva."""
+    06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia; 14:
+    SMS). `entregados`/`cancelados` cuentan por la fecha de SU PROPIO
+    evento (entrega/cancelación) -- tarjetas separadas, nunca sumadas en un
+    solo "procesados" (spec.md, ticket 06). `tendencia_*` acompaña a
+    Ingresos/Entregados/Cancelados (ticket 08) -- Tiempos promedio y SMS
+    (por ahora) no llevan; el ticket 16 le agrega tendencia a SMS."""
 
     ingresos: TrioHoySemanaMes
     entregados: TrioHoySemanaMes
@@ -134,6 +154,7 @@ class Panorama:
     tendencia_ingresos: Tendencia
     tendencia_entregados: Tendencia
     tendencia_cancelados: Tendencia
+    sms_aws: SmsPanorama
 
 
 @dataclass(frozen=True)
@@ -254,6 +275,28 @@ class OperacionYCalidad:
 
 
 @dataclass(frozen=True)
+class SmsPeriodo:
+    """Categoría "SMS del periodo" -- ticket 14 (solo cantidades; el 15
+    agrega costo). `enviados_aws` es avisos + códigos de acceso JUNTOS
+    (`avisos_aws`/`codigos_aws` alimentan el desglose "X avisos · Y códigos
+    de acceso"); un SMS entregado tras fallar antes por otro proveedor
+    cuenta para el que SÍ lo entregó, nunca para el primero de la cadena
+    que se intentó (`RegistroSms.proveedor`, ya resuelto en los tickets
+    11-12). `fallidos` son los que NINGÚN proveedor entregó -- de
+    cualquier tipo, no solo AWS. Matriz de "no aplica": NI Tipo NI
+    Cobrado/Anulado acotan ninguna tarjeta de esta categoría -- un envío
+    SMS no tiene Tipo de paquete ni estado de cobro. `registro_desde` es
+    la misma fecha que `Panorama.SmsPanorama.registro_desde` (fuente
+    única: `registro_sms_service.fecha_primer_registro`)."""
+
+    enviados_aws: int
+    avisos_aws: int
+    codigos_aws: int
+    fallidos: int
+    registro_desde: datetime | None
+
+
+@dataclass(frozen=True)
 class PeriodoSeleccionado:
     """Zona que responde a `FiltrosTablero`. `rango_activo` es la clave del
     atajo tal como quedó resuelta (`None` si no venía ninguno, o si el que
@@ -267,6 +310,7 @@ class PeriodoSeleccionado:
     ritmo: RitmoYTasas
     clientes: Clientes
     operacion: OperacionYCalidad
+    sms: SmsPeriodo
 
 
 @dataclass(frozen=True)
@@ -560,7 +604,25 @@ def _calcular_panorama(session: Session, hoy_local: date, ahora_local: datetime)
         tendencia_ingresos=_tendencia_ingresos(session, hoy_local, ahora_local, ingresos),
         tendencia_entregados=_tendencia_paquetes(session, Paquete.delivered_at, hoy_local, ahora_local, entregados),
         tendencia_cancelados=_tendencia_paquetes(session, Paquete.cancelled_at, hoy_local, ahora_local, cancelados),
+        sms_aws=_calcular_sms_panorama(session, desde_hoy, hasta_hoy, desde_semana, hasta_semana, desde_mes, hasta_mes),
     )
+
+
+def _calcular_sms_panorama(
+    session: Session,
+    desde_hoy: datetime, hasta_hoy: datetime,
+    desde_semana: datetime, hasta_semana: datetime,
+    desde_mes: datetime, hasta_mes: datetime,
+) -> SmsPanorama:
+    def _contar(desde: datetime, hasta: datetime) -> int:
+        return contar_envios(session, proveedor=_PROVEEDOR_SMS_CON_COSTO, desde=desde, hasta=hasta)
+
+    enviados = TrioHoySemanaMes(
+        hoy=_contar(desde_hoy, hasta_hoy),
+        semana=_contar(desde_semana, hasta_semana),
+        mes=_contar(desde_mes, hasta_mes),
+    )
+    return SmsPanorama(enviados=enviados, registro_desde=fecha_primer_registro(session))
 
 
 # --- Ahora: foto del momento (ticket 09; el 10 le agrega dinero) ----------- #
@@ -1190,12 +1252,37 @@ def _calcular_operacion(session: Session, hoy_local: date, filtros: FiltrosTable
     )
 
 
+def _calcular_sms_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> SmsPeriodo:
+    rango_dias = _rango_por_atajo(filtros.rango, hoy_local)
+    desde_utc = hasta_utc = None
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+
+    avisos = contar_envios(
+        session, tipo=TipoRegistroSms.AVISO_PAQUETE, proveedor=_PROVEEDOR_SMS_CON_COSTO,
+        desde=desde_utc, hasta=hasta_utc,
+    )
+    codigos = contar_envios(
+        session, tipo=TipoRegistroSms.OTP, proveedor=_PROVEEDOR_SMS_CON_COSTO,
+        desde=desde_utc, hasta=hasta_utc,
+    )
+    fallidos = contar_envios(session, exitoso=False, desde=desde_utc, hasta=hasta_utc)
+    return SmsPeriodo(
+        enviados_aws=avisos + codigos,
+        avisos_aws=avisos,
+        codigos_aws=codigos,
+        fallidos=fallidos,
+        registro_desde=fecha_primer_registro(session),
+    )
+
+
 def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> PeriodoSeleccionado:
     rango_activo = filtros.rango if _rango_por_atajo(filtros.rango, hoy_local) is not None else None
     recaudo = _calcular_recaudo(session, hoy_local, filtros)
     paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
     clientes = _calcular_clientes(session, hoy_local, filtros)
     operacion = _calcular_operacion(session, hoy_local, filtros)
+    sms = _calcular_sms_periodo(session, hoy_local, filtros)
     return PeriodoSeleccionado(
         rango_activo=rango_activo,
         recaudo=recaudo,
@@ -1203,6 +1290,7 @@ def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero
         ritmo=ritmo,
         clientes=clientes,
         operacion=operacion,
+        sms=sms,
     )
 
 

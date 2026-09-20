@@ -27,6 +27,8 @@ from app.domain.paquete import TipoPaquete
 from app.domain.paquete_lifecycle import deliver as dom_deliver
 from app.domain.paquete_lifecycle import receive as dom_receive
 from app.domain.paquete_service import Destinatario, announce
+from app.domain.registro_sms import TipoRegistroSms
+from app.domain.registro_sms_service import registrar_envio
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario, Usuario
 
@@ -576,3 +578,70 @@ def test_dinero_de_ahora_se_ve_y_no_cambia_con_filtros(client):
     inicio2 = con_filtros.index('aria-label="Ahora')
     fin2 = con_filtros.index('aria-label="Periodo seleccionado')
     assert ahora == con_filtros[inicio2:fin2]
+
+
+def test_sms_de_panorama_se_ve_y_no_cambia_con_filtros(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    assert "SMS enviados por AWS" in panorama
+    assert "Registro desde el" in panorama
+
+    con_filtros = client.get(
+        "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "rango": "hoy"}
+    ).text
+    inicio2 = con_filtros.index('aria-label="Panorama')
+    fin2 = con_filtros.index('aria-label="Ahora')
+    assert panorama == con_filtros[inicio2:fin2]
+
+
+def test_sms_de_panorama_sin_registro_no_muestra_error(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Panorama')
+    fin = r.index('aria-label="Ahora')
+    panorama = r[inicio:fin]
+    assert "Aún sin registros" in panorama
+
+
+def test_sms_de_periodo_desglosa_avisos_y_codigos(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    registrar_envio(client.db, TipoRegistroSms.OTP, True, proveedor="AWS_SNS")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, False)
+    client.db.commit()
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    assert "SMS enviados por AWS" in r
+    assert "1 avisos" in r
+    assert "1 códigos de acceso" in r
+    assert "SMS fallidos" in r
+
+
+def test_sms_de_periodo_no_depende_de_tipo_ni_cobrado_anulado(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    registrar_envio(client.db, TipoRegistroSms.AVISO_PAQUETE, True, proveedor="AWS_SNS")
+    client.db.commit()
+
+    r = _zona_periodo(
+        client.get(
+            "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "estado_cobro": "cobrado"}
+        ).text
+    )
+
+    def _articulo(titulo):
+        inicio = r.index(titulo)
+        return r[inicio : r.index("</article>", inicio)]
+
+    assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS enviados por AWS")
+    assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS fallidos")

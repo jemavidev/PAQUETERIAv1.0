@@ -35,6 +35,8 @@
       ('Permanencia en bodega', tablero.panorama.tiempos.permanencia_bodega),
       ('Bodegaje cobrado', tablero.panorama.tiempos.bodegaje_cobrado),
     ], 'lg:col-span-3') }}
+    {%- set sms_registro_desde = ('Registro desde el ' ~ (tablero.panorama.sms_aws.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.panorama.sms_aws.registro_desde else 'Aún sin registros' %}
+    {{ tarjeta_panorama('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, 'int', 'lg:col-span-3', nota=sms_registro_desde) }}
   {% endcall %}
 
   {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba') %}
@@ -115,5 +117,10 @@
     {{ tarjeta_periodo('Entregas dentro de 48h', tablero.periodo.operacion.porcentaje_dentro_de_48h, 'pct', 'lg:col-span-4', 'Calidad', detalle='recibido → entregado', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
     {{ tarjeta_periodo('Extra-dimensionados', tablero.periodo.operacion.porcentaje_extra_dimensionados, 'pct', 'lg:col-span-4', 'Calidad', detalle='sobre los recibidos', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
     {{ tarjeta_periodo('Recibidos en mal estado', tablero.periodo.operacion.porcentaje_mal_estado, 'pct', 'lg:col-span-4', 'Calidad', detalle='abiertos o regulares', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {%- set sms_desde_texto = ('Registro desde el ' ~ (tablero.periodo.sms.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.periodo.sms.registro_desde else 'Aún sin registros' %}
+    {%- set sms_detalle = formato(tablero.periodo.sms.avisos_aws, 'int') ~ ' avisos · ' ~ formato(tablero.periodo.sms.codigos_aws, 'int') ~ ' códigos de acceso · ' ~ sms_desde_texto %}
+    {{ tarjeta_periodo('SMS enviados por AWS', tablero.periodo.sms.enviados_aws, 'int', 'lg:col-span-6', 'SMS del periodo', detalle=sms_detalle, no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('SMS fallidos', tablero.periodo.sms.fallidos, 'int', 'lg:col-span-6', 'SMS del periodo', detalle='ningún proveedor los entregó', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
   {% endcall %}
 </div>
