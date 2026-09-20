@@ -18,11 +18,11 @@
    imprime como "—", nunca "0" ni un error. #}
 {% macro formato(valor, unidad) -%}
 {%- if valor is none -%}—
-{%- elif unidad == 'cop' -%}${{ "{:,}".format(valor) }}
+{%- elif unidad == 'cop' -%}${{ "{:,}".format(valor|round|int) }}
 {%- elif unidad == 'pct' -%}{{ "%.1f"|format(valor) }}%
 {%- elif unidad == 'h' -%}{{ "%.1f"|format(valor) if valor < 10 else "{:,}".format(valor|round|int) }} h
 {%- elif unidad == 'dec' -%}{{ "%.1f"|format(valor) }}
-{%- else -%}{{ "{:,}".format(valor) }}
+{%- else -%}{{ "{:,}".format(valor|round|int) }}
 {%- endif -%}
 {%- endmacro %}
 

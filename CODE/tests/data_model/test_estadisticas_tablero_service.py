@@ -215,7 +215,7 @@ def test_periodo_sin_rango_activo_son_todos_los_datos(db_session):
     tablero = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0))
 
     assert tablero.periodo.rango_activo is None
-    assert tablero.periodo.total_ingresos == 8000
+    assert tablero.periodo.recaudo.total_ingresos == 8000
 
 
 @pytest.mark.parametrize("clave", ["mes", "anio"])
@@ -230,7 +230,7 @@ def test_periodo_con_atajo_acota_al_rango(db_session, clave):
     tablero = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0), FiltrosTablero(rango=clave))
 
     assert tablero.periodo.rango_activo == clave
-    assert tablero.periodo.total_ingresos == 1000
+    assert tablero.periodo.recaudo.total_ingresos == 1000
 
 
 def test_periodo_una_clave_de_rango_desconocida_se_ignora(db_session):
@@ -244,7 +244,7 @@ def test_periodo_una_clave_de_rango_desconocida_se_ignora(db_session):
     )
 
     assert tablero.periodo.rango_activo is None
-    assert tablero.periodo.total_ingresos == 1000
+    assert tablero.periodo.recaudo.total_ingresos == 1000
 
 
 def test_periodo_filtra_por_tipo_y_por_cobrado_anulado(db_session):
@@ -258,20 +258,20 @@ def test_periodo_filtra_por_tipo_y_por_cobrado_anulado(db_session):
     ahora = _local(2026, 9, 16, 12, 0)
 
     solo_extra = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.EXTRA_DIMENSIONADO))
-    assert solo_extra.periodo.total_ingresos == 2000
+    assert solo_extra.periodo.recaudo.total_ingresos == 2000
 
     solo_anulados = calcular_tablero(db_session, ahora, FiltrosTablero(anulado=True))
-    assert solo_anulados.periodo.total_ingresos == 0  # el anulado quedó en $0
+    assert solo_anulados.periodo.recaudo.total_ingresos == 0  # el anulado quedó en $0
 
     solo_cobrados = calcular_tablero(db_session, ahora, FiltrosTablero(anulado=False))
-    assert solo_cobrados.periodo.total_ingresos == 1000 + 2000
+    assert solo_cobrados.periodo.recaudo.total_ingresos == 1000 + 2000
 
 
 def test_periodo_con_base_vacia_no_rompe(db_session):
     tablero = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0))
 
     assert tablero.periodo.rango_activo is None
-    assert tablero.periodo.total_ingresos == 0
+    assert tablero.periodo.recaudo.total_ingresos == 0
 
 
 # --- Periodo seleccionado: "Paquetes", "Ritmo y tasas" (ticket 02) --------- #
@@ -446,3 +446,90 @@ def test_paquetes_y_ritmo_con_base_vacia_no_rompe(db_session):
     assert periodo.paquetes.total == 0
     assert periodo.ritmo.anunciados.por_dia == 0
     assert periodo.ritmo.tasa_entrega is None
+
+
+# --- Periodo seleccionado: "Recaudo" completo (ticket 03) ------------------ #
+
+
+def test_recaudo_promedio_bodegaje_servicio_y_cobro_mas_alto(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    a = _entregar_con_cobro(db_session, staff, 1500, tel="3001111111")
+    _mover_cobro_a(db_session, a, _local(2026, 9, 10, 8, 0))
+    b = _entregar_con_cobro(db_session, staff, 2500, tel="3002222222")
+    _mover_cobro_a(db_session, b, _local(2026, 9, 11, 8, 0))
+    b.monto_base = 1500
+    b.monto_bodegaje = 1000
+    b.bloques_bodegaje = 1
+    db_session.commit()
+
+    recaudo = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.recaudo
+
+    assert recaudo.total_ingresos == 4000
+    assert recaudo.promedio_por_paquete == pytest.approx(2000)
+    assert recaudo.recaudado_bodegaje == 1000
+    assert recaudo.porcentaje_bodegaje == pytest.approx(25.0)
+    assert recaudo.recaudado_servicio == 3000
+    assert recaudo.porcentaje_servicio == pytest.approx(75.0)
+    assert recaudo.cobro_mas_alto == 2500
+    assert recaudo.dias_bodega_del_mas_alto == 1
+
+
+def test_recaudo_exonerado_por_anulaciones_estimado_con_tarifas_vigentes(db_session):
+    from app.domain.cobro_service import editar_tarifas
+
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    editar_tarifas(db_session, base_normal=1500, base_extra_dimensionado=2000, bodegaje_normal_24h=1000, bodegaje_extra_dimensionado_24h=1500)
+    normal_anulado = _entregar_con_cobro(db_session, staff, 1234, tel="3001111111", tipo=TipoPaquete.NORMAL, motivo_anulacion="Reclamo")
+    _mover_cobro_a(db_session, normal_anulado, _local(2026, 9, 10, 8, 0))
+    extra_anulado = _entregar_con_cobro(db_session, staff, 999, tel="3002222222", tipo=TipoPaquete.EXTRA_DIMENSIONADO, motivo_anulacion="Reclamo")
+    _mover_cobro_a(db_session, extra_anulado, _local(2026, 9, 11, 8, 0))
+    normal_cobrado = _entregar_con_cobro(db_session, staff, 1500, tel="3003333333", tipo=TipoPaquete.NORMAL)
+    _mover_cobro_a(db_session, normal_cobrado, _local(2026, 9, 12, 8, 0))
+    db_session.commit()
+
+    recaudo = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.recaudo
+
+    # Escenario armado a mano: 1 anulado NORMAL (tarifa vigente 1500) + 1
+    # anulado EXTRA_DIMENSIONADO (tarifa vigente 2000) = 3500 estimado.
+    assert recaudo.cantidad_anulaciones == 2
+    assert recaudo.exonerado_anulaciones == 1500 + 2000
+    assert recaudo.tasa_anulacion == pytest.approx(2 / 3 * 100)
+
+
+def test_recaudo_exenciones_primera_entrega_estimado_e_ignora_filtro_anulado(db_session):
+    from app.domain.cobro_service import editar_tarifas
+
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    editar_tarifas(db_session, base_normal=1500, base_extra_dimensionado=2000, bodegaje_normal_24h=1000, bodegaje_extra_dimensionado_24h=1500)
+    exento = _entregar_con_cobro(db_session, staff, 0, tel="3001111111", tipo=TipoPaquete.NORMAL)  # primera entrega, sin motivo
+    _mover_cobro_a(db_session, exento, _local(2026, 9, 10, 8, 0))
+    anulado = _entregar_con_cobro(db_session, staff, 0, tel="3002222222", tipo=TipoPaquete.NORMAL, motivo_anulacion="Reclamo")
+    _mover_cobro_a(db_session, anulado, _local(2026, 9, 11, 8, 0))
+    db_session.commit()
+
+    # "estado_cobro=cobrado" (anulado=False) NO debería vaciar esta tarjeta
+    # -- Cobrado/Anulado no la acota (matriz de "no aplica").
+    recaudo = calcular_tablero(
+        db_session, ahora, FiltrosTablero(rango="mes", anulado=False)
+    ).periodo.recaudo
+
+    assert recaudo.exenciones_primera_entrega == 1
+    assert recaudo.dejado_de_cobrar_primera_entrega == 1500
+    # El anulado (con motivo) NUNCA cuenta como "exención por primera entrega".
+
+
+def test_recaudo_sin_ningun_cobro_todo_none_o_cero(db_session):
+    recaudo = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).periodo.recaudo
+
+    assert recaudo.total_ingresos == 0
+    assert recaudo.promedio_por_paquete is None
+    assert recaudo.porcentaje_bodegaje is None
+    assert recaudo.porcentaje_servicio is None
+    assert recaudo.tasa_anulacion is None
+    assert recaudo.cobro_mas_alto is None
+    assert recaudo.dias_bodega_del_mas_alto is None
+    assert recaudo.cantidad_anulaciones == 0
+    assert recaudo.exenciones_primera_entrega == 0

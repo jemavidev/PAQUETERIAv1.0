@@ -321,6 +321,56 @@ def test_tipo_atenua_total_de_paquetes_pero_no_recibidos(client):
     assert "no depende de Tipo" in con_tipo
 
 
+def test_recaudo_completo_se_ve_en_periodo(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    for texto in (
+        "Promedio recaudado por paquete", "Recaudado por bodegaje", "Recaudado por servicio",
+        "Exonerado por anulaciones", "Exenciones por primera entrega", "Cobro más alto",
+    ):
+        assert texto in r
+
+
+def test_promedio_por_paquete_se_redondea_sin_decimales_de_flotante(client):
+    """Bug real encontrado en vivo: `promedio_por_paquete` es un float (una
+    división) -- formatearlo como dinero sin redondear imprimía algo como
+    "$2,520.6919945725917" en vez de "$2,521"."""
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+    _entregar_con_cobro(client, admin, 1234, tel="3002222222")
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    inicio = r.index("Promedio recaudado por paquete")
+    articulo = r[inicio : r.index("</article>", inicio)]
+    assert "$1,117" in articulo  # (1000+1234)/2 = 1117.0, exacto
+    assert "." not in articulo
+
+
+def test_exenciones_primera_entrega_se_atenua_con_cobrado_anulado_pero_no_con_tipo(client):
+    """Matriz de "no aplica" (issue estadisticas-cobro-dashboard, spec.md):
+    esta tarjeta es la única excepción dentro de "Recaudo" -- Tipo SÍ la
+    acota, Cobrado/Anulado NO."""
+    admin = _login_admin(client)
+    crear_motivo_anulacion(client.db, "Reclamo")
+    client.db.commit()
+    _entregar_con_cobro(client, admin, 1500, tel="3001111111")  # primera entrega -- exenta
+
+    def _articulo(texto):
+        r = _zona_periodo(texto)
+        inicio = r.index("Exenciones por primera entrega")
+        return r[inicio : r.index("</article>", inicio)]
+
+    con_estado = client.get(
+        "/administracion/estadisticas-cobro", params={"estado_cobro": "cobrado"}
+    ).text
+    assert "no depende de Cobrado/Anulado" in _articulo(con_estado)
+
+    con_tipo = client.get("/administracion/estadisticas-cobro", params={"tipo": "NORMAL"}).text
+    assert "no depende de" not in _articulo(con_tipo)
+
+
 def test_cobrado_anulado_atenua_paquetes_y_ritmo_pero_no_recaudo(client):
     admin = _login_admin(client)
     crear_motivo_anulacion(client.db, "Reclamo")

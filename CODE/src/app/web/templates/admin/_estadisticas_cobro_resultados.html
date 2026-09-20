@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_periodo, tarjeta_periodo_trio, no_aplica, zona, etiqueta_rango %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_periodo, tarjeta_periodo_trio, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -43,7 +43,13 @@
       <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1">Todos los datos</span>
       {%- endif %}
     </div>
-    {{ tarjeta_periodo('Total de ingresos', tablero.periodo.total_ingresos, 'cop', 'lg:col-span-3', 'Recaudo', no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Total de ingresos', tablero.periodo.recaudo.total_ingresos, 'cop', 'lg:col-span-3', 'Recaudo', no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Promedio recaudado por paquete', tablero.periodo.recaudo.promedio_por_paquete, 'cop', 'lg:col-span-3', 'Recaudo', no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Recaudado por bodegaje', tablero.periodo.recaudo.recaudado_bodegaje, 'cop', 'lg:col-span-3', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.porcentaje_bodegaje, 'pct') ~ ' del recaudo') if tablero.periodo.recaudo.porcentaje_bodegaje is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Recaudado por servicio', tablero.periodo.recaudo.recaudado_servicio, 'cop', 'lg:col-span-3', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.porcentaje_servicio, 'pct') ~ ' del recaudo') if tablero.periodo.recaudo.porcentaje_servicio is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Exonerado por anulaciones', tablero.periodo.recaudo.exonerado_anulaciones, 'cop', 'lg:col-span-4', 'Recaudo', detalle='Estimado con las tarifas vigentes -- ' ~ formato(tablero.periodo.recaudo.cantidad_anulaciones, 'int') ~ ' anulaciones' ~ ((' · ' ~ formato(tablero.periodo.recaudo.tasa_anulacion, 'pct') ~ ' de los cobros') if tablero.periodo.recaudo.tasa_anulacion is not none else ''), no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Exenciones por primera entrega', tablero.periodo.recaudo.exenciones_primera_entrega, 'int', 'lg:col-span-4', 'Recaudo', detalle='Estimado: ' ~ formato(tablero.periodo.recaudo.dejado_de_cobrar_primera_entrega, 'cop') ~ ' que se dejaron de cobrar', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Cobro más alto', tablero.periodo.recaudo.cobro_mas_alto, 'cop', 'lg:col-span-4', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.dias_bodega_del_mas_alto, 'int') ~ ' días en bodega') if tablero.periodo.recaudo.dias_bodega_del_mas_alto is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
 
     {{ tarjeta_periodo('Total de paquetes', tablero.periodo.paquetes.total, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
     {{ tarjeta_periodo('Anunciados', tablero.periodo.paquetes.anunciados, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}

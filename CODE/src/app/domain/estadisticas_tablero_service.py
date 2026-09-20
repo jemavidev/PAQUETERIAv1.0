@@ -32,7 +32,9 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from .cobro import Cobro
+from .cobro_service import obtener_tarifas_vigentes
 from .paquete import Paquete, TipoPaquete
+from .tarifa_cobro import TarifaCobro
 from .zona_horaria import ZONA_HORARIA_APP
 
 
@@ -111,6 +113,34 @@ class RitmoYTasas:
 
 
 @dataclass(frozen=True)
+class Recaudo:
+    """Categoría "Recaudo" de Periodo seleccionado. `promedio_por_paquete`,
+    los 2 porcentajes, `tasa_anulacion`, `cobro_mas_alto` y
+    `dias_bodega_del_mas_alto` son `None` sin ningún cobro en el periodo --
+    evita una división por cero o un "$0" engañoso, se pintan como "—".
+
+    `exonerado_anulaciones` y `dejado_de_cobrar_primera_entrega` son
+    ESTIMACIONES con las tarifas de SERVICIO vigentes HOY según el Tipo de
+    cada paquete anulado/exento -- el `Cobro` solo guarda el resultado
+    (servicio en 0), nunca lo que se hubiera cobrado, así que no hay forma
+    de saber el monto exacto que tenía cada cobro pasado antes de anularse."""
+
+    total_ingresos: int
+    promedio_por_paquete: float | None
+    recaudado_bodegaje: int
+    porcentaje_bodegaje: float | None
+    recaudado_servicio: int
+    porcentaje_servicio: float | None
+    exonerado_anulaciones: int
+    cantidad_anulaciones: int
+    tasa_anulacion: float | None
+    exenciones_primera_entrega: int
+    dejado_de_cobrar_primera_entrega: int
+    cobro_mas_alto: int | None
+    dias_bodega_del_mas_alto: int | None
+
+
+@dataclass(frozen=True)
 class PeriodoSeleccionado:
     """Zona que responde a `FiltrosTablero`. `rango_activo` es la clave del
     atajo tal como quedó resuelta (`None` si no venía ninguno, o si el que
@@ -119,7 +149,7 @@ class PeriodoSeleccionado:
     lógica de qué claves son válidas."""
 
     rango_activo: str | None
-    total_ingresos: int
+    recaudo: Recaudo
     paquetes: Paquetes
     ritmo: RitmoYTasas
 
@@ -332,14 +362,106 @@ def _calcular_paquetes_y_ritmo(
     return paquetes, ritmo
 
 
-def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> PeriodoSeleccionado:
+def _tarifa_servicio(tarifas: TarifaCobro, tipo: TipoPaquete | None) -> int:
+    """La tarifa de SERVICIO vigente que le tocaría a un paquete de `tipo`
+    (el bodegaje no entra acá -- solo se estima lo exonerado/exento del
+    cargo base, nunca del bodegaje, que nunca se exime -- ver
+    `cobro_service.calcular_cobro`)."""
+    return tarifas.base_extra_dimensionado if tipo == TipoPaquete.EXTRA_DIMENSIONADO else tarifas.base_normal
+
+
+def _monto_estimado_por_tipo(filas_tipo_y_cantidad, tarifas: TarifaCobro) -> tuple[int, int]:
+    """`filas_tipo_y_cantidad` = pares (Tipo, cantidad) ya agrupados.
+    Retorna (cantidad total, monto total) usando la tarifa de servicio
+    vigente de cada Tipo -- el monto es siempre una ESTIMACIÓN (ver
+    `Recaudo`)."""
+    cantidad_total = 0
+    monto_total = 0
+    for tipo, cantidad in filas_tipo_y_cantidad:
+        cantidad = int(cantidad)
+        cantidad_total += cantidad
+        monto_total += cantidad * _tarifa_servicio(tarifas, tipo)
+    return cantidad_total, monto_total
+
+
+def _calcular_recaudo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> Recaudo:
+    tarifas = obtener_tarifas_vigentes(session)
     base = _query_cobros_periodo(session, hoy_local, filtros)
-    total_ingresos = int(base.with_entities(func.coalesce(func.sum(Cobro.monto_total), 0)).scalar())
-    rango_activo = filtros.rango if _rango_por_atajo(filtros.rango, hoy_local) is not None else None
-    paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
-    return PeriodoSeleccionado(
-        rango_activo=rango_activo, total_ingresos=total_ingresos, paquetes=paquetes, ritmo=ritmo
+
+    cantidad, total_ingresos, bodegaje, servicio = base.with_entities(
+        func.count(Cobro.id),
+        func.coalesce(func.sum(Cobro.monto_total), 0),
+        func.coalesce(func.sum(Cobro.monto_bodegaje), 0),
+        func.coalesce(func.sum(Cobro.monto_base), 0),
+    ).one()
+    cantidad = int(cantidad)
+    total_ingresos = int(total_ingresos)
+    bodegaje = int(bodegaje)
+    servicio = int(servicio)
+
+    promedio_por_paquete = (total_ingresos / cantidad) if cantidad else None
+    porcentaje_bodegaje = (bodegaje / total_ingresos * 100) if total_ingresos else None
+    porcentaje_servicio = (servicio / total_ingresos * 100) if total_ingresos else None
+
+    # "Exonerado por anulaciones" -- Tipo Y Cobrado/Anulado SÍ acotan esta
+    # tarjeta (matriz de "no aplica"), así que se calcula sobre el MISMO
+    # `base` ya filtrado por ambos.
+    anulados_por_tipo = (
+        base.filter(Cobro.motivo_anulacion.isnot(None))
+        .with_entities(Paquete.package_type, func.count(Cobro.id))
+        .group_by(Paquete.package_type)
+        .all()
     )
+    cantidad_anulaciones, exonerado_anulaciones = _monto_estimado_por_tipo(anulados_por_tipo, tarifas)
+    tasa_anulacion = (cantidad_anulaciones / cantidad * 100) if cantidad else None
+
+    # "Exenciones por primera entrega" -- Tipo SÍ acota, Cobrado/Anulado NO
+    # (matriz): se recalcula sobre una variante de `base` con el mismo rango
+    # y Tipo pero IGNORANDO el filtro de Cobrado/Anulado.
+    filtros_sin_anulado = FiltrosTablero(rango=filtros.rango, tipo=filtros.tipo, anulado=None)
+    base_exenciones = _query_cobros_periodo(session, hoy_local, filtros_sin_anulado)
+    exentos_por_tipo = (
+        base_exenciones.filter(Cobro.monto_base == 0, Cobro.motivo_anulacion.is_(None))
+        .with_entities(Paquete.package_type, func.count(Cobro.id))
+        .group_by(Paquete.package_type)
+        .all()
+    )
+    exenciones_primera_entrega, dejado_de_cobrar_primera_entrega = _monto_estimado_por_tipo(
+        exentos_por_tipo, tarifas
+    )
+
+    # "Cobro más alto" -- `bloques_bodegaje` es la MISMA cifra que el resto
+    # de la app ya le muestra al staff como "N días" (ver `/paquetes`).
+    fila_max = (
+        base.order_by(Cobro.monto_total.desc())
+        .with_entities(Cobro.monto_total, Cobro.bloques_bodegaje)
+        .first()
+    )
+    cobro_mas_alto = int(fila_max[0]) if fila_max is not None else None
+    dias_bodega_del_mas_alto = int(fila_max[1]) if fila_max is not None else None
+
+    return Recaudo(
+        total_ingresos=total_ingresos,
+        promedio_por_paquete=promedio_por_paquete,
+        recaudado_bodegaje=bodegaje,
+        porcentaje_bodegaje=porcentaje_bodegaje,
+        recaudado_servicio=servicio,
+        porcentaje_servicio=porcentaje_servicio,
+        exonerado_anulaciones=exonerado_anulaciones,
+        cantidad_anulaciones=cantidad_anulaciones,
+        tasa_anulacion=tasa_anulacion,
+        exenciones_primera_entrega=exenciones_primera_entrega,
+        dejado_de_cobrar_primera_entrega=dejado_de_cobrar_primera_entrega,
+        cobro_mas_alto=cobro_mas_alto,
+        dias_bodega_del_mas_alto=dias_bodega_del_mas_alto,
+    )
+
+
+def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> PeriodoSeleccionado:
+    rango_activo = filtros.rango if _rango_por_atajo(filtros.rango, hoy_local) is not None else None
+    recaudo = _calcular_recaudo(session, hoy_local, filtros)
+    paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
+    return PeriodoSeleccionado(rango_activo=rango_activo, recaudo=recaudo, paquetes=paquetes, ritmo=ritmo)
 
 
 def calcular_tablero(
