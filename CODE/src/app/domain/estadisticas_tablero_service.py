@@ -66,9 +66,14 @@ class TrioHoySemanaMes:
 @dataclass(frozen=True)
 class Panorama:
     """Zona fija del tablero. Se completa ticket a ticket (01: Ingresos;
-    06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia)."""
+    06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia).
+    `entregados`/`cancelados` cuentan por la fecha de SU PROPIO evento
+    (entrega/cancelación) -- tarjetas separadas, nunca sumadas en un solo
+    "procesados" (spec.md, ticket 06)."""
 
     ingresos: TrioHoySemanaMes
+    entregados: TrioHoySemanaMes
+    cancelados: TrioHoySemanaMes
 
 
 @dataclass(frozen=True)
@@ -274,18 +279,36 @@ def _suma_ingresos_entre(session: Session, desde_utc: datetime, hasta_utc: datet
     return int(total)
 
 
+def _contar_paquetes_entre(session: Session, columna, desde_utc: datetime, hasta_utc: datetime) -> int:
+    return int(
+        session.query(func.count(Paquete.id))
+        .filter(columna.isnot(None), columna >= desde_utc, columna <= hasta_utc)
+        .scalar()
+    )
+
+
 def _calcular_panorama(session: Session, hoy_local: date) -> Panorama:
     desde_hoy, hasta_hoy = _limites_utc_de_dias_locales(hoy_local, hoy_local)
     desde_semana, hasta_semana = _limites_utc_de_dias_locales(
         hoy_local - timedelta(days=hoy_local.weekday()), hoy_local
     )
     desde_mes, hasta_mes = _limites_utc_de_dias_locales(hoy_local.replace(day=1), hoy_local)
+
+    def _trio_paquetes(columna) -> TrioHoySemanaMes:
+        return TrioHoySemanaMes(
+            hoy=_contar_paquetes_entre(session, columna, desde_hoy, hasta_hoy),
+            semana=_contar_paquetes_entre(session, columna, desde_semana, hasta_semana),
+            mes=_contar_paquetes_entre(session, columna, desde_mes, hasta_mes),
+        )
+
     ingresos = TrioHoySemanaMes(
         hoy=_suma_ingresos_entre(session, desde_hoy, hasta_hoy),
         semana=_suma_ingresos_entre(session, desde_semana, hasta_semana),
         mes=_suma_ingresos_entre(session, desde_mes, hasta_mes),
     )
-    return Panorama(ingresos=ingresos)
+    entregados = _trio_paquetes(Paquete.delivered_at)
+    cancelados = _trio_paquetes(Paquete.cancelled_at)
+    return Panorama(ingresos=ingresos, entregados=entregados, cancelados=cancelados)
 
 
 # --- Periodo seleccionado --------------------------------------------------- #

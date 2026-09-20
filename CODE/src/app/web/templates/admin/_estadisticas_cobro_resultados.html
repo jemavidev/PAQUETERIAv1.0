@@ -27,7 +27,9 @@
 
 <div class="space-y-4">
   {% call zona('bg-blue-600', 'Panorama: hoy, esta semana y este mes -- no cambia con los filtros de arriba') %}
-    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-6') }}
+    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-4') }}
+    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-4') }}
+    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-4') }}
   {% endcall %}
 
   {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba', vacio=True) %}

@@ -214,6 +214,63 @@ def test_panorama_con_base_vacia_no_rompe(db_session):
     assert tablero.panorama.ingresos.mes == 0
 
 
+# --- Panorama: "Entregados" y "Cancelados" (ticket 06) --------------------- #
+
+
+def test_panorama_entregados_y_cancelados_hoy_semana_mes(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+
+    entregado_hoy = _anunciar(db_session, "3001111111")
+    _mover(db_session, entregado_hoy, delivered_at=_local(2026, 9, 16, 8, 0))
+    entregado_en_semana = _anunciar(db_session, "3002222222")
+    _mover(db_session, entregado_en_semana, delivered_at=_local(2026, 9, 14, 8, 0))
+    entregado_en_mes = _anunciar(db_session, "3003333333")
+    _mover(db_session, entregado_en_mes, delivered_at=_local(2026, 9, 2, 8, 0))
+    entregado_fuera = _anunciar(db_session, "3004444444")
+    _mover(db_session, entregado_fuera, delivered_at=_local(2026, 8, 31, 8, 0))
+
+    cancelado_hoy = _anunciar(db_session, "3005555555")
+    _mover(db_session, cancelado_hoy, cancelled_at=_local(2026, 9, 16, 9, 0))
+    cancelado_en_mes = _anunciar(db_session, "3006666666")
+    _mover(db_session, cancelado_en_mes, cancelled_at=_local(2026, 9, 5, 9, 0))
+    db_session.commit()
+
+    tablero = calcular_tablero(db_session, ahora)
+
+    assert tablero.panorama.entregados.hoy == 1
+    assert tablero.panorama.entregados.semana == 2
+    assert tablero.panorama.entregados.mes == 3
+
+    assert tablero.panorama.cancelados.hoy == 1
+    assert tablero.panorama.cancelados.semana == 1
+    assert tablero.panorama.cancelados.mes == 2
+
+
+def test_panorama_entregados_cancelados_no_se_mezclan_ni_dependen_de_filtros(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    entregado = _anunciar(db_session, "3001111111", tipo=TipoPaquete.EXTRA_DIMENSIONADO)
+    _mover(db_session, entregado, delivered_at=_local(2026, 9, 16, 8, 0))
+    cancelado = _anunciar(db_session, "3002222222")
+    _mover(db_session, cancelado, cancelled_at=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).panorama
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).panorama
+    con_rango_lejano = calcular_tablero(db_session, ahora, FiltrosTablero(rango="anio")).panorama
+
+    assert sin_filtros.entregados.hoy == con_tipo.entregados.hoy == con_rango_lejano.entregados.hoy == 1
+    assert sin_filtros.cancelados.hoy == con_tipo.cancelados.hoy == con_rango_lejano.cancelados.hoy == 1
+    # Nunca sumadas en un solo "procesados" -- cada trío cuenta solo lo suyo.
+    assert sin_filtros.entregados.hoy != sin_filtros.entregados.hoy + sin_filtros.cancelados.hoy
+
+
+def test_panorama_entregados_cancelados_con_base_vacia_no_rompe(db_session):
+    panorama = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).panorama
+
+    assert panorama.entregados.hoy == panorama.entregados.semana == panorama.entregados.mes == 0
+    assert panorama.cancelados.hoy == panorama.cancelados.semana == panorama.cancelados.mes == 0
+
+
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
 
 
