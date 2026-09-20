@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -27,9 +27,14 @@
 
 <div class="space-y-4">
   {% call zona('bg-blue-600', 'Panorama: hoy, esta semana y este mes -- no cambia con los filtros de arriba') %}
-    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-4') }}
-    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-4') }}
-    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-4') }}
+    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-3') }}
+    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-3') }}
+    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-3') }}
+    {{ tarjeta_panorama_tiempos('Tiempos promedio', [
+      ('Anuncio → recepción', tablero.panorama.tiempos.anuncio_recepcion),
+      ('Permanencia en bodega', tablero.panorama.tiempos.permanencia_bodega),
+      ('Bodegaje cobrado', tablero.panorama.tiempos.bodegaje_cobrado),
+    ], 'lg:col-span-3') }}
   {% endcall %}
 
   {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba', vacio=True) %}

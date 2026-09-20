@@ -64,6 +64,37 @@ class TrioHoySemanaMes:
 
 
 @dataclass(frozen=True)
+class TrioPromedioHoras:
+    """Como `TrioHoySemanaMes`, pero para un promedio en HORAS -- cada
+    campo es `None` sin ningún paquete que califique en esa ventana (evita
+    un "0 h" engañoso, se pinta como "—")."""
+
+    hoy: float | None
+    semana: float | None
+    mes: float | None
+
+
+@dataclass(frozen=True)
+class TiemposPromedio:
+    """Las tres filas de la tarjeta "Tiempos promedio" de Panorama (ticket
+    07), cada una con su propio trío Hoy/Semana/Mes en horas:
+
+    - `anuncio_recepcion`: recibido − anunciado, de los RECIBIDOS en la
+      ventana.
+    - `permanencia_bodega`: entregado − recibido, de los ENTREGADOS en la
+      ventana -- de TODOS los entregados, cobrado bodegaje o no.
+    - `bodegaje_cobrado`: la misma resta que `permanencia_bodega`, pero
+      solo de los entregados cuyo cobro sí llevó bloques de bodegaje
+      (`Cobro.bloques_bodegaje > 0`) -- misma métrica que ya existía en la
+      pantalla anterior (`cobro_service.estadisticas_cobro`), reubicada
+      acá."""
+
+    anuncio_recepcion: TrioPromedioHoras
+    permanencia_bodega: TrioPromedioHoras
+    bodegaje_cobrado: TrioPromedioHoras
+
+
+@dataclass(frozen=True)
 class Panorama:
     """Zona fija del tablero. Se completa ticket a ticket (01: Ingresos;
     06: Entregados/Cancelados; 07: Tiempos promedio; 08: tendencia).
@@ -74,6 +105,7 @@ class Panorama:
     ingresos: TrioHoySemanaMes
     entregados: TrioHoySemanaMes
     cancelados: TrioHoySemanaMes
+    tiempos: TiemposPromedio
 
 
 @dataclass(frozen=True)
@@ -287,6 +319,62 @@ def _contar_paquetes_entre(session: Session, columna, desde_utc: datetime, hasta
     )
 
 
+def _promedio_horas_entre(
+    session: Session,
+    columna_ventana,
+    columna_inicio,
+    columna_fin,
+    desde_utc: datetime,
+    hasta_utc: datetime,
+    solo_con_bodegaje_cobrado: bool = False,
+) -> float | None:
+    """Promedio en HORAS de `columna_fin - columna_inicio`, de los
+    `Paquete` cuya `columna_ventana` cae en `[desde_utc, hasta_utc]` --
+    `None` sin ninguno que califique. `solo_con_bodegaje_cobrado` une con
+    `Cobro` y exige `bloques_bodegaje > 0` (fila "Bodegaje cobrado")."""
+    query = session.query(
+        func.avg(func.extract("epoch", columna_fin - columna_inicio) / 3600.0)
+    ).filter(
+        columna_ventana.isnot(None),
+        columna_ventana >= desde_utc,
+        columna_ventana <= hasta_utc,
+        columna_inicio.isnot(None),
+        columna_fin.isnot(None),
+    )
+    if solo_con_bodegaje_cobrado:
+        query = query.join(Cobro, Cobro.paquete_id == Paquete.id).filter(Cobro.bloques_bodegaje > 0)
+    valor = query.scalar()
+    return float(valor) if valor is not None else None
+
+
+def _calcular_tiempos_promedio(
+    session: Session,
+    desde_hoy: datetime, hasta_hoy: datetime,
+    desde_semana: datetime, hasta_semana: datetime,
+    desde_mes: datetime, hasta_mes: datetime,
+) -> TiemposPromedio:
+    def _trio_horas(columna_ventana, columna_inicio, columna_fin, solo_con_bodegaje_cobrado=False) -> TrioPromedioHoras:
+        return TrioPromedioHoras(
+            hoy=_promedio_horas_entre(
+                session, columna_ventana, columna_inicio, columna_fin, desde_hoy, hasta_hoy, solo_con_bodegaje_cobrado
+            ),
+            semana=_promedio_horas_entre(
+                session, columna_ventana, columna_inicio, columna_fin, desde_semana, hasta_semana, solo_con_bodegaje_cobrado
+            ),
+            mes=_promedio_horas_entre(
+                session, columna_ventana, columna_inicio, columna_fin, desde_mes, hasta_mes, solo_con_bodegaje_cobrado
+            ),
+        )
+
+    return TiemposPromedio(
+        anuncio_recepcion=_trio_horas(Paquete.received_at, Paquete.announced_at, Paquete.received_at),
+        permanencia_bodega=_trio_horas(Paquete.delivered_at, Paquete.received_at, Paquete.delivered_at),
+        bodegaje_cobrado=_trio_horas(
+            Paquete.delivered_at, Paquete.received_at, Paquete.delivered_at, solo_con_bodegaje_cobrado=True
+        ),
+    )
+
+
 def _calcular_panorama(session: Session, hoy_local: date) -> Panorama:
     desde_hoy, hasta_hoy = _limites_utc_de_dias_locales(hoy_local, hoy_local)
     desde_semana, hasta_semana = _limites_utc_de_dias_locales(
@@ -308,7 +396,10 @@ def _calcular_panorama(session: Session, hoy_local: date) -> Panorama:
     )
     entregados = _trio_paquetes(Paquete.delivered_at)
     cancelados = _trio_paquetes(Paquete.cancelled_at)
-    return Panorama(ingresos=ingresos, entregados=entregados, cancelados=cancelados)
+    tiempos = _calcular_tiempos_promedio(
+        session, desde_hoy, hasta_hoy, desde_semana, hasta_semana, desde_mes, hasta_mes
+    )
+    return Panorama(ingresos=ingresos, entregados=entregados, cancelados=cancelados, tiempos=tiempos)
 
 
 # --- Periodo seleccionado --------------------------------------------------- #

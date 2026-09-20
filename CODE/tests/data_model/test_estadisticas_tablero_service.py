@@ -271,6 +271,84 @@ def test_panorama_entregados_cancelados_con_base_vacia_no_rompe(db_session):
     assert panorama.cancelados.hoy == panorama.cancelados.semana == panorama.cancelados.mes == 0
 
 
+# --- Panorama: "Tiempos promedio" (ticket 07) ------------------------------ #
+
+
+def test_tiempos_promedio_anuncio_recepcion_y_permanencia_bodega(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+
+    # Recibido HOY: 6 horas entre anuncio y recepción.
+    p1 = _anunciar(db_session, "3001111111")
+    _mover(
+        db_session, p1,
+        announced_at=_local(2026, 9, 16, 2, 0), received_at=_local(2026, 9, 16, 8, 0),
+    )
+    # Recibido ESTA SEMANA (no hoy): 12 horas.
+    p2 = _anunciar(db_session, "3002222222")
+    _mover(
+        db_session, p2,
+        announced_at=_local(2026, 9, 14, 20, 0), received_at=_local(2026, 9, 15, 8, 0),
+    )
+    db_session.commit()
+
+    tiempos = calcular_tablero(db_session, ahora).panorama.tiempos
+
+    assert tiempos.anuncio_recepcion.hoy == pytest.approx(6.0)
+    assert tiempos.anuncio_recepcion.semana == pytest.approx((6.0 + 12.0) / 2)
+
+
+def test_tiempos_promedio_permanencia_bodega_y_bodegaje_cobrado(db_session):
+    from app.domain.cobro import Cobro as CobroModel
+
+    ahora = _local(2026, 9, 16, 12, 0)
+
+    # Entregado hoy, 10 horas en bodega, CON bloques de bodegaje cobrados.
+    cobro_con_bodegaje = _entregar_con_cobro(db_session, _usuario(db_session), 1000, tel="3001111111")
+    paquete_con = db_session.get(Paquete, cobro_con_bodegaje.paquete_id)
+    paquete_con.received_at = _local(2026, 9, 16, 0, 0)
+    paquete_con.delivered_at = _local(2026, 9, 16, 10, 0)
+    cobro_con_bodegaje.bloques_bodegaje = 2
+    # Entregado hoy también, 20 horas en bodega, SIN bloques de bodegaje.
+    cobro_sin_bodegaje = _entregar_con_cobro(db_session, _usuario(db_session, "Op2"), 500, tel="3002222222")
+    paquete_sin = db_session.get(Paquete, cobro_sin_bodegaje.paquete_id)
+    paquete_sin.received_at = _local(2026, 9, 16, 0, 0)
+    paquete_sin.delivered_at = _local(2026, 9, 16, 20, 0)
+    cobro_sin_bodegaje.bloques_bodegaje = 0
+    db_session.commit()
+
+    tiempos = calcular_tablero(db_session, ahora).panorama.tiempos
+
+    # Permanencia en bodega: promedio de AMBOS (10 y 20 horas).
+    assert tiempos.permanencia_bodega.hoy == pytest.approx((10.0 + 20.0) / 2)
+    # Bodegaje cobrado: solo el que tuvo bloques_bodegaje > 0.
+    assert tiempos.bodegaje_cobrado.hoy == pytest.approx(10.0)
+
+
+def test_tiempos_promedio_none_sin_ningun_paquete_que_califique(db_session):
+    tiempos = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).panorama.tiempos
+
+    assert tiempos.anuncio_recepcion.hoy is None
+    assert tiempos.anuncio_recepcion.semana is None
+    assert tiempos.anuncio_recepcion.mes is None
+    assert tiempos.permanencia_bodega.hoy is None
+    assert tiempos.bodegaje_cobrado.hoy is None
+
+
+def test_tiempos_promedio_no_cambia_con_ningun_filtro(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    p = _anunciar(db_session, "3001111111", tipo=TipoPaquete.EXTRA_DIMENSIONADO)
+    _mover(db_session, p, announced_at=_local(2026, 9, 16, 2, 0), received_at=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).panorama.tiempos.anuncio_recepcion.hoy
+    con_tipo = calcular_tablero(
+        db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)
+    ).panorama.tiempos.anuncio_recepcion.hoy
+    con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="anio")).panorama.tiempos.anuncio_recepcion.hoy
+
+    assert sin_filtros == con_tipo == con_rango == pytest.approx(6.0)
+
+
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
 
 
