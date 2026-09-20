@@ -44,6 +44,11 @@ def test_operador_ve_el_campo_unico(client):
     r = client.get("/announce")
     assert r.status_code == 200
     assert 'name="q"' in r.text
+    # Issue 366 (.scratch/pendientes-cliente): el campo también acepta un
+    # código Torre+Apto -- el texto (placeholder y aria-label) lo dice.
+    assert 'placeholder="Teléfono, WhatsApp o Apartamento"' in r.text
+    assert 'aria-label="Teléfono, WhatsApp o Apartamento"' in r.text
+    assert "Teléfono o usuario de WhatsApp" not in r.text
     assert "¿Solo registrar residentes?" not in r.text
     # El formulario viejo de 3 bloques desapareció -- ojo, no un plain
     # 'name="torre"' not in r.text: desde el bug/mejora de "+ Nueva
@@ -535,7 +540,8 @@ def test_identificar_torre_apto_con_residentes_muestra_la_lista(client):
     assert r.status_code == 200
     assert "PAPÁ" in r.text
     assert "HIJO" in r.text
-    assert "Nueva persona" in r.text
+    assert "Nuevo residente" in r.text
+    assert "Nueva persona" not in r.text  # issue 368: la etiqueta se renombró
     # Principal primero (listar_ocupantes ya lo ordena así) -- sin badge
     # visible (issue 131, mismo criterio que Recibir en issue 125).
     assert r.text.index("PAPÁ") < r.text.index("HIJO")
@@ -594,7 +600,7 @@ def test_identificar_torre_apto_unidad_vacia_solo_nueva_persona(client):
     r = client.get("/announce/identificar", params={"q": "01106"})
     assert r.status_code == 200
     assert 'data-ocupante-id' not in r.text
-    assert "Nueva persona" in r.text
+    assert "Nuevo residente" in r.text
     assert 'name="torre"' in r.text
     assert 'name="apartamento"' in r.text
 
@@ -1543,7 +1549,7 @@ def test_identificar_telefono_con_coresidentes_muestra_la_lista_de_la_unidad(cli
     assert r.status_code == 200
     assert "MAMÁ" in r.text
     assert "HIJO" in r.text
-    assert "Nueva persona" in r.text
+    assert "Nuevo residente" in r.text
     assert "data-ocupante-id" in r.text  # lista de residentes, no la tarjeta directa
     assert "Ya registrado" not in r.text  # esa etiqueta es de la tarjeta directa de _identificar.html
 

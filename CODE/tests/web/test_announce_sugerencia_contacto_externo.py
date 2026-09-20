@@ -152,7 +152,7 @@ def test_coincide_sin_importar_el_formato_en_que_se_teclea_el_telefono(client):
         assert "JUAN PEREZ" in _texto_visible(r.text)
 
 
-def test_coincide_con_cualquiera_de_los_telefonos_del_fila(client):
+def test_coincide_con_cualquiera_de_los_telefonos_del_contacto(client):
     _login_operador(client)
     _sembrar(client, _fila("juan perez", telefonos=["3001111111", "3002222222"]))
 
@@ -256,16 +256,17 @@ def test_torre_apto_valor_incompleto_y_campo_vacio_no_cambian_con_contactos_exte
         assert antes[q] == ""
 
 
-def test_el_fragmento_trae_nueva_persona_plegada_con_el_formulario_de_siempre(client):
+def test_el_fragmento_trae_nuevo_residente_plegado_con_el_formulario_de_siempre(client):
     _login_operador(client)
     _sembrar(client, _fila("juan perez", telefonos=["3001234567"]))
 
     html = client.get("/announce/identificar", params={"q": "3001234567"}).text
 
     desplegable = re.search(r"<details[^>]*data-nueva-persona[^>]*>", html)
-    assert desplegable, "falta el desplegable 'Nueva persona'"
+    assert desplegable, "falta el desplegable 'Nuevo residente'"
     assert not re.search(r"\bopen\b", desplegable.group(0)), "debe empezar plegado"
-    assert "Nueva persona" in _texto_visible(html)
+    assert "Nuevo residente" in _texto_visible(html)
+    assert "Nueva persona" not in _texto_visible(html)  # issue 368: la etiqueta se renombró
     # El formulario de persona nueva de siempre: UNA sola instancia (el campo
     # Nombre tiene un `id` fijo), Nombre obligatorio, Anunciar y Recibir, con
     # el Teléfono tecleado como dato oculto -- y sin el aviso "No encontramos
@@ -376,9 +377,9 @@ def test_recibir_desde_la_tarjeta_anuncia_y_abre_el_modal_de_recepcion(client):
     assert f'action="/paquetes/{paquete.id}/recibir"' in r.text
 
 
-def test_nueva_persona_registra_con_el_nombre_que_se_escriba_a_mano(client):
+def test_nuevo_residente_registra_con_el_nombre_que_se_escriba_a_mano(client):
     # Si la sugerencia no corresponde (el número cambió de dueño), el Staff
-    # abre "Nueva persona" y registra a alguien con OTRO nombre.
+    # abre "Nuevo residente" y registra a alguien con OTRO nombre.
     _login_operador(client)
     _sembrar(client, _fila("juan perez", telefonos=["3001234567"]))
     fragmento = client.get("/announce/identificar", params={"q": "3001234567"}).text
