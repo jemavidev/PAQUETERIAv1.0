@@ -22,9 +22,10 @@ from app.domain.estadisticas_tablero_service import (
     _rango_por_atajo,
     calcular_tablero,
 )
-from app.domain.paquete import TipoPaquete
+from app.domain.paquete import Paquete, TipoPaquete
 from app.domain.paquete_lifecycle import deliver, receive
 from app.domain.paquete_service import Destinatario, announce
+from app.domain.persona import Persona
 from app.domain.usuario import RolUsuario, Usuario
 from app.domain.zona_horaria import ZONA_HORARIA_APP
 
@@ -97,6 +98,18 @@ def _mover_cobro_a(session, cobro: Cobro, cuando: datetime) -> Cobro:
     """Reescribe `Cobro.cobrado_en` directo en la fila -- la única forma de
     ubicar un cobro en un instante puntual (`registrar_cobro` siempre usa
     `datetime.now()`)."""
+    cobro.cobrado_en = cuando
+    session.flush()
+    return cobro
+
+
+def _mover_entrega_a(session, cobro: Cobro, cuando: datetime) -> Cobro:
+    """Como `_mover_cobro_a`, pero ADEMÁS ubica `announced_at`/`received_at`/
+    `delivered_at` del propio Paquete en ese mismo instante -- necesario para
+    las pruebas de "Clientes"/"Paquetes", que consultan los timestamps del
+    Paquete, no el `Cobro.cobrado_en`."""
+    paquete = session.get(Paquete, cobro.paquete_id)
+    paquete.announced_at = paquete.received_at = paquete.delivered_at = cuando
     cobro.cobrado_en = cuando
     session.flush()
     return cobro
@@ -533,3 +546,139 @@ def test_recaudo_sin_ningun_cobro_todo_none_o_cero(db_session):
     assert recaudo.dias_bodega_del_mas_alto is None
     assert recaudo.cantidad_anulaciones == 0
     assert recaudo.exenciones_primera_entrega == 0
+
+
+# --- Periodo seleccionado: "Clientes" (ticket 04) --------------------------- #
+
+
+def test_clientes_activos_y_recurrentes(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    # Cliente A: 2 paquetes con movimiento en el periodo -- recurrente.
+    a1 = _anunciar(db_session, "3001111111")
+    _mover(db_session, a1, announced_at=_local(2026, 9, 5, 8, 0))
+    a2 = _anunciar(db_session, "3001111111")
+    _mover(db_session, a2, announced_at=_local(2026, 9, 6, 8, 0))
+    # Cliente B: 1 solo paquete -- activo, no recurrente.
+    b1 = _anunciar(db_session, "3002222222")
+    _mover(db_session, b1, announced_at=_local(2026, 9, 7, 8, 0))
+    # Cliente C: su único paquete es "nombre sin teléfono" -- NO cuenta.
+    from app.domain.paquete_service import Destinatario, announce
+
+    c1 = announce(
+        db_session, anunciante_telefono="3009999999", anunciante_nombre="Ana",
+        destinatario=Destinatario.solo_nombre("Un Vecino"),
+    )
+    _mover(db_session, c1, announced_at=_local(2026, 9, 8, 8, 0))
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.activos == 2  # A y B (el anunciante de C no es su destinatario)
+    assert clientes.recurrentes == 1  # solo A
+
+
+def test_clientes_nuevos_por_primera_entrega_historica(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    nuevo = _anunciar(db_session, "3001111111")
+    _mover(db_session, nuevo, announced_at=_local(2026, 9, 1, 8, 0), delivered_at=_local(2026, 9, 5, 8, 0))
+    # Cliente antiguo: su primera entrega fue MUCHO antes del periodo, así
+    # que aunque tenga actividad ahora, no es "nuevo".
+    antiguo_primera = _anunciar(db_session, "3002222222")
+    _mover(db_session, antiguo_primera, announced_at=_local(2025, 1, 1, 8, 0), delivered_at=_local(2025, 1, 5, 8, 0))
+    antiguo_reciente = _anunciar(db_session, "3002222222")
+    _mover(db_session, antiguo_reciente, announced_at=_local(2026, 9, 10, 8, 0))
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.nuevos == 1
+
+
+def test_cliente_con_mas_paquetes_nombre_apartamento_y_empate(db_session):
+    from app.domain.apartamento import Apartamento
+
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    apto = db_session.query(Apartamento).first()
+
+    for _ in range(2):
+        extra = _anunciar(db_session, "3001111111")
+        _mover(db_session, extra, announced_at=_local(2026, 9, 1, 8, 0), snapshot_torre=apto.torre, snapshot_apartamento=apto.apartamento)
+    # El MÁS RECIENTE de sus 3 paquetes también lleva el snapshot -- es el
+    # que `_nombre_y_apartamento_de_cliente` debe elegir.
+    ganador = _anunciar(db_session, "3001111111")
+    _mover(db_session, ganador, announced_at=_local(2026, 9, 2, 8, 0), snapshot_torre=apto.torre, snapshot_apartamento=apto.apartamento)
+    otro = _anunciar(db_session, "3002222222")
+    _mover(db_session, otro, announced_at=_local(2026, 9, 3, 8, 0))
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.con_mas_paquetes.valor == 3
+    assert clientes.con_mas_paquetes.nombre == "ANA"  # nombre de la Persona (announce() usa "Ana")
+    assert clientes.con_mas_paquetes.apartamento == f"{apto.torre} {apto.apartamento}"
+
+
+def test_cliente_con_mayor_gasto_respeta_cobrado_anulado_pero_mas_paquetes_no(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    barato_muchos = _entregar_con_cobro(db_session, staff, 100, tel="3001111111")
+    _mover_entrega_a(db_session, barato_muchos, _local(2026, 9, 1, 8, 0))
+    for _ in range(2):
+        c = _entregar_con_cobro(db_session, staff, 100, tel="3001111111")
+        _mover_entrega_a(db_session, c, _local(2026, 9, 2, 8, 0))
+    caro_uno = _entregar_con_cobro(db_session, staff, 9999, tel="3002222222")
+    _mover_entrega_a(db_session, caro_uno, _local(2026, 9, 3, 8, 0))
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.con_mayor_gasto.valor == 9999  # el caro, aunque tenga menos paquetes
+    assert clientes.con_mas_paquetes.valor == 3  # el de más paquetes, aunque gaste menos
+
+
+def test_clientes_de_baja_administrativa_no_cuentan(db_session):
+    from app.domain.persona_service import dar_de_baja_administrativa
+
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    p = _anunciar(db_session, "3001111111")
+    _mover(db_session, p, announced_at=_local(2026, 9, 5, 8, 0))
+    db_session.flush()
+    persona = db_session.query(Persona).filter(Persona.telefono == "+573001111111").one()
+    dar_de_baja_administrativa(db_session, persona)
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.activos == 0
+    assert clientes.con_mas_paquetes is None
+
+
+def test_clientes_filtro_tipo_acota_todas_menos_mayor_gasto_que_tambien_respeta_anulado(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    normal = _entregar_con_cobro(db_session, staff, 500, tel="3001111111", tipo=TipoPaquete.NORMAL)
+    _mover_entrega_a(db_session, normal, _local(2026, 9, 1, 8, 0))
+    extra = _entregar_con_cobro(db_session, staff, 500, tel="3002222222", tipo=TipoPaquete.EXTRA_DIMENSIONADO)
+    _mover_entrega_a(db_session, extra, _local(2026, 9, 2, 8, 0))
+    db_session.commit()
+
+    solo_normal = calcular_tablero(
+        db_session, ahora, FiltrosTablero(rango="mes", tipo=TipoPaquete.NORMAL)
+    ).periodo.clientes
+
+    assert solo_normal.activos == 1
+    assert solo_normal.con_mayor_gasto.valor == 500  # solo el cliente NORMAL califica
+
+
+def test_clientes_con_base_vacia_no_rompe(db_session):
+    clientes = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).periodo.clientes
+
+    assert clientes.activos == 0
+    assert clientes.nuevos == 0
+    assert clientes.recurrentes == 0
+    assert clientes.con_mas_paquetes is None
+    assert clientes.con_mayor_gasto is None

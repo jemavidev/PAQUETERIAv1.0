@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_periodo, tarjeta_periodo_trio, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -62,5 +62,23 @@
     {{ tarjeta_periodo_trio('Entregados', tablero.periodo.ritmo.entregados.por_dia, tablero.periodo.ritmo.entregados.por_semana, tablero.periodo.ritmo.entregados.por_mes, 'dec', 'lg:col-span-6', 'Ritmo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
     {{ tarjeta_periodo('Tasa de entrega', tablero.periodo.ritmo.tasa_entrega, 'pct', 'lg:col-span-3', 'Tasas', detalle='entregados ÷ cerrados', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
     {{ tarjeta_periodo('Tasa de cancelación', tablero.periodo.ritmo.tasa_cancelacion, 'pct', 'lg:col-span-3', 'Tasas', detalle='cancelados ÷ cerrados', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {{ tarjeta_periodo('Clientes activos', tablero.periodo.clientes.activos, 'int', 'lg:col-span-3', 'Clientes', detalle='con al menos un paquete en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Clientes nuevos', tablero.periodo.clientes.nuevos, 'int', 'lg:col-span-3', 'Clientes', detalle='su primera entrega fue en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {{ tarjeta_periodo('Clientes recurrentes', tablero.periodo.clientes.recurrentes, 'int', 'lg:col-span-3', 'Clientes', detalle='2 o más paquetes en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {%- set top_paquetes = tablero.periodo.clientes.con_mas_paquetes -%}
+    {%- set detalle_top_paquetes = none -%}
+    {%- if top_paquetes -%}
+      {%- set detalle_top_paquetes = (top_paquetes.apartamento ~ ' · ' if top_paquetes.apartamento else '') ~ formato(top_paquetes.valor, 'int') ~ ' paquetes' -%}
+    {%- endif %}
+    {{ tarjeta_periodo_texto('Cliente con más paquetes', top_paquetes.nombre if top_paquetes else none, 'lg:col-span-3', 'Clientes', detalle=detalle_top_paquetes, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+
+    {%- set top_gasto = tablero.periodo.clientes.con_mayor_gasto -%}
+    {%- set detalle_top_gasto = none -%}
+    {%- if top_gasto -%}
+      {%- set detalle_top_gasto = (top_gasto.apartamento ~ ' · ' if top_gasto.apartamento else '') ~ formato(top_gasto.valor, 'cop') -%}
+    {%- endif %}
+    {{ tarjeta_periodo_texto('Cliente con mayor gasto', top_gasto.nombre if top_gasto else none, 'lg:col-span-3', 'Clientes', detalle=detalle_top_gasto, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
   {% endcall %}
 </div>

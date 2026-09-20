@@ -371,6 +371,17 @@ def test_exenciones_primera_entrega_se_atenua_con_cobrado_anulado_pero_no_con_ti
     assert "no depende de" not in _articulo(con_tipo)
 
 
+def test_clientes_se_ven_en_periodo_con_nombre_no_telefono(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
+    for texto in ("Clientes activos", "Clientes nuevos", "Clientes recurrentes", "Cliente con más paquetes", "Cliente con mayor gasto"):
+        assert texto in r
+    assert "ANA" in r  # el nombre del cliente destacado, no su teléfono
+    assert "+573001111111" not in r
+
+
 def test_cobrado_anulado_atenua_paquetes_y_ritmo_pero_no_recaudo(client):
     admin = _login_admin(client)
     crear_motivo_anulacion(client.db, "Reclamo")

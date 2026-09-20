@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 from .cobro import Cobro
 from .cobro_service import obtener_tarifas_vigentes
 from .paquete import Paquete, TipoPaquete
+from .persona import Persona
 from .tarifa_cobro import TarifaCobro
 from .zona_horaria import ZONA_HORARIA_APP
 
@@ -141,6 +142,34 @@ class Recaudo:
 
 
 @dataclass(frozen=True)
+class ClienteDestacado:
+    """Un cliente puntual (por su Teléfono de destinatario) con su NOMBRE --
+    el de su Persona si existe, o si no el congelado en el snapshot de su
+    paquete más reciente del periodo (nunca el teléfono, spec.md: "mostrando
+    siempre el NOMBRE del cliente") -- su Apartamento del snapshot MÁS
+    RECIENTE (ADR-0001: nunca la unidad actual) y la cifra que lo hizo
+    destacar (cantidad de paquetes, o monto gastado, según la tarjeta)."""
+
+    nombre: str
+    apartamento: str | None
+    valor: int
+
+
+@dataclass(frozen=True)
+class Clientes:
+    """Categoría "Clientes" de Periodo seleccionado -- "cliente" = una
+    Persona identificada por el Teléfono del destinatario (`recipient_
+    phone`); los paquetes de "nombre sin teléfono" (sin Persona detrás)
+    nunca cuentan acá."""
+
+    activos: int
+    nuevos: int
+    recurrentes: int
+    con_mas_paquetes: ClienteDestacado | None
+    con_mayor_gasto: ClienteDestacado | None
+
+
+@dataclass(frozen=True)
 class PeriodoSeleccionado:
     """Zona que responde a `FiltrosTablero`. `rango_activo` es la clave del
     atajo tal como quedó resuelta (`None` si no venía ninguno, o si el que
@@ -152,6 +181,7 @@ class PeriodoSeleccionado:
     recaudo: Recaudo
     paquetes: Paquetes
     ritmo: RitmoYTasas
+    clientes: Clientes
 
 
 @dataclass(frozen=True)
@@ -457,11 +487,160 @@ def _calcular_recaudo(session: Session, hoy_local: date, filtros: FiltrosTablero
     )
 
 
+def _cliente_no_eliminado_ni_de_baja():
+    """Condición para descartar de "activos"/"nuevos"/"recurrentes" a
+    Personas dadas de baja administrativa (`dar_de_baja_administrativa`
+    nunca toca el Teléfono, así que el JOIN por teléfono la sigue
+    encontrando) -- spec.md: no cuentan como clientes aunque tengan
+    paquetes históricos.
+
+    Límite conocido y aceptado: `anonimizar_persona` (ADR-0005, derecho al
+    olvido) SÍ reemplaza el Teléfono por uno sintético -- el
+    `recipient_phone` congelado en un paquete viejo queda huérfano, sin
+    ninguna Persona VIVA que lo matchee, así que esta condición no puede
+    excluir retroactivamente a alguien ya anonimizado (`Persona.id` da
+    `NULL` en el JOIN, tratado como "no excluir" -- mismo criterio
+    defensivo de siempre: sin Persona que matchee, no se excluye). Esto no
+    empeora nada ya existente: cualquier snapshot de Paquete ya conserva el
+    nombre histórico tal cual estaba ANTES de anonimizar, por diseño
+    (ADR-0001, "los datos permanecen de principio a fin en cada paquete")."""
+    return or_(
+        Persona.id.is_(None),
+        and_(Persona.eliminado_en.is_(None), Persona.baja_administrativa_en.is_(None)),
+    )
+
+
+def _paquetes_por_cliente_con_movimiento(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> list[tuple[str, int]]:
+    """`[(recipient_phone, cantidad)]` de paquetes CON destinatario propio
+    (excluye "nombre sin teléfono") que tuvieron cualquier movimiento en el
+    rango -- mismo criterio que `_contar_total_paquetes`, agrupado por
+    cliente. `tipo`, si viene, filtra (matriz: Tipo SÍ acota Clientes)."""
+    query = (
+        session.query(Paquete.recipient_phone, func.count(Paquete.id))
+        .outerjoin(Persona, Persona.telefono == Paquete.recipient_phone)
+        .filter(Paquete.recipient_phone.isnot(None), _cliente_no_eliminado_ni_de_baja())
+    )
+    if tipo is not None:
+        query = query.filter(Paquete.package_type == tipo)
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+
+        def _en_rango(columna):
+            return and_(columna.isnot(None), columna >= desde_utc, columna <= hasta_utc)
+
+        query = query.filter(
+            or_(
+                _en_rango(Paquete.announced_at),
+                _en_rango(Paquete.received_at),
+                _en_rango(Paquete.delivered_at),
+                _en_rango(Paquete.cancelled_at),
+            )
+        )
+    return query.group_by(Paquete.recipient_phone).all()
+
+
+def _contar_clientes_nuevos(
+    session: Session, rango_dias: tuple[date, date] | None, tipo: TipoPaquete | None
+) -> int:
+    """Clientes cuya PRIMERA entrega HISTÓRICA (toda la vida, no solo el
+    periodo) cae dentro del periodo -- por eso arranca de un `MIN(delivered_
+    at)` sin acotar por fecha, y solo DESPUÉS se filtra ese mínimo contra el
+    rango."""
+    base = (
+        session.query(Paquete.recipient_phone.label("tel"), func.min(Paquete.delivered_at).label("primera"))
+        .outerjoin(Persona, Persona.telefono == Paquete.recipient_phone)
+        .filter(
+            Paquete.recipient_phone.isnot(None),
+            Paquete.delivered_at.isnot(None),
+            _cliente_no_eliminado_ni_de_baja(),
+        )
+    )
+    if tipo is not None:
+        base = base.filter(Paquete.package_type == tipo)
+    subq = base.group_by(Paquete.recipient_phone).subquery()
+
+    query = session.query(func.count()).select_from(subq)
+    if rango_dias is not None:
+        desde_utc, hasta_utc = _limites_utc_de_dias_locales(*rango_dias)
+        query = query.filter(subq.c.primera >= desde_utc, subq.c.primera <= hasta_utc)
+    return int(query.scalar())
+
+
+def _nombre_y_apartamento_de_cliente(session: Session, telefono: str) -> tuple[str, str | None]:
+    """El NOMBRE de la Persona de este teléfono (o, si no existe Persona, el
+    nombre congelado en su paquete más reciente) y su Apartamento del
+    snapshot MÁS RECIENTE -- ADR-0001, nunca la unidad actual."""
+    persona = session.query(Persona).filter(Persona.telefono == telefono).one_or_none()
+    fila = (
+        session.query(Paquete.recipient_name, Paquete.snapshot_torre, Paquete.snapshot_apartamento)
+        .filter(Paquete.recipient_phone == telefono)
+        .order_by(Paquete.announced_at.desc())
+        .first()
+    )
+    torre = apto = None
+    nombre_snapshot = telefono
+    if fila is not None:
+        nombre_snapshot, torre, apto = fila
+    nombre = persona.nombre if persona is not None else nombre_snapshot
+    partes = [p for p in (torre, apto) if p]
+    return nombre, " ".join(partes) if partes else None
+
+
+def _cliente_destacado(session: Session, filas_telefono_valor) -> "ClienteDestacado | None":
+    """El cliente con el mayor `valor` de `[(telefono, valor)]` -- empate
+    resuelto por NOMBRE (spec.md: "empates por monto y luego por nombre"),
+    determinista entre cargas."""
+    candidatos = []
+    for telefono, valor in filas_telefono_valor:
+        nombre, apartamento = _nombre_y_apartamento_de_cliente(session, telefono)
+        candidatos.append((int(valor), nombre, apartamento))
+    if not candidatos:
+        return None
+    candidatos.sort(key=lambda c: (-c[0], c[1]))
+    valor, nombre, apartamento = candidatos[0]
+    return ClienteDestacado(nombre=nombre, apartamento=apartamento, valor=valor)
+
+
+def _calcular_clientes(session: Session, hoy_local: date, filtros: FiltrosTablero) -> Clientes:
+    rango_dias = _rango_por_atajo(filtros.rango, hoy_local)
+
+    filas_movimiento = _paquetes_por_cliente_con_movimiento(session, rango_dias, filtros.tipo)
+    activos = len(filas_movimiento)
+    recurrentes = sum(1 for _, cantidad in filas_movimiento if cantidad >= 2)
+    nuevos = _contar_clientes_nuevos(session, rango_dias, filtros.tipo)
+    con_mas_paquetes = _cliente_destacado(session, filas_movimiento)
+
+    # "Cliente con mayor gasto" -- a diferencia del resto de esta categoría,
+    # SÍ respeta Cobrado/Anulado (matriz de "no aplica"): reusa la MISMA
+    # consulta de Cobros de "Recaudo", agrupada por destinatario.
+    filas_gasto = (
+        _query_cobros_periodo(session, hoy_local, filtros)
+        .filter(Paquete.recipient_phone.isnot(None))
+        .with_entities(Paquete.recipient_phone, func.coalesce(func.sum(Cobro.monto_total), 0))
+        .group_by(Paquete.recipient_phone)
+        .all()
+    )
+    con_mayor_gasto = _cliente_destacado(session, filas_gasto)
+
+    return Clientes(
+        activos=activos,
+        nuevos=nuevos,
+        recurrentes=recurrentes,
+        con_mas_paquetes=con_mas_paquetes,
+        con_mayor_gasto=con_mayor_gasto,
+    )
+
+
 def _calcular_periodo(session: Session, hoy_local: date, filtros: FiltrosTablero) -> PeriodoSeleccionado:
     rango_activo = filtros.rango if _rango_por_atajo(filtros.rango, hoy_local) is not None else None
     recaudo = _calcular_recaudo(session, hoy_local, filtros)
     paquetes, ritmo = _calcular_paquetes_y_ritmo(session, hoy_local, filtros)
-    return PeriodoSeleccionado(rango_activo=rango_activo, recaudo=recaudo, paquetes=paquetes, ritmo=ritmo)
+    clientes = _calcular_clientes(session, hoy_local, filtros)
+    return PeriodoSeleccionado(
+        rango_activo=rango_activo, recaudo=recaudo, paquetes=paquetes, ritmo=ritmo, clientes=clientes
+    )
 
 
 def calcular_tablero(

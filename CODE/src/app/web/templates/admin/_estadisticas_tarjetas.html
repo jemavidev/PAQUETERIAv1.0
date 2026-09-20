@@ -97,6 +97,24 @@
 </article>
 {% endmacro %}
 
+{#- Variante de `tarjeta_periodo` para un "destacado" (un nombre, no un
+   número) -- ej. "Cliente con más paquetes", "Operador con más entregas".
+   `texto=None` (nadie que destacar todavía, ej. sin cobros en el periodo)
+   muestra "—", igual que `formato()` con un valor `None`. #}
+{% macro tarjeta_periodo_texto(titulo, texto, span, categoria, detalle=None, no_aplica=None) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
+  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
+  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
+  <p class="text-lg font-extrabold text-slate-900 tracking-tight truncate">{{ texto if texto else '—' }}</p>
+  {%- if detalle %}
+  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
+  {%- endif %}
+  {%- if no_aplica %}
+  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
+  {%- endif %}
+</article>
+{% endmacro %}
+
 {#- La nota "no depende de Tipo [ni de Cobrado/Anulado]" de una tarjeta de
    Periodo seleccionado, según la matriz de "no aplica" (ticket 02):
    `tipo_aplica`/`anulado_aplica` (0 o 1) describen la tarjeta; `tipo_activo`/
