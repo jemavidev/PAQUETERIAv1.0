@@ -13,17 +13,21 @@ completo del destinatario (issue de privacidad explícita del ticket): solo
 lo necesario para las cuentas del tablero (por proveedor, por tipo, por
 rango de fechas).
 
-`tipo` arranca con un solo valor (`AVISO_PAQUETE`, ticket 11); el ticket 12
-agrega `OTP`/`PRUEBA` -- un valor nuevo del enum Python, SIN migración,
-porque `native_enum=False` guarda la columna como `VARCHAR` simple (mismo
-criterio que `Paquete.package_type`/`TipoPaquete`), nunca un tipo ENUM
-nativo de Postgres que exigiría `ALTER TYPE` para crecer.
+`tipo` arrancó con un solo valor (`AVISO_PAQUETE`, ticket 11); el ticket 12
+agrega `OTP` (código de acceso al iniciar sesión) -- un valor nuevo del
+enum Python, SIN migración, porque `native_enum=False` guarda la columna
+como `VARCHAR` simple (mismo criterio que `Paquete.package_type`/
+`TipoPaquete`), nunca un tipo ENUM nativo de Postgres que exigiría `ALTER
+TYPE` para crecer. El mensaje de PRUEBA que un ADMIN se manda desde
+`/administracion/notificaciones` NO es un tercer valor -- cuenta como
+`AVISO_PAQUETE` (para el conteo del tablero), simplemente sin `paquete_id`
+(spec.md, ticket 12: "una prueba no tiene paquete real").
 
-`evento`/`paquete_id` son nullable a propósito: solo los llena
-`AVISO_PAQUETE` (siempre atado a un Paquete y a la transición que lo
-disparó); `OTP`/`PRUEBA` (ticket 12) no tienen paquete detrás.
-`proveedor` es `None` únicamente cuando los tres proveedores configurados
-fallaron (`exitoso=False`) -- nunca cuando SÍ hubo entrega.
+`evento`/`paquete_id` son nullable a propósito: solo los llena un aviso
+real de una transición de Paquete -- ni `OTP` ni un mensaje de prueba
+tienen paquete/evento detrás. `proveedor` es `None` únicamente cuando los
+tres proveedores configurados fallaron (`exitoso=False`) -- nunca cuando
+SÍ hubo entrega.
 
 Append-only, igual que `Cobro`/`MovimientoSaldoContraEntrega`: ninguna ruta
 edita ni borra una fila ya creada. Por eso no tiene `updated_at`.
@@ -46,6 +50,9 @@ def _utcnow() -> datetime:
 
 class TipoRegistroSms(str, enum.Enum):
     AVISO_PAQUETE = "AVISO_PAQUETE"
+    # Código de acceso (OTP) al iniciar sesión en `/otp/solicitar` -- ticket
+    # 12. Nunca lleva `evento`/`paquete_id`.
+    OTP = "OTP"
 
 
 class RegistroSms(Base):

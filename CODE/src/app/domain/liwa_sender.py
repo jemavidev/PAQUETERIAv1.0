@@ -139,5 +139,6 @@ class LiwaNotificationSender:
 class LiwaOtpSender:
     """Implementación real de `OtpSender` vía LIWA.co."""
 
-    def enviar(self, telefono: str, codigo: str) -> None:
+    def enviar(self, telefono: str, codigo: str) -> str:
         _enviar_sms(telefono, mensaje_codigo(codigo))
+        return "LIWA"

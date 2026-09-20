@@ -158,7 +158,10 @@ def test_liwa_otp_sender_arma_el_mensaje_con_el_codigo(monkeypatch):
     llamadas = []
     monkeypatch.setattr(mod.httpx, "post", _fake_post_ok(llamadas))
 
-    LiwaOtpSender().enviar("+573001234567", "42")
+    resultado = LiwaOtpSender().enviar("+573001234567", "42")
 
     _, payload, _ = llamadas[1]
     assert "42" in payload["message"]
+    # Ticket 12 (.scratch/estadisticas-cobro-dashboard): se identifica a sí
+    # mismo como proveedor, igual que `LiwaNotificationSender`.
+    assert resultado == "LIWA"

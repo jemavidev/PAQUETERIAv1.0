@@ -70,6 +70,8 @@ from app.domain.paquete import EstadoPaquete, TipoPaquete
 from app.domain.paquete_service import migrar_codigos_del_anio
 from app.domain.plantilla_email_html import envolver_html
 from app.domain.preferencia_notificacion import CanalNotificacion
+from app.domain.registro_sms import TipoRegistroSms
+from app.domain.registro_sms_service import registrar_envio
 from app.domain.staff_service import (
     create_staff,
     editar_staff,
@@ -572,8 +574,17 @@ def admin_notificaciones_probar(
                 destino_limpio = normalizar_telefono(destino_limpio)
             except ValueError:
                 return _error("Teléfono inválido.", marcar_fila=True)
-            notification_sender.enviar(destino_limpio, texto)
+            proveedor = notification_sender.enviar(destino_limpio, texto)
+            # Ticket 12 (.scratch/estadisticas-cobro-dashboard): cuenta como
+            # AVISO_PAQUETE (para el conteo del tablero), sin paquete --
+            # una prueba no tiene paquete real. SÍNCRONO, misma sesión que
+            # el resto de la ruta (a diferencia del BackgroundTask de un
+            # aviso real): `registrar_envio` ya se protege solo.
+            if canal_enum is CanalNotificacion.SMS and proveedor is not None:
+                registrar_envio(db, TipoRegistroSms.AVISO_PAQUETE, exitoso=True, proveedor=proveedor)
     except Exception as exc:
+        if canal_enum is CanalNotificacion.SMS:
+            registrar_envio(db, TipoRegistroSms.AVISO_PAQUETE, exitoso=False)
         return _error(f"No se pudo enviar la prueba: {exc}", marcar_fila=True)
 
     return templates.TemplateResponse(

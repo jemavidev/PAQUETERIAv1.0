@@ -21,14 +21,14 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.otp_sender import OtpSender
 from app.domain.otp_service import preparar_otp, verify_otp
 from app.domain.persona import Persona
 from app.domain.telefono import normalizar_telefono
 
-from ..db import get_db
+from ..db import get_db, get_session_factory
 from ..otp import enviar_en_segundo_plano, get_otp_sender
 from ..rate_limit import rate_limit
 from ..security import CUSTOMER_NOMBRE_SESSION_KEY, CUSTOMER_SESSION_KEY, current_customer
@@ -63,6 +63,7 @@ def customer_request_otp(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     sender: OtpSender = Depends(get_otp_sender),
+    session_factory: sessionmaker = Depends(get_session_factory),
     permitido: bool = Depends(rate_limit("customer_request_otp", 5, 60)),
     telefono: str = Form(None),
 ):
@@ -99,7 +100,9 @@ def customer_request_otp(
     # sí lo fuera, para no revelar elegibilidad. Solo se difiere el envío
     # real cuando sí hay algo que enviar.
     if resultado is not None:
-        background_tasks.add_task(enviar_en_segundo_plano, sender, *resultado)
+        background_tasks.add_task(
+            enviar_en_segundo_plano, sender, *resultado, session_factory=session_factory
+        )
 
     return RedirectResponse(
         f"/otp/verificar?telefono={normalizar_telefono(telefono)}",

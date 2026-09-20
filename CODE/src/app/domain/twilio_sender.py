@@ -88,5 +88,6 @@ class TwilioNotificationSender:
 class TwilioOtpSender:
     """Implementación real de `OtpSender` vía Twilio."""
 
-    def enviar(self, telefono: str, codigo: str) -> None:
+    def enviar(self, telefono: str, codigo: str) -> str:
         _enviar_sms(telefono, mensaje_codigo(codigo))
+        return "TWILIO"

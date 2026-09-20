@@ -90,5 +90,6 @@ class SnsNotificationSender:
 class SnsOtpSender:
     """Implementación real de `OtpSender` vía AWS SNS."""
 
-    def enviar(self, telefono: str, codigo: str) -> None:
+    def enviar(self, telefono: str, codigo: str) -> str:
         _enviar_sms(telefono, mensaje_codigo(codigo))
+        return "AWS_SNS"
