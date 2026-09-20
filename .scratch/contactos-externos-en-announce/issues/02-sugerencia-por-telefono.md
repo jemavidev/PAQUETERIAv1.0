@@ -31,3 +31,5 @@ Es solo lectura: no se modifica, marca ni enlaza nada en Contactos externos ni e
 - [ ] "Contacto externo" queda definido en el glosario del dominio (contacto consolidado desde fuentes externas, con llaves Teléfono y usuario de WhatsApp, independiente de Persona y Ocupante).
 
 **Notes:** el fragmento de la lista de residentes de una unidad ya oculta la tarjeta seleccionada mientras "Nueva persona" está abierta, con un mecanismo propio del formulario de la vista; conviene reutilizar los mismos ganchos (contenedor de la tarjeta seleccionada y marca del desplegable) en vez de duplicar la lógica. El ticket 04 fija y prueba ese comportamiento.
+
+**Nota (revisión del ticket 01):** el campo Nombre del formulario de persona nueva tiene un `id` fijo; el fragmento con sugerencia debe dibujar UNA sola instancia del formulario (la del desplegable) para no duplicarlo en el DOM. El componente ya permite omitir su aviso ("No encontramos a nadie…"), que aquí no debe repetirse dentro de "Nueva persona".

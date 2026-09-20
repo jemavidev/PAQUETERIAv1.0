@@ -1,7 +1,7 @@
 {#
   Componente: formulario de "persona nueva" de `/announce` -- lo que ve el
-  Staff cuando el Teléfono o usuario de WhatsApp tecleado NO existe en
-  paquetes: campo Nombre + Anunciar + Recibir, con la identidad tecleada como
+  Staff cuando el Teléfono o usuario de WhatsApp tecleado no corresponde a
+  ninguna Persona registrada: campo Nombre + Anunciar + Recibir, con la identidad tecleada como
   dato oculto (`telefono` o `whatsapp_usuario`, nunca ambos). Envía a `POST
   /announce` (camino 1, Teléfono/WhatsApp directo): registra a la Persona con
   ese Nombre y anuncia -- con `accion=recibir` además abre el modal de
@@ -19,7 +19,7 @@
            Cualquier otro valor cae a WhatsApp, igual que hacía el fragmento
            original (el llamador ya clasificó el valor: nunca llega otro).
     valor  el Teléfono o usuario de WhatsApp tecleado, tal cual.
-    intro  texto opcional que va dentro del formulario, encima del campo
+    aviso  texto opcional que va dentro del formulario, encima del campo
            Nombre (en `_identificar.html`: "No encontramos a nadie con ese
            dato — regístralo:"). Sin él no se dibuja nada -- para un
            contexto donde el aviso ya lo da otro elemento.
@@ -33,19 +33,19 @@
 
   Uso:
     {% from "components/_formulario_persona_nueva.html" import formulario_persona_nueva %}
-    {{ formulario_persona_nueva('telefono', '3001234567', intro='No encontramos a nadie...') }}
+    {{ formulario_persona_nueva('telefono', '3001234567', aviso='No encontramos a nadie...') }}
 #}
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_botones.html" import boton %}
-{% macro formulario_persona_nueva(tipo, valor, intro=none) %}
+{% macro formulario_persona_nueva(tipo, valor, aviso=none) %}
 <form method="post" action="/announce" class="border-t border-gray-100 pt-3">
   {%- if tipo == 'telefono' %}
   <input type="hidden" name="telefono" value="{{ valor }}">
   {%- else %}
   <input type="hidden" name="whatsapp_usuario" value="{{ valor }}">
   {%- endif %}
-  {%- if intro %}
-  <p class="text-xs text-slate-700 mb-2">{{ intro }}</p>
+  {%- if aviso %}
+  <p class="text-xs text-slate-700 mb-2">{{ aviso }}</p>
   {%- endif %}
   {{ input_texto('Nombre', name='nombre', icono=iconos_nav.persona, required=True, extra_attrs='oninput="this.value = this.value.toUpperCase()"') }}
   <div class="grid grid-cols-2 gap-2 mt-3">

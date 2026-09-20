@@ -261,7 +261,7 @@ def test_identificar_whatsapp_sin_match_pide_nombre(client):
     assert 'name="nombre"' in r.text
 
 
-def _formulario_persona_nueva(**kwargs):
+def _renderizar_formulario_persona_nueva(**kwargs):
     # El componente AISLADO, sin el contexto de ningún fragmento -- así lo
     # incluye cualquier otro (por ejemplo, dentro de un desplegable), que es
     # justo lo que este prefactor permite (.scratch/contactos-externos-en-
@@ -272,40 +272,41 @@ def _formulario_persona_nueva(**kwargs):
     return str(plantilla.module.formulario_persona_nueva(**kwargs))
 
 
-def test_formulario_persona_nueva_por_telefono_trae_todo_lo_que_necesita():
-    html = _formulario_persona_nueva(tipo="telefono", valor="3001234567")
+def test_formulario_persona_nueva_por_telefono_trae_nombre_botones_e_identidad_oculta():
+    html = _renderizar_formulario_persona_nueva(tipo="telefono", valor="3001234567")
 
     assert 'action="/announce"' in html
     assert 'name="telefono" value="3001234567"' in html
     assert 'name="whatsapp_usuario"' not in html
     assert 'name="nombre"' in html
     assert " required" in html
+    assert "this.value.toUpperCase()" in html  # el Nombre se escribe en mayúsculas
     assert 'value="anunciar"' in html
     assert 'value="recibir"' in html
     assert html.count('name="accion"') == 2
     assert "autofocus" not in html
 
 
-def test_formulario_persona_nueva_por_whatsapp_manda_el_usuario_y_no_un_telefono():
-    html = _formulario_persona_nueva(tipo="whatsapp", valor="ana.whats")
+def test_formulario_persona_nueva_por_whatsapp_manda_el_usuario_de_whatsapp_y_no_un_telefono():
+    html = _renderizar_formulario_persona_nueva(tipo="whatsapp", valor="ana.whats")
 
     assert 'name="whatsapp_usuario" value="ana.whats"' in html
     assert 'name="telefono"' not in html
     assert html.count('name="accion"') == 2
 
 
-def test_formulario_persona_nueva_solo_muestra_el_intro_si_se_le_pasa():
-    sin_intro = _formulario_persona_nueva(tipo="telefono", valor="3001234567")
-    con_intro = _formulario_persona_nueva(
-        tipo="telefono", valor="3001234567", intro="No encontramos a nadie con ese dato — regístralo:"
+def test_formulario_persona_nueva_solo_muestra_el_aviso_si_se_le_pasa():
+    sin_aviso = _renderizar_formulario_persona_nueva(tipo="telefono", valor="3001234567")
+    con_aviso = _renderizar_formulario_persona_nueva(
+        tipo="telefono", valor="3001234567", aviso="No encontramos a nadie con ese dato — regístralo:"
     )
 
-    assert "No encontramos" not in sin_intro
-    assert "No encontramos a nadie con ese dato — regístralo:" in con_intro
+    assert "No encontramos" not in sin_aviso
+    assert "No encontramos a nadie con ese dato — regístralo:" in con_aviso
 
 
 def test_formulario_persona_nueva_escapa_el_valor_tecleado():
-    html = _formulario_persona_nueva(tipo="whatsapp", valor='ana"><script>')
+    html = _renderizar_formulario_persona_nueva(tipo="whatsapp", valor='ana"><script>')
 
     assert "<script>" not in html
     assert "&lt;script&gt;" in html

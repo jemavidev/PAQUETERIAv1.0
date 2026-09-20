@@ -14,14 +14,9 @@
       ticket 01 de `.scratch/contactos-externos-en-announce`, para que otros
       fragmentos lo reutilicen).
 
-  El campo Nombre NO lleva `autofocus` (corrección en code-review antes de
-  desplegar): este fragmento se re-renderiza completo (`innerHTML`) en CADA
-  tecleo del campo principal mientras no hay match -- un `autofocus` acá le
-  robaría el foco al campo principal una y otra vez mientras el staff sigue
-  escribiendo (ver `_clasificar` en `announce_new.py` para el resto de la
-  mitigación). El costo es un clic extra para entrar a Nombre; el beneficio
-  es que escribir un Teléfono/WhatsApp completo nunca se interrumpe solo. La
-  garantía vive ahora en el componente del formulario (ver su docstring).
+  El campo Nombre NO lleva `autofocus` -- este fragmento se re-renderiza en
+  CADA tecleo del campo principal; la razón completa vive en el docstring del
+  componente `_formulario_persona_nueva.html`.
 #}
 {% from "components/_formulario_persona_nueva.html" import formulario_persona_nueva %}
 {% from "components/_persona_resuelta.html" import tarjeta_persona_resuelta %}
@@ -38,5 +33,5 @@
   whatsapp_solicitud_url_desktop=whatsapp_solicitud_url_desktop,
 ) }}
 {%- else %}
-{{ formulario_persona_nueva(tipo, valor, intro='No encontramos a nadie con ese dato — regístralo:') }}
+{{ formulario_persona_nueva(tipo, valor, aviso='No encontramos a nadie con ese dato — regístralo:') }}
 {%- endif %}

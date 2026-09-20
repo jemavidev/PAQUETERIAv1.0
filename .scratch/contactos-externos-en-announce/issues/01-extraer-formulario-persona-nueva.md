@@ -20,13 +20,14 @@
   byte a byte** al de antes del refactor: se capturó del servidor de dev antes
   de tocar nada y se comparó después (2072 y 2082 bytes).
 - 4 tests nuevos fijan el contrato del componente aislado, sin el contexto de
-  ningún fragmento: por Teléfono, por WhatsApp, el `intro` opcional y el
+  ningún fragmento: por Teléfono, por WhatsApp, el `aviso` opcional y el
   escape del valor tecleado. Se vieron fallar primero (componente inexistente).
 - Las pruebas existentes de `/announce` pasan sin modificarse (137 en los dos
   archivos web de `/announce`); suite completa: 1840 pasan.
 - Decisión menor: el texto "No encontramos a nadie con ese dato — regístralo:"
-  se pasa como parámetro opcional `intro`, no vive dentro del componente --
+  se pasa como parámetro opcional `aviso`, no vive dentro del componente --
   así el ticket 02 puede incluir el formulario dentro de "Nueva persona" sin
   ese aviso. Cualquier otro valor de `tipo` cae a WhatsApp, como antes.
 - Sin cambios de esquema, de rutas ni de CSS compilado. El repo no tiene
   verificador de tipos configurado.
+- Revisión (`/code-review`): renombrado `intro` -> `aviso` y ajustes de nombres/glosario; test nuevo del manejador que escribe el Nombre en mayúsculas.
