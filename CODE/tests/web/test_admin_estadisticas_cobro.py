@@ -527,3 +527,32 @@ def test_tendencia_sin_tramo_anterior_no_muestra_ningun_porcentaje(client):
     # recién creado -- ninguna de las tres tarjetas debería mostrar "▲"/"▼".
     assert "▲" not in panorama
     assert "▼" not in panorama
+
+
+def test_ahora_se_ve_y_no_cambia_con_filtros(client):
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio = r.index('aria-label="Ahora')
+    fin = r.index('aria-label="Periodo seleccionado')
+    ahora = r[inicio:fin]
+    for texto in (
+        "Paquetes pendientes",
+        "En bodega",
+        "En gracia",
+        "Con bodegaje corriendo",
+        "Más de 7 días",
+        "Abandonados",
+        "Paquete más antiguo",
+        "Anuncios que nunca llegaron",
+        "Clientes registrados",
+    ):
+        assert texto in ahora
+
+    con_filtros = client.get(
+        "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "rango": "hoy"}
+    ).text
+    inicio2 = con_filtros.index('aria-label="Ahora')
+    fin2 = con_filtros.index('aria-label="Periodo seleccionado')
+    assert ahora == con_filtros[inicio2:fin2]

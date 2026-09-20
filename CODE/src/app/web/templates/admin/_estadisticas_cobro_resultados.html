@@ -18,7 +18,7 @@
   filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
   filtro SÍ la acota), los últimos dos son el estado real de los filtros.
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
 
 {%- set chips = [] -%}
 {%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
@@ -37,7 +37,22 @@
     ], 'lg:col-span-3') }}
   {% endcall %}
 
-  {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba', vacio=True) %}
+  {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba') %}
+    {{ tarjeta_ahora('Paquetes pendientes', tablero.ahora.pendientes, 'int', 'lg:col-span-2', semaforo='gris', detalle=formato(tablero.ahora.pendientes_anunciados, 'int') ~ ' anunciados · ' ~ formato(tablero.ahora.pendientes_recibidos, 'int') ~ ' recibidos') }}
+    {{ tarjeta_ahora('En bodega', tablero.ahora.en_bodega, 'int', 'lg:col-span-2', semaforo='gris') }}
+    {{ tarjeta_ahora('En gracia (≤ 48 h)', tablero.ahora.en_gracia, 'int', 'lg:col-span-2', semaforo='verde') }}
+    {{ tarjeta_ahora('Con bodegaje corriendo', tablero.ahora.con_bodegaje_corriendo, 'int', 'lg:col-span-2', semaforo='ambar') }}
+    {{ tarjeta_ahora('Más de 7 días', tablero.ahora.mas_de_7_dias, 'int', 'lg:col-span-2', semaforo='ambar') }}
+    {{ tarjeta_ahora('Abandonados (> 30 días)', tablero.ahora.abandonados, 'int', 'lg:col-span-2', semaforo='rojo') }}
+
+    {%- set antiguo = tablero.ahora.paquete_mas_antiguo -%}
+    {%- set detalle_antiguo = none -%}
+    {%- if antiguo -%}
+      {%- set detalle_antiguo = (antiguo.apartamento ~ ' · ' if antiguo.apartamento else '') ~ formato(antiguo.dias_en_bodega, 'int') ~ ' días en bodega' -%}
+    {%- endif %}
+    {{ tarjeta_ahora_texto('Paquete más antiguo', antiguo.access_code if antiguo else none, 'lg:col-span-2', semaforo='rojo', detalle=detalle_antiguo) }}
+    {{ tarjeta_ahora('Anuncios que nunca llegaron', tablero.ahora.anuncios_sin_llegar, 'int', 'lg:col-span-2', semaforo='ambar', detalle='anunciados hace más de 7 días, sin recibirse') }}
+    {{ tarjeta_ahora('Clientes registrados', tablero.ahora.clientes_registrados, 'int', 'lg:col-span-2', semaforo='gris') }}
   {% endcall %}
 
   {% call zona('bg-emerald-600', 'Periodo seleccionado: responde a los filtros de arriba') %}

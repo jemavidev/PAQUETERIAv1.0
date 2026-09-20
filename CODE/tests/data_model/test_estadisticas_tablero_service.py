@@ -534,6 +534,139 @@ def test_tendencia_con_base_vacia_no_rompe(db_session):
     assert panorama.tendencia_ingresos.serie_7_dias == (0, 0, 0, 0, 0, 0, 0)
 
 
+# --- Ahora: "Pendientes y bodega" (ticket 09) ------------------------------ #
+
+
+def _recibir(session, tel, staff, recibido_en=None):
+    p = _anunciar(session, tel)
+    receive(session, p, staff)
+    if recibido_en is not None:
+        _mover(session, p, received_at=recibido_en)
+    return p
+
+
+def test_pendientes_es_anunciados_mas_recibidos(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _anunciar(db_session, "3001111111")
+    _anunciar(db_session, "3002222222")
+    _recibir(db_session, "3003333333", staff)
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.pendientes_anunciados == 2
+    assert resultado.pendientes_recibidos == 1
+    assert resultado.pendientes == 3
+    assert resultado.en_bodega == 1
+
+
+def test_en_gracia_y_con_bodegaje_corriendo_no_se_solapan(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _recibir(db_session, "3001111111", staff, ahora - timedelta(hours=10))  # en gracia
+    _recibir(db_session, "3002222222", staff, ahora - timedelta(hours=48))  # justo en el límite -- en gracia
+    _recibir(db_session, "3003333333", staff, ahora - timedelta(hours=49))  # bodegaje corriendo
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.en_gracia == 2
+    assert resultado.con_bodegaje_corriendo == 1
+    assert resultado.en_gracia + resultado.con_bodegaje_corriendo == resultado.en_bodega
+
+
+def test_mas_de_7_dias_y_abandonados_son_acumulativos(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _recibir(db_session, "3001111111", staff, ahora - timedelta(days=3))  # ni 7 ni 30
+    _recibir(db_session, "3002222222", staff, ahora - timedelta(days=10))  # solo >7
+    _recibir(db_session, "3003333333", staff, ahora - timedelta(days=40))  # >7 Y >30
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.mas_de_7_dias == 2  # el de 10 días y el de 40
+    assert resultado.abandonados == 1  # solo el de 40
+
+
+def test_paquete_mas_antiguo_dias_apartamento_y_codigo(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _recibir(db_session, "3001111111", staff, ahora - timedelta(days=5))
+    mas_antiguo = _recibir(db_session, "3002222222", staff, ahora - timedelta(days=10))
+    mas_antiguo.snapshot_torre = "Torre 1"
+    mas_antiguo.snapshot_apartamento = "101"
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.paquete_mas_antiguo.dias_en_bodega == 10
+    assert resultado.paquete_mas_antiguo.apartamento == "Torre 1 101"
+    assert resultado.paquete_mas_antiguo.access_code == mas_antiguo.access_code
+
+
+def test_anuncios_que_nunca_llegaron(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    viejo = _anunciar(db_session, "3001111111")
+    _mover(db_session, viejo, announced_at=ahora - timedelta(days=8))
+    reciente = _anunciar(db_session, "3002222222")
+    _mover(db_session, reciente, announced_at=ahora - timedelta(days=2))
+    # Ya recibido -- aunque su anuncio sea viejo, no cuenta (ya llegó).
+    _recibir(db_session, "3003333333", staff, ahora - timedelta(days=1))
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.anuncios_sin_llegar == 1
+
+
+def test_clientes_registrados_excluye_eliminados_y_de_baja(db_session):
+    from app.domain.persona_service import anonimizar_persona, dar_de_baja_administrativa
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    activa = Persona(nombre="Activa", telefono="3001111111")
+    de_baja = Persona(nombre="De baja", telefono="3002222222")
+    eliminada = Persona(nombre="Eliminada", telefono="3003333333")
+    db_session.add_all([activa, de_baja, eliminada])
+    db_session.commit()
+    dar_de_baja_administrativa(db_session, de_baja)
+    anonimizar_persona(db_session, eliminada)
+    db_session.commit()
+
+    resultado = calcular_tablero(db_session, ahora).ahora
+
+    assert resultado.clientes_registrados == 1
+
+
+def test_ahora_no_cambia_con_ningun_filtro(db_session):
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    _recibir(db_session, "3001111111", staff, ahora - timedelta(hours=49))
+    db_session.commit()
+
+    sin_filtros = calcular_tablero(db_session, ahora).ahora
+    con_tipo = calcular_tablero(db_session, ahora, FiltrosTablero(tipo=TipoPaquete.NORMAL)).ahora
+    con_rango = calcular_tablero(db_session, ahora, FiltrosTablero(rango="hoy")).ahora
+
+    assert sin_filtros == con_tipo == con_rango
+
+
+def test_ahora_con_base_vacia_no_rompe(db_session):
+    resultado = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).ahora
+
+    assert resultado.pendientes == 0
+    assert resultado.en_bodega == 0
+    assert resultado.en_gracia == 0
+    assert resultado.con_bodegaje_corriendo == 0
+    assert resultado.mas_de_7_dias == 0
+    assert resultado.abandonados == 0
+    assert resultado.paquete_mas_antiguo is None
+    assert resultado.anuncios_sin_llegar == 0
+    assert resultado.clientes_registrados == 0
+
+
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
 
 

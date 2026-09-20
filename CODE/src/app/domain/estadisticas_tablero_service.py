@@ -32,8 +32,8 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from .cobro import Cobro
-from .cobro_service import obtener_tarifas_vigentes
-from .paquete import CondicionPaquete, Paquete, TipoPaquete
+from .cobro_service import _HORAS_GRACIA_BODEGAJE, obtener_tarifas_vigentes
+from .paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from .persona import Persona
 from .tarifa_cobro import TarifaCobro
 from .usuario import Usuario
@@ -269,8 +269,47 @@ class PeriodoSeleccionado:
 
 
 @dataclass(frozen=True)
+class PaqueteMasAntiguo:
+    """El Recibido con la recepción más antigua, para la tarjeta "Paquete
+    más antiguo" de Ahora (ticket 09) -- `apartamento` es del SNAPSHOT
+    (ADR-0001), `access_code` identifica al paquete sin exponer datos del
+    destinatario."""
+
+    dias_en_bodega: int
+    apartamento: str | None
+    access_code: str
+
+
+@dataclass(frozen=True)
+class Ahora:
+    """Zona "Ahora": la FOTO DEL MOMENTO -- ignora siempre `FiltrosTablero`,
+    igual que Panorama, pero a diferencia de esa zona no es una serie
+    (Hoy/Semana/Mes): es un instante. El ticket 09 la completa por primera
+    vez (pendientes y bodega); el ticket 10 le agrega las 2 tarjetas de
+    dinero.
+
+    `en_gracia`/`con_bodegaje_corriendo` particionan los MISMOS `en_bodega`
+    sin solaparse (el corte es el mismo de `cobro_service._HORAS_GRACIA_
+    BODEGAJE`); `mas_de_7_dias`/`abandonados` son umbrales ACUMULATIVOS
+    (un paquete de 40 días cuenta en ambos), no una partición."""
+
+    pendientes: int
+    pendientes_anunciados: int
+    pendientes_recibidos: int
+    en_bodega: int
+    en_gracia: int
+    con_bodegaje_corriendo: int
+    mas_de_7_dias: int
+    abandonados: int
+    paquete_mas_antiguo: PaqueteMasAntiguo | None
+    anuncios_sin_llegar: int
+    clientes_registrados: int
+
+
+@dataclass(frozen=True)
 class TableroEstadisticasCobro:
     panorama: Panorama
+    ahora: Ahora
     periodo: PeriodoSeleccionado
 
 
@@ -508,6 +547,72 @@ def _calcular_panorama(session: Session, hoy_local: date, ahora_local: datetime)
         tendencia_ingresos=_tendencia_ingresos(session, hoy_local, ahora_local, ingresos),
         tendencia_entregados=_tendencia_paquetes(session, Paquete.delivered_at, hoy_local, ahora_local, entregados),
         tendencia_cancelados=_tendencia_paquetes(session, Paquete.cancelled_at, hoy_local, ahora_local, cancelados),
+    )
+
+
+# --- Ahora: foto del momento (ticket 09; el 10 le agrega dinero) ----------- #
+
+# Umbrales de antigüedad en bodega (D9 del grilling, spec.md): "más de 7
+# días" y "abandonados" (más de 30) son alertas ACUMULATIVAS, no una
+# partición -- un paquete de 40 días cuenta en ambas. "Anuncios que nunca
+# llegaron" reusa el mismo umbral de 7 días, pero sobre `announced_at`.
+_DIAS_MAS_DE_7_EN_BODEGA = 7
+_DIAS_ABANDONADO_EN_BODEGA = 30
+_DIAS_ANUNCIO_SIN_LLEGAR = 7
+
+
+def _contar_estado(session: Session, estado: EstadoPaquete, *condiciones) -> int:
+    return int(
+        session.query(func.count(Paquete.id)).filter(Paquete.estado == estado, *condiciones).scalar()
+    )
+
+
+def _paquete_mas_antiguo_en_bodega(session: Session, ahora: datetime) -> PaqueteMasAntiguo | None:
+    fila = (
+        session.query(Paquete.received_at, Paquete.snapshot_torre, Paquete.snapshot_apartamento, Paquete.access_code)
+        .filter(Paquete.estado == EstadoPaquete.RECIBIDO)
+        .order_by(Paquete.received_at.asc())
+        .first()
+    )
+    if fila is None:
+        return None
+    recibido_en, torre, apto, codigo = fila
+    dias = int((ahora - recibido_en).total_seconds() // 86400)
+    partes = [p for p in (torre, apto) if p]
+    return PaqueteMasAntiguo(
+        dias_en_bodega=dias, apartamento=" ".join(partes) if partes else None, access_code=codigo
+    )
+
+
+def _calcular_ahora(session: Session, ahora: datetime) -> Ahora:
+    anunciados = _contar_estado(session, EstadoPaquete.ANUNCIADO)
+    recibidos = _contar_estado(session, EstadoPaquete.RECIBIDO)
+
+    limite_gracia = ahora - timedelta(hours=_HORAS_GRACIA_BODEGAJE)
+    limite_7_dias = ahora - timedelta(days=_DIAS_MAS_DE_7_EN_BODEGA)
+    limite_30_dias = ahora - timedelta(days=_DIAS_ABANDONADO_EN_BODEGA)
+    limite_anuncio_sin_llegar = ahora - timedelta(days=_DIAS_ANUNCIO_SIN_LLEGAR)
+
+    return Ahora(
+        pendientes=anunciados + recibidos,
+        pendientes_anunciados=anunciados,
+        pendientes_recibidos=recibidos,
+        en_bodega=recibidos,
+        en_gracia=_contar_estado(session, EstadoPaquete.RECIBIDO, Paquete.received_at >= limite_gracia),
+        con_bodegaje_corriendo=_contar_estado(
+            session, EstadoPaquete.RECIBIDO, Paquete.received_at < limite_gracia
+        ),
+        mas_de_7_dias=_contar_estado(session, EstadoPaquete.RECIBIDO, Paquete.received_at < limite_7_dias),
+        abandonados=_contar_estado(session, EstadoPaquete.RECIBIDO, Paquete.received_at < limite_30_dias),
+        paquete_mas_antiguo=_paquete_mas_antiguo_en_bodega(session, ahora),
+        anuncios_sin_llegar=_contar_estado(
+            session, EstadoPaquete.ANUNCIADO, Paquete.announced_at < limite_anuncio_sin_llegar
+        ),
+        clientes_registrados=int(
+            session.query(func.count(Persona.id))
+            .filter(Persona.eliminado_en.is_(None), Persona.baja_administrativa_en.is_(None))
+            .scalar()
+        ),
     )
 
 
@@ -1050,5 +1155,6 @@ def calcular_tablero(
     hoy_local = ahora_local.date()
     return TableroEstadisticasCobro(
         panorama=_calcular_panorama(session, hoy_local, ahora_local),
+        ahora=_calcular_ahora(session, ahora),
         periodo=_calcular_periodo(session, hoy_local, filtros),
     )

@@ -108,6 +108,48 @@
 </article>
 {% endmacro %}
 
+{#- El punto de semáforo de una tarjeta de Ahora (ticket 09): gris/neutro
+   por defecto, verde para lo sano, ámbar para lo que requiere atención,
+   rojo para lo crítico -- clases Tailwind COMPLETAS en un dict, nunca
+   armadas (mismo criterio que el resto del archivo). #}
+{% macro _punto_semaforo(semaforo) -%}
+{%- set colores = {'gris': 'bg-slate-400', 'verde': 'bg-green-500', 'ambar': 'bg-amber-500', 'rojo': 'bg-red-500'} -%}
+<span class="inline-block w-2 h-2 rounded-full {{ colores.get(semaforo, colores['gris']) }}" aria-hidden="true"></span>
+{%- endmacro %}
+
+{#- Tarjeta de Ahora: SIEMPRE ámbar, un solo valor + punto de semáforo +
+   etiqueta "foto" (spec.md: la foto del momento, nunca cambia con los
+   filtros). `span` es una clase Tailwind completa de ancho. #}
+{% macro tarjeta_ahora(titulo, valor, unidad, span, semaforo='gris', detalle=None) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-amber-500 p-4 {{ span }}">
+  <div class="flex items-center gap-1.5 mb-1">
+    {{ _punto_semaforo(semaforo) }}
+    <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700">foto</span>
+  </div>
+  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
+  <p class="text-2xl font-extrabold text-slate-900 tracking-tight">{{ formato(valor, unidad) }}</p>
+  {%- if detalle %}
+  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
+  {%- endif %}
+</article>
+{% endmacro %}
+
+{#- Variante de `tarjeta_ahora` para un "destacado" -- ej. "Paquete más
+   antiguo" (un código de acceso + detalle, no un número). #}
+{% macro tarjeta_ahora_texto(titulo, texto, span, semaforo='gris', detalle=None) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-amber-500 p-4 {{ span }}">
+  <div class="flex items-center gap-1.5 mb-1">
+    {{ _punto_semaforo(semaforo) }}
+    <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700">foto</span>
+  </div>
+  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
+  <p class="text-lg font-extrabold text-slate-900 tracking-tight truncate">{{ texto if texto else '—' }}</p>
+  {%- if detalle %}
+  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
+  {%- endif %}
+</article>
+{% endmacro %}
+
 {#- Tarjeta de Panorama "Tiempos promedio" (ticket 07): a diferencia de
    `tarjeta_panorama`, son VARIAS filas (una por métrica) x 3 columnas
    (Hoy/Semana/Mes) en una sola tarjeta -- siempre en horas (unidad 'h').
