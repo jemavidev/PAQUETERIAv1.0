@@ -1,0 +1,124 @@
+{#
+  Macros compartidos del tablero de tarjetas de
+  `/administracion/estadisticas-cobro` (`.scratch/estadisticas-cobro-
+  dashboard`) -- una tarjeta de Panorama (trío Hoy/Semana/Mes, siempre azul)
+  y una de Periodo seleccionado (siempre verde), más el envoltorio de zona
+  (carril de color + cuadrícula). Todo color de acento es una clase Tailwind
+  COMPLETA fija por zona (nunca se arma concatenando `bg-{{ x }}-600`):
+  Tailwind escanea el TEXTO FUENTE buscando nombres de clase literales -- una
+  clase armada en tiempo de render nunca llega al CSS compilado (mismo
+  criterio que ya usan `tipos_pill`/`estados_cobro_pill` en
+  `estadisticas_cobro.html`, que guardan las clases completas en un dict en
+  vez de interpolar un color suelto).
+#}
+
+{#- Formato de una cifra según su unidad -- mismo criterio de coma de miles y
+   "$" pegado que el resto de la app (`"{:,}".format(...)`). `none` (una
+   ventana sin ningún dato que promediar, ej. una tasa sin cerrados) se
+   imprime como "—", nunca "0" ni un error. #}
+{% macro formato(valor, unidad) -%}
+{%- if valor is none -%}—
+{%- elif unidad == 'cop' -%}${{ "{:,}".format(valor) }}
+{%- elif unidad == 'pct' -%}{{ "%.1f"|format(valor) }}%
+{%- elif unidad == 'h' -%}{{ "%.1f"|format(valor) if valor < 10 else "{:,}".format(valor|round|int) }} h
+{%- elif unidad == 'dec' -%}{{ "%.1f"|format(valor) }}
+{%- else -%}{{ "{:,}".format(valor) }}
+{%- endif -%}
+{%- endmacro %}
+
+{#- El envoltorio de una zona: un carril vertical de color (sin texto -- la
+   spec pide "sin encabezados de sección", el color por sí solo distingue
+   cada zona) + la cuadrícula de tarjetas que el caller arma. `etiqueta_sr`
+   solo la leen lectores de pantalla (`aria-label`), nunca se ve en pantalla.
+   `vacio=True` (ticket 01: "Ahora" todavía no tiene ninguna tarjeta, llegan
+   en los tickets 09-10 de esta misma feature) le da una altura mínima al
+   carril para que sea visible aunque su cuadrícula esté vacía -- quitar el
+   argumento en cuanto la zona tenga su primera tarjeta real. #}
+{% macro zona(color_rail, etiqueta_sr, vacio=False) %}
+<section class="flex gap-3 sm:gap-4" aria-label="{{ etiqueta_sr }}">
+  <div class="w-1.5 sm:w-2 rounded-full {{ color_rail }} shrink-0" aria-hidden="true"></div>
+  <div class="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-start{{ ' min-h-12' if vacio else '' }}">
+    {{ caller() }}
+  </div>
+</section>
+{% endmacro %}
+
+{#- Tarjeta de Panorama: SIEMPRE azul, un trío Hoy/Esta semana/Este mes.
+   `span` es una clase Tailwind completa de ancho (ej. "lg:col-span-6"). #}
+{% macro tarjeta_panorama(titulo, trio, unidad, span) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-blue-600 p-4 {{ span }}">
+  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
+  <div class="grid grid-cols-3 gap-3">
+    {%- for etq, valor in [('Hoy', trio.hoy), ('Esta semana', trio.semana), ('Este mes', trio.mes)] %}
+    <div class="min-w-0">
+      <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
+      <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(valor, unidad) }}</p>
+    </div>
+    {%- endfor %}
+  </div>
+</article>
+{% endmacro %}
+
+{#- Tarjeta de Periodo seleccionado: SIEMPRE verde, un solo valor +
+   categoría + detalle opcional. `no_aplica` (issue del ticket 02: la
+   matriz de qué filtro acota cada tarjeta) atenúa la tarjeta y muestra por
+   qué -- `None`/vacía = la tarjeta responde a todos los filtros activos. #}
+{% macro tarjeta_periodo(titulo, valor, unidad, span, categoria, detalle=None, no_aplica=None) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
+  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
+  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
+  <p class="text-2xl font-extrabold text-slate-900 tracking-tight">{{ formato(valor, unidad) }}</p>
+  {%- if detalle %}
+  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
+  {%- endif %}
+  {%- if no_aplica %}
+  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
+  {%- endif %}
+</article>
+{% endmacro %}
+
+{#- Variante de `tarjeta_periodo` para un trío por día/semana/mes (el ritmo,
+   ticket 02) -- mismo look que `tarjeta_panorama` pero verde/atenuable. #}
+{% macro tarjeta_periodo_trio(titulo, por_dia, por_semana, por_mes, unidad, span, categoria, no_aplica=None) %}
+<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
+  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
+  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
+  <div class="grid grid-cols-3 gap-3">
+    {%- for etq, valor in [('Por día', por_dia), ('Por semana', por_semana), ('Por mes', por_mes)] %}
+    <div class="min-w-0">
+      <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
+      <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(valor, unidad) }}</p>
+    </div>
+    {%- endfor %}
+  </div>
+  {%- if no_aplica %}
+  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
+  {%- endif %}
+</article>
+{% endmacro %}
+
+{#- La nota "no depende de Tipo [ni de Cobrado/Anulado]" de una tarjeta de
+   Periodo seleccionado, según la matriz de "no aplica" (ticket 02):
+   `tipo_aplica`/`anulado_aplica` (0 o 1) describen la tarjeta; `tipo_activo`/
+   `anulado_activo` son los valores CRUDOS de los filtros de la barra
+   (cadenas vacías cuentan como "no activo", Jinja las trata como falsy).
+   Cadena vacía = la tarjeta responde a todo lo que esté activo -- no se
+   atenúa. #}
+{% macro no_aplica(tipo_aplica, anulado_aplica, tipo_activo, anulado_activo) -%}
+{%- set motivos = [] -%}
+{%- if tipo_activo and not tipo_aplica %}{% set _ = motivos.append('Tipo') %}{% endif -%}
+{%- if anulado_activo and not anulado_aplica %}{% set _ = motivos.append('Cobrado/Anulado') %}{% endif -%}
+{{- motivos|join(' ni de ') -}}
+{%- endmacro %}
+
+{#- Etiqueta legible de una clave de atajo de fecha -- mismos 7 atajos que la
+   barra de filtros (`estadisticas_cobro.html::atajos_fecha`); vive acá
+   también porque el fragmento de resultados (que arma los chips de "filtros
+   activos") se recarga solo, sin la barra. #}
+{% macro etiqueta_rango(clave) -%}
+{%- set etiquetas = {
+  'hoy': 'Hoy', 'ayer': 'Ayer', 'semana': 'Esta semana', 'mes': 'Este mes',
+  'tres_meses': '3 últimos meses', 'semestre': 'Semestre', 'anio': 'Último año',
+} -%}
+{{- etiquetas.get(clave, clave) -}}
+{%- endmacro %}

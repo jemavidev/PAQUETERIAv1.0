@@ -12,7 +12,7 @@ esta rebanada es solo el cableado HTTP.
 import csv
 import io
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -20,14 +20,13 @@ from sqlalchemy.orm import Session
 
 from app.domain import smtp_email_sender
 from app.domain.cobro_service import (
-    FiltrosEstadisticasCobro,
     crear_motivo_anulacion,
     editar_tarifas,
     eliminar_motivo_anulacion,
-    estadisticas_cobro,
     listar_motivos_anulacion,
     obtener_tarifas_vigentes,
 )
+from app.domain.estadisticas_tablero_service import FiltrosTablero, calcular_tablero
 from app.domain.configuracion_conjunto_service import (
     actualizar_datos_operativos,
     obtener_datos_operativos,
@@ -983,72 +982,45 @@ def _peticion_en_vivo_estadisticas_cobro(request: Request) -> bool:
     return request.headers.get("X-Requested-With") == "fetch"
 
 
-_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO = 29  # 30 días inclusive (hoy - 29 .. hoy)
-
-
 @router.get("/administracion/estadisticas-cobro", response_class=HTMLResponse)
 def admin_estadisticas_cobro(
     request: Request,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
-    desde: str = None,
-    hasta: str = None,
+    rango: str = None,
     tipo: str = None,
     estado_cobro: str = None,
-    usuario_id: str = None,
-    pagina_apartamento: int = 1,
-    pagina_usuario: int = 1,
-    pagina_diario: int = 1,
 ):
-    """Solo lectura, exclusiva de admin (`.scratch/cobro-bodegaje` ticket 06,
-    rediseño interactivo en `.scratch/estadisticas-cobro-interactivas`).
+    """Tablero de tarjetas de cobro (`.scratch/estadisticas-cobro-dashboard`,
+    ticket 01) -- reemplaza el rediseño de listas de `.scratch/estadisticas-
+    cobro-interactivas`. Solo lectura, exclusiva de admin.
 
-    Sin `desde`/`hasta` (primera carga): últimos 30 días en UTC (antes: solo
-    hoy -- ampliado porque la serie diaria y los desgloses nuevos necesitan
-    cuerpo para tener sentido de entrada, decisión explícita del `grilling`).
+    `rango` es la clave de un atajo de fecha (`hoy`, `ayer`, `semana`, `mes`,
+    `tres_meses`, `semestre`, `anio`) que acota SOLO la zona "Periodo
+    seleccionado" -- "Panorama" y "Ahora" son siempre el total del conjunto,
+    sin importar los filtros de la barra (ver `estadisticas_tablero_service`).
+    Sin `rango`, o con una clave desconocida, Periodo seleccionado muestra
+    TODOS los datos existentes (issue 364). El parámetro `hoy` que antes
+    mandaba el navegador se retira: el servidor calcula el día en hora de
+    Colombia a partir de su propio reloj (issue estadisticas-cobro-
+    dashboard, ticket 01) -- ya no depende de la fecha local del cliente. No
+    se aceptan fechas sueltas (`desde`/`hasta`): sin controles que las
+    muestren serían un filtro invisible.
 
-    `tipo`/`estado_cobro`/`usuario_id` combinan (AND) entre sí y con el
-    rango -- valores inválidos o que no matchean ningún `TipoPaquete`/UUID
-    se ignoran en silencio (mismo criterio laxo que `estado` en
-    `packages.py::_listar`), no producen error 400."""
-    hoy = datetime.now(timezone.utc).date()
-    try:
-        fecha_desde = (
-            date.fromisoformat(desde)
-            if desde
-            else hoy - timedelta(days=_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO)
-        )
-    except ValueError:
-        fecha_desde = hoy - timedelta(days=_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO)
-    try:
-        fecha_hasta = date.fromisoformat(hasta) if hasta else hoy
-    except ValueError:
-        fecha_hasta = hoy
+    `tipo`/`estado_cobro` acotan "Periodo seleccionado" -- valores inválidos
+    o que no matchean ningún `TipoPaquete` se ignoran en silencio (mismo
+    criterio laxo que `estado` en `packages.py::_listar`), no producen error
+    400.
 
-    inicio = datetime.combine(fecha_desde, time.min, tzinfo=timezone.utc)
-    fin = datetime.combine(fecha_hasta, time.max, tzinfo=timezone.utc)
-
+    Sin filtro por usuario (issue 363, pedido explícito): ningún parámetro lo
+    acepta a propósito, para que la vista quede determinada solo por los
+    controles visibles."""
     tipo_valores = {t.value for t in TipoPaquete}
     tipo_enum = TipoPaquete(tipo) if tipo in tipo_valores else None
-
     anulado = {"cobrado": False, "anulado": True}.get(estado_cobro)
 
-    try:
-        usuario_uuid = uuid.UUID(usuario_id) if usuario_id else None
-    except ValueError:
-        usuario_uuid = None
-
-    filtros = FiltrosEstadisticasCobro(
-        desde=inicio,
-        hasta=fin,
-        tipo=tipo_enum,
-        anulado=anulado,
-        usuario_id=usuario_uuid,
-        pagina_apartamento=max(1, pagina_apartamento),
-        pagina_usuario=max(1, pagina_usuario),
-        pagina_diario=max(1, pagina_diario),
-    )
-    stats = estadisticas_cobro(db, filtros)
+    filtros = FiltrosTablero(rango=rango, tipo=tipo_enum, anulado=anulado)
+    tablero = calcular_tablero(db, datetime.now(timezone.utc), filtros)
 
     en_vivo = _peticion_en_vivo_estadisticas_cobro(request)
     plantilla = (
@@ -1059,22 +1031,11 @@ def admin_estadisticas_cobro(
     contexto = {
         "request": request,
         "admin": admin,
-        "stats": stats,
-        "desde": fecha_desde.isoformat(),
-        "hasta": fecha_hasta.isoformat(),
+        "tablero": tablero,
+        "filtro_rango": tablero.periodo.rango_activo or "",
         "filtro_tipo": tipo_enum.value if tipo_enum else "",
         "filtro_estado_cobro": estado_cobro or "",
-        "filtro_usuario_id": str(usuario_uuid) if usuario_uuid else "",
-        "pagina_apartamento": filtros.pagina_apartamento,
-        "pagina_usuario": filtros.pagina_usuario,
-        "pagina_diario": filtros.pagina_diario,
     }
-    if not en_vivo:
-        # Lista de staff para el `<select>` de Usuario -- vive en la barra
-        # de filtros, FUERA del fragmento que el fetch en vivo reemplaza, así
-        # que no hace falta recalcularla en cada actualización (mismo
-        # criterio que `conteos_estado` en `packages.py::_render_lista`).
-        contexto["staff_lista"] = db.query(Usuario).order_by(Usuario.nombre).all()
     return templates.TemplateResponse(plantilla, contexto)
 
 
