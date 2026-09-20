@@ -4124,6 +4124,21 @@ def test_eliminar_solo_visible_para_admin_en_anunciado(client):
     assert f'data-open="modal-eliminar-{p.id}"' not in r2.text
 
 
+def test_tooltip_del_chip_eliminar_dice_eliminar_paquete(client):
+    """Pedido explícito (issue 355): el tooltip era "Eliminar (solo Admin)"."""
+    import re
+
+    _login_staff(client)  # ADMIN
+    p = _anunciar(client, nombre="Ana")
+    client.db.commit()
+
+    r = client.get("/paquetes")
+    chip = re.search(rf'<button[^>]*data-open="modal-eliminar-{p.id}"[^>]*>', r.text)
+    assert chip, "el chip de Eliminar no se renderizó para un ADMIN"
+    assert 'title="Eliminar paquete"' in chip.group(0)
+    assert "solo Admin" not in chip.group(0)
+
+
 def test_eliminar_admin_borra_un_paquete_anunciado(client):
     admin = _login_staff(client)
     p = _anunciar(client, nombre="Ana")
