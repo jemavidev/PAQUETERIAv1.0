@@ -8,7 +8,8 @@
   `recursos_recibir()` trae el <style>+<script> que antes vivían solo inline en
   `packages/list.html`: el toggle genérico data-open/data-close (también usado por los otros
   modales de /paquetes -- Corregir/Entregar/Cancelar, no son parte de este componente pero
-  comparten el mismo mecanismo), el anti doble-envío, y el escáner de cámara ZXing. Cada página que
+  comparten el mismo mecanismo), el anti doble-envío, y -- en su propio bloque, `recursos_captura_guia()`,
+  que emite `recursos_recibir()` -- el escáner de cámara ZXing y la comparación de guía. Cada página que
   use `modal_recibir` debe llamar a `recursos_recibir()` una sola vez.
 
   Uso:
@@ -383,17 +384,6 @@
 <script type="application/json" id="catalogo-torres-global">{{ catalogo_torres|tojson }}</script>
 <script type="application/json" id="residentes-unidad-global">{{ (residentes_por_unidad or {})|tojson }}</script>
 {%- endif %}
-<style>
-  /* Ganchos de estado para el JS de escaneo ZXing y doble-confirmación de guía
-     (lógica de este componente, no del design system) -- el JS reasigna
-     `className` por completo en tiempo de ejecución, así que estas clases
-     necesitan su propio CSS real en vez de utilidades de Tailwind. */
-  .scan-video { width:100%; max-height:240px; background:#000; border-radius:8px; margin-top:10px; object-fit:cover; }
-  .scan-msg { font-size:.85rem; color:#9a6b00; margin-top:8px; }
-  .guia-check-msg { font-size:.85rem; margin-top:8px; }
-  .guia-check-ok { color:#1e7a35; }
-  .guia-check-warn { color:#9a6b00; }
-</style>
 <script>
   (function () {
     // Delegación de eventos sobre `document`: el contenedor que envuelve este
@@ -452,7 +442,7 @@
         return;
       }
       var cerrar = e.target.closest('[data-close]');
-      if (cerrar) { toggle(cerrar.dataset.close, true); stopReaders(); }
+      if (cerrar) { toggle(cerrar.dataset.close, true); }
     });
 
     // Picker de Apartamento (número -> Torre), compartido por "Asignar
@@ -687,6 +677,41 @@
         btn.disabled = true;
         setTimeout(function () { btn.disabled = false; }, 5000);
       }, 0);
+    });
+
+  })();
+</script>
+{{ recursos_captura_guia() }}
+{% endmacro %}
+
+{#
+  Captura de la Guía (ticket 01 de `.scratch/captura-guia-lector-camara`, prefactor): el escáner
+  de cámara ZXing y la comparación de guía de "Confirmar guía" (Entregar) viven en su propio
+  bloque, separado del resto de `recursos_recibir()` (modales, historial diferido, selector de
+  apartamento, anti doble-envío). Lo emite `recursos_recibir()`: ninguna página lo llama por
+  separado, así que sigue apareciendo exactamente una vez por página que use el componente.
+#}
+{% macro recursos_captura_guia() %}
+<style>
+  /* Ganchos de estado para el JS de escaneo ZXing y doble-confirmación de guía
+     (lógica de este componente, no del design system) -- el JS reasigna
+     `className` por completo en tiempo de ejecución, así que estas clases
+     necesitan su propio CSS real en vez de utilidades de Tailwind. */
+  .scan-video { width:100%; max-height:240px; background:#000; border-radius:8px; margin-top:10px; object-fit:cover; }
+  .scan-msg { font-size:.85rem; color:#9a6b00; margin-top:8px; }
+  .guia-check-msg { font-size:.85rem; margin-top:8px; }
+  .guia-check-ok { color:#1e7a35; }
+  .guia-check-warn { color:#9a6b00; }
+</style>
+<script>
+  (function () {
+    // El cierre de un modal (✕, fondo o Escape -- este último dispara un click sobre el propio
+    // `[data-close]`, ver `base.html`) apaga la cámara. Antes lo hacía el mismo listener que
+    // esconde el modal; ahora es un listener propio de este bloque. Misma exclusión que ese
+    // listener: un botón con `data-open` (traspaso entre modales, issue 80) no cuenta como cierre.
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-open]')) return;
+      if (e.target.closest('[data-close]')) stopReaders();
     });
 
     // Doble confirmación de guía al entregar (Grupo 14, Ronda 2; ampliado en
