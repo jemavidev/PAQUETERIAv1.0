@@ -11,9 +11,11 @@ frente a ella. Este helper SUSTITUYE `navigator.mediaDevices.getUserMedia` en la
     lienzo). Con texto, dibuja un QR con ese contenido (generado con el propio ZXing vendorizado, el
     mismo que decodifica en la app), así que el escáner lo lee de verdad, de punta a punta.
     `retardo_ms` hace que la cámara tarde en responder (un aviso de permiso sin contestar, una cámara
-    lenta): sirve para probar lo que pasa si el Operador cancela ANTES de que llegue.
-  - `estado()`: cuántas veces se pidió la cámara, con qué restricciones y en qué estado quedó cada pista
-    de cada flujo (`live` o `ended`) -- para comprobar que nada queda encendido.
+    lenta): sirve para probar lo que pasa si el Operador cancela ANTES de que llegue. `linterna=True`
+    hace que la pista reporte la capacidad `torch` y registre lo que se le aplica (`aplicadas`).
+  - `estado()`: cuántas veces se pidió la cámara, con qué restricciones, qué se le aplicó a las pistas
+    (`aplicadas`, p. ej. la linterna) y en qué estado quedó cada pista de cada flujo (`live` o `ended`) --
+    para comprobar que nada queda encendido.
 
 Se instala con `add_init_script` (sobrevive a las navegaciones) y también en el documento actual. La
 configuración se cambia en cualquier momento, incluso entre dos clics en "Escanear".
@@ -29,7 +31,7 @@ Uso (el fixture `camara` de `conftest.py` ya lo deja instalado):
 _INSTALADOR = """
 (() => {
   if (window.__camara) return;  // ya instalada en este documento
-  const camara = { cfg: { modo: 'video', texto: null, retardo: 0 }, llamadas: 0, restricciones: [], flujos: [] };
+  const camara = { cfg: { modo: 'video', texto: null, retardo: 0, linterna: false }, llamadas: 0, restricciones: [], aplicadas: [], flujos: [] };
   window.__camara = camara;
 
   async function cargarZXing() {
@@ -78,6 +80,12 @@ _INSTALADOR = """
       throw new DOMException('Cámara simulada: ' + camara.cfg.error, camara.cfg.error);
     }
     const flujo = await fabricarFlujo(camara.cfg.texto);
+    if (camara.cfg.linterna) {
+      flujo.getVideoTracks().forEach((pista) => {
+        pista.getCapabilities = () => ({ torch: true });
+        pista.applyConstraints = async (c) => { camara.aplicadas.push(c); };
+      });
+    }
     camara.flujos.push(flujo);
     return flujo;
   };
@@ -101,11 +109,11 @@ class CamaraSimulada:
             "n => { window.__camara.cfg = { modo: 'error', error: n, retardo: 0 }; }", nombre
         )
 
-    def con_video(self, texto=None, retardo_ms=0):
+    def con_video(self, texto=None, retardo_ms=0, linterna=False):
         """La cámara entrega un flujo real; con `texto`, con un QR de ese contenido a la vista."""
         self._pagina.evaluate(
-            "([t, r]) => { window.__camara.cfg = { modo: 'video', texto: t, retardo: r }; }",
-            [texto, retardo_ms],
+            "([t, r, l]) => { window.__camara.cfg = { modo: 'video', texto: t, retardo: r, linterna: l }; }",
+            [texto, retardo_ms, linterna],
         )
 
     def estado(self):
@@ -113,6 +121,7 @@ class CamaraSimulada:
             """() => ({
                 llamadas: window.__camara.llamadas,
                 restricciones: window.__camara.restricciones,
+                aplicadas: window.__camara.aplicadas,
                 pistas: window.__camara.flujos.map(f => f.getTracks().map(t => t.readyState)),
             })"""
         )

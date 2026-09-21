@@ -709,7 +709,7 @@
   .guia-largo-msg { font-size:.85rem; color:#b91c1c; margin-top:8px; }
   .guia-largo-error { border-color:#dc2626; }
   .scan-btn:disabled { opacity:.5; cursor:not-allowed; }
-  .scan-stop { margin-left:8px; }
+  .scan-stop, .scan-torch { margin-left:8px; }
 </style>
 <script>
   (function () {
@@ -772,8 +772,9 @@
     // texto que el del servidor, `GuiaDemasiadoLarga`). La lectura por cámara escribe el valor por código,
     // sin evento `input`: el escáner llama a esta función a mano.
     var largoMaximoGuia = 50;
+    function largoNormalizadoDeGuia(valor) { return valor.replace(/\s+/g, ' ').trim().length; }
     function validarLargoGuia(input) {
-      var largo = input.value.replace(/\s+/g, ' ').trim().length;
+      var largo = largoNormalizadoDeGuia(input.value);
       var msg = input.parentNode.querySelector('.guia-largo-msg');
       if (largo > largoMaximoGuia) {
         var texto = 'La guía tiene ' + largo + ' caracteres; el máximo es ' + largoMaximoGuia + '.';
@@ -876,6 +877,13 @@
       if (!esc) return;
       delete _escaneos[clave];
       esc.terminado = true;
+      if (esc.luz && esc.luz.parentNode) esc.luz.parentNode.removeChild(esc.luz);
+      if (esc.linternaEncendida && esc.pista) {
+        try {
+          var apagada = esc.pista.applyConstraints({ advanced: [{ torch: false }] });
+          if (apagada && apagada.catch) apagada.catch(function () {});
+        } catch (err) {}
+      }
       if (esc.reader) { try { esc.reader.reset(); } catch (err) {} }
       if (esc.video) esc.video.hidden = true;
       if (esc.btn) esc.btn.disabled = false;
@@ -888,6 +896,42 @@
     // en español y sin jerga. `decodeFromVideoDevice` devuelve una PROMESA que rechaza cuando el navegador
     // niega la cámara: el `try/catch` síncrono de antes nunca la atrapaba (quedaba un cuadro de video negro
     // visible, sin mensaje y con un error en la consola).
+    // Restricciones de la cámara (ticket 07): trasera y con resolución IDEAL de 1280x720. Sin restricciones de
+    // tamaño Chrome entrega 640x480, poco para un código lineal pequeño o algo lejano; `ideal` (nunca `exact`)
+    // para que una cámara que no la da igual arranque, con lo más cercano. `focusMode` no aporta: Chrome
+    // Android ya enfoca en continuo y Safari no lo implementa. Reintentos de decodificación cada
+    // `intervaloReintentosMs`: por defecto ZXing reintenta con 0 ms de pausa (cientos de intentos por
+    // segundo mientras no hay código a la vista: CPU y batería); ~10 por segundo alcanza al acercar la etiqueta.
+    var intervaloReintentosMs = 100;
+    function restriccionesDeCamara() {
+      return { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
+    }
+    // Linterna: solo si la pista de la cámara activa REPORTA la capacidad `torch` (nunca se asume: depende
+    // del celular y del navegador). Sin ella, el botón no aparece.
+    function ofrecerLinterna(clave, esc) {
+      var flujo = esc.video && esc.video.srcObject;
+      var pista = flujo && flujo.getVideoTracks ? flujo.getVideoTracks()[0] : null;
+      var capacidades = pista && pista.getCapabilities ? pista.getCapabilities() : null;
+      if (!capacidades || !capacidades.torch) return;
+      esc.pista = pista;
+      esc.luz = document.createElement('button');
+      esc.luz.type = 'button';
+      esc.luz.className = esc.btn.className.replace('scan-btn', 'scan-torch');
+      esc.luz.dataset.video = clave;
+      esc.luz.setAttribute('aria-pressed', 'false');
+      esc.luz.textContent = 'Linterna';
+      esc.parar.parentNode.insertBefore(esc.luz, esc.parar.nextSibling);
+    }
+    function alternarLinterna(clave) {
+      var esc = _escaneos[clave];
+      if (!esc || !esc.pista || !esc.luz) return;
+      var encender = !esc.linternaEncendida;
+      esc.pista.applyConstraints({ advanced: [{ torch: encender }] }).then(function () {
+        esc.linternaEncendida = encender;
+        esc.luz.setAttribute('aria-pressed', encender ? 'true' : 'false');
+        esc.luz.textContent = encender ? 'Apagar linterna' : 'Linterna';
+      }, function () {});  // sin efecto: el botón queda como estaba
+    }
     function mensajeDeErrorDeCamara(err) {
       var nombre = err && err.name;
       if (nombre === 'NotAllowedError' || nombre === 'PermissionDeniedError' || nombre === 'SecurityError') {
@@ -904,6 +948,8 @@
     document.addEventListener('click', function (e) {
       var parar = e.target.closest('.scan-stop');
       if (parar) { terminarEscaneo(parar.dataset.video); return; }
+      var luz = e.target.closest('.scan-torch');
+      if (luz) { alternarLinterna(luz.dataset.video); return; }
       var btn = e.target.closest('.scan-btn');
       if (!btn) return;
       var clave = btn.dataset.video;
@@ -924,7 +970,7 @@
       // Se registra el escaneo YA, antes de cualquier espera (carga del lector, aviso de permiso): un segundo
       // toque no abre otro flujo, y "Detener" funciona desde el primer instante. El botón "Detener" copia las
       // clases del botón "Escanear" (ninguna clase nueva de Tailwind).
-      var esc = { reader: null, btn: btn, video: video, parar: null, terminado: false };
+      var esc = { reader: null, btn: btn, video: video, parar: null, luz: null, pista: null, linternaEncendida: false, terminado: false };
       _escaneos[clave] = esc;
       btn.disabled = true;
       esc.parar = document.createElement('button');
@@ -939,11 +985,21 @@
         try {
           var reader = new ZXing.BrowserMultiFormatReader();
           esc.reader = reader;
+          reader.timeBetweenDecodingAttempts = intervaloReintentosMs;
           video.hidden = false;
-          var iniciado = reader.decodeFromVideoDevice(null, video, function (result) {
+          var iniciado = reader.decodeFromConstraints(restriccionesDeCamara(), video, function (result) {
             if (result && !esc.terminado) {
-              input.value = result.getText();
+              var leido = result.getText();
+              var largo = largoNormalizadoDeGuia(leido);
               terminarEscaneo(clave);
+              // Regla de los 50 (tickets 04 y 07): un código más largo (p. ej. un QR con una URL) NO es la guía:
+              // no se escribe en el campo, se dice cuánto tiene y la cámara ya quedó apagada.
+              if (largo > largoMaximoGuia) {
+                fail('El código leído tiene ' + largo + ' caracteres; el máximo es ' + largoMaximoGuia +
+                     '. Prueba con otro código de la etiqueta o escribe la guía a mano.');
+                return;
+              }
+              input.value = leido;
               compararGuia(input);
               if (input.matches(campoGuiaRecibir)) validarLargoGuia(input);
             }
@@ -952,7 +1008,10 @@
             iniciado.then(
               // La cámara llegó: si el Operador ya había cancelado (aviso de permiso sin contestar, cámara
               // lenta), el flujo que llega tarde no puede quedar encendido.
-              function () { if (esc.terminado) { try { reader.reset(); } catch (err) {} } },
+              function () {
+                if (esc.terminado) { try { reader.reset(); } catch (err) {} return; }
+                ofrecerLinterna(clave, esc);
+              },
               function (err) { if (!esc.terminado) apagarPorFallo(mensajeDeErrorDeCamara(err)); }
             );
           }
