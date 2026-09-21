@@ -49,6 +49,12 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Largo máximo de la Guía del transportador (`Paquete.guide_number`). La columna es `String(50)`;
+# la validación de `paquete_lifecycle.normalizar_guia` usa esta misma constante, así que el límite y
+# la columna no pueden desincronizarse.
+LARGO_MAXIMO_GUIA = 50
+
+
 class EstadoPaquete(str, enum.Enum):
     """Ciclo de vida del Paquete. `str` mixin: el valor persistido ES la etiqueta.
 
@@ -177,7 +183,7 @@ class Paquete(Base):
     # --- Llave de negocio legible, única -------------------------------------- #
     access_code = Column(String(20), nullable=False)
     # Guía del transportador: opcional y NO se captura al anunciar.
-    guide_number = Column(String(50), nullable=True)
+    guide_number = Column(String(LARGO_MAXIMO_GUIA), nullable=True)
 
     # --- Tipo/condición física: capturados al RECIBIR, no al anunciar -------- #
     package_type = Column(

@@ -79,11 +79,13 @@ from app.domain.paquete_correccion_service import (
 from app.domain.paquete_foto_service import agregar_foto_desde_url
 from app.domain.paquete_lifecycle import (
     ESTADOS_CORREGIBLES,
+    GuiaDemasiadoLarga,
     TransicionInvalida,
     cancel,
     corregir_apartamento,
     corregir_destinatario,
     deliver,
+    normalizar_guia,
     receive,
 )
 from app.domain.paquete_service import (
@@ -1476,6 +1478,23 @@ async def receive_action(
     # endpoint -- vuelve a esa vista (con la misma búsqueda) en vez de al
     # listado de staff, tanto si funciona como si no.
     destino = f"/consultar?q={quote(q)}" if origen == "consultar" and q else "/paquetes"
+
+    # Ticket 04 (`.scratch/captura-guia-lector-camara`): una Guía de más de 50 caracteres (ya normalizada
+    # como se guarda) se rechaza ACÁ, antes de cualquier efecto -- declarar la unidad, resolver o crear un
+    # Ocupante, registrar el pago al mensajero: `receive()` recién corre más abajo, y para entonces varias de
+    # esas cosas ya se commitearon. Sin esto, la columna (`varchar(50)`) la rechazaba en Postgres y el
+    # Operador veía un 500 sin explicación. El campo del modal ya la marca y bloquea el envío en el
+    # navegador; esto cubre lo que llegue igual. Nunca se trunca. Reabre el modal Recibir de ESTE paquete
+    # con el mensaje dentro (`error_campo="guide_number"`; el toast queda detrás del modal, z-40 < z-[60]).
+    try:
+        normalizar_guia(guia)
+    except GuiaDemasiadoLarga as exc:
+        if destino != "/paquetes":
+            return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
+        return _render_lista(
+            request, db, staff, error=str(exc), status_code=400,
+            recibir_paquete_id=str(paquete.id), error_campo="guide_number",
+        )
 
     # Paso nuevo, opcional (.scratch/ocupante-principal-escenarios, ticket
     # 05): declarar la unidad si al destinatario todavía no se le resolvió

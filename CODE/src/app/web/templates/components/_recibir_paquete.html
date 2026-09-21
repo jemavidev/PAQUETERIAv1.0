@@ -31,7 +31,7 @@
 {% from "components/_inputs.html" import input_texto, toggle %}
 {% from "components/_picker_apartamento.html" import picker_apartamento %}
 
-{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, persona_destino_saldo_id=None, saldo_actual=None, candidatos_fingerprint=None) %}
+{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, persona_destino_saldo_id=None, saldo_actual=None, candidatos_fingerprint=None, error_guia=None) %}
 {%- set opciones_tipo = [] -%}
 {%- for t in tipos %}{% set _ = opciones_tipo.append((t.value, t.value.replace('_', ' ')|capitalize)) %}{% endfor -%}
 {%- set opciones_condicion = [] -%}
@@ -271,10 +271,14 @@
     </script>
     {% endif %}
 
-    <input type="text" id="guia-{{ paquete_id }}" name="guide_number" autocomplete="off" inputmode="text" placeholder="Guía" aria-label="Guía del transportador (opcional)" oninput="this.value = this.value.toUpperCase()" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800">
+    <input type="text" id="guia-{{ paquete_id }}" name="guide_number" autocomplete="off" inputmode="text" placeholder="Guía" aria-label="Guía del transportador (opcional)" oninput="this.value = this.value.toUpperCase()" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800{{ " guia-largo-error" if error_guia }}">
     <button type="button" class="scan-btn mt-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-4 py-2.5 transition hover:bg-slate-50" data-target="guia-{{ paquete_id }}" data-video="video-{{ paquete_id }}">📷 Escanear con cámara</button>
     <video id="video-{{ paquete_id }}" class="scan-video" hidden playsinline muted></video>
     <p class="scan-msg" hidden></p>
+    {#- Ticket 04 (`.scratch/captura-guia-lector-camara`): el largo de la Guía (máx. 50 tras normalizar). Oculto
+       por defecto; lo llena el JS al teclear/leer (bloque de captura) o el servidor (`error_guia`) cuando
+       reabre este modal por un rechazo -- el toast del listado queda detrás del modal (z-40 < z-[60]). #}
+    <p class="guia-largo-msg" role="alert"{% if not error_guia %} hidden{% endif %}>{{ error_guia or '' }}</p>
 
     <div class="mt-4">
       {{ grupo_chips('package_type', opciones_tipo, seleccionado='NORMAL', etiqueta='Tipo de paquete') }}
@@ -702,6 +706,8 @@
   .guia-check-msg { font-size:.85rem; margin-top:8px; }
   .guia-check-ok { color:#1e7a35; }
   .guia-check-warn { color:#9a6b00; }
+  .guia-largo-msg { font-size:.85rem; color:#b91c1c; margin-top:8px; }
+  .guia-largo-error { border-color:#dc2626; }
 </style>
 <script>
   (function () {
@@ -755,6 +761,32 @@
       e.preventDefault();
       e.stopPropagation();
     }, true);
+
+    // Largo de la guía (ticket 04, `.scratch/captura-guia-lector-camara`): la columna admite 50 caracteres
+    // y el servidor cuenta la guía NORMALIZADA (mayúsculas, espacios colapsados, recortada), así que acá
+    // se cuenta igual. Sin `maxlength` a propósito: cortaría EN SILENCIO lo que inyecta el lector (una
+    // guía cortada es una guía equivocada). En su lugar el campo marca el error con el largo actual y
+    // `setCustomValidity` deja al navegador bloquear el envío de "Recibir" hasta que se corrija (mismo
+    // texto que el del servidor, `GuiaDemasiadoLarga`). La lectura por cámara escribe el valor por código,
+    // sin evento `input`: el escáner llama a esta función a mano.
+    var largoMaximoGuia = 50;
+    function validarLargoGuia(input) {
+      var largo = input.value.replace(/\s+/g, ' ').trim().length;
+      var msg = input.parentNode.querySelector('.guia-largo-msg');
+      if (largo > largoMaximoGuia) {
+        var texto = 'La guía tiene ' + largo + ' caracteres; el máximo es ' + largoMaximoGuia + '.';
+        input.setCustomValidity(texto);
+        input.classList.add('guia-largo-error');
+        if (msg) { msg.textContent = texto; msg.hidden = false; }
+      } else {
+        input.setCustomValidity('');
+        input.classList.remove('guia-largo-error');
+        if (msg) { msg.textContent = ''; msg.hidden = true; }
+      }
+    }
+    document.addEventListener('input', function (e) {
+      if (e.target.matches && e.target.matches(campoGuiaRecibir)) validarLargoGuia(e.target);
+    });
 
     // Doble confirmación de guía al entregar (Grupo 14, Ronda 2; ampliado en
     // retroalimentación en vivo 2026-08-18): 3 situaciones, nunca más --
@@ -858,6 +890,7 @@
               try { reader.reset(); } catch (e) {}
               video.hidden = true;
               compararGuia(input);
+              if (input.matches(campoGuiaRecibir)) validarLargoGuia(input);
             }
           });
         } catch (e) {
