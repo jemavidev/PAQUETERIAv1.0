@@ -79,3 +79,13 @@ def sembrar_paquete_con_guia(app_viva, guia, tel="3105550000", nombre="Sofia"):
     otro = anunciar_paquete(app_viva, tel=tel, nombre=nombre)
     recibir_paquete_en_bd(app_viva, otro, guia)
     return otro
+
+
+def volver_a_iniciar_sesion(pagina, app_viva, email=EMAIL_STAFF):
+    """Inicia sesión con un Staff que YA existe en la BD de la prueba (p. ej. en otro contexto de navegador)."""
+    respuesta = pagina.context.request.post(
+        f"{app_viva.url}/ingresar",
+        form={"email": email, "password": PASSWORD_STAFF},
+        max_redirects=0,
+    )
+    assert respuesta.status == 303, f"el login de Staff no redirigió (status {respuesta.status})"

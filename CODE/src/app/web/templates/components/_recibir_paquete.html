@@ -844,6 +844,56 @@
       consultarGuiaRepetida(e.target, pausaAvisoRepetidaMs);
     });
 
+    // Modo lector (ticket 10, `.scratch/captura-guia-lector-camara`): con el interruptor "Este equipo tiene
+    // lector" del menú de cuenta ENCENDIDO (`base.html`, `window.paqueteXModoLector`), al abrir Recibir el foco
+    // va al campo Guía -- el lector integrado del F7 escribe donde esté el foco, y antes el foco quedaba en el
+    // botón de la fila (la lectura se perdía sin aviso). APAGADO (el default) no se toca el foco: el issue 284
+    // retiró el foco automático de las vistas de staff y sigue en pie. El campo enfocado por esta vía (1) NO pide
+    // teclado en pantalla (`inputmode="none"`: el lector escribe solo y el teclado taparía el modal), y (2)
+    // queda con su contenido SELECCIONADO: con el modo de envío `FOCUS` sin sobrescribir, el F7 ANEXA a lo que ya
+    // hay, y una segunda lectura terminaría concatenada; seleccionado, la nueva lectura lo reemplaza. Un toque
+    // del Operador en el campo devuelve el teclado normal (para teclear a mano una guía que el lector no lee).
+    function modoLectorActivo() {
+      return !!(window.paqueteXModoLector && window.paqueteXModoLector.activo());
+    }
+    function enfocarParaLector(campo) {
+      if (!campo) return;
+      campo.setAttribute('inputmode', 'none');
+      campo.dataset.modoLectorFoco = '1';
+      campo.focus();
+      campo.select();
+    }
+    document.addEventListener('click', function (e) {
+      var abrir = e.target.closest('[data-open]');
+      if (!abrir || !modoLectorActivo()) return;
+      var modal = document.getElementById(abrir.dataset.open);
+      if (modal) enfocarParaLector(modal.querySelector(campoGuiaRecibir));
+    });
+    document.addEventListener('pointerup', function (e) {
+      var campo = e.target.closest && e.target.closest('[data-modo-lector-foco]');
+      if (!campo) return;
+      delete campo.dataset.modoLectorFoco;
+      campo.setAttribute('inputmode', 'text');
+      campo.blur();
+      campo.focus();  // ya con `inputmode` normal: ahora sí sale el teclado en pantalla
+    });
+    // Un modal que llega YA abierto (el servidor lo reabre tras un rechazo o un aviso pendiente) no pasa por un
+    // clic: se revisa una vez al cargar, cuando el DOM ya existe.
+    function enfocarModalesAbiertos() {
+      if (!modoLectorActivo()) return;
+      // Sin nombrar el id del modal: hay pruebas que verifican por substring que ese texto NO está en páginas sin él.
+      var campos = document.querySelectorAll(campoGuiaRecibir);
+      for (var i = 0; i < campos.length; i++) {
+        var modal = campos[i].closest('[role="dialog"]');
+        if (modal && !modal.hidden) { enfocarParaLector(campos[i]); break; }
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', enfocarModalesAbiertos);
+    } else {
+      enfocarModalesAbiertos();
+    }
+
     // Doble confirmación de guía al entregar (Grupo 14, Ronda 2; ampliado en
     // retroalimentación en vivo 2026-08-18): 3 situaciones, nunca más --
     // (1) campo vacío -- nada que comparar, "Entregar" sigue como entrega

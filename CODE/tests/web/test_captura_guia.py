@@ -340,3 +340,38 @@ def test_el_modal_recibir_trae_el_lugar_del_aviso_de_repetida_y_el_paquete_del_c
     campo = re.search(r'<input[^>]*name="guide_number"[^>]*>', html).group(0)
     assert f'data-paquete-id="{p.id}"' in campo
     assert re.search(r'<p class="guia-repetida-msg"[^>]*\bhidden\b', html)
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 10 — modo lector: el interruptor "Este equipo tiene lector" vive en el menú de cuenta (solo Staff),
+# NO en el modal Recibir. Su comportamiento (foco, teclado, persistencia) se prueba en navegador real.
+# --------------------------------------------------------------------------- #
+def test_el_menu_de_cuenta_de_staff_trae_el_interruptor_del_modo_lector_apagado(client):
+    _login_staff(client)
+    _anunciar(client)
+
+    for ruta in ("/paquetes", "/announce", "/residentes", "/consultar"):
+        html = client.get(ruta).text
+        boton = re.search(r'<button[^>]*data-modo-lector[^>]*>.*?</button>', html, re.S)
+        assert boton, f"{ruta}: falta el interruptor en el menú de cuenta"
+        assert "Este equipo tiene lector" in boton.group(0), ruta
+        assert "Desactivado" in boton.group(0), ruta  # el HTML sale apagado; el JS lo pinta según el equipo
+
+
+def test_el_interruptor_del_modo_lector_no_vive_en_el_modal_recibir(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    html = client.get("/paquetes").text
+
+    desde = html.index(f'id="modal-receive-{p.id}"')
+    hasta = html.index("</form>", desde)
+    assert "data-modo-lector" not in html[desde:hasta]
+    assert "Este equipo tiene lector" not in html[desde:hasta]
+
+
+def test_un_visitante_sin_sesion_no_ve_el_interruptor_del_modo_lector(client):
+    for ruta in ("/anunciar", "/consultar", "/ayuda"):
+        html = client.get(ruta).text
+        assert "data-modo-lector" not in html, ruta
+        assert "Este equipo tiene lector" not in html, ruta
