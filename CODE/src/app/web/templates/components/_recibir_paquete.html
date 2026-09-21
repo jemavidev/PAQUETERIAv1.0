@@ -708,6 +708,8 @@
   .guia-check-warn { color:#9a6b00; }
   .guia-largo-msg { font-size:.85rem; color:#b91c1c; margin-top:8px; }
   .guia-largo-error { border-color:#dc2626; }
+  .scan-btn:disabled { opacity:.5; cursor:not-allowed; }
+  .scan-stop { margin-left:8px; }
 </style>
 <script>
   (function () {
@@ -838,7 +840,7 @@
 
     // Escáner ZXing (cámara): carga el bundle de forma perezosa, decodifica
     // multi-formato y rellena la Guía. Degrada con gracia a entrada manual.
-    var _readers = {};
+    var _escaneos = {};  // clave (id del <video>) -> { reader, btn, video, parar, terminado }
     // `alFallar` (ticket 05, `.scratch/captura-guia-lector-camara`): antes `onerror` era una función vacía,
     // así que con la red caída el botón "Escanear" no hacía NADA y no decía nada. La precarga en
     // inactividad (más abajo) no pasa `alFallar`: si falla, el siguiente clic lo intenta de nuevo y ahí sí
@@ -864,12 +866,23 @@
     } else {
       setTimeout(function () { ensureZXing(function () {}); }, 1000);
     }
+    // Ciclo de vida del escaneo (ticket 06, `.scratch/captura-guia-lector-camara`): UN solo escaneo por
+    // campo a la vez, y cualquier forma de terminarlo (leer un código, "Detener", un fallo, cerrar el modal
+    // con ✕/fondo/Escape) lo apaga TODO: la cámara, el video, el botón "Detener" y el estado de "Escanear".
+    // Antes un doble clic abría dos flujos y el registro solo recordaba el último: al cerrar el modal el
+    // primero quedaba encendido (la luz de la cámara) hasta recargar la página.
+    function terminarEscaneo(clave) {
+      var esc = _escaneos[clave];
+      if (!esc) return;
+      delete _escaneos[clave];
+      esc.terminado = true;
+      if (esc.reader) { try { esc.reader.reset(); } catch (err) {} }
+      if (esc.video) esc.video.hidden = true;
+      if (esc.btn) esc.btn.disabled = false;
+      if (esc.parar && esc.parar.parentNode) esc.parar.parentNode.removeChild(esc.parar);
+    }
     function stopReaders() {
-      Object.keys(_readers).forEach(function (k) {
-        try { _readers[k].reset(); } catch (e) {}
-        var v = document.getElementById(k);
-        if (v) v.hidden = true;
-      });
+      Object.keys(_escaneos).forEach(terminarEscaneo);
     }
     // Mensaje según el tipo de fallo de `getUserMedia` (ticket 05): cada caso dice algo distinto y accionable,
     // en español y sin jerga. `decodeFromVideoDevice` devuelve una PROMESA que rechaza cuando el navegador
@@ -889,8 +902,12 @@
       return 'No se pudo iniciar la cámara; escribe la guía a mano.';
     }
     document.addEventListener('click', function (e) {
+      var parar = e.target.closest('.scan-stop');
+      if (parar) { terminarEscaneo(parar.dataset.video); return; }
       var btn = e.target.closest('.scan-btn');
       if (!btn) return;
+      var clave = btn.dataset.video;
+      if (_escaneos[clave]) return;  // ya hay un escaneo en curso en este campo (doble toque)
       var input = document.getElementById(btn.dataset.target);
       var video = document.getElementById(btn.dataset.video);
       var msg = btn.parentNode.querySelector('.scan-msg');
@@ -898,40 +915,52 @@
       function fail(t) { if (msg) { msg.hidden = false; msg.textContent = t; } }
       // Un fallo de cualquier tipo deja todo como antes de escanear: sin cuadro negro de video, la cámara
       // (si llegó a abrirse) apagada, y el campo Guía editable a mano.
-      function apagarPorFallo(t) {
-        var lector = _readers[btn.dataset.video];
-        if (lector) { try { lector.reset(); } catch (err) {} delete _readers[btn.dataset.video]; }
-        if (video) video.hidden = true;
-        fail(t);
-      }
+      function apagarPorFallo(t) { terminarEscaneo(clave); fail(t); }
       limpiarMensaje();  // un fallo anterior no debe quedarse si este intento sí arranca
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         fail('Cámara no disponible; escribe la guía a mano.');
         return;
       }
+      // Se registra el escaneo YA, antes de cualquier espera (carga del lector, aviso de permiso): un segundo
+      // toque no abre otro flujo, y "Detener" funciona desde el primer instante. El botón "Detener" copia las
+      // clases del botón "Escanear" (ninguna clase nueva de Tailwind).
+      var esc = { reader: null, btn: btn, video: video, parar: null, terminado: false };
+      _escaneos[clave] = esc;
+      btn.disabled = true;
+      esc.parar = document.createElement('button');
+      esc.parar.type = 'button';
+      esc.parar.className = btn.className.replace('scan-btn', 'scan-stop');
+      esc.parar.dataset.video = clave;
+      esc.parar.textContent = 'Detener';
+      btn.parentNode.insertBefore(esc.parar, btn.nextSibling);
       ensureZXing(function () {
+        if (esc.terminado) return;  // lo detuvieron mientras cargaba el lector
         if (!window.ZXing) { apagarPorFallo('No se pudo cargar el escáner; escribe la guía a mano.'); return; }
         try {
           var reader = new ZXing.BrowserMultiFormatReader();
-          _readers[btn.dataset.video] = reader;
+          esc.reader = reader;
           video.hidden = false;
           var iniciado = reader.decodeFromVideoDevice(null, video, function (result) {
-            if (result) {
+            if (result && !esc.terminado) {
               input.value = result.getText();
-              try { reader.reset(); } catch (err) {}
-              video.hidden = true;
+              terminarEscaneo(clave);
               compararGuia(input);
               if (input.matches(campoGuiaRecibir)) validarLargoGuia(input);
             }
           });
-          if (iniciado && iniciado.catch) {
-            iniciado.catch(function (err) { apagarPorFallo(mensajeDeErrorDeCamara(err)); });
+          if (iniciado && iniciado.then) {
+            iniciado.then(
+              // La cámara llegó: si el Operador ya había cancelado (aviso de permiso sin contestar, cámara
+              // lenta), el flujo que llega tarde no puede quedar encendido.
+              function () { if (esc.terminado) { try { reader.reset(); } catch (err) {} } },
+              function (err) { if (!esc.terminado) apagarPorFallo(mensajeDeErrorDeCamara(err)); }
+            );
           }
         } catch (err) {
           apagarPorFallo('No se pudo iniciar la cámara; escribe la guía a mano.');
         }
       }, function () {
-        apagarPorFallo('No se pudo cargar el escáner; escribe la guía a mano.');
+        if (!esc.terminado) apagarPorFallo('No se pudo cargar el escáner; escribe la guía a mano.');
       });
     });
   })();

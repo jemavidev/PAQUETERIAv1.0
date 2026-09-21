@@ -10,6 +10,8 @@ frente a ella. Este helper SUSTITUYE `navigator.mediaDevices.getUserMedia` en la
   - `con_video()` / `con_video("TEXTO")`: entrega un flujo de video REAL (un `MediaStream` de un
     lienzo). Con texto, dibuja un QR con ese contenido (generado con el propio ZXing vendorizado, el
     mismo que decodifica en la app), así que el escáner lo lee de verdad, de punta a punta.
+    `retardo_ms` hace que la cámara tarde en responder (un aviso de permiso sin contestar, una cámara
+    lenta): sirve para probar lo que pasa si el Operador cancela ANTES de que llegue.
   - `estado()`: cuántas veces se pidió la cámara, con qué restricciones y en qué estado quedó cada pista
     de cada flujo (`live` o `ended`) -- para comprobar que nada queda encendido.
 
@@ -27,7 +29,7 @@ Uso (el fixture `camara` de `conftest.py` ya lo deja instalado):
 _INSTALADOR = """
 (() => {
   if (window.__camara) return;  // ya instalada en este documento
-  const camara = { cfg: { modo: 'video', texto: null }, llamadas: 0, restricciones: [], flujos: [] };
+  const camara = { cfg: { modo: 'video', texto: null, retardo: 0 }, llamadas: 0, restricciones: [], flujos: [] };
   window.__camara = camara;
 
   async function cargarZXing() {
@@ -71,6 +73,7 @@ _INSTALADOR = """
   const pedirCamara = async (restricciones) => {
     camara.llamadas++;
     camara.restricciones.push(restricciones);
+    if (camara.cfg.retardo) await new Promise((ok) => setTimeout(ok, camara.cfg.retardo));
     if (camara.cfg.modo === 'error') {
       throw new DOMException('Cámara simulada: ' + camara.cfg.error, camara.cfg.error);
     }
@@ -95,13 +98,14 @@ class CamaraSimulada:
     def con_error(self, nombre):
         """La cámara rechaza con un `DOMException` de este nombre (NotAllowedError, NotFoundError...)."""
         self._pagina.evaluate(
-            "n => { window.__camara.cfg = { modo: 'error', error: n }; }", nombre
+            "n => { window.__camara.cfg = { modo: 'error', error: n, retardo: 0 }; }", nombre
         )
 
-    def con_video(self, texto=None):
+    def con_video(self, texto=None, retardo_ms=0):
         """La cámara entrega un flujo real; con `texto`, con un QR de ese contenido a la vista."""
         self._pagina.evaluate(
-            "t => { window.__camara.cfg = { modo: 'video', texto: t }; }", texto
+            "([t, r]) => { window.__camara.cfg = { modo: 'video', texto: t, retardo: r }; }",
+            [texto, retardo_ms],
         )
 
     def estado(self):
