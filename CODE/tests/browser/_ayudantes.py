@@ -8,8 +8,10 @@ recoge estas pruebas para deseleccionarlas, no para ejecutarlas).
 """
 
 from app.domain.paquete import Paquete
+from app.domain.paquete_lifecycle import receive
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.staff_service import create_initial_admin
+from app.domain.usuario import Usuario
 
 PASSWORD_STAFF = "Contrasena1"
 EMAIL_STAFF = "staff@club.com"
@@ -53,5 +55,20 @@ def abrir_modal_recibir(pagina, app_viva, paquete):
     """Va a /paquetes y abre el modal Recibir de `paquete` con un clic real sobre su botón."""
     modal_id = f"modal-receive-{paquete.id}"
     pagina.goto(f"{app_viva.url}/paquetes")
+    pagina.locator(f'[data-open="{modal_id}"]:visible').first.click()
+    pagina.wait_for_function("id => !document.getElementById(id).hidden", arg=modal_id)
+
+
+def recibir_paquete_en_bd(app_viva, paquete, guia, email=EMAIL_STAFF):
+    """Deja el Paquete `Recibido` con `guia` directo en el dominio (para probar Entregar sin pasar por Recibir)."""
+    staff = app_viva.db.query(Usuario).filter(Usuario.email == email).one()
+    receive(app_viva.db, paquete, staff, guia)
+    app_viva.db.commit()
+
+
+def abrir_modal_entregar(pagina, app_viva, paquete):
+    """Va a /paquetes (Recibidos) y abre el modal Entregar de `paquete` con un clic real."""
+    modal_id = f"modal-deliver-{paquete.id}"
+    pagina.goto(f"{app_viva.url}/paquetes?estado=RECIBIDO")
     pagina.locator(f'[data-open="{modal_id}"]:visible').first.click()
     pagina.wait_for_function("id => !document.getElementById(id).hidden", arg=modal_id)

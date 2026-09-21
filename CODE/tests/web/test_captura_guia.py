@@ -71,3 +71,26 @@ def test_la_captura_de_guia_es_un_bloque_propio_y_unico_en_cada_pagina(client):
 
         # Los estilos de escaneo se emiten una sola vez por página.
         assert r.text.count(".scan-msg {") == 1, ruta
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 03 — la guardia del Enter llega a /announce y al Recibir de /consultar por reusar el
+# mismo componente: el bloque de captura es el MISMO en todas las páginas que lo cargan.
+# El comportamiento en sí (Enter/Tab/envío) se prueba en el seam de navegador real.
+# --------------------------------------------------------------------------- #
+def test_el_bloque_de_captura_es_el_mismo_en_todas_las_paginas_con_recibir(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    rutas = ["/paquetes", f"/consultar?q={p.access_code}", "/announce", "/residentes"]
+    bloques = {}
+    for ruta in rutas:
+        r = client.get(ruta)
+        assert r.status_code == 200, ruta
+        captura = _bloques_con(r.text, "BrowserMultiFormatReader")
+        assert len(captura) == 1, ruta
+        bloques[ruta] = captura[0]
+
+    de_referencia = bloques["/paquetes"]
+    for ruta, bloque in bloques.items():
+        assert bloque == de_referencia, f"{ruta} carga un bloque de captura distinto"

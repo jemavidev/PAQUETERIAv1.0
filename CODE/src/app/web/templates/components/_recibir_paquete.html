@@ -714,6 +714,48 @@
       if (e.target.closest('[data-close]')) stopReaders();
     });
 
+    // Guardia del Enter (ticket 03, `.scratch/captura-guia-lector-camara`): una lectura SOLO llena
+    // la Guía -- recibir siempre lo confirma el Operador con el botón "Recibir". Un lector que actúa
+    // como teclado suele mandar un Enter al final de la lectura, y el campo Guía vive DENTRO del
+    // formulario de Recibir: sin esta guardia, ese Enter lo enviaba (Paquete Recibido con Normal/
+    // Bueno por defecto, sin fotos, sin elegir Residente y sin pago contra entrega).
+    // Dos niveles: (1) el propio Enter dentro del campo; (2) el envío del formulario, por si el
+    // lector inyecta su terminador de una forma que no dispare `keydown` (texto con salto de línea,
+    // la tecla "Ir" del teclado en pantalla). El envío implícito por Enter dispara un click simulado
+    // sobre el botón, así que `e.submitter` NO distingue "el Operador pulsó Recibir" de "Enter en
+    // el campo": lo que sí los distingue es un gesto real sobre el botón un instante antes (puntero
+    // o teclado) -- y que el foco esté en Guía al momento de enviar. Solo protege el campo Guía:
+    // Enter en los demás campos del modal se comporta como siempre. El Tab no necesita guardia
+    // (nunca envía). "Confirmar guía" (Entregar) ya vive FUERA de un <form>: un Enter allí no envía.
+    // OJO: constantes en camelCase y sin nombres propios a propósito -- los tests de /paquetes verifican
+    // por substring que ciertos nombres en MAYÚSCULAS no aparecen en la página, y este <script> viaja en ella.
+    var campoGuiaRecibir = 'input[name="guide_number"]';
+    var margenGestoMs = 1500;
+    var ultimoGestoSobreBoton = 0;
+    function registrarGestoSobreBoton(e) {
+      if (e.target.closest && e.target.closest('button[type=submit], input[type=submit]')) {
+        ultimoGestoSobreBoton = Date.now();
+      }
+    }
+    document.addEventListener('pointerdown', registrarGestoSobreBoton, true);
+    document.addEventListener('pointerup', registrarGestoSobreBoton, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.matches && e.target.matches(campoGuiaRecibir)) {
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'Enter' || e.key === ' ') registrarGestoSobreBoton(e);
+    }, true);
+    document.addEventListener('submit', function (e) {
+      var guia = e.target.querySelector ? e.target.querySelector(campoGuiaRecibir) : null;
+      if (!guia || document.activeElement !== guia) return;
+      if (Date.now() - ultimoGestoSobreBoton < margenGestoMs) return;
+      // `stopPropagation` a propósito: el anti doble-envío (bloque base, fase de burbuja) no debe
+      // deshabilitar el botón por un envío que no ocurrió.
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+
     // Doble confirmación de guía al entregar (Grupo 14, Ronda 2; ampliado en
     // retroalimentación en vivo 2026-08-18): 3 situaciones, nunca más --
     // (1) campo vacío -- nada que comparar, "Entregar" sigue como entrega
