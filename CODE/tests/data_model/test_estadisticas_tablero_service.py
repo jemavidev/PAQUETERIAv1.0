@@ -899,6 +899,133 @@ def test_sms_panorama_con_base_vacia_no_rompe(db_session):
     assert sms.registro_desde is None
 
 
+# --- Panorama: "SMS enviados por AWS" -- tendencia (ticket 16) --------------- #
+
+
+def test_sms_tendencia_hoy_contra_el_mismo_tramo_de_ayer(db_session):
+    """Mismo cálculo que Ingresos/Entregados/Cancelados (ticket 08): contra
+    ayer HASTA la misma hora, no contra el día completo -- el SMS de ayer a
+    las 15:00 queda fuera del corte de las 12:00."""
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 16, 9, 0))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 15, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 15, 15, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia
+
+    assert tendencia.variacion_hoy == pytest.approx(100.0)  # (2 - 1) / 1 * 100
+
+
+def test_sms_tendencia_semana_mismo_dia_y_hora_de_la_semana_anterior(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)  # miércoles
+    for minuto in (0, 5, 10):
+        _registrar_sms(
+            db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 15, 9, minuto)
+        )  # martes de esta semana
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 9, 9, 0)
+    )  # semana anterior, antes del corte de miércoles 12:00 -- cuenta
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 9, 14, 0)
+    )  # semana anterior, DESPUÉS del corte -- no cuenta
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia
+
+    assert tendencia.variacion_semana == pytest.approx((3 - 1) / 1 * 100)
+
+
+def test_sms_tendencia_mes_mismo_dia_y_hora_del_mes_anterior(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 16, 9, 0))
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 8, 16, 9, 0)
+    )  # 16 de agosto antes del corte -- cuenta
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 8, 16, 14, 0)
+    )  # 16 de agosto DESPUÉS del corte -- no cuenta
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia
+
+    assert tendencia.variacion_mes == pytest.approx((2 - 1) / 1 * 100)
+
+
+def test_sms_tendencia_none_cuando_el_tramo_anterior_vale_cero(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia
+
+    assert tendencia.variacion_hoy is None
+    assert tendencia.variacion_semana is None
+    assert tendencia.variacion_mes is None
+
+
+def test_sms_tendencia_serie_7_dias_del_mas_viejo_al_mas_reciente(db_session):
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 10, 9, 0))
+    _registrar_sms(db_session, TipoRegistroSms.OTP, "AWS_SNS", cuando=_local(2026, 9, 10, 10, 0))
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 9, 0))
+    db_session.commit()
+
+    serie = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia.serie_7_dias
+
+    assert len(serie) == 7
+    assert serie[0] == 2  # hace 6 días -- el más viejo, primero
+    assert serie[-1] == 1  # hoy -- el más reciente, último
+    # El registro ya existía desde el 10, así que estos ceros SÍ son reales.
+    assert serie[1:6] == (0, 0, 0, 0, 0)
+
+
+def test_sms_tendencia_serie_no_inventa_ceros_antes_de_que_existiera_el_registro(db_session):
+    """Ticket 16: con menos de 7 días de registro, el minigráfico trae solo
+    los días disponibles -- un "0" para un día anterior a la activación sería
+    un dato falso (ese día no se registraba, no es que no se enviara nada)."""
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 14, 8, 0))
+    for hora in (8, 9):
+        _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 15, hora, 0))
+    for hora in (8, 9, 10):
+        _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, hora, 0))
+    db_session.commit()
+
+    serie = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia.serie_7_dias
+
+    assert serie == (1, 2, 3)  # 14, 15 y 16 -- nada de días anteriores al 14
+
+
+def test_sms_tendencia_serie_cuenta_solo_aws_pero_el_registro_arranca_con_cualquier_proveedor(db_session):
+    """`registro_desde` es cuándo empezó a existir el registro de SMS (de
+    cualquier proveedor); la serie, en cambio, cuenta solo AWS -- un día con
+    solo un envío LIWA o uno fallido es un "0" real, no un día sin datos."""
+    ahora = _local(2026, 9, 16, 12, 0)
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "LIWA", cuando=_local(2026, 9, 15, 8, 0))
+    _registrar_sms(
+        db_session, TipoRegistroSms.AVISO_PAQUETE, None, exitoso=False, cuando=_local(2026, 9, 15, 9, 0)
+    )
+    _registrar_sms(db_session, TipoRegistroSms.AVISO_PAQUETE, "AWS_SNS", cuando=_local(2026, 9, 16, 8, 0))
+    db_session.commit()
+
+    tendencia = calcular_tablero(db_session, ahora).panorama.sms_aws.tendencia
+
+    assert tendencia.serie_7_dias == (0, 1)
+    assert tendencia.variacion_hoy is None  # ayer AWS valió 0
+
+
+def test_sms_tendencia_sin_ningun_registro_es_serie_vacia_y_sin_variacion(db_session):
+    tendencia = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0)).panorama.sms_aws.tendencia
+
+    assert tendencia.serie_7_dias == ()
+    assert tendencia.variacion_hoy is None
+    assert tendencia.variacion_semana is None
+    assert tendencia.variacion_mes is None
+
+
 # --- Periodo seleccionado: "Total de ingresos" ----------------------------- #
 
 

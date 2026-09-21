@@ -36,7 +36,7 @@
       ('Bodegaje cobrado', tablero.panorama.tiempos.bodegaje_cobrado),
     ], 'lg:col-span-3') }}
     {%- set sms_registro_desde = ('Registro desde el ' ~ (tablero.panorama.sms_aws.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.panorama.sms_aws.registro_desde else 'Aún sin registros' %}
-    {{ tarjeta_panorama_sms('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, tablero.panorama.sms_aws.costo_estimado, 'lg:col-span-3', nota=sms_registro_desde) }}
+    {{ tarjeta_panorama_sms('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, tablero.panorama.sms_aws.costo_estimado, 'lg:col-span-3', tendencia=tablero.panorama.sms_aws.tendencia, nota=sms_registro_desde) }}
   {% endcall %}
 
   {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba') %}

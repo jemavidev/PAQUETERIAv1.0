@@ -21,16 +21,19 @@ recién creado ("ahora" real) aparece en el tablero y que los filtros se
 reflejan en la salida.
 """
 
+from datetime import datetime, time, timedelta
+
 from app.domain.cobro import Cobro
 from app.domain.cobro_service import DesgloseCobro, crear_motivo_anulacion, registrar_cobro
 from app.domain.paquete import TipoPaquete
 from app.domain.paquete_lifecycle import deliver as dom_deliver
 from app.domain.paquete_lifecycle import receive as dom_receive
 from app.domain.paquete_service import Destinatario, announce
-from app.domain.registro_sms import TipoRegistroSms
+from app.domain.registro_sms import RegistroSms, TipoRegistroSms
 from app.domain.registro_sms_service import registrar_envio
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario, Usuario
+from app.domain.zona_horaria import ZONA_HORARIA_APP
 
 _PW = "Contrasena1"
 
@@ -610,6 +613,80 @@ def test_sms_de_panorama_sin_registro_no_muestra_error(client):
     fin = r.index('aria-label="Ahora')
     panorama = r[inicio:fin]
     assert "Aún sin registros" in panorama
+
+
+def _registrar_sms_aws_en(client, cuando):
+    # Directo, sin pasar por `registrar_envio`: necesita fijar `created_at`, y
+    # `RegistroSms.id` es un UUID -- no hay forma de "recuperar la última
+    # fila insertada" ordenando por id.
+    client.db.add(
+        RegistroSms(tipo=TipoRegistroSms.AVISO_PAQUETE, exitoso=True, proveedor="AWS_SNS", created_at=cuando)
+    )
+    client.db.commit()
+
+
+def _tarjeta_sms_de_panorama(client):
+    r = client.get("/administracion/estadisticas-cobro").text
+    inicio_panorama = r.index('aria-label="Panorama')
+    inicio = r.index("SMS enviados por AWS", inicio_panorama)
+    return r[inicio : r.index("</article>", inicio)]
+
+
+def _ayer_a_medianoche():
+    """Ayer a las 00:00 (hora de Colombia) -- SIEMPRE cae dentro de "ayer hasta
+    la misma hora de ahora", sea la hora que sea al correr la prueba."""
+    ayer = datetime.now(ZONA_HORARIA_APP).date() - timedelta(days=1)
+    return datetime.combine(ayer, time.min, tzinfo=ZONA_HORARIA_APP)
+
+
+def test_sms_de_panorama_tendencia_sube_se_pinta_en_gris_no_en_verde(client):
+    """Ticket 16: más o menos SMS no es "bueno" ni "malo" por sí solo -- la
+    flecha es neutra (gris), a diferencia de Ingresos/Entregados/Cancelados."""
+    _login_admin(client)
+    _registrar_sms_aws_en(client, _ayer_a_medianoche())
+    _registrar_sms_aws_en(client, datetime.now(ZONA_HORARIA_APP))
+    _registrar_sms_aws_en(client, datetime.now(ZONA_HORARIA_APP))
+
+    tarjeta = _tarjeta_sms_de_panorama(client)
+
+    assert "▲ 100%" in tarjeta  # 2 hoy vs 1 ayer
+    assert "bg-green-100" not in tarjeta
+    assert "bg-red-100" not in tarjeta
+
+
+def test_sms_de_panorama_tendencia_baja_tampoco_es_roja(client):
+    _login_admin(client)
+    _registrar_sms_aws_en(client, _ayer_a_medianoche())
+    _registrar_sms_aws_en(client, _ayer_a_medianoche())
+    _registrar_sms_aws_en(client, datetime.now(ZONA_HORARIA_APP))
+
+    tarjeta = _tarjeta_sms_de_panorama(client)
+
+    assert "▼ 50%" in tarjeta  # 1 hoy vs 2 ayer
+    assert "bg-green-100" not in tarjeta
+    assert "bg-red-100" not in tarjeta
+
+
+def test_sms_de_panorama_minigrafico_con_menos_de_7_dias_de_registro_lo_dice(client):
+    _login_admin(client)
+    _registrar_sms_aws_en(client, _ayer_a_medianoche())
+    _registrar_sms_aws_en(client, datetime.now(ZONA_HORARIA_APP))
+
+    tarjeta = _tarjeta_sms_de_panorama(client)
+
+    assert "Últimos 2 días (los que lleva el registro)" in tarjeta
+    assert tarjeta.count('<i class="block w-1.5') == 2  # solo ayer y hoy, sin ceros inventados
+
+
+def test_sms_de_panorama_sin_registro_no_muestra_minigrafico_ni_flechas(client):
+    _login_admin(client)
+
+    tarjeta = _tarjeta_sms_de_panorama(client)
+
+    assert "Últimos" not in tarjeta
+    assert '<i class="block w-1.5' not in tarjeta
+    assert "▲" not in tarjeta
+    assert "▼" not in tarjeta
 
 
 def test_sms_de_periodo_desglosa_avisos_y_codigos(client):

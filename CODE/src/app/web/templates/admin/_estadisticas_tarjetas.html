@@ -47,13 +47,17 @@
    tramo del periodo anterior (ticket 08) -- `valor` en `None` (el tramo
    anterior valió 0) no imprime nada, ni infinito ni un "0%" engañoso.
    `bueno` distingue qué dirección es una buena noticia para esta métrica:
-   'sube' (Ingresos/Entregados: subir es verde) o 'baja' (Cancelados: BAJAR
-   es verde). En 0% exacto (sin cambio) se pinta neutro, ninguna de las
-   flechas aplica. #}
+   'sube' (Ingresos/Entregados: subir es verde), 'baja' (Cancelados: BAJAR
+   es verde) o 'neutro' (SMS, ticket 16: más o menos SMS no es bueno ni
+   malo por sí solo -- la flecha se pinta gris sin importar la dirección).
+   En 0% exacto (sin cambio) se pinta neutro, ninguna de las flechas
+   aplica. #}
 {% macro variacion(valor, bueno='sube') -%}
 {%- if valor is not none -%}
 {%- if valor == 0 -%}
 <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold px-2 py-0.5">＝ 0%</span>
+{%- elif bueno == 'neutro' -%}
+<span class="inline-flex items-center rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold px-2 py-0.5" title="contra el mismo tramo del periodo anterior">{{ '▲' if valor > 0 else '▼' }} {{ "%.0f"|format(valor|abs) }}%</span>
 {%- else -%}
 {%- set sube = valor > 0 -%}
 {%- set bien = (bueno == 'sube') == sube -%}
@@ -123,23 +127,44 @@
    `costos` es un `TrioCosto` o `None` -- sin costo configurado, cada
    columna muestra "—" (mismo criterio que `formato(None, ...)` en toda la
    app) y, al pie, un enlace a Proveedores para configurarlo -- nunca un
-   "$0" engañoso ni un error. #}
-{% macro tarjeta_panorama_sms(titulo, cantidades, costos, span, nota=None) %}
+   "$0" engañoso ni un error.
+
+   `tendencia` (ticket 16) agrega la etiqueta ▲▼ bajo el costo de cada
+   columna -- SIEMPRE en gris (`variacion(..., 'neutro')`) -- y el
+   minigráfico de los últimos 7 días al pie. Si el registro de SMS lleva
+   menos de 7 días, la serie trae solo los días disponibles (nunca ceros
+   inventados para antes de la activación) y el pie lo dice; sin ningún
+   registro todavía, no hay minigráfico. #}
+{% macro tarjeta_panorama_sms(titulo, cantidades, costos, span, tendencia=None, nota=None) %}
 <article class="bg-white rounded-xl border border-slate-200 border-t-4 border-blue-600 p-4 {{ span }}">
   <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
   <div class="grid grid-cols-3 gap-3">
-    {%- for etq, cantidad, costo in [
-      ('Hoy', cantidades.hoy, costos.hoy if costos else none),
-      ('Esta semana', cantidades.semana, costos.semana if costos else none),
-      ('Este mes', cantidades.mes, costos.mes if costos else none),
+    {%- for etq, cantidad, costo, var in [
+      ('Hoy', cantidades.hoy, costos.hoy if costos else none, tendencia.variacion_hoy if tendencia else none),
+      ('Esta semana', cantidades.semana, costos.semana if costos else none, tendencia.variacion_semana if tendencia else none),
+      ('Este mes', cantidades.mes, costos.mes if costos else none, tendencia.variacion_mes if tendencia else none),
     ] %}
     <div class="min-w-0">
       <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
       <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(cantidad, 'int') }}</p>
       <p class="text-xs text-slate-500 mt-0.5 truncate">{{ formato(costo, 'cop') }}</p>
+      {%- if tendencia %}
+      <p class="mt-1">{{ variacion(var, 'neutro') }}</p>
+      {%- endif %}
     </div>
     {%- endfor %}
   </div>
+  {%- if tendencia and tendencia.serie_7_dias %}
+  {%- set dias_serie = tendencia.serie_7_dias|length %}
+  <div class="mt-3 text-blue-600">
+    {{ minigrafico(tendencia.serie_7_dias) }}
+    <p class="text-[10px] text-slate-400 mt-1">
+      {%- if dias_serie == 7 %}Últimos 7 días
+      {%- elif dias_serie == 1 %}Solo hoy (el registro arrancó hoy)
+      {%- else %}Últimos {{ dias_serie }} días (los que lleva el registro)
+      {%- endif %}</p>
+  </div>
+  {%- endif %}
   {%- if not costos %}
   <p class="text-[11px] text-amber-700 mt-2">
     <a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo promedio por SMS en Proveedores</a>

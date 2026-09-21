@@ -139,7 +139,7 @@ class TrioCosto:
 @dataclass(frozen=True)
 class SmsPanorama:
     """Trío Hoy/Semana/Mes de SMS enviados por AWS SNS -- Panorama, ticket
-    14 (cantidades) + 15 (costo estimado); el 16 agrega tendencia.
+    14 (cantidades) + 15 (costo estimado) + 16 (tendencia).
     `enviados` es avisos de paquete + códigos de acceso JUNTOS (`RegistroSms.
     proveedor` ya resolvió cuál proveedor entregó de verdad, sin importar
     si hubo failover -- ver `notificacion_service`/`app.web.otp`, tickets
@@ -150,12 +150,21 @@ class SmsPanorama:
     también para periodos pasados. `None` (el trío COMPLETO, no por
     columna) cuando el ADMIN todavía no configuró ningún costo -- se pinta
     como "—" con un enlace a Proveedores, nunca un "$0" engañoso.
+
+    `tendencia` usa el MISMO cálculo de variación que Ingresos/Entregados/
+    Cancelados (ticket 08) -- la plantilla la pinta en un color NEUTRO
+    (ni verde ni rojo: más o menos SMS no es "bueno" ni "malo" por sí
+    solo), a diferencia de esas tres. Su `serie_7_dias` nunca inventa
+    ceros para un día ANTERIOR a `registro_desde` -- esos días simplemente
+    no entran a la serie (ver `_tendencia_sms`).
+
     `registro_desde` es la fecha del primer envío que exista en el
     registro -- `None` sin ninguno todavía -- para dejar claro en pantalla
     que esto NO es un histórico completo, arrancó junto con esta feature."""
 
     enviados: TrioHoySemanaMes
     costo_estimado: TrioCosto | None
+    tendencia: Tendencia
     registro_desde: datetime | None
 
 
@@ -635,12 +644,55 @@ def _calcular_panorama(session: Session, hoy_local: date, ahora_local: datetime)
         tendencia_ingresos=_tendencia_ingresos(session, hoy_local, ahora_local, ingresos),
         tendencia_entregados=_tendencia_paquetes(session, Paquete.delivered_at, hoy_local, ahora_local, entregados),
         tendencia_cancelados=_tendencia_paquetes(session, Paquete.cancelled_at, hoy_local, ahora_local, cancelados),
-        sms_aws=_calcular_sms_panorama(session, desde_hoy, hasta_hoy, desde_semana, hasta_semana, desde_mes, hasta_mes),
+        sms_aws=_calcular_sms_panorama(
+            session, hoy_local, ahora_local, desde_hoy, hasta_hoy, desde_semana, hasta_semana, desde_mes, hasta_mes
+        ),
+    )
+
+
+def _tendencia_sms(
+    session: Session,
+    hoy_local: date,
+    ahora_local: datetime,
+    trio: TrioHoySemanaMes,
+    registro_desde: datetime | None,
+) -> Tendencia:
+    """Como `_tendencia_paquetes`, pero para SMS -- MISMO cálculo exacto de
+    variación (ticket 16: "el mismo cálculo exacto que ya usan Ingresos/
+    Entregados/Cancelados"). `serie_7_dias` es la única diferencia: nunca
+    inventa ceros para un día ANTERIOR a que el registro de SMS existiera
+    (`registro_desde`) -- esos días simplemente no entran a la serie, en
+    vez de aparecer como "0 enviados" (que sería un dato falso: no es que
+    ese día no se enviara nada, es que ese día no se registraba todavía).
+    Sin ningún registro aún, la serie queda vacía."""
+
+    def _contar(desde: datetime, hasta: datetime) -> int:
+        return contar_envios(session, proveedor=_PROVEEDOR_SMS_CON_COSTO, desde=desde, hasta=hasta)
+
+    variacion_hoy = _variacion_pct(trio.hoy, _contar(*_tramo_anterior_utc(hoy_local, ahora_local, "hoy")))
+    variacion_semana = _variacion_pct(
+        trio.semana, _contar(*_tramo_anterior_utc(hoy_local, ahora_local, "semana"))
+    )
+    variacion_mes = _variacion_pct(trio.mes, _contar(*_tramo_anterior_utc(hoy_local, ahora_local, "mes")))
+
+    dias = _ultimos_7_dias_locales(hoy_local)
+    if registro_desde is not None:
+        primero_local = registro_desde.astimezone(ZONA_HORARIA_APP).date()
+        dias = [dia for dia in dias if dia >= primero_local]
+    else:
+        dias = []
+    serie = tuple(_contar(*_limites_utc_de_dias_locales(dia, dia)) for dia in dias)
+
+    return Tendencia(
+        variacion_hoy=variacion_hoy, variacion_semana=variacion_semana, variacion_mes=variacion_mes,
+        serie_7_dias=serie,
     )
 
 
 def _calcular_sms_panorama(
     session: Session,
+    hoy_local: date,
+    ahora_local: datetime,
     desde_hoy: datetime, hasta_hoy: datetime,
     desde_semana: datetime, hasta_semana: datetime,
     desde_mes: datetime, hasta_mes: datetime,
@@ -662,8 +714,12 @@ def _calcular_sms_panorama(
             semana=enviados.semana * costo_unitario_f,
             mes=enviados.mes * costo_unitario_f,
         )
+    registro_desde = fecha_primer_registro(session)
     return SmsPanorama(
-        enviados=enviados, costo_estimado=costo_estimado, registro_desde=fecha_primer_registro(session)
+        enviados=enviados,
+        costo_estimado=costo_estimado,
+        tendencia=_tendencia_sms(session, hoy_local, ahora_local, enviados, registro_desde),
+        registro_desde=registro_desde,
     )
 
 
