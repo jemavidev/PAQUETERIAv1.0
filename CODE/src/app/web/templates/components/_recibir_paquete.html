@@ -271,7 +271,7 @@
     </script>
     {% endif %}
 
-    <input type="text" id="guia-{{ paquete_id }}" name="guide_number" autocomplete="off" inputmode="text" placeholder="Guía" aria-label="Guía del transportador (opcional)" oninput="this.value = this.value.toUpperCase()" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800{{ " guia-largo-error" if error_guia }}">
+    <input type="text" id="guia-{{ paquete_id }}" name="guide_number" data-paquete-id="{{ paquete_id }}" autocomplete="off" inputmode="text" placeholder="Guía" aria-label="Guía del transportador (opcional)" oninput="this.value = this.value.toUpperCase()" class="w-full rounded-lg border border-slate-300 px-3.5 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:border-blue-800{{ " guia-largo-error" if error_guia }}">
     <button type="button" class="scan-btn mt-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-4 py-2.5 transition hover:bg-slate-50" data-target="guia-{{ paquete_id }}" data-video="video-{{ paquete_id }}">📷 Escanear con cámara</button>
     <video id="video-{{ paquete_id }}" class="scan-video" hidden playsinline muted></video>
     <p class="scan-msg" hidden></p>
@@ -279,6 +279,8 @@
        por defecto; lo llena el JS al teclear/leer (bloque de captura) o el servidor (`error_guia`) cuando
        reabre este modal por un rechazo -- el toast del listado queda detrás del modal (z-40 < z-[60]). #}
     <p class="guia-largo-msg" role="alert"{% if not error_guia %} hidden{% endif %}>{{ error_guia or '' }}</p>
+    {#- Ticket 08: aviso de guía repetida -- informativo, NUNCA bloquea "Recibir" (la Guía es una referencia). #}
+    <p class="guia-repetida-msg" role="status" hidden></p>
 
     <div class="mt-4">
       {{ grupo_chips('package_type', opciones_tipo, seleccionado='NORMAL', etiqueta='Tipo de paquete') }}
@@ -710,6 +712,7 @@
   .guia-largo-error { border-color:#dc2626; }
   .scan-btn:disabled { opacity:.5; cursor:not-allowed; }
   .scan-stop, .scan-torch { margin-left:8px; }
+  .guia-repetida-msg { font-size:.85rem; color:#9a6b00; margin-top:8px; }
 </style>
 <script>
   (function () {
@@ -787,8 +790,58 @@
         if (msg) { msg.textContent = ''; msg.hidden = true; }
       }
     }
+    // Aviso de guía repetida (ticket 08, `.scratch/captura-guia-lector-camara`): un envío de varias cajas
+    // comparte guía, y una lectura repetida por error también; el aviso ayuda al Operador a distinguirlos.
+    // INFORMATIVO: nunca bloquea ni deshabilita "Recibir" (la Guía es una referencia, no una llave), y si la
+    // consulta falla simplemente no avisa. Consulta al servidor (solo Staff, solo cuenta: cantidad y estados,
+    // sin datos de nadie) con una pausa breve para no consultar en cada tecla -- un lector escribe la guía
+    // entera de una vez, y una lectura de cámara consulta al instante. Guía vacía = sin consulta y sin aviso.
+    var pausaAvisoRepetidaMs = 300;
+    var estadosDeGuia = {
+      ANUNCIADO: ['anunciado', 'anunciados'], RECIBIDO: ['recibido', 'recibidos'],
+      ENTREGADO: ['entregado', 'entregados'], CANCELADO: ['cancelado', 'cancelados']
+    };
+    var esperaRepetida = {};
+    var consultaRepetida = {};
+    function consultarGuiaRepetida(input, pausaMs) {
+      var clave = input.id;
+      var aviso = input.parentNode.querySelector('.guia-repetida-msg');
+      if (!aviso) return;
+      clearTimeout(esperaRepetida[clave]);
+      if (consultaRepetida[clave]) consultaRepetida[clave].abort();
+      var guia = input.value.replace(/\s+/g, ' ').trim();
+      if (!guia || largoNormalizadoDeGuia(guia) > largoMaximoGuia) {
+        aviso.hidden = true;
+        aviso.textContent = '';
+        return;
+      }
+      esperaRepetida[clave] = setTimeout(function () {
+        var controlador = new AbortController();
+        consultaRepetida[clave] = controlador;
+        fetch('/paquetes/guia-repetida?guia=' + encodeURIComponent(guia) +
+              '&excluir=' + encodeURIComponent(input.dataset.paqueteId || ''), {
+          headers: { 'X-Requested-With': 'fetch' },
+          signal: controlador.signal,
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (datos) {
+            if (!datos.cantidad) { aviso.hidden = true; aviso.textContent = ''; return; }
+            var detalle = Object.keys(datos.por_estado).map(function (estado) {
+              var n = datos.por_estado[estado];
+              var nombre = estadosDeGuia[estado] || [estado.toLowerCase(), estado.toLowerCase()];
+              return n + ' ' + (n === 1 ? nombre[0] : nombre[1]);
+            }).join(', ');
+            aviso.textContent = 'Ya hay ' + datos.cantidad + (datos.cantidad === 1 ? ' paquete' : ' paquetes') +
+                                ' con esta guía (' + detalle + ').';
+            aviso.hidden = false;
+          })
+          .catch(function () {});  // informativo: si falla, sin aviso (un AbortError es lo normal al seguir tecleando)
+      }, pausaMs);
+    }
     document.addEventListener('input', function (e) {
-      if (e.target.matches && e.target.matches(campoGuiaRecibir)) validarLargoGuia(e.target);
+      if (!(e.target.matches && e.target.matches(campoGuiaRecibir))) return;
+      validarLargoGuia(e.target);
+      consultarGuiaRepetida(e.target, pausaAvisoRepetidaMs);
     });
 
     // Doble confirmación de guía al entregar (Grupo 14, Ronda 2; ampliado en
@@ -1001,7 +1054,7 @@
               }
               input.value = leido;
               compararGuia(input);
-              if (input.matches(campoGuiaRecibir)) validarLargoGuia(input);
+              if (input.matches(campoGuiaRecibir)) { validarLargoGuia(input); consultarGuiaRepetida(input, 0); }
             }
           });
           if (iniciado && iniciado.then) {

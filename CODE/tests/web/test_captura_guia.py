@@ -231,3 +231,112 @@ def test_el_campo_guia_de_recibir_no_lleva_maxlength(client):
     campo = re.search(r'<input[^>]*name="guide_number"[^>]*>', html)
     assert campo, "no está el campo Guía"
     assert "maxlength" not in campo.group(0)
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 08 — aviso de guía repetida: un servicio solo para Staff que devuelve CANTIDAD y ESTADOS
+# (todos, incluido Cancelado), sin datos de nadie. La política no cambia: la Guía sigue siendo una
+# referencia sin unicidad; dos paquetes con la misma guía se pueden recibir.
+# --------------------------------------------------------------------------- #
+def _paquete_con_guia(client, staff, guia, estado="RECIBIDO", tel="3001234567", nombre="Ana"):
+    """Un Paquete que ya pasó por Recibir con `guia`, y llegó a `estado` (RECIBIDO, ENTREGADO o CANCELADO)."""
+    from app.domain.paquete_lifecycle import cancel, deliver, receive
+
+    p = _anunciar(client, tel=tel, nombre=nombre)
+    receive(client.db, p, staff, guia)
+    if estado == "ENTREGADO":
+        deliver(client.db, p, staff)
+    elif estado == "CANCELADO":
+        cancel(client.db, p, staff, "ANUNCIO_ERRONEO")
+    client.db.commit()
+    return p
+
+
+def test_el_servicio_de_guia_repetida_devuelve_cantidad_y_estados_sin_datos_personales(client):
+    staff = _login_staff(client)
+    con_guia = [
+        _paquete_con_guia(client, staff, "GUIA-1", estado, tel="3001110000", nombre="Marta")
+        for estado in ("RECIBIDO", "ENTREGADO", "CANCELADO")
+    ]
+    _paquete_con_guia(client, staff, "OTRA-2", "RECIBIDO", tel="3002220000", nombre="Sofia")
+
+    r = client.get("/paquetes/guia-repetida", params={"guia": "guia-1"})
+
+    assert r.status_code == 200
+    assert r.json() == {
+        "cantidad": 3,
+        "por_estado": {"RECIBIDO": 1, "ENTREGADO": 1, "CANCELADO": 1},
+    }
+    # Nada que permita ver o identificar esos paquetes: ni nombres, ni teléfonos, ni códigos de acceso.
+    texto = r.text.lower()
+    for ajeno in ["marta", "3001110000"] + [p.access_code.lower() for p in con_guia]:
+        assert ajeno not in texto
+
+
+def test_el_servicio_de_guia_repetida_es_solo_para_staff(client):
+    r = client.get(
+        "/paquetes/guia-repetida", params={"guia": "GUIA-1"}, follow_redirects=False
+    )
+
+    assert r.status_code == 303
+    assert r.headers["location"].endswith("/ingresar")
+
+
+def test_la_comparacion_normaliza_la_guia_como_al_guardarla(client):
+    staff = _login_staff(client)
+    _paquete_con_guia(client, staff, "abc   123")  # se guarda como "ABC 123"
+
+    r = client.get("/paquetes/guia-repetida", params={"guia": "  abc 123  "})
+
+    assert r.json()["cantidad"] == 1
+
+
+def test_el_servicio_puede_excluir_el_paquete_actual(client):
+    staff = _login_staff(client)
+    a = _paquete_con_guia(client, staff, "G-2", tel="3001110000", nombre="Marta")
+    _paquete_con_guia(client, staff, "G-2", tel="3002220000", nombre="Sofia")
+
+    r = client.get("/paquetes/guia-repetida", params={"guia": "G-2", "excluir": str(a.id)})
+
+    assert r.json() == {"cantidad": 1, "por_estado": {"RECIBIDO": 1}}
+
+
+def test_guia_vacia_en_blanco_o_demasiado_larga_no_cuenta_nada_ni_da_error(client):
+    staff = _login_staff(client)
+    _paquete_con_guia(client, staff, "G-3")
+
+    for guia in ("", "   ", "X" * 60):
+        r = client.get("/paquetes/guia-repetida", params={"guia": guia})
+        assert r.status_code == 200
+        assert r.json() == {"cantidad": 0, "por_estado": {}}
+
+
+def test_dos_paquetes_con_la_misma_guia_se_pueden_recibir(client):
+    from app.domain.paquete import EstadoPaquete, Paquete
+
+    _login_staff(client)
+    a = _anunciar(client, tel="3001110000", nombre="Marta")
+    b = _anunciar(client, tel="3002220000", nombre="Sofia")
+
+    for p in (a, b):
+        r = client.post(
+            f"/paquetes/{p.id}/recibir", data={"guide_number": "MISMA-1"}, follow_redirects=False
+        )
+        assert r.status_code == 303
+
+    client.db.expire_all()
+    for p in (a, b):
+        recibido = client.db.get(Paquete, p.id)
+        assert recibido.estado == EstadoPaquete.RECIBIDO
+        assert recibido.guide_number == "MISMA-1"
+
+
+def test_el_modal_recibir_trae_el_lugar_del_aviso_de_repetida_y_el_paquete_del_campo(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    html = client.get("/paquetes").text
+
+    campo = re.search(r'<input[^>]*name="guide_number"[^>]*>', html).group(0)
+    assert f'data-paquete-id="{p.id}"' in campo
+    assert re.search(r'<p class="guia-repetida-msg"[^>]*\bhidden\b', html)

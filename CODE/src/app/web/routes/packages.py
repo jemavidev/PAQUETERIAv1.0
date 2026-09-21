@@ -90,6 +90,7 @@ from app.domain.paquete_lifecycle import (
 )
 from app.domain.paquete_service import (
     condiciones_busqueda_paquetes,
+    contar_paquetes_por_guia,
     es_primera_entrega_a_telefono,
     paquetes_relacionados_por_codigo,
 )
@@ -2208,6 +2209,33 @@ def nuevo_residente_identificar(
             db, paquete.snapshot_conjunto, paquete.snapshot_torre, paquete.snapshot_apartamento
         )
     return identificar_contacto_para_unidad(db, contacto, apto_actual)
+
+
+@router.get("/paquetes/guia-repetida")
+def guia_repetida(
+    guia: str = "",
+    excluir: str = "",
+    db: Session = Depends(get_db),
+    staff: Usuario = Depends(current_staff),
+):
+    """Aviso de guía repetida al recibir (`.scratch/captura-guia-lector-camara`, ticket 08): cuántos
+    Paquetes ya tienen esta Guía y en qué estado. Solo Staff (`current_staff`), y solo CUENTA: sin nombres,
+    teléfonos ni códigos de acceso -- lo único que el JS necesita es "Ya hay N paquete(s)...". Informativo:
+    la Guía es una referencia, no una llave, así que nunca bloquea nada. `excluir` (id del Paquete que se
+    está recibiendo) lo deja fuera del conteo; un id inválido se ignora.
+
+    Returns:
+        `{"cantidad": N, "por_estado": {"RECIBIDO": 1, ...}}` -- `{"cantidad": 0, "por_estado": {}}` si la
+        guía viene vacía, es demasiado larga para existir o nadie la tiene."""
+    try:
+        excluir_id = uuid.UUID(excluir) if excluir else None
+    except ValueError:
+        excluir_id = None
+    por_estado = contar_paquetes_por_guia(db, guia, excluir_paquete_id=excluir_id)
+    return {
+        "cantidad": sum(por_estado.values()),
+        "por_estado": {estado.value: cantidad for estado, cantidad in por_estado.items()},
+    }
 
 
 @router.get("/paquetes/promover-candidatos")

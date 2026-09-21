@@ -72,3 +72,10 @@ def abrir_modal_entregar(pagina, app_viva, paquete):
     pagina.goto(f"{app_viva.url}/paquetes?estado=RECIBIDO")
     pagina.locator(f'[data-open="{modal_id}"]:visible').first.click()
     pagina.wait_for_function("id => !document.getElementById(id).hidden", arg=modal_id)
+
+
+def sembrar_paquete_con_guia(app_viva, guia, tel="3105550000", nombre="Sofia"):
+    """Otro Paquete (de otra persona) ya `Recibido` con `guia`: lo que el aviso de repetida debe encontrar."""
+    otro = anunciar_paquete(app_viva, tel=tel, nombre=nombre)
+    recibir_paquete_en_bd(app_viva, otro, guia)
+    return otro
