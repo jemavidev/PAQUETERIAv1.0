@@ -1,47 +1,34 @@
 {#
-  Macros compartidos del tablero de tarjetas de
-  `/administracion/estadisticas-cobro` (`.scratch/estadisticas-cobro-
-  dashboard`) -- una tarjeta de Panorama (trío Hoy/Semana/Mes, siempre azul)
-  y una de Periodo seleccionado (siempre verde), más el envoltorio de zona
-  (carril de color + cuadrícula). Todo color de acento es una clase Tailwind
-  COMPLETA fija por zona (nunca se arma concatenando `bg-{{ x }}-600`):
-  Tailwind escanea el TEXTO FUENTE buscando nombres de clase literales -- una
-  clase armada en tiempo de render nunca llega al CSS compilado (mismo
-  criterio que ya usan `tipos_pill`/`estados_cobro_pill` en
-  `estadisticas_cobro.html`, que guardan las clases completas en un dict en
-  vez de interpolar un color suelto).
+  Piezas compartidas del tablero de `/administracion/estadisticas-cobro`
+  (`.scratch/estadisticas-cobro-dashboard`): formato de cifras, la etiqueta ▲▼
+  de variación, el gráfico de línea de 7 días y los dos helpers de la matriz
+  de "no aplica" y de rango. Los paneles mismos (el layout) viven en
+  `_estadisticas_cobro_resultados.html` -- desde el issue 369 de
+  `.scratch/pendientes-cliente` ya no hay una macro "tarjeta" por métrica: una
+  tarjeta por cifra dejaba ~40 cajas del mismo peso, sin jerarquía.
+
+  Todo color de acento es una clase Tailwind COMPLETA y literal (nunca se arma
+  concatenando `bg-{{ x }}-600`): Tailwind escanea el TEXTO FUENTE buscando
+  nombres de clase, una clase armada en tiempo de render nunca llega al CSS
+  compilado. Mismo criterio que `tipos_pill`/`estados_cobro_pill` en
+  `estadisticas_cobro.html`, que guardan las clases completas en un dict.
 #}
 
 {#- Formato de una cifra según su unidad -- mismo criterio de coma de miles y
-   "$" pegado que el resto de la app (`"{:,}".format(...)`). `none` (una
-   ventana sin ningún dato que promediar, ej. una tasa sin cerrados) se
-   imprime como "—", nunca "0" ni un error. #}
+   "$" pegado que el resto de la app (`"{:,}".format(...)`). El signo de un
+   monto negativo va ANTES del "$" (`-$280,000`, nunca `$-280,000`: la deuda
+   contra entrega es negativa por definición). `none` (una ventana sin ningún
+   dato que promediar, ej. una tasa sin cerrados) se imprime como "—", nunca
+   "0" ni un error. #}
 {% macro formato(valor, unidad) -%}
 {%- if valor is none -%}—
-{%- elif unidad == 'cop' -%}${{ "{:,}".format(valor|round|int) }}
+{%- elif unidad == 'cop' -%}{{ '-' if valor < 0 }}${{ "{:,}".format(valor|abs|round|int) }}
 {%- elif unidad == 'pct' -%}{{ "%.1f"|format(valor) }}%
 {%- elif unidad == 'h' -%}{{ "%.1f"|format(valor) if valor < 10 else "{:,}".format(valor|round|int) }} h
 {%- elif unidad == 'dec' -%}{{ "%.1f"|format(valor) }}
 {%- else -%}{{ "{:,}".format(valor|round|int) }}
 {%- endif -%}
 {%- endmacro %}
-
-{#- El envoltorio de una zona: un carril vertical de color (sin texto -- la
-   spec pide "sin encabezados de sección", el color por sí solo distingue
-   cada zona) + la cuadrícula de tarjetas que el caller arma. `etiqueta_sr`
-   solo la leen lectores de pantalla (`aria-label`), nunca se ve en pantalla.
-   `vacio=True` (ticket 01: "Ahora" todavía no tiene ninguna tarjeta, llegan
-   en los tickets 09-10 de esta misma feature) le da una altura mínima al
-   carril para que sea visible aunque su cuadrícula esté vacía -- quitar el
-   argumento en cuanto la zona tenga su primera tarjeta real. #}
-{% macro zona(color_rail, etiqueta_sr, vacio=False) %}
-<section class="flex gap-3 sm:gap-4" aria-label="{{ etiqueta_sr }}">
-  <div class="w-1.5 sm:w-2 rounded-full {{ color_rail }} shrink-0" aria-hidden="true"></div>
-  <div class="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-start{{ ' min-h-12' if vacio else '' }}">
-    {{ caller() }}
-  </div>
-</section>
-{% endmacro %}
 
 {#- La etiqueta ▲▼ de variación de una columna de Panorama contra el mismo
    tramo del periodo anterior (ticket 08) -- `valor` en `None` (el tramo
@@ -66,268 +53,36 @@
 {%- endif -%}
 {%- endmacro %}
 
-{#- Minigráfico de barras de los últimos 7 días (ticket 08) -- `serie` ya
-   viene del más viejo al más reciente; el color hereda el `text-*` del
-   contenedor (`bg-current`), así que no hace falta ninguna clase nueva por
-   tarjeta. La barra de hoy (la última) se ve sólida; el resto, atenuada. #}
-{% macro minigrafico(serie) -%}
-{%- set maximo = serie|max if serie and serie|max else 1 -%}
-<span class="inline-flex items-end gap-0.5 h-8" aria-hidden="true">
-  {%- for v in serie %}
-  <i class="block w-1.5 rounded-t bg-current {{ 'opacity-100' if loop.last else 'opacity-40' }}" style="height:{{ ([8, (v / maximo * 100)]|max)|round|int }}%"></i>
-  {%- endfor %}
-</span>
+{#- Gráfico de línea + área de los últimos 7 días (ticket 08; el issue 369
+   reemplazó las barras). `serie` va del más viejo al más reciente y puede
+   traer MENOS de 7 puntos (SMS con poco registro, ticket 16); con menos de 2
+   no hay línea que dibujar y no imprime nada. Ocupa TODO el contenedor
+   (`h-full w-full`, el caller le da el tamaño) y hereda el color del `text-*`
+   del contenedor (`currentColor`), así que no hace falta ninguna clase nueva
+   por gráfico. `vector-effect` mantiene el grosor de la línea aunque el SVG
+   se estire para llenar el contenedor. Es decorativo (`aria-hidden`): las
+   cifras ya están escritas al lado. #}
+{% macro spark(serie, clase='text-blue-600') -%}
+{%- if serie and serie|length > 1 -%}
+{%- set n = serie|length -%}
+{%- set maximo = serie|max if serie|max > 0 else 1 -%}
+{%- set pts = [] -%}
+{%- for v in serie -%}
+{%- set _ = pts.append((((loop.index0 * 100 / (n - 1))|round(2))|string) ~ ',' ~ (((1 - v / maximo) * 26 + 2)|round(2))|string) -%}
+{%- endfor -%}
+<svg viewBox="0 0 100 30" preserveAspectRatio="none" class="h-full w-full overflow-visible {{ clase }}" aria-hidden="true">
+  <polygon points="0,30 {{ pts|join(' ') }} 100,30" fill="currentColor" fill-opacity="0.10"/>
+  <polyline points="{{ pts|join(' ') }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+</svg>
+{%- endif -%}
 {%- endmacro %}
 
-{#- Tarjeta de Panorama: SIEMPRE azul, un trío Hoy/Esta semana/Este mes.
-   `span` es una clase Tailwind completa de ancho (ej. "lg:col-span-6").
-   `tendencia` (ticket 08, opcional -- Tiempos promedio no la lleva) agrega
-   la etiqueta ▲▼ bajo cada columna y el minigráfico de 7 días al pie;
-   `bueno` es la dirección que cuenta como buena noticia para esta métrica
-   (ver `variacion`). #}
-{% macro tarjeta_panorama(titulo, trio, unidad, span, tendencia=None, bueno='sube', nota=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-blue-600 p-4 {{ span }}">
-  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
-  <div class="grid grid-cols-3 gap-3">
-    {%- for etq, valor, var in [
-      ('Hoy', trio.hoy, tendencia.variacion_hoy if tendencia else none),
-      ('Esta semana', trio.semana, tendencia.variacion_semana if tendencia else none),
-      ('Este mes', trio.mes, tendencia.variacion_mes if tendencia else none),
-    ] %}
-    <div class="min-w-0">
-      <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
-      <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(valor, unidad) }}</p>
-      {%- if tendencia %}
-      <p class="mt-1">{{ variacion(var, bueno) }}</p>
-      {%- endif %}
-    </div>
-    {%- endfor %}
-  </div>
-  {%- if tendencia %}
-  <div class="mt-3 text-blue-600">
-    {{ minigrafico(tendencia.serie_7_dias) }}
-    <p class="text-[10px] text-slate-400 mt-1">Últimos 7 días</p>
-  </div>
-  {%- endif %}
-  {%- if nota %}
-  {#- Ticket 14 (.scratch/estadisticas-cobro-dashboard): "SMS enviados por
-     AWS" -- desde qué fecha existe registro, para dejar claro que no es un
-     histórico completo. Genérico (cualquier tarjeta de Panorama puede
-     usarlo), no exclusivo de SMS. #}
-  <p class="text-[10px] text-slate-400 mt-2">{{ nota }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Tarjeta de Panorama "SMS enviados por AWS" (ticket 14: cantidades;
-   ticket 15: costo estimado debajo de cada columna) -- macro DEDICADO
-   (no reusa `tarjeta_panorama`) porque esta tarjeta necesita una segunda
-   línea por columna, que ninguna otra tarjeta de Panorama tiene.
-
-   `costos` es un `TrioCosto` o `None` -- sin costo configurado, cada
-   columna muestra "—" (mismo criterio que `formato(None, ...)` en toda la
-   app) y, al pie, un enlace a Proveedores para configurarlo -- nunca un
-   "$0" engañoso ni un error.
-
-   `tendencia` (ticket 16) agrega la etiqueta ▲▼ bajo el costo de cada
-   columna -- SIEMPRE en gris (`variacion(..., 'neutro')`) -- y el
-   minigráfico de los últimos 7 días al pie. Si el registro de SMS lleva
-   menos de 7 días, la serie trae solo los días disponibles (nunca ceros
-   inventados para antes de la activación) y el pie lo dice; sin ningún
-   registro todavía, no hay minigráfico. #}
-{% macro tarjeta_panorama_sms(titulo, cantidades, costos, span, tendencia=None, nota=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-blue-600 p-4 {{ span }}">
-  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
-  <div class="grid grid-cols-3 gap-3">
-    {%- for etq, cantidad, costo, var in [
-      ('Hoy', cantidades.hoy, costos.hoy if costos else none, tendencia.variacion_hoy if tendencia else none),
-      ('Esta semana', cantidades.semana, costos.semana if costos else none, tendencia.variacion_semana if tendencia else none),
-      ('Este mes', cantidades.mes, costos.mes if costos else none, tendencia.variacion_mes if tendencia else none),
-    ] %}
-    <div class="min-w-0">
-      <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
-      <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(cantidad, 'int') }}</p>
-      <p class="text-xs text-slate-500 mt-0.5 truncate">{{ formato(costo, 'cop') }}</p>
-      {%- if tendencia %}
-      <p class="mt-1">{{ variacion(var, 'neutro') }}</p>
-      {%- endif %}
-    </div>
-    {%- endfor %}
-  </div>
-  {%- if tendencia and tendencia.serie_7_dias %}
-  {%- set dias_serie = tendencia.serie_7_dias|length %}
-  <div class="mt-3 text-blue-600">
-    {{ minigrafico(tendencia.serie_7_dias) }}
-    <p class="text-[10px] text-slate-400 mt-1">
-      {%- if dias_serie == 7 %}Últimos 7 días
-      {%- elif dias_serie == 1 %}Solo hoy (el registro arrancó hoy)
-      {%- else %}Últimos {{ dias_serie }} días (los que lleva el registro)
-      {%- endif %}</p>
-  </div>
-  {%- endif %}
-  {%- if not costos %}
-  <p class="text-[11px] text-amber-700 mt-2">
-    <a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo promedio por SMS en Proveedores</a>
-  </p>
-  {%- endif %}
-  {%- if nota %}
-  <p class="text-[10px] text-slate-400 mt-2">{{ nota }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- El punto de semáforo de una tarjeta de Ahora (ticket 09): gris/neutro
-   por defecto, verde para lo sano, ámbar para lo que requiere atención,
-   rojo para lo crítico -- clases Tailwind COMPLETAS en un dict, nunca
-   armadas (mismo criterio que el resto del archivo). #}
-{% macro _punto_semaforo(semaforo) -%}
-{%- set colores = {'gris': 'bg-slate-400', 'verde': 'bg-green-500', 'ambar': 'bg-amber-500', 'rojo': 'bg-red-500'} -%}
-<span class="inline-block w-2 h-2 rounded-full {{ colores.get(semaforo, colores['gris']) }}" aria-hidden="true"></span>
-{%- endmacro %}
-
-{#- Tarjeta de Ahora: SIEMPRE ámbar, un solo valor + punto de semáforo +
-   etiqueta "foto" (spec.md: la foto del momento, nunca cambia con los
-   filtros). `span` es una clase Tailwind completa de ancho. #}
-{% macro tarjeta_ahora(titulo, valor, unidad, span, semaforo='gris', detalle=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-amber-500 p-4 {{ span }}">
-  <div class="flex items-center gap-1.5 mb-1">
-    {{ _punto_semaforo(semaforo) }}
-    <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700">foto</span>
-  </div>
-  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
-  <p class="text-2xl font-extrabold text-slate-900 tracking-tight">{{ formato(valor, unidad) }}</p>
-  {%- if detalle %}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Variante de `tarjeta_ahora` para un "destacado" -- ej. "Paquete más
-   antiguo" (un código de acceso + detalle, no un número). #}
-{% macro tarjeta_ahora_texto(titulo, texto, span, semaforo='gris', detalle=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-amber-500 p-4 {{ span }}">
-  <div class="flex items-center gap-1.5 mb-1">
-    {{ _punto_semaforo(semaforo) }}
-    <span class="text-[10px] font-bold uppercase tracking-wide text-amber-700">foto</span>
-  </div>
-  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
-  <p class="text-lg font-extrabold text-slate-900 tracking-tight truncate">{{ texto if texto else '—' }}</p>
-  {%- if detalle %}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Tarjeta de dinero de Ahora (ticket 10): punto AZUL + etiqueta "dinero"
-   en vez del semáforo de salud (gris/verde/ámbar/rojo) -- ambas cifras son
-   estimaciones/sumas de dinero, no un conteo, así que no les aplica ningún
-   color de "sano/atención/crítico". Sigue sin cambiar con los filtros de
-   la barra, igual que el resto de Ahora. #}
-{% macro tarjeta_ahora_dinero(titulo, valor, unidad, span, detalle=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-amber-500 p-4 {{ span }}">
-  <div class="flex items-center gap-1.5 mb-1">
-    <span class="inline-block w-2 h-2 rounded-full bg-blue-500" aria-hidden="true"></span>
-    <span class="text-[10px] font-bold uppercase tracking-wide text-blue-700">dinero</span>
-  </div>
-  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
-  <p class="text-2xl font-extrabold text-slate-900 tracking-tight">{{ formato(valor, unidad) }}</p>
-  {%- if detalle %}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Tarjeta de Panorama "Tiempos promedio" (ticket 07): a diferencia de
-   `tarjeta_panorama`, son VARIAS filas (una por métrica) x 3 columnas
-   (Hoy/Semana/Mes) en una sola tarjeta -- siempre en horas (unidad 'h').
-   `filas` = lista de (etiqueta, trío). #}
-{% macro tarjeta_panorama_tiempos(titulo, filas, span) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-blue-600 p-4 {{ span }}">
-  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
-  <div class="grid grid-cols-4 gap-x-2 gap-y-2 items-center">
-    <div></div>
-    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">Hoy</p>
-    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">Semana</p>
-    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">Mes</p>
-    {%- for etiqueta, trio in filas %}
-    <p class="text-xs text-slate-600 truncate">{{ etiqueta }}</p>
-    <p class="text-sm font-bold text-slate-900 text-right">{{ formato(trio.hoy, 'h') }}</p>
-    <p class="text-sm font-bold text-slate-900 text-right">{{ formato(trio.semana, 'h') }}</p>
-    <p class="text-sm font-bold text-slate-900 text-right">{{ formato(trio.mes, 'h') }}</p>
-    {%- endfor %}
-  </div>
-</article>
-{% endmacro %}
-
-{#- Tarjeta de Periodo seleccionado: SIEMPRE verde, un solo valor +
-   categoría + detalle opcional. `no_aplica` (issue del ticket 02: la
-   matriz de qué filtro acota cada tarjeta) atenúa la tarjeta y muestra por
-   qué -- `None`/vacía = la tarjeta responde a todos los filtros activos. #}
-{% macro tarjeta_periodo(titulo, valor, unidad, span, categoria, detalle=None, detalle_html=None, no_aplica=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
-  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
-  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
-  <p class="text-2xl font-extrabold text-slate-900 tracking-tight">{{ formato(valor, unidad) }}</p>
-  {%- if detalle_html %}
-  {#- Ticket 15 (.scratch/estadisticas-cobro-dashboard): a diferencia de
-     `detalle` (texto plano, escapado), esto SÍ lleva HTML -- hoy solo el
-     enlace "Configura el costo en Proveedores". Nunca pasarle nada que
-     incluya datos de un usuario/formulario -- siempre texto fijo de la
-     plantilla. #}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle_html|safe }}</p>
-  {%- elif detalle %}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
-  {%- endif %}
-  {%- if no_aplica %}
-  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Variante de `tarjeta_periodo` para un trío por día/semana/mes (el ritmo,
-   ticket 02) -- mismo look que `tarjeta_panorama` pero verde/atenuable. #}
-{% macro tarjeta_periodo_trio(titulo, por_dia, por_semana, por_mes, unidad, span, categoria, no_aplica=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
-  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
-  <h3 class="text-sm font-semibold text-slate-700 mb-3">{{ titulo }}</h3>
-  <div class="grid grid-cols-3 gap-3">
-    {%- for etq, valor in [('Por día', por_dia), ('Por semana', por_semana), ('Por mes', por_mes)] %}
-    <div class="min-w-0">
-      <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 truncate">{{ etq }}</p>
-      <p class="text-xl font-extrabold text-slate-900 tracking-tight truncate">{{ formato(valor, unidad) }}</p>
-    </div>
-    {%- endfor %}
-  </div>
-  {%- if no_aplica %}
-  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- Variante de `tarjeta_periodo` para un "destacado" (un nombre, no un
-   número) -- ej. "Cliente con más paquetes", "Operador con más entregas".
-   `texto=None` (nadie que destacar todavía, ej. sin cobros en el periodo)
-   muestra "—", igual que `formato()` con un valor `None`. #}
-{% macro tarjeta_periodo_texto(titulo, texto, span, categoria, detalle=None, no_aplica=None) %}
-<article class="bg-white rounded-xl border border-slate-200 border-t-4 border-emerald-600 p-4 {{ span }}{{ ' opacity-40 grayscale' if no_aplica }}">
-  <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-1">{{ categoria }}</p>
-  <h3 class="text-sm font-semibold text-slate-700 mb-2">{{ titulo }}</h3>
-  <p class="text-lg font-extrabold text-slate-900 tracking-tight truncate">{{ texto if texto else '—' }}</p>
-  {%- if detalle %}
-  <p class="text-xs text-slate-500 mt-1">{{ detalle }}</p>
-  {%- endif %}
-  {%- if no_aplica %}
-  <p class="text-[11px] italic text-slate-400 mt-1">no depende de {{ no_aplica }}</p>
-  {%- endif %}
-</article>
-{% endmacro %}
-
-{#- La nota "no depende de Tipo [ni de Cobrado/Anulado]" de una tarjeta de
+{#- La nota "no depende de Tipo [ni de Cobrado/Anulado]" de un dato de
    Periodo seleccionado, según la matriz de "no aplica" (ticket 02):
-   `tipo_aplica`/`anulado_aplica` (0 o 1) describen la tarjeta; `tipo_activo`/
+   `tipo_aplica`/`anulado_aplica` (0 o 1) describen el dato; `tipo_activo`/
    `anulado_activo` son los valores CRUDOS de los filtros de la barra
    (cadenas vacías cuentan como "no activo", Jinja las trata como falsy).
-   Cadena vacía = la tarjeta responde a todo lo que esté activo -- no se
+   Cadena vacía = el dato responde a todo lo que esté activo -- no se
    atenúa. #}
 {% macro no_aplica(tipo_aplica, anulado_aplica, tipo_activo, anulado_activo) -%}
 {%- set motivos = [] -%}

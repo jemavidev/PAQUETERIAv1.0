@@ -21,7 +21,9 @@ recién creado ("ahora" real) aparece en el tablero y que los filtros se
 reflejan en la salida.
 """
 
+import re
 from datetime import datetime, time, timedelta
+from html.parser import HTMLParser
 
 from app.domain.cobro import Cobro
 from app.domain.cobro_service import DesgloseCobro, crear_motivo_anulacion, registrar_cobro
@@ -50,6 +52,59 @@ def _login_operador(client, email="op@club.com"):
     create_staff(client.db, admin, email, "Opa", _PW, RolUsuario.OPERADOR)
     client.db.commit()
     client.post("/ingresar", data={"email": email, "password": _PW})
+
+
+class _Metricas(HTMLParser):
+    """Extrae cada elemento `data-metrica="..."` del HTML del tablero: su `class`
+    y su texto visible (con todo lo que lleve dentro). Cada dato de "Periodo
+    seleccionado" se declara con ese identificador (macros `metrica`/`dato` de
+    `_estadisticas_cobro_resultados.html`), así una prueba apunta a UN dato sin
+    depender del texto que se vea ni de dónde caiga su `</article>` -- el diseño
+    agrupa varias métricas por panel. Solo stdlib: el proyecto no trae un
+    parser HTML."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.metricas = {}
+        self._abiertas = []  # [slug, etiqueta HTML, profundidad de esa etiqueta]
+
+    def handle_starttag(self, tag, attrs):
+        for abierta in self._abiertas:
+            if abierta[1] == tag:
+                abierta[2] += 1
+        atributos = dict(attrs)
+        if "data-metrica" in atributos:
+            slug = atributos["data-metrica"]
+            self.metricas[slug] = {"clase": atributos.get("class") or "", "texto": ""}
+            self._abiertas.append([slug, tag, 1])
+
+    def handle_endtag(self, tag):
+        for abierta in list(self._abiertas):
+            if abierta[1] == tag:
+                abierta[2] -= 1
+                if abierta[2] == 0:
+                    self._abiertas.remove(abierta)
+
+    def handle_data(self, data):
+        for slug, _, _ in self._abiertas:
+            self.metricas[slug]["texto"] += data
+
+
+def _metricas(html):
+    """Todos los datos con `data-metrica` de la página: {slug: {clase, texto,
+    atenuada}}. `atenuada` = lleva la clase `opacity-40` (matriz de "no aplica")."""
+    parser = _Metricas()
+    parser.feed(html)
+    for m in parser.metricas.values():
+        m["texto"] = " ".join(m["texto"].split())
+        m["atenuada"] = "opacity-40" in m["clase"].split()
+    return parser.metricas
+
+
+def _metrica(html, slug):
+    metricas = _metricas(html)
+    assert slug in metricas, f"no hay data-metrica={slug!r}; hay: {sorted(metricas)}"
+    return metricas[slug]
 
 
 def _zona_periodo(texto):
@@ -104,8 +159,8 @@ def test_carga_completa_muestra_las_tres_zonas(client):
     r = client.get("/administracion/estadisticas-cobro")
     assert r.status_code == 200
     assert "<h1" in r.text
-    # Los 3 carriles de color -- Panorama (azul), Ahora (ámbar), Periodo
-    # seleccionado (verde) -- ver `_estadisticas_tarjetas.html::zona`.
+    # El punto de color de cada zona -- Panorama (azul), Ahora (ámbar), Periodo
+    # seleccionado (verde) -- junto a su título visible (ver la prueba de títulos).
     assert "bg-blue-600" in r.text
     assert "bg-amber-500" in r.text
     assert "bg-emerald-600" in r.text
@@ -311,6 +366,12 @@ def test_paquetes_ritmo_y_tasas_se_ven_en_periodo(client):
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
     for texto in ("Total de paquetes", "Anunciados", "Recibidos", "Entregados", "Cancelados", "Tasa de entrega", "Tasa de cancelación"):
         assert texto in r
+    for slug in (
+        "total_paquetes", "paquetes_anunciados", "paquetes_recibidos", "paquetes_entregados",
+        "paquetes_cancelados", "ritmo_anunciados", "ritmo_recibidos", "ritmo_entregados",
+        "tasa_entrega", "tasa_cancelacion",
+    ):
+        _metrica(r, slug)
 
 
 def test_tipo_atenua_total_de_paquetes_pero_no_recibidos(client):
@@ -324,6 +385,9 @@ def test_tipo_atenua_total_de_paquetes_pero_no_recibidos(client):
         client.get("/administracion/estadisticas-cobro", params={"tipo": "NORMAL"}).text
     )
     assert "no depende de Tipo" in con_tipo
+    # Tipo acota Recibidos (y Entregados) pero no el total de paquetes con movimiento.
+    assert _metrica(con_tipo, "total_paquetes")["atenuada"]
+    assert not _metrica(con_tipo, "paquetes_recibidos")["atenuada"]
 
 
 def test_recaudo_completo_se_ve_en_periodo(client):
@@ -332,10 +396,15 @@ def test_recaudo_completo_se_ve_en_periodo(client):
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
     for texto in (
-        "Promedio recaudado por paquete", "Recaudado por bodegaje", "Recaudado por servicio",
+        "Total de ingresos", "Promedio por paquete", "Bodegaje", "Servicio",
         "Exonerado por anulaciones", "Exenciones por primera entrega", "Cobro más alto",
     ):
         assert texto in r
+    for slug in (
+        "total_ingresos", "promedio_por_paquete", "recaudado_bodegaje", "recaudado_servicio",
+        "exonerado_por_anulaciones", "exenciones_primera_entrega", "cobro_mas_alto",
+    ):
+        _metrica(r, slug)
 
 
 def test_promedio_por_paquete_se_redondea_sin_decimales_de_flotante(client):
@@ -346,11 +415,9 @@ def test_promedio_por_paquete_se_redondea_sin_decimales_de_flotante(client):
     _entregar_con_cobro(client, admin, 1000, tel="3001111111")
     _entregar_con_cobro(client, admin, 1234, tel="3002222222")
 
-    r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
-    inicio = r.index("Promedio recaudado por paquete")
-    articulo = r[inicio : r.index("</article>", inicio)]
-    assert "$1,117" in articulo  # (1000+1234)/2 = 1117.0, exacto
-    assert "." not in articulo
+    promedio = _metrica(client.get("/administracion/estadisticas-cobro").text, "promedio_por_paquete")
+    assert "$1,117" in promedio["texto"]  # (1000+1234)/2 = 1117.0, exacto
+    assert "." not in promedio["texto"]
 
 
 def test_exenciones_primera_entrega_se_atenua_con_cobrado_anulado_pero_no_con_tipo(client):
@@ -362,18 +429,17 @@ def test_exenciones_primera_entrega_se_atenua_con_cobrado_anulado_pero_no_con_ti
     client.db.commit()
     _entregar_con_cobro(client, admin, 1500, tel="3001111111")  # primera entrega -- exenta
 
-    def _articulo(texto):
-        r = _zona_periodo(texto)
-        inicio = r.index("Exenciones por primera entrega")
-        return r[inicio : r.index("</article>", inicio)]
-
     con_estado = client.get(
         "/administracion/estadisticas-cobro", params={"estado_cobro": "cobrado"}
     ).text
-    assert "no depende de Cobrado/Anulado" in _articulo(con_estado)
+    exenciones = _metrica(con_estado, "exenciones_primera_entrega")
+    assert exenciones["atenuada"]
+    assert "no depende de Cobrado/Anulado" in exenciones["texto"]
 
     con_tipo = client.get("/administracion/estadisticas-cobro", params={"tipo": "NORMAL"}).text
-    assert "no depende de" not in _articulo(con_tipo)
+    exenciones = _metrica(con_tipo, "exenciones_primera_entrega")
+    assert not exenciones["atenuada"]
+    assert "no depende de" not in exenciones["texto"]
 
 
 def test_clientes_se_ven_en_periodo_con_nombre_no_telefono(client):
@@ -381,9 +447,14 @@ def test_clientes_se_ven_en_periodo_con_nombre_no_telefono(client):
     _entregar_con_cobro(client, admin, 1000, tel="3001111111")
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
-    for texto in ("Clientes activos", "Clientes nuevos", "Clientes recurrentes", "Cliente con más paquetes", "Cliente con mayor gasto"):
+    for texto in ("Clientes", "Activos", "Nuevos", "Recurrentes", "Más paquetes", "Mayor gasto"):
         assert texto in r
-    assert "ANA" in r  # el nombre del cliente destacado, no su teléfono
+    for slug in (
+        "clientes_activos", "clientes_nuevos", "clientes_recurrentes",
+        "cliente_con_mas_paquetes", "cliente_con_mayor_gasto",
+    ):
+        _metrica(r, slug)
+    assert "ANA" in _metrica(r, "cliente_con_mas_paquetes")["texto"]  # el nombre, no su teléfono
     assert "+573001111111" not in r
 
 
@@ -397,11 +468,13 @@ def test_cobrado_anulado_atenua_paquetes_y_ritmo_pero_no_recaudo(client):
         client.get("/administracion/estadisticas-cobro", params={"estado_cobro": "cobrado"}).text
     )
     assert "no depende de Cobrado/Anulado" in r
+    for slug in ("total_paquetes", "paquetes_anunciados", "ritmo_anunciados", "tasa_entrega"):
+        assert _metrica(r, slug)["atenuada"], slug
     # "Total de ingresos" (Recaudo) SÍ responde a Cobrado/Anulado -- nunca
     # debería llevar esa nota.
-    inicio_recaudo = r.index("Total de ingresos")
-    fin_recaudo = r.index("</article>", inicio_recaudo)
-    assert "no depende de" not in r[inicio_recaudo:fin_recaudo]
+    total = _metrica(r, "total_ingresos")
+    assert not total["atenuada"]
+    assert "no depende de" not in total["texto"]
 
 
 def test_operacion_y_calidad_se_ven_en_periodo(client):
@@ -409,15 +482,15 @@ def test_operacion_y_calidad_se_ven_en_periodo(client):
     _entregar_con_cobro(client, admin, 1000, tel="3001111111")
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
-    for texto in (
-        "Operador con más entregas",
-        "Día más activo",
-        "Hora pico",
-        "Entregas dentro de 48h",
-        "Extra-dimensionados",
-        "Recibidos en mal estado",
+    for texto, slug in (
+        ("Operador con más entregas", "operador_con_mas_entregas"),
+        ("Día más activo", "dia_mas_activo"),
+        ("Hora pico", "hora_pico"),
+        ("Entregas dentro de 48 h", "entregas_dentro_de_48h"),
+        ("Extra-dimensionados", "extra_dimensionados"),
+        ("Recibidos en mal estado", "recibidos_en_mal_estado"),
     ):
-        assert texto in r
+        assert texto in _metrica(r, slug)["texto"]
 
 
 def test_operacion_y_calidad_no_depende_de_cobrado_anulado(client):
@@ -432,19 +505,17 @@ def test_operacion_y_calidad_no_depende_de_cobrado_anulado(client):
         client.get("/administracion/estadisticas-cobro", params={"estado_cobro": "cobrado"}).text
     )
 
-    def _articulo(titulo):
-        inicio = r.index(titulo)
-        return r[inicio : r.index("</article>", inicio)]
-
-    for titulo in (
-        "Operador con más entregas",
-        "Día más activo",
-        "Hora pico",
-        "Entregas dentro de 48h",
-        "Extra-dimensionados",
-        "Recibidos en mal estado",
+    for slug in (
+        "operador_con_mas_entregas",
+        "dia_mas_activo",
+        "hora_pico",
+        "entregas_dentro_de_48h",
+        "extra_dimensionados",
+        "recibidos_en_mal_estado",
     ):
-        assert "no depende de Cobrado/Anulado" in _articulo(titulo)
+        metrica = _metrica(r, slug)
+        assert metrica["atenuada"], slug
+        assert "no depende de Cobrado/Anulado" in metrica["texto"], slug
 
 
 def test_extra_dimensionados_no_depende_de_tipo(client):
@@ -454,13 +525,13 @@ def test_extra_dimensionados_no_depende_de_tipo(client):
     r = _zona_periodo(
         client.get("/administracion/estadisticas-cobro", params={"tipo": "NORMAL"}).text
     )
-    inicio = r.index("Extra-dimensionados")
-    fin = r.index("</article>", inicio)
-    assert "no depende de Tipo" in r[inicio:fin]
+    extra = _metrica(r, "extra_dimensionados")
+    assert extra["atenuada"]
+    assert "no depende de Tipo" in extra["texto"]
 
-    inicio_operador = r.index("Operador con más entregas")
-    fin_operador = r.index("</article>", inicio_operador)
-    assert "no depende de" not in r[inicio_operador:fin_operador]
+    operador = _metrica(r, "operador_con_mas_entregas")  # Tipo SÍ lo acota
+    assert not operador["atenuada"]
+    assert "no depende de" not in operador["texto"]
 
 
 def test_panorama_entregados_y_cancelados_no_cambian_con_filtros(client):
@@ -543,7 +614,7 @@ def test_ahora_se_ve_y_no_cambia_con_filtros(client):
     fin = r.index('aria-label="Periodo seleccionado')
     ahora = r[inicio:fin]
     for texto in (
-        "Paquetes pendientes",
+        "paquetes pendientes",
         "En bodega",
         "En gracia",
         "Con bodegaje corriendo",
@@ -573,7 +644,6 @@ def test_dinero_de_ahora_se_ve_y_no_cambia_con_filtros(client):
     ahora = r[inicio:fin]
     assert "Por cobrar en bodega" in ahora
     assert "Deuda contra entrega" in ahora
-    assert "dinero" in ahora
 
     con_filtros = client.get(
         "/administracion/estadisticas-cobro", params={"tipo": "NORMAL", "rango": "hoy"}
@@ -675,7 +745,9 @@ def test_sms_de_panorama_minigrafico_con_menos_de_7_dias_de_registro_lo_dice(cli
     tarjeta = _tarjeta_sms_de_panorama(client)
 
     assert "Últimos 2 días (los que lleva el registro)" in tarjeta
-    assert tarjeta.count('<i class="block w-1.5') == 2  # solo ayer y hoy, sin ceros inventados
+    # Solo ayer y hoy, sin ceros inventados: la línea del gráfico tiene 2 puntos.
+    puntos = re.search(r'<polyline points="([^"]+)"', tarjeta).group(1).split()
+    assert len(puntos) == 2
 
 
 def test_sms_de_panorama_sin_registro_no_muestra_minigrafico_ni_flechas(client):
@@ -684,7 +756,7 @@ def test_sms_de_panorama_sin_registro_no_muestra_minigrafico_ni_flechas(client):
     tarjeta = _tarjeta_sms_de_panorama(client)
 
     assert "Últimos" not in tarjeta
-    assert '<i class="block w-1.5' not in tarjeta
+    assert "<polyline" not in tarjeta
     assert "▲" not in tarjeta
     assert "▼" not in tarjeta
 
@@ -698,10 +770,11 @@ def test_sms_de_periodo_desglosa_avisos_y_codigos(client):
     client.db.commit()
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
-    assert "SMS enviados por AWS" in r
-    assert "1 avisos" in r
-    assert "1 códigos de acceso" in r
-    assert "SMS fallidos" in r
+    enviados = _metrica(r, "sms_enviados_aws")["texto"]
+    assert "Enviados por AWS" in enviados
+    assert "1 avisos" in enviados
+    assert "1 códigos de acceso" in enviados
+    assert "Fallidos" in _metrica(r, "sms_fallidos")["texto"]
 
 
 def test_sms_de_periodo_no_depende_de_tipo_ni_cobrado_anulado(client):
@@ -716,12 +789,8 @@ def test_sms_de_periodo_no_depende_de_tipo_ni_cobrado_anulado(client):
         ).text
     )
 
-    def _articulo(titulo):
-        inicio = r.index(titulo)
-        return r[inicio : r.index("</article>", inicio)]
-
-    assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS enviados por AWS")
-    assert "no depende de Tipo ni de Cobrado/Anulado" in _articulo("SMS fallidos")
+    for slug in ("sms_enviados_aws", "sms_fallidos"):
+        assert "no depende de Tipo ni de Cobrado/Anulado" in _metrica(r, slug)["texto"], slug
 
 
 def test_sms_costo_de_panorama_sin_configurar_ofrece_link_a_proveedores(client):
@@ -765,8 +834,8 @@ def test_sms_costo_de_periodo_sin_configurar_ofrece_link_a_proveedores(client):
     client.db.commit()
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
-    assert "Costo estimado de SMS" in r
-    assert "Costo de SMS por paquete" in r
+    assert "Costo estimado" in _metrica(r, "sms_costo_estimado")["texto"]
+    assert "Costo por paquete" in _metrica(r, "sms_costo_por_paquete")["texto"]
     assert r.count('href="/administracion/proveedores?tab=SMS"') == 2
 
 
@@ -784,9 +853,88 @@ def test_sms_costo_de_periodo_configurado_calcula_estimado_y_por_paquete(client)
 
     r = _zona_periodo(client.get("/administracion/estadisticas-cobro").text)
 
-    def _articulo(titulo):
-        inicio = r.index(titulo)
-        return r[inicio : r.index("</article>", inicio)]
+    assert "$50" in _metrica(r, "sms_costo_estimado")["texto"]
+    assert "$50" in _metrica(r, "sms_costo_por_paquete")["texto"]  # 1 SMS x $50 / 1 paquete
 
-    assert "$50" in _articulo("Costo estimado de SMS")
-    assert "$50" in _articulo("Costo de SMS por paquete")  # 1 SMS x $50 / 1 paquete
+
+# --- Rediseño visual (issue 369 de .scratch/pendientes-cliente) ----------------- #
+
+
+def _seccion(html, desde, hasta=None):
+    inicio = html.index(f'aria-label="{desde}')
+    return html[inicio : html.index(f'aria-label="{hasta}', inicio)] if hasta else html[inicio:]
+
+
+def test_cada_zona_tiene_su_titulo_visible_y_dice_si_responde_a_los_filtros(client):
+    """Queja original: las 3 zonas solo se distinguían por una franja de color, y el
+    texto que explica que Panorama y Ahora NO responden a los filtros era solo para
+    lectores de pantalla."""
+    _login_admin(client)
+
+    r = client.get("/administracion/estadisticas-cobro").text
+
+    for titulo, aclaracion in (
+        ("Panorama", "no cambia con los filtros"),
+        ("Ahora", "no cambia con los filtros"),
+        ("Periodo seleccionado", "Responde a los filtros de arriba"),
+    ):
+        assert re.search(rf"<h2[^>]*>.*?{titulo}.*?</h2>", r, re.S), titulo
+        assert aclaracion in r, aclaracion
+
+
+def test_ninguna_cifra_del_panorama_se_corta_con_puntos_suspensivos(client):
+    """Queja original: `$110,…` en Ingresos y `Anuncio…` en Tiempos promedio -- una cifra
+    cortada es un dato perdido. Ningún elemento del Panorama debe truncar su texto."""
+    admin = _login_admin(client)
+    _entregar_con_cobro(client, admin, 1234567, tel="3001111111")
+
+    r = client.get("/administracion/estadisticas-cobro").text
+
+    assert "truncate" not in _seccion(r, "Panorama", "Ahora")
+    assert "1,234,567" in _seccion(r, "Panorama", "Ahora")
+
+
+def test_todo_dato_atenuado_dice_por_que_y_solo_esos(client):
+    """Regla de la spec (matriz de "no aplica"): un dato que el filtro activo no acota se
+    atenúa Y lo explica. Un dato atenuado sin explicación parece roto; una explicación
+    sin atenuar, contradictoria. Se verifica para TODOS los datos y todas las
+    combinaciones de filtros, no dato por dato."""
+    admin = _login_admin(client)
+    crear_motivo_anulacion(client.db, "Reclamo")
+    client.db.commit()
+    _entregar_con_cobro(client, admin, 1000, tel="3001111111")
+
+    combinaciones = [
+        {},
+        {"tipo": "NORMAL"},
+        {"estado_cobro": "cobrado"},
+        {"tipo": "NORMAL", "estado_cobro": "anulado"},
+    ]
+    for params in combinaciones:
+        metricas = _metricas(client.get("/administracion/estadisticas-cobro", params=params).text)
+        assert len(metricas) >= 30, params  # que el extractor no se haya quedado sin nada
+        for slug, m in metricas.items():
+            assert m["atenuada"] == ("no depende de" in m["texto"]), (params, slug)
+        if params:
+            assert any(m["atenuada"] for m in metricas.values()), params
+        else:
+            assert not any(m["atenuada"] for m in metricas.values())
+
+
+def test_deuda_contra_entrega_lleva_el_signo_antes_del_peso(client):
+    """`$-5,000` (el signo pegado a la cifra) leía como un error de formato; es
+    `-$5,000`. La deuda contra entrega es negativa por definición."""
+    from app.domain.persona import Persona
+    from app.domain.saldo_contra_entrega_service import registrar_movimiento_saldo
+
+    admin = _login_admin(client)
+    persona = Persona(nombre="Con deuda", telefono="3002222222")
+    client.db.add(persona)
+    client.db.commit()
+    registrar_movimiento_saldo(client.db, persona.id, -5000, admin)
+    client.db.commit()
+
+    ahora = _seccion(client.get("/administracion/estadisticas-cobro").text, "Ahora", "Periodo seleccionado")
+
+    assert "-$5,000" in ahora
+    assert "$-5,000" not in ahora

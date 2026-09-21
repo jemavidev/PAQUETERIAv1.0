@@ -1,149 +1,471 @@
 {#
   Fragmento de resultados de `/administracion/estadisticas-cobro`
-  (rediseño de tablero, `.scratch/estadisticas-cobro-dashboard`) -- lo que el
-  fetch en vivo del `<script>` de `estadisticas_cobro.html` reemplaza por
-  completo (innerHTML) en cada cambio de filtro (mismo mecanismo que
-  `packages/_resultados.html`: la ruta decide esta plantilla o la completa
-  según el header `X-Requested-With`, ver `admin.py`). La barra de filtros
-  vive FUERA de este fragmento -- no hace falta recalcularla en cada
-  actualización.
+  (`.scratch/estadisticas-cobro-dashboard`) -- lo que el fetch en vivo del
+  `<script>` de `estadisticas_cobro.html` reemplaza por completo (innerHTML)
+  en cada cambio de filtro (mismo mecanismo que `packages/_resultados.html`:
+  la ruta decide esta plantilla o la completa según el header
+  `X-Requested-With`, ver `admin.py`). La barra de filtros vive FUERA de este
+  fragmento -- no hace falta recalcularla en cada actualización.
 
-  Tres zonas, cada una con su carril de color (ver `_estadisticas_tarjetas.
-  html::zona`): Panorama (azul, fijo), Ahora (ámbar, fijo) y Periodo
-  seleccionado (verde, responde a los filtros de arriba).
+  Layout (issue 369 de `.scratch/pendientes-cliente`, variante A "Ejecutivo"
+  elegida entre 3 propuestas): en vez de una tarjeta por métrica, un bloque
+  héroe (Ingresos) + paneles que agrupan las cifras relacionadas, con barras
+  donde el dato es una proporción (composición de la bodega, origen del
+  recaudo, embudo de paquetes). Tres zonas con título visible: Panorama
+  (siempre el total del conjunto), Ahora (foto del momento) -- ninguna de las
+  dos responde a los filtros de arriba -- y Periodo seleccionado (sí responde).
 
-  Cada tarjeta de "Periodo seleccionado" declara su propia posición en la
-  matriz de "no aplica" (ticket 02, `.scratch/estadisticas-cobro-dashboard/
-  spec.md`): `no_aplica(tipo_aplica, anulado_aplica, filtro_tipo,
-  filtro_estado_cobro)` -- los primeros dos son fijos por tarjeta (1 = el
-  filtro SÍ la acota), los últimos dos son el estado real de los filtros.
+  Cada dato de "Periodo seleccionado" declara su posición en la matriz de "no
+  aplica" (ticket 02, `.scratch/estadisticas-cobro-dashboard/spec.md`):
+  `no_aplica(tipo_aplica, anulado_aplica, filtro_tipo, filtro_estado_cobro)` --
+  los primeros dos son fijos por dato (1 = el filtro SÍ lo acota), los últimos
+  dos son el estado real de los filtros. Un dato que el filtro activo no acota
+  se atenúa y dice de qué no depende (`atenuar`/`nota_na`).
 #}
-{% from "admin/_estadisticas_tarjetas.html" import tarjeta_panorama, tarjeta_panorama_tiempos, tarjeta_panorama_sms, tarjeta_ahora, tarjeta_ahora_texto, tarjeta_ahora_dinero, tarjeta_periodo, tarjeta_periodo_trio, tarjeta_periodo_texto, no_aplica, zona, etiqueta_rango, formato %}
+{% from "admin/_estadisticas_tarjetas.html" import formato, variacion, spark, no_aplica, etiqueta_rango %}
 
-{%- set chips = [] -%}
-{%- if tablero.periodo.rango_activo %}{% set _ = chips.append(etiqueta_rango(tablero.periodo.rango_activo)) %}{% endif -%}
-{%- if filtro_tipo %}{% set _ = chips.append('Normal' if filtro_tipo == 'NORMAL' else 'Extra-dimensionado') %}{% endif -%}
-{%- if filtro_estado_cobro %}{% set _ = chips.append('Cobrado' if filtro_estado_cobro == 'cobrado' else 'Anulado') %}{% endif -%}
+{%- set p = tablero.panorama -%}
+{%- set a = tablero.ahora -%}
+{%- set r = tablero.periodo -%}
+{%- set rc = r.recaudo -%}
+{%- set card = 'rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70' -%}
+{#- Pie del gráfico de SMS: el registro arrancó junto con esta feature, así que la serie
+   puede traer menos de 7 días (ticket 16) y el pie lo dice -- un gráfico de 3 puntos
+   rotulado "7 días" engañaría. -#}
+{%- set sms_dias = p.sms_aws.tendencia.serie_7_dias|length -%}
+{%- set sms_serie = '' if sms_dias == 0 else ('Últimos 7 días' if sms_dias == 7 else ('Solo hoy (el registro arrancó hoy)' if sms_dias == 1 else 'Últimos ' ~ sms_dias ~ ' días (los que lleva el registro)')) -%}
+{%- set sms_desde = ('Registro desde el ' ~ (p.sms_aws.registro_desde|hora_local).strftime('%d/%m/%Y')) if p.sms_aws.registro_desde else 'Aún sin registros' -%}
 
-<div class="space-y-4">
-  {% call zona('bg-blue-600', 'Panorama: hoy, esta semana y este mes -- no cambia con los filtros de arriba') %}
-    {{ tarjeta_panorama('Ingresos', tablero.panorama.ingresos, 'cop', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_ingresos, bueno='sube') }}
-    {{ tarjeta_panorama('Entregados', tablero.panorama.entregados, 'int', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_entregados, bueno='sube') }}
-    {{ tarjeta_panorama('Cancelados', tablero.panorama.cancelados, 'int', 'lg:col-span-3', tendencia=tablero.panorama.tendencia_cancelados, bueno='baja') }}
-    {{ tarjeta_panorama_tiempos('Tiempos promedio', [
-      ('Anuncio → recepción', tablero.panorama.tiempos.anuncio_recepcion),
-      ('Permanencia en bodega', tablero.panorama.tiempos.permanencia_bodega),
-      ('Bodegaje cobrado', tablero.panorama.tiempos.bodegaje_cobrado),
-    ], 'lg:col-span-3') }}
-    {%- set sms_registro_desde = ('Registro desde el ' ~ (tablero.panorama.sms_aws.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.panorama.sms_aws.registro_desde else 'Aún sin registros' %}
-    {{ tarjeta_panorama_sms('SMS enviados por AWS', tablero.panorama.sms_aws.enviados, tablero.panorama.sms_aws.costo_estimado, 'lg:col-span-3', tendencia=tablero.panorama.sms_aws.tendencia, nota=sms_registro_desde) }}
-  {% endcall %}
+{% macro seccion(titulo, sub, color) -%}
+<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+  <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900"><span class="h-2.5 w-2.5 rounded-full {{ color }}"></span>{{ titulo }}</h2>
+  <p class="text-sm text-slate-500">{{ sub }}</p>
+</div>
+{%- endmacro %}
 
-  {% call zona('bg-amber-500', 'Ahora: foto del momento -- no cambia con los filtros de arriba') %}
-    {{ tarjeta_ahora('Paquetes pendientes', tablero.ahora.pendientes, 'int', 'lg:col-span-2', semaforo='gris', detalle=formato(tablero.ahora.pendientes_anunciados, 'int') ~ ' anunciados · ' ~ formato(tablero.ahora.pendientes_recibidos, 'int') ~ ' recibidos') }}
-    {{ tarjeta_ahora('En bodega', tablero.ahora.en_bodega, 'int', 'lg:col-span-2', semaforo='gris') }}
-    {{ tarjeta_ahora('En gracia (≤ 48 h)', tablero.ahora.en_gracia, 'int', 'lg:col-span-2', semaforo='verde') }}
-    {{ tarjeta_ahora('Con bodegaje corriendo', tablero.ahora.con_bodegaje_corriendo, 'int', 'lg:col-span-2', semaforo='ambar') }}
-    {{ tarjeta_ahora('Más de 7 días', tablero.ahora.mas_de_7_dias, 'int', 'lg:col-span-2', semaforo='ambar') }}
-    {{ tarjeta_ahora('Abandonados (> 30 días)', tablero.ahora.abandonados, 'int', 'lg:col-span-2', semaforo='rojo') }}
+{#- Atenúa lo que el filtro activo NO acota (matriz de "no aplica", ticket 02) y
+   dice por qué. `atenuar` devuelve las clases; `nota_na` el "no depende de ..."
+   que las explica (vacío si el dato responde a todos los filtros activos;
+   `tag` = `dd` dentro de una `<dl>`). Se usan SIEMPRE juntas -- un dato
+   atenuado sin explicación es un dato "roto" para quien lo mira --, por eso la
+   forma normal de declarar un dato de Periodo es `metrica`, que las empareja
+   y además le pone su identificador estable (`data-metrica`, el que usan las
+   pruebas, sin depender del texto que se vea). -#}
+{% macro atenuar(t, an) -%}{% if no_aplica(t, an, filtro_tipo, filtro_estado_cobro) %} opacity-40 grayscale{% endif %}{%- endmacro %}
+{% macro nota_na(t, an, tag='p') -%}{%- set m = no_aplica(t, an, filtro_tipo, filtro_estado_cobro) -%}{% if m %}<{{ tag }} class="mt-0.5 text-[11px] italic text-slate-400">no depende de {{ m }}</{{ tag }}>{% endif %}{%- endmacro %}
 
-    {%- set antiguo = tablero.ahora.paquete_mas_antiguo -%}
-    {%- set detalle_antiguo = none -%}
-    {%- if antiguo -%}
-      {%- set detalle_antiguo = (antiguo.apartamento ~ ' · ' if antiguo.apartamento else '') ~ formato(antiguo.dias_en_bodega, 'int') ~ ' días en bodega' -%}
-    {%- endif %}
-    {{ tarjeta_ahora_texto('Paquete más antiguo', antiguo.access_code if antiguo else none, 'lg:col-span-2', semaforo='rojo', detalle=detalle_antiguo) }}
-    {{ tarjeta_ahora('Anuncios que nunca llegaron', tablero.ahora.anuncios_sin_llegar, 'int', 'lg:col-span-2', semaforo='ambar', detalle='anunciados hace más de 7 días, sin recibirse') }}
-    {{ tarjeta_ahora('Clientes registrados', tablero.ahora.clientes_registrados, 'int', 'lg:col-span-2', semaforo='gris') }}
+{#- Un dato de "Periodo seleccionado": su contenido (el `caller`) + atenuado y nota
+   de la matriz de "no aplica" (`t`/`an`, 1 = el filtro SÍ lo acota) + el
+   identificador `slug`. -#}
+{% macro metrica(slug, t=0, an=0, clase='') -%}
+<div data-metrica="{{ slug }}" class="{{ clase }}{{ atenuar(t, an) }}">
+  {{ caller() }}
+  {{- nota_na(t, an) }}
+</div>
+{%- endmacro %}
 
-    {{ tarjeta_ahora_dinero('Por cobrar en bodega', tablero.ahora.por_cobrar_en_bodega, 'cop', 'lg:col-span-3', detalle='si se entregara todo justo ahora') }}
-    {{ tarjeta_ahora_dinero('Deuda contra entrega', tablero.ahora.deuda_contra_entrega, 'cop', 'lg:col-span-3', detalle=formato(tablero.ahora.personas_con_deuda, 'int') ~ ' clientes con saldo negativo') }}
-  {% endcall %}
+{#- Un dato suelto dentro de una `<dl>` (etiqueta, cifra grande y detalle), con el
+   mismo emparejamiento atenuado + nota que `metrica`. `enlace_costo` reemplaza el
+   detalle por el enlace a Proveedores -- SMS sin costo configurado (ticket 15):
+   nunca un "$0" engañoso. -#}
+{% macro dato(slug, etiqueta, valor, detalle=None, enlace_costo=False, t=0, an=0) -%}
+<div data-metrica="{{ slug }}" class="{{ atenuar(t, an) }}">
+  <dt class="text-xs text-slate-500">{{ etiqueta }}</dt>
+  <dd class="text-2xl font-semibold tabular-nums text-slate-900">{{ valor }}</dd>
+  {%- if enlace_costo %}
+  <dd class="text-[11px] text-slate-400"><a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo en Proveedores</a></dd>
+  {%- elif detalle %}
+  <dd class="text-[11px] text-slate-400">{{ detalle }}</dd>
+  {%- endif %}
+  {{- nota_na(t, an, 'dd') }}
+</div>
+{%- endmacro %}
 
-  {% call zona('bg-emerald-600', 'Periodo seleccionado: responde a los filtros de arriba') %}
-    <div class="lg:col-span-12 flex flex-wrap items-center gap-1.5" aria-label="Filtros activos">
-      {%- if chips %}
-      {%- for chip in chips %}
-      <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-1">{{ chip }}</span>
+<div class="space-y-10 rounded-3xl bg-slate-50 p-3 sm:p-6">
+
+{# ============================ PANORAMA ============================ #}
+<section aria-label="Panorama">
+  {{ seccion('Panorama', 'Hoy, esta semana y este mes · no cambia con los filtros', 'bg-blue-600') }}
+  <div class="grid gap-4 lg:grid-cols-12">
+
+    {# Héroe: Ingresos #}
+    <article class="{{ card }} sm:p-6 lg:col-span-8">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="text-sm font-medium text-slate-500">Ingresos</h3>
+        <span class="text-xs text-slate-400">variación contra el mismo tramo anterior</span>
+      </div>
+      <div class="mt-4 grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        {%- for etq, val, var in [('Hoy', p.ingresos.hoy, p.tendencia_ingresos.variacion_hoy), ('Esta semana', p.ingresos.semana, p.tendencia_ingresos.variacion_semana), ('Este mes', p.ingresos.mes, p.tendencia_ingresos.variacion_mes)] %}
+        <div class="flex items-center justify-between gap-3 py-2.5 sm:block sm:px-5 sm:py-0 sm:first:pl-0">
+          <p class="text-sm text-slate-500 sm:text-xs">{{ etq }}</p>
+          <div class="flex items-center gap-2 sm:block">
+            <p class="text-xl font-semibold tabular-nums tracking-tight text-slate-900 sm:mt-1 sm:text-3xl">{{ formato(val, 'cop') }}</p>
+            <p class="sm:mt-2">{{ variacion(var, 'sube') }}</p>
+          </div>
+        </div>
+        {%- endfor %}
+      </div>
+      <div class="mt-5 h-16 text-blue-600">{{ spark(p.tendencia_ingresos.serie_7_dias) }}</div>
+      <p class="mt-1 text-xs text-slate-400">Últimos 7 días</p>
+    </article>
+
+    {# Entregados / Cancelados: compactas #}
+    <div class="grid gap-4 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+      {%- for titulo, trio, tend, bueno in [('Entregados', p.entregados, p.tendencia_entregados, 'sube'), ('Cancelados', p.cancelados, p.tendencia_cancelados, 'baja')] %}
+      <article class="{{ card }}">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-sm font-medium text-slate-500">{{ titulo }}</h3>
+          <div class="h-6 w-20 text-blue-600">{{ spark(tend.serie_7_dias) }}</div>
+        </div>
+        <div class="mt-3 grid grid-cols-3 gap-2">
+          {%- for etq, val, var in [('Hoy', trio.hoy, tend.variacion_hoy), ('Semana', trio.semana, tend.variacion_semana), ('Mes', trio.mes, tend.variacion_mes)] %}
+          <div>
+            <p class="text-[11px] text-slate-400">{{ etq }}</p>
+            <p class="text-xl font-semibold tabular-nums text-slate-900">{{ formato(val, 'int') }}</p>
+            <p class="mt-1">{{ variacion(var, bueno) }}</p>
+          </div>
+          {%- endfor %}
+        </div>
+      </article>
       {%- endfor %}
-      {%- else %}
-      <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1">Todos los datos</span>
-      {%- endif %}
     </div>
-    {{ tarjeta_periodo('Total de ingresos', tablero.periodo.recaudo.total_ingresos, 'cop', 'lg:col-span-3', 'Recaudo', no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Promedio recaudado por paquete', tablero.periodo.recaudo.promedio_por_paquete, 'cop', 'lg:col-span-3', 'Recaudo', no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Recaudado por bodegaje', tablero.periodo.recaudo.recaudado_bodegaje, 'cop', 'lg:col-span-3', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.porcentaje_bodegaje, 'pct') ~ ' del recaudo') if tablero.periodo.recaudo.porcentaje_bodegaje is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Recaudado por servicio', tablero.periodo.recaudo.recaudado_servicio, 'cop', 'lg:col-span-3', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.porcentaje_servicio, 'pct') ~ ' del recaudo') if tablero.periodo.recaudo.porcentaje_servicio is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Exonerado por anulaciones', tablero.periodo.recaudo.exonerado_anulaciones, 'cop', 'lg:col-span-4', 'Recaudo', detalle='Estimado con las tarifas vigentes -- ' ~ formato(tablero.periodo.recaudo.cantidad_anulaciones, 'int') ~ ' anulaciones' ~ ((' · ' ~ formato(tablero.periodo.recaudo.tasa_anulacion, 'pct') ~ ' de los cobros') if tablero.periodo.recaudo.tasa_anulacion is not none else ''), no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Exenciones por primera entrega', tablero.periodo.recaudo.exenciones_primera_entrega, 'int', 'lg:col-span-4', 'Recaudo', detalle='Estimado: ' ~ formato(tablero.periodo.recaudo.dejado_de_cobrar_primera_entrega, 'cop') ~ ' que se dejaron de cobrar', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Cobro más alto', tablero.periodo.recaudo.cobro_mas_alto, 'cop', 'lg:col-span-4', 'Recaudo', detalle=(formato(tablero.periodo.recaudo.dias_bodega_del_mas_alto, 'int') ~ ' días en bodega') if tablero.periodo.recaudo.dias_bodega_del_mas_alto is not none else none, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
 
-    {{ tarjeta_periodo('Total de paquetes', tablero.periodo.paquetes.total, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Anunciados', tablero.periodo.paquetes.anunciados, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Recibidos', tablero.periodo.paquetes.recibidos, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Entregados', tablero.periodo.paquetes.entregados, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Cancelados', tablero.periodo.paquetes.cancelados, 'int', 'lg:col-span-3', 'Paquetes', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {# SMS #}
+    <article class="{{ card }} lg:col-span-6">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="text-sm font-medium text-slate-500">SMS enviados por AWS</h3>
+        <div class="h-6 w-20 text-slate-400">{{ spark(p.sms_aws.tendencia.serie_7_dias, 'text-slate-400') }}</div>
+      </div>
+      <div class="mt-3 grid grid-cols-3 gap-2">
+        {%- set ce = p.sms_aws.costo_estimado -%}
+        {%- for etq, cant, costo, var in [('Hoy', p.sms_aws.enviados.hoy, ce.hoy if ce else none, p.sms_aws.tendencia.variacion_hoy), ('Semana', p.sms_aws.enviados.semana, ce.semana if ce else none, p.sms_aws.tendencia.variacion_semana), ('Mes', p.sms_aws.enviados.mes, ce.mes if ce else none, p.sms_aws.tendencia.variacion_mes)] %}
+        <div>
+          <p class="text-[11px] text-slate-400">{{ etq }}</p>
+          <p class="text-xl font-semibold tabular-nums text-slate-900">{{ formato(cant, 'int') }}</p>
+          <p class="text-xs tabular-nums text-slate-500">{{ formato(costo, 'cop') }}</p>
+          <p class="mt-1">{{ variacion(var, 'neutro') }}</p>
+        </div>
+        {%- endfor %}
+      </div>
+      {%- if not ce %}
+      <p class="mt-3 text-xs text-amber-700"><a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo promedio por SMS en Proveedores</a></p>
+      {%- endif %}
+      <p class="mt-3 text-[11px] text-slate-400">{{ sms_serie ~ ' · ' if sms_serie }}{{ sms_desde }}</p>
+    </article>
 
-    {{ tarjeta_periodo_trio('Anunciados', tablero.periodo.ritmo.anunciados.por_dia, tablero.periodo.ritmo.anunciados.por_semana, tablero.periodo.ritmo.anunciados.por_mes, 'dec', 'lg:col-span-6', 'Ritmo', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo_trio('Recibidos', tablero.periodo.ritmo.recibidos.por_dia, tablero.periodo.ritmo.recibidos.por_semana, tablero.periodo.ritmo.recibidos.por_mes, 'dec', 'lg:col-span-6', 'Ritmo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo_trio('Entregados', tablero.periodo.ritmo.entregados.por_dia, tablero.periodo.ritmo.entregados.por_semana, tablero.periodo.ritmo.entregados.por_mes, 'dec', 'lg:col-span-6', 'Ritmo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Tasa de entrega', tablero.periodo.ritmo.tasa_entrega, 'pct', 'lg:col-span-3', 'Tasas', detalle='entregados ÷ cerrados', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Tasa de cancelación', tablero.periodo.ritmo.tasa_cancelacion, 'pct', 'lg:col-span-3', 'Tasas', detalle='cancelados ÷ cerrados', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {# Tiempos #}
+    <article class="{{ card }} lg:col-span-6">
+      <h3 class="text-sm font-medium text-slate-500">Tiempos promedio</h3>
+      <table class="mt-3 w-full text-sm">
+        <thead>
+          <tr class="text-xs text-slate-400">
+            <th class="pb-2 text-left font-normal"><span class="sr-only">Métrica</span></th>
+            <th class="pb-2 text-right font-normal">Hoy</th>
+            <th class="pb-2 text-right font-normal">Semana</th>
+            <th class="pb-2 text-right font-normal">Mes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {%- for etq, t in [('Anuncio → recepción', p.tiempos.anuncio_recepcion), ('Permanencia en bodega', p.tiempos.permanencia_bodega), ('Bodegaje cobrado', p.tiempos.bodegaje_cobrado)] %}
+          <tr>
+            <th class="py-2 pr-3 text-left font-normal text-slate-600">{{ etq }}</th>
+            <td class="py-2 text-right font-semibold tabular-nums text-slate-900">{{ formato(t.hoy, 'h') }}</td>
+            <td class="py-2 text-right font-semibold tabular-nums text-slate-900">{{ formato(t.semana, 'h') }}</td>
+            <td class="py-2 text-right font-semibold tabular-nums text-slate-900">{{ formato(t.mes, 'h') }}</td>
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </article>
+  </div>
+</section>
 
-    {{ tarjeta_periodo('Clientes activos', tablero.periodo.clientes.activos, 'int', 'lg:col-span-3', 'Clientes', detalle='con al menos un paquete en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Clientes nuevos', tablero.periodo.clientes.nuevos, 'int', 'lg:col-span-3', 'Clientes', detalle='su primera entrega fue en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Clientes recurrentes', tablero.periodo.clientes.recurrentes, 'int', 'lg:col-span-3', 'Clientes', detalle='2 o más paquetes en el periodo', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+{# ============================== AHORA ============================== #}
+<section aria-label="Ahora">
+  {{ seccion('Ahora', 'Foto del momento · no cambia con los filtros', 'bg-amber-500') }}
+  {#- Composición de la bodega. `en_gracia` y `con_bodegaje_corriendo` PARTICIONAN
+     `en_bodega`, y `mas_de_7_dias` / `abandonados` son umbrales anidados dentro de
+     `con_bodegaje_corriendo` (ver `Ahora` en `estadisticas_tablero_service`): para
+     que las 4 franjas sean excluyentes y sumen `en_bodega`, a cada umbral se le
+     resta el siguiente. La leyenda de abajo conserva los valores acumulativos. -#}
+  {%- set seg_abandonados = a.abandonados -%}
+  {%- set seg_7_30 = [a.mas_de_7_dias - a.abandonados, 0]|max -%}
+  {%- set seg_bodegaje = [a.con_bodegaje_corriendo - a.mas_de_7_dias, 0]|max -%}
+  {%- set total_seg = a.en_gracia + seg_bodegaje + seg_7_30 + seg_abandonados -%}
+  {%- set antiguo = a.paquete_mas_antiguo -%}
+  <div class="grid gap-4 lg:grid-cols-12">
+    <article class="{{ card }} sm:p-6 lg:col-span-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h3 class="text-sm font-medium text-slate-500">En bodega ahora</h3>
+          <p class="mt-1 text-5xl font-semibold tabular-nums tracking-tight text-slate-900">{{ formato(a.en_bodega, 'int') }}</p>
+        </div>
+        <div class="text-sm text-slate-500 sm:text-right">
+          <p class="text-base font-medium text-slate-900">{{ formato(a.pendientes, 'int') }} paquetes pendientes</p>
+          <p>{{ formato(a.pendientes_anunciados, 'int') }} anunciados · {{ formato(a.pendientes_recibidos, 'int') }} recibidos</p>
+        </div>
+      </div>
+      {%- if total_seg > 0 %}
+      <div class="mt-5 flex h-3 overflow-hidden rounded-full bg-slate-100" role="img" aria-label="Composición de la bodega por antigüedad">
+        {%- for n, color in [(a.en_gracia, 'bg-green-500'), (seg_bodegaje, 'bg-amber-400'), (seg_7_30, 'bg-orange-500'), (seg_abandonados, 'bg-red-500')] %}
+        {%- if n > 0 %}<div class="{{ color }}" style="width: {{ (n / total_seg * 100)|round(2) }}%"></div>{% endif %}
+        {%- endfor %}
+      </div>
+      {%- endif %}
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+        {%- for etq, n, color in [('En gracia (≤ 48 h)', a.en_gracia, 'bg-green-500'), ('Con bodegaje corriendo', a.con_bodegaje_corriendo, 'bg-amber-400'), ('Más de 7 días', a.mas_de_7_dias, 'bg-orange-500'), ('Abandonados (> 30 días)', a.abandonados, 'bg-red-500')] %}
+        <div>
+          <dt class="flex items-center gap-1.5 text-xs text-slate-500"><span class="h-2 w-2 shrink-0 rounded-full {{ color }}"></span>{{ etq }}</dt>
+          <dd class="mt-0.5 text-xl font-semibold tabular-nums text-slate-900">{{ formato(n, 'int') }}</dd>
+        </div>
+        {%- endfor %}
+      </dl>
+    </article>
 
-    {%- set top_paquetes = tablero.periodo.clientes.con_mas_paquetes -%}
-    {%- set detalle_top_paquetes = none -%}
-    {%- if top_paquetes -%}
-      {%- set detalle_top_paquetes = (top_paquetes.apartamento ~ ' · ' if top_paquetes.apartamento else '') ~ formato(top_paquetes.valor, 'int') ~ ' paquetes' -%}
-    {%- endif %}
-    {{ tarjeta_periodo_texto('Cliente con más paquetes', top_paquetes.nombre if top_paquetes else none, 'lg:col-span-3', 'Clientes', detalle=detalle_top_paquetes, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+    <div class="grid gap-4 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+      <article class="{{ card }}">
+        <h3 class="text-sm font-medium text-slate-500">Por cobrar en bodega</h3>
+        <p class="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{{ formato(a.por_cobrar_en_bodega, 'cop') }}</p>
+        <p class="mt-1 text-xs text-slate-400">si se entregara todo justo ahora</p>
+      </article>
+      <article class="{{ card }}">
+        <h3 class="text-sm font-medium text-slate-500">Deuda contra entrega</h3>
+        <p class="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{{ formato(a.deuda_contra_entrega, 'cop') }}</p>
+        <p class="mt-1 text-xs text-slate-400">{{ formato(a.personas_con_deuda, 'int') }} clientes con saldo negativo</p>
+      </article>
+    </div>
 
-    {%- set top_gasto = tablero.periodo.clientes.con_mayor_gasto -%}
-    {%- set detalle_top_gasto = none -%}
-    {%- if top_gasto -%}
-      {%- set detalle_top_gasto = (top_gasto.apartamento ~ ' · ' if top_gasto.apartamento else '') ~ formato(top_gasto.valor, 'cop') -%}
-    {%- endif %}
-    {{ tarjeta_periodo_texto('Cliente con mayor gasto', top_gasto.nombre if top_gasto else none, 'lg:col-span-3', 'Clientes', detalle=detalle_top_gasto, no_aplica=no_aplica(1, 1, filtro_tipo, filtro_estado_cobro)) }}
+    <article class="{{ card }} lg:col-span-12">
+      <div class="grid gap-5 sm:grid-cols-3 sm:divide-x sm:divide-slate-100">
+        <div class="sm:pr-5">
+          <p class="flex items-center gap-1.5 text-sm font-medium text-slate-500"><span class="h-2 w-2 rounded-full bg-red-500"></span>Paquete más antiguo</p>
+          {%- if antiguo %}
+          <p class="mt-1 font-mono text-2xl font-semibold tracking-wider text-slate-900">{{ antiguo.access_code }}</p>
+          <p class="text-xs text-slate-500">{{ antiguo.apartamento ~ ' · ' if antiguo.apartamento else '' }}{{ formato(antiguo.dias_en_bodega, 'int') }} días en bodega</p>
+          {%- else %}
+          <p class="mt-1 text-2xl font-semibold text-slate-900">—</p>
+          {%- endif %}
+        </div>
+        <div class="sm:px-5">
+          <p class="flex items-center gap-1.5 text-sm font-medium text-slate-500"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Anuncios que nunca llegaron</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formato(a.anuncios_sin_llegar, 'int') }}</p>
+          <p class="text-xs text-slate-500">anunciados hace más de 7 días, sin recibirse</p>
+        </div>
+        <div class="sm:pl-5">
+          <p class="flex items-center gap-1.5 text-sm font-medium text-slate-500"><span class="h-2 w-2 rounded-full bg-slate-400"></span>Clientes registrados</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formato(a.clientes_registrados, 'int') }}</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 
-    {%- set operador_detalle = (formato(tablero.periodo.operacion.operador_top_cantidad, 'int') ~ ' entregas') if tablero.periodo.operacion.operador_top_nombre else none -%}
-    {{ tarjeta_periodo_texto('Operador con más entregas', tablero.periodo.operacion.operador_top_nombre, 'lg:col-span-4', 'Operación', detalle=operador_detalle, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {%- set dia_detalle = (formato(tablero.periodo.operacion.dia_mas_activo_porcentaje, 'pct') ~ ' de las entregas') if tablero.periodo.operacion.dia_mas_activo_porcentaje is not none else none -%}
-    {{ tarjeta_periodo_texto('Día más activo', tablero.periodo.operacion.dia_mas_activo, 'lg:col-span-4', 'Operación', detalle=dia_detalle, no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo_texto('Hora pico', tablero.periodo.operacion.hora_pico, 'lg:col-span-4', 'Operación', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+{# ====================== PERIODO SELECCIONADO ====================== #}
+<section aria-label="Periodo seleccionado">
+  {{ seccion('Periodo seleccionado', 'Responde a los filtros de arriba', 'bg-emerald-600') }}
+  <div class="mb-4 flex flex-wrap items-center gap-1.5" aria-label="Filtros activos">
+    {%- set chips = [] -%}
+    {%- if r.rango_activo %}{% set _ = chips.append(etiqueta_rango(r.rango_activo)) %}{% endif -%}
+    {%- if filtro_tipo %}{% set _ = chips.append('Normal' if filtro_tipo == 'NORMAL' else 'Extra-dimensionado') %}{% endif -%}
+    {%- if filtro_estado_cobro %}{% set _ = chips.append('Cobrado' if filtro_estado_cobro == 'cobrado' else 'Anulado') %}{% endif -%}
+    {%- for chip in chips %}
+    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">{{ chip }}</span>
+    {%- else %}
+    <span class="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">Todos los datos</span>
+    {%- endfor %}
+  </div>
 
-    {{ tarjeta_periodo('Entregas dentro de 48h', tablero.periodo.operacion.porcentaje_dentro_de_48h, 'pct', 'lg:col-span-4', 'Calidad', detalle='recibido → entregado', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Extra-dimensionados', tablero.periodo.operacion.porcentaje_extra_dimensionados, 'pct', 'lg:col-span-4', 'Calidad', detalle='sobre los recibidos', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('Recibidos en mal estado', tablero.periodo.operacion.porcentaje_mal_estado, 'pct', 'lg:col-span-4', 'Calidad', detalle='abiertos o regulares', no_aplica=no_aplica(1, 0, filtro_tipo, filtro_estado_cobro)) }}
+  {%- set pq = r.paquetes -%}
+  {%- set cl = r.clientes -%}
+  {%- set op = r.operacion -%}
+  {%- set sm = r.sms -%}
+  {%- set sin_costo = sm.costo_estimado is none -%}
+  <div class="grid gap-4 lg:grid-cols-12">
 
-    {%- set sms_desde_texto = ('Registro desde el ' ~ (tablero.periodo.sms.registro_desde|hora_local).strftime('%d/%m/%Y')) if tablero.periodo.sms.registro_desde else 'Aún sin registros' %}
-    {%- set sms_detalle = formato(tablero.periodo.sms.avisos_aws, 'int') ~ ' avisos · ' ~ formato(tablero.periodo.sms.codigos_aws, 'int') ~ ' códigos de acceso · ' ~ sms_desde_texto %}
-    {{ tarjeta_periodo('SMS enviados por AWS', tablero.periodo.sms.enviados_aws, 'int', 'lg:col-span-3', 'SMS del periodo', detalle=sms_detalle, no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-    {{ tarjeta_periodo('SMS fallidos', tablero.periodo.sms.fallidos, 'int', 'lg:col-span-3', 'SMS del periodo', detalle='ningún proveedor los entregó', no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {# Recaudo #}
+    <article class="{{ card }} sm:p-6 lg:col-span-12">
+      <h3 class="mb-4 text-sm font-medium text-slate-500">Recaudo</h3>
+      <div class="grid gap-8 lg:grid-cols-3">
+        <div class="space-y-3">
+          {%- call metrica('total_ingresos', 1, 1) %}
+          <p class="text-xs text-slate-500">Total de ingresos</p>
+          <p class="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-slate-900">{{ formato(rc.total_ingresos, 'cop') }}</p>
+          {%- endcall %}
+          {%- call metrica('promedio_por_paquete', 1, 1) %}
+          <p class="text-sm text-slate-500">Promedio por paquete <span class="font-semibold tabular-nums text-slate-800">{{ formato(rc.promedio_por_paquete, 'cop') }}</span></p>
+          {%- endcall %}
+        </div>
+        <div>
+          <p class="text-xs text-slate-500">De dónde viene</p>
+          {%- set pb = rc.porcentaje_bodegaje %}
+          <div class="mt-3 flex h-3 overflow-hidden rounded-full bg-slate-100">
+            {%- if pb is not none %}
+            <div class="bg-blue-600" style="width: {{ pb|round(2) }}%"></div>
+            <div class="bg-emerald-500" style="width: {{ (100 - pb)|round(2) }}%"></div>
+            {%- endif %}
+          </div>
+          <div class="mt-3 space-y-2 text-sm">
+            {%- call metrica('recaudado_bodegaje', 1, 1) %}
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-blue-600"></span>Bodegaje</span>
+              <span><span class="font-semibold tabular-nums text-slate-900">{{ formato(rc.recaudado_bodegaje, 'cop') }}</span> <span class="text-xs text-slate-400">{{ formato(rc.porcentaje_bodegaje, 'pct') }}</span></span>
+            </div>
+            {%- endcall %}
+            {%- call metrica('recaudado_servicio', 1, 1) %}
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Servicio</span>
+              <span><span class="font-semibold tabular-nums text-slate-900">{{ formato(rc.recaudado_servicio, 'cop') }}</span> <span class="text-xs text-slate-400">{{ formato(rc.porcentaje_servicio, 'pct') }}</span></span>
+            </div>
+            {%- endcall %}
+          </div>
+        </div>
+        <div class="space-y-4 text-sm">
+          {%- call metrica('exonerado_por_anulaciones', 1, 1) %}
+          <p class="text-slate-500">Exonerado por anulaciones</p>
+          <p class="font-semibold tabular-nums text-slate-900">{{ formato(rc.exonerado_anulaciones, 'cop') }}</p>
+          <p class="text-xs text-slate-400">Estimado con las tarifas vigentes · {{ formato(rc.cantidad_anulaciones, 'int') }} anulaciones{{ (' · ' ~ formato(rc.tasa_anulacion, 'pct') ~ ' de los cobros') if rc.tasa_anulacion is not none else '' }}</p>
+          {%- endcall %}
+          {%- call metrica('exenciones_primera_entrega', 1, 0) %}
+          <p class="text-slate-500">Exenciones por primera entrega</p>
+          <p class="font-semibold tabular-nums text-slate-900">{{ formato(rc.exenciones_primera_entrega, 'int') }}</p>
+          <p class="text-xs text-slate-400">Estimado: {{ formato(rc.dejado_de_cobrar_primera_entrega, 'cop') }} que se dejaron de cobrar</p>
+          {%- endcall %}
+          {%- call metrica('cobro_mas_alto', 1, 1) %}
+          <p class="text-slate-500">Cobro más alto</p>
+          <p class="font-semibold tabular-nums text-slate-900">{{ formato(rc.cobro_mas_alto, 'cop') }}</p>
+          {%- if rc.dias_bodega_del_mas_alto is not none %}<p class="text-xs text-slate-400">{{ formato(rc.dias_bodega_del_mas_alto, 'int') }} días en bodega</p>{% endif %}
+          {%- endcall %}
+        </div>
+      </div>
+    </article>
 
-    {%- set configura_costo_html = '<a href="/administracion/proveedores?tab=SMS" class="underline">Configura el costo en Proveedores</a>' -%}
-    {%- set sin_costo = tablero.periodo.sms.costo_estimado is none -%}
+    {# Paquetes: total, embudo, tasas y ritmo #}
+    {%- set maxp = [pq.anunciados, pq.recibidos, pq.entregados, pq.cancelados, 1]|max %}
+    <article class="{{ card }} lg:col-span-6">
+      <h3 class="text-sm font-medium text-slate-500">Paquetes</h3>
+      {%- call metrica('total_paquetes', 0, 0, 'mt-3') %}
+      <p class="text-xs text-slate-500">Total de paquetes</p>
+      <p class="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{{ formato(pq.total, 'int') }}</p>
+      <p class="text-xs text-slate-400">con movimiento en el periodo</p>
+      {%- endcall %}
+      <div class="mt-4 space-y-3">
+        {%- for slug, etq, n, color, tipo_ap in [('paquetes_anunciados', 'Anunciados', pq.anunciados, 'bg-slate-400', 0), ('paquetes_recibidos', 'Recibidos', pq.recibidos, 'bg-blue-500', 1), ('paquetes_entregados', 'Entregados', pq.entregados, 'bg-emerald-500', 1), ('paquetes_cancelados', 'Cancelados', pq.cancelados, 'bg-rose-500', 0)] %}
+        {%- call metrica(slug, tipo_ap, 0) %}
+        <div class="flex items-baseline justify-between text-sm"><span class="text-slate-600">{{ etq }}</span><span class="font-semibold tabular-nums text-slate-900">{{ formato(n, 'int') }}</span></div>
+        <div class="mt-1 h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full {{ color }}" style="width: {{ (n / maxp * 100)|round(1) }}%"></div></div>
+        {%- endcall %}
+        {%- endfor %}
+      </div>
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        {%- call metrica('tasa_entrega', 0, 0, 'rounded-xl bg-emerald-50 p-3') %}
+        <p class="text-xs text-emerald-800">Tasa de entrega</p>
+        <p class="text-xl font-semibold tabular-nums text-emerald-900">{{ formato(r.ritmo.tasa_entrega, 'pct') }}</p>
+        <p class="text-[11px] text-emerald-800/70">entregados ÷ cerrados</p>
+        {%- endcall %}
+        {%- call metrica('tasa_cancelacion', 0, 0, 'rounded-xl bg-rose-50 p-3') %}
+        <p class="text-xs text-rose-800">Tasa de cancelación</p>
+        <p class="text-xl font-semibold tabular-nums text-rose-900">{{ formato(r.ritmo.tasa_cancelacion, 'pct') }}</p>
+        <p class="text-[11px] text-rose-800/70">cancelados ÷ cerrados</p>
+        {%- endcall %}
+      </div>
+      <table class="mt-5 w-full text-sm">
+        <thead>
+          <tr class="text-xs text-slate-400">
+            <th class="pb-1 text-left font-normal">Ritmo</th>
+            <th class="pb-1 text-right font-normal">por día</th>
+            <th class="pb-1 text-right font-normal">por semana</th>
+            <th class="pb-1 text-right font-normal">por mes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {%- for slug, etq, rt, tipo_ap in [('ritmo_anunciados', 'Anunciados', r.ritmo.anunciados, 0), ('ritmo_recibidos', 'Recibidos', r.ritmo.recibidos, 1), ('ritmo_entregados', 'Entregados', r.ritmo.entregados, 1)] %}
+          <tr data-metrica="{{ slug }}" class="{{ atenuar(tipo_ap, 0) }}">
+            <th class="py-1.5 text-left font-normal text-slate-600">{{ etq }}{{ nota_na(tipo_ap, 0) }}</th>
+            <td class="py-1.5 text-right font-semibold tabular-nums text-slate-900">{{ formato(rt.por_dia, 'dec') }}</td>
+            <td class="py-1.5 text-right font-semibold tabular-nums text-slate-900">{{ formato(rt.por_semana, 'dec') }}</td>
+            <td class="py-1.5 text-right font-semibold tabular-nums text-slate-900">{{ formato(rt.por_mes, 'dec') }}</td>
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </article>
 
-    {%- set detalle_costo_estimado = none -%}
-    {%- if not sin_costo -%}
-      {%- set detalle_costo_estimado = formato(tablero.periodo.sms.enviados_aws, 'int') ~ ' SMS al costo vigente' -%}
-    {%- endif %}
-    {{ tarjeta_periodo('Costo estimado de SMS', tablero.periodo.sms.costo_estimado, 'cop', 'lg:col-span-3', 'SMS del periodo', detalle=detalle_costo_estimado, detalle_html=(configura_costo_html if sin_costo else none), no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
+    {# Clientes + Operación y calidad (apiladas) #}
+    <div class="grid gap-4 lg:col-span-6">
+      <article class="{{ card }}">
+        <h3 class="text-sm font-medium text-slate-500">Clientes</h3>
+        <div class="mt-3 grid grid-cols-3 gap-2">
+          {%- for slug, etq, n, det in [('clientes_activos', 'Activos', cl.activos, 'con al menos un paquete'), ('clientes_nuevos', 'Nuevos', cl.nuevos, 'primera entrega en el periodo'), ('clientes_recurrentes', 'Recurrentes', cl.recurrentes, '2 o más paquetes')] %}
+          {%- call metrica(slug, 1, 0) %}
+          <p class="text-xs text-slate-500">{{ etq }}</p>
+          <p class="text-2xl font-semibold tabular-nums text-slate-900">{{ formato(n, 'int') }}</p>
+          <p class="text-[11px] leading-tight text-slate-400">{{ det }}</p>
+          {%- endcall %}
+          {%- endfor %}
+        </div>
+        <div class="mt-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
+          {%- set tp = cl.con_mas_paquetes %}
+          {%- set tg = cl.con_mayor_gasto %}
+          {%- call metrica('cliente_con_mas_paquetes', 1, 0) %}
+          <div class="flex items-baseline justify-between gap-3">
+            <span class="text-slate-500">Más paquetes</span>
+            <span class="text-right"><span class="font-semibold text-slate-900">{{ tp.nombre if tp else '—' }}</span>{% if tp %}<span class="block text-xs text-slate-400">{{ tp.apartamento ~ ' · ' if tp.apartamento else '' }}{{ formato(tp.valor, 'int') }} paquetes</span>{% endif %}</span>
+          </div>
+          {%- endcall %}
+          {%- call metrica('cliente_con_mayor_gasto', 1, 1) %}
+          <div class="flex items-baseline justify-between gap-3">
+            <span class="text-slate-500">Mayor gasto</span>
+            <span class="text-right"><span class="font-semibold text-slate-900">{{ tg.nombre if tg else '—' }}</span>{% if tg %}<span class="block text-xs text-slate-400">{{ tg.apartamento ~ ' · ' if tg.apartamento else '' }}{{ formato(tg.valor, 'cop') }}</span>{% endif %}</span>
+          </div>
+          {%- endcall %}
+        </div>
+      </article>
 
-    {#- Distinto de "sin costo configurado": acá SÍ hay costo, pero cero
-       paquetes con movimiento en el periodo -- nunca confundir los dos
-       motivos de un "—" (issue de este ticket: nunca una división por
-       cero, y el mensaje tiene que decir la razón correcta). #}
-    {%- set detalle_costo_por_paquete = none -%}
-    {%- if sin_costo -%}
-      {%- set detalle_costo_por_paquete = none -%}
-    {%- elif tablero.periodo.sms.costo_por_paquete is none -%}
-      {%- set detalle_costo_por_paquete = 'sin paquetes con movimiento en el periodo' -%}
-    {%- else -%}
-      {%- set detalle_costo_por_paquete = 'costo estimado ÷ paquetes con movimiento' -%}
-    {%- endif %}
-    {{ tarjeta_periodo('Costo de SMS por paquete', tablero.periodo.sms.costo_por_paquete, 'cop', 'lg:col-span-3', 'SMS del periodo', detalle=detalle_costo_por_paquete, detalle_html=(configura_costo_html if sin_costo else none), no_aplica=no_aplica(0, 0, filtro_tipo, filtro_estado_cobro)) }}
-  {% endcall %}
+      <article class="{{ card }}">
+        <h3 class="text-sm font-medium text-slate-500">Operación y calidad</h3>
+        <div class="mt-3 grid grid-cols-3 gap-3 text-sm">
+          {%- call metrica('operador_con_mas_entregas', 1, 0) %}
+          <p class="text-xs text-slate-500">Operador con más entregas</p>
+          <p class="font-semibold text-slate-900">{{ op.operador_top_nombre or '—' }}</p>
+          {%- if op.operador_top_nombre %}<p class="text-xs text-slate-400">{{ formato(op.operador_top_cantidad, 'int') }} entregas</p>{% endif %}
+          {%- endcall %}
+          {%- call metrica('dia_mas_activo', 1, 0) %}
+          <p class="text-xs text-slate-500">Día más activo</p>
+          <p class="font-semibold text-slate-900">{{ op.dia_mas_activo or '—' }}</p>
+          {%- if op.dia_mas_activo_porcentaje is not none %}<p class="text-xs text-slate-400">{{ formato(op.dia_mas_activo_porcentaje, 'pct') }} de las entregas</p>{% endif %}
+          {%- endcall %}
+          {%- call metrica('hora_pico', 1, 0) %}
+          <p class="text-xs text-slate-500">Hora pico</p>
+          <p class="font-semibold text-slate-900">{{ op.hora_pico or '—' }}</p>
+          {%- endcall %}
+        </div>
+        <div class="mt-4 space-y-3 border-t border-slate-100 pt-4">
+          {%- for slug, etq, val, det, tipo_ap in [('entregas_dentro_de_48h', 'Entregas dentro de 48 h', op.porcentaje_dentro_de_48h, 'recibido → entregado', 1), ('extra_dimensionados', 'Extra-dimensionados', op.porcentaje_extra_dimensionados, 'sobre los recibidos', 0), ('recibidos_en_mal_estado', 'Recibidos en mal estado', op.porcentaje_mal_estado, 'abiertos o regulares', 1)] %}
+          {%- call metrica(slug, tipo_ap, 0) %}
+          <div class="flex items-baseline justify-between text-sm"><span class="text-slate-600">{{ etq }} <span class="text-xs text-slate-400">· {{ det }}</span></span><span class="font-semibold tabular-nums text-slate-900">{{ formato(val, 'pct') }}</span></div>
+          <div class="mt-1 h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-blue-600" style="width: {{ (val if val is not none else 0)|round(1) }}%"></div></div>
+          {%- endcall %}
+          {%- endfor %}
+        </div>
+      </article>
+    </div>
+
+    {# SMS del periodo #}
+    <article class="{{ card }} lg:col-span-12">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-sm font-medium text-slate-500">SMS del periodo</h3>
+        <p class="text-xs text-slate-400">{{ sms_desde }}</p>
+      </div>
+      <dl class="mt-3 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
+        {{ dato('sms_enviados_aws', 'Enviados por AWS', formato(sm.enviados_aws, 'int'), formato(sm.avisos_aws, 'int') ~ ' avisos · ' ~ formato(sm.codigos_aws, 'int') ~ ' códigos de acceso') }}
+        {{ dato('sms_fallidos', 'Fallidos', formato(sm.fallidos, 'int'), 'ningún proveedor los entregó') }}
+        {{ dato('sms_costo_estimado', 'Costo estimado', formato(sm.costo_estimado, 'cop'), formato(sm.enviados_aws, 'int') ~ ' SMS al costo vigente', sin_costo) }}
+        {#- Distinto de "sin costo configurado": acá SÍ hay costo, pero cero paquetes con
+           movimiento en el periodo -- nunca confundir los dos motivos de un "—". -#}
+        {{ dato('sms_costo_por_paquete', 'Costo por paquete', formato(sm.costo_por_paquete, 'cop'), ('sin paquetes con movimiento en el periodo' if sm.costo_por_paquete is none else 'costo estimado ÷ paquetes con movimiento'), sin_costo) }}
+      </dl>
+    </article>
+  </div>
+</section>
+
 </div>

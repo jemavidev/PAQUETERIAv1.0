@@ -593,6 +593,34 @@ def test_mas_de_7_dias_y_abandonados_son_acumulativos(db_session):
     assert resultado.abandonados == 1  # solo el de 40
 
 
+def test_la_composicion_de_la_bodega_suma_lo_que_hay_en_bodega(db_session):
+    """La barra de "En bodega ahora" (issue 369) le resta a cada umbral acumulativo el
+    siguiente para dibujar 4 franjas EXCLUYENTES: en gracia | bodegaje | 7 a 30 días |
+    más de 30. Eso solo es cierto si los umbrales están anidados (abandonados ⊆ más de 7
+    días ⊆ con bodegaje ⊆ en bodega) -- si algún día un umbral se redefine y deja de
+    estarlo, la barra mentiría en silencio."""
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    for i, antiguedad in enumerate(
+        [timedelta(hours=10), timedelta(hours=60), timedelta(days=5), timedelta(days=10),
+         timedelta(days=40), timedelta(days=100)]
+    ):
+        _recibir(db_session, f"30011111{i:02d}", staff, ahora - antiguedad)
+    db_session.commit()
+
+    a = calcular_tablero(db_session, ahora).ahora
+
+    franjas = [
+        a.en_gracia,
+        a.con_bodegaje_corriendo - a.mas_de_7_dias,
+        a.mas_de_7_dias - a.abandonados,
+        a.abandonados,
+    ]
+    assert franjas == [1, 2, 1, 2]
+    assert min(franjas) >= 0
+    assert sum(franjas) == a.en_bodega == 6
+
+
 def test_paquete_mas_antiguo_dias_apartamento_y_codigo(db_session):
     staff = _usuario(db_session)
     ahora = _local(2026, 9, 16, 12, 0)
