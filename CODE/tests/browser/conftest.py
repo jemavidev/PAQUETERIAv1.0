@@ -147,3 +147,11 @@ def pagina(chromium):
     pag.set_default_timeout(10_000)
     yield pag
     contexto.close()
+
+
+@pytest.fixture()
+def camara(pagina):
+    """La cámara simulada (`_camara.py`) ya instalada en `pagina`: por defecto entrega video sin código."""
+    from _camara import CamaraSimulada
+
+    return CamaraSimulada(pagina).instalar()
