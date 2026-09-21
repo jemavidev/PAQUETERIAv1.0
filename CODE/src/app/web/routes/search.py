@@ -6,7 +6,7 @@ sesión).
 Busca SOLO por `access_code` o `guide_number` exactos (Grupo 2 de
 `ajustes-post-referencia-funcional/REQUERIMIENTOS.md`) — a propósito, NUNCA
 por teléfono: el `access_code` únicamente lo conoce quien anunció, así que es
-la única llave de consulta pública. El timeline (con actor por hito, y
+la única llave de consulta pública (la guía NO lo es: puede repetirse, ver ticket 09 en `renderizar_busqueda`). El timeline (con actor por hito, y
 `dias_desde_recibido`) vive en `paquete_timeline_service` — compartido con
 `/mis-paquetes`, que cuenta la misma historia del mismo paquete para el
 cliente autenticado.
@@ -132,13 +132,32 @@ def renderizar_busqueda(
             "search/form.html", {"request": request, "q": ""}
         )
 
-    paquete = (
+    # Ticket 09 (`.scratch/captura-guia-lector-camara`): "cero, uno o varios" en vez de "cero o uno".
+    # La Guía es una referencia, no una llave (glosario): un envío de varias cajas la comparte, y antes
+    # `.one_or_none()` reventaba con `MultipleResultsFound` (500) en cuanto dos paquetes la tenían. El
+    # `access_code` SÍ es único, así que si el término es el código de un paquete, ese gana aunque otro
+    # paquete tenga esa misma cadena como guía.
+    coincidencias = (
         db.query(Paquete)
         .filter(
             or_(Paquete.access_code == termino, Paquete.guide_number == termino)
         )
-        .one_or_none()
+        .order_by(Paquete.announced_at.desc(), Paquete.id)
+        .all()
     )
+    paquete = next((c for c in coincidencias if c.access_code == termino), None)
+    if paquete is None and len(coincidencias) == 1:
+        paquete = coincidencias[0]
+    if paquete is None and len(coincidencias) > 1:
+        contexto = {"request": request, "q": termino, "varios_paquetes": True}
+        # Con sesión de staff, la lista para elegir (código de acceso, destinatario, estado); sin sesión,
+        # NADA de datos -- una guía repetida por error no debe exponer el paquete de otra persona.
+        if request.session.get(SESSION_KEY):
+            contexto["coincidencias"] = [
+                {"access_code": c.access_code, "destinatario": c.recipient_name, "estado": c.estado}
+                for c in coincidencias
+            ]
+        return templates.TemplateResponse("search/form.html", contexto)
     if paquete is not None:
         contexto = {
             "request": request,
