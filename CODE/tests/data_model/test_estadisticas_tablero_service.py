@@ -1092,6 +1092,35 @@ def test_periodo_filtra_por_tipo_y_por_cobrado_anulado(db_session):
     assert solo_cobrados.periodo.recaudo.total_ingresos == 1000 + 2000
 
 
+def test_periodo_combina_rango_tipo_y_cobrado_anulado_a_la_vez(db_session):
+    """Regla migrada del servicio de listas retirado (ticket 17): los
+    filtros se combinan con AND -- solo cuenta lo que calza con TODOS a la
+    vez, no con cualquiera de ellos."""
+    staff = _usuario(db_session)
+    ahora = _local(2026, 9, 16, 12, 0)
+    # El único que calza los 3: dentro del mes, EXTRA_DIMENSIONADO y cobrado.
+    calza = _entregar_con_cobro(
+        db_session, staff, 2000, tel="3001111111", tipo=TipoPaquete.EXTRA_DIMENSIONADO
+    )
+    anulado = _entregar_con_cobro(
+        db_session, staff, 0, tel="3002222222", tipo=TipoPaquete.EXTRA_DIMENSIONADO, motivo_anulacion="Cortesía"
+    )
+    normal = _entregar_con_cobro(db_session, staff, 1500, tel="3003333333", tipo=TipoPaquete.NORMAL)
+    fuera_del_mes = _entregar_con_cobro(
+        db_session, staff, 7000, tel="3004444444", tipo=TipoPaquete.EXTRA_DIMENSIONADO
+    )
+    for cobro in (calza, anulado, normal):
+        _mover_cobro_a(db_session, cobro, _local(2026, 9, 16, 8, 0))
+    _mover_cobro_a(db_session, fuera_del_mes, _local(2024, 1, 1, 8, 0))
+    db_session.commit()
+
+    tablero = calcular_tablero(
+        db_session, ahora, FiltrosTablero(rango="mes", tipo=TipoPaquete.EXTRA_DIMENSIONADO, anulado=False)
+    )
+
+    assert tablero.periodo.recaudo.total_ingresos == 2000
+
+
 def test_periodo_con_base_vacia_no_rompe(db_session):
     tablero = calcular_tablero(db_session, _local(2026, 9, 16, 12, 0))
 
@@ -1431,6 +1460,29 @@ def test_cliente_con_mas_paquetes_nombre_apartamento_y_empate(db_session):
     assert clientes.con_mas_paquetes.valor == 3
     assert clientes.con_mas_paquetes.nombre == "ANA"  # nombre de la Persona (announce() usa "Ana")
     assert clientes.con_mas_paquetes.apartamento == f"{apto.torre} {apto.apartamento}"
+
+
+def test_clientes_distintos_del_mismo_apartamento_no_se_mezclan(db_session):
+    """Regla migrada del servicio de listas retirado (ticket 17): su desglose
+    por cliente/apartamento agrupaba solo por unidad y mezclaba a dos
+    clientes que viven en el mismo apartamento (hallazgo de code-review). El
+    tablero cuenta personas por teléfono -- la unidad es solo una etiqueta."""
+    from app.domain.apartamento import Apartamento
+
+    ahora = _local(2026, 9, 16, 12, 0)
+    apto = db_session.query(Apartamento).first()
+    for tel in ("3001111111", "3002222222"):
+        paquete = _anunciar(db_session, tel)
+        _mover(
+            db_session, paquete, announced_at=_local(2026, 9, 5, 8, 0),
+            snapshot_torre=apto.torre, snapshot_apartamento=apto.apartamento,
+        )
+    db_session.commit()
+
+    clientes = calcular_tablero(db_session, ahora, FiltrosTablero(rango="mes")).periodo.clientes
+
+    assert clientes.activos == 2
+    assert clientes.con_mas_paquetes.valor == 1  # mezclados serían 2
 
 
 def test_cliente_con_mayor_gasto_respeta_cobrado_anulado_pero_mas_paquetes_no(db_session):

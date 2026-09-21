@@ -3,9 +3,8 @@
 Servicio de dominio del tablero de tarjetas de
 `/administracion/estadisticas-cobro` (`.scratch/estadisticas-cobro-dashboard`,
 rediseño que reemplaza al de listas de `.scratch/estadisticas-cobro-
-interactivas` -- ese servicio, `cobro_service.estadisticas_cobro`, se retira
-en el ticket 17 de esta misma feature; hasta entonces convive sin que nada lo
-llame desde la ruta web).
+interactivas` -- ese servicio, `cobro_service.estadisticas_cobro`, se retiró
+en el ticket 17 de esta misma feature).
 
 Tres zonas (ver la spec del feature):
   - **Panorama**: cifras FIJAS Hoy / Esta semana / Este mes, en HORA DE
@@ -92,8 +91,8 @@ class TiemposPromedio:
     - `bodegaje_cobrado`: la misma resta que `permanencia_bodega`, pero
       solo de los entregados cuyo cobro sí llevó bloques de bodegaje
       (`Cobro.bloques_bodegaje > 0`) -- misma métrica que ya existía en la
-      pantalla anterior (`cobro_service.estadisticas_cobro`), reubicada
-      acá."""
+      pantalla anterior (`cobro_service.estadisticas_cobro`, retirada en el
+      ticket 17), reubicada acá."""
 
     anuncio_recepcion: TrioPromedioHoras
     permanencia_bodega: TrioPromedioHoras
