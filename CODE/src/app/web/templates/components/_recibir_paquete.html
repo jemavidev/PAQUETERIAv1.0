@@ -853,6 +853,9 @@
     // queda con su contenido SELECCIONADO: con el modo de envío `FOCUS` sin sobrescribir, el F7 ANEXA a lo que ya
     // hay, y una segunda lectura terminaría concatenada; seleccionado, la nueva lectura lo reemplaza. Un toque
     // del Operador en el campo devuelve el teclado normal (para teclear a mano una guía que el lector no lee).
+    // Los DOS campos donde se captura la guía: la de Recibir y "la de confirmación" de Entregar (ticket 11: solo
+    // existe si el paquete YA tiene guía -- sin ella no hay nada que confirmar y este modo no enfoca nada).
+    var campoGuiaLector = campoGuiaRecibir + ', [data-guia-esperada]';
     function modoLectorActivo() {
       return !!(window.paqueteXModoLector && window.paqueteXModoLector.activo());
     }
@@ -867,7 +870,7 @@
       var abrir = e.target.closest('[data-open]');
       if (!abrir || !modoLectorActivo()) return;
       var modal = document.getElementById(abrir.dataset.open);
-      if (modal) enfocarParaLector(modal.querySelector(campoGuiaRecibir));
+      if (modal) enfocarParaLector(modal.querySelector(campoGuiaLector));
     });
     document.addEventListener('pointerup', function (e) {
       var campo = e.target.closest && e.target.closest('[data-modo-lector-foco]');
@@ -882,7 +885,7 @@
     function enfocarModalesAbiertos() {
       if (!modoLectorActivo()) return;
       // Sin nombrar el id del modal: hay pruebas que verifican por substring que ese texto NO está en páginas sin él.
-      var campos = document.querySelectorAll(campoGuiaRecibir);
+      var campos = document.querySelectorAll(campoGuiaLector);
       for (var i = 0; i < campos.length; i++) {
         var modal = campos[i].closest('[role="dialog"]');
         if (modal && !modal.hidden) { enfocarParaLector(campos[i]); break; }

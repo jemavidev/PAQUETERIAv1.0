@@ -89,3 +89,20 @@ def volver_a_iniciar_sesion(pagina, app_viva, email=EMAIL_STAFF):
         max_redirects=0,
     )
     assert respuesta.status == 303, f"el login de Staff no redirigió (status {respuesta.status})"
+
+
+def abrir_menu_de_cuenta(pagina):
+    """Abre el menú de cuenta si está cerrado (un clic en el `summary` lo alterna)."""
+    if pagina.locator("#site-header .account-menu").get_attribute("open") is None:
+        pagina.click("#site-header .account-menu > summary")
+
+
+def alternar_modo_lector(pagina):
+    """Pulsa "Este equipo tiene lector" en el menú de cuenta (activa o desactiva)."""
+    abrir_menu_de_cuenta(pagina)
+    pagina.locator("#site-header [data-modo-lector]").click()
+
+
+def foco_en(pagina):
+    """El `id` del elemento que tiene el foco ahora."""
+    return pagina.evaluate("() => document.activeElement && document.activeElement.id")

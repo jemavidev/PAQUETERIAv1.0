@@ -9,8 +9,11 @@ con "Este equipo tiene lector" en el menú de cuenta: apagado por defecto y guar
 """
 
 from _ayudantes import (
+    abrir_menu_de_cuenta,
     abrir_modal_recibir,
+    alternar_modo_lector,
     anunciar_paquete,
+    foco_en,
     iniciar_sesion_staff,
     volver_a_iniciar_sesion,
 )
@@ -18,27 +21,21 @@ from _ayudantes import (
 CLAVE = "paquetex.modoLector"
 
 
-def _abrir_menu(pagina):
-    """Abre el menú de cuenta si está cerrado (un clic en el `summary` lo alterna)."""
-    if pagina.locator("#site-header .account-menu").get_attribute("open") is None:
-        pagina.click("#site-header .account-menu > summary")
+_abrir_menu = abrir_menu_de_cuenta
 
 
 def _interruptor(pagina):
     return pagina.locator("#site-header [data-modo-lector]")
 
 
-def _alternar_desde_el_menu(pagina):
-    _abrir_menu(pagina)
-    _interruptor(pagina).click()
+_alternar_desde_el_menu = alternar_modo_lector
 
 
 def _activo(pagina):
     return _interruptor(pagina).locator("[data-modo-lector-estado]").inner_text()
 
 
-def _foco_en(pagina):
-    return pagina.evaluate("() => document.activeElement && document.activeElement.id")
+_foco_en = foco_en
 
 
 def _modo_lector_guardado(pagina):
