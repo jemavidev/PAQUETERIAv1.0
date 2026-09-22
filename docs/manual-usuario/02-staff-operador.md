@@ -268,9 +268,10 @@ laterales). Para que la lectura llegue al campo Guía hacen falta dos pasos,
    nada en tu celular ni en el de tus compañeros.
 
 Con el modo lector activado, al abrir **Recibir** el cursor ya queda en el
-campo Guía (sin que aparezca el teclado en pantalla): apuntás al código,
-apretás el gatillo y la guía aparece. Si en algún momento necesitás
-escribirla a mano, tocás el campo y aparece el teclado. Si el equipo está en
+campo Guía: apuntás al código, apretás el gatillo y la guía aparece (puede
+que el teclado en pantalla aparezca un instante — se prefiere eso a que el
+lector no funcione). Si en algún momento necesitás escribirla a mano, tocás
+el campo y escribís, igual que siempre. Si el equipo está en
 el modo que sobrescribe, o si el lector termina cada lectura con Enter, una
 segunda lectura **reemplaza** a la anterior en vez de sumarse; con un modo que
 no sobrescribe y sin Enter, borrá el campo antes de volver a leer. En
