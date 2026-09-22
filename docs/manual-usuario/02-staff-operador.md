@@ -219,6 +219,13 @@ escribe en el campo**. Recibir el paquete lo hacés vos, con el botón
 paquete **no** se recibe solo: así nunca te salteás el tipo, la condición,
 las fotos ni la confirmación del residente.
 
+**En un equipo con "Este equipo tiene lector" activado (ver más abajo) no
+aparece el botón de cámara** — confirmado en vivo: la cámara del Farset F7 no
+entrega una imagen utilizable (se ve negro), y con el lector físico y el
+campo ya enfocado la captura es más rápida igual. En un celular normal (el
+interruptor apagado, que es el estado por defecto) el botón de cámara sigue
+exactamente igual que siempre.
+
 Avisos que vas a ver:
 
 - **"La guía tiene N caracteres; el máximo es 50."** Una guía no puede pasar
@@ -269,7 +276,9 @@ segunda lectura **reemplaza** a la anterior en vez de sumarse; con un modo que
 no sobrescribe y sin Enter, borrá el campo antes de volver a leer. En
 **Entregar**, si el paquete
 tiene guía, el cursor queda directamente en **Confirmar guía**. El botón de
-la cámara sigue disponible por si una etiqueta dañada no se deja leer.
+la cámara ya NO aparece en ningún lugar mientras el interruptor esté
+activado — en este equipo, el único camino para capturar la guía es el
+lector físico.
 
 > **Cuidado:** estos pasos de configuración del lector salen de la
 > documentación del fabricante y todavía no se confirmaron en un F7 real; los
