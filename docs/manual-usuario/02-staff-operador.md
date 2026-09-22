@@ -252,8 +252,9 @@ laterales). Para que la lectura llegue al campo Guía hacen falta dos pasos,
    envío** de la lectura (*send mode*): elegí el que escribe en el campo
    enfocado — si hay una versión que sobrescribe lo que ya está escrito
    (*Focus input, covering existing content*), esa. El **terminador** dejalo
-   en **ninguno**; "Enter" o "Tab" también sirven (PaqueteX no recibe el
-   paquete por eso), pero "ninguno" es lo más limpio.
+   en **ninguno** o en **Enter** (PaqueteX no recibe el paquete por eso).
+   **Evitá "Tab"**: manda el cursor al botón que sigue y la lectura
+   siguiente se pierde.
 2. **Activar el modo lector en PaqueteX.** En el menú de cuenta (tu avatar)
    tocá **Este equipo tiene lector**: pasa a "Activado". Queda guardado **en
    ese equipo** — no hace falta repetirlo cada vez que entrás, y no cambia
@@ -262,8 +263,11 @@ laterales). Para que la lectura llegue al campo Guía hacen falta dos pasos,
 Con el modo lector activado, al abrir **Recibir** el cursor ya queda en el
 campo Guía (sin que aparezca el teclado en pantalla): apuntás al código,
 apretás el gatillo y la guía aparece. Si en algún momento necesitás
-escribirla a mano, tocás el campo y aparece el teclado. Una segunda lectura
-**reemplaza** a la anterior en vez de sumarse. En **Entregar**, si el paquete
+escribirla a mano, tocás el campo y aparece el teclado. Si el equipo está en
+el modo que sobrescribe, o si el lector termina cada lectura con Enter, una
+segunda lectura **reemplaza** a la anterior en vez de sumarse; con un modo que
+no sobrescribe y sin Enter, borrá el campo antes de volver a leer. En
+**Entregar**, si el paquete
 tiene guía, el cursor queda directamente en **Confirmar guía**. El botón de
 la cámara sigue disponible por si una etiqueta dañada no se deja leer.
 

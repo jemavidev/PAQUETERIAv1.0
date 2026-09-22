@@ -182,3 +182,16 @@ def test_en_confirmar_guia_de_entregar_una_lectura_de_mas_de_50_tampoco_se_escri
     assert pagina.input_value(f"#guia-confirmar-{p.id}") == ""
     assert "60" in mensaje.inner_text()
     _esperar_sin_flujos_vivos(pagina)
+
+
+def test_la_regla_de_50_cuenta_como_el_servidor_tras_pasar_a_mayusculas(app_viva, pagina, camara):
+    """Revisión del ticket 07: el servidor cuenta la guía DESPUÉS de pasarla a mayúsculas ("ß" pasa a "SS"),
+    la cámara escribe lo leído tal cual. 26 "ß" son 26 caracteres crudos pero 52 normalizados: se rechaza."""
+    p = _abrir(app_viva, pagina)
+    camara.con_video("ß" * 26)
+
+    _escanear(pagina, p)
+    _mensaje(pagina, p).wait_for(state="visible", timeout=15_000)
+
+    assert _campo(pagina, p) == ""  # no se escribió
+    assert "52" in _mensaje(pagina, p).inner_text()

@@ -1491,7 +1491,11 @@ async def receive_action(
         normalizar_guia(guia)
     except GuiaDemasiadoLarga as exc:
         if destino != "/paquetes":
-            return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
+            # Desde /consultar (revisión del ticket 04): antes un 303 mudo -- el Operador no veía nada. Ahora esa
+            # vista se vuelve a pintar con el modal Recibir abierto y el mensaje dentro, como en /paquetes.
+            return renderizar_busqueda(
+                request, db, q, status_code=400, recibir_error_guia=str(exc)
+            )
         return _render_lista(
             request, db, staff, error=str(exc), status_code=400,
             recibir_paquete_id=str(paquete.id), error_campo="guide_number",

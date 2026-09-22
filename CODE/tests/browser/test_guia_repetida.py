@@ -94,3 +94,22 @@ def test_la_lectura_de_la_camara_tambien_dispara_el_aviso(app_viva, pagina, cama
     _aviso(pagina, p).wait_for(state="visible", timeout=15_000)
 
     assert "Ya hay 1 paquete con esta guía" in _aviso(pagina, p).inner_text()
+
+
+def test_si_la_consulta_falla_se_oculta_el_aviso_anterior(app_viva, pagina):
+    """Revisión del ticket 08: una sesión vencida hace que la consulta devuelva la página de ingreso (HTML) en
+    vez de JSON. El aviso de la guía ANTERIOR no puede quedarse en pantalla como si fuera de la actual."""
+    p = _abrir(app_viva, pagina)
+    sembrar_paquete_con_guia(app_viva, "DUP-1")
+
+    pagina.click(f"#guia-{p.id}")
+    pagina.keyboard.type("dup-1")
+    _aviso(pagina, p).wait_for(state="visible")
+
+    pagina.route(
+        "**/paquetes/guia-repetida**",
+        lambda ruta: ruta.fulfill(status=200, content_type="text/html", body="<html>ingreso</html>"),
+    )
+    pagina.keyboard.type("9")  # otra guía: la consulta ahora falla
+
+    _aviso(pagina, p).wait_for(state="hidden")

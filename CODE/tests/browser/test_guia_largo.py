@@ -103,3 +103,17 @@ def test_si_el_envio_llega_al_servidor_el_modal_reabre_con_el_mensaje_visible(ap
     assert _mensaje(pagina, p).is_visible()
     assert "La guía tiene 60 caracteres; el máximo es 50." in _mensaje(pagina, p).inner_text()
     assert paquete_en_bd(app_viva, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_el_campo_cuenta_caracteres_y_no_unidades_utf16_como_el_servidor(app_viva, pagina):
+    """Revisión del ticket 04: un emoji son 2 unidades UTF-16 pero 1 carácter para Python y Postgres. 30
+    emojis caben en 50; contarlos como 60 bloquearía una guía que el servidor sí acepta."""
+    p = _abrir(app_viva, pagina)
+
+    pagina.click(f"#guia-{p.id}")
+    pagina.keyboard.insert_text("\U0001F600" * 30)
+
+    assert not _mensaje(pagina, p).is_visible()
+    with pagina.expect_navigation():
+        pagina.click(f"#modal-receive-{p.id} button[type=submit]")
+    assert paquete_en_bd(app_viva, p.id).estado == EstadoPaquete.RECIBIDO

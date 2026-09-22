@@ -115,6 +115,7 @@ def renderizar_busqueda(
     error: str = None,
     status_code: int = 200,
     entregar_error_motivo: bool = False,
+    recibir_error_guia: str = None,
 ) -> HTMLResponse:
     """Cuerpo de `/consultar` (GET), extraído para reusarse desde
     `packages.py::deliver_action` (pedido explícito del cliente, reportado
@@ -168,6 +169,9 @@ def renderizar_busqueda(
             "dias_desde_recibido": dias_desde_recibido(paquete),
             "error": error,
             "entregar_error_motivo": entregar_error_motivo,
+            # Ticket 04 (revisión): reabre el modal Recibir con el rechazo por guía larga DENTRO, igual que
+            # `/paquetes` (`error_guia`); `None` en cualquier otro caso.
+            "recibir_error_guia": recibir_error_guia,
         }
         # Issue 171 (.scratch/pendientes-cliente): mismo contexto que ya
         # arma `packages.py` para el modal `modal_recibir` compartido --

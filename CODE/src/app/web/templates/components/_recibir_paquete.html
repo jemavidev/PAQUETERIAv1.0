@@ -753,6 +753,9 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && e.target.matches && e.target.matches(campoGuiaRecibir)) {
         e.preventDefault();
+        // Modo lector (ticket 10): el Enter es el terminador de una lectura. Dejar el contenido SELECCIONADO hace
+        // que un segundo disparo del gatillo lo REEMPLACE en vez de pegarse a él (historia 27 del spec).
+        if (modoLectorActivo()) e.target.select();
         return;
       }
       if (e.key === 'Enter' || e.key === ' ') registrarGestoSobreBoton(e);
@@ -775,7 +778,11 @@
     // texto que el del servidor, `GuiaDemasiadoLarga`). La lectura por cámara escribe el valor por código,
     // sin evento `input`: el escáner llama a esta función a mano.
     var largoMaximoGuia = 50;
-    function largoNormalizadoDeGuia(valor) { return valor.replace(/\s+/g, ' ').trim().length; }
+    // Se cuenta como el servidor (`normalizar_guia`): forma NORMALIZADA, ya en MAYÚSCULAS ("ß" pasa a "SS": 1
+    // carácter crudo, 2 normalizados) y en caracteres REALES, no en unidades UTF-16 (un emoji cuenta 1).
+    function largoNormalizadoDeGuia(valor) {
+      return Array.from(valor.replace(/\s+/g, ' ').trim().toUpperCase()).length;
+    }
     function validarLargoGuia(input) {
       var largo = largoNormalizadoDeGuia(input.value);
       var msg = input.parentNode.querySelector('.guia-largo-msg');
@@ -823,7 +830,10 @@
           headers: { 'X-Requested-With': 'fetch' },
           signal: controlador.signal,
         })
-          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (!r.ok) throw new Error('consulta de guía repetida: ' + r.status);
+            return r.json();  // una sesión vencida devuelve la página de ingreso (HTML): esto lanza y cae al catch
+          })
           .then(function (datos) {
             if (!datos.cantidad) { aviso.hidden = true; aviso.textContent = ''; return; }
             var detalle = Object.keys(datos.por_estado).map(function (estado) {
@@ -835,7 +845,13 @@
                                 ' con esta guía (' + detalle + ').';
             aviso.hidden = false;
           })
-          .catch(function () {});  // informativo: si falla, sin aviso (un AbortError es lo normal al seguir tecleando)
+          .catch(function (err) {
+            // Un AbortError es lo normal al seguir tecleando (viene otra consulta). Cualquier otro fallo: sin aviso,
+            // y sobre todo SIN dejar el de la guía anterior, que ya no corresponde a lo que hay en el campo.
+            if (err && err.name === 'AbortError') return;
+            aviso.hidden = true;
+            aviso.textContent = '';
+          });
       }, pausaMs);
     }
     document.addEventListener('input', function (e) {
@@ -1061,7 +1077,6 @@
       var clave = btn.dataset.video;
       if (_escaneos[clave]) return;  // ya hay un escaneo en curso en este campo (doble toque)
       var input = document.getElementById(btn.dataset.target);
-      var video = document.getElementById(btn.dataset.video);
       var msg = btn.parentNode.querySelector('.scan-msg');
       function limpiarMensaje() { if (msg) { msg.hidden = true; msg.textContent = ''; } }
       function fail(t) { if (msg) { msg.hidden = false; msg.textContent = t; } }
@@ -1076,6 +1091,13 @@
       // Se registra el escaneo YA, antes de cualquier espera (carga del lector, aviso de permiso): un segundo
       // toque no abre otro flujo, y "Detener" funciona desde el primer instante. El botón "Detener" copia las
       // clases del botón "Escanear" (ninguna clase nueva de Tailwind).
+      // Un <video> NUEVO por escaneo (revisión del ticket 06): si el Operador cancela y vuelve a escanear antes de
+      // que llegue la primera cámara, el lector viejo (cuya cámara llega tarde) se colgaba del MISMO <video> y lo
+      // soltaba, dejando ciego al escaneo nuevo. Con un elemento por escaneo, lo tardío solo toca el suyo (ya
+      // desprendido). Conserva el `id` y los atributos, así que nada más cambia.
+      var videoViejo = document.getElementById(btn.dataset.video);
+      var video = videoViejo.cloneNode(false);
+      videoViejo.parentNode.replaceChild(video, videoViejo);
       var esc = { reader: null, btn: btn, video: video, parar: null, luz: null, pista: null, linternaEncendida: false, terminado: false };
       _escaneos[clave] = esc;
       btn.disabled = true;

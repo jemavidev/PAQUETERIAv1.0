@@ -204,7 +204,10 @@ def test_una_guia_larga_que_queda_en_50_o_menos_al_normalizar_se_guarda(client):
     assert recibido.guide_number == "A" * 30 + " " + "B" * 15
 
 
-def test_desde_consultar_una_guia_larga_tampoco_da_500_y_deja_el_paquete_anunciado(client):
+def test_desde_consultar_una_guia_larga_reabre_el_recibir_de_consultar_con_el_mensaje(client):
+    """Revisión del ticket 04 (historia 40 del spec): antes, con `origen=consultar`, el rechazo era un 303 mudo
+    y el Operador no veía nada. Ahora /consultar se vuelve a pintar con el modal Recibir abierto y el mensaje
+    DENTRO, sin recibir el paquete."""
     from app.domain.paquete import EstadoPaquete, Paquete
 
     _login_staff(client)
@@ -216,8 +219,10 @@ def test_desde_consultar_una_guia_larga_tampoco_da_500_y_deja_el_paquete_anuncia
         follow_redirects=False,
     )
 
-    assert r.status_code == 303
-    assert r.headers["location"].startswith("/consultar?q=")
+    assert r.status_code == 400
+    assert " hidden" not in _tag_del_modal_recibir(r.text, p.id)  # el modal llega abierto
+    desde = r.text.index(f'id="modal-receive-{p.id}"')
+    assert "La guía tiene 51 caracteres; el máximo es 50." in r.text[desde:]
     client.db.expire_all()
     assert client.db.get(Paquete, p.id).estado == EstadoPaquete.ANUNCIADO
 

@@ -44,6 +44,13 @@ def _sin_flujos_vivos(camara):
     return all(estado == "ended" for flujo in pistas for estado in flujo)
 
 
+def _esperar_sin_flujos_vivos_salvo_el_primero(pagina):
+    """El flujo tardío (el segundo en llegar, índice 1) del escaneo cancelado tiene que quedar apagado."""
+    pagina.wait_for_function(
+        "() => window.__camara.flujos.length >= 2 && window.__camara.flujos[1].getTracks().every(t => t.readyState === 'ended')"
+    )
+
+
 def _esperar_sin_flujos_vivos(pagina, camara):
     pagina.wait_for_function(
         "() => window.__camara.flujos.every(f => f.getTracks().every(t => t.readyState === 'ended'))"
@@ -178,3 +185,27 @@ def test_en_confirmar_guia_de_entregar_el_ciclo_es_el_mismo(app_viva, pagina, ca
     pagina.keyboard.press("Escape")
     pagina.wait_for_function("id => document.getElementById(id).hidden", arg=f"modal-deliver-{p.id}")
     _esperar_sin_flujos_vivos(pagina, camara)
+
+
+def test_cancelar_y_volver_a_escanear_antes_de_que_llegue_la_primera_camara_no_deja_ciego_al_segundo(
+    app_viva, pagina, camara
+):
+    """Revisión del ticket 06: el escaneo cancelado y el nuevo compartían el mismo <video>. Cuando la primera
+    cámara por fin llegaba, se colgaba de ese video y lo soltaba, dejando al segundo escaneo sin imagen aunque
+    su cámara siguiera encendida."""
+    p = _abrir(app_viva, pagina)
+    camara.con_video(retardo_ms=1200)  # la primera cámara tarda (aviso de permiso sin contestar)
+    _escanear_btn(pagina, p).click()
+    _detener_btn(pagina, p).click()  # cancela antes de que llegue
+
+    camara.con_video()  # la segunda llega enseguida
+    _escanear_btn(pagina, p).click()
+    pagina.wait_for_function("() => window.__camara.flujos.length === 2", timeout=10_000)  # llegó la tardía
+
+    # El video que se ve sigue siendo el del SEGUNDO escaneo (el primero en llegar, índice 0), y sigue vivo.
+    assert pagina.evaluate(
+        "id => document.getElementById(id).srcObject === window.__camara.flujos[0]", f"video-{p.id}"
+    )
+    estado = camara.estado()
+    assert estado["pistas"][0] == ["live"]
+    _esperar_sin_flujos_vivos_salvo_el_primero(pagina)

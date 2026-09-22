@@ -189,3 +189,33 @@ def test_un_modal_que_llega_ya_abierto_tambien_recibe_el_foco(app_viva, pagina):
     assert pagina.locator(f"#modal-receive-{p.id}").is_visible()  # llegó abierto del servidor
     assert _foco_en(pagina) == f"guia-{p.id}"
     assert pagina.get_attribute(f"#guia-{p.id}", "inputmode") == "none"
+
+
+def test_un_enter_del_lector_deja_el_contenido_seleccionado_para_que_la_siguiente_lectura_lo_reemplace(
+    app_viva, pagina
+):
+    """Revisión del ticket 10 (historia 27 del spec): dos disparos SEGUIDOS, sin reabrir el modal ni tocar el
+    campo. Con el terminador Enter (la guardia lo absorbe) el contenido queda seleccionado: la segunda lectura
+    reemplaza a la primera en vez de pegarse a ella."""
+    p = _preparar(app_viva, pagina)
+    _alternar_desde_el_menu(pagina)
+    abrir_modal_recibir(pagina, app_viva, p)
+
+    pagina.keyboard.type("primera-1")
+    pagina.keyboard.press("Enter")  # el terminador que manda el lector tras la primera lectura
+    pagina.keyboard.type("segunda-2")  # segundo disparo del gatillo, sin tocar nada
+
+    assert pagina.input_value(f"#guia-{p.id}") == "SEGUNDA-2"
+
+
+def test_con_el_modo_apagado_un_enter_no_selecciona_nada(app_viva, pagina):
+    """Sin modo lector el campo se comporta como siempre: teclear a mano tras un Enter no borra lo escrito."""
+    p = _preparar(app_viva, pagina)
+    abrir_modal_recibir(pagina, app_viva, p)
+    pagina.click(f"#guia-{p.id}")
+
+    pagina.keyboard.type("abc")
+    pagina.keyboard.press("Enter")
+    pagina.keyboard.type("def")
+
+    assert pagina.input_value(f"#guia-{p.id}") == "ABCDEF"
