@@ -25,12 +25,7 @@ def iniciar_sesion_staff(pagina, app_viva, email=EMAIL_STAFF):
     """
     create_initial_admin(app_viva.db, email, "Staff", PASSWORD_STAFF)
     app_viva.db.commit()
-    respuesta = pagina.context.request.post(
-        f"{app_viva.url}/ingresar",
-        form={"email": email, "password": PASSWORD_STAFF},
-        max_redirects=0,
-    )
-    assert respuesta.status == 303, f"el login de Staff no redirigió (status {respuesta.status})"
+    volver_a_iniciar_sesion(pagina, app_viva, email)
 
 
 def anunciar_paquete(app_viva, tel="3001234567", nombre="Ana"):
@@ -106,3 +101,54 @@ def alternar_modo_lector(pagina):
 def foco_en(pagina):
     """El `id` del elemento que tiene el foco ahora."""
     return pagina.evaluate("() => document.activeElement && document.activeElement.id")
+
+
+def preparar_recibir(app_viva, pagina):
+    """Login de Staff, un Paquete `Anunciado` y su modal Recibir abierto. Devuelve el Paquete."""
+    iniciar_sesion_staff(pagina, app_viva)
+    p = anunciar_paquete(app_viva)
+    abrir_modal_recibir(pagina, app_viva, p)
+    return p
+
+
+def preparar_entregar(app_viva, pagina, guia="GUIA-9"):
+    """Login de Staff, un Paquete `Recibido` con `guia` y su modal Entregar abierto. Devuelve el Paquete."""
+    iniciar_sesion_staff(pagina, app_viva)
+    p = anunciar_paquete(app_viva)
+    recibir_paquete_en_bd(app_viva, p, guia)
+    abrir_modal_entregar(pagina, app_viva, p)
+    return p
+
+
+def espiar_envios(pagina, sufijo="/recibir"):
+    """Lista viva de los POST cuya URL termina en `sufijo` que el navegador envía (lo que salió de verdad)."""
+    enviados = []
+    pagina.on(
+        "request",
+        lambda r: enviados.append(r.url) if r.method == "POST" and r.url.endswith(sufijo) else None,
+    )
+    return enviados
+
+
+# --- escaneo con cámara en el modal Recibir (los mismos localizadores en todas las pruebas de cámara) ---
+def boton_escanear(pagina, paquete):
+    return pagina.locator(f"#modal-receive-{paquete.id} .scan-btn")
+
+
+def escanear(pagina, paquete):
+    boton_escanear(pagina, paquete).click()
+
+
+def video_de(pagina, paquete):
+    return pagina.locator(f"#video-{paquete.id}")
+
+
+def mensaje_de_escaneo(pagina, paquete):
+    return pagina.locator(f"#modal-receive-{paquete.id} .scan-msg")
+
+
+def esperar_sin_flujos_vivos(pagina):
+    """Espera a que TODA pista de TODO flujo que abrió la cámara simulada quede `ended` (nada encendido)."""
+    pagina.wait_for_function(
+        "() => window.__camara.flujos.every(f => f.getTracks().every(t => t.readyState === 'ended'))"
+    )

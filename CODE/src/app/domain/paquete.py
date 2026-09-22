@@ -43,16 +43,11 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from .base import Base
+from .guia import LARGO_MAXIMO_GUIA
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
-
-
-# Largo máximo de la Guía del transportador (`Paquete.guide_number`). La columna es `String(50)`;
-# la validación de `paquete_lifecycle.normalizar_guia` usa esta misma constante, así que el límite y
-# la columna no pueden desincronizarse.
-LARGO_MAXIMO_GUIA = 50
 
 
 class EstadoPaquete(str, enum.Enum):

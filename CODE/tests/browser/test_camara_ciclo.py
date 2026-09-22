@@ -12,36 +12,17 @@ escaneo sin haber leído nada. Cada prueba mira el estado de TODOS los flujos qu
 import pytest
 
 from _ayudantes import (
-    abrir_modal_entregar,
-    abrir_modal_recibir,
-    anunciar_paquete,
-    iniciar_sesion_staff,
-    recibir_paquete_en_bd,
+    boton_escanear,
+    escanear,
+    esperar_sin_flujos_vivos,
+    preparar_entregar,
+    preparar_recibir,
+    video_de,
 )
-
-
-def _abrir(app_viva, pagina):
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    abrir_modal_recibir(pagina, app_viva, p)
-    return p
-
-
-def _escanear_btn(pagina, p):
-    return pagina.locator(f"#modal-receive-{p.id} .scan-btn")
 
 
 def _detener_btn(pagina, p):
     return pagina.locator(f"#modal-receive-{p.id} .scan-stop")
-
-
-def _video(pagina, p):
-    return pagina.locator(f"#video-{p.id}")
-
-
-def _sin_flujos_vivos(camara):
-    pistas = camara.estado()["pistas"]
-    return all(estado == "ended" for flujo in pistas for estado in flujo)
 
 
 def _esperar_sin_flujos_vivos_salvo_el_primero(pagina):
@@ -51,18 +32,11 @@ def _esperar_sin_flujos_vivos_salvo_el_primero(pagina):
     )
 
 
-def _esperar_sin_flujos_vivos(pagina, camara):
-    pagina.wait_for_function(
-        "() => window.__camara.flujos.every(f => f.getTracks().every(t => t.readyState === 'ended'))"
-    )
-    assert _sin_flujos_vivos(camara)
-
-
 def test_un_doble_clic_en_escanear_abre_un_solo_flujo(app_viva, pagina, camara):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
-    _escanear_btn(pagina, p).dblclick()
-    _video(pagina, p).wait_for(state="visible")
+    boton_escanear(pagina, p).dblclick()
+    video_de(pagina, p).wait_for(state="visible")
 
     estado = camara.estado()
     assert estado["llamadas"] == 1
@@ -70,65 +44,65 @@ def test_un_doble_clic_en_escanear_abre_un_solo_flujo(app_viva, pagina, camara):
 
 
 def test_mientras_escanea_el_boton_queda_deshabilitado_y_aparece_detener(app_viva, pagina, camara):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     assert _detener_btn(pagina, p).count() == 0
 
-    _escanear_btn(pagina, p).click()
-    _video(pagina, p).wait_for(state="visible")
+    boton_escanear(pagina, p).click()
+    video_de(pagina, p).wait_for(state="visible")
 
-    assert _escanear_btn(pagina, p).is_disabled()
+    assert boton_escanear(pagina, p).is_disabled()
     assert _detener_btn(pagina, p).is_visible()
     assert _detener_btn(pagina, p).inner_text() == "Detener"
 
 
 def test_detener_apaga_la_camara_oculta_el_video_y_deja_el_campo_como_estaba(app_viva, pagina, camara):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc")
 
-    _escanear_btn(pagina, p).click()
-    _video(pagina, p).wait_for(state="visible")
+    boton_escanear(pagina, p).click()
+    video_de(pagina, p).wait_for(state="visible")
     _detener_btn(pagina, p).click()
 
-    _esperar_sin_flujos_vivos(pagina, camara)
-    assert _video(pagina, p).is_hidden()
+    esperar_sin_flujos_vivos(pagina)
+    assert video_de(pagina, p).is_hidden()
     assert pagina.input_value(f"#guia-{p.id}") == "ABC"
-    assert _escanear_btn(pagina, p).is_enabled()
+    assert boton_escanear(pagina, p).is_enabled()
     assert _detener_btn(pagina, p).count() == 0
 
 
 def test_una_lectura_llena_el_campo_apaga_la_camara_y_permite_otra(app_viva, pagina, camara):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     camara.con_video("gu-77")  # un QR real dibujado frente a la "cámara"
 
-    _escanear_btn(pagina, p).click()
+    boton_escanear(pagina, p).click()
     pagina.wait_for_function(
         "id => document.getElementById('guia-' + id).value !== ''", arg=str(p.id), timeout=15_000
     )
 
     assert pagina.input_value(f"#guia-{p.id}") == "gu-77"  # tal como se leyó
-    assert _video(pagina, p).is_hidden()
-    _esperar_sin_flujos_vivos(pagina, camara)
-    assert _escanear_btn(pagina, p).is_enabled()
+    assert video_de(pagina, p).is_hidden()
+    esperar_sin_flujos_vivos(pagina)
+    assert boton_escanear(pagina, p).is_enabled()
     assert _detener_btn(pagina, p).count() == 0
 
     # Otra lectura funciona: el estado quedó reiniciado.
     camara.con_video("otra-88")
-    _escanear_btn(pagina, p).click()
+    boton_escanear(pagina, p).click()
     pagina.wait_for_function(
         "id => document.getElementById('guia-' + id).value === 'otra-88'",
         arg=str(p.id),
         timeout=15_000,
     )
-    _esperar_sin_flujos_vivos(pagina, camara)
+    esperar_sin_flujos_vivos(pagina)
     assert camara.estado()["llamadas"] == 2
 
 
 @pytest.mark.parametrize("como", ["equis", "fondo", "escape"])
 def test_cerrar_el_modal_apaga_la_camara_y_se_puede_volver_a_escanear(app_viva, pagina, camara, como):
-    p = _abrir(app_viva, pagina)
-    _escanear_btn(pagina, p).click()
-    _video(pagina, p).wait_for(state="visible")
+    p = preparar_recibir(app_viva, pagina)
+    boton_escanear(pagina, p).click()
+    video_de(pagina, p).wait_for(state="visible")
 
     if como == "equis":
         pagina.click(f'#modal-receive-{p.id} button[aria-label="Cerrar"]')
@@ -138,35 +112,32 @@ def test_cerrar_el_modal_apaga_la_camara_y_se_puede_volver_a_escanear(app_viva, 
         pagina.keyboard.press("Escape")
 
     pagina.wait_for_function("id => document.getElementById(id).hidden", arg=f"modal-receive-{p.id}")
-    _esperar_sin_flujos_vivos(pagina, camara)
+    esperar_sin_flujos_vivos(pagina)
 
     # Reabrir el modal y escanear otra vez funciona.
     pagina.locator(f'[data-open="modal-receive-{p.id}"]:visible').first.click()
-    _escanear_btn(pagina, p).click()
-    _video(pagina, p).wait_for(state="visible")
+    boton_escanear(pagina, p).click()
+    video_de(pagina, p).wait_for(state="visible")
     assert camara.estado()["llamadas"] == 2
 
 
 def test_detener_antes_de_que_llegue_la_camara_no_deja_un_flujo_vivo(app_viva, pagina, camara):
     """El aviso de permiso sin contestar: si el Operador cancela antes de que la cámara responda, el flujo
     que llega tarde no puede quedar encendido."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     camara.con_video(retardo_ms=800)
 
-    _escanear_btn(pagina, p).click()
+    boton_escanear(pagina, p).click()
     _detener_btn(pagina, p).click()  # antes de que la cámara responda
     pagina.wait_for_function("() => window.__camara.flujos.length === 1", timeout=5_000)
 
-    _esperar_sin_flujos_vivos(pagina, camara)
-    assert _video(pagina, p).is_hidden()
-    assert _escanear_btn(pagina, p).is_enabled()
+    esperar_sin_flujos_vivos(pagina)
+    assert video_de(pagina, p).is_hidden()
+    assert boton_escanear(pagina, p).is_enabled()
 
 
 def test_en_confirmar_guia_de_entregar_el_ciclo_es_el_mismo(app_viva, pagina, camara):
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    recibir_paquete_en_bd(app_viva, p, "GUIA-9")
-    abrir_modal_entregar(pagina, app_viva, p)
+    p = preparar_entregar(app_viva, pagina)
     boton = pagina.locator(f"#modal-deliver-{p.id} .scan-btn")
     video = pagina.locator(f"#video-confirmar-{p.id}")
 
@@ -176,7 +147,7 @@ def test_en_confirmar_guia_de_entregar_el_ciclo_es_el_mismo(app_viva, pagina, ca
     assert boton.is_disabled()
 
     pagina.locator(f"#modal-deliver-{p.id} .scan-stop").click()
-    _esperar_sin_flujos_vivos(pagina, camara)
+    esperar_sin_flujos_vivos(pagina)
     assert video.is_hidden()
     assert boton.is_enabled()
 
@@ -184,7 +155,7 @@ def test_en_confirmar_guia_de_entregar_el_ciclo_es_el_mismo(app_viva, pagina, ca
     video.wait_for(state="visible")
     pagina.keyboard.press("Escape")
     pagina.wait_for_function("id => document.getElementById(id).hidden", arg=f"modal-deliver-{p.id}")
-    _esperar_sin_flujos_vivos(pagina, camara)
+    esperar_sin_flujos_vivos(pagina)
 
 
 def test_cancelar_y_volver_a_escanear_antes_de_que_llegue_la_primera_camara_no_deja_ciego_al_segundo(
@@ -193,13 +164,13 @@ def test_cancelar_y_volver_a_escanear_antes_de_que_llegue_la_primera_camara_no_d
     """Revisión del ticket 06: el escaneo cancelado y el nuevo compartían el mismo <video>. Cuando la primera
     cámara por fin llegaba, se colgaba de ese video y lo soltaba, dejando al segundo escaneo sin imagen aunque
     su cámara siguiera encendida."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     camara.con_video(retardo_ms=1200)  # la primera cámara tarda (aviso de permiso sin contestar)
-    _escanear_btn(pagina, p).click()
+    boton_escanear(pagina, p).click()
     _detener_btn(pagina, p).click()  # cancela antes de que llegue
 
     camara.con_video()  # la segunda llega enseguida
-    _escanear_btn(pagina, p).click()
+    boton_escanear(pagina, p).click()
     pagina.wait_for_function("() => window.__camara.flujos.length === 2", timeout=10_000)  # llegó la tardía
 
     # El video que se ve sigue siendo el del SEGUNDO escaneo (el primero en llegar, índice 0), y sigue vivo.

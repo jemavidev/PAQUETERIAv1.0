@@ -10,19 +10,10 @@ distinguirlos, pero NUNCA bloquea (la Guía es una referencia, no una llave).
 from app.domain.paquete import EstadoPaquete
 
 from _ayudantes import (
-    abrir_modal_recibir,
-    anunciar_paquete,
-    iniciar_sesion_staff,
     paquete_en_bd,
+    preparar_recibir,
     sembrar_paquete_con_guia,
 )
-
-
-def _abrir(app_viva, pagina):
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    abrir_modal_recibir(pagina, app_viva, p)
-    return p
 
 
 def _aviso(pagina, p):
@@ -30,7 +21,7 @@ def _aviso(pagina, p):
 
 
 def test_al_escribir_una_guia_que_ya_existe_aparece_el_aviso_y_no_bloquea_recibir(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
 
     pagina.click(f"#guia-{p.id}")
@@ -51,7 +42,7 @@ def test_al_escribir_una_guia_que_ya_existe_aparece_el_aviso_y_no_bloquea_recibi
 
 
 def test_el_aviso_desaparece_si_la_guia_cambia_a_una_que_no_existe(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
 
     pagina.click(f"#guia-{p.id}")
@@ -63,7 +54,7 @@ def test_el_aviso_desaparece_si_la_guia_cambia_a_una_que_no_existe(app_viva, pag
 
 
 def test_con_la_guia_vacia_no_hay_aviso(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
 
     pagina.click(f"#guia-{p.id}")
@@ -75,7 +66,7 @@ def test_con_la_guia_vacia_no_hay_aviso(app_viva, pagina):
 
 
 def test_una_guia_que_no_existe_no_muestra_aviso(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
 
     pagina.click(f"#guia-{p.id}")
@@ -86,7 +77,7 @@ def test_una_guia_que_no_existe_no_muestra_aviso(app_viva, pagina):
 
 
 def test_la_lectura_de_la_camara_tambien_dispara_el_aviso(app_viva, pagina, camara):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
     camara.con_video("DUP-1")
 
@@ -99,7 +90,7 @@ def test_la_lectura_de_la_camara_tambien_dispara_el_aviso(app_viva, pagina, cama
 def test_si_la_consulta_falla_se_oculta_el_aviso_anterior(app_viva, pagina):
     """Revisión del ticket 08: una sesión vencida hace que la consulta devuelva la página de ingreso (HTML) en
     vez de JSON. El aviso de la guía ANTERIOR no puede quedarse en pantalla como si fuera de la actual."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
     sembrar_paquete_con_guia(app_viva, "DUP-1")
 
     pagina.click(f"#guia-{p.id}")

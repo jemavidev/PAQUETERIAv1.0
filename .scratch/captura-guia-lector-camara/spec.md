@@ -245,15 +245,15 @@ formulario que entrega el paquete, así que un Enter allí no envía nada y no n
 - Ciclo de vida: mientras hay un escaneo en curso el botón "Escanear" queda deshabilitado (no se permiten dos flujos en el
   mismo campo); hay un botón para detener; cerrar el modal por cualquier vía, incluida la tecla Escape, apaga la cámara y
   libera todos los flujos, incluidos los abiertos por un doble toque.
-- Todo este comportamiento vive en el bloque de comportamiento compartido del cliente que ya incluyen las páginas con Recibir
+- Todo este comportamiento vive en el bloque de comportamiento compartido del navegador que ya incluyen las páginas con Recibir
   y Entregar, así que llega por igual a Recibir (en /paquetes, /announce y /consultar) y a "Confirmar guía" de Entregar (en
   /paquetes y /consultar). No se duplica por página.
 
 **Largo de la guía (máximo 50 caracteres, sin cambios de esquema).**
 - No se agrega un tope de longitud al campo, a propósito: cortaría en silencio lo que inyecta el F7.
-- Cliente, lectura por cámara: si el texto leído supera 50 caracteres no se escribe y se muestra un mensaje con el largo
+- En el navegador, lectura por cámara: si el texto leído supera 50 caracteres no se escribe y se muestra un mensaje con el largo
   leído y el máximo.
-- Cliente, lector o teclado: si el valor del campo supera 50 caracteres el campo marca un error visible con el largo actual
+- En el navegador, lector o teclado: si el valor del campo supera 50 caracteres el campo marca un error visible con el largo actual
   y el envío de "Recibir" queda bloqueado hasta corregirlo (validación nativa del formulario).
 - Servidor: Recibir valida el largo de la Guía ya normalizada (la misma normalización con la que se guarda) y, si supera 50,
   responde con el mecanismo de error de modal que Recibir ya usa (reabre el modal Recibir del paquete con el mensaje), con
@@ -266,7 +266,7 @@ formulario que entrega el paquete, así que un Enter allí no envía nada y no n
   actual para no contarlo.
 - La comparación normaliza la guía igual que al guardar (mayúsculas, espacios colapsados, recortada), para que la
   coincidencia sea la misma que vería la base de datos.
-- El cliente lo consulta al terminar de leer o escribir (con una pausa breve para no consultar cada tecla) y muestra el
+- El navegador lo consulta al terminar de leer o escribir (con una pausa breve para no consultar cada tecla) y muestra el
   aviso junto al campo. Con la guía vacía no consulta ni avisa.
 - El aviso es solo informativo: no bloquea el envío, no se persiste, no cambia la política de la base de datos (sigue sin
   unicidad; en el glosario la Guía es una referencia, no una llave de emparejamiento).
@@ -299,7 +299,7 @@ ajustarlo tras la prueba de campo sin tocar la cámara ni las validaciones.
 ## Testing Decisions
 
 **Qué es un buen test aquí.** Prueba solo comportamiento externo: lo que el Operador ve y puede hacer, y lo que el servidor
-responde y persiste. No prueba nombres de funciones internas del cliente, la estructura del bloque compartido ni la
+responde y persiste. No prueba nombres de funciones internas del navegador, la estructura del bloque compartido ni la
 librería de lectura. Un test del navegador debe fallar si el Operador ya no puede completar la acción, no si se renombra
 una función.
 
@@ -311,7 +311,7 @@ una función.
    servicio de aviso de guía repetida (Staff sí, anónimo no; cantidad y estados; normalización; excluye el paquete actual;
    guía vacía; ningún dato personal en la respuesta); la consulta por guía con cero, uno y varios paquetes (Staff ve la
    lista, el público ve el mensaje neutro y ninguno de los dos recibe un 500; código de acceso sin cambios); y el contrato
-   del HTML renderizado que el cliente necesita (campo Guía de Recibir con sus ganchos, el interruptor en el menú de cuenta
+   del HTML renderizado que el navegador necesita (campo Guía de Recibir con sus ganchos, el interruptor en el menú de cuenta
    solo para Staff, "Confirmar guía" de Entregar solo cuando el paquete tiene guía, y que esto llegue a /announce y a
    /consultar).
 2. **Navegador real (nuevo, único).** Chromium real con Playwright contra la aplicación levantada sobre ese mismo Postgres

@@ -10,27 +10,10 @@ cuenta es la guía NORMALIZADA (espacios colapsados y recortada), igual que en e
 from app.domain.paquete import EstadoPaquete
 
 from _ayudantes import (
-    abrir_modal_recibir,
-    anunciar_paquete,
-    iniciar_sesion_staff,
+    espiar_envios,
     paquete_en_bd,
+    preparar_recibir,
 )
-
-
-def _abrir(app_viva, pagina):
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    abrir_modal_recibir(pagina, app_viva, p)
-    return p
-
-
-def _espiar_envios(pagina):
-    enviados = []
-    pagina.on(
-        "request",
-        lambda r: enviados.append(r.url) if r.method == "POST" and r.url.endswith("/recibir") else None,
-    )
-    return enviados
 
 
 def _mensaje(pagina, p):
@@ -38,8 +21,8 @@ def _mensaje(pagina, p):
 
 
 def test_mas_de_50_caracteres_marca_el_error_con_el_largo_y_bloquea_el_envio(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
-    enviados = _espiar_envios(pagina)
+    p = preparar_recibir(app_viva, pagina)
+    enviados = espiar_envios(pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.insert_text("x" * 60)  # como lo inyecta un lector: texto de una vez
@@ -57,7 +40,7 @@ def test_mas_de_50_caracteres_marca_el_error_con_el_largo_y_bloquea_el_envio(app
 
 
 def test_al_corregir_la_guia_el_error_desaparece_y_recibir_funciona(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.insert_text("x" * 60)
@@ -76,7 +59,7 @@ def test_al_corregir_la_guia_el_error_desaparece_y_recibir_funciona(app_viva, pa
 
 def test_los_espacios_que_se_colapsan_no_cuentan_para_el_maximo(app_viva, pagina):
     """60 caracteres crudos = 46 normalizados: no hay error y Recibir guarda la guía normalizada."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.insert_text("a" * 30 + " " * 15 + "b" * 15)
@@ -90,7 +73,7 @@ def test_los_espacios_que_se_colapsan_no_cuentan_para_el_maximo(app_viva, pagina
 def test_si_el_envio_llega_al_servidor_el_modal_reabre_con_el_mensaje_visible(app_viva, pagina):
     """El camino defensivo: `form.submit()` no pasa por la validación del campo. El servidor rechaza con
     400, no recibe nada y reabre el modal Recibir con el mensaje DENTRO (el toast queda detrás del modal)."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.insert_text("x" * 60)
@@ -108,7 +91,7 @@ def test_si_el_envio_llega_al_servidor_el_modal_reabre_con_el_mensaje_visible(ap
 def test_el_campo_cuenta_caracteres_y_no_unidades_utf16_como_el_servidor(app_viva, pagina):
     """Revisión del ticket 04: un emoji son 2 unidades UTF-16 pero 1 carácter para Python y Postgres. 30
     emojis caben en 50; contarlos como 60 bloquearía una guía que el servidor sí acepta."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.insert_text("\U0001F600" * 30)

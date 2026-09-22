@@ -12,35 +12,16 @@ cosas: si salió un POST a /recibir (lo que el navegador envió) y qué hay en l
 from app.domain.paquete import EstadoPaquete
 
 from _ayudantes import (
-    abrir_modal_entregar,
-    abrir_modal_recibir,
-    anunciar_paquete,
-    iniciar_sesion_staff,
+    espiar_envios,
     paquete_en_bd,
-    recibir_paquete_en_bd,
+    preparar_entregar,
+    preparar_recibir,
 )
 
 
-def _espiar_envios(pagina):
-    """Lista viva de los POST a /recibir que el navegador envía."""
-    enviados = []
-    pagina.on(
-        "request",
-        lambda r: enviados.append(r.url) if r.method == "POST" and r.url.endswith("/recibir") else None,
-    )
-    return enviados
-
-
-def _abrir(app_viva, pagina):
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    abrir_modal_recibir(pagina, app_viva, p)
-    return p
-
-
 def test_un_enter_tras_la_guia_no_recibe_el_paquete(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
-    enviados = _espiar_envios(pagina)
+    p = preparar_recibir(app_viva, pagina)
+    enviados = espiar_envios(pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc-123")  # ráfaga de teclas, como un lector
@@ -54,8 +35,8 @@ def test_un_enter_tras_la_guia_no_recibe_el_paquete(app_viva, pagina):
 
 
 def test_un_tab_tras_la_guia_conserva_el_valor_y_no_envia(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
-    enviados = _espiar_envios(pagina)
+    p = preparar_recibir(app_viva, pagina)
+    enviados = espiar_envios(pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc-123")
@@ -68,7 +49,7 @@ def test_un_tab_tras_la_guia_conserva_el_valor_y_no_envia(app_viva, pagina):
 
 
 def test_recibir_despues_del_enter_recibe_con_la_guia_leida(app_viva, pagina):
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc-123")
@@ -84,8 +65,8 @@ def test_recibir_despues_del_enter_recibe_con_la_guia_leida(app_viva, pagina):
 def test_un_envio_que_no_viene_del_boton_con_el_foco_en_guia_tampoco_recibe(app_viva, pagina):
     """Segundo nivel de la guardia: aunque el terminador llegue por un camino que no dispare la
     tecla Enter, un envío del formulario con el foco en Guía y sin gesto sobre el botón no recibe."""
-    p = _abrir(app_viva, pagina)
-    enviados = _espiar_envios(pagina)
+    p = preparar_recibir(app_viva, pagina)
+    enviados = espiar_envios(pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc-123")
@@ -100,7 +81,7 @@ def test_un_envio_que_no_viene_del_boton_con_el_foco_en_guia_tampoco_recibe(app_
 
 def test_el_boton_recibir_activado_con_el_teclado_si_recibe(app_viva, pagina):
     """La guardia no le quita al Operador el teclado: Enter con el foco en el botón "Recibir" recibe."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f"#guia-{p.id}")
     pagina.keyboard.type("abc-123")
@@ -113,7 +94,7 @@ def test_el_boton_recibir_activado_con_el_teclado_si_recibe(app_viva, pagina):
 
 def test_enter_en_otro_campo_del_modal_se_comporta_como_hoy(app_viva, pagina):
     """El ticket solo protege el campo Guía: Enter en el campo de Apartamento sigue enviando."""
-    p = _abrir(app_viva, pagina)
+    p = preparar_recibir(app_viva, pagina)
 
     pagina.click(f'[data-picker-apartamento="recibir-{p.id}"]')
     pagina.keyboard.type("302")
@@ -126,10 +107,7 @@ def test_enter_en_otro_campo_del_modal_se_comporta_como_hoy(app_viva, pagina):
 def test_enter_en_confirmar_guia_de_entregar_no_envia_nada(app_viva, pagina):
     """"Confirmar guía" vive FUERA del formulario de Entregar: la guardia no le hace falta y un
     Enter allí sigue sin entregar el paquete."""
-    iniciar_sesion_staff(pagina, app_viva)
-    p = anunciar_paquete(app_viva)
-    recibir_paquete_en_bd(app_viva, p, "GUIA-9")
-    abrir_modal_entregar(pagina, app_viva, p)
+    p = preparar_entregar(app_viva, pagina)
     entregas = []
     pagina.on(
         "request",

@@ -48,8 +48,8 @@ from .ocupante_service import (
     telefono_notificacion_de_persona,
     telefono_notificacion_ocupante,
 )
+from .guia import GuiaDemasiadoLarga, normalizar_guia
 from .paquete import EstadoPaquete, Paquete
-from .paquete_lifecycle import GuiaDemasiadoLarga, normalizar_guia
 from .persona import Persona
 from .persona_service import get_or_create_persona, get_or_create_persona_por_whatsapp
 from .telefono import normalizar_telefono

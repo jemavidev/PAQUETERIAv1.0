@@ -23,8 +23,9 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from .apartamento import Apartamento
+from .guia import normalizar_guia
 from .ocupante_service import promover_al_recibir
-from .paquete import LARGO_MAXIMO_GUIA, CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
+from .paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from .persona_service import reactivar_al_recibir
 from .telefono import normalizar_telefono
 from .texto import normalizar_nombre
@@ -50,31 +51,6 @@ class TransicionInvalida(Exception):
         )
 
 
-class GuiaDemasiadoLarga(ValueError):
-    """La Guía, ya normalizada como se guarda, supera `LARGO_MAXIMO_GUIA`.
-
-    El mensaje (`str(exc)`) es el que se le muestra al Operador: dice el largo real y el máximo."""
-
-    def __init__(self, largo: int):
-        self.largo = largo
-        super().__init__(f"La guía tiene {largo} caracteres; el máximo es {LARGO_MAXIMO_GUIA}.")
-
-
-def normalizar_guia(guide_number: str | None) -> str | None:
-    """La Guía en su forma canónica (mayúsculas, espacios colapsados y recortada), validando el largo.
-
-    `None` y cadena vacía pasan intactos (la Guía es opcional). Nunca trunca: una guía cortada sería
-    una guía equivocada.
-
-    Raises:
-        GuiaDemasiadoLarga: si la forma normalizada supera `LARGO_MAXIMO_GUIA`.
-    """
-    guia = normalizar_nombre(guide_number)
-    if guia and len(guia) > LARGO_MAXIMO_GUIA:
-        raise GuiaDemasiadoLarga(len(guia))
-    return guia
-
-
 def receive(
     session: Session,
     paquete: Paquete,
@@ -93,7 +69,7 @@ def receive(
 
     Raises:
         TransicionInvalida: si el paquete no está `ANUNCIADO` (queda intacto).
-        GuiaDemasiadoLarga: si la Guía normalizada supera `LARGO_MAXIMO_GUIA` (queda intacto).
+        GuiaDemasiadoLarga (`guia.py`): si la Guía normalizada supera `LARGO_MAXIMO_GUIA` (queda intacto).
     """
     if paquete.estado is not EstadoPaquete.ANUNCIADO:
         raise TransicionInvalida(paquete.estado, "recibir")

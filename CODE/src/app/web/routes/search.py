@@ -6,7 +6,8 @@ sesión).
 Busca SOLO por `access_code` o `guide_number` exactos (Grupo 2 de
 `ajustes-post-referencia-funcional/REQUERIMIENTOS.md`) — a propósito, NUNCA
 por teléfono: el `access_code` únicamente lo conoce quien anunció, así que es
-la única llave de consulta pública (la guía NO lo es: puede repetirse, ver ticket 09 en `renderizar_busqueda`). El timeline (con actor por hito, y
+la única llave de consulta pública (la guía NO lo es: puede repetirse, ver el ticket 09 en
+`renderizar_busqueda`). El timeline (con actor por hito, y
 `dias_desde_recibido`) vive en `paquete_timeline_service` — compartido con
 `/mis-paquetes`, que cuenta la misma historia del mismo paquete para el
 cliente autenticado.

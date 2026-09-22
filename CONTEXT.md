@@ -92,6 +92,11 @@ El nombre es **condicional**, no siempre se pide (`.scratch/anunciar-atajo-telef
 ### Guía (`guide_number`)
 Número del transportador. **Opcional** — no todos los operadores la usan hoy. Se captura al **Recibir**, escaneando el código de barras del paquete físico (referencia). El **emparejamiento** anuncio↔paquete físico se hace **por nombre/teléfono** del destinatario, no por la guía. El diseño deja espacio para **promover la guía a llave de emparejamiento a futuro** sin romper el esquema.
 
+**No es única**: un envío de varias cajas la comparte. Recibir la acepta y solo **avisa** (no bloquea) si otro Paquete ya la tiene, y `/consultar` le muestra al Staff la lista de coincidencias (al público, un aviso neutro sin datos). Máximo **50 caracteres**: se rechaza con un mensaje, nunca se trunca (`.scratch/captura-guia-lector-camara`).
+
+### Modo lector
+Preferencia **por equipo** (no por Usuario) que el Staff activa con **"Este equipo tiene lector"** en el menú de cuenta, para los equipos con un lector de códigos de barras integrado (por ejemplo el Farset F7). Apagada por defecto y guardada en el propio equipo. Encendida, al abrir **Recibir** (y "Confirmar guía" de **Entregar**) el foco va al campo de la guía, sin teclado en pantalla, para que el lector escriba ahí. Nunca recibe un paquete por sí sola: una lectura **solo llena** la guía, y recibir lo confirma siempre el Operador con el botón.
+
 ### Usuario (staff)
 Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. **Solo un `ADMIN` crea cuentas de staff.**
 

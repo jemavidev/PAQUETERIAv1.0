@@ -76,16 +76,15 @@ from app.domain.paquete_correccion_service import (
     fingerprint_candidatos,
     persona_confirmada_del_destinatario,
 )
+from app.domain.guia import GuiaDemasiadoLarga, normalizar_guia
 from app.domain.paquete_foto_service import agregar_foto_desde_url
 from app.domain.paquete_lifecycle import (
     ESTADOS_CORREGIBLES,
-    GuiaDemasiadoLarga,
     TransicionInvalida,
     cancel,
     corregir_apartamento,
     corregir_destinatario,
     deliver,
-    normalizar_guia,
     receive,
 )
 from app.domain.paquete_service import (

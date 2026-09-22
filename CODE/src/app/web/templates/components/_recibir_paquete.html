@@ -740,7 +740,7 @@
     // (nunca envía). El campo de confirmación de guía de Entregar ya vive FUERA de un <form>: un Enter allí no envía.
     // OJO: constantes en camelCase y sin nombres propios a propósito -- los tests de /paquetes verifican
     // por substring que ciertos nombres en MAYÚSCULAS no aparecen en la página, y este <script> viaja en ella.
-    var campoGuiaRecibir = 'input[name="guide_number"]';
+    var selectorGuiaRecibir = 'input[name="guide_number"]';
     var margenGestoMs = 1500;
     var ultimoGestoSobreBoton = 0;
     function registrarGestoSobreBoton(e) {
@@ -751,7 +751,7 @@
     document.addEventListener('pointerdown', registrarGestoSobreBoton, true);
     document.addEventListener('pointerup', registrarGestoSobreBoton, true);
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && e.target.matches && e.target.matches(campoGuiaRecibir)) {
+      if (e.key === 'Enter' && e.target.matches && e.target.matches(selectorGuiaRecibir)) {
         e.preventDefault();
         // Modo lector (ticket 10): el Enter es el terminador de una lectura. Dejar el contenido SELECCIONADO hace
         // que un segundo disparo del gatillo lo REEMPLACE en vez de pegarse a él (historia 27 del spec).
@@ -761,7 +761,7 @@
       if (e.key === 'Enter' || e.key === ' ') registrarGestoSobreBoton(e);
     }, true);
     document.addEventListener('submit', function (e) {
-      var guia = e.target.querySelector ? e.target.querySelector(campoGuiaRecibir) : null;
+      var guia = e.target.querySelector ? e.target.querySelector(selectorGuiaRecibir) : null;
       if (!guia || document.activeElement !== guia) return;
       if (Date.now() - ultimoGestoSobreBoton < margenGestoMs) return;
       // `stopPropagation` a propósito: el anti doble-envío (bloque base, fase de burbuja) no debe
@@ -777,11 +777,12 @@
     // `setCustomValidity` deja al navegador bloquear el envío de "Recibir" hasta que se corrija (mismo
     // texto que el del servidor, `GuiaDemasiadoLarga`). La lectura por cámara escribe el valor por código,
     // sin evento `input`: el escáner llama a esta función a mano.
-    var largoMaximoGuia = 50;
+    var largoMaximoGuia = {{ LARGO_MAXIMO_GUIA }};  // global de plantilla (`domain/guia.py`): una sola fuente
     // Se cuenta como el servidor (`normalizar_guia`): forma NORMALIZADA, ya en MAYÚSCULAS ("ß" pasa a "SS": 1
     // carácter crudo, 2 normalizados) y en caracteres REALES, no en unidades UTF-16 (un emoji cuenta 1).
+    function normalizarGuia(valor) { return valor.replace(/\s+/g, ' ').trim(); }
     function largoNormalizadoDeGuia(valor) {
-      return Array.from(valor.replace(/\s+/g, ' ').trim().toUpperCase()).length;
+      return Array.from(normalizarGuia(valor).toUpperCase()).length;
     }
     function validarLargoGuia(input) {
       var largo = largoNormalizadoDeGuia(input.value);
@@ -816,7 +817,7 @@
       if (!aviso) return;
       clearTimeout(esperaRepetida[clave]);
       if (consultaRepetida[clave]) consultaRepetida[clave].abort();
-      var guia = input.value.replace(/\s+/g, ' ').trim();
+      var guia = normalizarGuia(input.value);
       if (!guia || largoNormalizadoDeGuia(guia) > largoMaximoGuia) {
         aviso.hidden = true;
         aviso.textContent = '';
@@ -855,7 +856,7 @@
       }, pausaMs);
     }
     document.addEventListener('input', function (e) {
-      if (!(e.target.matches && e.target.matches(campoGuiaRecibir))) return;
+      if (!(e.target.matches && e.target.matches(selectorGuiaRecibir))) return;
       validarLargoGuia(e.target);
       consultarGuiaRepetida(e.target, pausaAvisoRepetidaMs);
     });
@@ -871,7 +872,7 @@
     // del Operador en el campo devuelve el teclado normal (para teclear a mano una guía que el lector no lee).
     // Los DOS campos donde se captura la guía: la de Recibir y "la de confirmación" de Entregar (ticket 11: solo
     // existe si el paquete YA tiene guía -- sin ella no hay nada que confirmar y este modo no enfoca nada).
-    var campoGuiaLector = campoGuiaRecibir + ', [data-guia-esperada]';
+    var selectorGuiaLector = selectorGuiaRecibir + ', [data-guia-esperada]';
     function modoLectorActivo() {
       return !!(window.paqueteXModoLector && window.paqueteXModoLector.activo());
     }
@@ -886,7 +887,7 @@
       var abrir = e.target.closest('[data-open]');
       if (!abrir || !modoLectorActivo()) return;
       var modal = document.getElementById(abrir.dataset.open);
-      if (modal) enfocarParaLector(modal.querySelector(campoGuiaLector));
+      if (modal) enfocarParaLector(modal.querySelector(selectorGuiaLector));
     });
     document.addEventListener('pointerup', function (e) {
       var campo = e.target.closest && e.target.closest('[data-modo-lector-foco]');
@@ -901,7 +902,7 @@
     function enfocarModalesAbiertos() {
       if (!modoLectorActivo()) return;
       // Sin nombrar el id del modal: hay pruebas que verifican por substring que ese texto NO está en páginas sin él.
-      var campos = document.querySelectorAll(campoGuiaLector);
+      var campos = document.querySelectorAll(selectorGuiaLector);
       for (var i = 0; i < campos.length; i++) {
         var modal = campos[i].closest('[role="dialog"]');
         if (modal && !modal.hidden) { enfocarParaLector(campos[i]); break; }
@@ -963,7 +964,8 @@
 
     // Escáner ZXing (cámara): carga el bundle de forma perezosa, decodifica
     // multi-formato y rellena la Guía. Degrada con gracia a entrada manual.
-    var _escaneos = {};  // clave (id del <video>) -> { reader, btn, video, parar, terminado }
+    // clave (id del <video>) -> { reader, btn, video, parar, luz, pista, linternaEncendida, terminado }
+    var _escaneos = {};
     // `alFallar` (ticket 05, `.scratch/captura-guia-lector-camara`): antes `onerror` era una función vacía,
     // así que con la red caída el botón "Escanear" no hacía NADA y no decía nada. La precarga en
     // inactividad (más abajo) no pasa `alFallar`: si falla, el siguiente clic lo intenta de nuevo y ahí sí
@@ -1014,10 +1016,6 @@
     function stopReaders() {
       Object.keys(_escaneos).forEach(terminarEscaneo);
     }
-    // Mensaje según el tipo de fallo de `getUserMedia` (ticket 05): cada caso dice algo distinto y accionable,
-    // en español y sin jerga. `decodeFromVideoDevice` devuelve una PROMESA que rechaza cuando el navegador
-    // niega la cámara: el `try/catch` síncrono de antes nunca la atrapaba (quedaba un cuadro de video negro
-    // visible, sin mensaje y con un error en la consola).
     // Restricciones de la cámara (ticket 07): trasera y con resolución IDEAL de 1280x720. Sin restricciones de
     // tamaño Chrome entrega 640x480, poco para un código lineal pequeño o algo lejano; `ideal` (nunca `exact`)
     // para que una cámara que no la da igual arranque, con lo más cercano. `focusMode` no aporta: Chrome
@@ -1054,6 +1052,10 @@
         esc.luz.textContent = encender ? 'Apagar linterna' : 'Linterna';
       }, function () {});  // sin efecto: el botón queda como estaba
     }
+    // Mensaje según el tipo de fallo de `getUserMedia` (ticket 05): cada caso dice algo distinto y accionable,
+    // en español y sin jerga. `decodeFromVideoDevice` devuelve una PROMESA que rechaza cuando el navegador
+    // niega la cámara: el `try/catch` síncrono de antes nunca la atrapaba (quedaba un cuadro de video negro
+    // visible, sin mensaje y con un error en la consola).
     function mensajeDeErrorDeCamara(err) {
       var nombre = err && err.name;
       if (nombre === 'NotAllowedError' || nombre === 'PermissionDeniedError' || nombre === 'SecurityError') {
@@ -1129,7 +1131,7 @@
               }
               input.value = leido;
               compararGuia(input);
-              if (input.matches(campoGuiaRecibir)) { validarLargoGuia(input); consultarGuiaRepetida(input, 0); }
+              if (input.matches(selectorGuiaRecibir)) { validarLargoGuia(input); consultarGuiaRepetida(input, 0); }
             }
           });
           if (iniciado && iniciado.then) {
