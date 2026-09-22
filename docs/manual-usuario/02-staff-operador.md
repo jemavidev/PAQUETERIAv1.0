@@ -50,6 +50,7 @@ antes que con alguien esperando en portería.
 | Entrar, salir, editar tu perfil o cambiar tu contraseña | La pantalla de ingreso, y el menú de cuenta → Mi perfil |
 | Ver, buscar y filtrar todos los paquetes | La bandeja de Paquetes |
 | Recibir, entregar o cancelar un paquete puntual | Los botones en la fila de cada paquete |
+| Cargar la guía de un paquete con la cámara o con el lector del F7 | El campo Guía del modal Recibir, y el menú de cuenta → "Este equipo tiene lector" |
 | Asignarle unidad a un paquete, o corregir a quién le corresponde | Los botones "Asignar apartamento" y "Modificar" de cada fila |
 | Anunciar un paquete a nombre de un residente | La pantalla de Anunciar para staff |
 | Buscar residentes y abrir su ficha completa | El buscador de Residentes |
@@ -192,6 +193,93 @@ real corresponde. Recién ahí se dispara la notificación al residente.
 > `[Angélica Ramírez, Daniel Ramírez, + Nuevo residente]` para que
 > confirmes a cuál de ellos corresponde en realidad.
 
+### La guía: a mano, con la cámara o con el lector
+
+La **guía** es el número que trae la etiqueta del transportador. Es
+**opcional** (no todos los paquetes la traen) y sirve solo de referencia: no
+reemplaza al código de acceso ni cambia a qué residente le corresponde el
+paquete. Se carga en el campo **Guía** del modal Recibir, de tres formas:
+
+1. **A mano.** Tocás el campo y la escribís; se pasa sola a mayúsculas.
+2. **Con la cámara del celular.** Tocás **📷 Escanear con cámara**, apuntás al
+   código de barras de la etiqueta y, cuando lo lee, la guía aparece sola en
+   el campo. La primera vez el celular te pide permiso para usar la cámara:
+   aceptalo. Mientras escanea tenés **Detener** (cancela sin leer nada) y, si
+   tu celular tiene linterna, **Linterna** (útil con poca luz). Cerrar el
+   modal también apaga la cámara. Si algo falla (permiso negado, sin cámara,
+   sin conexión), el sistema te dice qué pasó y podés escribir la guía a
+   mano. Ojo: si la etiqueta trae varios códigos, la cámara toma el primero
+   que logra leer — mirá que lo que quedó en el campo sea el número de la
+   guía.
+3. **Con el lector del Farset F7**, que se explica más abajo.
+
+**Lo que siempre vale, la cargues como la cargues:** leer la guía **solo la
+escribe en el campo**. Recibir el paquete lo hacés vos, con el botón
+**Recibir**. Aunque tu lector mande un "Enter" al final de cada lectura, el
+paquete **no** se recibe solo: así nunca te salteás el tipo, la condición,
+las fotos ni la confirmación del residente.
+
+Avisos que vas a ver:
+
+- **"La guía tiene N caracteres; el máximo es 50."** Una guía no puede pasar
+  de 50 caracteres. Si la cámara lee un código más largo (por ejemplo, un QR
+  con una dirección web), no lo escribe en el campo y te avisa cuántos
+  caracteres tiene: probá con otro código de la etiqueta o escribí la guía a
+  mano. Mientras la guía esté pasada, **Recibir** no envía nada.
+- **"Ya hay N paquetes con esta guía (...)"**, en color ámbar debajo del
+  campo. Es solo un aviso: **no bloquea nada** y te cuenta en qué estado
+  están esos otros paquetes. Una guía repetida es normal cuando un mismo
+  envío trae varias cajas; si en cambio leíste dos veces la misma etiqueta
+  por error, es la pista para darte cuenta.
+
+Cuando vas a **entregar** un paquete que tiene guía, el modal
+[Entregar](#4-entregar-un-paquete) trae un campo **Confirmar guía**: la
+leés (o la escribís) de nuevo y el sistema te muestra ✅ si coincide con la
+registrada o ⚠️ si es distinta. Es una ayuda para verificar que entregás el
+paquete correcto — **nunca bloquea** la entrega.
+
+### Usar el lector del Farset F7
+
+El F7 trae un lector de códigos de barras integrado (se dispara con las teclas
+laterales). Para que la lectura llegue al campo Guía hacen falta dos pasos,
+**una sola vez por equipo**:
+
+1. **Configurar el lector del equipo.** De fábrica el lector del F7 **no
+   escribe en páginas web**: viene mandando la lectura a otras aplicaciones,
+   no al campo que tenés enfocado, y por eso un F7 recién sacado de la caja
+   parece "no leer" en PaqueteX aunque no esté roto. En el equipo, entrá a
+   **Ajustes → Scanning Tools → Scanning Settings** y buscá el **modo de
+   envío** de la lectura (*send mode*): elegí el que escribe en el campo
+   enfocado — si hay una versión que sobrescribe lo que ya está escrito
+   (*Focus input, covering existing content*), esa. El **terminador** dejalo
+   en **ninguno**; "Enter" o "Tab" también sirven (PaqueteX no recibe el
+   paquete por eso), pero "ninguno" es lo más limpio.
+2. **Activar el modo lector en PaqueteX.** En el menú de cuenta (tu avatar)
+   tocá **Este equipo tiene lector**: pasa a "Activado". Queda guardado **en
+   ese equipo** — no hace falta repetirlo cada vez que entrás, y no cambia
+   nada en tu celular ni en el de tus compañeros.
+
+Con el modo lector activado, al abrir **Recibir** el cursor ya queda en el
+campo Guía (sin que aparezca el teclado en pantalla): apuntás al código,
+apretás el gatillo y la guía aparece. Si en algún momento necesitás
+escribirla a mano, tocás el campo y aparece el teclado. Una segunda lectura
+**reemplaza** a la anterior en vez de sumarse. En **Entregar**, si el paquete
+tiene guía, el cursor queda directamente en **Confirmar guía**. El botón de
+la cámara sigue disponible por si una etiqueta dañada no se deja leer.
+
+> **Cuidado:** estos pasos de configuración del lector salen de la
+> documentación del fabricante y todavía no se confirmaron en un F7 real; los
+> nombres exactos de las opciones pueden variar según la versión del equipo.
+> Si tu F7 no escribe la guía en el campo, revisá primero ese ajuste (el modo
+> de envío) y avisale al administrador.
+
+> **Ejemplo:** llega un paquete de una transportadora para Angélica Ramírez
+> (Torre 5 - 302). En el F7, con el modo lector activado, abrís **Recibir**,
+> apuntás al código de barras de la etiqueta y apretás el gatillo: la guía
+> aparece en el campo. Elegís tipo y condición, sacás las fotos y tocás
+> **Recibir**. Si el lector hubiera mandado un "Enter" al final, nada
+> cambia: el paquete recién se recibe cuando vos tocás el botón.
+
 ---
 
 ## 4. Entregar un paquete
@@ -209,6 +297,10 @@ Botón **Entregar**, en cualquier paquete que esté Recibido.
 4. Si el destinatario te debe (saldo contra entrega negativo), hay un
    campo opcional para registrar cuánto pagó en este mismo momento — si lo
    dejás vacío, la entrega ocurre igual y la deuda queda pendiente.
+5. Si el paquete tiene guía, hay un campo **Confirmar guía** para verificar
+   que entregás el paquete correcto (ver
+   [La guía](#la-guía-a-mano-con-la-cámara-o-con-el-lector)) — es solo una
+   ayuda, nunca bloquea la entrega.
 
 La entrega, el cobro y el ajuste de saldo (si aplica) quedan registrados
 todos juntos, en el mismo paso — nunca vas a terminar con la entrega hecha
@@ -523,6 +615,12 @@ tener que ir a buscarlo. Útil cuando alguien llega directo con su código
 en la mano — resolvés todo en la misma pantalla. Las mismas reglas de los
 bloques [3](#3-recibir-un-paquete) y [4](#4-entregar-un-paquete) aplican
 acá tal cual.
+
+Si buscás por **guía** y esa guía corresponde a más de un paquete (un mismo
+envío con varias cajas), ves la lista de coincidencias para elegir uno —
+destinatario, código de acceso y estado. Quien consulta sin ser staff no ve
+esa lista: solo un aviso de que tiene que buscar con el código de acceso de
+cada paquete.
 
 > **Ejemplo:** Angélica se presenta en portería con el código `AB4X9K`
 > que le llegó por WhatsApp. En vez de ir a la bandeja a buscarlo, entrás
