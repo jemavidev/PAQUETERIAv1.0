@@ -50,7 +50,7 @@ antes que con alguien esperando en portería.
 | Entrar, salir, editar tu perfil o cambiar tu contraseña | La pantalla de ingreso, y el menú de cuenta → Mi perfil |
 | Ver, buscar y filtrar todos los paquetes | La bandeja de Paquetes |
 | Recibir, entregar o cancelar un paquete puntual | Los botones en la fila de cada paquete |
-| Cargar la guía de un paquete con la cámara o con el lector del F7 | El campo Guía del modal Recibir, y el menú de cuenta → "Este equipo tiene lector" |
+| Cargar la guía de un paquete con la cámara o con el lector del F7 | El campo Guía del modal Recibir, y el menú de cuenta → "Lector" |
 | Asignarle unidad a un paquete, o corregir a quién le corresponde | Los botones "Asignar apartamento" y "Modificar" de cada fila |
 | Anunciar un paquete a nombre de un residente | La pantalla de Anunciar para staff |
 | Buscar residentes y abrir su ficha completa | El buscador de Residentes |
@@ -219,7 +219,7 @@ escribe en el campo**. Recibir el paquete lo hacés vos, con el botón
 paquete **no** se recibe solo: así nunca te salteás el tipo, la condición,
 las fotos ni la confirmación del residente.
 
-**En un equipo con "Este equipo tiene lector" activado (ver más abajo) no
+**En un equipo con "Lector" activado (ver más abajo) no
 aparece el botón de cámara** — confirmado en vivo: la cámara del Farset F7 no
 entrega una imagen utilizable (se ve negro), y con el lector físico y el
 campo ya enfocado la captura es más rápida igual. En un celular normal (el
@@ -263,7 +263,7 @@ laterales). Para que la lectura llegue al campo Guía hacen falta dos pasos,
    **Evitá "Tab"**: manda el cursor al botón que sigue y la lectura
    siguiente se pierde.
 2. **Activar el modo lector en PaqueteX.** En el menú de cuenta (tu avatar)
-   tocá **Este equipo tiene lector**: pasa a "Activado". Queda guardado **en
+   tocá **Lector**: pasa a "Activado". Queda guardado **en
    ese equipo** — no hace falta repetirlo cada vez que entrás, y no cambia
    nada en tu celular ni en el de tus compañeros.
 
