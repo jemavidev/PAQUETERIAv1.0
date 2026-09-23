@@ -42,7 +42,7 @@ from app.domain.ocupante_service import residentes_por_torre_apartamento
 from app.domain.paquete import CondicionPaquete, EstadoPaquete, Paquete, TipoPaquete
 from app.domain.paquete_correccion_service import candidatos_correccion, fingerprint_candidatos
 from app.domain.paquete_foto_service import listar_fotos
-from app.domain.paquete_service import es_primera_entrega_a_telefono
+from app.domain.paquete_service import es_primera_entrega, primera_entrega_verificable
 from app.domain.paquete_timeline_service import dias_desde_recibido, timeline_de_paquete
 from app.domain.persona import Persona
 from app.domain.saldo_contra_entrega_service import saldo_de_persona
@@ -218,9 +218,8 @@ def renderizar_busqueda(
         # gated igual que el propio modal (staff + RECIBIDO) para no pagar
         # el query de más en la inmensa mayoría de consultas anónimas.
         if request.session.get(SESSION_KEY) and paquete.estado == EstadoPaquete.RECIBIDO:
-            paquete.primera_entrega_a_telefono = es_primera_entrega_a_telefono(
-                db, paquete.recipient_phone
-            )
+            paquete.primera_entrega_a_telefono = es_primera_entrega(db, paquete)
+            paquete.primera_entrega_no_verificable = not primera_entrega_verificable(paquete)
             # .scratch/cobro-bodegaje, ticket 02: mismo criterio que arriba
             # -- acá solo hay UN paquete, se resuelve directo sin batch.
             contexto["cobro_desglose"] = calcular_cobro(

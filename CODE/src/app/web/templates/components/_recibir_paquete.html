@@ -134,13 +134,19 @@
         </label>
         {% endfor %}
         {% endif %}
-        <label class="col-span-2 cursor-pointer">
-          <input type="radio" name="candidato_idx" value="nuevo" id="recibir-candidato-nuevo-{{ paquete_id }}" class="peer sr-only" onchange="document.getElementById('recibir-nuevo-ocupante-{{ paquete_id }}').hidden = false">
-          <span class="flex items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 px-3 py-2.5 text-sm font-medium text-blue-700 transition peer-checked:bg-blue-50 hover:bg-blue-50">
+        {#- Issue 377 (`.scratch/pendientes-cliente`): sin unidad, "Nuevo residente" no tiene dónde registrar a nadie --
+           deshabilitada hasta elegir Torre/Apartamento en el selector de arriba (el script de abajo la habilita al
+           oír `picker-apartamento-cambio`). Si igual llegara sin unidad, el servidor recibe el paquete de todas formas. #}
+        <label class="col-span-2 cursor-pointer has-[:disabled]:cursor-not-allowed">
+          <input type="radio" name="candidato_idx" value="nuevo" id="recibir-candidato-nuevo-{{ paquete_id }}" class="peer sr-only"{{ " disabled" if sin_apartamento }} onchange="document.getElementById('recibir-nuevo-ocupante-{{ paquete_id }}').hidden = false">
+          <span class="flex items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 px-3 py-2.5 text-sm font-medium text-blue-700 transition peer-checked:bg-blue-50 hover:bg-blue-50 peer-disabled:border-slate-200 peer-disabled:text-slate-400 peer-disabled:hover:bg-transparent">
             Nuevo residente
           </span>
         </label>
       </div>
+      {%- if sin_apartamento %}
+      <p id="recibir-nuevo-ocupante-nota-{{ paquete_id }}" class="mt-2 text-xs text-slate-600">Elige primero el apartamento para registrar un nuevo residente.</p>
+      {%- endif %}
       <div id="recibir-nuevo-ocupante-{{ paquete_id }}" hidden class="mt-3 space-y-3">
         {{ input_texto('Teléfono o WhatsApp (opcional)', name='nuevo_ocupante_contacto', id='recibir-nuevo-ocupante-telefono-' ~ paquete_id, icono=iconos_nav.telefono_campo) }}
         {# Nombre oculto hasta que se sepa qué hacer con él -- mismo
@@ -189,6 +195,24 @@
         var moverCheckbox = moverLabel ? moverLabel.querySelector('input[type=checkbox]') : null;
         var moverTexto = document.getElementById('recibir-nuevo-ocupante-mover-texto-{{ paquete_id }}');
         var moverTextoBase = moverTexto ? moverTexto.textContent : '';
+        {%- if sin_apartamento %}
+        // Issue 377: "Nuevo residente" se habilita solo con un apartamento elegido en el selector de arriba; al
+        // limpiarlo se vuelve a deshabilitar y se cierra lo que se hubiera abierto.
+        (function () {
+          var radioNuevo = document.getElementById('recibir-candidato-nuevo-{{ paquete_id }}');
+          var seccionNuevo = document.getElementById('recibir-nuevo-ocupante-{{ paquete_id }}');
+          var notaNuevo = document.getElementById('recibir-nuevo-ocupante-nota-{{ paquete_id }}');
+          document.addEventListener('picker-apartamento-cambio', function (e) {
+            if (!radioNuevo || e.detail.prefix !== 'recibir-{{ paquete_id }}') return;
+            radioNuevo.disabled = !e.detail.elegido;
+            if (notaNuevo) notaNuevo.hidden = e.detail.elegido;
+            if (!e.detail.elegido) {
+              radioNuevo.checked = false;
+              if (seccionNuevo) seccionNuevo.hidden = true;
+            }
+          });
+        })();
+        {%- endif %}
         if (!contacto || !nombreWrap || !nombreInput || !preview) return;
         var previewTexto = preview.querySelector('span');
 
@@ -485,12 +509,19 @@
       if (residentesMsg) { residentesMsg.hidden = true; residentesMsg.innerHTML = ''; }
       if (hidTorre) hidTorre.value = '';
       if (hidApto) hidApto.value = '';
+      avisarCambioDeApartamento(prefix, false);
+    }
+    // Issue 377 (`.scratch/pendientes-cliente`): avisa a quien escuche (la tarjeta "Nuevo residente" de Recibir, que
+    // sin unidad queda deshabilitada hasta que acá se elija una) que el apartamento elegido cambió.
+    function avisarCambioDeApartamento(prefix, elegido) {
+      document.dispatchEvent(new CustomEvent('picker-apartamento-cambio', { detail: { prefix: prefix, elegido: elegido } }));
     }
     function pickerElegirTorre(prefix, torre, apto) {
       var hidTorre = document.getElementById('picker-hid-torre-' + prefix);
       var hidApto = document.getElementById('picker-hid-apto-' + prefix);
       hidTorre.value = torre;
       hidApto.value = apto;
+      avisarCambioDeApartamento(prefix, true);
       // Modo "con resumen" (Asignar apartamento) si ese contenedor existe
       // en el DOM; si no, modo liviano (Recibir) -- decidido por presencia
       // de markup, no por un parámetro JS aparte.

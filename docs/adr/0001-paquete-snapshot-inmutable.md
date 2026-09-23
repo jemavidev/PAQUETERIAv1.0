@@ -65,3 +65,11 @@ esta excepción, cada una con su propio guard de estado acotado y el mismo rastr
    DESPUÉS. Invocada explícitamente desde las rutas de ambas vistas (nunca desde dentro de
    `ocupante_service`/`persona_service`, que siguen sin saber que `Paquete` existe). Comparte las
    mismas columnas de auditoría que las dos excepciones anteriores.
+4. **`renombrar_conjunto`** (`configuracion_conjunto_service.py`, issue 378 de `.scratch/pendientes-cliente`,
+   2026-09-22) — al renombrar el Conjunto (`/administracion/conjunto`) copia el nombre nuevo a
+   `snapshot_conjunto` de TODOS los Paquetes que tenían el anterior, en cualquier estado. No es una Persona que se
+   muda: es el MISMO lugar con otra etiqueta, así que la historia no cambia de sentido. Sin esto, los Paquetes
+   anteriores al renombre dejaban de encontrar su unidad en toda búsqueda por la terna del snapshot
+   (`buscar_apartamento_por_terna`: candidatos, "Nuevo residente", hermanos). La migración `0057_alinear_
+   snapshot_conjunto` alineó los que ya habían quedado desfasados. Sin auditoría `corrected_*`: no corrige el
+   destinatario ni la unidad de ningún Paquete.

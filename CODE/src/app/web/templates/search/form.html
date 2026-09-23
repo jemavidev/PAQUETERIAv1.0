@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "components/_formularios.html" import formulario_flujo %}
 {% from "components/_inputs.html" import input_texto, toggle %}
-{% from "components/_badge.html" import badge, bandera_primera_entrega %}
+{% from "components/_badge.html" import badge, bandera_primera_entrega, aviso_primera_entrega_no_verificable %}
 {% from "components/_timeline.html" import timeline_paquete, paso_timeline %}
 {% from "components/_estado_vacio.html" import estado_vacio %}
 {% from "components/_confirmacion.html" import fila_dato %}
@@ -177,6 +177,9 @@
        entrega_a_telefono` resuelto en `search.py` (versión de un solo
        paquete, no batch -- esta vista solo maneja uno a la vez). -#}
     {{ bandera_primera_entrega() }}
+    {%- endif %}
+    {%- if paquete.primera_entrega_no_verificable %}
+    {{ aviso_primera_entrega_no_verificable() }}
     {%- endif %}
     {% if paquete.guide_number %}
     {# Reescaneo opcional de guía (issue 124, mismo mecanismo que
