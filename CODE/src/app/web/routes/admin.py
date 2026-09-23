@@ -1141,9 +1141,20 @@ async def admin_contactos_externos_importar(
         try:
             texto = contenido.decode("utf-8-sig")
         except UnicodeDecodeError:
+            # Issue 381: Excel en Windows guarda "CSV" en ANSI (cp1252), no en UTF-8 -- un archivo exportado de acá,
+            # editado en Excel y vuelto a subir llegaba así y se rechazaba. cp1252 decodifica casi cualquier byte, así
+            # que es el último intento, no el primero.
+            try:
+                texto = contenido.decode("cp1252")
+            except UnicodeDecodeError:
+                texto = None
+        if texto is None:
             error_importacion = "El archivo no es un CSV de texto válido (UTF-8)."
         else:
-            lector = csv.DictReader(io.StringIO(texto))
+            # Issue 381: con la configuración regional de Colombia Excel separa con `;` (la coma es el decimal).
+            primera_linea = texto.split("\n", 1)[0]
+            separador = ";" if primera_linea.count(";") > primera_linea.count(",") else ","
+            lector = csv.DictReader(io.StringIO(texto), delimiter=separador)
             columnas = set(lector.fieldnames or [])
             if columnas != set(COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS):
                 error_importacion = (
@@ -1162,16 +1173,36 @@ async def admin_contactos_externos_importar(
     return templates.TemplateResponse("admin/contactos_externos.html", contexto)
 
 
-@router.get("/administracion/contactos-externos/plantilla")
-def admin_contactos_externos_plantilla(admin: Usuario = Depends(require_admin)):
+# Issue 381 (.scratch/pendientes-cliente): Excel en Windows abre un CSV UTF-8 SIN BOM como ANSI ("JOSÉ" -> "JOSÃ‰").
+# El BOM al inicio y `charset=utf-8` lo resuelven; la importación ya lee con `utf-8-sig`, así que el ida y vuelta
+# (exportar -> importar tal cual) sigue funcionando.
+_BOM_UTF8 = "\ufeff"
+# Un nombre que empieza así lo ejecutaría Excel como fórmula al abrir el archivo (inyección de fórmulas): se le
+# antepone un apóstrofo, que Excel no muestra y que la importación quita (`fila_plantilla_a_fila_fuente`). Solo la
+# columna Nombre: los teléfonos (`+57...`) se validan al importar y un usuario de WhatsApp no puede empezar así.
+_INICIOS_DE_FORMULA = ("=", "+", "-", "@")
+
+
+def _respuesta_csv(filas: list[dict], nombre_archivo: str) -> Response:
     buffer = io.StringIO()
+    buffer.write(_BOM_UTF8)
     escritor = csv.DictWriter(buffer, fieldnames=COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS)
     escritor.writeheader()
+    for fila in filas:
+        nombre = fila.get("Nombre") or ""
+        if nombre.startswith(_INICIOS_DE_FORMULA):
+            fila = {**fila, "Nombre": "'" + nombre}
+        escritor.writerow(fila)
     return Response(
-        content=buffer.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=plantilla-contactos-externos.csv"},
+        content=buffer.getvalue().encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"},
     )
+
+
+@router.get("/administracion/contactos-externos/plantilla")
+def admin_contactos_externos_plantilla(admin: Usuario = Depends(require_admin)):
+    return _respuesta_csv([], "plantilla-contactos-externos.csv")
 
 
 @router.get("/administracion/contactos-externos/exportar")
@@ -1179,16 +1210,7 @@ def admin_contactos_externos_exportar(
     db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
 ):
     contactos = listar_todos_los_contactos_externos(db)
-    filas = contactos_externos_a_filas_plantilla(contactos)
-    buffer = io.StringIO()
-    escritor = csv.DictWriter(buffer, fieldnames=COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS)
-    escritor.writeheader()
-    escritor.writerows(filas)
-    return Response(
-        content=buffer.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=contactos-externos.csv"},
-    )
+    return _respuesta_csv(contactos_externos_a_filas_plantilla(contactos), "contactos-externos.csv")
 
 
 @router.get("/administracion/migrar-anio", response_class=HTMLResponse)

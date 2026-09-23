@@ -420,26 +420,28 @@ def test_confirmar_multiple_de_otro_telefono_no_afecta_este(client):
 
 
 def test_llegar_al_maximo_bloquea_sin_opcion_de_confirmar(client):
-    from app.domain.paquete_service import MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO
+    """Issue 385: un teléfono sin historial (nunca se le recibió un paquete) llega al tope con 3 pendientes (antes 10)."""
+    from app.domain.paquete_service import MAX_ANUNCIADOS_SIN_HISTORIAL
 
-    for _ in range(MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO):
+    for _ in range(MAX_ANUNCIADOS_SIN_HISTORIAL):
         r = _anunciar(client, confirmar=True)
-    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO
+    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_SIN_HISTORIAL
 
-    r = _anunciar(client, confirmar=True)  # el 11vo, incluso confirmando
+    r = _anunciar(client, confirmar=True)  # el 4to, incluso confirmando
     assert r.status_code == 400
-    assert "máximo" in r.text.lower()
-    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO  # sin cambios
+    assert "paquetes anunciados esperando llegar" in r.text
+    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_SIN_HISTORIAL  # sin cambios
 
 
 def test_recibir_uno_libera_espacio_bajo_el_limite(client):
+    """Recibir uno baja la cola -- y además le da historial al teléfono, que pasa a tener tope 5."""
     from app.domain.paquete_lifecycle import receive
-    from app.domain.paquete_service import MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO
+    from app.domain.paquete_service import MAX_ANUNCIADOS_SIN_HISTORIAL
     from app.domain.staff_service import create_initial_admin
 
     staff = create_initial_admin(client.db, "admin@club.com", "Admin", "Contrasena1")
 
-    for _ in range(MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO):
+    for _ in range(MAX_ANUNCIADOS_SIN_HISTORIAL):
         _anunciar(client, confirmar=True)
 
     primero = client.db.query(Paquete).order_by(Paquete.created_at.asc()).first()
@@ -448,7 +450,7 @@ def test_recibir_uno_libera_espacio_bajo_el_limite(client):
 
     r = _anunciar(client, confirmar=True)
     assert r.status_code == 200
-    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO + 1
+    assert _cuenta_paquetes(client) == MAX_ANUNCIADOS_SIN_HISTORIAL + 1
 
 
 # --------------------------------------------------------------------------- #
@@ -474,16 +476,22 @@ def test_conocido_sin_nombre_respeta_pantalla_intermedia_del_limite(client):
 
 
 def test_conocido_sin_nombre_tambien_llega_al_tope_duro(client):
-    from app.domain.paquete_service import MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO
+    """Issue 385: un cliente conocido (con historial) tiene tope 5 pendientes (antes 10)."""
+    from datetime import datetime, timedelta, timezone
+
+    from app.domain.paquete_service import MAX_ANUNCIADOS_CON_HISTORIAL
 
     _crear_entregado(client, telefono="3001234567", nombre="Ana")
+    # Fuera de las últimas 24 h: así actúa el tope de pendientes, no el diario.
+    client.db.query(Paquete).update({"announced_at": datetime.now(timezone.utc) - timedelta(days=3)})
+    client.db.commit()
 
-    for _ in range(MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO):
+    for _ in range(MAX_ANUNCIADOS_CON_HISTORIAL):
         _anunciar_sin_nombre(client, confirmar=True)
 
     r = _anunciar_sin_nombre(client, confirmar=True)  # el siguiente, incluso confirmando
     assert r.status_code == 400
-    assert "máximo" in r.text.lower()
+    assert "paquetes anunciados esperando llegar" in r.text
 
 
 # --------------------------------------------------------------------------- #

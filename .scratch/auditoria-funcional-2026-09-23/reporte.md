@@ -21,7 +21,7 @@ Cada hallazgo dice **qué pasa**, **cómo pasa**, la **evidencia** y qué hacer.
 | 3 | Alta | `/anunciar` es público y sin límite: permite mandar SMS a cualquier número (costo y acoso) | Por código |
 | 4 | Alta | En staging el límite de intentos es GLOBAL (no por persona): 10 consultas/min para todo el conjunto, staff incluido | Por configuración |
 | 5 | Alta | `/consultar` sin sesión muestra nombre, teléfono completo, apartamento, fotos y nombres del staff | Reproducido |
-| 6 | Media | Eliminar un paquete Anunciado cuyo SMS de anuncio se registró da error 500 | Reproducido (BD) |
+| 6 | Media | El SMS de "Anunciado" no queda registrado (estadísticas de SMS subcontadas); al arreglarlo, "Eliminar" daría 500 | Reproducido |
 | 7 | Media | Las fotos verticales tomadas con el celular quedan guardadas acostadas | Reproducido |
 | 8 | Media | El contador "N días" sigue creciendo en paquetes ya Entregados (`/consultar`, `/mis-paquetes`) | Reproducido |
 | 9 | Media | Las sesiones no se pueden revocar (14 días; cambiar la contraseña no cierra las demás) | Por código |
@@ -122,18 +122,22 @@ incluido el historial: con ~1.600 paquetes, 1 de cada ~580 códigos al azar acie
 ocultar los nombres del staff, y decidir si las fotos se muestran. Valorar no mostrar paquetes Entregados o Cancelados
 de hace más de N días al público.
 
-### 6. Media — eliminar un paquete Anunciado puede dar error 500
+### 6. Media — el SMS de "Anunciado" no queda registrado (y, al arreglarlo, "Eliminar" daría error 500)
 
-**Qué pasa.** El admin pulsa "Eliminar" en un paquete Anunciado y recibe un error 500, si el SMS de anuncio de ese
-paquete llegó a registrarse (en staging y producción, con proveedor SMS real).
-**Cómo pasa.** `delete_action` borra la fila asumiendo que un Anunciado no tiene nada que dependa de él, pero desde
-el ticket 11 de estadísticas `registros_sms.paquete_id` apunta al paquete sin `ON DELETE`. La ruta no captura el
-`IntegrityError`.
-**Evidencia.** En una transacción revertida en la BD dev: insertar un registro SMS de un Anunciado y borrarlo da
-"violates foreign key constraint `fk_registros_sms_paquete`". En dev no pasa porque el envío por consola no deja
-registro.
-**Qué hacer.** `ON DELETE SET NULL` en esa FK (el registro de costo se conserva) o borrar los registros antes;
-prueba HTTP que lo cubra.
+**Corregido el 2026-09-23** (la primera versión decía que "Eliminar" ya daba 500; hoy no pasa, por la razón de abajo).
+**Qué pasa.** El SMS de un paquete recién anunciado sale, pero su registro en `registros_sms` se pierde en silencio:
+el tablero de estadísticas de SMS (cantidades y costo) no cuenta los avisos de "Anunciado", que son justo los únicos
+activos por defecto. Pasa en `/anunciar` y en el anuncio del staff (`/announce`).
+**Cómo pasa.** Con FastAPI 0.104.1, el commit de la sesión del request (`get_db`) corre DESPUÉS de las tareas en
+segundo plano. La tarea que envía el SMS intenta registrar el envío apuntando a un paquete que todavía no está
+guardado: la llave foránea `fk_registros_sms_paquete` lo rechaza y `registrar_envio` se traga el error
+(`except Exception: pass`). Recibir no tiene el problema porque `receive_action` hace commit explícito antes.
+**Evidencia.** Reproducido por HTTP: `/anunciar` con un proveedor simulado que confirma el envío; el SMS sale, el
+INSERT falla por la FK y `registros_sms` queda vacío. Borrar después ese paquete devuelve 303 (no falla), justamente
+porque no hay registro.
+**Qué hacer.** Commit explícito antes de programar la tarea en las dos rutas de anuncio. Al hacerlo, el borrado de un
+Anunciado con su SMS registrado SÍ fallaría (reproducido a nivel de BD), así que en el mismo cambio hay que poner
+`ON DELETE SET NULL` en esa FK. Agregar pruebas HTTP de las dos cosas.
 
 ### 7. Media — fotos verticales guardadas acostadas
 
@@ -213,6 +217,6 @@ del Principal de su unidad se juzga por el teléfono del Principal.
 2. **Seguridad de clientes, juntos:** 2 (OTP), 3 (`/anunciar`) y 4 (`--proxy-headers`), en ese orden o en un
    mismo despliegue.
 3. **Privacidad:** 5 (`/consultar` público). Pide decisiones del cliente sobre qué se muestra.
-4. **Defectos rápidos, una línea o poco más cada uno:** 7 (EXIF), 8 (días), 6 (FK de `registros_sms`), 10 (BOM).
+4. **Defectos rápidos, una línea o poco más cada uno:** 7 (EXIF), 8 (días), 6 (commit antes del SMS + FK), 10 (BOM).
 5. **Endurecimiento:** 9 (sesiones), 11, 12.
 6. **Con el cliente:** 13 (SMS por defecto) y 14 (configuración del F7).

@@ -36,6 +36,7 @@ import enum
 import re
 import secrets
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import and_, extract, false, func, or_
 from sqlalchemy.orm import Session
@@ -455,7 +456,40 @@ def paquetes_abiertos_de_persona(session: Session, persona: Persona) -> list[Paq
 # error o abuso dispare una ráfaga de notificaciones SMS reales (cada
 # ANUNCIADO nuevo notifica). Mismo espíritu que `MAX_OCUPANTES_ACTIVOS` en
 # `ocupante_service.py` -- un tope duro con su propio mensaje claro.
-MAX_ANUNCIADOS_ACTIVOS_POR_TELEFONO = 10
+# Issue 385 (.scratch/pendientes-cliente): el tope depende de si el teléfono ya es un cliente real (alguna vez se le
+# RECIBIÓ un paquete) -- antes era 10 para todos. Más un tope diario, que no depende de la cola.
+MAX_ANUNCIADOS_SIN_HISTORIAL = 3
+MAX_ANUNCIADOS_CON_HISTORIAL = 5
+MAX_ANUNCIOS_POR_DIA = 5
+
+
+def tiene_historial_de_recepcion(session: Session, telefono_canonico: str) -> bool:
+    """¿Alguna vez se le recibió un paquete a este teléfono, como Anunciante o Destinatario? (issue 385)"""
+    consulta = session.query(Paquete).filter(
+        Paquete.received_at.isnot(None),
+        or_(Paquete.announced_by_phone == telefono_canonico, Paquete.recipient_phone == telefono_canonico),
+    )
+    return bool(session.query(consulta.exists()).scalar())
+
+
+def max_anunciados_activos(session: Session, telefono_canonico: str) -> int:
+    """Tope de anuncios pendientes para este teléfono en `/anunciar` (issue 385)."""
+    if tiene_historial_de_recepcion(session, telefono_canonico):
+        return MAX_ANUNCIADOS_CON_HISTORIAL
+    return MAX_ANUNCIADOS_SIN_HISTORIAL
+
+
+def contar_anuncios_ultimas_24h(session: Session, telefono_canonico: str, excluir_paquete_id=None) -> int:
+    """Anuncios de este teléfono (como Anunciante, en cualquier estado) en las últimas 24 h -- alimenta el tope
+    diario y el "un SMS de Anunciado por día" de `/anunciar` (issue 385). Ventana móvil de 24 h, no día calendario:
+    no se reinicia a medianoche para quien anunció a las 11 p. m."""
+    consulta = session.query(Paquete).filter(
+        Paquete.announced_by_phone == telefono_canonico,
+        Paquete.announced_at > datetime.now(timezone.utc) - timedelta(hours=24),
+    )
+    if excluir_paquete_id is not None:
+        consulta = consulta.filter(Paquete.id != excluir_paquete_id)
+    return consulta.count()
 
 
 def contar_anunciados_activos_de_telefono(session: Session, telefono_canonico: str) -> int:

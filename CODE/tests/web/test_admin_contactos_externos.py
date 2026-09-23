@@ -696,7 +696,10 @@ def test_plantilla_trae_solo_el_encabezado(client):
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")
     assert "attachment" in r.headers["content-disposition"]
-    assert r.text.strip() == "Nombre,Teléfonos,WhatsApp"
+    # Issue 381: BOM UTF-8 al inicio -- sin él, Excel en Windows abre el archivo como ANSI y rompe las tildes.
+    assert r.content.startswith(b"\xef\xbb\xbf")
+    assert "charset=utf-8" in r.headers["content-type"]
+    assert r.text.lstrip("\ufeff").strip() == "Nombre,Teléfonos,WhatsApp"
 
 
 # --- Exportar ---
@@ -722,7 +725,8 @@ def test_exportar_trae_todos_los_contactos_con_las_columnas_de_la_plantilla(clie
     r = client.get("/administracion/contactos-externos/exportar")
     assert r.status_code == 200
     assert "attachment" in r.headers["content-disposition"]
-    lineas = r.text.strip().splitlines()
+    assert r.content.startswith(b"\xef\xbb\xbf")  # issue 381
+    lineas = r.text.lstrip("\ufeff").strip().splitlines()
     assert lineas[0] == "Nombre,Teléfonos,WhatsApp"
     assert lineas[1] == "Juan Perez,+573001234567,juan.whatsapp"
 
@@ -841,3 +845,51 @@ def test_exportar_e_importar_de_nuevo_es_round_trip(client):
 
     client.db.expire_all()
     assert client.db.query(ContactoExterno).count() == 1  # no duplicó
+
+
+# --- Issue 381 (.scratch/pendientes-cliente): CSV y Excel ---
+
+
+def test_exportar_neutraliza_un_nombre_que_parece_formula(client):
+    """Excel ejecutaría `=...` como fórmula al abrir el archivo: se antepone un apóstrofo."""
+    _login_admin(client)
+    _sembrar(
+        client,
+        [FilaFuenteContacto(nombre="=HYPERLINK(1)", telefonos=("3001234567",), fuente=FUENTE_GOOGLE_CONTACTS)],
+    )
+
+    r = client.get("/administracion/contactos-externos/exportar")
+
+    assert "'=HYPERLINK(1)" in r.text
+    assert "+573001234567" in r.text  # los teléfonos no se tocan
+
+
+def test_reimportar_un_nombre_neutralizado_no_guarda_el_apostrofo(client):
+    _login_admin(client)
+    csv_texto = "Nombre,Teléfonos,WhatsApp\n'=Raro,3001234567,\n"
+
+    client.post(
+        "/administracion/contactos-externos/importar",
+        data={"fuente": "__otra__", "fuente_otra": "excel"},
+        files={"archivo": ("contactos.csv", csv_texto.encode("utf-8"), "text/csv")},
+    )
+
+    client.db.expire_all()
+    assert client.db.query(ContactoExterno).one().nombre.upper() == "=RARO"
+
+
+def test_importar_acepta_un_csv_guardado_por_excel_en_ansi_y_con_punto_y_coma(client):
+    """Excel en Windows (configuración regional de Colombia) guarda "CSV" en ANSI y separado por `;`."""
+    _login_admin(client)
+    csv_texto = "Nombre;Teléfonos;WhatsApp\r\nJosé Muñoz;3001234567;\r\n"
+
+    r = client.post(
+        "/administracion/contactos-externos/importar",
+        data={"fuente": "__otra__", "fuente_otra": "excel"},
+        files={"archivo": ("contactos.csv", csv_texto.encode("cp1252"), "text/csv")},
+    )
+
+    assert "no tiene las columnas" not in r.text
+    assert "no es un CSV" not in r.text
+    client.db.expire_all()
+    assert client.db.query(ContactoExterno).one().nombre.upper() == "JOSÉ MUÑOZ"

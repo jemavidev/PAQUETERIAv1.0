@@ -399,3 +399,14 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `377` — Recibir: no tener apartamento nunca bloquea la recepción -- "Nuevo residente" sin apartamento recibe igual (lo tecleado queda como destinatario, con aviso) y la tarjeta queda deshabilitada hasta elegir apartamento — **implementado, pendiente confirmar en vivo**
 - `378` — Renombrar el Conjunto no actualizaba `snapshot_conjunto` de los paquetes: los anteriores al renombre (ej. 7JY7) quedaban "sin apartamento resuelto" -- el renombre se propaga a los paquetes, migración de datos para los desfasados, y Recibir trata una unidad no encontrada como "sin apartamento" — **implementado, pendiente confirmar en vivo**
 - `379` — "Primera entrega" no funcionaba para clientes solo-WhatsApp (se decidía solo por `recipient_phone`: sin bandera y cobro desde el primer paquete) -- nueva columna `recipient_whatsapp`, regla teléfono → WhatsApp, aviso en Entregar cuando no hay ninguno — **implementado, pendiente confirmar en vivo**
+- `380` — Registro del SMS de "Anunciado" perdido y "Eliminar" con 500 latente — **implementado, pendiente confirmar en vivo (localhost)**
+- `381` — CSV de contactos externos: tildes en Excel — **implementado, pendiente confirmar en vivo (localhost)**
+- `382` — Contador de días: solo cuenta mientras está Recibido — **implementado, pendiente confirmar en vivo (localhost)**
+- `383` — Sesiones: 24 h desde el último uso — **implementado, pendiente confirmar en vivo (localhost)**
+- `384` — OTP de clientes: 6 dígitos sin "666" y límites por teléfono — **implementado, pendiente confirmar en vivo (localhost)**
+- `385` — `/anunciar`: límites por teléfono con mensaje amigable — **implementado, pendiente confirmar en vivo (localhost)**
+- `386` — `/consultar`: el staff con sesión no cuenta en el límite de consultas — **implementado, pendiente confirmar en vivo (localhost)**
+- `387` — `/consultar`: entregados/cancelados de más de 15 días, ofuscados — **implementado, pendiente confirmar en vivo (localhost)**
+- `388` — SMS: solo "Anunciado" por defecto; el resto lo activa el staff — **verificado sin cambios: solo el Admin (confirmado por Jesús)**
+- `389` — Fotos: Recibir sin esperar fotos, cola con reintentos, orientación y validaciones — **implementado, pendiente confirmar en vivo (localhost)**
+- `390` — "Fotos por subir": dentro del menú de cuenta debajo de "Lector", y oculto de verdad con 0 (antes se veía "0 fotos por subir") — **implementado, pendiente confirmar en vivo (localhost)**

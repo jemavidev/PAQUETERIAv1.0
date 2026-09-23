@@ -24,7 +24,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from sqlalchemy import func, or_, tuple_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
@@ -78,7 +78,8 @@ from app.domain.paquete_correccion_service import (
     persona_confirmada_del_destinatario,
 )
 from app.domain.guia import GuiaDemasiadoLarga, normalizar_guia
-from app.domain.paquete_foto_service import agregar_foto_desde_url
+from app.domain.imagen_service import ImagenInvalida
+from app.domain.paquete_foto_service import MAX_FOTOS_POR_PAQUETE, agregar_foto_desde_url, listar_fotos
 from app.domain.paquete_lifecycle import (
     ESTADOS_CORREGIBLES,
     SIN_CAMBIO,
@@ -115,7 +116,7 @@ from app.domain.usuario import Usuario
 
 from ..config import public_base_url_relaxed
 from ..db import get_db, get_session_factory
-from ..fotos import get_foto_storage, procesar_foto_individual, subir_fotos_diferido
+from ..fotos import MAX_BYTES_FOTO, get_foto_storage, procesar_foto_individual, subir_fotos_diferido
 from ..notifications import enviar_en_segundo_plano, get_notification_sender
 from ..security import current_staff, require_admin
 from ..templating import templates
@@ -1429,6 +1430,7 @@ def paquete_timeline(
 async def subir_foto_individual_action(
     paquete_id: str,
     foto: UploadFile = File(...),
+    asociar: str = Form(None),
     db: Session = Depends(get_db),
     staff: Usuario = Depends(current_staff),
     storage: FotoStorage = Depends(get_foto_storage),
@@ -1460,7 +1462,18 @@ async def subir_foto_individual_action(
     en vez de subir una foto que ya no tendría dónde asociarse con
     sentido."""
     paquete = _get_paquete_o_404(db, paquete_id)
-    if paquete.estado != EstadoPaquete.ANUNCIADO:
+    # Issue 389 (.scratch/pendientes-cliente): `asociar=1` lo manda la cola de fotos del equipo, que sube DESPUÉS de
+    # confirmar "Recibir" (Recibir ya no espera ni lleva fotos pendientes) -- la foto se asocia directo al paquete.
+    # Las respuestas 409 dicen si vale la pena reintentar: todavía Anunciado (la recepción aún no quedó guardada) sí;
+    # sin cupo o Cancelado, no -- la cola la descarta en vez de reintentar para siempre.
+    if asociar:
+        if paquete.estado == EstadoPaquete.ANUNCIADO:
+            return JSONResponse({"detail": "El paquete todavía no está recibido.", "reintentar": True}, status_code=409)
+        if paquete.estado not in (EstadoPaquete.RECIBIDO, EstadoPaquete.ENTREGADO):
+            return JSONResponse({"detail": "Este paquete ya no admite fotos.", "reintentar": False}, status_code=409)
+        if len(listar_fotos(db, paquete)) >= MAX_FOTOS_POR_PAQUETE:
+            return JSONResponse({"detail": "El paquete ya tiene sus 3 fotos.", "reintentar": False}, status_code=409)
+    elif paquete.estado != EstadoPaquete.ANUNCIADO:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             detail="Este paquete ya no admite fotos nuevas por esta vía.",
@@ -1468,7 +1481,15 @@ async def subir_foto_individual_action(
     contenido = await foto.read()
     if not contenido:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Archivo vacío.")
-    url = procesar_foto_individual(storage, foto.filename, contenido)
+    if len(contenido) > MAX_BYTES_FOTO:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="La foto pasa de 15 MB.")
+    try:
+        url = procesar_foto_individual(storage, foto.filename, contenido)
+    except ImagenInvalida:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="El archivo no es una imagen.")
+    if asociar:
+        agregar_foto_desde_url(db, paquete, url)
+        db.commit()
     return {"url": url}
 
 
@@ -1741,7 +1762,8 @@ async def receive_action(
     # solo falta la fila, sin volver a tocar `storage` (síncrono, es un
     # simple insert). Mismo tope de 3 que `agregar_foto` (`ValueError`
     # corta el loop, igual que el fallback de abajo).
-    for url in fotos_urls or []:
+    # Issue 389: solo URLs que generó el propio almacenamiento -- no cualquier dirección que llegue en el POST.
+    for url in [u for u in (fotos_urls or []) if storage.es_url_propia(u)]:
         try:
             agregar_foto_desde_url(db, paquete, url)
         except ValueError:
@@ -1757,7 +1779,7 @@ async def receive_action(
         if not archivo.filename:
             continue
         contenido = await archivo.read()
-        if not contenido:
+        if not contenido or len(contenido) > MAX_BYTES_FOTO:  # issue 389: tope de 15 MB por foto
             continue
         archivos.append((archivo.filename, contenido))
     if archivos:

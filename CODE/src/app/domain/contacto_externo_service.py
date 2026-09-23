@@ -527,6 +527,10 @@ def fila_plantilla_a_fila_fuente(row: dict, fuente: str) -> FilaFuenteContacto:
     `FilaFuenteContacto` -- la normalización real ocurre después, dentro de
     `fusionar_fuentes`."""
     nombre = (row.get("Nombre") or "").strip()
+    # Issue 381: la exportación antepone un apóstrofo a un nombre que Excel leería como fórmula (`=`, `+`, `-`, `@`);
+    # al volver a importar ese mismo archivo, el apóstrofo no es parte del nombre.
+    if nombre.startswith("'") and nombre[1:2] in ("=", "+", "-", "@"):
+        nombre = nombre[1:]
     telefonos = tuple(t.strip() for t in (row.get("Teléfonos") or "").split(";") if t.strip())
     whatsapps = tuple(w.strip() for w in (row.get("WhatsApp") or "").split(";") if w.strip())
     return FilaFuenteContacto(nombre=nombre, telefonos=telefonos, whatsapps=whatsapps, fuente=fuente)

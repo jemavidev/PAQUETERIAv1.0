@@ -838,6 +838,12 @@ def announce_submit(
         except ValueError as exc:
             return _error(str(exc), valor_original)
 
+    # Issue 380 (.scratch/pendientes-cliente): commit ANTES de programar el
+    # envío -- con FastAPI 0.104 el commit de `get_db` corre DESPUÉS de las
+    # BackgroundTasks, y la tarea registra el SMS en su propia sesión
+    # apuntando a este Paquete: sin el commit, la FK lo rechazaba y el
+    # registro se perdía en silencio (mismo criterio que `receive_action`).
+    db.commit()
     resultado = preparar_notificacion(db, paquete, EstadoPaquete.ANUNCIADO, public_base_url_relaxed())
     if resultado is not None:
         background_tasks.add_task(

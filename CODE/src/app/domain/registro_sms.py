@@ -59,7 +59,10 @@ class RegistroSms(Base):
     __tablename__ = "registros_sms"
 
     __table_args__ = (
-        ForeignKeyConstraint(["paquete_id"], ["paquetes.id"], name="fk_registros_sms_paquete"),
+        # Issue 380: SET NULL -- borrar un Paquete Anunciado conserva el registro (y el costo) de su SMS.
+        ForeignKeyConstraint(
+            ["paquete_id"], ["paquetes.id"], name="fk_registros_sms_paquete", ondelete="SET NULL"
+        ),
         Index("ix_registros_sms_created_at", "created_at"),
     )
 
