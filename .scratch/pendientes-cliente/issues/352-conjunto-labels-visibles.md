@@ -7,7 +7,7 @@ para los horarios tengo esto 'EL CLUB / 9:30 AM - 7:30 PM / 9:30 AM - 2:00
 PM / 2:00 PM - 6:00 PM / 573334004007' y no tengo la más mínima idea de lo
 que dicen con relación a los horarios."
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co, 2026-09-19: los 10 campos con `<label>` visible)
 
 ## Causa raíz
 

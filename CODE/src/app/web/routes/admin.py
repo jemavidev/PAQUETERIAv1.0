@@ -40,11 +40,12 @@ from app.domain.configuracion_empresa_service import (
 )
 from app.domain.contacto_externo_service import (
     COLUMNAS_PLANTILLA_CONTACTOS_EXTERNOS,
+    MAX_LARGO_FUENTE,
     buscar_contactos_externos,
     contactos_externos_a_filas_plantilla,
     fila_plantilla_a_fila_fuente,
-    fuentes_existentes,
     importar_contactos_externos,
+    listar_fuentes,
     listar_todos_los_contactos_externos,
 )
 from app.domain.email_sender import EmailSender
@@ -1074,11 +1075,15 @@ def _contexto_contactos_externos(
         "total_contactos": total_contactos,
         "pagina": pagina,
         "q": q or "",
-        # `fuentes`: puebla el `<select>` del formulario de import, no
-        # cambia con la búsqueda -- solo hace falta fuera del fragmento en
-        # vivo (ver `admin_contactos_externos`), pero acá siempre es la
-        # página completa, así que siempre se incluye.
-        "fuentes": fuentes_existentes(db),
+        # `fuentes_catalogo`: puebla el `<select>` del formulario de import
+        # ("Nombre - NN") y la leyenda de equivalencias sobre la tabla
+        # (issue 362) -- no cambia con la búsqueda, así que solo hace falta
+        # fuera del fragmento en vivo (ver `admin_contactos_externos`), pero
+        # acá siempre es la página completa, así que siempre se incluye.
+        # Los números de la columna Fuentes de cada fila ya vienen en el
+        # propio contacto (`.fuentes_numeradas`, ver `buscar_contactos_
+        # externos`), por eso el fragmento en vivo no necesita el catálogo.
+        "fuentes_catalogo": listar_fuentes(db),
     }
 
 
@@ -1129,6 +1134,8 @@ async def admin_contactos_externos_importar(
 
     if not fuente_valor:
         error_importacion = "Elegí o escribí una fuente para este archivo."
+    elif len(" ".join(fuente_valor.split())) > MAX_LARGO_FUENTE:
+        error_importacion = f"El nombre de la fuente no puede pasar de {MAX_LARGO_FUENTE} caracteres."
     else:
         contenido = await archivo.read()
         try:

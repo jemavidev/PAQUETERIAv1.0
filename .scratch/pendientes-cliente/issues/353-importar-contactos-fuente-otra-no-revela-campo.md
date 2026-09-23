@@ -4,7 +4,7 @@
 externos/importar sigo sin poder seleccionar una fuente para el archivo,
 en caso que este vacío, no es posible subir contactos."
 
-**Status:** implementado
+**Status:** verificado (desplegado y confirmado en test.papyrus.com.co, 2026-09-19: con BD sin contactos, "Importar CSV" muestra "Nombre de la fuente nueva" junto a "Otra (especificar)…")
 
 ## Causa raíz
 
