@@ -418,3 +418,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `396` — `/ingresar`: el staff entra con correo o con usuario (lo que va antes de la "@", sin migración); crear personal rechaza un usuario repetido — **implementado, pendiente confirmar en vivo (localhost)**
 - `397` — `/paquetes` móvil: cada paquete en 2 líneas y acciones grandes -- 3 variantes prototipadas (`:8011`, rama `prototipo/paquetes-movil-2-lineas`) -- elegida la B, con letra más grande — **implementado, pendiente confirmar en vivo (localhost)**
 - `398` — "Staff Papyrus" en vez de "Operador v1 (sin identificar)" para el usuario técnico de las entregas/cancelaciones importadas de la v1 — **implementado**
+- `399` — `/administracion/estadisticas-cobro`: quitar la barra de filtros (atajos de fecha, Tipo, Cobrado/Anulado); "Periodo seleccionado" pasa a "Todo el historial" — **implementado (localhost verificado; desplegando a test)**
