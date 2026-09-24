@@ -5220,6 +5220,9 @@ def test_codigo_parcial_no_dispara_expansion(client):
     client.db.commit()
     dom_receive(client.db, p1, staff)
     dom_receive(client.db, p2, staff)
+    # Códigos fijos: con códigos al azar, el de p2 podía contener el mismo fragmento de 2 caracteres que se busca y
+    # aparecer en la búsqueda parcial -- fallo intermitente real (CI local del despliegue del 2026-09-24).
+    p1.access_code, p2.access_code = "AB2C", "XY9Z"
     client.db.commit()
 
     r = client.get("/paquetes", params={"q": p1.access_code[:2]})
