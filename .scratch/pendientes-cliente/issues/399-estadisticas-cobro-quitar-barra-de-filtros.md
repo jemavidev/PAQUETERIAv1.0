@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "puedes en test y localhost eliminar esta seccion "/administracion/estadisticas-cobro"
 la misma que "filtros-estadisticas-cobro" en algun momento me dijiste que no er necesaria".
 
-**Status:** implementado — verificado en localhost:8010; desplegando a test
+**Status:** verificado — localhost:8010 y test.papyrus.com.co (`b272a6b`, 2026-09-24)
 
 ## Qué se quita
 
