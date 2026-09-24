@@ -12,8 +12,10 @@
 - [x] El bucket de destino sale de la configuración de la v2, sin cambiar código.
 - [x] Una foto que falla queda en el reporte, no frena el resto y se reintenta en la siguiente pasada.
 - [x] `--simular` no llama al copiador, ni al real ni al falso.
-- [ ] Validación manual del copiador real con una tanda chica (fotos de los paquetes `RECIBIDO`) antes de escalar, confirmando HTTP 200 público.
+- [x] Validación manual del copiador real con una tanda chica (fotos de los paquetes `RECIBIDO`) antes de escalar, confirmando HTTP 200 público.
 
 ## Comments
 
 **2026-09-23.** La validación manual con S3 real quedó en la guía de puesta en marcha (§5.1): necesita las credenciales de la v1 en el servidor v2, lo que requiere autorización.
+
+**2026-09-24.** Validado en vivo: 7.475 fotos en el bucket de la v2, y una nueva responde HTTP 200 pública. Hizo falta el fix `8cec947` (403 sin `s3:ListBucket`).
