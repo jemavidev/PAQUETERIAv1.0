@@ -6,7 +6,7 @@ Glosario de dominio y lenguaje ubicuo del sistema. **Los skills deben usar estos
 
 ## Qué es el sistema
 
-Gestión de paquetería para un **conjunto residencial**, **mobile-first** (90% del uso desde celular). Un transportador entrega paquetes en la portería; el **staff** los recibe, almacena y entrega a los residentes; los **residentes** anuncian que esperan un paquete y consultan su estado.
+Gestión de paquetería para un **conjunto residencial**, **mobile-first** (90% del uso desde celular). Un transportador entrega paquetes en la **papelería Papyrus** (el punto de servicio que opera PAQUETEX); el **staff** —personal de Papyrus— los recibe, almacena y entrega a los residentes; los **residentes** anuncian que esperan un paquete y consultan su estado.
 
 ---
 
@@ -16,6 +16,8 @@ Gestión de paquetería para un **conjunto residencial**, **mobile-first** (90% 
 - **Cliente (sin privilegios)** — residente, **registrado o no**. Se registra implícitamente al anunciar; puede anunciar paquetes y consultar su estado. Nunca administra.
 
 Término evitado: no llamar "usuario" al cliente ni "cliente" al staff. **Usuario = staff**; **Persona/Cliente = residente**.
+
+**Hacia el residente** (textos de interfaz, mensajes, términos), el staff es **"el personal de Papyrus"** y el lugar es **"la papelería Papyrus"**. Términos evitados: **"portería"** y **"portero"** — el servicio no lo presta la portería de un edificio sino la papelería Papyrus (issue 394, `.scratch/pendientes-cliente`). La plataforma se sigue llamando PAQUETEX.
 
 ---
 

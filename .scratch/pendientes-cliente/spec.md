@@ -410,3 +410,7 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `388` — SMS: solo "Anunciado" por defecto; el resto lo activa el staff — **verificado sin cambios: solo el Admin (confirmado por Jesús)**
 - `389` — Fotos: Recibir sin esperar fotos, cola con reintentos, orientación y validaciones — **implementado, pendiente confirmar en vivo (localhost)**
 - `390` — "Fotos por subir": dentro del menú de cuenta debajo de "Lector", y oculto de verdad con 0 (antes se veía "0 fotos por subir") — **implementado, pendiente confirmar en vivo (localhost)**
+- `391` — `/mis-datos`: aviso de privacidad bajo "Autorizo a Papyrus…"; "Saldo (contra entrega)" como píldora desplegable con el historial — **implementado, pendiente confirmar en vivo (localhost)**
+- `392` — `/mis-datos`: movimientos del saldo con qué pasó ("Pagado al mensajero", "Pago recibido", "Abono a tu saldo"), código del paquete, fecha amigable y "-$3,500" — **implementado, pendiente confirmar en vivo (localhost)**
+- `393` — Saldo contra entrega: el destinatario se resuelve por teléfono, luego WhatsApp, y por nombre solo si es único (antes: primer nombre coincidente); limpieza del selector de saldo por apartamento — **implementado, pendiente confirmar en vivo (localhost)**
+- `394` — "La papelería Papyrus" / "el personal de Papyrus" en vez de "portería"/"portero" en los 11 textos visibles, asunto del correo de Recibido y glosario — **implementado, pendiente confirmar en vivo (localhost)**
