@@ -65,7 +65,7 @@ un `DELETE` falla con `cannot execute DELETE in a read-only transaction`.)
 
 ## 3. Variables en el `.env` de la v2 **[autorización: servidor v2]**
 
-`ssh paquetex-v2`, en `~/app/.env`:
+`ssh paquetex-v2`, en `~/app/PaqueteX/.env`:
 
 ```
 V1_DATABASE_URL=postgresql://paquetex_importador:<contraseña>@<POSTGRES_HOST de ~/paqueteria/.env en ssh paquetex>:5432/paqueteria_v4
@@ -85,7 +85,7 @@ Lo ideal es un usuario IAM propio con solo `s3:GetObject` sobre `elclub-paqueter
 ## 4. Dump y limpieza del staging **[autorización: servidor v2]**
 
 ```
-cd ~/app
+cd ~/app/PaqueteX
 sudo docker compose exec -T db pg_dump -U paquetex -Fc paquetex > ~/paquetex_backup_pre_importador_v1_$(date +%Y%m%d_%H%M%S).dump
 sudo docker compose --env-file .env exec -T -w /app/src app python -m app.limpieza_staging_cli --simular
 # revisar conteos: se borran residentes/paquetes; se conservan usuarios, apartamentos (804), contactos externos (1041)
@@ -114,7 +114,7 @@ Revisar el reporte: ~609 personas, ~2.555 + 18 paquetes, ~2.537 cobros, fotos
 
 ```
 crontab -e   # usuario ubuntu
-*/15 * * * * /home/ubuntu/app/scripts/importador_v1/importar_v1_cron.sh
+*/15 * * * * /home/ubuntu/app/PaqueteX/scripts/importador_v1/importar_v1_cron.sh
 ```
 
 Una pasada con alerta del tope del 5 % no escribe nada y deja el código de salida 1 en el log.
