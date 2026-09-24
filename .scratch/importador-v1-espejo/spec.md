@@ -352,3 +352,4 @@ conservan la configuración, el censo de apartamentos y los contactos externos.
   apaga los avisos de los paquetes importados de la v1 (`espejo_v1.py`, en
   `preparar_notificacion`). Los nativos, el OTP y las pruebas con clientes reales siguen igual. En el
   corte se quita la variable.
+- **Issue 398 (2026-09-24):** el Usuario técnico de `operator_1` se llama **"Staff Papyrus"** (antes "Operador v1 (sin identificar)"; así lo pidió Jesús). El importador le corrige el nombre en cada pasada; los usuarios reales enlazados no se renombran.
