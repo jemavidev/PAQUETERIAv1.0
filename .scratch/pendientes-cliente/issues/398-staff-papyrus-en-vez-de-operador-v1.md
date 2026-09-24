@@ -2,7 +2,7 @@
 
 **Pedido original (Jesús):** "Remplaza esto "Operador v1 (sin identificar)" por esto "Staff Papyrus"".
 
-**Status:** implementado (pendiente de desplegar y de la siguiente pasada del cron)
+**Status:** verificado — desplegado (`4a3c19e`) y aplicado por la pasada de las 15:00 UTC del 2026-09-24; "Staff Papyrus" visible en `/consultar` de test.papyrus.com.co
 
 ## Contexto
 
