@@ -13,7 +13,7 @@
      requerido por los macros del design system (components/_*.html). Al agregar clases nuevas en
      una plantilla hay que RECOMPILAR este archivo y subir el ?v= — no es un CDN en runtime.
      Mismo enfoque que produccion v1 (static/css/tailwind.css commiteado). #}
-  <link rel="stylesheet" href="/static/css/tailwind.css?v=108">
+  <link rel="stylesheet" href="/static/css/tailwind.css?v=109">
   <style>
     :root { --site-brand:#1e40af; --site-ink:#1a1a1a; --site-line:#e5e7eb; }
     /* Ancho estable sin importar si la página tiene scrollbar vertical o no
@@ -323,7 +323,7 @@
     {% if not es_admin %}{{ enlace_menu('/mi-sesion', 'Mi perfil', iconos_nav.mis_datos) }}{% endif %}
     {#- Issue 406: "Dashboard" (antes "Estadísticas de cobro", dentro de la categoría Cobros, que se quitó) queda suelto
        arriba de "Lector". Solo ADMIN: la ruta es `require_admin`. -#}
-    {% if es_admin %}{{ enlace_menu('/administracion/estadisticas-cobro', 'Dashboard', iconos_nav.dashboard) }}{% endif %}
+    {% if es_admin %}{{ enlace_menu('/administracion/dashboard', 'Dashboard', iconos_nav.dashboard) }}{% endif %}
     {#- Modo lector (ticket 10, `.scratch/captura-guia-lector-camara`): interruptor POR EQUIPO, apagado por defecto,
        guardado en el propio equipo (`localStorage`, ver el `<script>` de abajo). Encendido, al abrir Recibir (y
        "Confirmar guía" de Entregar) el foco va al campo de guía, sin teclado en pantalla: el lector integrado del

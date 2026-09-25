@@ -7,8 +7,7 @@ las diferentes secciones de esta vista, ya que te estare diciendo cual va de pri
 y el orden de como debe quedar todo. Por ahora esto sera lo ultimo que haga con relacion a
 esta vista para continuar con otro enfoque despues."
 
-**Status:** pendiente (bloques prototipados sobre la propuesta del issue 370; falta que
-Jesús diga el orden final)
+**Status:** implementado en el código real (localhost, 2026-09-25), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -56,3 +55,25 @@ mergea), `:8011`. Lo actual (`:8010`) no se tocó.
 **Pendiente:** el orden final (de bloques y de paneles) y, con él, pasar TODO (la propuesta del
 370 + estos bloques) al código real con pruebas y quitar el andamio del prototipo (`?orden=`).
 Antes, confirmar las decisiones abiertas del 370 o dejarlas como están prototipadas.
+
+## Retomado (2026-09-25)
+
+**Jesús:** "te había pedido que separaras las secciones internas de estas para que se viera un poco mejor y más
+estructurado todo, qué pasó porque no lo dejaste así como me lo habías mostrado ... retomar algo que te había pedido".
+
+**Qué pasó:** los bloques quedaron solo en el prototipo (`prototipo/estadisticas-cobro-filtros-y-tablas`, `:8011`)
+esperando el orden final, que nunca llegó; después el issue 399 quitó la barra de filtros del código real. Nunca se
+pasaron al código real.
+
+**Ahora:** se pasan al código real (con pruebas) SOLO los bloques, sobre la pantalla actual: Panorama (azul), Ahora
+(ámbar) y Todo el historial (verde), en ese orden. Sin bloque de filtros (issue 399 los quitó) y sin el `?orden=`
+del prototipo. Lo demás del 370 (comparación, gráfico de evolución, tablas con CSV) no se trae salvo que Jesús lo pida.
+
+### Implementado (2026-09-25)
+
+- `admin/_dashboard_bloques.html` (macro `bloque`, del prototipo sin filtros ni `?orden=`); `_dashboard_resultados.html`
+  envuelve Panorama (azul), Ahora (ámbar) y Todo el historial (verde); lienzo gris claro en `dashboard.html`.
+- Móvil (lección del issue 372): toda grilla del tablero con `grid-cols-1` explícito.
+- Prueba nueva: los 3 bloques con encabezado (ícono + `h2`) y en ese orden. Tailwind reconstruido, `?v=109`.
+- Visto en navegador (admin temporal en la BD local, borrado después) a 1280 y 390 px: sin scroll lateral, sin
+  errores de consola.

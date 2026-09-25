@@ -377,7 +377,7 @@ def test_admin_ve_dashboard_arriba_de_lector_sin_seccion_cobros_y_tarifas_al_fin
     html = client.get("/paquetes").text
 
     assert 'data-cat-panel="cobros"' not in html and 'data-cat-open="cobros"' not in html
-    i = html.index('href="/administracion/estadisticas-cobro"')
+    i = html.index('href="/administracion/dashboard"')
     assert html[i : html.index("</a>", i)].endswith("Dashboard")
     # Issue 407: ícono propio (no la lupa de buscar) y Perfiles antes que Datos.
     assert ICONOS_NAV["dashboard"] in html[i : html.index("</a>", i)]
@@ -388,12 +388,12 @@ def test_admin_ve_dashboard_arriba_de_lector_sin_seccion_cobros_y_tarifas_al_fin
         enlaces = re.findall(r'href="([^"]+)"', panel)
         assert enlaces[-2:] == ["/administracion/notificaciones", "/administracion/tarifas-cobro"]
     for panel in _paneles_de_categoria(html, "equipo") + _paneles_de_categoria(html, "datos"):
-        assert "estadisticas-cobro" not in panel
+        assert "/administracion/dashboard" not in panel
 
 
 def test_operador_no_ve_dashboard(client):
     _login_staff_operador(client)
-    assert 'href="/administracion/estadisticas-cobro"' not in client.get("/paquetes").text
+    assert 'href="/administracion/dashboard"' not in client.get("/paquetes").text
 
 
 def test_operador_conserva_mi_perfil_arriba_porque_no_ve_las_categorias(client):
