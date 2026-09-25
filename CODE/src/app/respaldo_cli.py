@@ -16,6 +16,7 @@ Variables de entorno:
     RESPALDO_S3_BUCKET, RESPALDO_AWS_ACCESS_KEY_ID, RESPALDO_AWS_SECRET_ACCESS_KEY, AWS_REGION
                             bucket de respaldos y la llave de solo subida de este servidor (ver
                             `infra/respaldos/`). Sin ellas el respaldo queda solo en el disco.
+    RESPALDO_CORREO_AVISOS  correos (separados por coma) que reciben los avisos; salen por el SMTP del sistema
 
 Uso (dentro del contenedor, desde `/app/src`; ver `scripts/respaldos/`):
     python -m app.respaldo_cli respaldar --motivo diario
@@ -32,17 +33,19 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+from app.domain import smtp_email_sender
+from app.domain.email_sender import ConsoleEmailSender
 from app.domain.respaldo_service import (
+    Avisos,
     Instalacion,
     MotivoRespaldo,
     RespaldoEnCurso,
     RespaldoFallido,
     RestauracionRechazada,
     S3DestinoRespaldos,
-    crear_respaldo,
+    ejecutar_respaldo,
     leer_commit,
     restaurar,
-    subir_respaldo,
     verificar_respaldo,
 )
 
@@ -74,6 +77,12 @@ def _destino_s3():
         access_key_id=_requerida("RESPALDO_AWS_ACCESS_KEY_ID"),
         secret_access_key=_requerida("RESPALDO_AWS_SECRET_ACCESS_KEY"),
     )
+
+
+def _avisos() -> Avisos:
+    destinatarios = [c.strip() for c in os.environ.get("RESPALDO_CORREO_AVISOS", "").split(",") if c.strip()]
+    sender = smtp_email_sender.SmtpEmailSender() if smtp_email_sender.configurado() else ConsoleEmailSender()
+    return Avisos(sender=sender, destinatarios=destinatarios)
 
 
 def _resumen(carpeta: Path) -> str:
@@ -114,14 +123,9 @@ def main() -> int:
             )
             print(f"Restaurado: {args.carpeta.name}")
             return 0
-        respaldo = crear_respaldo(_instalacion(), carpeta, MotivoRespaldo(args.motivo))
-        print(f"Respaldo listo: {respaldo.carpeta}")
         destino = _destino_s3()
-        if destino is None:
-            print("Sin RESPALDO_S3_BUCKET: el respaldo quedó solo en el disco.")
-            return 0
-        tipos = subir_respaldo(respaldo, destino)
-        print(f"Subido a S3: {', '.join(tipos)}")
+        respaldo = ejecutar_respaldo(_instalacion(), carpeta, MotivoRespaldo(args.motivo), destino, _avisos())
+        print(f"Respaldo listo: {respaldo.carpeta}" + ("" if destino else " (sin RESPALDO_S3_BUCKET: solo en el disco)"))
         return 0
     except RestauracionRechazada as exc:
         print(f"NO se restauró: {exc}", file=sys.stderr)

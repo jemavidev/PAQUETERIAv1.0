@@ -14,6 +14,7 @@ import contextlib
 import enum
 import fcntl
 import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -21,12 +22,13 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Protocol
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from .configuracion_conjunto_service import obtener_nombre_conjunto
+from .email_sender import EmailSender
 from .plantilla_env import generar_plantilla_env
 from .zona_horaria import ZONA_HORARIA_APP
 
@@ -446,3 +448,110 @@ class S3DestinoRespaldos:
 
     def subir(self, clave: str, ruta: Path, tipo: str) -> None:
         self._s3.upload_file(str(ruta), self._bucket, clave, ExtraArgs={"Tagging": f"tipo={tipo}"})
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Corrida completa (ticket 05): respaldar + subir + avisar + registrar
+# --------------------------------------------------------------------------------------------------------------------
+UMBRAL_DISCO = 0.80
+ARCHIVO_HISTORIAL = ".historial.jsonl"
+
+
+def uso_disco(carpeta: Path) -> float:
+    """Fracción usada (0 a 1) del disco donde vive `carpeta`."""
+    uso = shutil.disk_usage(carpeta)
+    return uso.used / uso.total
+
+
+@dataclass
+class Avisos:
+    """A quién y cómo avisar por correo. `uso_disco` se inyecta para poder probar el umbral."""
+
+    sender: EmailSender
+    destinatarios: list[str]
+    uso_disco: Callable[[Path], float] = uso_disco
+
+    def enviar(self, asunto: str, cuerpo: str) -> None:
+        for destino in self.destinatarios:
+            try:
+                self.sender.enviar(destino, asunto, cuerpo)
+            except Exception:
+                pass  # un correo que no sale no debe tapar el resultado del respaldo (queda en el log del host)
+
+
+def _registrar(carpeta_respaldos: Path, corrida: dict) -> None:
+    with open(Path(carpeta_respaldos) / ARCHIVO_HISTORIAL, "a", encoding="utf-8") as f:
+        f.write(json.dumps(corrida, ensure_ascii=False) + "\n")
+
+
+def leer_historial(carpeta_respaldos: Path) -> list[dict]:
+    """Una entrada por corrida (la más vieja primero): para el resumen del lunes y la pantalla de respaldos."""
+    ruta = Path(carpeta_respaldos) / ARCHIVO_HISTORIAL
+    if not ruta.is_file():
+        return []
+    return [json.loads(linea) for linea in ruta.read_text(encoding="utf-8").splitlines() if linea.strip()]
+
+
+def ejecutar_respaldo(
+    instalacion: Instalacion,
+    carpeta_respaldos: Path,
+    motivo: MotivoRespaldo,
+    destino: DestinoRespaldos | None,
+    avisos: Avisos,
+    ahora: datetime | None = None,
+) -> Respaldo:
+    """Una corrida completa: respaldo local, subida a S3 (si hay destino), correo inmediato si cualquier paso falla,
+    aviso si el disco pasa del 80 % y una línea en el historial. Relanza `RespaldoFallido` tras avisar."""
+    ahora = ahora or datetime.now(timezone.utc)
+    carpeta_respaldos = Path(carpeta_respaldos)
+    carpeta_respaldos.mkdir(parents=True, exist_ok=True)
+    corrida = {
+        "fecha_utc": ahora.isoformat(timespec="seconds"),
+        "motivo": motivo.value,
+        "ok": False,
+        "respaldo": None,
+        "tamano": None,
+        "subido_a": [],
+        "error": None,
+    }
+    try:
+        respaldo = crear_respaldo(instalacion, carpeta_respaldos, motivo, ahora=ahora)
+        corrida["respaldo"] = respaldo.carpeta.name
+        corrida["tamano"] = sum(a.stat().st_size for a in respaldo.carpeta.iterdir())
+        if destino is not None:
+            corrida["subido_a"] = subir_respaldo(respaldo, destino)
+        corrida["ok"] = True
+    except RespaldoFallido as exc:
+        corrida["error"] = str(exc)
+        _registrar(carpeta_respaldos, corrida)
+        local = ahora.astimezone(ZONA_HORARIA_APP)
+        avisos.enviar(
+            f"[Respaldos] FALLÓ el respaldo de {instalacion.dominio}",
+            f"El respaldo ({motivo.value}) de {instalacion.dominio} del {local:%Y-%m-%d %H:%M} (hora Colombia) no se "
+            f"completó.\n\nPaso que falló: {exc.paso}\nDetalle: {exc.detalle}\n\n"
+            + (
+                f"El respaldo local SÍ quedó en el disco del servidor ({corrida['respaldo']}); solo falló la subida.\n"
+                if corrida["respaldo"]
+                else "No quedó ningún respaldo nuevo de esta corrida.\n"
+            )
+            + "Revisar en el servidor: el log de respaldos y `docker compose logs app`.",
+        )
+        raise
+    finally:
+        _avisar_si_el_disco_se_llena(instalacion, carpeta_respaldos, avisos)
+    _registrar(carpeta_respaldos, corrida)
+    return respaldo
+
+
+def _avisar_si_el_disco_se_llena(instalacion: Instalacion, carpeta_respaldos: Path, avisos: Avisos) -> None:
+    try:
+        uso = avisos.uso_disco(carpeta_respaldos)
+    except OSError:
+        return
+    if uso > UMBRAL_DISCO:
+        avisos.enviar(
+            f"[Respaldos] Disco casi lleno en {instalacion.dominio}",
+            f"El disco del servidor de {instalacion.dominio} está al {uso * 100:.0f} % (el aviso salta al pasar del "
+            f"{UMBRAL_DISCO * 100:.0f} %).\n\nSin espacio, los respaldos y la copia de las fotos van a empezar a "
+            "fallar. Liberar espacio (ej. `docker system prune`, la caché de construcción) o ampliar el disco.",
+        )
