@@ -8,14 +8,23 @@ mostrarse.
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Políticas, reglas de ciclo de vida y script de creación versionados en el repo, sin ningún secreto.
-- [ ] Bucket creado: privado, cifrado por defecto, reglas `diario/` y `puntual/` 30 días, `mensual/` 365 días,
+- [x] Políticas, reglas de ciclo de vida y script de creación versionados en el repo, sin ningún secreto.
+- [x] Bucket creado: privado, cifrado por defecto, reglas `diario/` y `puntual/` 30 días, `mensual/` 365 días,
       `anual/` sin expiración.
-- [ ] Llave de test: solo puede subir bajo `test.papyrus.com.co/`; verificado en vivo que NO puede leer, listar ni
+- [x] Llave de test: solo puede subir bajo `test.papyrus.com.co/`; verificado en vivo que NO puede leer, listar ni
       borrar, ni escribir en la carpeta de otro dominio.
-- [ ] Un respaldo del día 1 queda en `diario/` y `mensual/`; el del 1 de enero además en `anual/`; uno "antes de
+- [x] Un respaldo del día 1 queda en `diario/` y `mensual/`; el del 1 de enero además en `anual/`; uno "antes de
       deploy" o "a pedido" en `puntual/`.
-- [ ] Si la subida falla, el respaldo local se conserva y el error queda registrado (el aviso por correo es del 05).
-- [ ] Pruebas con el destino S3 falso: carpeta correcta según fecha y motivo, nombres únicos (sin sobrescribir).
+- [x] Si la subida falla, el respaldo local se conserva y el error queda registrado (el aviso por correo es del 05).
+- [x] Pruebas con el destino S3 falso: carpeta correcta según fecha y motivo, nombres únicos (sin sobrescribir).
+
+## Comments
+
+**2026-09-25 (implementado, PaqueteX `1b04fe0`):** bucket `paquetex-respaldos` creado en la cuenta 172460160630 (privado,
+AES256, versionado, reglas por etiqueta `tipo`; la anual sin regla). Usuario `paquetex-respaldos-test-papyrus-com-co`,
+llave instalada en el `.env` de test sin mostrarse. Verificado con esa llave: sube a su carpeta; NO puede subir a otro
+dominio, leer, listar ni borrar. Un respaldo real quedó en `test.papyrus.com.co/puntual/2026-09-25_111522_a_pedido/`
+con sus 4 archivos, etiqueta `tipo=puntual` y cifrado AES256. Decisión técnica: las reglas de S3 no aceptan comodines
+en la ruta, por eso filtran por etiqueta (una regla por tipo sirve para todos los dominios).
