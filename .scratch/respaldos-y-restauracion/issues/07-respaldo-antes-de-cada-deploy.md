@@ -6,9 +6,15 @@ estaba corriendo) ANTES de actualizar el código y reiniciar la app — las migr
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] El paso corre antes del `git reset` y del reinicio/rebuild.
-- [ ] El respaldo queda en `puntual/` con el commit previo al deploy en su manifiesto.
-- [ ] Si el respaldo falla, el deploy no continúa y el job falla con un mensaje claro.
-- [ ] Verificado en vivo con un deploy real a test.
+- [x] El paso corre antes del `git reset` y del reinicio/rebuild.
+- [x] El respaldo queda en `puntual/` con el commit previo al deploy en su manifiesto.
+- [x] Si el respaldo falla, el deploy no continúa y el job falla con un mensaje claro.
+- [x] Verificado en vivo con un deploy real a test.
+
+## Comments
+
+**2026-09-25:** paso "Respaldo antes del deploy" en el workflow del repo de deploy, antes de `git reset`/reinicio; si
+falla, `exit 1` y el deploy no sigue. Verificado en dos deploys reales (`c77c719`, `b558516`): respaldos
+`..._antes_de_deploy` en el disco y en S3 `puntual/`.

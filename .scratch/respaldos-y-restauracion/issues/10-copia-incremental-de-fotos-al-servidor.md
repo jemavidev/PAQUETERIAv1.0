@@ -7,10 +7,15 @@ y listar solo el bucket/prefijo de fotos. Reusa el mecanismo de segundo plano de
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Permiso de lectura y listado agregado solo sobre las fotos; definido en el repo y aplicado en la cuenta.
-- [ ] Primera corrida copia todo; la siguiente copia solo lo nuevo y nunca borra nada local.
-- [ ] Avance visible y persistente; se puede cerrar la pantalla mientras corre.
-- [ ] Pruebas con el origen de fotos falso: primera copia completa, segunda incremental, estructura de carpetas.
-- [ ] Verificado en vivo en test con las fotos reales (medir tamaño y tiempo de la primera copia).
+- [x] Permiso de lectura y listado agregado solo sobre las fotos; definido en el repo y aplicado en la cuenta.
+- [x] Primera corrida copia todo; la siguiente copia solo lo nuevo y nunca borra nada local.
+- [x] Avance visible y persistente; se puede cerrar la pantalla mientras corre.
+- [x] Pruebas con el origen de fotos falso: primera copia completa, segunda incremental, estructura de carpetas.
+- [x] Verificado en vivo en test con las fotos reales (medir tamaño y tiempo de la primera copia).
+
+## Comments
+
+**2026-09-25 (PaqueteX `b558516`):** en test desde la pantalla: primera copia 7.561 fotos (550 MB, ~15 min, avance
+visible "Copiando fotos: 150 de 7.561"...), segunda copia "0 fotos nuevas copiadas, 7561 ya estaban". Disco al 25 %.
