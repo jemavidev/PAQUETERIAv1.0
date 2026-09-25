@@ -16,6 +16,7 @@ import fcntl
 import hashlib
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -56,9 +57,14 @@ class RespaldoEnCurso(Exception):
     """Ya hay otra operación de respaldo/restauración corriendo sobre la misma carpeta."""
 
 
+class RestauracionRechazada(Exception):
+    """La restauración no se hizo porque una protección la frenó; la base quedó intacta."""
+
+
 @dataclass(frozen=True)
-class OrigenRespaldo:
-    """Qué se respalda: la base y los datos de la instalación que la identifican."""
+class Instalacion:
+    """Una instalación de PaqueteX (un dominio): su base y lo que la identifica. Es el origen de un respaldo y el
+    destino de una restauración."""
 
     database_url: str
     dominio: str
@@ -152,7 +158,7 @@ def operacion_exclusiva(carpeta_respaldos: Path):
 
 
 def crear_respaldo(
-    origen: OrigenRespaldo,
+    origen: Instalacion,
     carpeta_respaldos: Path,
     motivo: MotivoRespaldo,
     ahora: datetime | None = None,
@@ -176,7 +182,7 @@ def _rotar_locales(carpeta_respaldos: Path) -> None:
         shutil.rmtree(vieja)
 
 
-def _crear_respaldo(origen: OrigenRespaldo, carpeta_respaldos: Path, motivo: MotivoRespaldo, ahora: datetime) -> Respaldo:
+def _crear_respaldo(origen: Instalacion, carpeta_respaldos: Path, motivo: MotivoRespaldo, ahora: datetime) -> Respaldo:
     local = ahora.astimezone(ZONA_HORARIA_APP)
     nombre = f"{local:%Y-%m-%d_%H%M%S}_{motivo.value}"
     destino = Path(carpeta_respaldos) / nombre
@@ -196,7 +202,7 @@ def _crear_respaldo(origen: OrigenRespaldo, carpeta_respaldos: Path, motivo: Mot
     return Respaldo(carpeta=destino)
 
 
-def _armar(origen: OrigenRespaldo, carpeta: Path, motivo: MotivoRespaldo, local: datetime) -> None:
+def _armar(origen: Instalacion, carpeta: Path, motivo: MotivoRespaldo, local: datetime) -> None:
     try:
         version, conjunto, conteos = _leer_estado_bd(origen.database_url)
     except Exception as exc:
@@ -244,4 +250,105 @@ def leer_manifiesto(carpeta: Path) -> Manifiesto:
             for seccion in cp.sections()
             if seccion.startswith("archivo ")
         },
+    )
+
+
+def verificar_respaldo(carpeta: Path) -> Manifiesto:
+    """El manifiesto del respaldo, tras comprobar que cada archivo existe y coincide con su tamaño y su huella.
+    `RestauracionRechazada` nombrando el archivo que falla (ej. una descarga incompleta)."""
+    carpeta = Path(carpeta)
+    if not (carpeta / ARCHIVO_MANIFIESTO).is_file():
+        raise RestauracionRechazada(f"{carpeta} no es un respaldo: falta {ARCHIVO_MANIFIESTO}.")
+    try:
+        manifiesto = leer_manifiesto(carpeta)
+    except (KeyError, ValueError, configparser.Error) as exc:
+        raise RestauracionRechazada(f"El manifiesto de {carpeta.name} está incompleto o dañado (falta {exc}).") from exc
+    for nombre, esperada in manifiesto.archivos.items():
+        ruta = carpeta / nombre
+        if not ruta.is_file():
+            raise RestauracionRechazada(f"Falta {nombre} en el respaldo.")
+        if _huella(ruta) != esperada:
+            raise RestauracionRechazada(f"{nombre} no coincide con la huella del manifiesto (archivo dañado o incompleto).")
+    return manifiesto
+
+
+def restaurar(
+    carpeta: Path,
+    destino: Instalacion,
+    confirmacion: str,
+    carpeta_respaldos: Path,
+    codigo: Path,
+    permitir_otro_destino: bool = False,
+) -> None:
+    """Reemplaza la base de `destino` por la del respaldo de `carpeta`, con sus protecciones (ticket 02): confirmación
+    escribiendo el dominio, huellas, mismo sistema (salvo `permitir_otro_destino`), versión compatible con el código
+    instalado en `codigo` (la carpeta con `alembic.ini`) y un respaldo de lo actual antes de tocar nada. Si el
+    respaldo es de una versión anterior, al final aplica las migraciones pendientes. Cualquier protección que frene
+    lanza `RestauracionRechazada` con la base intacta."""
+    if confirmacion.strip().lower() != destino.dominio.lower():
+        raise RestauracionRechazada(f"No se confirmó: hay que escribir el dominio exacto ({destino.dominio}).")
+    manifiesto = verificar_respaldo(carpeta)
+    if manifiesto.dominio != destino.dominio and not permitir_otro_destino:
+        raise RestauracionRechazada(
+            f"El respaldo es de {manifiesto.dominio} y esta instalación es {destino.dominio}. Si de verdad quieres "
+            "restaurarlo aquí (ej. un servidor nuevo), pídelo explícitamente con --otro-destino."
+        )
+    script = _scripts_alembic(codigo)
+    if manifiesto.version_bd != script.get_current_head():
+        try:
+            script.get_revision(manifiesto.version_bd)
+        except Exception:
+            raise RestauracionRechazada(
+                f"El respaldo es de una versión de la base ({manifiesto.version_bd}) más nueva que el código instalado "
+                "aquí. Primero despliega el código de ese respaldo (sistema.tar.gz) y después restaura."
+            )
+    with operacion_exclusiva(carpeta_respaldos):
+        # Sin rotar: la copia de lo actual no debe empujar fuera del disco al respaldo que se está restaurando.
+        previo = _crear_respaldo(destino, Path(carpeta_respaldos), MotivoRespaldo.ANTES_DE_RESTAURAR, datetime.now(timezone.utc))
+        try:
+            _reemplazar_base(destino.database_url, Path(carpeta) / ARCHIVO_BD)
+        except Exception as exc:
+            # A mitad de camino la base puede quedar vacía: se vuelve a lo que había justo antes.
+            _reemplazar_base(destino.database_url, previo.carpeta / ARCHIVO_BD)
+            raise RestauracionRechazada(
+                f"La restauración falló y se devolvió la base a como estaba ({previo.carpeta.name}): {exc}"
+            ) from exc
+    _migrar_a_la_version_del_codigo(destino.database_url, codigo)
+
+
+def _scripts_alembic(codigo: Path):
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    config = Config(str(Path(codigo) / "alembic.ini"))
+    config.set_main_option("script_location", str(Path(codigo) / "alembic"))
+    return ScriptDirectory.from_config(config)
+
+
+def _migrar_a_la_version_del_codigo(database_url: str, codigo: Path) -> None:
+    # Mismo camino que el arranque de la app (`alembic upgrade head`); `-x db_url` para no depender del entorno.
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "-x", f"db_url={database_url}", "upgrade", "head"],
+        cwd=str(codigo),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _reemplazar_base(database_url: str, volcado: Path) -> None:
+    # Se vacía el esquema entero (no `pg_restore --clean`): así no sobrevive ninguna tabla que exista hoy y no en el
+    # respaldo.
+    engine = create_engine(database_url, isolation_level="AUTOCOMMIT")
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE"))
+            conn.execute(text("CREATE SCHEMA public"))
+    finally:
+        engine.dispose()
+    subprocess.run(
+        ["pg_restore", "--no-owner", "--no-privileges", "--exit-on-error", "--dbname", _pg_url(database_url), str(volcado)],
+        check=True,
+        capture_output=True,
+        text=True,
     )
