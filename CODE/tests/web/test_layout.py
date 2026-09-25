@@ -27,6 +27,7 @@ from app.domain.paquete_lifecycle import receive
 from app.domain.paquete_service import Destinatario, announce
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario, Usuario
+from app.web.icons import ICONOS_NAV
 from app.web.otp import get_otp_sender
 
 _CANON = "+573001234567"
@@ -378,6 +379,10 @@ def test_admin_ve_dashboard_arriba_de_lector_sin_seccion_cobros_y_tarifas_al_fin
     assert 'data-cat-panel="cobros"' not in html and 'data-cat-open="cobros"' not in html
     i = html.index('href="/administracion/estadisticas-cobro"')
     assert html[i : html.index("</a>", i)].endswith("Dashboard")
+    # Issue 407: ícono propio (no la lupa de buscar) y Perfiles antes que Datos.
+    assert ICONOS_NAV["dashboard"] in html[i : html.index("</a>", i)]
+    assert ICONOS_NAV["buscar"] not in html[i : html.index("</a>", i)]
+    assert html.index('data-cat-open="equipo"') < html.index('data-cat-open="datos"')
     assert i < html.index("data-modo-lector", i)
     for panel in _paneles_de_categoria(html, "datos"):
         enlaces = re.findall(r'href="([^"]+)"', panel)

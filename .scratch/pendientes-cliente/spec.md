@@ -426,3 +426,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `404` — Límites de intentos por la IP real (uvicorn confía en `X-Forwarded-For` de Caddy) — **verificado en test (`f65dfc7`)**
 - `405` — Menú de cuenta: "Mi perfil" dentro de Perfiles (admin; el operador lo conserva arriba), "Notificaciones" dentro de Datos — **implementado, pendiente confirmar en vivo (localhost)**
 - `406` — Menú de cuenta sin "Cobros": "Dashboard" (antes Estadísticas de cobro, también su título) arriba de Lector; Tarifas de cobro al final de Datos — **implementado, pendiente confirmar en vivo (localhost)**
+- `407` — Menú de cuenta: ícono de barras para "Dashboard" y Perfiles antes que Datos — **implementado, pendiente confirmar en vivo (localhost)**

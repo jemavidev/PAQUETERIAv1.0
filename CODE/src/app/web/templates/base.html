@@ -323,7 +323,7 @@
     {% if not es_admin %}{{ enlace_menu('/mi-sesion', 'Mi perfil', iconos_nav.mis_datos) }}{% endif %}
     {#- Issue 406: "Dashboard" (antes "Estadísticas de cobro", dentro de la categoría Cobros, que se quitó) queda suelto
        arriba de "Lector". Solo ADMIN: la ruta es `require_admin`. -#}
-    {% if es_admin %}{{ enlace_menu('/administracion/estadisticas-cobro', 'Dashboard', iconos_nav.buscar) }}{% endif %}
+    {% if es_admin %}{{ enlace_menu('/administracion/estadisticas-cobro', 'Dashboard', iconos_nav.dashboard) }}{% endif %}
     {#- Modo lector (ticket 10, `.scratch/captura-guia-lector-camara`): interruptor POR EQUIPO, apagado por defecto,
        guardado en el propio equipo (`localStorage`, ver el `<script>` de abajo). Encendido, al abrir Recibir (y
        "Confirmar guía" de Entregar) el foco va al campo de guía, sin teclado en pantalla: el lector integrado del
@@ -355,11 +355,12 @@
        listener de `toggle` de `.account-menu` ahí mismo. -#}
     <div class="account-menu-separator"></div>
     <div data-cat-list>
-      <button type="button" class="account-menu-cat-btn" data-cat-open="datos">
-        <span>Datos</span><span aria-hidden="true">›</span>
-      </button>
+      {#- Issue 407: Perfiles antes que Datos. -#}
       <button type="button" class="account-menu-cat-btn" data-cat-open="equipo">
         <span>Perfiles</span><span aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="account-menu-cat-btn" data-cat-open="datos">
+        <span>Datos</span><span aria-hidden="true">›</span>
       </button>
     </div>
     <div data-cat-panel="datos" hidden>
