@@ -54,7 +54,9 @@ def _instalacion() -> Instalacion:
     if not dominio:
         raise SystemExit("PUBLIC_BASE_URL no tiene un dominio válido.")
     checkout = Path(os.environ.get("RESPALDO_CHECKOUT_DIR", "/app/checkout"))
-    return Instalacion(database_url=_requerida("DATABASE_URL"), dominio=dominio, commit=leer_commit(checkout))
+    return Instalacion(
+        database_url=_requerida("DATABASE_URL"), dominio=dominio, commit=leer_commit(checkout), checkout=checkout
+    )
 
 
 def _resumen(carpeta: Path) -> str:

@@ -14,6 +14,7 @@ import contextlib
 import enum
 import fcntl
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -25,9 +26,12 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from .configuracion_conjunto_service import obtener_nombre_conjunto
+from .plantilla_env import generar_plantilla_env
 from .zona_horaria import ZONA_HORARIA_APP
 
 ARCHIVO_BD = "base_datos.dump"
+ARCHIVO_SISTEMA = "sistema.tar.gz"
+ARCHIVO_PLANTILLA_ENV = "env.plantilla"
 ARCHIVO_MANIFIESTO = "manifiesto.txt"
 
 # Las tablas cuyo conteo guarda el manifiesto: lo que una restauración debe devolver intacto.
@@ -69,6 +73,9 @@ class Instalacion:
     database_url: str
     dominio: str
     commit: str
+    # El checkout desplegado (de ahí salen la copia del código y la plantilla del `.env`). Sin él, el respaldo lleva
+    # solo la base.
+    checkout: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -87,6 +94,9 @@ class Manifiesto:
     version_bd: str
     conteos: dict[str, int] = field(default_factory=dict)
     archivos: dict[str, HuellaArchivo] = field(default_factory=dict)
+    # Las variables que el `docker-compose.yml` desplegado toma del `.env` (`${VAR}`): lo mínimo a configurar al
+    # restaurar en otro servidor.
+    variables_requeridas: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -116,6 +126,19 @@ def leer_commit(checkout: Path) -> str:
 def _pg_url(database_url: str) -> str:
     # `pg_dump` entiende URLs `postgresql://`, no el dialecto de SQLAlchemy.
     return database_url.replace("postgresql+psycopg2://", "postgresql://", 1)
+
+
+def _copiar_codigo(checkout: Path, commit: str, destino: Path) -> None:
+    """`git archive` del commit desplegado: exactamente lo versionado. Nunca el `.env`, sus copias viejas
+    (`.env.bak...`) ni otros archivos sueltos o ignorados que haya en el checkout del servidor.
+    `safe.directory`: el checkout es de otro usuario del host que el del contenedor."""
+    archivo = subprocess.run(
+        ["git", "-c", "safe.directory=*", "-C", str(checkout), "archive", "--format=tar.gz", "--output", str(destino), commit],
+        capture_output=True,
+        text=True,
+    )
+    if archivo.returncode != 0:
+        raise RespaldoFallido("copia del código (git archive)", archivo.stderr.strip())
 
 
 def _huella(ruta: Path) -> HuellaArchivo:
@@ -214,6 +237,16 @@ def _armar(origen: Instalacion, carpeta: Path, motivo: MotivoRespaldo, local: da
     )
     if volcado.returncode != 0:
         raise RespaldoFallido("volcado de la base de datos (pg_dump)", volcado.stderr.strip())
+    archivos = [ARCHIVO_BD]
+    if origen.checkout is not None:
+        _copiar_codigo(Path(origen.checkout), origen.commit, carpeta / ARCHIVO_SISTEMA)
+        archivos.append(ARCHIVO_SISTEMA)
+        env = Path(origen.checkout) / ".env"
+        texto_env = env.read_text(encoding="utf-8") if env.is_file() else ""
+        (carpeta / ARCHIVO_PLANTILLA_ENV).write_text(
+            generar_plantilla_env(texto_env, origen.dominio, f"{local:%Y-%m-%d %H:%M}"), encoding="utf-8"
+        )
+        archivos.append(ARCHIVO_PLANTILLA_ENV)
 
     manifiesto = configparser.ConfigParser()
     manifiesto["respaldo"] = {
@@ -225,8 +258,12 @@ def _armar(origen: Instalacion, carpeta: Path, motivo: MotivoRespaldo, local: da
         "version_bd": version,
     }
     manifiesto["conteos"] = {t: str(n) for t, n in conteos.items()}
+    compose = Path(origen.checkout) / "docker-compose.yml" if origen.checkout is not None else None
+    if compose is not None and compose.is_file():
+        requeridas = sorted(set(re.findall(r"\$\{([A-Za-z_][A-Za-z0-9_]*)", compose.read_text(encoding="utf-8"))))
+        manifiesto["variables_requeridas"] = {"nombres": ", ".join(requeridas)}
     # Una sección por archivo: `[archivo base_datos.dump]` con su tamaño y su sha256.
-    for nombre in (ARCHIVO_BD,):
+    for nombre in archivos:
         huella = _huella(carpeta / nombre)
         manifiesto[f"archivo {nombre}"] = {"tamano": str(huella.tamano), "sha256": huella.sha256}
     with open(carpeta / ARCHIVO_MANIFIESTO, "w", encoding="utf-8") as f:
@@ -250,6 +287,9 @@ def leer_manifiesto(carpeta: Path) -> Manifiesto:
             for seccion in cp.sections()
             if seccion.startswith("archivo ")
         },
+        variables_requeridas=[
+            v.strip() for v in cp.get("variables_requeridas", "nombres", fallback="").split(",") if v.strip()
+        ],
     )
 
 
