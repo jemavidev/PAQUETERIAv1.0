@@ -5,7 +5,7 @@ la idea es que estas opciones se comporten como se manejan los motivos de bloque
 (/administracion/motivos-bloqueo y /administracion/motivos-anulacion-cobro), con su propia vista y que aplique a los
 motivos de cancelación". Confirmado: "sí, continúa con todo".
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (`f65dfc7`), pendiente confirmar en vivo
 
 ## Decisiones (acordadas)
 

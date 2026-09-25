@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "me confirmas que el personal de staff no tenga límites de consultas, ni para esto ni
 para otras cosas" -> al revisar se encontró el problema de abajo -> "ahora sí arregla lo relacionado a lo de la IP".
 
-**Status:** implementado (commit `52e2b24` en rama `deploy-404` del repo de deploy), sin desplegar
+**Status:** verificado en test (`f65dfc7`)
 
 ## Problema
 
@@ -34,3 +34,11 @@ públicas de un "vecino A" y luego un "vecino B" distinto:
 | Con el cambio | 429 | **200** | la real de cada uno |
 
 Pendiente tras el deploy: confirmar en los logs del servidor que ya no aparece solo `172.18.0.x`.
+
+## Verificación en test (2026-09-25, `f65dfc7`)
+
+- El contenedor arranca con `--proxy-headers --forwarded-allow-ips '*'` (`docker inspect`).
+- Logs de la app: las solicitudes aparecen con la IP pública real (`186.82.84.45`, la de esta PC; el health check de
+  CI con la suya), ya no `172.18.0.x`.
+- Una solicitud con `X-Forwarded-For: 1.2.3.4` falso se registró con la IP real: Caddy descarta la cabecera del
+  cliente, no se puede suplantar.

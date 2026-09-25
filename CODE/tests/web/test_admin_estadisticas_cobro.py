@@ -304,7 +304,9 @@ def test_ya_no_hay_barra_de_filtros(client):
     assert "data-atajo-fecha" not in r.text
     assert "data-tipo-icono" not in r.text
     assert "data-estadocobro-icono" not in r.text
-    assert re.search(r"<h1[^>]*>\s*Estadísticas de cobro\s*</h1>", r.text)
+    # Issue 406: la pantalla se llama "Dashboard" (antes "Estadísticas de cobro").
+    assert re.search(r"<h1[^>]*>\s*Dashboard\s*</h1>", r.text)
+    assert "<title>Dashboard" in r.text
 
 
 def test_con_base_vacia_carga_sin_error(client):

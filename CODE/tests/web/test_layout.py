@@ -19,6 +19,8 @@ conjunto de enlaces de staff; Administración solo si el rol es ADMIN. Con
 sesiones de cliente Y staff coexistiendo, se muestran ambos conjuntos juntos.
 """
 
+import re
+
 from app.domain.otp_sender import DevOtpSender
 from app.domain.paquete import EstadoPaquete, Paquete
 from app.domain.paquete_lifecycle import receive
@@ -341,6 +343,60 @@ def test_staff_admin_ve_ademas_los_enlaces_de_administracion(client):
     assert 'href="/paquetes"' in html
     assert 'href="/administracion/personal"' in html
     assert 'href="/administracion/notificaciones"' in html
+
+
+def _paneles_de_categoria(html, categoria):
+    """El HTML de cada `data-cat-panel="<categoria>"` del menú de cuenta (el menú puede pintarse más de una vez)."""
+    paneles, desde = [], 0
+    while (i := html.find(f'data-cat-panel="{categoria}"', desde)) != -1:
+        paneles.append(html[i : html.index("</div>", i)])
+        desde = i + 1
+    return paneles
+
+
+def test_admin_ve_mi_perfil_solo_dentro_de_perfiles_y_notificaciones_dentro_de_datos(client):
+    # Issue 405 (.scratch/pendientes-cliente): Perfiles = Mi perfil + Usuarios; Notificaciones pasa a Datos.
+    _login_staff_admin(client)
+    html = client.get("/paquetes").text
+
+    perfiles, datos = _paneles_de_categoria(html, "equipo"), _paneles_de_categoria(html, "datos")
+    assert perfiles and datos
+    for panel in perfiles:
+        assert panel.index('href="/mi-sesion"') < panel.index('href="/administracion/personal"')
+        assert 'href="/administracion/notificaciones"' not in panel
+    for panel in datos:
+        assert 'href="/administracion/notificaciones"' in panel
+    # "Mi perfil" ya no aparece suelto arriba: solo dentro de Perfiles.
+    assert html.count('href="/mi-sesion"') == len(perfiles)
+
+
+def test_admin_ve_dashboard_arriba_de_lector_sin_seccion_cobros_y_tarifas_al_final_de_datos(client):
+    # Issue 406 (.scratch/pendientes-cliente): se quita la categoría Cobros.
+    _login_staff_admin(client)
+    html = client.get("/paquetes").text
+
+    assert 'data-cat-panel="cobros"' not in html and 'data-cat-open="cobros"' not in html
+    i = html.index('href="/administracion/estadisticas-cobro"')
+    assert html[i : html.index("</a>", i)].endswith("Dashboard")
+    assert i < html.index("data-modo-lector", i)
+    for panel in _paneles_de_categoria(html, "datos"):
+        enlaces = re.findall(r'href="([^"]+)"', panel)
+        assert enlaces[-2:] == ["/administracion/notificaciones", "/administracion/tarifas-cobro"]
+    for panel in _paneles_de_categoria(html, "equipo") + _paneles_de_categoria(html, "datos"):
+        assert "estadisticas-cobro" not in panel
+
+
+def test_operador_no_ve_dashboard(client):
+    _login_staff_operador(client)
+    assert 'href="/administracion/estadisticas-cobro"' not in client.get("/paquetes").text
+
+
+def test_operador_conserva_mi_perfil_arriba_porque_no_ve_las_categorias(client):
+    # Issue 405: las categorías son solo de admin; el operador necesita "Mi perfil" para su contraseña (issue 196).
+    _login_staff_operador(client)
+    html = client.get("/paquetes").text
+    assert 'href="/mi-sesion"' in html
+    assert 'data-cat-panel="' not in html
 
 
 def test_staff_admin_no_duplica_notificaciones_ni_proveedores_en_el_tab_del_header(client):

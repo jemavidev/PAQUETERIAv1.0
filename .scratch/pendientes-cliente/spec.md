@@ -421,6 +421,8 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `399` — `/administracion/estadisticas-cobro`: quitar la barra de filtros (atajos de fecha, Tipo, Cobrado/Anulado); "Periodo seleccionado" pasa a "Todo el historial" — **verificado (localhost y test, `b272a6b`)**
 - `400` — `/residentes` móvil: tarjeta por residente con botones grandes (patrón de /paquetes) -- vista previa en `:8011`, rama `prototipo/residentes-movil-tarjetas` — **implementado y aprobado, pendiente confirmar en test**
 - `401` — `/paquetes` y `/residentes` móvil: botones solo con ícono, sin nombre, íconos más grandes — **desplegado en test (`923404d`), pendiente confirmar en vivo**
-- `402` — `/residentes` móvil: "Limpiar filtros" junto a la búsqueda, 3 vistas repartidas en la 2da fila (como /paquetes) — **implementado, pendiente confirmar en vivo (localhost)**
-- `403` — Motivos de cancelación con vista propia `/administracion/motivos-cancelacion` (como bloqueo/anulación), fuera de `/administracion/notificaciones` — **implementado, pendiente confirmar en vivo (localhost)**
-- `404` — Límites de intentos por la IP real (uvicorn confía en `X-Forwarded-For` de Caddy) — **implementado, sin desplegar**
+- `402` — `/residentes` móvil: "Limpiar filtros" junto a la búsqueda, 3 vistas repartidas en la 2da fila (como /paquetes) — **desplegado en test (`f65dfc7`), pendiente confirmar en vivo**
+- `403` — Motivos de cancelación con vista propia `/administracion/motivos-cancelacion` (como bloqueo/anulación), fuera de `/administracion/notificaciones` — **desplegado en test (`f65dfc7`), pendiente confirmar en vivo**
+- `404` — Límites de intentos por la IP real (uvicorn confía en `X-Forwarded-For` de Caddy) — **verificado en test (`f65dfc7`)**
+- `405` — Menú de cuenta: "Mi perfil" dentro de Perfiles (admin; el operador lo conserva arriba), "Notificaciones" dentro de Datos — **implementado, pendiente confirmar en vivo (localhost)**
+- `406` — Menú de cuenta sin "Cobros": "Dashboard" (antes Estadísticas de cobro, también su título) arriba de Lector; Tarifas de cobro al final de Datos — **implementado, pendiente confirmar en vivo (localhost)**
