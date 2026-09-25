@@ -4,7 +4,7 @@
 la sección de 'Perfiles' muevas 'Notificaciones' hasta la sección de 'Datos'. Debería todo quedar como notificaciones
 dentro de datos con el resto de otros datos y mi perfil dentro de perfiles al igual que usuarios."
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Decisiones (acordadas)
 

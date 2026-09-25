@@ -5,7 +5,7 @@ que está dentro de cobros y las vas a colocar arriba de lector, esta la vas a l
 tarifas de cobro la vas a agregar a la sección de datos". Luego: "cámbialo a 'Dashboard'" (también el título de la
 pantalla) y "sí, puede ir al final" (Tarifas al final de Datos).
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Decisiones (acordadas)
 

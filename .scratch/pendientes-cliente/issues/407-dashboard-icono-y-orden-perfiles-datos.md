@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "Cambia el ícono de dashboard a uno mejor que se te ocurra, no como el de buscar que
 tiene ahora, adicional cambia el orden o posición de 'datos y perfiles'".
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Decisiones
 

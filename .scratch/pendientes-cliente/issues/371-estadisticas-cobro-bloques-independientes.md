@@ -7,7 +7,7 @@ las diferentes secciones de esta vista, ya que te estare diciendo cual va de pri
 y el orden de como debe quedar todo. Por ahora esto sera lo ultimo que haga con relacion a
 esta vista para continuar con otro enfoque despues."
 
-**Status:** implementado en el código real (localhost, 2026-09-25), pendiente confirmar en vivo
+**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Contexto
 
