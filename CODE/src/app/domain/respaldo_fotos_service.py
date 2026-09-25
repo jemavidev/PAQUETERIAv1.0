@@ -75,3 +75,55 @@ class S3OrigenFotos:
 
     def descargar(self, clave: str, destino: Path) -> None:
         self._s3.download_file(self._bucket, clave, str(destino))
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Descargas (ticket 11)
+# --------------------------------------------------------------------------------------------------------------------
+def clave_de_url(url: str) -> str:
+    """La clave en S3 de una foto, a partir de la URL que guarda el sistema (`https://<bucket>.s3...amazonaws.com/<clave>`)."""
+    from urllib.parse import unquote, urlparse
+
+    return unquote(urlparse(url).path).lstrip("/")
+
+
+def fotos_locales(carpeta_copia: Path) -> list[tuple[Path, str]]:
+    """(ruta, clave) de cada foto de la copia del servidor, sin los temporales de una copia a medias."""
+    carpeta_copia = Path(carpeta_copia)
+    if not carpeta_copia.is_dir():
+        return []
+    return sorted(
+        (ruta, ruta.relative_to(carpeta_copia).as_posix())
+        for ruta in carpeta_copia.rglob("*")
+        if ruta.is_file() and not ruta.name.startswith(".")
+    )
+
+
+@dataclass(frozen=True)
+class FotosNuevas:
+    fotos: list[tuple[Path, str]]
+    sin_copiar: int  # registradas desde la marca pero todavía no copiadas al servidor
+
+    @property
+    def tamano(self) -> int:
+        return sum(ruta.stat().st_size for ruta, _ in self.fotos)
+
+
+def fotos_nuevas(session, carpeta_copia: Path, desde) -> FotosNuevas:
+    """Las fotos registradas en el sistema después de `desde` (la última descarga; `None` = nunca: todas) que ya están
+    en la copia del servidor."""
+    from .paquete_foto import PaqueteFoto
+
+    consulta = session.query(PaqueteFoto.url)
+    if desde is not None:
+        consulta = consulta.filter(PaqueteFoto.created_at > desde)
+    carpeta_copia = Path(carpeta_copia)
+    fotos, sin_copiar = [], 0
+    for (url,) in consulta:
+        clave = clave_de_url(url)
+        ruta = carpeta_copia / clave
+        if ruta.is_file():
+            fotos.append((ruta, clave))
+        else:
+            sin_copiar += 1
+    return FotosNuevas(fotos=sorted(fotos, key=lambda f: f[1]), sin_copiar=sin_copiar)

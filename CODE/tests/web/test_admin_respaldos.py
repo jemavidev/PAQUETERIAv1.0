@@ -191,3 +191,78 @@ def test_la_copia_de_fotos_no_bloquea_ni_es_bloqueada_por_un_respaldo(client, re
 def test_un_operador_no_puede_copiar_fotos(client, respaldos, lanzador):
     _login_operador(client)
     assert client.post(f"{_URL}/fotos/copiar").status_code == 403
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Ticket 11 -- descargar las fotos copiadas al servidor: "solo las nuevas" (desde la última descarga) o "todas".
+# --------------------------------------------------------------------------------------------------------------------
+_BASE_S3 = "https://paquetex-staging-fotos.s3.us-east-1.amazonaws.com/"
+
+
+@pytest.fixture()
+def fotos(client, tmp_path, monkeypatch):
+    """Fotos registradas en el sistema y ya copiadas al servidor (misma estructura que en S3)."""
+    from app.domain.paquete import EstadoPaquete, Paquete
+    from app.domain.paquete_foto import PaqueteFoto
+    from app.domain.persona import Persona
+
+    copia = tmp_path / "fotos-copia"
+    monkeypatch.setenv("RESPALDO_FOTOS_DIR", str(copia))
+    persona = Persona(telefono="+573001112233", nombre="Ana")
+    client.db.add(persona)
+    client.db.flush()
+    paquete = Paquete(access_code="FOTO", announced_by_persona_id=persona.id, recipient_name="Ana", estado=EstadoPaquete.RECIBIDO)
+    client.db.add(paquete)
+    client.db.flush()
+
+    def agregar(clave, datos, creada):
+        client.db.add(PaqueteFoto(paquete_id=paquete.id, url=_BASE_S3 + clave, created_at=creada))
+        client.db.commit()
+        (copia / clave).parent.mkdir(parents=True, exist_ok=True)
+        (copia / clave).write_bytes(datos)
+
+    agregar("paquetes-recibidos-imagenes/a1.jpg", b"foto a1", datetime(2026, 9, 1, tzinfo=timezone.utc))
+    agregar("paquetes-recibidos-imagenes/a2.jpg", b"foto a2", datetime(2026, 9, 2, tzinfo=timezone.utc))
+    return agregar
+
+
+def _nombres_zip(r):
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        return sorted(z.namelist())
+
+
+def test_descargar_todas_las_fotos_trae_la_misma_estructura_de_s3(client, respaldos, fotos):
+    _login_admin(client)
+
+    r = client.get(f"{_URL}/fotos/descargar?cuales=todas")
+
+    assert r.status_code == 200 and r.headers["content-type"] == "application/zip"
+    assert _nombres_zip(r) == ["paquetes-recibidos-imagenes/a1.jpg", "paquetes-recibidos-imagenes/a2.jpg"]
+
+
+def test_solo_las_nuevas_trae_lo_llegado_desde_la_ultima_descarga(client, respaldos, fotos):
+    _login_admin(client)
+    assert len(_nombres_zip(client.get(f"{_URL}/fotos/descargar?cuales=nuevas"))) == 2  # la primera vez: todas
+
+    fotos("paquetes-recibidos-imagenes/b1.jpg", b"foto nueva", datetime.now(timezone.utc))
+    r = client.get(f"{_URL}/fotos/descargar?cuales=nuevas")
+
+    assert _nombres_zip(r) == ["paquetes-recibidos-imagenes/b1.jpg"]
+    # "Todas" sigue trayendo todo, sin importar la marca.
+    assert len(_nombres_zip(client.get(f"{_URL}/fotos/descargar?cuales=todas"))) == 3
+
+
+def test_la_pantalla_dice_cuantas_fotos_nuevas_hay_desde_la_ultima_descarga(client, respaldos, fotos):
+    _login_admin(client)
+    assert "Nunca se han descargado" in client.get(_URL).text
+
+    client.get(f"{_URL}/fotos/descargar?cuales=nuevas")
+    fotos("paquetes-recibidos-imagenes/b1.jpg", b"x" * 2_500_000, datetime.now(timezone.utc))
+
+    html = client.get(_URL).text
+    assert "1 foto nueva (≈ 2.5 MB)" in html and "desde el" in html
+
+
+def test_un_operador_no_puede_descargar_fotos(client, respaldos, fotos):
+    _login_operador(client)
+    assert client.get(f"{_URL}/fotos/descargar?cuales=todas").status_code == 403

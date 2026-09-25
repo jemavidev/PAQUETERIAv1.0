@@ -22,9 +22,17 @@ from app.domain.respaldo_service import (
     leer_manifiesto,
     listar_respaldos,
     zip_de_respaldo,
+    zip_por_partes,
 )
 from app.domain.operacion_respaldo import TipoOperacion
-from app.domain.operacion_respaldo_service import OperacionEnCurso, en_curso, iniciar_operacion, ultima_operacion
+from app.domain.operacion_respaldo_service import (
+    OperacionEnCurso,
+    en_curso,
+    iniciar_operacion,
+    terminar_operacion,
+    ultima_operacion,
+)
+from app.domain.respaldo_fotos_service import fotos_locales, fotos_nuevas
 from app.domain.usuario import Usuario
 from app.domain.zona_horaria import ZONA_HORARIA_APP
 
@@ -44,6 +52,23 @@ MOTIVOS = {
 
 def _carpeta() -> Path:
     return Path(os.environ.get("RESPALDO_DIR", "/respaldos"))
+
+
+def _carpeta_fotos() -> Path:
+    return Path(os.environ.get("RESPALDO_FOTOS_DIR", "/fotos-copia"))
+
+
+def _estado_descargas(db: Session) -> dict:
+    ultima = ultima_operacion(db, TipoOperacion.DESCARGA_FOTOS)
+    marca = ultima.inicio if ultima is not None else None
+    nuevas = fotos_nuevas(db, _carpeta_fotos(), marca)
+    return {
+        "ultima": marca.astimezone(ZONA_HORARIA_APP).strftime("%Y-%m-%d %H:%M") if marca else None,
+        "nuevas": len(nuevas.fotos),
+        "nuevas_mb": nuevas.tamano / 1_000_000,
+        "sin_copiar": nuevas.sin_copiar,
+        "en_servidor": len(fotos_locales(_carpeta_fotos())),
+    }
 
 
 _COMANDOS = {
@@ -107,6 +132,7 @@ def _pantalla(request: Request, db: Session, admin: Usuario, aviso: str | None =
             "bucket": os.environ.get("RESPALDO_S3_BUCKET", "paquetex-respaldos"),
             "a_pedido": _estado_operacion(ultima_operacion(db, TipoOperacion.RESPALDO)),
             "copia_fotos": _estado_operacion(ultima_operacion(db, TipoOperacion.COPIA_FOTOS)),
+            "descargas": _estado_descargas(db),
             "aviso": aviso,
         },
     )
@@ -164,6 +190,30 @@ def admin_respaldos_copiar_fotos(
     return RedirectResponse("/administracion/respaldos", status_code=303)
 
 
+@router.get("/administracion/respaldos/fotos/descargar")
+def admin_respaldos_descargar_fotos(
+    cuales: str = "nuevas", db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
+):
+    """Declarada ANTES de `/{nombre}/descargar`, que si no la atraparía ("fotos" como nombre de respaldo).
+    `.zip` por partes con la estructura de S3. "nuevas" = registradas desde la última descarga, y deja la marca
+    para la siguiente (por sistema, no por usuario); "todas" no depende de la marca ni la mueve."""
+    if cuales == "todas":
+        fotos = fotos_locales(_carpeta_fotos())
+        nombre = "fotos-todas"
+    else:
+        ultima = ultima_operacion(db, TipoOperacion.DESCARGA_FOTOS)
+        fotos = fotos_nuevas(db, _carpeta_fotos(), ultima.inicio if ultima else None).fotos
+        operacion = iniciar_operacion(db, TipoOperacion.DESCARGA_FOTOS, admin.email)
+        terminar_operacion(db, operacion.id, True, f"{len(fotos)} fotos")
+        db.commit()
+        nombre = f"fotos-nuevas-{operacion.inicio.astimezone(ZONA_HORARIA_APP):%Y-%m-%d_%H%M}"
+    return StreamingResponse(
+        zip_por_partes([(ruta, clave) for ruta, clave in fotos]),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}.zip"'},
+    )
+
+
 @router.get("/administracion/respaldos/{nombre}/descargar")
 def admin_respaldos_descargar(nombre: str, admin: Usuario = Depends(require_admin)):
     # Solo un nombre de la lista: nunca una ruta armada con lo que mande el navegador.
@@ -175,3 +225,4 @@ def admin_respaldos_descargar(nombre: str, admin: Usuario = Depends(require_admi
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{respaldo.name}.zip"'},
     )
+

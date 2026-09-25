@@ -115,6 +115,23 @@
         <button type="submit" {{ 'disabled' if c and c.en_curso else '' }} class="rounded-lg border border-blue-800 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50">Copiar fotos al servidor</button>
       </form>
     </div>
+    {%- set d = descargas %}
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3" data-descargas-fotos>
+      <div class="min-w-0 text-sm">
+        {%- if d.ultima %}
+        <p class="text-slate-800"><strong>{{ d.nuevas }} {{ 'foto nueva' if d.nuevas == 1 else 'fotos nuevas' }} (≈ {{ '%.1f'|format(d.nuevas_mb) }} MB)</strong> desde el {{ d.ultima }}, la última descarga.</p>
+        {%- else %}
+        <p class="text-slate-800">Nunca se han descargado. Hay <strong>{{ d.en_servidor }}</strong> fotos copiadas en el servidor.</p>
+        {%- endif %}
+        {%- if d.sin_copiar %}
+        <p class="text-xs text-amber-700">{{ d.sin_copiar }} registradas todavía no están copiadas al servidor: copia primero para incluirlas.</p>
+        {%- endif %}
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="/administracion/respaldos/fotos/descargar?cuales=nuevas" class="rounded-lg bg-blue-800 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Descargar solo las nuevas</a>
+        <a href="/administracion/respaldos/fotos/descargar?cuales=todas" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Descargar todas</a>
+      </div>
+    </div>
   </div>
 
   <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 text-sm text-slate-700 space-y-2">
