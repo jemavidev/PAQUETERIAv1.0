@@ -32,10 +32,15 @@ Código de salida distinto de cero si el respaldo no se completó (o si ya habí
 import argparse
 import os
 import sys
+import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
 from app.domain import smtp_email_sender
+from app.domain.operacion_respaldo_service import terminar_operacion
 from app.domain.email_sender import ConsoleEmailSender
 from app.domain.respaldo_service import (
     Avisos,
@@ -89,6 +94,19 @@ def _avisos() -> Avisos:
     return Avisos(sender=sender, destinatarios=destinatarios)
 
 
+def _terminar(operacion_id, ok: bool, detalle: str) -> None:
+    """Marca la operación de la pantalla "Respaldos" con su resultado (ticket 09)."""
+    if operacion_id is None:
+        return
+    engine = create_engine(_requerida("DATABASE_URL"))
+    try:
+        with Session(engine) as session:
+            terminar_operacion(session, operacion_id, ok, detalle)
+            session.commit()
+    finally:
+        engine.dispose()
+
+
 def _resumen(carpeta: Path) -> str:
     m = verificar_respaldo(carpeta)
     conteos = ", ".join(f"{n} {t}" for t, n in m.conteos.items())
@@ -103,6 +121,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="accion", required=True)
     respaldar = sub.add_parser("respaldar", help="Saca un respaldo ahora")
     respaldar.add_argument("--motivo", choices=[m.value for m in MotivoRespaldo], default=MotivoRespaldo.DIARIO.value)
+    respaldar.add_argument("--operacion", type=uuid.UUID, help="Operación de la pantalla Respaldos a marcar al terminar")
     verificar = sub.add_parser("verificar", help="Comprueba las huellas de un respaldo y dice qué contiene")
     verificar.add_argument("carpeta", type=Path)
     rest = sub.add_parser("restaurar", help="Restaura un respaldo (usar scripts/respaldos/restaurar.sh)")
@@ -141,8 +160,14 @@ def main() -> int:
             print(f"Restaurado: {args.carpeta.name}")
             return 0
         destino = _destino_s3()
-        respaldo = ejecutar_respaldo(_instalacion(), carpeta, MotivoRespaldo(args.motivo), destino, _avisos())
-        print(f"Respaldo listo: {respaldo.carpeta}" + ("" if destino else " (sin RESPALDO_S3_BUCKET: solo en el disco)"))
+        try:
+            respaldo = ejecutar_respaldo(_instalacion(), carpeta, MotivoRespaldo(args.motivo), destino, _avisos())
+        except (RespaldoFallido, RespaldoEnCurso) as exc:
+            _terminar(args.operacion, False, str(exc))
+            raise
+        mensaje = f"Respaldo listo: {respaldo.carpeta.name}" + ("" if destino else " (sin S3: solo en el disco)")
+        _terminar(args.operacion, True, mensaje)
+        print(mensaje)
         return 0
     except RestauracionRechazada as exc:
         print(f"NO se restauró: {exc}", file=sys.stderr)

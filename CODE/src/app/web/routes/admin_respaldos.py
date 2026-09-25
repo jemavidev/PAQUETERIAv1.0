@@ -8,11 +8,14 @@ muestra el comando exacto para restaurar cada uno por SSH. Restaurar NO se hace 
 """
 
 import os
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from sqlalchemy.orm import Session
 
 from app.domain.respaldo_service import (
     leer_historial,
@@ -20,9 +23,12 @@ from app.domain.respaldo_service import (
     listar_respaldos,
     zip_de_respaldo,
 )
+from app.domain.operacion_respaldo import TipoOperacion
+from app.domain.operacion_respaldo_service import OperacionEnCurso, en_curso, iniciar_operacion, ultima_operacion
 from app.domain.usuario import Usuario
 from app.domain.zona_horaria import ZONA_HORARIA_APP
 
+from ..db import get_db
 from ..security import require_admin
 from ..templating import templates
 
@@ -38,6 +44,24 @@ MOTIVOS = {
 
 def _carpeta() -> Path:
     return Path(os.environ.get("RESPALDO_DIR", "/respaldos"))
+
+
+def _lanzar_respaldo(operacion_id) -> None:
+    """"Respaldar ahora" en un proceso aparte (sesión propia): sigue aunque se cierre la pantalla o termine la
+    petición, y es el mismo comando que usan el cron y el deploy. Su salida va al log de operaciones."""
+    src = Path(__file__).resolve().parents[3]
+    log = open(_carpeta() / ".operaciones.log", "a")
+    subprocess.Popen(
+        [sys.executable, "-m", "app.respaldo_cli", "respaldar", "--motivo", "a_pedido", "--operacion", str(operacion_id)],
+        cwd=src,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+
+
+def get_lanzador_respaldo():
+    return _lanzar_respaldo
 
 
 def _fila(carpeta: Path) -> dict:
@@ -56,8 +80,7 @@ def _fila(carpeta: Path) -> dict:
     }
 
 
-@router.get("/administracion/respaldos", response_class=HTMLResponse)
-def admin_respaldos(request: Request, admin: Usuario = Depends(require_admin)):
+def _pantalla(request: Request, db: Session, admin: Usuario, aviso: str | None = None):
     carpeta = _carpeta()
     corridas = [c for c in leer_historial(carpeta) if c["motivo"] in MOTIVOS]
     ultima = None
@@ -75,8 +98,46 @@ def admin_respaldos(request: Request, admin: Usuario = Depends(require_admin)):
             "carpeta_host": os.environ.get("RESPALDO_DIR_HOST", "/home/ubuntu/paquetex-respaldos"),
             "app_host": os.environ.get("RESPALDO_APP_DIR_HOST", "/home/ubuntu/app/PaqueteX"),
             "bucket": os.environ.get("RESPALDO_S3_BUCKET", "paquetex-respaldos"),
+            "a_pedido": _estado_operacion(ultima_operacion(db, TipoOperacion.RESPALDO)),
+            "aviso": aviso,
         },
     )
+
+
+def _estado_operacion(operacion) -> dict | None:
+    if operacion is None:
+        return None
+    return {
+        "en_curso": en_curso(operacion),
+        "interrumpida": operacion.estado == "en_curso" and not en_curso(operacion),
+        "ok": operacion.estado == "ok",
+        "desde": operacion.inicio.astimezone(ZONA_HORARIA_APP).strftime("%Y-%m-%d %H:%M"),
+        "solicitado_por": operacion.solicitado_por,
+        "detalle": operacion.detalle,
+        "avance_actual": operacion.avance_actual,
+        "avance_total": operacion.avance_total,
+    }
+
+
+@router.get("/administracion/respaldos", response_class=HTMLResponse)
+def admin_respaldos(request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)):
+    return _pantalla(request, db, admin)
+
+
+@router.post("/administracion/respaldos/ahora")
+def admin_respaldos_ahora(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    lanzar=Depends(get_lanzador_respaldo),
+):
+    try:
+        operacion = iniciar_operacion(db, TipoOperacion.RESPALDO, admin.email)
+    except OperacionEnCurso:
+        return _pantalla(request, db, admin, aviso="Ya hay un respaldo en curso: espera a que termine.")
+    db.commit()
+    lanzar(operacion.id)
+    return RedirectResponse("/administracion/respaldos", status_code=303)
 
 
 @router.get("/administracion/respaldos/{nombre}/descargar")

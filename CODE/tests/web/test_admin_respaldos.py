@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from app.domain.operacion_respaldo_service import terminar_operacion
 from app.domain.respaldo_service import Instalacion, MotivoRespaldo, crear_respaldo
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario
@@ -96,3 +97,66 @@ def test_el_menu_de_datos_enlaza_la_pantalla_de_respaldos(client, respaldos):
     html = client.get("/paquetes").text
     i = html.index('data-cat-panel="datos"')
     assert f'href="{_URL}"' in html[i : html.index("</div>", i)]
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Ticket 09 -- "Respaldar ahora": se lanza en segundo plano y la pantalla muestra su estado (guardado en la base).
+# --------------------------------------------------------------------------------------------------------------------
+class LanzadorFalso:
+    """Reemplaza el proceso en segundo plano: anota qué se lanzó y, si se le pide, lo termina en el acto."""
+
+    def __init__(self, session):
+        self.session = session
+        self.lanzadas = []
+        self.terminar_con = None  # None = queda en curso; (ok, detalle) = termina así, como lo haría el proceso
+
+    def __call__(self, operacion_id):
+        self.lanzadas.append(operacion_id)
+        if self.terminar_con is not None:
+            terminar_operacion(self.session, operacion_id, *self.terminar_con)
+            self.session.commit()
+
+
+@pytest.fixture()
+def lanzador(client):
+    from app.web.routes.admin_respaldos import get_lanzador_respaldo
+
+    falso = LanzadorFalso(client.db)
+    client.app.dependency_overrides[get_lanzador_respaldo] = lambda: falso
+    return falso
+
+
+def test_respaldar_ahora_lanza_el_respaldo_y_la_pantalla_lo_muestra_en_curso(client, respaldos, lanzador):
+    _login_admin(client)
+
+    r = client.post(f"{_URL}/ahora", follow_redirects=False)
+
+    assert r.status_code == 303 and r.headers["location"] == _URL
+    assert len(lanzador.lanzadas) == 1
+    assert "Respaldo a pedido en curso" in client.get(_URL).text
+
+
+def test_cuando_termina_la_pantalla_dice_si_salio_bien_o_mal(client, respaldos, lanzador):
+    _login_admin(client)
+    lanzador.terminar_con = (False, "subida a S3: S3 no responde")
+
+    client.post(f"{_URL}/ahora")
+
+    html = client.get(_URL).text
+    assert "Respaldo a pedido: FALLÓ" in html and "S3 no responde" in html
+
+
+def test_no_se_lanza_un_segundo_respaldo_mientras_otro_esta_en_curso(client, respaldos, lanzador):
+    _login_admin(client)
+    client.post(f"{_URL}/ahora")
+
+    r = client.post(f"{_URL}/ahora")
+
+    assert len(lanzador.lanzadas) == 1
+    assert "Ya hay un respaldo en curso" in r.text
+
+
+def test_un_operador_no_puede_lanzar_respaldos(client, respaldos, lanzador):
+    _login_operador(client)
+    assert client.post(f"{_URL}/ahora").status_code == 403
+    assert lanzador.lanzadas == []
