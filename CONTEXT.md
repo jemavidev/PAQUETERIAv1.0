@@ -142,5 +142,5 @@ Nombres de ruta en español amigable (decidido 2026-07-26, ver `docs/adr/` si ap
 ## Infraestructura (resumen; detalle en el brief)
 
 - **Prod ≈ 2 GB / staging ≈ 1 GB** en AWS Lightsail, una caja por ambiente (app + Postgres + Redis + Caddy). El objetivo de $5 se descartó con evidencia de swap.
-- **D/R**: `pg_dump` horario → S3 cifrado/versionado (RPO ~1 h); imágenes ya en S3. Portable a cualquier nube.
+- **D/R** (decidido 2026-09-25, `.scratch/respaldos-y-restauracion`; reemplaza el `pg_dump` horario cifrado del brief): respaldo **diario** 3:00 a. m. hora Colombia + **puntuales** (antes de cada deploy y "Respaldar ahora"), cada uno con la base, el código desplegado, un manifiesto y una plantilla del `.env` con secretos ofuscados; a un bucket S3 privado dedicado (una carpeta por dominio, llave de solo subida por servidor), sin cifrado propio; las últimas 3 también en el disco. Restauración solo por SSH. Fotos aparte, ya en S3, descargables a pedido. Portable a cualquier nube.
 - **CI/CD**: local → GitHub → deploy auto a staging → aprobación manual (GitHub Environments) → prod. Rama de rebuild: **`PaqueteXv.2`**.
