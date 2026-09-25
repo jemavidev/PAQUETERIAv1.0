@@ -420,3 +420,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `398` — "Staff Papyrus" en vez de "Operador v1 (sin identificar)" para el usuario técnico de las entregas/cancelaciones importadas de la v1 — **implementado**
 - `399` — `/administracion/estadisticas-cobro`: quitar la barra de filtros (atajos de fecha, Tipo, Cobrado/Anulado); "Periodo seleccionado" pasa a "Todo el historial" — **verificado (localhost y test, `b272a6b`)**
 - `400` — `/residentes` móvil: tarjeta por residente con botones grandes (patrón de /paquetes) -- vista previa en `:8011`, rama `prototipo/residentes-movil-tarjetas` — **implementado y aprobado, pendiente confirmar en test**
+- `401` — `/paquetes` y `/residentes` móvil: botones solo con ícono, sin nombre, íconos más grandes — **implementado, pendiente confirmar en vivo (localhost)**
