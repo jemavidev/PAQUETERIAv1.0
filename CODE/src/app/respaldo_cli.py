@@ -22,6 +22,8 @@ Uso (dentro del contenedor, desde `/app/src`; ver `scripts/respaldos/`):
     python -m app.respaldo_cli respaldar --motivo diario
     python -m app.respaldo_cli verificar /respaldos/<carpeta>
     python -m app.respaldo_cli restaurar /respaldos/<carpeta> --confirmacion <dominio> [--otro-destino]
+    python -m app.respaldo_cli probar --url-bd-temporal <url de una base VACÍA y aparte>   (domingos)
+    python -m app.respaldo_cli resumen                                                    (lunes)
     (restaurar se corre desde `scripts/respaldos/restaurar.sh`, que detiene y enciende la app)
 
 Código de salida distinto de cero si el respaldo no se completó (o si ya había otro en curso).
@@ -44,7 +46,9 @@ from app.domain.respaldo_service import (
     RestauracionRechazada,
     S3DestinoRespaldos,
     ejecutar_respaldo,
+    enviar_resumen_semanal,
     leer_commit,
+    probar_restauracion,
     restaurar,
     verificar_respaldo,
 )
@@ -105,12 +109,25 @@ def main() -> int:
     rest.add_argument("carpeta", type=Path)
     rest.add_argument("--confirmacion", required=True, help="El dominio de esta instalación, escrito a mano")
     rest.add_argument("--otro-destino", action="store_true", help="Restaurar un respaldo de otro dominio a propósito")
+    probar = sub.add_parser("probar", help="Prueba de restauración del último respaldo en una base temporal")
+    probar.add_argument("--url-bd-temporal", required=True, help="Base VACÍA y aparte (nunca la de la instalación)")
+    sub.add_parser("resumen", help="Envía el resumen semanal por correo")
     args = parser.parse_args()
 
     carpeta = Path(os.environ.get("RESPALDO_DIR", "/respaldos"))
     try:
         if args.accion == "verificar":
             print(_resumen(args.carpeta))
+            return 0
+        if args.accion == "probar":
+            if args.url_bd_temporal == os.environ.get("DATABASE_URL"):
+                raise SystemExit("La base temporal no puede ser la de la instalación.")
+            resultado = probar_restauracion(carpeta, args.url_bd_temporal, _avisos())
+            print(("Prueba OK: " if resultado.ok else "Prueba FALLIDA: ") + resultado.detalle)
+            return 0 if resultado.ok else 1
+        if args.accion == "resumen":
+            dominio = urlparse(_requerida("PUBLIC_BASE_URL")).hostname
+            print(enviar_resumen_semanal(carpeta, dominio, _avisos()))
             return 0
         if args.accion == "restaurar":
             restaurar(
