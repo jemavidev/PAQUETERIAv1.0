@@ -85,6 +85,38 @@
     {%- endfor %}
   </div>
 
+  {#- Tickets 10-11: las fotos van aparte del respaldo diario; a pedido se copian de S3 al servidor (incremental) para
+     poder descargarlas. -#}
+  <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 space-y-3" data-fotos>
+    <div>
+      <h2 class="text-base font-semibold text-slate-900 m-0">Fotos de los paquetes</h2>
+      <p class="text-xs text-slate-500">No van en el respaldo diario: viven en S3. Cópialas al servidor (la primera vez todas, después solo las nuevas) para poder descargarlas con su misma estructura de carpetas.</p>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="min-w-0 text-sm" data-copia-fotos>
+        {%- set c = copia_fotos %}
+        {%- if c and c.en_curso %}
+        <p class="font-semibold text-blue-800">{% if c.avance_total %}Copiando fotos: {{ '{:,}'.format(c.avance_actual or 0).replace(',', '.') }} de {{ '{:,}'.format(c.avance_total).replace(',', '.') }}{% else %}Copiando fotos: preparando la lista…{% endif %}</p>
+        <p class="text-xs text-slate-500">Desde {{ c.desde }}. Puedes cerrar esta pantalla: sigue solo.</p>
+        {%- elif c and c.interrumpida %}
+        <p class="font-semibold text-amber-800">La copia de fotos se interrumpió</p>
+        <p class="text-xs text-slate-500">La del {{ c.desde }} no terminó. Vuelve a copiar: sigue desde donde quedó.</p>
+        {%- elif c and c.ok %}
+        <p class="font-semibold text-emerald-800">Copia de fotos lista</p>
+        <p class="text-xs text-slate-500">{{ c.desde }} · {{ c.detalle }}</p>
+        {%- elif c %}
+        <p class="font-semibold text-red-800">La copia de fotos FALLÓ</p>
+        <p class="text-xs text-red-700 break-words">{{ c.desde }} · {{ c.detalle }}</p>
+        {%- else %}
+        <p class="text-slate-700">Todavía no se han copiado las fotos al servidor.</p>
+        {%- endif %}
+      </div>
+      <form method="post" action="/administracion/respaldos/fotos/copiar">
+        <button type="submit" {{ 'disabled' if c and c.en_curso else '' }} class="rounded-lg border border-blue-800 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50">Copiar fotos al servidor</button>
+      </form>
+    </div>
+  </div>
+
   <div class="bg-white rounded-xl border border-slate-200 px-4 py-4 text-sm text-slate-700 space-y-2">
     <h2 class="text-base font-semibold text-slate-900 m-0">Cómo restaurar</h2>
     <ol class="list-decimal space-y-1 pl-5">
@@ -97,7 +129,7 @@
   </div>
 </div>
 <script>
-  {%- if a_pedido and a_pedido.en_curso %}
+  {%- if (a_pedido and a_pedido.en_curso) or (copia_fotos and copia_fotos.en_curso) %}
   // Mientras haya una operación en curso, la pantalla se refresca sola para mostrar cuándo termina.
   setTimeout(function () { location.reload(); }, 10000);
   {%- endif %}

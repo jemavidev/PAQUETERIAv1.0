@@ -46,13 +46,20 @@ def _carpeta() -> Path:
     return Path(os.environ.get("RESPALDO_DIR", "/respaldos"))
 
 
-def _lanzar_respaldo(operacion_id) -> None:
-    """"Respaldar ahora" en un proceso aparte (sesión propia): sigue aunque se cierre la pantalla o termine la
-    petición, y es el mismo comando que usan el cron y el deploy. Su salida va al log de operaciones."""
+_COMANDOS = {
+    TipoOperacion.RESPALDO: ["respaldar", "--motivo", "a_pedido"],
+    TipoOperacion.COPIA_FOTOS: ["copiar-fotos"],
+}
+
+
+def _lanzar(operacion_id, tipo: TipoOperacion) -> None:
+    """La operación en un proceso aparte (sesión propia): sigue aunque se cierre la pantalla o termine la petición.
+    Es el mismo comando que usan el cron y el deploy; el proceso marca la operación al terminar. Su salida va al log
+    de operaciones."""
     src = Path(__file__).resolve().parents[3]
     log = open(_carpeta() / ".operaciones.log", "a")
     subprocess.Popen(
-        [sys.executable, "-m", "app.respaldo_cli", "respaldar", "--motivo", "a_pedido", "--operacion", str(operacion_id)],
+        [sys.executable, "-m", "app.respaldo_cli", *_COMANDOS[tipo], "--operacion", str(operacion_id)],
         cwd=src,
         stdout=log,
         stderr=subprocess.STDOUT,
@@ -61,7 +68,7 @@ def _lanzar_respaldo(operacion_id) -> None:
 
 
 def get_lanzador_respaldo():
-    return _lanzar_respaldo
+    return _lanzar
 
 
 def _fila(carpeta: Path) -> dict:
@@ -99,6 +106,7 @@ def _pantalla(request: Request, db: Session, admin: Usuario, aviso: str | None =
             "app_host": os.environ.get("RESPALDO_APP_DIR_HOST", "/home/ubuntu/app/PaqueteX"),
             "bucket": os.environ.get("RESPALDO_S3_BUCKET", "paquetex-respaldos"),
             "a_pedido": _estado_operacion(ultima_operacion(db, TipoOperacion.RESPALDO)),
+            "copia_fotos": _estado_operacion(ultima_operacion(db, TipoOperacion.COPIA_FOTOS)),
             "aviso": aviso,
         },
     )
@@ -136,7 +144,23 @@ def admin_respaldos_ahora(
     except OperacionEnCurso:
         return _pantalla(request, db, admin, aviso="Ya hay un respaldo en curso: espera a que termine.")
     db.commit()
-    lanzar(operacion.id)
+    lanzar(operacion.id, TipoOperacion.RESPALDO)
+    return RedirectResponse("/administracion/respaldos", status_code=303)
+
+
+@router.post("/administracion/respaldos/fotos/copiar")
+def admin_respaldos_copiar_fotos(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    lanzar=Depends(get_lanzador_respaldo),
+):
+    try:
+        operacion = iniciar_operacion(db, TipoOperacion.COPIA_FOTOS, admin.email)
+    except OperacionEnCurso:
+        return _pantalla(request, db, admin, aviso="Ya hay una copia de fotos en curso: espera a que termine.")
+    db.commit()
+    lanzar(operacion.id, TipoOperacion.COPIA_FOTOS)
     return RedirectResponse("/administracion/respaldos", status_code=303)
 
 

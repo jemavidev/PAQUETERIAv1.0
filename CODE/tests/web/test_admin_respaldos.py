@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.domain.operacion_respaldo_service import terminar_operacion
+from app.domain.operacion_respaldo_service import registrar_avance, terminar_operacion
 from app.domain.respaldo_service import Instalacion, MotivoRespaldo, crear_respaldo
 from app.domain.staff_service import create_initial_admin, create_staff
 from app.domain.usuario import RolUsuario
@@ -110,8 +110,8 @@ class LanzadorFalso:
         self.lanzadas = []
         self.terminar_con = None  # None = queda en curso; (ok, detalle) = termina así, como lo haría el proceso
 
-    def __call__(self, operacion_id):
-        self.lanzadas.append(operacion_id)
+    def __call__(self, operacion_id, tipo):
+        self.lanzadas.append((operacion_id, tipo.value))
         if self.terminar_con is not None:
             terminar_operacion(self.session, operacion_id, *self.terminar_con)
             self.session.commit()
@@ -160,3 +160,34 @@ def test_un_operador_no_puede_lanzar_respaldos(client, respaldos, lanzador):
     _login_operador(client)
     assert client.post(f"{_URL}/ahora").status_code == 403
     assert lanzador.lanzadas == []
+
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Ticket 10 -- copia incremental de las fotos al servidor, en segundo plano y con avance visible.
+# --------------------------------------------------------------------------------------------------------------------
+def test_copiar_las_fotos_se_lanza_aparte_y_muestra_el_avance(client, respaldos, lanzador):
+    _login_admin(client)
+
+    r = client.post(f"{_URL}/fotos/copiar", follow_redirects=False)
+
+    assert r.status_code == 303
+    (operacion_id, tipo), = lanzador.lanzadas
+    assert tipo == "copia_fotos"
+    registrar_avance(client.db, operacion_id, 1234, 7511)
+    client.db.commit()
+    assert "Copiando fotos: 1.234 de 7.511" in client.get(_URL).text
+
+
+def test_la_copia_de_fotos_no_bloquea_ni_es_bloqueada_por_un_respaldo(client, respaldos, lanzador):
+    _login_admin(client)
+    client.post(f"{_URL}/ahora")
+
+    client.post(f"{_URL}/fotos/copiar")
+
+    assert [t for _, t in lanzador.lanzadas] == ["respaldo", "copia_fotos"]
+
+
+def test_un_operador_no_puede_copiar_fotos(client, respaldos, lanzador):
+    _login_operador(client)
+    assert client.post(f"{_URL}/fotos/copiar").status_code == 403
