@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -670,3 +671,50 @@ def enviar_resumen_semanal(carpeta_respaldos: Path, dominio: str, avisos: Avisos
     cuerpo = "\n".join(lineas) + "\n"
     avisos.enviar(f"[Respaldos] Resumen semanal de {dominio}: {'OK' if todo_bien else 'ATENCIÓN'}", cuerpo)
     return cuerpo
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Descarga (ticket 08)
+# --------------------------------------------------------------------------------------------------------------------
+class _Tubo:
+    """Archivo de solo escritura que acumula lo escrito para entregarlo por partes (`zipfile` acepta destinos que no
+    se pueden recorrer hacia atrás: escribe los tamaños después de cada archivo)."""
+
+    def __init__(self) -> None:
+        self._partes: list[bytes] = []
+        self._escrito = 0
+
+    def write(self, datos) -> int:
+        self._partes.append(bytes(datos))
+        self._escrito += len(datos)
+        return len(datos)
+
+    def tell(self) -> int:
+        return self._escrito
+
+    def flush(self) -> None:
+        pass
+
+    def vaciar(self) -> bytes:
+        datos, self._partes = b"".join(self._partes), []
+        return datos
+
+
+def zip_por_partes(archivos: list[tuple[Path, str]], bloque: int = 1024 * 1024):
+    """Un `.zip` de `archivos` ((ruta, nombre dentro del zip)) entregado por partes, sin armarlo entero en memoria ni
+    en disco: una descarga de varios GB no agota la memoria del servidor. Sin comprimir: el volcado y las fotos ya
+    vienen comprimidos."""
+    tubo = _Tubo()
+    with zipfile.ZipFile(tubo, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as z:
+        for ruta, nombre in archivos:
+            with open(ruta, "rb") as origen, z.open(zipfile.ZipInfo.from_file(ruta, nombre), "w", force_zip64=True) as destino:
+                for datos in iter(lambda: origen.read(bloque), b""):
+                    destino.write(datos)
+                    yield tubo.vaciar()
+            yield tubo.vaciar()
+    yield tubo.vaciar()
+
+
+def zip_de_respaldo(carpeta: Path):
+    carpeta = Path(carpeta)
+    return zip_por_partes([(a, f"{carpeta.name}/{a.name}") for a in sorted(carpeta.iterdir()) if a.is_file()])
