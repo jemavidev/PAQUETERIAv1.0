@@ -5,7 +5,7 @@ botones ... conserven la misma forma y las mismas dimensiones que tienen ahora, 
 ejemplo whatsapp, llamar, recibir...), solo se conserve el ícono relacionado a esta acción". Luego: "podría tener los
 íconos un poco más grande ya que no vas a tener las palabras".
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** implementado y desplegado en test (`923404d`), pendiente confirmar en vivo
 
 ## Decisiones (acordadas)
 
