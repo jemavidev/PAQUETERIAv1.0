@@ -13,6 +13,9 @@ Variables de entorno:
     RESPALDO_CHECKOUT_DIR   checkout desplegado, montado en solo lectura (default
                             `/app/checkout`): de ahí sale el commit
     RESPALDO_CODIGO_DIR     carpeta con `alembic.ini` del código instalado (default `/app`)
+    RESPALDO_S3_BUCKET, RESPALDO_AWS_ACCESS_KEY_ID, RESPALDO_AWS_SECRET_ACCESS_KEY, AWS_REGION
+                            bucket de respaldos y la llave de solo subida de este servidor (ver
+                            `infra/respaldos/`). Sin ellas el respaldo queda solo en el disco.
 
 Uso (dentro del contenedor, desde `/app/src`; ver `scripts/respaldos/`):
     python -m app.respaldo_cli respaldar --motivo diario
@@ -35,9 +38,11 @@ from app.domain.respaldo_service import (
     RespaldoEnCurso,
     RespaldoFallido,
     RestauracionRechazada,
+    S3DestinoRespaldos,
     crear_respaldo,
     leer_commit,
     restaurar,
+    subir_respaldo,
     verificar_respaldo,
 )
 
@@ -56,6 +61,18 @@ def _instalacion() -> Instalacion:
     checkout = Path(os.environ.get("RESPALDO_CHECKOUT_DIR", "/app/checkout"))
     return Instalacion(
         database_url=_requerida("DATABASE_URL"), dominio=dominio, commit=leer_commit(checkout), checkout=checkout
+    )
+
+
+def _destino_s3():
+    bucket = os.environ.get("RESPALDO_S3_BUCKET")
+    if not bucket:
+        return None
+    return S3DestinoRespaldos(
+        bucket=bucket,
+        region=os.environ.get("AWS_REGION", "us-east-1"),
+        access_key_id=_requerida("RESPALDO_AWS_ACCESS_KEY_ID"),
+        secret_access_key=_requerida("RESPALDO_AWS_SECRET_ACCESS_KEY"),
     )
 
 
@@ -98,6 +115,14 @@ def main() -> int:
             print(f"Restaurado: {args.carpeta.name}")
             return 0
         respaldo = crear_respaldo(_instalacion(), carpeta, MotivoRespaldo(args.motivo))
+        print(f"Respaldo listo: {respaldo.carpeta}")
+        destino = _destino_s3()
+        if destino is None:
+            print("Sin RESPALDO_S3_BUCKET: el respaldo quedó solo en el disco.")
+            return 0
+        tipos = subir_respaldo(respaldo, destino)
+        print(f"Subido a S3: {', '.join(tipos)}")
+        return 0
     except RestauracionRechazada as exc:
         print(f"NO se restauró: {exc}", file=sys.stderr)
         return 2
@@ -107,8 +132,6 @@ def main() -> int:
     except RespaldoFallido as exc:
         print(f"Respaldo FALLIDO en el paso «{exc.paso}»: {exc.detalle}", file=sys.stderr)
         return 1
-    print(f"Respaldo listo: {respaldo.carpeta}")
-    return 0
 
 
 if __name__ == "__main__":

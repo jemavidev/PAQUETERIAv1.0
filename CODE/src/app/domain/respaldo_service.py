@@ -21,6 +21,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Protocol
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
@@ -392,3 +393,56 @@ def _reemplazar_base(database_url: str, volcado: Path) -> None:
         capture_output=True,
         text=True,
     )
+
+
+class DestinoRespaldos(Protocol):
+    """Adónde suben los respaldos (S3 en el servidor; uno falso en las pruebas). `tipo` es la carpeta
+    (`diario`/`mensual`/`anual`/`puntual`) y viaja además como etiqueta: las reglas de conservación de S3 filtran por
+    ella, así una regla por tipo sirve para todos los dominios."""
+
+    def subir(self, clave: str, ruta: Path, tipo: str) -> None: ...
+
+
+def carpetas_destino(manifiesto: Manifiesto) -> list[str]:
+    """En qué carpetas del bucket va un respaldo: los diarios en `diario/`, además en `mensual/` el del día 1 y en
+    `anual/` el del 1 de enero (en hora de Colombia); todo lo demás en `puntual/`."""
+    if manifiesto.motivo != MotivoRespaldo.DIARIO:
+        return ["puntual"]
+    fecha = datetime.strptime(manifiesto.fecha_hora_colombia, "%Y-%m-%d %H:%M:%S")
+    tipos = ["diario"]
+    if fecha.day == 1:
+        tipos.append("mensual")
+        if fecha.month == 1:
+            tipos.append("anual")
+    return tipos
+
+
+def subir_respaldo(respaldo: Respaldo, destino: DestinoRespaldos) -> list[str]:
+    """Sube todos los archivos del respaldo a `<dominio>/<tipo>/<nombre del respaldo>/`. Devuelve las carpetas. Si
+    falla, `RespaldoFallido` y el respaldo local queda intacto."""
+    manifiesto = leer_manifiesto(respaldo.carpeta)
+    tipos = carpetas_destino(manifiesto)
+    try:
+        for tipo in tipos:
+            for archivo in sorted(respaldo.carpeta.iterdir()):
+                clave = f"{manifiesto.dominio}/{tipo}/{respaldo.carpeta.name}/{archivo.name}"
+                destino.subir(clave, archivo, tipo)
+    except Exception as exc:
+        raise RespaldoFallido("subida a S3", str(exc)) from exc
+    return tipos
+
+
+class S3DestinoRespaldos:
+    """El bucket de respaldos. La llave del servidor solo puede SUBIR bajo la carpeta de su dominio (ver
+    `infra/respaldos/`): ni leer, ni listar, ni borrar."""
+
+    def __init__(self, bucket: str, region: str, access_key_id: str, secret_access_key: str) -> None:
+        import boto3
+
+        self._bucket = bucket
+        self._s3 = boto3.client(
+            "s3", region_name=region, aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key
+        )
+
+    def subir(self, clave: str, ruta: Path, tipo: str) -> None:
+        self._s3.upload_file(str(ruta), self._bucket, clave, ExtraArgs={"Tagging": f"tipo={tipo}"})
