@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-26):** "La idea es que en cualquier búsqueda no distinga nunca, que sea lo mismo"
 (a raíz de que `/consultar?q=za9325` no encontraba el paquete `ZA9325`).
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (`b7e4170`), pendiente confirmar en vivo
 
 ## Qué se hace
 
@@ -17,3 +17,5 @@ Auditoría de las cajas de búsqueda: /paquetes, /residentes (incluido `apt302`)
 entrega ya usaban `ilike` / `re.IGNORECASE`. La única que distinguía era **/consultar** (igualdad exacta en código y
 guía): ahora compara en mayúsculas. `tests/web/test_busquedas_sin_mayusculas.py` fija el comportamiento en /consultar
 (código y guía, 4 variantes cada uno), /paquetes (nombre y código) y /residentes; 72 en verde con las de /consultar.
+
+**En test (`b7e4170`):** `/consultar?q=657L` y `?q=657l` encuentran el mismo paquete real.
