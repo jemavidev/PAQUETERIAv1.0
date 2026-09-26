@@ -5,7 +5,7 @@ las mismas políticas de look and feel de todo el aplicativo, donde las cosas de
 identificar y con las funcionalidades a la mano, amigable para que lo vea cualquier usuario, si es información no toda
 se debe mostrar enseguida, podrías incluir modales y hacer todo más fácil".
 
-**Status:** pendiente
+**Status:** implementado (variante B), desplegando a test
 
 ## Alcance
 
@@ -29,4 +29,13 @@ Común a las tres: fechas amigables ("sáb 26 sep · 7:00 a. m."), la recuperaci
 comando en un modal, y lo técnico (bucket, retenciones) solo en "¿Cómo funciona?". Sin scroll lateral a 390 px y sin
 errores de consola.
 
-**Pendiente:** que Jesús elija (o combine) una variante.
+**Elegida: B** ("me gusta la B, aplícala", 2026-09-26). Se reescribe en la plantilla real con pruebas; A y C quedan solo en la rama del prototipo.
+
+## Implementado (2026-09-26)
+
+Variante B reescrita en la plantilla real: estado en una línea (a pedido en curso / interrumpido / falló si es más
+reciente que el último registro / todo respaldado / último falló / sin registro), tarjetas por respaldo con descargar,
+recuperar (modal con advertencia, pasos y comando) y detalle (modal); tarjeta de fotos con modal de 2 pasos (copiar,
+descargar); "¿Cómo funciona?" en modal. Fechas amigables calculadas en la ruta (`fecha_amigable`). En celular el tamaño
+se oculta en la tarjeta (queda en el detalle). Pruebas: 2 ajustadas a propósito (formato de fecha, tarjeta `<article>`),
+23 en verde. Tailwind `?v=110`.
