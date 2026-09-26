@@ -428,3 +428,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `406` — Menú de cuenta sin "Cobros": "Dashboard" (antes Estadísticas de cobro, también su título) arriba de Lector; Tarifas de cobro al final de Datos — **desplegado en test (`c77c719`), pendiente confirmar en vivo**
 - `407` — Menú de cuenta: ícono de barras para "Dashboard" y Perfiles antes que Datos — **desplegado en test (`c77c719`), pendiente confirmar en vivo**
 - `408` — "Dashboard" en todas las referencias y la URL (`/administracion/dashboard`, la vieja redirige) — **desplegado en test (`c77c719`), pendiente confirmar en vivo**
+- `409` — La pantalla "Respaldos" no funciona en localhost (`Permission denied: '/respaldos'`) — **implementado, pendiente confirmar en vivo (localhost)**
+- `410` — Ninguna búsqueda distingue mayúsculas de minúsculas (ej. `/consultar?q=za9325`) — **pendiente**
