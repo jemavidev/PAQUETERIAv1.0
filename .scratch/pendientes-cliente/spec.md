@@ -430,4 +430,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `408` — "Dashboard" en todas las referencias y la URL (`/administracion/dashboard`, la vieja redirige) — **desplegado en test (`c77c719`), pendiente confirmar en vivo**
 - `409` — La pantalla "Respaldos" no funciona en localhost (`Permission denied: '/respaldos'`) — **implementado, pendiente confirmar en vivo (localhost)**
 - `410` — Ninguna búsqueda distingue mayúsculas de minúsculas (ej. `/consultar?q=za9325`) — **desplegado en test (`b7e4170`), pendiente confirmar en vivo**
-- `411` — Pantalla "Respaldos" amigable, con el look and feel de la app y modales — **implementado (variante B), desplegando a test**
+- `411` — Pantalla "Respaldos" amigable, con el look and feel de la app y modales — **desplegado en test (`53b6964`), pendiente confirmar en vivo**

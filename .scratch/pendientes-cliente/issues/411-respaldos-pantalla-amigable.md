@@ -5,7 +5,7 @@ las mismas políticas de look and feel de todo el aplicativo, donde las cosas de
 identificar y con las funcionalidades a la mano, amigable para que lo vea cualquier usuario, si es información no toda
 se debe mostrar enseguida, podrías incluir modales y hacer todo más fácil".
 
-**Status:** implementado (variante B), desplegando a test
+**Status:** desplegado en test (`53b6964`), pendiente confirmar en vivo
 
 ## Alcance
 
