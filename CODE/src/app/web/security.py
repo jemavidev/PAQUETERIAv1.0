@@ -12,11 +12,14 @@ import uuid
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
+from itsdangerous import BadSignature, Signer
 from sqlalchemy.orm import Session
 
+from app.domain.operador_dispositivo_service import registro_vigente
 from app.domain.persona import Persona
 from app.domain.usuario import RolUsuario, Usuario
 
+from .config import secret_key
 from .db import get_db
 
 SESSION_KEY = "usuario_id"
@@ -43,8 +46,52 @@ NOMBRE_SESSION_KEY = "nombre"
 CUSTOMER_NOMBRE_SESSION_KEY = "persona_nombre"
 
 
-def current_staff(request: Request, db: Session = Depends(get_db)) -> Usuario:
-    """El `Usuario` de la sesión actual. Sin sesión válida → 401.
+# Dispositivo registrado (`.scratch/pin-operador-dispositivo`): cookie PROPIA del equipo, firmada, independiente de la
+# de sesión -- identifica el navegador aunque la sesión venza o se cierre, y es lo que hace que un PIN solo valga donde
+# su dueño entró con contraseña. Su vida es larga a propósito: la vigencia real de cada registro la decide el servidor
+# con los días configurados.
+COOKIE_DISPOSITIVO = "paquetex_dispositivo"
+_DURACION_COOKIE_DISPOSITIVO_SEGUNDOS = 365 * 24 * 60 * 60
+
+
+def _firmador_dispositivo() -> Signer:
+    return Signer(secret_key(), salt="paquetex-dispositivo")
+
+
+def dispositivo_id_de(request: Request) -> uuid.UUID | None:
+    """El id del equipo según su cookie firmada, o `None` si no hay cookie o la firma no cuadra."""
+    crudo = request.cookies.get(COOKIE_DISPOSITIVO)
+    if not crudo:
+        return None
+    try:
+        return uuid.UUID(_firmador_dispositivo().unsign(crudo).decode("ascii"))
+    except (BadSignature, ValueError, UnicodeDecodeError):
+        return None
+
+
+def fijar_cookie_dispositivo(request: Request, response, dispositivo_id) -> None:
+    """`Secure` con el mismo criterio que la cookie de sesión, decidido al crear el app (`create_app`)."""
+    response.set_cookie(
+        COOKIE_DISPOSITIVO,
+        _firmador_dispositivo().sign(str(dispositivo_id)).decode("ascii"),
+        max_age=_DURACION_COOKIE_DISPOSITIVO_SEGUNDOS,
+        httponly=True,
+        samesite="lax",
+        secure=getattr(request.app.state, "cookies_seguras", False),
+    )
+
+
+class RedireccionStaff(Exception):
+    """Una puerta de staff que no niega el acceso sino que lo desvía (ej. "Crea tu PIN"). El app la convierte en un
+    303 hacia `destino`."""
+
+    def __init__(self, destino: str):
+        self.destino = destino
+
+
+def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
+    """El `Usuario` de la sesión actual, sin exigir que ya tenga PIN -- solo para la pantalla que lo crea.
+    Sin sesión válida → 401.
 
     Un 401 lo convierte el app en un redirect a `/ingresar` (ver app factory).
     """
@@ -61,6 +108,10 @@ def current_staff(request: Request, db: Session = Depends(get_db)) -> Usuario:
     if usuario is not None and request.session.get(SESION_VERSION_KEY, 0) != (usuario.sesion_version or 0):
         # Issue 383: la contraseña cambió después de abrir esta sesión -- otro equipo, o un restablecimiento.
         usuario = None
+    if usuario is not None and not registro_vigente(db, dispositivo_id_de(request), usuario):
+        # PIN de operador: la sesión solo vale en un equipo donde este Usuario tiene un registro vigente (vence por
+        # días configurados, o por "Cerrar en todos los dispositivos").
+        usuario = None
     if usuario is None or not usuario.activo:
         # `activo` se relee de la BD en CADA request (sin caché, mismo
         # criterio que ya aplicaba el rol -- ver ROLE_SESSION_KEY arriba):
@@ -70,6 +121,14 @@ def current_staff(request: Request, db: Session = Depends(get_db)) -> Usuario:
         # -- antes `activo` solo se chequeaba en `staff_service.autenticar`).
         request.session.pop(SESSION_KEY, None)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Sesión inválida")
+    return usuario
+
+
+def current_staff(request: Request, usuario: Usuario = Depends(staff_sin_pin)) -> Usuario:
+    """El `Usuario` de la sesión actual: el actor de las acciones y la puerta de las rutas con privilegios.
+    Sin sesión válida → 401; sin PIN todavía → a "Crea tu PIN" (nadie opera sin identidad rápida)."""
+    if not usuario.pin_huella:
+        raise RedireccionStaff("/mi-pin")
     return usuario
 
 

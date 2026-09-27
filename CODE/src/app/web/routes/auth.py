@@ -17,6 +17,12 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.domain.operador_dispositivo_service import (
+    DemasiadosIntentosDePin,
+    definir_pin,
+    obtener_o_crear_dispositivo,
+    registrar_ingreso,
+)
 from app.domain.staff_service import editar_mi_perfil, set_password, verify_credentials
 from app.domain.usuario import Usuario
 
@@ -30,6 +36,9 @@ from ..security import (
     SESION_VERSION_KEY,
     SESSION_KEY,
     current_staff,
+    dispositivo_id_de,
+    fijar_cookie_dispositivo,
+    staff_sin_pin,
 )
 from ..templating import templates
 
@@ -91,8 +100,52 @@ def login_submit(
     # única puerta real de las rutas de administración.
     request.session[ROLE_SESSION_KEY] = usuario.rol.value
     request.session[NOMBRE_SESSION_KEY] = usuario.nombre
+    # PIN de operador (`.scratch/pin-operador-dispositivo`): entrar con contraseña registra ESTE equipo para el
+    # Usuario; sin PIN todavía, lo primero es crearlo.
+    dispositivo = obtener_o_crear_dispositivo(db, dispositivo_id_de(request))
+    debe_crear_pin = registrar_ingreso(db, dispositivo, usuario)
     # Corrección en vivo 2026-08-02: antes iba a /mi-sesion (ruta de prueba);
     # /paquetes es lo que un staff realmente quiere ver al entrar.
+    respuesta = RedirectResponse(
+        "/mi-pin" if debe_crear_pin else "/paquetes", status_code=status.HTTP_303_SEE_OTHER
+    )
+    fijar_cookie_dispositivo(request, respuesta, dispositivo.id)
+    return respuesta
+
+
+def _pantalla_pin(request: Request, usuario: Usuario, error: str | None = None, status_code: int = 200):
+    return templates.TemplateResponse(
+        "auth/pin.html",
+        {"request": request, "usuario": usuario, "tiene_pin": bool(usuario.pin_huella), "error": error},
+        status_code=status_code,
+    )
+
+
+@router.get("/mi-pin", response_class=HTMLResponse)
+def mi_pin(request: Request, usuario: Usuario = Depends(staff_sin_pin)):
+    return _pantalla_pin(request, usuario)
+
+
+@router.post("/mi-pin")
+def mi_pin_guardar(
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(staff_sin_pin),
+    pin: str = Form(""),
+    pin_confirmacion: str = Form(""),
+):
+    """Crear el PIN (`.scratch/pin-operador-dispositivo`, ticket 02). Quien llega acá sin PIN acaba de entrar con su
+    contraseña, así que no se le vuelve a pedir."""
+    if usuario.pin_huella:
+        return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
+    if pin != pin_confirmacion:
+        return _pantalla_pin(request, usuario, "Los PIN no coinciden.", status_code=400)
+    try:
+        definir_pin(db, usuario, pin)
+    except DemasiadosIntentosDePin as exc:
+        return _pantalla_pin(request, usuario, str(exc), status_code=429)
+    except ValueError as exc:
+        return _pantalla_pin(request, usuario, str(exc), status_code=400)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
