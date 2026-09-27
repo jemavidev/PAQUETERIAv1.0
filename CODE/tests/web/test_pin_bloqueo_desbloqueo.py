@@ -84,12 +84,28 @@ def test_el_pin_no_sirve_en_un_equipo_donde_su_dueno_no_esta_registrado(client):
     _ingresar(client, "ana@club.com")
     client.post("/bloquear")
 
-    r = _desbloquear(client, "2222")  # Beto nunca entró con contraseña en este equipo
-    assert r.status_code == 400
-    assert "PIN incorrecto" in r.text
+    # Beto nunca entró con contraseña en este equipo: su PIN correcto no desbloquea, lo manda a `/ingresar` (issue 425,
+    # `.scratch/pendientes-cliente`) -- sin importar que el equipo lo haya bloqueado Ana.
+    r = _desbloquear(client, "2222")
+    assert r.status_code == 303
+    assert r.headers["location"] == "/ingresar?aviso=sin-registro"
+    assert "no has ingresado en este equipo" in client.get(r.headers["location"]).text
+    assert client.get("/paquetes", follow_redirects=False).headers["location"].startswith("/bloqueo")
+
     r_inexistente = _desbloquear(client, "9999")
     assert r_inexistente.status_code == 400
-    assert "PIN incorrecto" in r_inexistente.text  # mismo mensaje: no revela si el PIN existe
+    assert "PIN incorrecto" in r_inexistente.text
+
+
+def test_el_pin_correcto_sin_registro_cuenta_como_intento_fallido(client):
+    """Issue 425: revelar que el PIN existe es un costo aceptado, acotado por el límite de intentos del equipo."""
+    _sembrar(client)
+    _ingresar(client, "ana@club.com")
+    client.post("/bloquear")
+    for _ in range(4):
+        _desbloquear(client, "2222")
+    assert _desbloquear(client, "2222").headers["location"] == "/ingresar?aviso=intentos"
+    assert _desbloquear(client, "1111").headers["location"] == "/ingresar?aviso=intentos"
 
 
 def test_recibir_tras_desbloquear_con_el_pin_de_otro_queda_a_su_nombre(client):
@@ -177,16 +193,29 @@ def test_cambiar_la_contrasena_invalida_el_pin_en_los_otros_equipos_no_en_el_pro
 
     r = otro_equipo.get("/paquetes", follow_redirects=False)
     assert r.headers["location"].endswith("/ingresar")  # no a /bloqueo: su registro también cayó
-    assert _desbloquear(otro_equipo, "1111").status_code == 400
+    assert _desbloquear(otro_equipo, "1111").headers["location"] == "/ingresar?aviso=sin-registro"
 
 
-def test_el_header_trae_el_candado_solo_con_operador_activo(client):
-    """Issue 422 (.scratch/pendientes-cliente): candado para bloquear el equipo, a la izquierda del menú de cuenta."""
-    assert "data-bloquear-equipo" not in client.get("/anunciar").text
+def test_el_candado_del_header_solo_aparece_con_el_equipo_bloqueado(client):
+    """Issue 422 (.scratch/pendientes-cliente, corregido): el candado no bloquea -- con el equipo bloqueado por PIN,
+    lleva a `/bloqueo` desde cualquier vista, a la izquierda del ícono de ingresar."""
+    assert "data-desbloquear-equipo" not in client.get("/anunciar").text  # equipo sin registrar
     _sembrar(client)
     _ingresar(client, "ana@club.com")
-    texto = client.get("/paquetes").text
-    assert "data-bloquear-equipo" in texto
-    assert texto.index("data-bloquear-equipo") < texto.index('class="account-menu')
+    assert "data-desbloquear-equipo" not in client.get("/paquetes").text  # Operador activo: no hay nada que desbloquear
+
     client.post("/bloquear")
-    assert "data-bloquear-equipo" not in client.get("/bloqueo").text
+    texto = client.get("/anunciar").text
+    assert 'href="/bloqueo"' in texto
+    assert texto.index("data-desbloquear-equipo") < texto.index('aria-label="Iniciar sesión"')
+    assert "data-desbloquear-equipo" not in client.get("/bloqueo").text  # ya está en la pantalla de bloqueo
+    assert 'action="/bloquear"' not in texto  # y ya no hay candado que bloquee
+
+
+def test_con_el_equipo_agotado_por_intentos_no_hay_candado(client):
+    _sembrar(client)
+    _ingresar(client, "ana@club.com")
+    client.post("/bloquear")
+    for _ in range(5):
+        _desbloquear(client, "9999")
+    assert "data-desbloquear-equipo" not in client.get("/anunciar").text  # la pantalla de bloqueo ya no le sirve

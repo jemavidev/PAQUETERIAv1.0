@@ -35,6 +35,7 @@ MAX_PIN_REPETIDOS_POR_HORA = 3
 MAX_PIN_FALLIDOS = 5
 _MENSAJE_REQUIERE_CONTRASENA = "Demasiados intentos. Ingresa con tu usuario y contraseña."
 _MENSAJE_DEBE_CAMBIAR_PIN = "Debes cambiar tu PIN: ingresa con tu usuario y contraseña."
+_MENSAJE_SIN_REGISTRO = "Todavía no has ingresado en este equipo: entra con tu usuario y contraseña."
 
 
 class PinNoDisponible(ValueError):
@@ -52,7 +53,23 @@ class PinIncorrecto(ValueError):
 
 class EquipoRequiereContrasena(PinIncorrecto):
     """Desbloquear exige usuario y contraseña: el equipo agotó sus PIN incorrectos seguidos, o el dueño del PIN tiene
-    un cambio de PIN pendiente."""
+    un cambio de PIN pendiente. `aviso`: código corto del motivo, para que la capa web lo explique en `/ingresar`."""
+
+    aviso = "intentos"
+
+
+class PinSinRegistroEnEquipo(EquipoRequiereContrasena):
+    """El PIN es correcto y de un Usuario activo, pero este no tiene registro vigente en ESTE equipo (issue 425,
+    `.scratch/pendientes-cliente`): tiene que entrar con usuario y contraseña. Cuenta igual como intento fallido del
+    equipo -- revelar que el PIN existe es un costo aceptado, y el límite de intentos lo acota."""
+
+    aviso = "sin-registro"
+
+
+class PinConCambioPendiente(EquipoRequiereContrasena):
+    """El dueño del PIN tiene un cambio de PIN obligatorio pendiente (ticket 07)."""
+
+    aviso = "cambiar-pin"
 
 
 @dataclass(frozen=True)
@@ -248,6 +265,7 @@ def desbloquear(session: Session, dispositivo_id, pin: str) -> Usuario:
     Raises:
         EquipoRequiereContrasena: si el equipo ya agotó sus intentos, si este fallo es el que los agota (queda
             registrado para el aviso al ADMIN), o si el dueño del PIN tiene un cambio de PIN pendiente.
+        PinSinRegistroEnEquipo: si el PIN es correcto pero su dueño no tiene registro vigente en este equipo.
         PinIncorrecto: en cualquier otro caso de rechazo.
     """
     dispositivo = obtener_dispositivo(session, dispositivo_id)
@@ -261,13 +279,18 @@ def desbloquear(session: Session, dispositivo_id, pin: str) -> Usuario:
         usuario = None
     else:
         usuario = session.query(Usuario).filter(Usuario.pin_huella == huella).first()
-    if usuario is None or not registro_vigente(session, dispositivo.id, usuario):
+    if usuario is None or not usuario.activo:
         _contar_fallo(session, dispositivo)
         raise PinIncorrecto("PIN incorrecto.")
+    if not registro_vigente(session, dispositivo.id, usuario):
+        # Issue 425: PIN correcto, pero su dueño no ha entrado con contraseña en este equipo (o su registro venció o
+        # se cerró) -- a `/ingresar`, sin importar quién dejó bloqueado el equipo.
+        _contar_fallo(session, dispositivo)
+        raise PinSinRegistroEnEquipo(_MENSAJE_SIN_REGISTRO)
     if usuario.debe_cambiar_pin:
         # Ticket 07: el PIN viejo pudo quedar expuesto -- no desbloquea hasta que su dueño lo cambie entrando con su
         # contraseña.
-        raise EquipoRequiereContrasena(_MENSAJE_DEBE_CAMBIAR_PIN)
+        raise PinConCambioPendiente(_MENSAJE_DEBE_CAMBIAR_PIN)
     dispositivo.intentos_pin_fallidos = 0
     dispositivo.ultimo_uso_en = _ahora()
     session.flush()

@@ -55,10 +55,20 @@ _MENSAJE_RATE_LIMIT = "Demasiados intentos. Espera un momento e inténtalo de nu
 router = APIRouter()
 
 
+# Motivos por los que la pantalla de bloqueo manda a `/ingresar` (PIN de operador). Solo códigos conocidos: nunca texto
+# libre desde la URL.
+_AVISOS_INGRESAR = {
+    "intentos": "Demasiados PIN incorrectos en este equipo: ingresa con tu usuario y contraseña.",
+    "sin-registro": "Todavía no has ingresado en este equipo: entra con tu usuario y contraseña.",
+    "cambiar-pin": "Debes cambiar tu PIN: ingresa con tu usuario y contraseña.",
+}
+
+
 @router.get("/ingresar", response_class=HTMLResponse)
-def login_form(request: Request, restablecida: bool = False):
+def login_form(request: Request, restablecida: bool = False, aviso: str = ""):
     return templates.TemplateResponse(
-        "auth/login.html", {"request": request, "restablecida": restablecida}
+        "auth/login.html",
+        {"request": request, "restablecida": restablecida, "aviso": _AVISOS_INGRESAR.get(aviso)},
     )
 
 
@@ -211,10 +221,12 @@ def desbloquear_con_pin(
     try:
         usuario = desbloquear(db, dispositivo_id_de(request), pin)
     except EquipoRequiereContrasena as exc:
-        # Ticket 07: se agotaron los intentos -- a usuario y contraseña (la capa recibe el destino).
+        # A usuario y contraseña (la capa recibe el destino): se agotaron los intentos (ticket 07), hay un cambio de PIN
+        # pendiente, o el PIN es de alguien sin registro en este equipo (issue 425). `/ingresar` explica el motivo.
+        destino = f"/ingresar?aviso={exc.aviso}"
         if quiere_json:
-            return JSONResponse({"error": str(exc), "destino": "/ingresar"}, status_code=400)
-        return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
+            return JSONResponse({"error": str(exc), "destino": destino}, status_code=400)
+        return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
     except PinIncorrecto as exc:
         if quiere_json:
             return JSONResponse({"error": str(exc)}, status_code=400)

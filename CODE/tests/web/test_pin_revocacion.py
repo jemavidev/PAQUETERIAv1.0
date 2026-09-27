@@ -92,8 +92,8 @@ def test_salir_de_este_dispositivo_deja_vivo_el_registro_en_el_otro(client):
 
     r = client.post("/salir-dispositivo", follow_redirects=False)
     assert r.status_code == 303
-    # En este equipo Ana ya no está registrada (Beto sí): su PIN no sirve acá.
-    assert _pin(client, "1111").status_code == 400
+    # En este equipo Ana ya no está registrada (Beto sí): su PIN la manda a entrar con contraseña (issue 425).
+    assert _pin(client, "1111").headers["location"] == "/ingresar?aviso=sin-registro"
     assert _pin(client, "2222").headers["location"] == "/paquetes"
     # En el otro equipo, sí.
     otro.post("/bloquear")

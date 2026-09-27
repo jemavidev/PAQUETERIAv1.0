@@ -2,8 +2,8 @@
 """
 Seam de navegador real — atajos del PIN de operador (`.scratch/pendientes-cliente`, issues 422 y 423).
 
-- 422: candado en el header (a la izquierda del menú de cuenta) para bloquear el equipo en un toque, en escritorio y en
-  móvil, solo con un Operador activo.
+- 422 (corregido): con el equipo bloqueado por PIN, un candado en el header (a la izquierda del ícono de ingresar) lleva
+  a la pantalla de bloqueo desde cualquier vista, en escritorio y en móvil.
 - 423: en escritorio el PIN se teclea sin depender del foco, en la pantalla de bloqueo y en la capa.
 """
 
@@ -23,36 +23,45 @@ def _preparar(app_viva, pagina):
 
 
 def _candado(pagina):
-    return pagina.locator("#site-header [data-bloquear-equipo]")
+    return pagina.locator("#site-header [data-desbloquear-equipo]")
 
 
-def test_el_candado_del_header_bloquea_el_equipo(app_viva, pagina):
+def _bloquear(pagina, app_viva):
+    """Deja el equipo bloqueado (lo mismo que "Bloquear" del menú de cuenta)."""
+    pagina.context.request.post(f"{app_viva.url}/bloquear", max_redirects=0)
+
+
+def test_con_el_equipo_bloqueado_el_candado_lleva_a_desbloquear(app_viva, pagina):
     _preparar(app_viva, pagina)
     pagina.goto(f"{app_viva.url}/paquetes")
-    assert _candado(pagina).is_visible()
+    assert _candado(pagina).count() == 0  # con Operador activo no hay nada que desbloquear
+    _bloquear(pagina, app_viva)
+    pagina.goto(f"{app_viva.url}/anunciar")
     with pagina.expect_navigation():
         _candado(pagina).click()
     assert "/bloqueo" in pagina.url
-    assert _candado(pagina).count() == 0  # bloqueado: ya no hay Operador activo
+    with pagina.expect_navigation():
+        pagina.keyboard.type("1357")
+    assert pagina.url.endswith("/paquetes")
 
 
 def test_el_candado_tambien_se_ve_en_movil(app_viva, pagina):
     _preparar(app_viva, pagina)
+    _bloquear(pagina, app_viva)
     pagina.set_viewport_size({"width": 390, "height": 844})
-    pagina.goto(f"{app_viva.url}/paquetes")
+    pagina.goto(f"{app_viva.url}/anunciar")
     assert _candado(pagina).is_visible()
 
 
-def test_sin_sesion_de_staff_no_hay_candado(app_viva, pagina):
+def test_sin_equipo_registrado_no_hay_candado(app_viva, pagina):
     pagina.goto(f"{app_viva.url}/anunciar")
     assert _candado(pagina).count() == 0
 
 
 def test_en_la_pantalla_de_bloqueo_se_teclea_el_pin_sin_el_mouse(app_viva, pagina):
     _preparar(app_viva, pagina)
-    pagina.goto(f"{app_viva.url}/paquetes")
-    with pagina.expect_navigation():
-        _candado(pagina).click()
+    _bloquear(pagina, app_viva)
+    pagina.goto(f"{app_viva.url}/bloqueo")
     pagina.mouse.click(5, 5)  # el foco no está en el campo del PIN
     pagina.keyboard.type("13")
     pagina.keyboard.press("Backspace")

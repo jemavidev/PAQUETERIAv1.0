@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from ..domain.configuracion_conjunto_service import obtener_datos_operativos
 from ..domain.guia import LARGO_MAXIMO_GUIA
+from ..domain.operador_dispositivo_service import acepta_pin
 from ..domain.posicion import GRILLA_ESTANTE
 from ..domain.paquete import torre_sin_prefijo
 from ..domain.zona_horaria import ZONA_HORARIA_APP
@@ -21,6 +22,7 @@ from .security import (
     ROLE_SESSION_KEY,
     SEGUNDOS_INACTIVIDAD_KEY,
     SESSION_KEY,
+    dispositivo_id_de,
 )
 
 # Reexportado por compatibilidad -- `ZONA_HORARIA_APP` vivía acá; ahora la
@@ -54,16 +56,38 @@ def numero_whatsapp_vigente(request) -> str | None:
 
     Abre su propia sesión con la misma fábrica que usan los `BackgroundTask` (`get_session_factory`, respetando el
     override del app). Un footer nunca debe tumbar la página: si la BD falla, cae a la variable de entorno."""
-    fabrica = request.app.dependency_overrides.get(get_session_factory, get_session_factory)()
     try:
-        with fabrica() as sesion:
+        with _fabrica_de_sesiones(request)() as sesion:
             numero = obtener_datos_operativos(sesion).numero_whatsapp
     except Exception:  # noqa: BLE001 -- ver docstring
         numero = ""
     return numero or whatsapp_soporte_numero()
 
 
+def _fabrica_de_sesiones(request):
+    """La fábrica de sesiones del app (la misma de los `BackgroundTask`, respetando su override): las funciones de
+    plantilla de abajo no tienen la sesión del request."""
+    return request.app.dependency_overrides.get(get_session_factory, get_session_factory)()
+
+
+def equipo_bloqueado(request) -> bool:
+    """¿Mostrar el candado para ir a desbloquear? (issue 422, `.scratch/pendientes-cliente`). Solo sin Operador activo y
+    si alguien puede desbloquear ESTE equipo con su PIN (hay registros vigentes y no agotó sus intentos). Sin la cookie
+    del equipo no consulta nada; si la BD falla, no muestra el candado."""
+    if request.session.get(SESSION_KEY):
+        return False
+    dispositivo_id = dispositivo_id_de(request)
+    if dispositivo_id is None:
+        return False
+    try:
+        with _fabrica_de_sesiones(request)() as sesion:
+            return acepta_pin(sesion, dispositivo_id)
+    except Exception:  # noqa: BLE001 -- ver docstring
+        return False
+
+
 templates.env.globals["numero_whatsapp_vigente"] = numero_whatsapp_vigente
+templates.env.globals["equipo_bloqueado"] = equipo_bloqueado
 # Global (no una variable local de base.html): los macros de componentes se
 # importan con `{% from ... import %}` y no heredan el contexto de quien los
 # llama -- `_inputs.html`/`_botones.html` necesitan poder usar un ícono por

@@ -55,10 +55,11 @@ def test_el_quinto_fallo_exige_contrasena_aunque_despues_llegue_el_pin_correcto(
         _pin(client, "9999")
     r = _pin(client, "9999")
     assert r.status_code == 303
-    assert r.headers["location"] == "/ingresar"
+    assert r.headers["location"] == "/ingresar?aviso=intentos"
+    assert "Demasiados PIN incorrectos" in client.get(r.headers["location"]).text
 
     r = _pin(client, "1111")
-    assert r.headers["location"] == "/ingresar"
+    assert r.headers["location"] == "/ingresar?aviso=intentos"
     assert client.get("/bloqueo", follow_redirects=False).headers["location"] == "/ingresar"
     assert client.get("/paquetes", follow_redirects=False).headers["location"].endswith("/ingresar")
 
@@ -69,7 +70,7 @@ def test_la_capa_recibe_la_orden_de_ir_a_contrasena(client):
         _pin(client, "9999")
     r = client.post("/bloqueo", data={"pin": "9999"}, headers={"Accept": "application/json"})
     assert r.status_code == 400
-    assert r.json()["destino"] == "/ingresar"
+    assert r.json()["destino"] == "/ingresar?aviso=intentos"
 
 
 def test_tras_la_contrasena_obliga_a_cambiar_el_pin_y_acepta_el_mismo(client):
@@ -125,7 +126,7 @@ def test_el_cambio_obligatorio_no_se_salta_bloqueando_el_equipo(client):
 
     client.post("/bloquear")  # ...pero en vez de cambiarlo, bloquea
     r = _pin(client, "1111")
-    assert r.headers["location"] == "/ingresar"  # el PIN viejo no desbloquea
+    assert r.headers["location"] == "/ingresar?aviso=cambiar-pin"  # el PIN viejo no desbloquea
 
     _ingresar(client, "ana@club.com")
     assert client.get("/paquetes", follow_redirects=False).headers["location"] == "/mi-pin"
