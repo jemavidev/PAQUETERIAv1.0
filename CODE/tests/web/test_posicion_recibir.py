@@ -157,3 +157,36 @@ def test_la_grilla_es_un_grupo_requerido_en_el_navegador(client):
     radios = re.findall(r'<input type="radio" name="posicion"[^>]*>', form)
     assert len(radios) == 14
     assert all(" required" in radio for radio in radios)
+
+
+def test_recibir_sin_posicion_no_crea_residente_ni_registra_pago_al_mensajero(client):
+    from app.domain.apartamento_service import resolver_apartamento, set_apartamento_actual
+    from app.domain.ocupante import Ocupante
+    from app.domain.persona_service import get_or_create_persona
+    from app.domain.saldo_contra_entrega import MovimientoSaldoContraEntrega
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    get_or_create_persona(client.db, "3001234567", "Ana")
+    set_apartamento_actual(client.db, "3001234567", apto)
+    client.db.commit()
+    p = _anunciar(client)
+    ocupantes_antes = client.db.query(Ocupante).count()
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={
+            "candidato_idx": "nuevo",
+            "nuevo_ocupante_nombre": "Beto",
+            "nuevo_ocupante_contacto": "3009998888",
+            "hay_pago_contra_entrega": "1",
+            "monto_pagado_mensajero": "3000",
+        },
+        follow_redirects=False,
+    )
+
+    assert r.status_code == 400
+    client.db.expire_all()
+    assert client.db.query(Ocupante).count() == ocupantes_antes
+    assert client.db.query(MovimientoSaldoContraEntrega).filter(MovimientoSaldoContraEntrega.paquete_id == p.id).count() == 0
+    assert _paquete(client, p.id).estado == EstadoPaquete.ANUNCIADO
