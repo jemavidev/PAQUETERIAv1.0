@@ -436,3 +436,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `414` — Grilla de Posición del modal Recibir más pequeña (botones compactos) — **implementado (local), pendiente desplegar**
 - `415` — Grilla de Posición: 11/12/21/22 con fondo azul y 41–72 pegados entre sí — **implementado (local), pendiente desplegar**
 - `416` — Administración → Posiciones: desactivar filas del estante (no elegibles en Recibir) — **implementado (local), pendiente desplegar**
+- `417` — La "x" de cerrar de los modales queda flotante al hacer scroll — **implementado (local), pendiente desplegar**
