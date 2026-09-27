@@ -6,11 +6,13 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
+from ..domain.configuracion_conjunto_service import obtener_datos_operativos
 from ..domain.guia import LARGO_MAXIMO_GUIA
 from ..domain.posicion import GRILLA_ESTANTE
 from ..domain.paquete import torre_sin_prefijo
 from ..domain.zona_horaria import ZONA_HORARIA_APP
 from .config import whatsapp_soporte_numero
+from .db import get_session_factory
 from .icons import ICONOS_NAV
 from .security import (
     CUSTOMER_NOMBRE_SESSION_KEY,
@@ -42,6 +44,26 @@ templates.env.globals["CUSTOMER_NOMBRE_SESSION_KEY"] = CUSTOMER_NOMBRE_SESSION_K
 # Se expone la FUNCIÓN (no el valor) para que se lea la variable de entorno en
 # cada request, no una sola vez al importar el módulo (Grupo 10, Ronda 2).
 templates.env.globals["whatsapp_soporte_numero"] = whatsapp_soporte_numero
+
+
+def numero_whatsapp_vigente(request) -> str | None:
+    """El WhatsApp de soporte vigente para el footer de TODAS las vistas (issue 424, `.scratch/pendientes-cliente`):
+    el configurado en Administración → Conjunto si hay, si no la variable de entorno de siempre. Antes solo `/ayuda`
+    leía el de la BD y el resto de vistas caía a la variable (vacía donde no está configurada), así que el footer
+    público perdía el ícono de WhatsApp fuera de `/ayuda`.
+
+    Abre su propia sesión con la misma fábrica que usan los `BackgroundTask` (`get_session_factory`, respetando el
+    override del app). Un footer nunca debe tumbar la página: si la BD falla, cae a la variable de entorno."""
+    fabrica = request.app.dependency_overrides.get(get_session_factory, get_session_factory)()
+    try:
+        with fabrica() as sesion:
+            numero = obtener_datos_operativos(sesion).numero_whatsapp
+    except Exception:  # noqa: BLE001 -- ver docstring
+        numero = ""
+    return numero or whatsapp_soporte_numero()
+
+
+templates.env.globals["numero_whatsapp_vigente"] = numero_whatsapp_vigente
 # Global (no una variable local de base.html): los macros de componentes se
 # importan con `{% from ... import %}` y no heredan el contexto de quien los
 # llama -- `_inputs.html`/`_botones.html` necesitan poder usar un ícono por
