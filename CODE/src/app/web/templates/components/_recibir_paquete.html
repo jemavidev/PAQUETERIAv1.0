@@ -364,15 +364,16 @@
         navegador no deja enviar sin Posición (ticket 02); la ruta lo vuelve a exigir. -#}
     <fieldset class="mt-4">
       <legend class="text-sm font-medium text-slate-700 mb-1.5">Posición</legend>
-      <div class="grid grid-cols-2 gap-2">
+      {#- Compacta (issue 414, .scratch/pendientes-cliente): botones de ~34 px y grilla angosta centrada. -#}
+      <div class="mx-auto grid w-48 grid-cols-2 gap-1.5">
         {%- for fila in GRILLA_ESTANTE %}{% for codigo in fila %}
         <label class="relative cursor-pointer">
           <input type="radio" name="posicion" value="{{ codigo }}" class="peer sr-only" required>
-          <span class="flex items-center justify-center rounded-lg border border-slate-300 py-3 text-base font-semibold text-slate-700 transition peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-blue-300 peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white">{{ codigo }}</span>
+          <span class="flex items-center justify-center rounded-lg border border-slate-300 py-1.5 text-sm font-semibold text-slate-700 transition peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-blue-300 peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white">{{ codigo }}</span>
         </label>
         {%- endfor %}{% endfor %}
       </div>
-      <p class="posicion-msg mt-1.5 text-sm text-red-600" role="alert"{% if not error_posicion %} hidden{% endif %}>{{ error_posicion or '' }}</p>
+      <p class="posicion-msg mt-1.5 text-center text-sm text-red-600" role="alert"{% if not error_posicion %} hidden{% endif %}>{{ error_posicion or '' }}</p>
     </fieldset>
 
     {# Issue 306 (.scratch/pendientes-cliente): botón flotante y siempre

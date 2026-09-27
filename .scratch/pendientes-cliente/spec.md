@@ -433,3 +433,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `411` — Pantalla "Respaldos" amigable, con el look and feel de la app y modales — **desplegado en test (`53b6964`), pendiente confirmar en vivo**
 - `412` — El Farset F7 se queda pensando o se bloquea en los modales Recibir/Entregar, sobre todo al capturar fotos en Recibir — **pendiente**
 - `413` — Activar la compresión de respuestas en test.papyrus.com.co (Caddy `encode`) — **desplegado en test (`3ea732f`), pendiente confirmar en vivo**
+- `414` — Grilla de Posición del modal Recibir más pequeña (botones compactos) — **implementado (local), pendiente desplegar**
