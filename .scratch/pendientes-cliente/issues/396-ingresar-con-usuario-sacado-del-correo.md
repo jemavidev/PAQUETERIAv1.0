@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "es posible que paralelo a el email se pueda también ingresar con un nombre de usuario ...
 (email: jveyes@gmail.com, entonces usuario: jveyes)" -- tras el análisis: "sí, hazlo con el usuario sacado del correo".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** pendiente (reabierto 2026-09-27)
 
 ## Decisiones
 
@@ -22,3 +22,12 @@
 ## Limpieza del registro (2026-09-26)
 
 Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.
+
+## Reabierto (2026-09-27)
+
+Jesús: "no está funcionando ni en test ni en localhost". Causa: la pantalla que abre el botón del header es `/entrar`
+(selector Cliente/Staff), y su formulario de staff tiene su propio campo `type="email"` con placeholder "Email" -- el
+navegador rechaza "jveyes" antes de enviarlo. El 396 solo había cambiado `/ingresar`; las pruebas miraban solo esa vista.
+El backend sí resolvía el usuario (verificado por HTTP contra :8010 con una cuenta temporal).
+
+- `/entrar` (pestaña Staff): mismo campo que `/ingresar` -- "Email o usuario", `type="text"`.
