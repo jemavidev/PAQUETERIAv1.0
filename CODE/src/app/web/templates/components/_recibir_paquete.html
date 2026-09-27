@@ -360,13 +360,14 @@
 
     {#- Posición de almacenamiento (`.scratch/posicion-almacenamiento`): lo último antes del botón Recibir. La
         grilla es el estante visto de frente (`GRILLA_ESTANTE`: 72|71 arriba … 12|11 abajo). Radios reales con
-        estilo de botón (mismo patrón que `grupo_chips`): un toque SOLO selecciona, nunca envía. -#}
+        estilo de botón (mismo patrón que `grupo_chips`): un toque SOLO selecciona, nunca envía. `required`: el
+        navegador no deja enviar sin Posición (ticket 02); la ruta lo vuelve a exigir. -#}
     <fieldset class="mt-4">
       <legend class="text-sm font-medium text-slate-700 mb-1.5">Posición</legend>
       <div class="grid grid-cols-2 gap-2">
         {%- for fila in GRILLA_ESTANTE %}{% for codigo in fila %}
-        <label class="cursor-pointer">
-          <input type="radio" name="posicion" value="{{ codigo }}" class="peer sr-only">
+        <label class="relative cursor-pointer">
+          <input type="radio" name="posicion" value="{{ codigo }}" class="peer sr-only" required>
           <span class="flex items-center justify-center rounded-lg border border-slate-300 py-3 text-base font-semibold text-slate-700 transition peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-blue-300 peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white">{{ codigo }}</span>
         </label>
         {%- endfor %}{% endfor %}

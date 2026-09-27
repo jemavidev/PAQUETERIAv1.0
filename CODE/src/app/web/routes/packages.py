@@ -1589,17 +1589,22 @@ async def receive_action(
             recibir_paquete_id=str(paquete.id), error_campo="guide_number",
         )
 
-    # Posición de almacenamiento (.scratch/posicion-almacenamiento): mismo criterio que la Guía de arriba --
-    # se valida ACÁ, antes de cualquier efecto, y el rechazo reabre el modal con el mensaje junto a la grilla.
+    # Posición de almacenamiento (.scratch/posicion-almacenamiento): OBLIGATORIA al recibir (ticket 02). Mismo
+    # criterio que la Guía de arriba -- se valida ACÁ, antes de cualquier efecto, y el rechazo reabre el modal con
+    # el mensaje junto a la grilla. La obligatoriedad vive en esta ruta, no en `receive()`: el importador v1 y los
+    # llamadores internos reciben sin Posición ("Sin ubicación").
     try:
         posicion = normalizar_posicion(posicion)
+        error_posicion = None if posicion else "Elige la posición del estante donde guardas el paquete."
     except PosicionInvalida as exc:
+        error_posicion = str(exc)
+    if error_posicion:
         if destino != "/paquetes":
             return renderizar_busqueda(
-                request, db, q, status_code=400, recibir_error_posicion=str(exc)
+                request, db, q, status_code=400, recibir_error_posicion=error_posicion
             )
         return _render_lista(
-            request, db, staff, error=str(exc), status_code=400,
+            request, db, staff, error=error_posicion, status_code=400,
             recibir_paquete_id=str(paquete.id), error_campo="posicion",
         )
 

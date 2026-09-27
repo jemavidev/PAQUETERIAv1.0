@@ -1519,7 +1519,7 @@ def test_recibir_reusa_la_ruta_existente_de_recepcion(client):
 
     r2 = client.post(
         f"/paquetes/{p.id}/recibir",
-        data={"package_type": "NORMAL", "package_condition": "BUENO"},
+        data={"posicion": "41", "package_type": "NORMAL", "package_condition": "BUENO"},
         follow_redirects=False,
     )
     assert r2.status_code == 303

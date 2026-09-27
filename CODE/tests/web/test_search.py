@@ -498,7 +498,7 @@ def test_recibir_desde_consultar_redirige_de_vuelta_con_el_mismo_termino(client)
 
     r = client.post(
         f"/paquetes/{p.id}/recibir",
-        data={"origen": "consultar", "q": p.access_code},
+        data={"posicion": "41", "origen": "consultar", "q": p.access_code},
         follow_redirects=False,
     )
     assert r.status_code == 303
@@ -520,7 +520,7 @@ def test_recibir_desde_consultar_en_error_tambien_vuelve_a_consultar(client):
 
     r = client.post(
         f"/paquetes/{p.id}/recibir",
-        data={"origen": "consultar", "q": p.access_code},
+        data={"posicion": "41", "origen": "consultar", "q": p.access_code},
         follow_redirects=False,
     )
     assert r.status_code == 303

@@ -103,3 +103,57 @@ def test_el_modal_recibir_de_announce_muestra_la_grilla_del_estante(client):
     client.db.expire_all()
     p = client.db.query(Paquete).one()
     assert _posiciones_en_orden(_form_recibir(r.text, p.id)) == _ORDEN_ESTANTE
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 02 — la Posición es obligatoria: sin ella, rechazo ANTES de cualquier efecto.
+# --------------------------------------------------------------------------- #
+def _modal_recibir_abierto(html, paquete_id):
+    m = re.search(rf'<div id="modal-receive-{paquete_id}"[^>]*>', html)
+    assert m, "el modal Recibir del paquete no está en la página"
+    return "hidden" not in m.group(0)
+
+
+def test_recibir_sin_posicion_se_rechaza_sin_efecto_y_reabre_el_modal(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"torre": "1", "apartamento": "302"},
+        follow_redirects=False,
+    )
+
+    assert r.status_code == 400
+    assert _modal_recibir_abierto(r.text, p.id)
+    assert "Elige la posición del estante donde guardas el paquete." in _form_recibir(r.text, p.id)
+    p = _paquete(client, p.id)
+    assert p.estado == EstadoPaquete.ANUNCIADO
+    assert p.snapshot_apartamento is None  # la unidad NO se declaró
+
+
+def test_recibir_sin_posicion_desde_consultar_reabre_el_modal_en_consultar(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    r = client.post(
+        f"/paquetes/{p.id}/recibir",
+        data={"origen": "consultar", "q": p.access_code},
+        follow_redirects=False,
+    )
+
+    assert r.status_code == 400
+    assert _modal_recibir_abierto(r.text, p.id)
+    assert "Elige la posición del estante donde guardas el paquete." in _form_recibir(r.text, p.id)
+    assert _paquete(client, p.id).estado == EstadoPaquete.ANUNCIADO
+
+
+def test_la_grilla_es_un_grupo_requerido_en_el_navegador(client):
+    _login_staff(client)
+    p = _anunciar(client)
+
+    form = _form_recibir(client.get("/paquetes").text, p.id)
+
+    radios = re.findall(r'<input type="radio" name="posicion"[^>]*>', form)
+    assert len(radios) == 14
+    assert all(" required" in radio for radio in radios)
