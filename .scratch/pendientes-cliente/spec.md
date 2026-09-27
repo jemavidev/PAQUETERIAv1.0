@@ -434,4 +434,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `412` — El Farset F7 se queda pensando o se bloquea en los modales Recibir/Entregar, sobre todo al capturar fotos en Recibir — **pendiente**
 - `413` — Activar la compresión de respuestas en test.papyrus.com.co (Caddy `encode`) — **desplegado en test (`3ea732f`), pendiente confirmar en vivo**
 - `414` — Grilla de Posición del modal Recibir más pequeña (botones compactos) — **implementado (local), pendiente desplegar**
-- `415` — Grilla de Posición: 11/12/21/22 con fondo azul y 51–72 pegados entre sí — **implementado (local), pendiente desplegar**
+- `415` — Grilla de Posición: 11/12/21/22 con fondo azul y 41–72 pegados entre sí — **implementado (local), pendiente desplegar**

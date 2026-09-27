@@ -9,6 +9,7 @@ pegados entre si". Sigue al 414 (grilla compacta).
 ## Alcance
 
 - 11, 12, 21, 22: fondo azul CLARO en reposo (la seleccionada sigue en azul oscuro con texto blanco, para distinguirla).
-- 51 a 72 (filas 5-7): un solo bloque pegado -- sin separación entre botones, solo una línea fina entre celdas y
+- 41 a 72 (filas 4-7): un solo bloque pegado (ajuste del mismo día: "51 y 52 no tendrían espacio ABAJO, eso significa que 41
+  y 42 también estarían pegados") -- sin separación entre botones, solo una línea fina entre celdas y
   esquinas redondeadas únicamente en el borde exterior del bloque.
-- 31 a 42 sin cambios. Mismo orden espejo del estante y mismo un-toque-selecciona.
+- 11 a 32 siguen como botones sueltos. Mismo orden espejo del estante y mismo un-toque-selecciona.
