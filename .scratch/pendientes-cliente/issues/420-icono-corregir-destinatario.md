@@ -4,7 +4,7 @@
 4 opciones mostradas (persona con lápiz, persona con intercambio, ficha, persona con check): "persona con intercambio me parece
 perfecta, remplazalo".
 
-**Status:** implementado (local), pendiente desplegar
+**Status:** desplegado en test (`96bb562`, 2026-09-27), pendiente confirmar en vivo
 
 ## Alcance
 

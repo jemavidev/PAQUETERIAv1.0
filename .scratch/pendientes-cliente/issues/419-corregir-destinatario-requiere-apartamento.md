@@ -6,7 +6,7 @@ apartamentos y "Corregir destinatario" para asignar al destinatario correcto par
 tenga un apartamento asignado, no sera posible ver el modal de "Corregir destinatario" [...] seria bueno que el tratar de activar
 este modal este desactivado en caso que no exista un apartamento asociado".
 
-**Status:** implementado (local), pendiente desplegar
+**Status:** desplegado en test (`96bb562`, 2026-09-27), pendiente confirmar en vivo
 
 ## Alcance
 
