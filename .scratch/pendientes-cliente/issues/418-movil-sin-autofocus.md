@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-27):** "ahora necesito que para la version mobil desactives todas las veces que se aplique el
 autofocus".
 
-**Status:** desplegado en test (`f17c396`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (desplegado en test `f17c396`, confirmado por Jesús 2026-09-27)
 
 ## Alcance
 

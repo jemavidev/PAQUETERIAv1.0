@@ -4,7 +4,7 @@
 esto desde "51 hasta 72" no tenga ni padding ni margin en el fondo, quiro que para esto se vea como si esto estubieran
 pegados entre si". Sigue al 414 (grilla compacta).
 
-**Status:** desplegado en test (`f17c396`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (desplegado en test `f17c396`, confirmado por Jesús 2026-09-27)
 
 ## Alcance
 

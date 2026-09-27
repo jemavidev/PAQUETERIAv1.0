@@ -5,7 +5,7 @@ posiblemente desactivar filas 1 y 2, o solo desactivar 4 y 7, la idea es que en 
 seleccionarla en la lista del modal de recibir, este nuevo controlador necesito que lo agregues a una nueva vista para el
 administardor llamado posicion..... lo que pido es tan sensillo como te lo digo". Sigue a `.scratch/posicion-almacenamiento`.
 
-**Status:** desplegado en test (`f17c396`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (desplegado en test `f17c396`, confirmado por Jesús 2026-09-27)
 
 ## Alcance
 
