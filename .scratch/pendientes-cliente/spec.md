@@ -437,3 +437,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `415` — Grilla de Posición: 11/12/21/22 con fondo azul y 41–72 pegados entre sí — **implementado (local), pendiente desplegar**
 - `416` — Administración → Posiciones: desactivar filas del estante (no elegibles en Recibir) — **implementado (local), pendiente desplegar**
 - `417` — La "x" de cerrar de los modales queda flotante al hacer scroll — **implementado (local), pendiente desplegar**
+- `418` — En móvil, desactivar el autofocus — **implementado (local), pendiente desplegar**
