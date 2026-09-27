@@ -59,6 +59,7 @@
 {% from "components/_paginacion.html" import paginacion %}
 {% from "components/_modales.html" import modal, modal_confirmacion, grupo_chips %}
 {% from "components/_recibir_paquete.html" import modal_recibir %}
+{% from "components/_posicion.html" import etiqueta_posicion, posicion_entregar %}
 {% from "components/_estado_vacio.html" import estado_vacio %}
 {% from "components/_inputs.html" import input_texto, toggle %}
 {% from "components/_badge.html" import badge, badge_ocupante, bandera_primera_entrega, aviso_primera_entrega_no_verificable, chip_icono %}
@@ -156,6 +157,7 @@
           {{ p.estado.value|capitalize }}{% if p.duracion_transcurrida %} · {{ p.duracion_transcurrida }}{% endif -%}
         </p>
       </div>
+      {{ etiqueta_posicion(p) }}
     </div>
     {#- Solo ícono, sin nombre (issue 401): el botón conserva tamaño y color; el nombre queda en aria-label y el motivo
        de los apagados en title. -#}
@@ -246,6 +248,7 @@
              conservan -- lo distinguen como código, no como badge de
              Estado. #}
           <a href="/consultar?q={{ p.access_code }}" class="ml-1.5 inline-flex items-center {{ estado_colores.get(p.estado.value, 'bg-gray-50 text-gray-800 border-gray-200') }} border rounded-full px-2.5 py-1 font-mono font-extrabold text-sm tracking-wide align-middle hover:underline" title="Código de acceso -- clic para consultar">{{ p.access_code }}</a>
+          {{ etiqueta_posicion(p) }}
         </div>
         {# Issue 343 (.scratch/pendientes-cliente, pedido explícito del
            cliente): "Asignar apartamento" y "Fecha" se retiran de la fila
@@ -936,6 +939,7 @@
       {# Pedido explícito del cliente: "Entregar a" es redundante -- el
          modal ya se titula "Entregar paquete". #}
       <p class="text-sm text-slate-700"><strong>{{ p.recipient_name }}</strong>{% if p.snapshot_apartamento %} — {{ p.snapshot_conjunto }} · Torre {{ p.snapshot_torre|torre_sin_prefijo }} · Apto {{ p.snapshot_apartamento }}{% endif %}.</p>
+      {{ posicion_entregar(p.posicion) }}
       {%- if p.saldo_actual %}
       {#- Pedido explícito del cliente: "Saldo: $X" a favor (positivo,
          verde+negrilla) o "Saldo pendiente: $X" en contra (negativo, una

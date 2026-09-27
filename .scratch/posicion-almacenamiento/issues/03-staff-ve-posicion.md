@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 — Recibir captura la Posición.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Etiqueta "📍 NN" solo para `Recibido` con Posición, en móvil y escritorio.
-- [ ] Modal Entregar: Posición destacada o "Sin ubicación".
-- [ ] La Posición no aparece en /mis-paquetes, /consultar público, la línea de tiempo ni las notificaciones.
-- [ ] La Posición se conserva tras `Entregado` (no se muestra en el listado).
+- [x] Etiqueta "📍 NN" solo para `Recibido` con Posición, en móvil y escritorio.
+- [x] Modal Entregar: Posición destacada o "Sin ubicación".
+- [x] La Posición no aparece en /mis-paquetes, /consultar público, la línea de tiempo ni las notificaciones.
+- [x] La Posición se conserva tras `Entregado` (no se muestra en el listado).
