@@ -193,10 +193,14 @@
   </span>
   {%- endif %}
 
-  {%- if p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
+  {#- Issue 419 (.scratch/pendientes-cliente): sin apartamento no hay entre quién elegir -- primero "Asignar apartamento",
+      después "Corregir destinatario". El lápiz sale apagado con el aviso en vez de abrir el modal. -#}
+  {%- if p.estado.value in ("ANUNCIADO", "RECIBIDO") and p.snapshot_apartamento %}
   <button type="button" class="{{ chip_icono('slate', tam=_tam_accion)|replace('inline-flex', 'hidden sm:inline-flex') }}" data-open="modal-correct-{{ p.id }}" onclick="document.getElementById('corregir-origen-{{ p.id }}').value = ''" aria-label="Modificar destinatario de {{ p.recipient_name }}" title="Modificar">
     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ _pencil() }}</svg>
   </button>
+  {%- elif p.estado.value in ("ANUNCIADO", "RECIBIDO") %}
+  <span class="{{ _accion_off|replace('inline-flex', 'hidden sm:inline-flex') }} cursor-not-allowed" role="img" aria-label="Modificar destinatario: asigna un apartamento primero" title="Asigna un apartamento primero"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ _pencil() }}</svg></span>
   {%- else %}
   <span class="{{ _accion_off|replace('inline-flex', 'hidden sm:inline-flex') }}" aria-hidden="true"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">{{ _pencil() }}</svg></span>
   {%- endif %}

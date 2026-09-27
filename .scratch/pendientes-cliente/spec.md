@@ -438,3 +438,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `416` — Administración → Posiciones: desactivar filas del estante (no elegibles en Recibir) — **implementado (local), pendiente desplegar**
 - `417` — La "x" de cerrar de los modales queda flotante al hacer scroll — **implementado (local), pendiente desplegar**
 - `418` — En móvil, desactivar el autofocus — **implementado (local), pendiente desplegar**
+- `419` — "Corregir destinatario" solo con apartamento asignado (lápiz apagado sin apartamento) — **implementado (local), pendiente desplegar**
