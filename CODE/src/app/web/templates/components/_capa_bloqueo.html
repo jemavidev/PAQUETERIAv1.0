@@ -42,12 +42,12 @@
     // misma en todas las pestañas). Bloquear, desbloquear, cambiar de Operador y la actividad se avisan por un canal del
     // navegador; sin BroadcastChannel, por eventos de `storage`. El servidor sigue siendo la fuente de verdad: si un
     // mensaje se pierde, la siguiente petición de esa pestaña igual recibe la señal de bloqueo.
-    var CANAL = 'paquetex-bloqueo';
-    var canal = window.BroadcastChannel ? new BroadcastChannel(CANAL) : null;
+    var nombreCanal = 'paquetex-bloqueo';
+    var canal = window.BroadcastChannel ? new BroadcastChannel(nombreCanal) : null;
     function difundir(mensaje) {
       try {
         if (canal) canal.postMessage(mensaje);
-        else localStorage.setItem(CANAL, JSON.stringify(Object.assign({ n: Math.random() }, mensaje)));
+        else localStorage.setItem(nombreCanal, JSON.stringify(Object.assign({ n: Math.random() }, mensaje)));
       } catch (e) {}
     }
     function recibir(mensaje) {
@@ -62,7 +62,7 @@
     }
     if (canal) canal.onmessage = function (e) { recibir(e.data); };
     else window.addEventListener('storage', function (e) {
-      if (e.key === CANAL && e.newValue) { try { recibir(JSON.parse(e.newValue)); } catch (err) {} }
+      if (e.key === nombreCanal && e.newValue) { try { recibir(JSON.parse(e.newValue)); } catch (err) {} }
     });
     // Otra persona desbloqueó en otra pestaña: esta vista se recarga limpia -- al inicio si el nuevo Operador no tiene
     // permiso para ella (mismo criterio que el servidor al desbloquear).

@@ -321,6 +321,8 @@
        Issue 405: el ADMIN lo tiene dentro de "Perfiles" (junto a Usuarios), así que acá arriba queda solo para quien
        no ve las categorías. #}
     {% if not es_admin %}{{ enlace_menu('/mi-sesion', 'Mi perfil', iconos_nav.mis_datos) }}{% endif %}
+    {#- PIN de operador (`.scratch/pin-operador-dispositivo`, ticket 08): cambiar el PIN o cerrarlo en todos los equipos. -#}
+    {{ enlace_menu('/mi-pin', 'Mi PIN', iconos_nav.candado, contorno=true) }}
     {#- Issue 406: "Dashboard" (antes "Estadísticas de cobro", dentro de la categoría Cobros, que se quitó) queda suelto
        arriba de "Lector". Solo ADMIN: la ruta es `require_admin`. -#}
     {% if es_admin %}{{ enlace_menu('/administracion/dashboard', 'Dashboard', iconos_nav.dashboard) }}{% endif %}
@@ -468,7 +470,11 @@
           <form method="post" action="/bloquear">
             <button type="submit" class="account-menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.candado|safe }}</svg>Bloquear</button>
           </form>
-          {{ formulario_salir() }}
+          {#- Ticket 08: reemplaza al "Cerrar sesión" unificado en el menú de staff -- además de cerrar las sesiones
+              (staff y cliente, como antes), quita el registro de este Usuario en ESTE equipo. -#}
+          <form method="post" action="/salir-dispositivo">
+            <button type="submit" class="account-menu-item"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">{{ iconos_nav.salir|safe }}</svg>Salir de este dispositivo</button>
+          </form>
         {% endcall %}
         {% elif tiene_persona %}
         {% call cuenta_menu(nombre_cliente) %}

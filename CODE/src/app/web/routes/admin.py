@@ -70,7 +70,7 @@ from app.domain.notificacion_service import (
     obtener_asunto_actual,
     obtener_texto_actual,
 )
-from app.domain.operador_dispositivo_service import bloqueos_por_intentos_recientes
+from app.domain.operador_dispositivo_service import bloqueos_por_intentos_recientes, cerrar_en_todos
 from app.domain.paquete import EstadoPaquete, TipoPaquete
 from app.domain.paquete_service import migrar_codigos_del_anio
 from app.domain.plantilla_email_html import envolver_html
@@ -172,7 +172,7 @@ def admin_staff_submit(
                 "admin": admin,
                 "roles": list(RolUsuario),
                 "staff_list": listar_staff(db),
-        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
+                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
                 "error": mensaje,
                 "email": email or "",
                 "nombre": nombre or "",
@@ -243,7 +243,7 @@ def admin_staff_editar(
                 "admin": admin,
                 "roles": list(RolUsuario),
                 "staff_list": listar_staff(db),
-        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
+                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
                 "error": mensaje,
             },
             status_code=400,
@@ -283,11 +283,24 @@ def admin_staff_resetear_password(
                 "admin": admin,
                 "roles": list(RolUsuario),
                 "staff_list": listar_staff(db),
-        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
+                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
                 "error": str(exc),
             },
             status_code=400,
         )
+    return RedirectResponse("/administracion/personal", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/administracion/personal/{usuario_id}/cerrar-dispositivos", response_class=HTMLResponse)
+def admin_staff_cerrar_dispositivos(
+    usuario_id: str,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    """"Cerrar en todos los dispositivos" de un Usuario (`.scratch/pin-operador-dispositivo`, ticket 08): por ejemplo,
+    si se pierde un celular. En cada equipo, ese Usuario vuelve a necesitar su contraseña."""
+    usuario = _get_usuario_o_404(db, usuario_id)
+    cerrar_en_todos(db, usuario, actor=admin)
     return RedirectResponse("/administracion/personal", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -320,7 +333,7 @@ def admin_staff_desactivar(
                 "admin": admin,
                 "roles": list(RolUsuario),
                 "staff_list": listar_staff(db),
-        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
+                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
                 "error": str(exc),
             },
             status_code=400,

@@ -66,6 +66,10 @@
             <div class="flex items-center gap-1.5 justify-end">
               {{ accion_icono('editar', 'Editar', extra_attrs='data-open="modal-editar-' ~ u.id ~ '"') }}
               {{ accion_icono('resetear', 'Resetear contraseña', extra_attrs='data-open="modal-reset-' ~ u.id ~ '"') }}
+              {#- PIN de operador (ticket 08): p. ej. si se pierde un celular -- en cada equipo vuelve a pedir contraseña. -#}
+              <form method="post" action="/administracion/personal/{{ u.id }}/cerrar-dispositivos">
+                {{ accion_icono('cerrar_dispositivos', 'Cerrar en todos los dispositivos', type='submit') }}
+              </form>
               {% if u.activo %}
               <form method="post" action="/administracion/personal/{{ u.id }}/desactivar">
                 {{ accion_icono('desactivar', 'Desactivar', type='submit') }}

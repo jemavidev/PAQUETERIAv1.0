@@ -23,10 +23,12 @@ from app.domain.operador_dispositivo_service import (
     EquipoRequiereContrasena,
     PinIncorrecto,
     acepta_pin,
+    cerrar_en_todos,
     definir_pin,
     desbloquear,
     obtener_o_crear_dispositivo,
     registrar_ingreso,
+    salir_de_dispositivo,
 )
 from app.domain.usuario import RolUsuario
 from app.domain.staff_service import editar_mi_perfil, set_password, verify_credentials
@@ -45,6 +47,7 @@ from ..security import (
     OPERADOR_BLOQUEADO_KEY,
     abrir_sesion_staff,
     bloquear_sesion_staff,
+    cerrar_sesion_staff,
     current_staff,
     dispositivo_id_de,
     fijar_cookie_dispositivo,
@@ -148,13 +151,17 @@ def mi_pin_guardar(
     usuario: Usuario = Depends(staff_sin_pin),
     pin: str = Form(""),
     pin_confirmacion: str = Form(""),
+    password: str = Form(""),
 ):
     """Crear el PIN (`.scratch/pin-operador-dispositivo`, ticket 02), o cambiarlo obligatoriamente tras un bloqueo
     del equipo por intentos fallidos (ticket 07, puede dejar el mismo). Quien llega acá en cualquiera de los dos casos
     acaba de entrar con su contraseña, así que no se le vuelve a pedir."""
     debe_cambiar = bool(request.session.get(DEBE_CAMBIAR_PIN_KEY))
     if usuario.pin_huella and not debe_cambiar:
-        return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
+        # Cambio voluntario (ticket 08): se confirma con la contraseña -- quien encuentre el equipo desbloqueado no
+        # puede adueñarse del PIN de otro.
+        if not password or verify_credentials(db, usuario.email or "", password) is None:
+            return _pantalla_pin(request, usuario, "Contraseña incorrecta.", status_code=400)
     if pin != pin_confirmacion:
         return _pantalla_pin(request, usuario, "Los PIN no coinciden.", status_code=400)
     try:
@@ -244,6 +251,35 @@ def aviso_de_actividad(usuario: Usuario = Depends(current_staff)):
     """Aviso del navegador (ticket 04): hubo toques o teclas desde el último aviso. Sin efectos: `current_staff` ya
     renueva la marca -- o responde 423 si el equipo quedó bloqueado entretanto."""
     return Response(status_code=204)
+
+
+@router.post("/mi-pin/cerrar-todos")
+def cerrar_en_todos_mis_dispositivos(
+    request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(current_staff)
+):
+    """"Cerrar en todos los dispositivos" para uno mismo (ticket 08): en todo equipo -- este incluido -- vuelve a hacer
+    falta la contraseña."""
+    cerrar_en_todos(db, usuario, actor=usuario)
+    cerrar_sesion_staff(request)
+    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
+    return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/salir-dispositivo")
+def salir_de_este_dispositivo(
+    request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(current_staff)
+):
+    """"Salir de este dispositivo" (ticket 08): quita el registro del Operador activo solo en este equipo y cierra la
+    sesión -- de staff y de cliente, como el "Cerrar sesión" unificado al que reemplaza en el menú de staff. Si otro
+    Usuario sigue registrado acá, el equipo queda en la pantalla de bloqueo; si no, en `/ingresar`."""
+    dispositivo_id = dispositivo_id_de(request)
+    salir_de_dispositivo(db, dispositivo_id, usuario)
+    cerrar_sesion_staff(request)
+    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
+    request.session.pop(CUSTOMER_SESSION_KEY, None)
+    request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
+    destino = "/bloqueo" if acepta_pin(db, dispositivo_id) else "/ingresar"
+    return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/salir")

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from .configuracion_conjunto_service import obtener_seguridad_sesion
 from .dispositivo import Dispositivo, EventoSeguridad, RegistroDispositivo, TipoEventoSeguridad
-from .usuario import Usuario
+from .usuario import RolUsuario, Usuario
 
 _PIN_RE = re.compile(r"^\d{4}$")
 # Límite de cambios de PIN rechazados por "ya existe": exigir unicidad confirma que ese PIN es de alguien, así que se
@@ -255,3 +255,29 @@ def bloqueos_por_intentos_recientes(session: Session, limite: int = 10) -> list[
         .limit(limite)
         .all()
     )
+
+
+# --------------------------------------------------------------------------- #
+# Revocación (ticket 08)
+# --------------------------------------------------------------------------- #
+def salir_de_dispositivo(session: Session, dispositivo_id, usuario: Usuario) -> None:
+    """"Salir de este dispositivo": quita el registro de `usuario` solo en este equipo."""
+    if dispositivo_id is None:
+        return
+    registro = session.get(RegistroDispositivo, (dispositivo_id, usuario.id))
+    if registro is not None:
+        session.delete(registro)
+        session.flush()
+
+
+def cerrar_en_todos(session: Session, usuario: Usuario, actor: Usuario) -> None:
+    """"Cerrar en todos los dispositivos": invalida TODOS los registros de `usuario` (en cada equipo vuelve a hacer
+    falta la contraseña). Lo pueden hacer el propio Usuario o un ADMIN.
+
+    Raises:
+        PermissionError: si `actor` no es `usuario` ni un ADMIN.
+    """
+    if actor is None or (actor.id != usuario.id and actor.rol != RolUsuario.ADMIN):
+        raise PermissionError("Solo el propio Usuario o un ADMIN pueden cerrar sus dispositivos.")
+    usuario.registros_version = (usuario.registros_version or 0) + 1
+    session.flush()
