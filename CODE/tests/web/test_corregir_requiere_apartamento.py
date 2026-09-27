@@ -96,3 +96,14 @@ def test_el_boton_corregir_usa_el_icono_de_persona_con_intercambio(client):
     apagados_sin = re.findall(rf'<span[^>]*title="{_AVISO}"[^>]*>\s*<svg[^>]*>(.*?)</svg>', html, re.S)
     assert len(apagados_sin) >= 2 and all(icono in b for b in apagados_sin)
     assert "M13.586 3.586" not in "".join(botones_con + apagados_sin)  # ya no es el lápiz
+
+
+def test_en_ver_el_icono_apagado_solo_se_ve_en_escritorio(client):
+    """Issue 421: en móvil, sin apartamento, el ícono apagado de Corregir no se muestra dentro de "Ver"."""
+    _login_staff(client)
+    sin = _anunciar(client, "3001111111", "Ana")
+
+    html = client.get("/paquetes", params={"estado": ""}).text
+
+    apagados = re.findall(rf'<span class="([^"]*)"[^>]*title="{_AVISO}"', html)
+    assert apagados and all("hidden sm:inline-flex" in clases for clases in apagados)

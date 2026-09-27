@@ -462,7 +462,8 @@
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.cambiar_destinatario|safe }}</svg>
           </button>
           {%- else %}
-          <span class="inline-flex items-center justify-center h-[clamp(1.625rem,7.8vw,2.15rem)] w-[clamp(1.625rem,7.8vw,2.15rem)] shrink-0 rounded-full bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" role="img" aria-label="Modificar destinatario: asigna un apartamento primero" title="Asigna un apartamento primero">
+          {#- Issue 421: en móvil no se muestra (mismo criterio que el 🏠 apagado, issue 345); solo escritorio lo ve gris. -#}
+          <span class="hidden sm:inline-flex items-center justify-center h-[clamp(1.625rem,7.8vw,2.15rem)] w-[clamp(1.625rem,7.8vw,2.15rem)] shrink-0 rounded-full bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" role="img" aria-label="Modificar destinatario: asigna un apartamento primero" title="Asigna un apartamento primero">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.cambiar_destinatario|safe }}</svg>
           </span>
           {%- endif %}

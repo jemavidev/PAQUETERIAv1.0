@@ -440,3 +440,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `418` — En móvil, desactivar el autofocus — **desplegado en test (`f17c396`), pendiente confirmar en vivo**
 - `419` — "Corregir destinatario" solo con apartamento asignado (lápiz apagado sin apartamento) — **implementado (local), pendiente desplegar**
 - `420` — Ícono "persona con intercambio" para Corregir destinatario — **implementado (local), pendiente desplegar**
+- `421` — En móvil, sin apartamento, no se muestra el ícono apagado de Corregir — **implementado (local), pendiente desplegar**
