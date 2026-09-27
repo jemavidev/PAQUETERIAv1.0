@@ -5,7 +5,7 @@ mismo síntoma: "listo voy a probar lo que estas diciendo, pero necesito que ant
 sistema (vistas, modales, formularios, tabs...) y demas para confirmar que todo el sistema este
 intercoinectado entre si, necesito que este unificado y se pueda hablar entre si."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -228,3 +228,7 @@ con la que autocompletar.
   unidad (`apartamento_actual_id` sincronizado). Confirmado en `/residentes/<id-de-Angélica>?tab=
   residentes` que FANTASMA 6 aparece listado como residente de la unidad -- el hueco que el cliente
   reportó ("esto no está pasando en este momento") queda cerrado.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

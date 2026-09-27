@@ -3,7 +3,7 @@
 **Pedido original (cliente):**
 "Puedes remover el icono de Apartamento de la vista mobil de /paquetes."
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -33,3 +33,7 @@ retirado no tenía ningún assert dependiente).
 ## Verificación
 
 Pendiente confirmación visual del cliente.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

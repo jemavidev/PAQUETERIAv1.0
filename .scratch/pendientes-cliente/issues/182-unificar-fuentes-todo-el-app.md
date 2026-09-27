@@ -3,7 +3,7 @@
 **Pedido original:** "ahora lo que necesito es que unifiques todas las fuentes entre las vistas
 del app."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -36,3 +36,7 @@ Ningún otro archivo del proyecto define una fuente propia -- con esto, TODAS la
 - Auditoría de cobertura: `grep` confirma que no queda ninguna otra plantilla con `font-family`/
   `fonts.googleapis`/`@font-face` propio en todo el proyecto.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

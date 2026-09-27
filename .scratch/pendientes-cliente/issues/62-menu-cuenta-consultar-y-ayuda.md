@@ -9,7 +9,7 @@ footer pedida por el cliente) -- al mover Consultar/Ayuda fuera del footer
 móvil del cliente en [[61]], quedaron sin ninguna vía alcanzable desde
 mobile.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -49,3 +49,7 @@ queda exactamente Mis paquetes → Mis datos → Consultar → Ayuda → (línea
 - Sin clases Tailwind nuevas -- no hizo falta recompilar `tailwind.css`.
 - Pendiente: confirmar en `test.papyrus.com.co` que el menú de cuenta
   muestra los 4 enlaces en el orden pedido, tanto en mobile como desktop.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -7,7 +7,7 @@ mostarr todos los campos posibles de todos los clientes en la vista al
 cargarla." — sobre el inventario completo de campos de `Persona` que se
 presentó en el turno anterior.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -69,3 +69,7 @@ esta sesión).
 - Pendiente: confirmar en `test.papyrus.com.co` que la tabla se ve bien
   en un computador de staff, y decidir si el scroll horizontal de 12
   columnas es cómodo o si conviene ocultar algunas por defecto.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

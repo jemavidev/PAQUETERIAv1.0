@@ -4,7 +4,7 @@
 se vieran reflejados. Al investigar por qué hacía falta, apareció un problema mucho más grande que
 el de esa única página.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo
 
@@ -75,3 +75,7 @@ antes de hoy y se atribuyó a otra causa, esta es la explicación real más prob
 el cliente revise visualmente el sitio completo después del próximo deploy con este fix.
 
 ## Comments
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

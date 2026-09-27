@@ -9,7 +9,7 @@
    alineados."
 3. "Lleva el ícono de eliminar al final derecho de la lista."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -31,3 +31,7 @@
 Verificado en vivo por curl (`ANGELICA ARRAZOLA` -- Confirmado, no
 Principal): nombre + píldora "Confirmado" en una sola línea, íconos en
 el orden ⭐ -> ✏️ -> 🔔 -> ❌.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -9,7 +9,7 @@ lg:p-6 mb-4 sm:mb-6`) — colores más vivos y más espacio usado por la
 información. Explícitamente **no** pide letras más grandes (el tamaño de
 texto sigue como está).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -61,3 +61,7 @@ color/espacio, no sobre agregar acciones nuevas.
 - `tests/web/test_packages.py` (52) y `tests/web/test_layout.py` (26)
   pasan sin cambios.
 - Pendiente: confirmar en vivo en `test.papyrus.com.co` tras el deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

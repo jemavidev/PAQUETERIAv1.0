@@ -9,7 +9,7 @@ código: 2 de las 3 reglas ya estaban implementadas (unidad vacía → confirma 
 Principal → gana el primero en recibir un paquete, `promover_al_recibir`) -- la única que faltaba
 era la del medio.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -44,3 +44,7 @@ Sin cambios en `agregar_ocupante` (nunca auto-confirmó, ya cumplía) ni en `pro
 - Suite completa: 1046/1046.
 - Verificado en vivo contra `localhost:8010`: unidad vacía sigue confirmando+promoviendo; unidad
   ya ocupada ahora deja al nuevo Residente "Pendiente de confirmar". Datos de prueba limpiados.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

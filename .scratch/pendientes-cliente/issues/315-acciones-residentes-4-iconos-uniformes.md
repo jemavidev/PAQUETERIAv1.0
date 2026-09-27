@@ -5,7 +5,7 @@ Acciones para una fila, en vez de omitirlos se deben mostrar desactivados -- mis
 usado para otros íconos -- para que la lista de íconos sea siempre del mismo tamaño y se vea de
 forma uniforme entre filas.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión).
 
 ## Los 4 íconos
@@ -23,3 +23,7 @@ disponible en esta sesión).
 
 Ningún ícono cambia su comportamiento cuando SÍ aplica -- solo se agregó la rama `{% else %}`
 apagada donde antes no había nada.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente verificar visualmente en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

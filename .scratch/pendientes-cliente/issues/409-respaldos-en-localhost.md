@@ -5,7 +5,7 @@ FALLÓ -- No se pudo iniciar: [Errno 13] Permission denied: '/respaldos'"; "Desc
 "La copia de fotos FALLÓ ... Permission denied: '/respaldos'"; "Se descargan solo 2 archivos vacíos";
 "Restaurar este respaldo (por SSH): no lo veo".
 
-**Status:** implementado (localhost), pendiente confirmar en vivo
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Causa
 
@@ -28,3 +28,7 @@ del código es solo `CODE/`), comando de restauración visible, copia de fotos 6
 nuevas" 7 (justo las 7 registradas que antes figuraban "sin copiar") y "todas" 6.388. Pruebas nuevas: origen de fotos
 local y subcarpeta del checkout. En local el comando de restauración se muestra pero `restaurar.sh` es para el servidor
 (usa docker compose).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

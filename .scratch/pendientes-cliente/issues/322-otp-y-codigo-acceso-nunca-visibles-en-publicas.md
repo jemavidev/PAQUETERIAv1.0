@@ -16,7 +16,7 @@ Tras el análisis, dos correcciones puntuales derivadas:
 > codigo. En caso que en una vista publica se consulte un codigo de acceso es porque ya este se
 > conoce y se podra interactuar con este, pero nunca revelarlo en vistas publicas."
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-06, commits `bf2e54f`/`3b4e544`
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Análisis (OTP)
@@ -77,3 +77,7 @@ propia persona ya tecleó, nunca imprime `paquete.access_code` de forma independ
 - En vivo contra el servidor real de dev (`localhost:8010`): anuncio real → confirmación con
   `?id=<uuid>` en la URL, código real (`9ZQF` en la prueba) presente en la BD pero ausente del
   HTML y de la URL de la respuesta.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-06), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

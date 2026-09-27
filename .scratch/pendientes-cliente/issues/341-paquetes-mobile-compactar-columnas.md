@@ -8,7 +8,7 @@ del nombre del residente, esto asi como hiciste con la vista /residentes
 para algunos campos, la idea de todo esto es que la informacion se vea
 compacta sin cambiar los tamanos de la informacion para que se puedan leer"
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -54,3 +54,7 @@ columnas Contacto y Torre y Apartamento ocultas en mobile
 Pendiente confirmación visual del cliente (no se usó el navegador durante
 esta implementación, a pedido explícito de la sesión anterior: "por ahora
 no necesito que analices en el navegador hasta que yo te lo pida").
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

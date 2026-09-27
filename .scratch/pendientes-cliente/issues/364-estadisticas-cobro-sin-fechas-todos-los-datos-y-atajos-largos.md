@@ -6,7 +6,7 @@ existentes al cargar la vista por primera vez y poder ir buscando o
 filtrando por 'Hoy Ayer Esta semana Este mes', a estos filtros agrega '3
 últimos meses' y 'semestre' y 'último año'".
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Tests:
 - `tests/web/test_admin_estadisticas_cobro.py`: primera carga con todos los
@@ -80,3 +80,7 @@ los_datos` / `test_periodo_con_atajo_acota_al_rango` (dominio) y
 `test_barra_de_filtros_tiene_los_siete_atajos_sin_fechas_sueltas` /
 `test_el_atajo_activo_llega_resaltado` (web). Un cambio de fondo: el tablero
 usa el reloj del servidor en hora de Colombia, ya no el `hoy` del navegador.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

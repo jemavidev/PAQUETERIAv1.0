@@ -3,7 +3,7 @@
 **Pedido original (cliente):**
 "puedes cambiar la fuente de esta vista a Roboto?"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -48,3 +48,7 @@ puntual.
 - Suite completa: ver commit para el conteo final (cambio puramente de
   presentación, sin lógica nueva -- no se esperan tests nuevos).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

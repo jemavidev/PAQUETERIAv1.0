@@ -3,7 +3,7 @@
 **Pedido original:** "quiero que unifiques la barra de busqueda, que quede similar (en lo que
 aplique) a la barra de la vista /paquetes, corrije esto"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -28,3 +28,7 @@ aplique) a la barra de la vista /paquetes, corrije esto"
   ahora el mismo `<div class="bg-white rounded-xl border ...">` + `<form id="busqueda-filtros-form">`
   que `/paquetes`, mismo placeholder de campo, mismo botón `sr-only`, título inline en desktop.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

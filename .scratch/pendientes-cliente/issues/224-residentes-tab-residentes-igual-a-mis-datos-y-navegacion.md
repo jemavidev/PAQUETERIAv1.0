@@ -9,7 +9,7 @@ feature y que se pueda interactuar entre los diferentes residentes, dime si
 es posible." (seguimiento de la comparación pedida entre
 `/mis-datos` y `/residentes`, tab Residentes).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance confirmado con el cliente
 
@@ -26,3 +26,7 @@ es posible." (seguimiento de la comparación pedida entre
   En `/residentes`, cada nombre de Ocupante con `persona_id` propio enlaza a
   `/residentes/{ese persona_id}?tab=residentes` -- mismo mecanismo
   `?tab=` que ya usa el link de Torre/Apto (issue 100/172).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

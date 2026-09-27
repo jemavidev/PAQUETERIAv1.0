@@ -4,7 +4,7 @@
 todo lo comentado en las otras 2 vistas de paquetes y anuncios, adicional necesito que se cambie
 el término de clientes a residentes, ya que eso es lo que son, residentes."
 
-**Status:** implementado (alcance explicado abajo -- ver "Fuera de alcance")
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto importante: esto revierte una decisión anterior
 
@@ -80,3 +80,7 @@ ya se decidió dos veces.
   de confirmar 0 regresiones fuera de las 2 ya corregidas.
 - Pendiente: confirmación visual en navegador real (sin acceso a la extensión Chrome en esta
   sesión).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -4,7 +4,7 @@
 /paquetes este dato se filtra de inmediato, pero si presiono enter aparece algo asi como esto
 `{"detail":[{"type":"bool_parsing","loc":["query","conectados"],...}]}`".
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome confirmada no conectada en
 esta sesión). Reproducido y corregido contra el servidor real.
 
@@ -38,3 +38,7 @@ día se agrega un nuevo toggle así -- revisé el resto de la app (`grep ": bool
 `src/app/web/routes/`) y `conectados` era el único caso real expuesto a un submit nativo de
 formulario; los demás `bool` son parámetros internos de funciones Python (no query params) o
 dependencias inyectadas (`Depends(...)`), no vulnerables a esto.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

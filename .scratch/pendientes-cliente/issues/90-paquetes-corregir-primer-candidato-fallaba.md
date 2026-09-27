@@ -4,7 +4,7 @@
 que se tiene en la vista de /paquetes... botones, enlaces, modales") — no fue un pedido puntual,
 sino un bug real descubierto al ejercitar la vista de punta a punta con Playwright.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Bug
 
@@ -49,3 +49,7 @@ previas, que probablemente no probaron sistemáticamente el primero.
   Cancelar, íconos de Acciones (wa.me/tel/mailto), búsqueda — todo verificado funcionando.
 - `tests/web/test_packages.py`: 95/95. Suite completa: 922/922.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

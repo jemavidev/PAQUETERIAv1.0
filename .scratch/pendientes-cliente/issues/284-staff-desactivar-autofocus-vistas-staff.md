@@ -7,7 +7,7 @@ desactivarlos en caso de ser staff o estar autenticado"
 Se preguntó alcance (`AskUserQuestion`): solo los buscadores, o todos
 los `autofocus` de vistas de staff. Respuesta: **todos**.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -67,3 +67,7 @@ Verificado en vivo (dev local, `document.activeElement`): en `/paquetes`
 y `/residentes`, al cargar la página el foco queda en `<body>`, no en el
 buscador -- confirmado también que no queda ningún
 `input[autofocus]` en el DOM de ninguna de las dos.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

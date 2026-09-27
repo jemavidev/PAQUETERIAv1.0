@@ -8,7 +8,7 @@ residente y "Convertir en residente principal", mientras `search.html` (misma ru
 ya usaban el componente `modal_confirmacion` para sus acciones equivalentes (Eliminar
 cliente/paquete, Cancelar paquete).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de implementación
 
@@ -38,3 +38,7 @@ cliente/paquete, Cancelar paquete).
   ambos modales renderizan con texto/color correcto y los `data-open`/`id` calzan.
 - Pendiente: confirmación visual en navegador real (sin acceso a la extensión Chrome en esta
   sesión) -- verificado solo por HTML devuelto por el servidor, no por captura de pantalla.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

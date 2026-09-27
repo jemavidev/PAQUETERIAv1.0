@@ -11,7 +11,7 @@ telefono y whatsapp, puedes agregar email?" — seguido de la aclaración
 WhatsApp/Teléfono: el ícono de Email solo aparece si esa Persona tiene el
 dato).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -52,3 +52,7 @@ sección "Anunciado por" -- el hito "Anunciado" ya muestra quién anunció
   distintas combinaciones) confirma que el ícono de Email solo aparece
   junto al nombre de quien tiene el dato.
 - Pendiente: `tests/` completo + deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

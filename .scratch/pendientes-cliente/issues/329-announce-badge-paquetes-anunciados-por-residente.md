@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "Sería bueno ver en los residentes el número de paquetes que tiene
 cada uno anunciado, colócalo con un badge."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diseño
 
@@ -26,3 +26,7 @@ ningún Paquete todavía, así que no entra al diccionario (sin badge, no "0").
 
 - 2 tests nuevos en `tests/web/test_announce_new.py` (conteo singular y plural, más un residente
   sin paquetes que no muestra badge).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

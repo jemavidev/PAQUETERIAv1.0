@@ -4,7 +4,7 @@
 respuesta a "estoy teniendo problemas con twilio y los mensajes de texto,
 como funciona el failover").
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -51,3 +51,7 @@ existentes, no se agregaron tests nuevos).
 
 Desplegado en `test.papyrus.com.co` (2026-08-06). Pendiente: confirmar en
 vivo que el próximo envío real (SMS/OTP) sale por AWS SNS.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

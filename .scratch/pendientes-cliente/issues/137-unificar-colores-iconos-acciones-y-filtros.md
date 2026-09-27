@@ -12,7 +12,7 @@ tercero ("todo el sistema") queda deliberadamente pendiente de un barrido
 aparte antes de tocar colores que codifican significado en otras partes
 de la app (ver Pendiente abajo).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -48,3 +48,7 @@ familia de color (sin cambiar de hue), no un color distinto.
   otras vistas que codifican significado específico acumulado a lo largo
   de muchos issues anteriores, así que conviene presentar un inventario
   antes de aplicar el mismo "+1 tono" a ciegas.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

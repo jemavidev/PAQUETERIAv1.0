@@ -6,7 +6,7 @@ ADMIN Cerrar sesión 'bg-white border border-gray-200 rounded-2xl shadow-lg
 p-6' creo que no es necesario" — la tarjeta de avatar+nombre+email+rol+
 Cerrar sesión agregada en issue 197.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -35,3 +35,7 @@ Cerrar sesión agregada en issue 197.
   aparece; "Cerrar sesión" sigue disponible 2 veces en la página (dropdown
   de escritorio + móvil del header), ninguna en el cuerpo de "Mi perfil".
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

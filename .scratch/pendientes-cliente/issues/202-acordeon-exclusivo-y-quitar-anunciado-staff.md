@@ -6,7 +6,7 @@ Anunciado Staff no debe existor ya que los anuncios incluyendo estos se
 van directo a los clientes, con el 'Anunciado Cliente' es mas que
 suficiente"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Parte 1 — Acordeón exclusivo
 
@@ -56,3 +56,7 @@ RECIBIDO/ENTREGADO: una sola plantilla, sin `motivo`.
   abierto a la vez; `/administracion/notificaciones` muestra "ANUNCIADO"
   como una sola fila, sin "Cliente"/"Staff".
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -4,7 +4,7 @@
 completo?" → explicado que hoy solo matchea teléfono completo y válido (`normalizar_telefono` +
 comparación exacta `==`), un fragmento no encuentra nada → confirmado: "sí, agrégalo."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -24,3 +24,7 @@ comparación exacta `==`), un fragmento no encuentra nada → confirmado: "sí, 
 - Verificado en local (`localhost:8010`): buscar "3849" (últimos 4 dígitos de un teléfono real de
   prueba) encuentra correctamente a esa Persona.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

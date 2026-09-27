@@ -26,7 +26,7 @@
    variantes reales sobre `/paquetes` (`?variant=select|click|confirm`);
    ganó B ("Creo que la opcion B se ve perfecto").
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -80,3 +80,7 @@
   esperado cada una) y para el caso "advertencia clickeable" (candidato
   automático detectado correctamente por nombre).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

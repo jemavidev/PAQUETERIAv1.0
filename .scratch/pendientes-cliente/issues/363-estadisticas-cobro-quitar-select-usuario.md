@@ -2,7 +2,7 @@
 
 **Pedido original (Jesús):** "Remueve el select de 'usuario_id'".
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_no_hay_filtro_por_usuario_y_el_parametro_se_ignora` en
 `tests/web/test_admin_estadisticas_cobro.py` (reemplaza a los 2 tests que
@@ -34,3 +34,7 @@ diaria" a los cobros de una sola persona.
   cobertura en `tests/data_model/test_cobro_service_integration.py`): sigue
   siendo una capacidad válida de la consulta, solo que ninguna pantalla la
   usa hoy. Volver a exponerla es agregar el control de nuevo.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

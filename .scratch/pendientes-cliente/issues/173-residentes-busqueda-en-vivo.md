@@ -7,7 +7,7 @@ donde vaya coincidiendo todo" → aclarado con pregunta de opción múltiple: el
 Enter. Descartada la otra opción ofrecida (dropdown de sugerencias flotante) -- no existe hoy en
 ningún buscador del proyecto y hubiera sido una interacción nueva.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -46,3 +46,7 @@ ningún buscador del proyecto y hubiera sido una interacción nueva.
   normal vs. fragmento, filtro con resultados, filtro sin resultados ("Sin resultados"), y el
   modal "Eliminar residente" presente en el fragmento en vivo.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

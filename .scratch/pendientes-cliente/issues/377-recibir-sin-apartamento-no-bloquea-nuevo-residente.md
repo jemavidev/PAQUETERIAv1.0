@@ -5,7 +5,7 @@ hecho que no tenga un apartamento resuelto no debería ser impedimento para reci
 paquetes no están asociados a un apartamento". Aprobó las 3 correcciones propuestas: "recuerda el no tener un
 apartamento no debería bloquear para recibir".
 
-**Status:** implementado, pendiente confirmar en vivo
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -41,3 +41,7 @@ unidad, bloqueo del issue 189).
   deshabilita (desmarcada, sección cerrada) al cambiar el apartamento.
 - Regresión: `test_packages`, `test_search`, `test_announce_new`, `test_layout` (426) y seam `browser` (76) en verde.
 - Tailwind reconstruido (clases `peer-disabled:*`, `has-[:disabled]:*`) y `?v=101` en `base.html`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

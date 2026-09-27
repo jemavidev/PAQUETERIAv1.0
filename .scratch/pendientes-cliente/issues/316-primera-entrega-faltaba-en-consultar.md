@@ -4,7 +4,7 @@
 'modal-entregar-consultar' no me aparece el mensaje indicando que es un usuario nuevo, analiza y
 dime se hace falta en algun otro lugar."
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
 sesión).
 
@@ -39,3 +39,7 @@ mostraba la bandera; `JTV8`, con 3 entregas previas, SÍ la mostraba -- exactame
 Corregido negando el resultado del `.exists()`. 3 tests nuevos en `test_search.py` bloquean esta
 regresión a futuro. 427 tests en verde
 (`test_packages.py`/`test_layout.py`/`test_customers_manage.py`/`test_search.py`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

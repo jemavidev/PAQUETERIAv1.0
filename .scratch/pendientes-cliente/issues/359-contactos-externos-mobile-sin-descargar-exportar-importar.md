@@ -4,7 +4,7 @@
 /administracion/contactos-externos, para la version mobil no sea posible usar
 el sistema de plantillas 'Descargar, Exportar, Importar'."
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -22,3 +22,7 @@ el sistema de plantillas 'Descargar, Exportar, Importar'."
 - `test_botones_de_plantilla_y_formulario_de_import_se_ocultan_en_mobile`
   (fila `hidden md:flex`, formulario dentro de `hidden md:block`).
 - Solo se comprobó el markup; pendiente verlo en un viewport mobile real.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

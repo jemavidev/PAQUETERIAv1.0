@@ -14,7 +14,7 @@ vista 'Corregir destinatario' podra ser para los estados 'Anunciado y
 Recibido'." -- ENTREGADO queda fuera (Corregir destinatario tampoco se
 abre ahí, sin relación con esta ampliación).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -80,3 +80,7 @@ no solo mostrar un botón.
   Gomez", con la función ya desbloqueada).
 - Suite completa: pendiente de confirmar.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

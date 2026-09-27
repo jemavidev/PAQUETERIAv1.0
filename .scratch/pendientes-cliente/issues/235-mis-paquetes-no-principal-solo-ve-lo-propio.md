@@ -7,7 +7,7 @@ residentes -- la idea es que solo el residente principal sea el que pueda
 visualizar los paquetes de todos los demás residentes de ese mismo
 apartamento."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado con el cliente
 
@@ -45,3 +45,7 @@ tener como sesión al Ocupante que la promoción automática de `receive()`
 Verificado en vivo (curl, dev DB real): un no-Principal con paquetes
 propios + de otros 3 Ocupantes de su unidad (6 en total) ahora solo ve
 sus 4 propios; el Principal de esa misma unidad sigue viendo los 6.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

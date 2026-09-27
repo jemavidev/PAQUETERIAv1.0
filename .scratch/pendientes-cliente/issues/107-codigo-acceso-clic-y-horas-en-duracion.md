@@ -8,7 +8,7 @@ que acabas de implementar en el modal de clientes '1 dia', '0 dias' o
 similares tambien incluya las horas, por ejemplo '3 dias y 4 horas' o
 '16 horas'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -45,3 +45,7 @@ precisión pedida sobre la marcha al ver el resultado en vivo.
   nuevo test del link `/consultar?q=` en la columna Cliente.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

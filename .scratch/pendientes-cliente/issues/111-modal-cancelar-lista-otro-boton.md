@@ -8,7 +8,7 @@ contenido del boton de confirmar de 'Confirmar cancelación' a
 'Otro' se deberia mostrar un input para escribir una posible causa que
 no este representada en la lista anterior."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -58,3 +58,7 @@ otros 2 modales, que nadie pidió tocar.
   cancelar con motivo="OTRO" sin texto libre guarda "OTRO" (fallback).
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

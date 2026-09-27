@@ -6,7 +6,7 @@ header" — seguimiento a la pregunta anterior sobre qué alternativas había
 para esa vista (eliminarla del todo, o convertirla en "cambiar mi
 contraseña"); el cliente resolvió sacarla del menú.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo importante ANTES de tocar código
 
@@ -45,3 +45,7 @@ menú del header, que es literalmente lo que se pidió.
 - Verificado en vivo contra el servidor de dev local: el dropdown de un
   admin logueado ya no incluye "Mi sesión" (sí sigue incluyendo Perfiles).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

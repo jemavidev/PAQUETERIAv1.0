@@ -7,7 +7,7 @@ en este caso quedaria por cada contacto 2 filas 'Nombre' al lado izquierdo,
 'Contacto de whatsapp' debajo del nombre en la nueva fila, El 'numero de
 telefono' al lado derecho."
 
-**Status:** implementado (ronda 2), pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -61,3 +61,7 @@ items-center gap-1.5 flex-wrap mt-1.5 sm:hidden`. Se mantuvo `break-all` (y
 no `whitespace-nowrap` como las otras) para que un usuario largo se parta en
 vez de ensanchar la columna. Test:
 `test_mobile_la_pildora_de_whatsapp_usa_la_receta_de_las_otras_vistas`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado (ronda 2), pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

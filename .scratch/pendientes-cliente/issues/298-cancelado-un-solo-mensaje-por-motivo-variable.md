@@ -16,7 +16,7 @@ resolver cuál se eligió -- exactamente como `{recipient_name}`/
 `{access_code}`. Esto predataba incluso esta rebanada (venía de Grupo 8 /
 `.scratch/plantillas-notificacion-multicanal`).
 
-**Status:** implementado -- pendiente confirmar en vivo en test.papyrus.com.co
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado
 
@@ -61,3 +61,7 @@ resolver cuál se eligió -- exactamente como `{recipient_name}`/
   título compuesto "CANCELADO · <motivo>" reescritos para verificar la
   lista "Motivos seleccionables" dentro del modal (nuevo helper
   `_segmento_modal`, portado de `tests/web/test_packages.py`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

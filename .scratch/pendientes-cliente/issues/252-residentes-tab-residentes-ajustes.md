@@ -16,7 +16,7 @@
 6. "Agregar un nuevo Residente" -> "Agregar Residente".
 7. "Residentes del apartamento" -> "Residentes &lt;Torre y Apartamento&gt;".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -70,3 +70,7 @@ estrella `text-[13px]`.
 El cliente pidió quitar el texto "(ficha actual)" que acompañaba al
 `ring` índigo (punto 4). El `ring-2 ring-indigo-400` en la tarjeta se
 queda igual -- solo se retira el texto junto al nombre.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

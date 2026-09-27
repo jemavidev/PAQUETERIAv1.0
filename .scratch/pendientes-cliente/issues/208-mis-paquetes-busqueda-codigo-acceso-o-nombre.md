@@ -5,7 +5,7 @@ una opción de búsqueda por código de acceso o el nombre del residente,
 recuerda que debería estar similar a las barras de búsqueda que ya has
 venido trabajando."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -16,3 +16,6 @@ acentos), combinado con el filtro de tab de Estado ya existente -- no usa
 el macro de búsqueda en vivo del staff (fetch al servidor) porque esta
 lista es chica y ya está completa en el DOM.
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

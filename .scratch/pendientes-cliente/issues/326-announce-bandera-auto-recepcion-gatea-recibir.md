@@ -19,7 +19,7 @@
 > presionar el botón de recibir y este internamente deberá anunciar el paquete y paralelo después
 > de anunciarlo abrir el modal de recepción de paquetes para continuar con este flujo."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de alcance (confirmadas con el cliente antes de implementar)
 
@@ -84,3 +84,7 @@ admin existente (atado a `EstadoPaquete`).
 - Suite completa `tests/web/test_announce_new.py`: 81/81 en verde.
 - `tests/data_model/test_persona_service.py` + `tests/data_model/test_notificacion_service.py`:
   78/78 en verde.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

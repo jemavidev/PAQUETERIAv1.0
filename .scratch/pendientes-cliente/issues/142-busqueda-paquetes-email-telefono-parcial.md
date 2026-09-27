@@ -4,7 +4,7 @@
 `/paquetes`; de las sugerencias presentadas, confirmó implementar email y teléfono parcial,
 "aplica la búsqueda parcial a todo lo que aplique".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación (`_listar` en `packages/routes.py`)
 
@@ -34,3 +34,7 @@
   que es el filtro de Estado combinado con AND (comportamiento correcto, no bug): sin filtro,
   86 coincidencias reales / 5 páginas; con RECIBIDO o CANCELADO activo, exactamente 4.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

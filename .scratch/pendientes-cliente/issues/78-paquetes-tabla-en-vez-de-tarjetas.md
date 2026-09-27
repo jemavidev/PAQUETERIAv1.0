@@ -10,7 +10,7 @@ sigan trabajando con la barra de busqueda tal cual como esta". Tras ver las 5
 capturas: "la opcion A me parece buena ... por ahora esta es la que
 necesito, implementala".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -52,3 +52,7 @@ estaba conectado), y el cliente eligió la variante A ("Grid denso").
   Entregar/Cancelar) probadas con clicks reales.
 - Desplegado 2026-08-14 junto con [[79]] (mismo push a `jemavidev/PaqueteX`,
   ver esa nota de despliegue). Pendiente confirmar visualmente en vivo.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

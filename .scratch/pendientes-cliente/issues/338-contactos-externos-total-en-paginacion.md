@@ -4,7 +4,7 @@
 "muy bien, necesito que en la paginacion sea posible vicualizar la cantidad
 de cobtactos existentes"
 
-**Status:** implementado, verificado en vivo en localhost:8010
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -36,3 +36,7 @@ descarta -- solo devuelve `(contactos, total_paginas)`.
   contacto (caso de una sola página).
 - Verificado en vivo contra `localhost:8010`: la vista real muestra
   "1041 contactos".
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, verificado en vivo en localhost:8010". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

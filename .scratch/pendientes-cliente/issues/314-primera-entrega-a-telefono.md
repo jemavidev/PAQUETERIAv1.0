@@ -5,7 +5,7 @@ que se entrega un paquete a un residente, mostrar una bandera/prueba visual de e
 es el NÚMERO DE TELÉFONO específico (`recipient_phone`), independientemente de que ese teléfono
 viva con otros residentes en la misma unidad.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). El modal se confirmó ubicado en `/paquetes` (no `/residentes`, el
 pedido original lo mencionaba ahí por error del cliente, aclarado con AskUserQuestion). Verificado
 contra datos reales (`localhost:8010`): 3 paquetes RECIBIDO reales, ninguno pinta la bandera
@@ -27,3 +27,7 @@ ni "no primera").
 Mismo patrón de batch query "un puñado fijo de consultas por página" que ya usa el resto de
 `_listar()` (`app/web/routes/packages.py`) -- una sola consulta agrupando los teléfonos de los
 paquetes RECIBIDO de la página contra el historial de ENTREGADO, no una consulta por fila.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente verificar visualmente en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

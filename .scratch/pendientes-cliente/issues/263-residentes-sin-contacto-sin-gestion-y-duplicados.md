@@ -10,7 +10,7 @@ gestionarlos, no sé qué se deba hacer"* -- confirmado después: *"Veo
 que las características para gestionarlo solo aparecen después de
 agregar teléfono/whatsapp"*.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -101,3 +101,7 @@ idea de todo esto es que se hable un mismo idioma siempre."*
   residentes reales. Confirmado también que intentar recrear
   "RAFAEL TORRES" sin contacto ahora rechaza con "Ya existe un
   Residente activo llamado 'RAFAEL TORRES' en esta unidad."
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

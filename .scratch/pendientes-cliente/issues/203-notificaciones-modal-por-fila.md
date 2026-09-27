@@ -8,7 +8,7 @@ modales cada una, de esta forma vea mejor". Tras explicarle el trade-off
 cada opcion se abra con un modal, puedes hacerlo" — sin pasar por
 `?variant=` esta vez, pidió el reemplazo directo.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -60,3 +60,7 @@ contrato `data-open`/`data-close` que usan `admin/staff.html` y
 ## Pendiente
 
 - Deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

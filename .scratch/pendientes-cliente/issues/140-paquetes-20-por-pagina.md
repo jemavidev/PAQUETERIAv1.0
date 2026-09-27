@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "como podrías aumentar a 20 la cantidad de paquetes listados"
 (en el marco de la conversación sobre paginación, issue [[139]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -19,3 +19,7 @@
   `test_paginacion_con_mas_de_20_paquetes`, ajustado a la nueva cantidad de páginas.
 - Suite completa: sin regresiones (ver [[139]]).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

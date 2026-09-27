@@ -7,7 +7,7 @@ ya se ha venido trabajando), este podría estar ubicado al lado de la
 píldora del estado, recuerda que sería en cada paquete antes de
 expandirlo, ya que cuando está expandido sí se muestra sin problemas."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -15,3 +15,6 @@ expandirlo, ya que cuando está expandido sí se muestra sin problemas."
 detalle expandido, compactada) agregada junto al `badge(p.estado)` en el
 header de cada tarjeta, antes de expandir.
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

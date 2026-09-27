@@ -4,7 +4,7 @@
 cuando existan conexiones reales para la búsqueda actual -- si presionarlo no cambiaría nada
 en pantalla, no debería ser presionable.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión).
 
 ## Regla
@@ -25,3 +25,7 @@ La barra de búsqueda vive FUERA de `#resultados-paquetes` y no se vuelve a rend
 fetch de búsqueda en vivo -- por eso `hay_conexiones` viaja también como header de respuesta
 (`X-Hay-Conexiones`), que el JS de `_busqueda_filtros.html` lee tras cada fetch para
 habilitar/deshabilitar el botón sin recargar la página completa.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente verificar visualmente en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

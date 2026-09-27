@@ -4,7 +4,7 @@
 destinatario de un paquete se buscaba por teléfono y, si no, por NOMBRE tomando la primera coincidencia; con dos
 personas del mismo nombre, el descuento/abono del contra entrega podía ir a la persona equivocada.
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -28,3 +28,7 @@ personas del mismo nombre, el descuento/abono del contra entrega podía ir a la 
 - BD dev: 3 nombres repetidos y 3 paquetes abiertos con esos nombres. FJ4T y P5SJ se resuelven por teléfono (sin
   cambio); Y5U8 ("TEST 3", sin teléfono, con homónimo) antes podía caer en cualquiera de los dos y ahora se resuelve
   por su WhatsApp. Ninguno queda sin resolver.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

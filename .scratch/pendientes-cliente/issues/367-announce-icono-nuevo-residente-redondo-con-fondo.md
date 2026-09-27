@@ -11,7 +11,7 @@ este debe ser relacionado con 'Agregar usuario', recuerda debe ser el mismo
 esquema que para los iconos de la columna Accion de las diferentes vistas
 'redondo, con fondo'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -55,3 +55,7 @@ esquema que para los iconos de la columna Accion de las diferentes vistas
   o el desplegable abierto sigue siendo el único ícono de ese tamaño en la
   fila.
 - Pendiente: confirmación visual del cliente y deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

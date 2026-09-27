@@ -7,7 +7,7 @@ muestra la segunda parte: "Tus datos se tratan según nuestra Política de
 Tratamiento de Datos Personales, incluida la transferencia a servidores
 fuera de Colombia de nuestro proveedor de infraestructura."
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Seguimiento a [[351]] (que dejó ambas partes en un solo `<label>`).
 
@@ -31,3 +31,7 @@ Seguimiento a [[351]] (que dejó ambas partes en un solo `<label>`).
   `<span class="block mt-1">` interno.
 - Al hacer click el link desaparece (no vuelve a colapsar): lo pedido es
   solo "mostrar la segunda parte".
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

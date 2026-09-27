@@ -6,7 +6,7 @@ agregar, esto con el fin que los botones existentes realicen estos cambios
 y se visualice de mejor forma y más homogeneidad." (seguimiento de
 [[226-mis-datos-residentes-editar-nombre-email-notificaciones]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -28,3 +28,7 @@ Promover, ✏️ Editar, 🔔 Notificaciones).
 
 Sin cambios de backend -- las 3 rutas (`/telefono`, `/whatsapp`, `/datos`)
 son las mismas de los issues 213/217/226, solo se reorganizó la plantilla.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

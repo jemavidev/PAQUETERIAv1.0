@@ -5,7 +5,7 @@ mover_ocupante" — confirmando la propuesta de reusar el mismo mecanismo
 de auto-promoción que ya existe en `mover_ocupante` (issue 159) para el
 flujo "Mudarse de este apartamento".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance (ajustado tras revisión de scope)
 
@@ -61,3 +61,7 @@ autoservicio o solo a staff -- respuesta: **solo staff**, igual que
   303, el más antiguo de los dos restantes quedó `es_principal=True`, el
   otro sin tocar, el principal original quedó `desvinculado_en` con
   fecha y `es_principal=False`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

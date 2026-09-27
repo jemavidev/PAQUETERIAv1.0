@@ -6,7 +6,7 @@ referente a este lo crees una pildora que estara al laso de
 Auto/Principal/Torre-Apt?, dime si es posible y asi optimizamos espacio
 y mejoramos los padings y margenes"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -47,3 +47,7 @@ Apartamento sigue viendo su columna dedicada de siempre, sin cambios.
 
 Suite completa (`pytest tests/web/test_customers_manage.py`): 154
 passed, sin regresiones.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

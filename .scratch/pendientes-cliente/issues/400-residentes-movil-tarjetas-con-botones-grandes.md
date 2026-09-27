@@ -4,7 +4,7 @@
 vista de /paquetes, esto enfocado a la versión móvil ... serían unos botones en la parte inferior del residente y que
 sea de 2 líneas, decide cuál dejas arriba y cuáles abajo".
 
-**Status:** implementado; aprobado por Jesús ("ahora sí se ve bien todo"), pendiente confirmar en test
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones (propuestas)
 
@@ -48,3 +48,7 @@ filas de 2). Jesús: "ahora sí se ve bien ... despliega a localhost y test.papy
   que haya una sola tarjeta) y del nombre (+1). 201 en verde.
 - Tailwind reconstruido, `?v=105`. Capturas a 390/360 px revisadas; a 320 px los textos de los botones se cortan.
 - Vista previa apagada; rondas en la rama `prototipo/residentes-movil-tarjetas`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado y aprobado, pendiente confirmar en test". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -3,7 +3,7 @@
 **Reporte original (Jesús), tras [[377]]:** "para este paquete '7JY7' sigue mostrando este mensaje 'Este paquete no
 tiene apartamento resuelto en su snapshot.'"
 
-**Status:** implementado, pendiente confirmar en vivo
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -36,3 +36,7 @@ no lo cubría porque el paquete SÍ tiene los 3 campos del snapshot.
 - BD dev: `alembic upgrade head` aplicó `0057`; 1580 paquetes con apartamento ahora en `EL CLUB APARTAMENTOS`
   (antes 1569 en `EL CLUB`), 7JY7 incluido. ADR-0001: excepción 4 documentada.
 - Al desplegar, la migración corre sola (si producción también tuvo un renombre, lo corrige igual).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

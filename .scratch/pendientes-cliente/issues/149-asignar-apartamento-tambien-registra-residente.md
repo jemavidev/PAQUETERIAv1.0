@@ -10,7 +10,7 @@ apartamento" (modal independiente, ícono propio en la fila de `/paquetes`) nunc
 capacidad de registrar residente -- ni antes de [[148]] ni después, porque ese fix solo tocó el
 modal "Recibir".
 
-**Status:** implementado (el Paquete puntual de Lais quedó ENTREGADO -- terminal, ya no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 corregible; ver "Nota sobre el caso reportado" abajo para cómo completarlo a mano)
 
 ## Diagnóstico
@@ -61,3 +61,7 @@ fix de este ticket ya lo resuelve en un solo envío.
 - Suite completa `/paquetes` + `/announce` + `/residentes`: 329/329, sin regresiones.
 - Verificado en vivo contra `localhost:8010`: la sección "+ Nuevo residente (opcional)" aparece en
   el modal "Asignar apartamento" de paquetes reales sin unidad.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

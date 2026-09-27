@@ -6,7 +6,7 @@ letting me click on the whatsapp icon in this view" -- reportado como
 ejemplo concreto tras la pregunta general de issue 103 sobre la prioridad
 username > teléfono.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -49,3 +49,7 @@ estado apagado en vez de usar su `whatsapp_usuario`.
   clickeable y apunta a `https://wa.me/camila.ospina`.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

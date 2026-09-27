@@ -8,7 +8,7 @@ cancelacion-catalogo` (Anuncio erróneo, Devuelto al transportador, No
 reclamado, Otro) cada uno como su propio módulo (fila + modal de 3
 canales).
 
-**Status:** implementado -- pendiente confirmar en vivo en test.papyrus.com.co
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado
 
@@ -42,3 +42,7 @@ canales).
   (2 tests que cancelaban con "Anuncio erróneo"/"Devuelto al
   transportador" pasan a usar "Otro"; el test que verificaba las 4
   etiquetas en el modal pasa a verificar solo "Otro").
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

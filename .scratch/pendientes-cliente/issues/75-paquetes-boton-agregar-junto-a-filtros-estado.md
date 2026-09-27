@@ -8,7 +8,7 @@ este a la mano izquierda del boton de ANUNCIADO, justo al lado, podria ser
 algo que referencie el echo de 'agregar'. Este nuevo icono o boton debe
 tener el look and feel del resto de botones a su lado."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -44,3 +44,7 @@ otro paquete después de revisar la lista.
 - Verificación manual en navegador (Postgres efímero + Playwright): el botón
   aparece a la izquierda de ANUNCIADO, mismo tamaño/forma que sus vecinos,
   clic navega a `/announce`, sin errores de consola.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

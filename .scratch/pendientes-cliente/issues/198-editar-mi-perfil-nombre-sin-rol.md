@@ -6,7 +6,7 @@ ellos mismos con formularios y demas, pero no permitas que se modifique el
 rol por ellos mismos" -- seguimiento a issue 196 (autoservicio de
 contraseña) y al pedido de mejorar el look de `/mi-sesion`.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -40,3 +40,7 @@ perfil en el dominio hoy. "Datos... y demás" se resolvió a eso.
 - `test_staff_service.py` + `test_auth.py`: 42 tests, todos pasan.
 - Verificado en vivo contra el servidor de dev local con un OPERADOR real.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

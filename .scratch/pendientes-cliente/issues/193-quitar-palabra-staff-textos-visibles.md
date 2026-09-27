@@ -5,7 +5,7 @@
 remplasarla por algo como 'Personal' o simplemente removersla, por ejemplo
 'Nueva cuenta de staff' --> 'Nuevo usuario'"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -36,3 +36,7 @@ copy, no sobre identificadores ni URLs.
   — 161 tests, todos pasan (ninguno hardcodeaba el texto exacto de estos
   mensajes).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

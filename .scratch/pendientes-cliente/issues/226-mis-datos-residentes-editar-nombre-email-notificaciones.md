@@ -7,7 +7,7 @@ que van a ser varios datos adicionales, dime si puedes?" (seguimiento de la
 pregunta sobre cómo editar datos/notificaciones de un co-residente desde
 `/mis-datos`).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -41,3 +41,7 @@ issue 217): 2 chips nuevos por residente CON contacto propio --
 `combinaciones_editables` que ya usa el principal para sí mismo). Ambos
 colapsados por defecto -- la tarjeta no crece salvo que se abran a
 propósito.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

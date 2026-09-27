@@ -10,7 +10,7 @@ el front no para la logica del sistema" — el fix es solo de
 presentación (plantillas), nunca toca cómo el dominio/backend maneja
 `None`/`NULL`.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Investigación
 
@@ -101,3 +101,7 @@ Fix: `... or paquete.announced_by_phone or 'N/D'`.
   tras ambos fixes: las 8 vistas antes revisadas siguen limpias.
 - Suite completa: pendiente de confirmar tras el segundo fix (corriendo).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

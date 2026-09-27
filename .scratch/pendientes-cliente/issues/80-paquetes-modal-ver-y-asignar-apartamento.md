@@ -48,7 +48,7 @@ y la columna Dirección, tras ver [[79]] desplegado:
     (terminales). Clic cierra "Ver" y abre el modal real de la acción en el
     mismo gesto (traspaso limpio, no dos modales superpuestos).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -119,3 +119,7 @@ feature nueva chica (asignar apartamento) que salió de esa misma revisión.
   `jemavidev/PaqueteX`, rama `deploy-paquetes-ver-modal-y-hora`, commit
   `4649bf0`, push directo a `main`). Pendiente confirmar visualmente en
   vivo (sin credenciales de ese ambiente en esta sesión).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

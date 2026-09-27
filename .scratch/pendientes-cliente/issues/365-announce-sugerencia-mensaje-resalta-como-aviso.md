@@ -7,7 +7,7 @@ podría ser:'" -- se propusieron 3 formas (caja de aviso ámbar / solo texto
 destacado / franja lateral) y el cliente eligió la **A, caja de aviso ámbar**:
 "Si aplica la opcion A".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -43,3 +43,7 @@ destacado / franja lateral) y el cliente eligió la **A, caja de aviso ámbar**:
   en dos líneas, 14 px semibold, contraste 6,84:1 (pasa AA), sin scroll
   horizontal; con la tarjeta seleccionada el aviso sigue arriba.
 - Pendiente: confirmación visual del cliente y deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

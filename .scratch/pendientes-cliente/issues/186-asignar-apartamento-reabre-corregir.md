@@ -5,7 +5,7 @@ al apartamento 302 de la torre 2, donde la [está] Angelica... analiza que paso"
 con evidencia directa de la base de datos local (ver Diagnóstico) → confirmado el plan de fix:
 "sí, lo que recomiendes."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -43,3 +43,7 @@ dejarlo así, es que nada lo señala.
   (guard: con "+ Nuevo residente" lleno, sigue yendo a `/paquetes` sin cambios).
 - Suite completa.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

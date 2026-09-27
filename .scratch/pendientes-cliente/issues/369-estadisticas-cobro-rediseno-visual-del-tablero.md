@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "no sé, pero creo que aplicaste sobre ingeniería y
 /administracion/estadisticas-cobro no se ve nada agradable".
 
-**Status:** implementado, pendiente confirmar visualmente (variante A elegida por Jesús; commit `c9f5149`, sin deploy)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Qué se ve hoy (capturas del tablero real, escritorio 1440 y móvil 390)
 
@@ -92,3 +92,7 @@ rondan 1,2 s. Es el cálculo de `calcular_tablero`, no la plantilla.
 
 **Sigue abierto:** la barra de filtros (los 4 íconos de color -- cian, morado,
 verde, rojo -- no dicen qué filtran), que no cambió.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -15,7 +15,7 @@ Después de 2 rondas fallidas del campo de búsqueda libre ([[87]]), el
 cliente pidió abandonar ese enfoque y construir un flujo guiado de
 pasos explícitos en su lugar.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -96,3 +96,7 @@ nombres en un solo texto corrido separado por comas; pasa a una lista
 (la lista se construye en el mismo JS del paso 3).
 
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

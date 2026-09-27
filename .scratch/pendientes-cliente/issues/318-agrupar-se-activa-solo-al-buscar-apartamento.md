@@ -5,7 +5,7 @@ apartamento con ese esquema) en la barra de búsqueda, el botón "Agrupar por ap
 activar SOLO -- sin tener que clickearlo aparte -- para llegar en un solo paso al grid fijo de 10
 Torres de issue 317. Debe funcionar así para cualquier número.
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome confirmada NO conectada en
 esta sesión -- no se pudo probar el comportamiento de JS en un navegador real, solo revisión de
 código + smoke test de que la página sigue cargando bien).
@@ -32,3 +32,7 @@ verifican HTML server-renderizado) ni con curl -- se revisó la lógica a mano t
 escenarios (tipeo progresivo "a"->"apt302", borrar hasta salir del esquema, click manual de
 "Principales" mientras hay un número de apartamento en el campo) pero falta la confirmación
 visual real del cliente.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), sin poder verificar JS en vivo (sin navegador conectado) -- pendiente que el cliente lo confirme". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

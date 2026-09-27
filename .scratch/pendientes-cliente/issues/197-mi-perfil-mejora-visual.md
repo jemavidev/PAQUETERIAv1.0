@@ -4,7 +4,7 @@
 "mejora el como se ve esta vista /mi-sesion, ya que se ve poco profesional
 y no acorde con lo que hemos venido trabajando, solucionalo"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Qué estaba desalineado del resto del sistema
 
@@ -42,3 +42,7 @@ y no acorde con lo que hemos venido trabajando, solucionalo"
   siguen pasando sin tocarlos.
 - Verificado en vivo contra el servidor de dev local.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

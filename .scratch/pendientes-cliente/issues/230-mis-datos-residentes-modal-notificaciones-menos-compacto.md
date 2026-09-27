@@ -4,7 +4,7 @@
 necesito que la sección/modal de Notificaciones sea menos compacta."
 (seguimiento de [[229-mis-datos-residentes-editar-notif-como-modal-y-bug-canal-doble]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -22,3 +22,7 @@ solo usa el default si la LLAVE falta, no si el VALOR ya es `None`
 (`personas_telefono`/`personas_whatsapp` sí tienen la llave con `None`
 cuando el residente no tiene ese canal). Corregido con `or ''` en las dos
 variables.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

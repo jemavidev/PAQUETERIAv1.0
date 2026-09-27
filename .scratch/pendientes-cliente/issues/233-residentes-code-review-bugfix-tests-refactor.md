@@ -7,7 +7,7 @@ pendientes y posibles nuevos." + confirmación de arreglar el bug de
 colisión encontrado y aplicar los 2 refactors sugeridos por la revisión de
 Standards.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgos (code-review de dos ejes, Standards + Spec, sobre el diff sin
 commitear de toda la sesión en esta área)
@@ -73,3 +73,7 @@ tests web cliente (`test_customer_verify.py`) + 130 tests web staff
 en verde. Confirmado en vivo por curl (login real de staff y de cliente vía
 `otp_dev.sh`) que ambas vistas renderizan los badges/chips a través de los
 macros nuevos, sin clases hand-rolled sobrantes.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -6,7 +6,7 @@ apartamento', que me sugieres" -- confirmó la sugerencia: mostrarlo
 solo si `mi_ocupante` existe (la Persona de la ficha ya es Ocupante
 activo de alguna unidad).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 
@@ -27,3 +27,7 @@ unidad, marcar la casilla no tiene ningún efecto. Se envuelve el
 `<label>` en `{% if mi_ocupante %}` -- mismo dato que ya calcula
 `_contexto_detalle` para el resto de la ficha, sin ningún cambio de
 ruta.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

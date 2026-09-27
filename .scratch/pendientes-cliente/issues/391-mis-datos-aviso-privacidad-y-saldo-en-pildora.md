@@ -7,7 +7,7 @@ toda esta sección [la tarjeta del saldo] la puedes colocar con un botón que di
 $<valor del saldo> y al presionarlo se muestre el contenido, ... una especie de píldora que se presione y se muestre la
 información desplegada."
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -25,3 +25,7 @@ información desplegada."
   después de "Autorizo a Papyrus…"). 71 en verde con `test_customer_verify.py`.
 - Tailwind reconstruido (`group-open:rotate-180`, marcador de `<details>` oculto), `?v=103`. Capturas a 390 px
   revisadas, cerrada y abierta.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

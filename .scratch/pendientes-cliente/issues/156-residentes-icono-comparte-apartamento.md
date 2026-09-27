@@ -7,7 +7,7 @@ apartamento con otros residentes, muestrame opciones" — se mostraron 4 variant
 Aclaración inmediata: "Solo quiero que sean las 2 personitas, nada más" — sin número/texto visible
 al lado, solo el ícono.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -29,3 +29,7 @@ al lado, solo el ícono.
   unidad de un Residente existente vía `/residentes/{id}/ocupantes`, confirmado que 👫 aparece en
   su fila de `/residentes`; dado de baja el Ocupante de prueba, confirmado que el ícono desaparece.
   Datos de prueba limpiados al terminar.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

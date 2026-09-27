@@ -6,7 +6,7 @@ principal? Se degrada automáticamente a quien es principal ahora.',
 permite que los colores predominantes sean los tonos azules así como
 debería ser."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -17,3 +17,7 @@ acción) además de las ya existentes `'danger'` (rojo) y `'warning'`
 (naranja). Solo se cambió el llamador de `/residentes` (`variant='info'`
 en vez de `'warning'`) -- el modal equivalente de `/mis-datos` no se
 tocó, el pedido fue puntual sobre esta vista.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

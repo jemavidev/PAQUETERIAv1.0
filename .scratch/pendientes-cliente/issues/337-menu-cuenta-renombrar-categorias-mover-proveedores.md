@@ -9,7 +9,7 @@ mensaje de seguimiento: "Tambien mueve lo que es 'Motivos de anulación' hasta
 la nueva seccion de 'Datos'" (mensaje llegó cortado a mitad de frase, se
 confirmó el destino "Datos" vía pregunta directa).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -60,3 +60,7 @@ para Proveedores y Motivos de anulación, en qué panel viven.
   pero no reemplazan una revisión visual.
 - Pendiente: confirmar visualmente en `localhost:8010` o
   `test.papyrus.com.co` -- esta sesión no tiene navegador conectado.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

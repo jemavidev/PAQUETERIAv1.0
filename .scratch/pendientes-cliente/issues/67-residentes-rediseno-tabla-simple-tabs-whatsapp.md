@@ -14,7 +14,7 @@ telefono, email, torre y apartamento. De igual forma en otra sección se
 debe poder hacer crud a lo relacionado a las notificaciones en general.
 Por último y por ahora se debe poder gestionar las opciones de residentes."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -103,3 +103,7 @@ el staff no invalida ninguna sesión activa de ese residente).
 - Pendiente: confirmación visual del cliente en `test.papyrus.com.co` —
   en particular si el link de WhatsApp por username realmente abre un chat
   (no hay forma de probarlo sin un username real de WhatsApp registrado).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

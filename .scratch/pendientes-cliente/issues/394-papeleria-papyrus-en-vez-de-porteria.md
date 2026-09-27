@@ -5,7 +5,7 @@ porteros de un edificio, ... será personal de la papelería Papyrus los que est
 se identifiquen en el sistema pero no como porteros". Respuestas: el transportador deja el paquete en el punto Papyrus
 ("el punto Papyrus es correcto"); nombre del lugar: "... en la papelería Papyrus".
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -26,3 +26,7 @@ se identifiquen en el sistema pero no como porteros". Respuestas: el transportad
   nombres de datos de prueba. 127 en verde con notificaciones y páginas legales.
 - `CONTEXT.md`: término oficial hacia el residente + "portería"/"portero" como términos evitados.
 - Quedan "Portero" como nombre de anunciante de ejemplo en 3 pruebas antiguas: no es texto del sistema.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

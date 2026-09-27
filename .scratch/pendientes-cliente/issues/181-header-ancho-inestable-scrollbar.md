@@ -5,7 +5,7 @@ la de /paquetes sigue teniendo el mismo comportamiento de nota a simple vista qu
 analiza ondo y dime cuando lo encuentres" → mid-turn: "al parecer parece el ancho o de una vista o
 de la otra" y "pero creo que esta en el header".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -37,3 +37,7 @@ layout del navegador, no del markup.
 - Pendiente: verificar visualmente en un browser real (sin acceso a uno en este entorno) y en
   test.papyrus.com.co tras deploy -- confirmar que el header ya no se percibe "corrido" al
   alternar entre vistas con distinta cantidad de contenido.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "remove the arrows on the images, lets the
 swipe funtionality working as it is, just remove the 2 arrows for now"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -36,3 +36,7 @@ dejando la navegación entre fotos solo por swipe.
   eliminados).
 - Pendiente: confirmar en `test.papyrus.com.co` que el swipe sigue
   funcionando igual sin las flechas.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

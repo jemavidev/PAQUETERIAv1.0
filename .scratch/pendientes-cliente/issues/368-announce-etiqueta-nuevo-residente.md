@@ -4,7 +4,7 @@
 "Necesito que para la vista /announce cambien la etiqueta 'Nueva persona'
 por 'Nuevo residente'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -37,3 +37,7 @@ por 'Nuevo residente'."
   externo.py`: 121 pasan.
 - Navegador a 390 px: "Nuevo residente" se ve en los dos lugares.
 - Pendiente: confirmación visual del cliente y deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -8,7 +8,7 @@ distinto era que `/paquetes` carga Nunito Sans (Google Fonts) mientras `/residen
 `/consultar` usan la fuente por defecto del sitio, y el título justo debajo del header compartido
 se siente "distinto" por eso → confirmado: "sí, quítalo."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -28,3 +28,7 @@ se siente "distinto" por eso → confirmado: "sí, quítalo."
   `#vista-paquetes` -- confirmado con curl (0 ocurrencias de "Nunito"/"fonts.googleapis"/
   "vista-paquetes" en el HTML servido).
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -53,7 +53,7 @@ pregunta de opción múltiple sobre CÓMO se ve "Agrupar por apartamento": el cl
 "Tarjetas por apartamento" (reusa el patrón visual "Residentes de la unidad" que ya existe en el
 modal Ver de `/paquetes`) en vez de una tabla con encabezados de grupo.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones inferidas (sin pregunta aparte, por precedente directo en el propio pedido/código)
 
@@ -113,3 +113,7 @@ modal Ver de `/paquetes`) en vez de una tabla con encabezados de grupo.
   con `q`, paginación preservando `vista`, estado activo/opacado de los íconos al togglear.
 - Pendiente: verificar en test.papyrus.com.co tras deploy (especialmente el ícono `estrella`
   calculado a mano -- confirmar que se ve bien en un browser real).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

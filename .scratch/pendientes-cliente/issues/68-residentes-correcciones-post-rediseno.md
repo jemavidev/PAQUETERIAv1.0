@@ -29,7 +29,7 @@
 14. Barra de búsqueda de `/residentes`: alinear look and feel con
     producción (`paquetex.papyrus.com.co`).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de implementación
 
@@ -79,3 +79,7 @@
 - Pendiente: confirmar con el cliente en vivo, en particular si la barra de
   búsqueda coincide con lo que ve en `/customers/manage` de producción (no
   se pudo inspeccionar esa página directamente, está detrás de login).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

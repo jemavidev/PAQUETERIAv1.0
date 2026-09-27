@@ -3,7 +3,7 @@
 **Pedido original (cliente):** trabajar la paginación (`Anterior 1 2 3 4 Siguiente`), pidiendo
 alternativas de vista, luego iterado en varias rondas hasta el diseño final.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -55,3 +55,7 @@ alternativas de vista, luego iterado en varias rondas hasta el diseño final.
   `/paquetes` y `/residentes` por separado.
 - Suite completa: 1023 passed (corrida durante la sesión).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

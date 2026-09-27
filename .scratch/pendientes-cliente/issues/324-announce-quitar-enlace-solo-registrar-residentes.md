@@ -4,7 +4,7 @@
 varias formas de interactuar con este flujo, comencemos por eliminar este enlace '¿Solo registrar
 residentes?'."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -23,3 +23,7 @@ para ubicarlo junto al título.
 ## Verificación
 
 - `tests/web/test_announce_new.py` en verde.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

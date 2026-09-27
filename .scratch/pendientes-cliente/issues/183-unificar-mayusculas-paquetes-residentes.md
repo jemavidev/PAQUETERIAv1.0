@@ -3,7 +3,7 @@
 **Pedido original:** "realiza ahora la unificacion de las vistas /paquetes y /residentes para
 que por ejemplo las mayusculas sean en los mismos puntos o solo unifica a una de las 2"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -44,3 +44,7 @@ tabla, encabezados, badges, nombres):
 - Los 24 tests relacionados con torre/apartamento/asignado en `test_customers_manage.py` pasan
   sin cambios (la clase CSS no altera el HTML fuente, solo el render visual).
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

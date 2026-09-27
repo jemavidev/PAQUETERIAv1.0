@@ -7,7 +7,7 @@
 (A continuación de la pregunta sobre credenciales del admin — ver issue
 190 para el contexto de la vista tocada.)
 
-**Status:** implementado (solo ambiente local — ver Alcance)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -40,3 +40,7 @@ código de producto que tocar.
 - No toca `test.papyrus.com.co` ni ningún ambiente real — si también se
   quiere ese cambio ahí, es una acción aparte (credenciales de un sistema
   real, no algo para tocar sin pedirlo explícitamente).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

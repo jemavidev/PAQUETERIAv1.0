@@ -5,7 +5,7 @@
 asociarle uno directo desde ahí. Pidió sugerencia de diseño que se vea consistente con el resto
 del aplicativo.
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
 sesión). Verificado contra el servidor real (residente de prueba insertado y eliminado en la
 misma verificación) y 8 tests nuevos, suite completa en verde.
@@ -73,3 +73,7 @@ de "ninguno/vacío", visualmente distinto de los otros 2 botones de la misma fil
 Principales, casa=Agrupado). Cambio puramente de ícono -- mismo layout/comportamiento/tests
 (ningún test asertaba el path SVG de este botón), verificado en vivo contra el servidor real de
 desarrollo.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

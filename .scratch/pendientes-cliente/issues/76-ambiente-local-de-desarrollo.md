@@ -6,7 +6,7 @@ modificando lo que construyes), pero de una forma mas rapida, creo que
 podria generar todo un esquema completo para correr el proyecto en
 localhost y solo poder desplegar a test cuando te lo pida."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -41,3 +41,7 @@ efímero descartable por ticket (`tests/_harness.py`).
   responder sin intervención manual.
 - Postgres queda corriendo tras apagar `uvicorn` (Ctrl+C) -- persistencia
   confirmada entre corridas.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

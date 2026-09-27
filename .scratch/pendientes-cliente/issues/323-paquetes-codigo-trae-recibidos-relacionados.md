@@ -6,7 +6,7 @@ que por lo general si tienen 3 paquetes recibidos, la idea es que al consultar u
 paquetes se muestren los otros paquetes de este mismo cliente o los residentes del apartamento, se
 esta forma se puedan mostrar todos los paquetes con una sola consulta."
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-06, commits `bf2e54f`/`3b4e544`
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Decisiones de alcance (confirmadas con el cliente antes de implementar)
@@ -63,3 +63,7 @@ sus `RECIBIDO` relacionados. El paquete buscado va siempre primero.
 - En vivo contra el servidor real de dev (`localhost:8010`): 2 paquetes RECIBIDO del mismo
   teléfono (`3011112222`) -- buscar el código del primero (`Y3E6`) trajo también el segundo
   (`Y97Y`) y mostró la nota.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-06), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

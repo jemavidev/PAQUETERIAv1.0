@@ -10,7 +10,7 @@ pequeno, posiblemente que el pading o margin sea menor, de esta forma
 tener esa seccion superior mas pequena, recuerda que este boton
 deberia ser lo suficientemente grande para su look and feel."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -32,3 +32,7 @@ deberia ser lo suficientemente grande para su look and feel."
 - `tests/web/test_packages.py`: 95 tests pasan.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

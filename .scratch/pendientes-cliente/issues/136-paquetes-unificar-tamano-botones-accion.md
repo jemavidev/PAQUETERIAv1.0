@@ -6,7 +6,7 @@ mismo tamano que los botones de filtro, la idea es unificar los
 tamanos en el sistema, analiza y corrije, el tamano deseado deberia
 ser igual al de los botones de filtro."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -42,3 +42,7 @@ ser igual al de los botones de filtro."
 - Tailwind: rebuild + `?v=` de 50 a 51.
 - Suite completa: pendiente de confirmar.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

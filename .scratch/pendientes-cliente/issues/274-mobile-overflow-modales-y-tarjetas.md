@@ -8,7 +8,7 @@ analizar inicialmente los modales para corregir esto y también analiza
 las secciones cuando se pasan a mobil para que esto no pase o sea
 controlado."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -119,3 +119,7 @@ una extensión de Chrome del propio navegador (`bit-notification-bar-
 root`, probablemente un gestor de contraseñas tipo Bitwarden)
 inyectando un elemento que interceptaba el click en esa posición.
 Nada que corregir del lado de la app.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

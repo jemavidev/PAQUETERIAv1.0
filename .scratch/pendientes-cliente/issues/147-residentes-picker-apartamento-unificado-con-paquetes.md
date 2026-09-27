@@ -8,7 +8,7 @@ tenía su propio picker Torre→Piso→Apartamento (JS duplicado), mientras `/pa
 apartamento"/Recibir) y `/announce` (modal Recibir compartido) ya usaban un componente unificado
 con un flujo distinto (Apartamento→Torre) y trato informativo (no bloqueante) de unidades ocupadas.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Qué cambió
 
@@ -40,3 +40,7 @@ con un flujo distinto (Apartamento→Torre) y trato informativo (no bloqueante) 
 - Detectado y corregido en el camino un problema del entorno (no del código): el `uvicorn
   --reload` local llevaba horas sin recargar Python (los templates sí, lo que casi hace reportar
   un bug falso) -- reiniciado y re-verificado todo.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

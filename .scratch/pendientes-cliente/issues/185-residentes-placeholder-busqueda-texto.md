@@ -3,7 +3,7 @@
 **Pedido original:** convertir "Nombre, teléfono, WhatsApp, email, torre o apt302" a "Nombre,
 Teléfono, WhatsApp, Email, APT302".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -16,3 +16,7 @@ Teléfono, WhatsApp, Email, APT302".
   del string exacto).
 - Verificado en local (`localhost:8010`).
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

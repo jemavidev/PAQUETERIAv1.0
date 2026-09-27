@@ -7,7 +7,7 @@ ven los TABS (solo en el look and feel), para que se vean un poco mas
 grande en el desktop, y se pueda resaltar cuales son y cual esta
 seleccionado, pero que se vean en la misma posicion qu esta actualemnte."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -45,3 +45,7 @@ activo/inactivo queda igual de clara en desktop que en mobile.
 - Pendiente: confirmar en `test.papyrus.com.co` que desktop se ve más
   grande/resaltado en la misma posición, y que mobile sigue exactamente
   como en [[57]] (no se tocó ninguna clase sin `lg:`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

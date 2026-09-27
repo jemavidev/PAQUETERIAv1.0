@@ -10,7 +10,7 @@ residente sin cambios. Respuesta del cliente: "En el punto 1 me parece bien todo
 tengas presente que la integridad debe ser real... Para el punto 2 me parece bien, solo verifica
 que nada se rompa y todo se lo más íntegro, lógico y transparente posible."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -59,3 +59,7 @@ de `.scratch/ocupante-principal-escenarios`), no del dominio.
   Dirección, a la unidad de ANGELICA (T 01 · Apto 302, ya con Angelica como principal) -- éxito,
   Angelica se queda de principal, Jesus queda confirmado y NO principal, ambos con el ícono 👫 de
   [[156]]. Dato de prueba limpiado al terminar.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

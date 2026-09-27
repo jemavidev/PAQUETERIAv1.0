@@ -5,7 +5,7 @@
 aparecer si este esta libre o si tiene residentes actuales, esto con el
 fin de saber si se asocia o no un usuario sin apartamento a otro"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -47,3 +47,7 @@ error a alguien con una familia que no es la suya.
   `residentes-unidad-asignar-<id>` sirve datos reales (confirmado con la
   simulación de familias ya cargada en local).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

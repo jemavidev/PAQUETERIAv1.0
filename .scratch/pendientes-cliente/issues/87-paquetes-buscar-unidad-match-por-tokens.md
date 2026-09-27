@@ -9,7 +9,7 @@ seleccionado (digitado), con el fin de asignar a la persona correcta al
 apartamento correcto, analiza el como lo haces y como se puede hacer
 esto"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico (ronda 1)
 
@@ -74,3 +74,7 @@ todos con Apt 302, porque "302" también calzaba en cualquier torre y
   server-rendered del modal no cambió -- el bug era 100% client-side,
   sin cobertura automatizada de JS en este proyecto).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

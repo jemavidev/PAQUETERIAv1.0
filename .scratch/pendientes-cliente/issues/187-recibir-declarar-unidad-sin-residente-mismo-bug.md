@@ -4,7 +4,7 @@
 pasa lo mismo y no se corrigio, analiza lo que se hizo en todos los flujos y dime que pasa y como
 se corrije."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -46,3 +46,7 @@ asignar unidad sin resolver residente, y NO estaba cubierto por ese fix.
 - Pendiente: verificar en test.papyrus.com.co tras deploy. El paquete "ESTE ES UN CLIENTE
   FANTASMA" que quedó en la base local (dato de prueba del cliente, no tocado) ya se puede
   terminar de asociar entrando a su "Corregir destinatario" -- ahora sí ofrece candidatos reales.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

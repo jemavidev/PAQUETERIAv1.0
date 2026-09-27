@@ -6,7 +6,7 @@ veras" — seguido de evidencia concreta: "acabo de probar con FANTASMA 1 A7MA y
 aparece en un lado como asignado a una torre y apartamento, pero en otro lado no aparece... No
 aparece en residentes pero si se visualiza en paquete."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -51,3 +51,7 @@ Nuevo residente") y seguía de largo, dejando el paquete en el mismo estado a me
 - Pendiente: verificar visualmente en localhost (o test.papyrus.com.co tras deploy) que el toast
   naranja se ve correctamente posicionado y no se auto-cierra — no hay acceso a navegador en este
   entorno, solo verificación por curl/HTML.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

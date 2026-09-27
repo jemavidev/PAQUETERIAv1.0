@@ -4,7 +4,7 @@
 y por ende aparece un cobro" — tras el análisis: "en caso que sea con teléfono sí funciona, pero si es con usuario de
 WhatsApp no funciona".
 
-**Status:** implementado, pendiente confirmar en vivo
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -39,3 +39,7 @@ tampoco lo cuentan. BD dev: 55 paquetes sin `recipient_phone`.
   WhatsApp (destinatarios "solo nombre" de los datos demo) se cobran con el aviso.
 - Limitación conocida (sin cambios, issue 314): un residente solo-WhatsApp cuyo paquete tomó como `recipient_phone` el
   teléfono del Principal de su unidad sigue juzgándose por ese teléfono.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -8,7 +8,7 @@ usuarios principales es que será posible realizar los cambios [el
 staff/Principal] — los residentes simples no podrán modificar la
 información de otros, solo la de ellos."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Nota: el dominio (ADR-0007) ya permite que una Persona tenga Teléfono,
 WhatsApp o ambos — falta confirmar si la restricción "uno u otro" descrita
@@ -43,3 +43,7 @@ tocaría `ocupante_service.py`, las plantillas de `/mis-datos` (cliente) y
 este lote -- se deja pendiente para una pasada aparte, no se improvisa acá
 por el riesgo de dejar Personas huérfanas o historial de paquetes
 desconectado.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

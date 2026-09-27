@@ -7,7 +7,7 @@
 4. Cambia "Si ya es Ocupante (no principal) de otra unidad, moverlo acá" por "Mudar residente de apartamento" -- y si existe algún modal de esto, actualizarlo con el mismo enfoque.
 5. Cambia "Libre -- sin residentes registrados" por "Apartamento vacío."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -53,3 +53,7 @@
 - Verificado en vivo (`/residentes/c75f7cdd-...?tab=direccion`): los 3
   textos removidos ya no aparecen, "Mudar residente de apartamento" y
   "Apartamento vacío." sí.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

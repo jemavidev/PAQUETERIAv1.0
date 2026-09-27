@@ -4,7 +4,7 @@
 relacionados a 'Últimos 7 días y Últimos 30 días', ya que estos están
 incluidos en semana y mes".
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_atajos_de_fecha_son_solo_hoy_ayer_semana_y_mes` en
 `tests/web/test_admin_estadisticas_cobro.py`.
@@ -26,3 +26,7 @@ semana" y "Este mes" a criterio del cliente, así que quedan 4.
   (`admin.py::_DIAS_RANGO_INICIAL_ESTADISTICAS_COBRO`). Los atajos solo
   escriben Desde/Hasta y no son un estado que se resalte, así que no queda
   ningún control "huérfano" por quitar el de 30 días.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -4,7 +4,7 @@
 "Me acabo de dar cuenta que cuando modifico uno de los mensajes me aparece
 este error al guardar los cambios: 'Internal Server Error'."
 
-**Status:** implementado (vía `/diagnosing-bugs`)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Causa raíz
 
@@ -57,3 +57,7 @@ siempre hacia adelante con una migración nueva.
 
 - Deploy a test.papyrus.com.co (esa base NUNCA corrió la 0034 vieja --
   cuando se despliegue, correrá 0034+0035 juntas de una vez, sin problema).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

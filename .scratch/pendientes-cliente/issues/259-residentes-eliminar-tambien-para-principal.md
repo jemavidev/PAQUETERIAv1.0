@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "permite que la opción de eliminar también
 la tenga el residente principal."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -38,3 +38,7 @@ esto sin tocar código. Se verificó en vivo contra el dev local:
   activos...", y se confirmó en la BD que `desvinculado_en` siguió en
   `None` (no hubo mutación).
 - Suite completa `tests/web/test_customers_manage.py`: 139 passed.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

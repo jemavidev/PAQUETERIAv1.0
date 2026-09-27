@@ -14,7 +14,7 @@
 > - Necesito que la píldora de 'Auto' se dé un color que contraste con el verde de fondo [...]
 > rojo con letras blancas."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de alcance
 
@@ -66,3 +66,7 @@
 - No se pudo verificar visualmente en navegador dentro de esta sesión (sin Chrome conectado) --
   pendiente que el cliente lo confirme en test.papyrus.com.co, especialmente el toggle de
   Anunciar/Recibir (JS) y el layout de 2 columnas en mobile real.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

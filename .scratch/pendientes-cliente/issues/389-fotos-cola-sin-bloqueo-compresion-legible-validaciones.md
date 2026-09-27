@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "que este no sea un sistema bloqueante de una recepción basado en una foto que falló, debería correr en paralelo e intentar sincronizar ... equipos con poco procesamiento y poca memoria"; "comprimidas pero con calidad para leerlas"; validaciones: "me parece perfecto" (hallazgos 7 y 12).
 Respuesta de Jesús a la auditoría funcional (`.scratch/auditoria-funcional-2026-09-23/reporte.md`), 2026-09-23 — "soluciona estas cositas"; todo en localhost, el servidor de test se habla después.
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -17,3 +17,7 @@ Respuesta de Jesús a la auditoría funcional (`.scratch/auditoria-funcional-202
 ## Verificación
 
 - `tests/web/test_fotos_cola_y_validaciones.py` (8), `tests/data_model/test_imagen_service.py` (orientación, 2048 px, rechazo), `test_s3_foto_storage.py` (URLs propias) y `tests/browser/test_fotos_cola.py` (2): Recibir sale al instante con una subida colgada, la foto queda en la cola del equipo, el aviso del encabezado aparece y, al volver la conexión, la cola la sube y la asocia. La prueba destapó dos defectos que se corrigieron: sin tiempo límite una subida colgada bloqueaba la cola, y el aviso solo se pintaba al terminar la cola. Pruebas que subían bytes falsos pasaron a JPEG reales a propósito.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

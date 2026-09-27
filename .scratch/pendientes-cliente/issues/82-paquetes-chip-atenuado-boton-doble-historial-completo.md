@@ -19,7 +19,7 @@
    resumen de la ÚLTIMA acción ("Última acción por: X"); ahora debe mostrar
    el HISTORIAL completo (todos los hitos ocurridos, no solo el actual).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -61,3 +61,7 @@
   conectora). Colores por rol, badges y atribución de actor por hito
   correctos en los 3 casos.
 - Pendiente: `tests/` completo + deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

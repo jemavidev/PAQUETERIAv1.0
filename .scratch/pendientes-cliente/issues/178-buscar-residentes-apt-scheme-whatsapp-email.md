@@ -5,7 +5,7 @@ algo solo permite buscar por numero de apartamento y el esquema deberia ser 'apt
 para buscar los apartamentos que sean el 302 de cualquier torre. Adicional a esto necesito que
 permitas la busqueda por usuario de whatsapp y tambien por email."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -42,3 +42,7 @@ permitas la busqueda por usuario de whatsapp y tambien por email."
   CUALQUIER torre (Torre 1 y Torre 2 en los datos de prueba); `302` suelto ya no encuentra nada
   por apartamento; búsqueda por WhatsApp confirmada.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

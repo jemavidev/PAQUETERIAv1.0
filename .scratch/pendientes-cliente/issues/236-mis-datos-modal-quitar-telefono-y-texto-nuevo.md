@@ -8,7 +8,7 @@ personal te asigna un Teléfono nuevo. Entiendo que perderé el acceso a
 panel de "Mis datos", ya que el ingreso a este panel solamente por número
 de Teléfono. Entiendo que perderé el acceso a "Mis datos".'"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -20,3 +20,7 @@ que ya usan Confirmar/Rechazar/Promover en esta misma vista). Texto del
 cuerpo y del checkbox reemplazados por el nuevo, verbatim salvo el acento
 en "número" (typo del texto tal como llegó, corregido para
 consistencia ortográfica con el resto de la app).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

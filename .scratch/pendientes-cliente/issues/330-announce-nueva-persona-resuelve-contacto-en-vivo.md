@@ -7,7 +7,7 @@ ser posible que solo con ese dato se traigan los datos de este residente si exis
 saber dónde vive y si existe, en caso que no exista, se debe habilitar un campo para colocar el
 nombre."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de alcance (mini-diseño, confirmadas con el cliente antes de implementar)
 
@@ -97,3 +97,7 @@ Corregido:
   actualizaron para reflejar el conteo real. 5 tests nuevos para las combinaciones bandera
   ON/OFF de `otra_unidad`/`conocido_sin_unidad`/`nuevo`.
 - Suite completa `tests/web/test_announce_new.py`: 94/94 en verde tras la corrección.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

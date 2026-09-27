@@ -5,7 +5,7 @@ este texto 'PaqueteX - Papyrus'. Remplaza este texto 'Restablece tu
 contraseña de PAQUETEX' por 'Restablece tu contraseña de PaqueteX'. con
 esto finalizaremos la seccion de login."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -30,3 +30,7 @@ comportamiento.
 
 Con esto el cliente da por cerrada la sección de login (`/ingresar`,
 `/entrar`, recuperación de contraseña de staff).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

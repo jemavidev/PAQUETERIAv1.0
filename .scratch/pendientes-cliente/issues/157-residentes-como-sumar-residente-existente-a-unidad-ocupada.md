@@ -19,7 +19,7 @@ Ambos puntos, confirmados reproduciendo el flujo completo (asignar unidad vacía
 segunda Persona YA existente por su contacto → confirmado en la lista con 👫 de [[156]]) antes de
 tocar código.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -44,3 +44,7 @@ tocar código.
 - Verificado en vivo: reproducido el escenario completo (asignar unidad vacía a un Residente,
   intentar sumar a otro directo por Dirección → bloqueado con el link correcto al Residente que ya
   vive ahí). Datos de prueba limpiados al terminar.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

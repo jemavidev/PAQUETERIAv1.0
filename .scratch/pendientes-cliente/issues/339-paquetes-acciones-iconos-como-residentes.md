@@ -5,7 +5,7 @@
 columna "Acciones" sea similares en todo aspecto a los que manejas en la
 vista de /residentes"
 
-**Status:** implementado, pendiente confirmar visualmente el tamaño ya corregido
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Ronda 2 (mismo issue, pedido de seguimiento del cliente)
 
@@ -93,3 +93,7 @@ Pedido explícito: que `/paquetes` adopte el mismo lenguaje visual de
 - Pendiente: correr la suite de `/paquetes` y confirmar visualmente contra
   `localhost:8010` que los íconos de Acciones (activos y apagados) se ven
   igual que los de `/residentes` en el mismo viewport.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

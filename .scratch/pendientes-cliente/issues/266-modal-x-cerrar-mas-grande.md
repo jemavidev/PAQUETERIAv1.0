@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "Podría hacer las 'x' que cierran los
 modales un poco más grande ya que casi no se ve."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 
@@ -22,3 +22,7 @@ compartido: afecta a TODOS los modales de la app que usan `modal()`
 (ej. "Editar" en `/residentes` y `/mis-datos`), no solo uno puntual --
 mismo criterio que issue 242 (texto "Regresar" en `modal_confirmacion`,
 también componente compartido).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

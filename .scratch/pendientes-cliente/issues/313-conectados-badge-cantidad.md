@@ -7,7 +7,7 @@ depender de que el toggle ya estuviera activado (es un adelanto de lo que hay, n
 confirmación de lo que se está viendo), y el color se corrigió de índigo a rojo para que
 coincida con el resto de badges de conteo de la app (issue 126).
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). Verificado end-to-end contra el servidor real (`localhost:8010`,
 caso "JESUS VILLALOBOS"): `q=jesus` (SIN `conectados`) -> header `X-Conteo-Conectados: 2` + badge
 rojo "2" visible con el toggle todavía apagado; sin conexiones -> header vacío, sin badge. 3
@@ -41,3 +41,7 @@ consulta aparte. Viaja como header de respuesta (`X-Conteo-Conectados`) porque l
 búsqueda vive fuera de `#resultados-paquetes` y no se vuelve a renderizar en cada fetch de
 búsqueda en vivo -- el JS de `_busqueda_filtros.html` crea/actualiza/quita el `<span>` del badge
 a mano tras cada fetch.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente verificar visualmente en vivo". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

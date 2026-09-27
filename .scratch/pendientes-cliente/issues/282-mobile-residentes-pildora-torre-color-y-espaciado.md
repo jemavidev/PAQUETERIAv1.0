@@ -5,7 +5,7 @@ aprtamentos, en caso que no tenga asignado no coloques la pildora con
 el valor 'No Asig.', ajusta los margenes/padding de los valores en la
 columna de Nombre"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -43,3 +43,7 @@ Suite completa (`pytest tests/web/test_customers_manage.py`): sin
 regresiones (ningún test dependía de "No Asig." en el listado -- el
 único match de "No Asignado" en la suite es el fallback de desktop, que
 no cambió).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -4,7 +4,7 @@
 mostrar esto en un modal, similar como lo haces en 'Promover o Eliminar'"
 (seguimiento de [[228-mis-datos-residentes-editar-un-boton-y-acordeon-exclusivo]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -37,3 +37,7 @@ tests existentes. 4 tests nuevos en `test_ocupante_service.py` cubren el
 caso de canal doble (no pierde el otro canal + colisión con otra Persona
 existente falla). Datos de prueba dañados por el bug (Angélica quedó
 partida en 2 Personas) reparados a mano en el ambiente local.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

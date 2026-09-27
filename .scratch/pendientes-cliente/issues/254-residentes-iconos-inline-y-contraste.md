@@ -9,7 +9,7 @@
    cliente. Cambia el ícono de eliminar por algo de color rojo alusivo.
    Permite que los íconos tengan más contraste y se vean mejor."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -30,3 +30,7 @@
 
 Reposición del ícono de Promover, el resto de la fila pasando a inline, y
 el orden de los íconos -- ver issue 255.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

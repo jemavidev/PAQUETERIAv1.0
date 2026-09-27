@@ -4,7 +4,7 @@
 ubiques el código de acceso justo al lado derecho de la torre y el
 apartamento, justificado a la derecha."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -15,3 +15,7 @@ nombre/badge) a la misma fila donde ya vive "Torre X · Apto Y"
 también el caso "Sin apartamento" (`snapshot_apartamento` vacío) -- el
 código se alinea a la derecha de ese texto también, para no perderlo en
 ningún paquete.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

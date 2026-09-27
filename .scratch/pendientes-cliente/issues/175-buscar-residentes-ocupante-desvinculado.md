@@ -11,7 +11,7 @@ barrido de esas issues no cubrió -- vive en la capa de rutas (`customers_manage
 dominio (`ocupante_service.py`) donde se hizo ese barrido. Confirmado con auditoría completa de
 las 22 consultas contra `Ocupante` en todo el repo: esta es la ÚNICA que falta.
 
-**Status:** implementado (superado por [[176]], ver esa issue -- el mecanismo completo que este fix
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 corregía se quitó en el seguimiento inmediato; el diagnóstico y el fix en sí siguen siendo
 correctos mientras el mecanismo existió, se deja el registro tal cual)
 
@@ -48,3 +48,7 @@ TORRE 2 · APT 302. Buscar "dan" sigue trayendo a Jesus por el registro viejo.
 - Suite completa.
 - Verificado en local (`localhost:8010`) reproduciendo el caso real ("dan" ya no trae a Jesus,
   sigue trayendo a Angelica).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

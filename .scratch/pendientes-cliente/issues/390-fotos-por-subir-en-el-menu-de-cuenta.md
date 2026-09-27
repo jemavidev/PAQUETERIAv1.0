@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "Necesito que esto que acabas de agregar "📷 0 fotos por subir" lo coloque mejor en la
 sección del header "account-menu", justo debajo de donde está ubicado el botón del "Lector"".
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -27,3 +27,7 @@ del número de fotos pendientes." -- la cantidad a la derecha pasa de "2 fotos" 
 - `tests/browser/test_fotos_cola.py`: con 0 fotos el ítem no se ve y está justo después de "Lector"; con una foto en
   cola aparece en el menú con "1 foto" y se oculta al subirse. Captura a 390 px revisada: "Fotos por subir" debajo de
   "Lector", cantidad en ámbar.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

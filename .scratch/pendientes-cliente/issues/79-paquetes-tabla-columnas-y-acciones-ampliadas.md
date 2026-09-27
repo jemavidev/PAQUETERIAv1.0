@@ -14,7 +14,7 @@ Accion, Eliminar) [...] los botones de accion deben tener colores y ser
 alusivos a lo que realiza cada uno de ellos, la columna de 'Cliente' debe ser
 cliqueable y mostrar lo mismo que el boton de 'Ver'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -118,3 +118,7 @@ código/dato existente, se le preguntó directo al cliente):
 - Deuda declarada (no bloquea este issue): el ícono Email queda sin datos
   reales hasta que se decida construir "email de apartamento" como feature
   propia (columna nueva + pantalla para configurarla).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

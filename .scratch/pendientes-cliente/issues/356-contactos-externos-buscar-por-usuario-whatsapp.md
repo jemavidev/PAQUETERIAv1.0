@@ -5,7 +5,7 @@
 siguientes criterios 'Nombre, Teléfono y usuario de WhatsApp', hasta el
 momento creo que solo es posible buscar por 'Nombre y Teléfono'."
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -42,3 +42,7 @@ excluyente: si el término normaliza como teléfono busca SOLO por teléfono
   + `@` + mayúsculas + espacios; `_` no es comodín; nombre sigue igual.
 - En vivo contra `localhost:8010` (1.041 contactos reales): `adrianacuelloq01`
   y `@ADRIANACUELLOQ01` -> 1 contacto; `adri` -> 3.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

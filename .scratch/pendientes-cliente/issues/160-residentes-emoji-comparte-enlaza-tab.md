@@ -3,7 +3,7 @@
 **Pedido original:** "Este emoji 👫 debería tener un acceso directo al tab de ese residente,
 específicamente en la opción donde se visualizan los residentes."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -20,3 +20,7 @@ texto ni número visible, mismo criterio original de [[156]].
   ficha) en vez de 2; el test se actualizó para reflejarlo, no es una fila duplicada real.
 - Suite completa: 1046/1046.
 - Verificado en vivo contra `localhost:8010`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

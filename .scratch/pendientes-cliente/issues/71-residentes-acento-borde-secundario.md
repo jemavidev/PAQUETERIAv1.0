@@ -7,7 +7,7 @@ alternativas vía pregunta directa; eligió **"Cambiar a un borde/acento de
 color"** — una franja de color a la izquierda en vez de rellenar todo el
 fondo.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -27,3 +27,7 @@ fondo.
   regresiones. 3 tests actualizados para el nuevo marcador CSS
   (`border-l-4 border-red-400` / `border-l-4 border-l-red-400`).
 - Tailwind recompilado y comiteado — `?v=36` → `?v=37`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

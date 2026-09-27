@@ -8,7 +8,7 @@ respondida con una recomendación alternativa, borde lateral de color, para
 evitar competir con las píldoras de color que ya lleva la fila; el cliente
 reafirmó la idea original de fondo).
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -86,3 +86,7 @@ fila).
 ## Verificación
 
 Pendiente confirmación visual del cliente.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

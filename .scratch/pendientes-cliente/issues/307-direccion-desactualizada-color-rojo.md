@@ -8,7 +8,7 @@ destinatario resuelto de un paquete YA CERRADO (ENTREGADO/CANCELADO) ya no vive 
 congelada en el snapshot, el texto "Torre X · Apt Y" debe verse en **rojo** y dejar de ser un link
 -- tanto en el modal "Ver" como en la columna "Dirección" de la tabla.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -40,3 +40,7 @@ tabla, no solo al modal.
 - Modal "Ver": con `destinatario_se_mudo`, el Torre/Apto queda como `<span>` en rojo (sin link),
   en vez del `<a>` azul de siempre -- ya no depende de si `persona_destino_id`/`advertencia_nombre`
   habilitarían el link, porque ese caso ahora tiene prioridad sobre esa decisión.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, verificación visual pendiente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

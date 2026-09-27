@@ -4,7 +4,7 @@
 columna de whatsapp esté activada, y a la derecha de sms, todas las
 opciones deben estar activadas."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -26,3 +26,6 @@ que se haya pedido.
   para el nuevo default (codificaban la política vieja "todo inactivo salvo
   SMS×ANUNCIADO").
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

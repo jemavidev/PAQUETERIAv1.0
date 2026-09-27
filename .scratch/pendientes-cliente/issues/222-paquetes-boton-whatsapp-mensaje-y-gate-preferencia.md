@@ -11,7 +11,7 @@ permitidas dejarían el botón habilitado y las que no dejarían el botón en
 gris e inactivo [...] pruebas con 'darrazola' y '+573008103849'."
 (motivación original de [[221-mis-datos-notificaciones-activar-whatsapp]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -63,3 +63,6 @@ pueden_activar` (asumía WhatsApp bloqueado, previo a
 `test_llamada_no_se_puede_activar` + `test_whatsapp_si_se_puede_activar`.
 1198+ tests pasan (`tests/web/`, `tests/data_model/`).
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

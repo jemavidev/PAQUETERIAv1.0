@@ -7,7 +7,7 @@ ven en la vista de /residentes en el tab de 'Residentes'." Seguimiento:
 'Eliminar residente'" (el SVG de basurero que ya tenía la columna
 Acciones) -- "utiliza ese ícono en lo que aplique en el sistema".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -47,3 +47,7 @@ Acciones) -- "utiliza ese ícono en lo que aplique en el sistema".
   (curl), no visualmente. Es el cambio de menor riesgo de los 3 (solo
   antepone el ícono al texto ya existente, mismo patrón exacto que ya
   usan los botones hermanos ⭐/✏️/🔔 de esa misma vista).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

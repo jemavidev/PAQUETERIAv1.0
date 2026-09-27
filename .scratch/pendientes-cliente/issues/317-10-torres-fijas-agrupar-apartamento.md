@@ -8,7 +8,7 @@ vacío -- T10 centrada). Pidió sugerencias de LOOK: cards, acordeón, secciones
 y cómo tratar a los residentes sin apartamento asignado (que YA tienen su propio tratamiento
 hoy, separado del agrupado).
 
-**Status:** implementado, desplegado a test.papyrus.com.co (2026-09-05, commit `bcac30d`) --
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
 sesión). Cliente eligió **Variante A** ("me parece perfecta en todas las
 vistas") sobre acordeón/secciones. Prototipo (código + ruta throwaway) BORRADO tras plegar la
@@ -69,3 +69,7 @@ Que el cliente elija variante (o pida mezclar partes) antes de implementar la l�
 backend (hoy `_agrupar_por_apartamento` solo trae Torres que YA tienen match -- hace falta una
 función nueva que arme las 10 combinaciones Torre+número fijas cuando la búsqueda es un número de
 apartamento exacto).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

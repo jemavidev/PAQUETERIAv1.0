@@ -8,7 +8,7 @@ entonces se deberia usar el numero de telefono, dime si puedes corregir
 esto, aqui y en cualquier otro lugar donde se utilice el enlace de
 whatsapp."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -48,3 +48,7 @@ mirar si el destinatario tenía un username registrado.
   `https://wa.me/<username>`, no al teléfono.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

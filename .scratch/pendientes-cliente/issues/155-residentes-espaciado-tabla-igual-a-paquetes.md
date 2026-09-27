@@ -4,7 +4,7 @@
 la lista que aparece en esta vista no es similar a la de los paquetes por ejemplo, veo que esta
 esta mas compacta, la idea es que el look and feel sea similar, puedes corregir esta lista"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -26,3 +26,7 @@ de `/paquetes`.
 Verificado en vivo contra `localhost:8010` (recarga en caliente de plantilla, sin reinicio de
 servidor necesario): las 4 celdas de encabezado de `/residentes` traen `px-4 py-2.5` en el HTML
 servido.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

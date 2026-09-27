@@ -6,7 +6,7 @@ deberia aparecer activado" (seguido de la confusión previa: "no se porque
 ahora los iconos de asignar apartamento aparecen desactivados en todas las
 vistas, pero menos en el modal de la vista Residentes, no se porque").
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo (verificado en vivo en localhost:8010)
 
@@ -48,3 +48,7 @@ píldora de mobile (issue 345) no se tocó -- sigue condicionada solo a
 actualizado: el conteo de "🏠</button>" sube de 2 a 4 (2 paquetes x 2
 ubicaciones activas ahora: columna desktop + modal Ver). Suite completa:
 229 passed.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -11,7 +11,7 @@ pertenece, a menos que ya este tenga un apartamento asignado. no se tu
 que opinas" -- confirmado "si", con pedido adicional de seguir
 compactando texto hacia placeholder cuando sea posible.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -51,3 +51,7 @@ declarada. Riesgo real de datos, no solo de UX.
   Apartamento a Guía.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

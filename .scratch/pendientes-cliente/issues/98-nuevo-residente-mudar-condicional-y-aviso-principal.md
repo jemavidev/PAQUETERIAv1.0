@@ -17,7 +17,7 @@ principal antes de mudarlo ... sería necesario ir hasta la vista
 "Nombre correcto (un clic)" → "Nombre correcto", y el botón "Guardar
 nuevo residente" → "Guardar".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -73,3 +73,7 @@ en vez de `.hidden`.
   original (desvinculado) a la unidad del paquete (activo).
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

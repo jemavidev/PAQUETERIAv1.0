@@ -6,7 +6,7 @@ apartamento esta mala, tiene una letra T de mas asi como se muestra:
 (Apartamento EL CLUB · T TORRE 2 · APT 302) debe decir (Apartamento EL CLUB
 · TORRE 2 · APT 302), sin la letra T antes de la palabra TORRE"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico (`/diagnosing-bugs`)
 
@@ -59,3 +59,7 @@ architecture`: centralizar "Conjunto · TORRE X · APT Y" en un solo helper
 (mismo espíritu que `etiqueta_torre_apto` de `customers_manage.py`) en vez
 de que cada template concatene el string a mano -- eliminaría la clase de
 bug entera, no solo este síntoma puntual.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

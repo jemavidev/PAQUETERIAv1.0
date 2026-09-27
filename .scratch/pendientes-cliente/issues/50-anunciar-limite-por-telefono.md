@@ -9,7 +9,7 @@ se envien mensajes de texto, adicional al hacer esta notificacion indicando
 que ya existen varios anuncios, no se debe mostrar ni mencionar el codigo de
 acceso de esos anuncios."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -67,3 +67,7 @@ límite).
 
 Pendiente: desplegar a `test.papyrus.com.co` y que el cliente confirme en
 vivo (cambia `Status` a `verificado`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

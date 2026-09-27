@@ -6,10 +6,13 @@ Residentes debería poder tener una mejor forma de mostrar esta información
 Eliminar', la idea es que muestres algunas alternativas, podrían ser
 iconos, emojis o palabras más concisas."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
 Enlaces de texto reemplazados por chips ícono/emoji+palabra corta:
 ✅ Confirmar, 🗑️ Rechazar/Eliminar, ⭐ Principal, ✕ Teléfono, ✕ WhatsApp.
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

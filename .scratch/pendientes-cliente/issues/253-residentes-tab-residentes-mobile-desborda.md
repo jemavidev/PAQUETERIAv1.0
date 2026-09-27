@@ -7,7 +7,7 @@ veo que para la versión mobile se ve bastante regular y sobresale del
 área donde deberían estar, analiza cuál sería la mejor opción y
 corrige."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -33,3 +33,7 @@ desborde reportado.
 - El bloque de acciones pierde `shrink-0` (ya no compite por espacio con
   el nombre en mobile) y usa `lg:justify-end lg:shrink-0` solo desde el
   quiebre donde vuelve a compartir fila.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

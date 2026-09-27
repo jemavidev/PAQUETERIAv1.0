@@ -7,7 +7,7 @@
    palabra 'Agregar ' en los placeholders"
 3. "Remplaza 'Pendiente de confirmar' por 'Pendiente' solamente"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -23,3 +23,7 @@
   "Teléfono o WhatsApp" -- en las dos vistas (`/mis-datos` y `/residentes`,
   mismos textos duplicados en ambas).
 - Badge: "Pendiente de confirmar" → "Pendiente" -- en las dos vistas.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

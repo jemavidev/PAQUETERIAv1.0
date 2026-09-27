@@ -8,7 +8,7 @@
 - "los 5 últimos íconos [4 filtros de Estado + botón de limpiar] necesito que los redistribuyas
   en la segunda línea donde se agrupan estos" (mobile).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -39,3 +39,7 @@ confirmado explícitamente por el cliente contra el HTML exacto de la sección.
 - Verificado con capturas de Playwright en mobile (390px) y desktop (1280px).
 - Suite completa: sin regresiones (ver [[139]]).
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "La columna 'Nombre' y su contenido
 sigue pegada al lado izquierdo"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -25,3 +25,7 @@ la inmensa mayoría de dispositivos reales, ver criterio ya usado en
 
 Suite completa (`pytest tests/web/test_customers_manage.py`) sin
 regresiones. Desktop sin cambios.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

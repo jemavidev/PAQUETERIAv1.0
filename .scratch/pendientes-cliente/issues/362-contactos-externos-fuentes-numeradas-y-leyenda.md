@@ -14,7 +14,7 @@ Whatsapp = 01' o similar, que me recomiendas., recuerda que esto solo debe
 funcionar para la vista desde el desktop [...] la vista para mobile es bastante
 compacta y no es necesario ya que sera solo consulta."
 
-**Status:** implementado; el cliente lo confirmó en local (2026-09-20) -- pendiente desplegar (requiere migración 0054) y verificar en test.papyrus.com.co
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hechos hallados (2026-09-20, BD de dev)
 
@@ -97,3 +97,7 @@ siguiente).
   columna. Sin overflow horizontal en ninguno.
 - **Al desplegar:** correr `alembic upgrade head` (la migración es
   obligatoria: la vista lee el catálogo).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, confirmado por el cliente en local (2026-09-20), pendiente desplegar (requiere migración 0054)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

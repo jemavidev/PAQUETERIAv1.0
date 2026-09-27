@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "coloca lo relacionado a '+ Nueva persona' arriba de los botones de
 'Anunciar y Recibir'."
 
-**Status:** implementado, pendiente desplegar a test.papyrus.com.co y que el cliente lo confirme.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -23,3 +23,7 @@ Nueva persona" → tarjeta.
 
 - `tests/web/test_announce_new.py`: 81/81 en verde antes de sumar las mejoras de [[329]]/[[330]] en
   la misma sesión (91/91 al final).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente desplegar y confirmar". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

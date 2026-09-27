@@ -7,7 +7,7 @@ Editar, solo uno se mantenga abierto, o el uno o el otro, para poder ir
 cambiando o el uno o el otro." (seguimiento de
 [[227-mis-datos-residentes-editar-unificado]]).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -27,3 +27,7 @@ cambiando o el uno o el otro." (seguimiento de
   nativo de HTML (sin JS), mismo mecanismo que ya usa
   `admin/notificaciones.html`. Único por residente (el `name` incluye
   `ocupante.id`) para que abrir uno no cierre el de OTRO residente.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

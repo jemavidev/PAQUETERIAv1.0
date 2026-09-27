@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "es posible que paralelo a el email se pueda también ingresar con un nombre de usuario ...
 (email: jveyes@gmail.com, entonces usuario: jveyes)" -- tras el análisis: "sí, hazlo con el usuario sacado del correo".
 
-**Status:** implementado, pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -18,3 +18,7 @@
 ## Verificación
 
 - `tests/web/test_ingresar_con_usuario.py` (8; 4 fallaban antes): usuario, mayúsculas, correo completo, error genérico, formulario sin `type="email"`, crear personal con usuario repetido rechazado, dos cuentas viejas con el mismo usuario -> solo entran por correo. Suite completa (comando de la CI): 2212 en verde.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

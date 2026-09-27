@@ -5,7 +5,7 @@ recomendaciones") -- reusar en el tab Residentes el mismo mecanismo de vista pre
 ya tenía "+ Nuevo residente" en `/paquetes` (Recibir/Corregir destinatario), para que agregar un
 residente desde acá se sienta igual que hacerlo desde `/paquetes`.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Refactor de dominio (seam real, no hipotético)
 
@@ -49,3 +49,7 @@ de residentes.
 - Suite completa: 1041/1041.
 - Verificado en vivo contra `localhost:8010`: el endpoint responde el JSON esperado, y el HTML de
   la ficha trae el nuevo markup apuntando al `persona_id` correcto.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

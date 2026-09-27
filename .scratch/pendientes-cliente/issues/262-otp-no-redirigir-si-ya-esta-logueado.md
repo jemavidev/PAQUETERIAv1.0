@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "en caso de ya estar logueado con otp,
 por favor no me redirijas a esta vista /otp."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -23,3 +23,7 @@ Test nuevo `test_get_customer_login_con_sesion_activa_redirige_a_mis_datos`
 (`test_customer_auth.py`): login real por OTP, luego `GET /otp` con esa
 sesión -> 303 a `/mis-datos`. Suite completa (`tests/web` +
 `tests/data_model`): 1245 passed.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -8,7 +8,7 @@ crear, para que sea un solo modulo que trabaje de la mano" — tras terminar
 mismo: una arriba para renombrar/borrar el motivo (la etiqueta), otra abajo
 (la fila `CANCELADO · <motivo>`) para editar sus 3 plantillas de canal.
 
-**Status:** implementado -- pendiente confirmar en vivo en test.papyrus.com.co
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado
 
@@ -44,3 +44,7 @@ mismo: una arriba para renombrar/borrar el motivo (la etiqueta), otra abajo
 
 Ver también [[297]] (reducción del catálogo a un solo motivo genérico,
 pedido inmediatamente después de ver esta unificación).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

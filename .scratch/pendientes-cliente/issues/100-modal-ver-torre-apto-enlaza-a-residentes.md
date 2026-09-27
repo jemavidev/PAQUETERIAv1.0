@@ -8,7 +8,7 @@ esta la torre y el apartamento, lo que necesito es que esta torre y
 apartamento le pueda hacer click y me lleve a la vista de /residentes en
 el tab de "Residentes del apartamento""
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -42,3 +42,7 @@ el tab de "Residentes del apartamento""
   seguirlo (`/residentes/<id>?tab=residentes`) la página responde con
   `activar('residentes')` -- abre directo en "Residentes del apartamento".
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

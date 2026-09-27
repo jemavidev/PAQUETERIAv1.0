@@ -7,7 +7,7 @@ que `whatsapp_usuario` tenía antes de issue 69), porque `_blank_to_none`
 convierte "" a `None` antes de llegar a `update_datos_personales`, y esa
 función trata `email=None` como "no tocar" (contrato de 2 estados).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -71,3 +71,7 @@ colapsar), no vía `Form()`. Fix: usar el mismo idiom `(email or
   `test_editar_ocupante_unificado_email_vacio_lo_borra`
   (`test_customer_verify.py`) -- cubren los 4 call sites.
 - Suite completa (`tests/web` + `tests/data_model`): 1245 passed.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -6,7 +6,7 @@ solamente al lado de por ejemplo la parte donde dice 'Página 1 de 53',
 recuerda la pildora debera quedar del lado derecho, todo esto solamente para
 la vista /administracion/contactos-externos."
 
-**Status:** implementado (ronda 3), pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -89,3 +89,7 @@ centrado horizontal exacto en la barra), es un cambio aparte.
 - Tests: `test_la_pildora_del_total_es_text_sm_y_del_alto_de_los_botones` y
   `test_en_la_barra_el_texto_de_pagina_y_la_pildora_comparten_eje_vertical`;
   el de la barra ajustado a la estructura nueva. `tailwind.css` sin cambios.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado (ronda 3), pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

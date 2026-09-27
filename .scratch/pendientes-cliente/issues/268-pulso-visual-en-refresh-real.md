@@ -7,7 +7,7 @@ que se note" -- propuesto por Claude: detectar un refresh REAL
 y disparar un pulso breve. Cliente confirmó: "pulso breve solo en
 refresh real".
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 
@@ -28,3 +28,7 @@ izquierda a derecha y se desvanece en ~500ms, SOLO cuando
 (con fallback al `performance.navigation.type` legado para navegadores
 viejos) -- nunca en una navegación normal (click en un link, submit de
 un form, etc.), que es justo la señal que se pidió.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

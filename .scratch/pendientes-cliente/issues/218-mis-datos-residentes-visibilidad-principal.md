@@ -6,7 +6,7 @@ puedes promocionar a un residente para que sea principal, corrije esto."
 (el principal es intercambiable vía "⭐ Principal", así que quién lo es
 puede cambiar -- debe quedar inequívoco en la lista).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -16,3 +16,6 @@ y su badge pasa de "Residente principal" a "⭐ Residente principal" en
 negrilla completa (antes semibold) -- mismo ⭐ que ya usa el botón para
 promover, para que la asociación visual sea inmediata.
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

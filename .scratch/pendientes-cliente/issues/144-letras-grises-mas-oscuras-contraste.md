@@ -6,7 +6,7 @@ equipos que manejamos solo se vería mejor con letras más oscuras" → confirm�
 todo" tras proponerle subir un escalón el tono (no saltar directo a negro, para no aplanar la
 jerarquía visual label/dato).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -40,3 +40,7 @@ indistinguibles del texto real/activo.
   este registro).
 - Pendiente: deploy a test.papyrus.com.co + confirmación del cliente en vivo, en particular en
   el equipo que reportó el problema de contraste.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

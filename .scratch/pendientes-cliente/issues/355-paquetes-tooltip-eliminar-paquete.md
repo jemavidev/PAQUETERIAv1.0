@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "Cambia el mensaje de 'Eliminar (solo admin)' a
 'Eliminar paquete'".
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_tooltip_del_chip_eliminar_dice_eliminar_paquete` en
 `tests/web/test_packages.py`.
@@ -21,3 +21,7 @@ lugar de la app con ese texto (`grep` en `src/app/web` y `tests`).
   ("Eliminar") y el gate por rol/estado no se tocan.
 - El nuevo texto coincide con el título y el botón del modal de confirmación
   que abre este chip ("Eliminar paquete", `packages/_resultados.html`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

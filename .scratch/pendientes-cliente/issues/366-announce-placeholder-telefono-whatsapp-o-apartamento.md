@@ -4,7 +4,7 @@
 "Necesito que para la vista /announce cambien el placeholder 'Teléfono o
 usuario de WhatsApp' por 'Teléfono, WhatsApp o Apartamento'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -30,3 +30,7 @@ usuario de WhatsApp' por 'Teléfono, WhatsApp o Apartamento'."
 - Navegador a 390 px (iframe del mismo origen, sesión de Staff real): el
   campo se ve con el texto nuevo, sin desbordar ni provocar scroll horizontal.
 - Pendiente: confirmación visual del cliente y deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

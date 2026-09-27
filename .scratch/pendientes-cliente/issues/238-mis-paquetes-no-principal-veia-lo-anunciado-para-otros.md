@@ -4,7 +4,7 @@
 (Anunciados y Cancelados no están funcionando así) y no soy en residente
 principal."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico (`/diagnosing-bugs`)
 
@@ -34,3 +34,7 @@ Regresión: `test_no_principal_no_ve_lo_que_anuncio_para_otro_residente`
 en `test_mis_paquetes.py` -- Beto (no-Principal) anuncia un paquete para
 Ana (Principal de su unidad), Beto no debe verlo en su propio
 `/mis-paquetes`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

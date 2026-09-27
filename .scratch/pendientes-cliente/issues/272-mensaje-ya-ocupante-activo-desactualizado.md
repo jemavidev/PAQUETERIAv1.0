@@ -6,7 +6,7 @@ PRINCIPAL de TORRE 2 Apto 302 -- marcá "Mover acá" para reubicarlo
 vacía si está solo).' y similares para que estén acordes con lo que se
 ha cambiado."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 
@@ -48,3 +48,7 @@ describe la ACCIÓN ("activa la opción de mudarlo") en vez de citar
 palabra por palabra un label que varía según la vista. Root cause, no
 symptom: esto no vuelve a desalinearse aunque cualquiera de los 4
 checkboxes cambie su texto en el futuro.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

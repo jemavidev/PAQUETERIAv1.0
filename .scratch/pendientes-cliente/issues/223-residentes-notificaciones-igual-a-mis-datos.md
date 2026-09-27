@@ -7,7 +7,7 @@ las notificaciones." (seguimiento de
 [[221-mis-datos-notificaciones-activar-whatsapp]] -- ambas vistas se
 diseñaron para reflejarse, quedó desactualizada tras ese cambio).
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -23,3 +23,6 @@ cliente donde se quitó por pedido explícito.
 Verificado en vivo: columna WhatsApp habilitada y en el orden correcto en
 `/residentes/{id}`. 128 tests de `test_customers_manage.py` pasan.
 
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

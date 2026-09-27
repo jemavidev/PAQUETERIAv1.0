@@ -5,7 +5,7 @@ segmentos, la idea es que los sms se reciban en el menor tiempo posible"
 — tras activar logging de entrega de AWS SNS ([[287]]) para diagnosticar
 por qué dos envíos de prueba no mostraban rastro en CloudWatch.
 
-**Status:** implementado y desplegado.
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Investigación
 
@@ -78,3 +78,7 @@ por qué dos envíos de prueba no mostraban rastro en CloudWatch.
 - Desplegado a test.papyrus.com.co. Pendiente que el cliente confirme
   con una prueba real que el próximo SMS de RECIBIDO llega casi al
   instante (verificado).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -5,7 +5,7 @@ visualice que sea posible que tengas 2 líneas por cada paquete, esto con el fin
 muestra, adicional que se pueda tener los íconos de la columna acción más grandes y fácil de usar por cualquier usuario
 en dispositivos móviles. Dame 3 versiones de cómo lo solucionarías".
 
-**Status:** implementado (variante B), pendiente confirmar en vivo (localhost)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -48,3 +48,7 @@ podrían ser un poco más grandes, los 3 botones están perfectos".
 - Tailwind reconstruido, `?v=104`. Capturas a 390 px (tarjetas) y 1100 px (tabla sin cambios) revisadas.
 - Prototipo: servidor `:8011` apagado y worktree quitado; las 3 variantes quedan en la rama
   `prototipo/paquetes-movil-2-lineas` (`78a9928`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, pendiente confirmar en vivo (localhost)". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

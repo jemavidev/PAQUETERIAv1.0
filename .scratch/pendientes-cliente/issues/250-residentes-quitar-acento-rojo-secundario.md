@@ -4,7 +4,7 @@
 necesito que remuevas esta barra roja que aparece al lado izquierdo
 'tab-panel border-l-4 border-red-400 pl-3'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Seguimiento: "Volver a Residentes" más visible/funcional
 
@@ -31,3 +31,7 @@ siempre visible en la cabecera cuando aplica (issue 244/248/249), el
 cliente ya tiene la información sin necesitar el acento -- se retira de
 las 4 tabs (Datos/Dirección/Notificaciones/Residentes) y se elimina la
 variable `es_secundario`, que queda sin ningún otro uso.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -23,7 +23,7 @@
   la ficha) generó dudas ("OK, pero no sé") -- pendiente de una decisión
   más clara, ver conversación.
 
-**Status:** implementado (puntos 1 y 2); ver arriba los 3 puntos que
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 quedan abiertos sin resolver todavía.
 
 ## Decisión de implementación
@@ -53,3 +53,7 @@ quedan abiertos sin resolver todavía.
 - Sin cambios en Tailwind compilado esta vez (solo se quitó markup que
   usaba clases ya compiladas, no se agregó ninguna nueva) -- `?v=36` sigue
   vigente, sin bump.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

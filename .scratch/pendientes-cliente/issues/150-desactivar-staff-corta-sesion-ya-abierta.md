@@ -7,7 +7,7 @@ pregunta ahora o calla para siempre", se auditó toda la app PaqueteX v2 (portal
 hallazgo real fuera del padrón de residentes: `current_staff` nunca releía `usuario.activo`.
 Confirmado explícitamente por el usuario ("sí") para arreglarlo.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -36,3 +36,7 @@ igual criterio que ya usa el rechazo de login).
   request después de que el admin lo desactiva devuelve 303 a `/ingresar`.
 - `tests/web/test_admin_staff.py`: 16/16.
 - Suite completa del repo corriendo al momento de escribir este ticket.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

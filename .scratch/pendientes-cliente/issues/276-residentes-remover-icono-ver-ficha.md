@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "remueve el ícono que se llama 'Ver
 ficha', no creo que sea muy útil."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -24,3 +24,7 @@ a 2 (Nombre + 👫). Otro test que verificaba "Ver ficha es ícono, no
 texto" quedó obsoleto (la premisa ya no existe) -- reemplazado por uno
 que confirma la ausencia total. Suite completa: 151 passed. Verificado
 en vivo: 0 ocurrencias de "Ver ficha" en `/residentes`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

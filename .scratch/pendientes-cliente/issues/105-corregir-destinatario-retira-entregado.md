@@ -5,7 +5,7 @@
 que ya el paquete este en estado 'Entregado o Cancelado' no aparezca el
 boton. Confirmado que se veria mejor."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto -- reversión parcial del mismo día
 
@@ -47,3 +47,7 @@ cambios.
   muestra el botón naranja "Corregir" junto al de estado.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

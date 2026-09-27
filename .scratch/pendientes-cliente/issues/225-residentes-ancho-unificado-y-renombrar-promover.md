@@ -7,7 +7,7 @@ esta aplicando para las notificaciones. Algo adicional es que necesito que
 cambien el nombre de '⭐ Principal' a '⭐ Promover' en todas las vistas y
 tabs."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -23,3 +23,7 @@ tabs."
   `customers_manage/detail.html` (el único lugar con ese texto en las dos
   vistas) -- el badge de estado "⭐ Residente principal" se dejó igual, es
   un estado, no la acción de promover.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

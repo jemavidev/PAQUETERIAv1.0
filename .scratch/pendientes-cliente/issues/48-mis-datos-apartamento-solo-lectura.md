@@ -9,7 +9,7 @@ opción de hacer esto? Adicional de qué forma podría mejorar la forma en que
 se verá la torre y el apartamento... Por último siempre debe aparecer (solo
 lectura) el nombre del conjunto."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -99,3 +99,7 @@ ambos en verde por primera vez desde esa fecha.
 
 Pendiente: que el cliente confirme esta segunda vuelta visualmente (cambia
 `Status` a `verificado`).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

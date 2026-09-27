@@ -4,7 +4,7 @@
 del mismo ancho que el contenido del header" → confirmó extenderlo a "todas las vistas que
 aplique" y desplegar a test.papyrus.com.co.
 
-**Status:** implementado (desplegado a test.papyrus.com.co, commit `a8b2a2b`)
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Criterio aplicado
 
@@ -30,3 +30,7 @@ Se auditaron las 27 vistas del proyecto (`grep` de todo `{% block content %}`) y
 - Test suite completo (local + del repo de deploy): 1026 passed.
 - CI/CD del repo de deploy: `completed success`. Health check 200 en test.papyrus.com.co.
 - Pendiente: confirmación del cliente en vivo.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

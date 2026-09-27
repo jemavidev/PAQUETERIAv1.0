@@ -4,7 +4,7 @@
 residente de apartamento y Recibir paquetes sin autorización' tengan
 mejor opción de toggle."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 
@@ -60,3 +60,7 @@ Como se agregan clases Tailwind nuevas (`peer`, pseudo-elemento
 `after:` con `content-['']`), hace falta recompilar `tailwind.css`
 localmente y commitear el archivo (no solo subir `?v=`) -- ver memoria
 `paquetex-tailwind-build.md`.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

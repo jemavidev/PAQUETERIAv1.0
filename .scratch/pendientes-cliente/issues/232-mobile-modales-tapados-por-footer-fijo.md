@@ -4,7 +4,7 @@
 información que se muestre en una vista no sea obstruida por ningún
 'site-footer-mobile' o 'footer-nav-mobile'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Investigación
 
@@ -28,3 +28,7 @@ ve en cada modal de Editar/Notificaciones/Promover/Eliminar).
 sin acoplarse al valor exacto del footer. Arregla TODOS los modales del
 sistema (no solo los nuevos de esta sesión), incluidos los que ya existían
 en `/residentes`/`/paquetes` antes.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

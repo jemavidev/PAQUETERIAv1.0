@@ -12,7 +12,7 @@ teléfono o usuario de whatsapp antes de poder convertirlo en principal, sea o n
 confirmado: el contacto es un filtro obligatorio, la antigüedad solo desempata ENTRE los que ya
 tienen contacto.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -50,3 +50,7 @@ tienen contacto.
 - Verificado en vivo contra `localhost:8010`: movido un Principal con otro residente a una unidad
   nueva -- el otro residente quedó promovido en la unidad vieja, el movido llegó confirmado pero
   NO principal a la nueva. Datos de prueba limpiados al terminar.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

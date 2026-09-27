@@ -6,7 +6,7 @@ base de datos" — seguido de un análisis a fondo (agente en background) que
 encontró varios hallazgos; el cliente eligió aplicar específicamente los
 índices faltantes.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -52,3 +52,7 @@ necesitaba quedar cubierto por ese guard.
 - Pendiente: desplegar (la migración corre sola en el arranque del
   contenedor -- `alembic -x db_url=... upgrade head` en el `CMD` del
   Dockerfile del repo de deploy).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

@@ -9,7 +9,7 @@ siguentes datos en la busqueda 'telefono, email o usuario de whatsapp' mostrando
 paquetes de este cliente, como ya esta funcionando actualmente. Esta pildora debe ser similar a
 las existentes 'Auto, Principal y Torre/Apt'."
 
-**Status:** implementado (color fucsia, ver amendment abajo), desplegado a test.papyrus.com.co
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 (2026-09-05, commit `bcac30d`) -- pendiente que el cliente lo confirme visualmente (extensión de
 Chrome no disponible en esta sesión). Verificado contra el servidor real de desarrollo (residente
 real "JESUS VILLALOBOS", +573002596319: píldora mostró "6", `/paquetes?q=%2B573002596319` devolvió
@@ -91,3 +91,7 @@ Cambio puramente de color -- mismo layout/comportamiento, mismos 6 tests (actual
 esperar `bg-fuchsia-100`/`text-fuchsia-700`/`border-fuchsia-200` en vez de cian), Tailwind
 recompilado (`?v=91`), verificado en vivo contra el mismo residente real (JESUS VILLALOBOS: píldora
 ahora en fucsia, sigue mostrando "6").
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, desplegado a test.papyrus.com.co (2026-09-05), verificado contra datos reales, pendiente que el cliente lo confirme visualmente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

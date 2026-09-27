@@ -8,7 +8,7 @@ agregues un tab al header donde solo se muestre para el rol de admin"
 SMS/Email/WhatsApp recién construidas, `.scratch/plantillas-notificacion-
 multicanal`, tickets 01-04.)
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo antes de implementar
 
@@ -42,3 +42,7 @@ dentro de ese bloque, mismo patrón que los demás enlaces ahí (`Paquetes`,
 **Nota (seguimiento [[295]]):** el tab visible en `.site-nav` que este
 issue agregó se retiró después -- la entrada queda solo en el menú de
 cuenta, tal como estaba antes de este issue.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

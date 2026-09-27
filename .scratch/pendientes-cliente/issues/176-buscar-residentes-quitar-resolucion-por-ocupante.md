@@ -8,7 +8,7 @@ los relacionados de una unidad, ya no hace falta que la búsqueda por texto infi
 otras personas (el Principal) solo porque comparten unidad con quien matcheó -- el resultado debe
 ser exactamente quien matchea el término, nada más.
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 
@@ -44,3 +44,7 @@ ser exactamente quien matchea el término, nada más.
 - Verificado en local (`localhost:8010`): "dan" ahora trae SOLO a Daniela Arrazola -- ni Angelica
   ni Jesus.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

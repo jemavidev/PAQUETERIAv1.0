@@ -11,7 +11,7 @@ pueda usar la camara de dispositivos mobiles para capturar las imagenes,
 recuerda que son maximo 3 imagenes. Cambia el Nombre de[l boton
 'Confirmar recibo' a 'Recibir']."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 
@@ -46,3 +46,7 @@ recuerda que son maximo 3 imagenes. Cambia el Nombre de[l boton
   confirmando visualmente los 6 puntos.
 - Suite completa: ver commit para el conteo final.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

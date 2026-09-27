@@ -6,7 +6,7 @@ que al estar los 4 tabs juntos se mezcla con todo lo que es esta vista y
 por forma en que colocamos el grid no se nota demaciado que es un grid en
 la vista movil [...] recuerda solo en la vista movil todo lo que hagas."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -37,3 +37,7 @@ Mismo cambio en `customer/verify.html` y `customer/paquetes.html`:
 - Pendiente: confirmar en `test.papyrus.com.co`, en un dispositivo móvil
   real, que cada tab ahora se distingue como una ficha propia y que
   desktop queda intacto.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

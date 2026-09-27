@@ -4,7 +4,7 @@
 mobil solamente incluyas estos enlaces 'Anunciar, Mis Paquetes, Mis Datos
 y Whatsapp'."
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -42,3 +42,7 @@ fuera (no se pidió mantenerla).
 - Pendiente: confirmar en `test.papyrus.com.co`, en un dispositivo móvil
   real logueado como cliente, que el footer muestra exactamente esos 4
   enlaces.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

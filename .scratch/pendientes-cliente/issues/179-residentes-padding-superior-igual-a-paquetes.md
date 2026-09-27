@@ -3,7 +3,7 @@
 **Pedido original:** "necesito que la parte superior de las vitas /paquetes y /residentes sea
 igual en tamanos, espacios, margenes y demas, la idea es que se vea unificado el software"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
@@ -33,3 +33,7 @@ revertirlo.
 - Verificado en local (`localhost:8010`): el contenedor raíz de ambas vistas trae exactamente
   `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 md:pb-4`.
 - Pendiente: verificar en test.papyrus.com.co tras deploy.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

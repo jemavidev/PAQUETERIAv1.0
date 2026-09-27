@@ -6,7 +6,7 @@
 deberia aparecer El estado y esa palabra ' • Actual' no deberia
 aparecer en ningun estado"
 
-**Status:** implementado
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -38,3 +38,7 @@ de solo "Entregado".
   sufijo, en los 3 pasos del timeline.
 - Suite completa: pendiente de confirmar.
 - Pendiente: deploy a test.papyrus.com.co.
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.

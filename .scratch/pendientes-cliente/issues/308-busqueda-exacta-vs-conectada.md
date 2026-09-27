@@ -6,7 +6,7 @@ coincidencias exactas (destinatario real) y, al presionarlo, SOLO las conexiones
 el término buscado matchea al Anunciante, no al destinatario). Aplica a los 4 campos de texto:
 Nombre, Teléfono, Email, Usuario de WhatsApp.
 
-**Status:** implementado -- pendiente verificar visualmente en vivo (extensión de Chrome no
+**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). Verificado end-to-end contra el servidor real (`localhost:8010`) con
 los datos reales del caso "JESUS VILLALOBOS": `q=jesus` sin `conectados` -> 6; con `conectados=true`
 -> 2 (MASE, KTN4). Igual para email. 225 + 158 tests relacionados en verde
@@ -34,3 +34,7 @@ propósito -- es un dato propio del paquete, confirmado con el cliente que NO de
 existentes -- alterna un parámetro (`conectados=1`) que cambia el SET de condiciones SQL completo
 (nunca mezcla los dos sets). Aplica a los 4 campos de texto (Nombre/Teléfono/Email/WhatsApp) con
 la misma regla; NO aplica a código de acceso/guía/Torre/Apto (no tiene sentido "conectado" ahí).
+
+## Limpieza del registro (2026-09-26)
+
+Estado anterior: "implementado, verificación visual pendiente". El código de la app en MATT (`CODE/src/app`, `CODE/alembic`) es idéntico al desplegado en test (`jemavidev/PaqueteX` `3ea732f`), así que este cambio ya está en test.
