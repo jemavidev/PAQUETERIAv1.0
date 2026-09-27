@@ -32,3 +32,9 @@
 - **Cómo distingue un `fetch`:** por `Sec-Fetch-Mode` (distinto de `navigate`). A un `fetch` bloqueado le responde 423 con `X-PaqueteX-Bloqueo: 1`; a una navegación, la pantalla de bloqueo.
 - **Cola de fotos:** trata el 423 como "reintentar" (hasta el ticket 05 no quedaba exenta).
 - El encabezado se llamaba `X-PaqueteX-Bloqueado`, pero chocaba con una prueba que busca la palabra "Bloqueado" en toda la página.
+- **Correcciones tras `code-review` (2026-09-27):**
+  - El middleware `bloquear_si_vencio` (dentro de la sesión) bloquea el equipo antes de cualquier ruta cuando la inactividad venció. Así, `/consultar` y `/entrar`, que solo miran si hay sesión de staff, tampoco muestran nada con un Operador vencido.
+  - La capa escucha también `htmx:afterRequest` (423).
+  - El teclado usa `data-enfocar` en vez de `autofocus` (issue 418).
+  - El spec ahora dice explícitamente el minuto de margen del servidor.
+- Queda sin corregir, a propósito: un envío de formulario normal (no `fetch`) rechazado por el servidor pierde lo escrito. Solo ocurre si el navegador no mostró la capa a tiempo, porque la capa bloquea los envíos antes.

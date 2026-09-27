@@ -111,10 +111,11 @@ Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. *
 4 dígitos que cada Usuario **elige** y que son **únicos** entre todos los Usuarios: en un equipo compartido identifican a quién está operando sin elegir nombre de una lista. Solo sirven en un **Dispositivo registrado** de su dueño. Se guarda como huella HMAC, nunca en claro. Es obligatorio: sin PIN, el Usuario no pasa de "Crea tu PIN" (`.scratch/pin-operador-dispositivo`).
 
 ### Dispositivo registrado
-Un equipo (navegador, identificado por su propia cookie firmada) donde un Usuario entró con **usuario y contraseña**. Vigente por los días configurados en "Seguridad de sesión" (15 por defecto). Deja de valer con "Salir de este dispositivo", "Cerrar en todos los dispositivos", un cambio de contraseña o la desactivación del Usuario. Tras **5 PIN incorrectos seguidos**, el equipo exige contraseña y quien entre cambia su PIN.
+Un **equipo** (navegador, identificado por su propia cookie firmada) donde un Usuario entró con **usuario y contraseña**. "Equipo" es el término de interfaz y de conversación; `Dispositivo` es solo el nombre de la entidad en código (y el de "Salir de este dispositivo", tal como lo pidió el cliente). Vigente por los días configurados en "Seguridad de sesión" (15 por defecto). Deja de valer con "Salir de este dispositivo", "Cerrar en todos los dispositivos", un cambio de contraseña o la desactivación del Usuario. Tras **5 PIN incorrectos seguidos**, el equipo exige contraseña y quien entre cambia su PIN.
 
 ### Operador activo
 El Usuario que desbloqueó el equipo con su PIN (o entró con contraseña): el **actor** de todo lo que se haga en ese equipo hasta el siguiente Bloqueo. Hay **uno solo por equipo**, sin importar las pestañas abiertas.
+- No confundir con el rol `OPERADOR`: un `ADMIN` también es el Operador activo cuando desbloquea un equipo.
 
 ### Bloqueo
 Estado del equipo tras la **inactividad configurada** (300 s por defecto; cuenta cualquier toque, clic o tecla) o tras "Bloquear". El servidor rechaza toda acción hasta que alguien digite su PIN, salvo la **cola de fotos**, que sigue subiendo. Si desbloquea la misma persona, sigue donde iba; si es otra, la vista se recarga limpia.

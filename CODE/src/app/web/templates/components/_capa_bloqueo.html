@@ -22,7 +22,7 @@
   <div class="capa-bloqueo-panel">
     <p class="capa-bloqueo-titulo" id="capa-bloqueo-titulo">Equipo bloqueado</p>
     <p class="text-sm text-slate-700 mt-1">Digita tu PIN para continuar.</p>
-    {{ teclado_pin('/bloqueo', form_id='capa-bloqueo-form', autofocus=False) }}
+    {{ teclado_pin('/bloqueo', form_id='capa-bloqueo-form', enfocar=False) }}
     <a href="/ingresar" class="capa-bloqueo-enlace">Ingresar con usuario y contraseña</a>
   </div>
 </div>
@@ -122,6 +122,11 @@
         return r;
       });
     };
+    // Lo mismo para htmx (usa XMLHttpRequest, no fetch).
+    document.addEventListener('htmx:afterRequest', function (e) {
+      var xhr = e.detail && e.detail.xhr;
+      if (xhr && xhr.status === 423 && xhr.getResponseHeader('X-PaqueteX-Bloqueo')) mostrar(false);
+    });
     // Con la capa puesta no sale ningún formulario de la página (el de la capa, sí). "Bloquear" del menú navega a la
     // pantalla de bloqueo: antes de irse, avisa a las demás pestañas.
     document.addEventListener('submit', function (e) {

@@ -37,7 +37,7 @@ El bloqueo lo hace cumplir el servidor y funciona igual en celular y en escritor
 11. Como Usuario, quiero que el equipo se bloquee solo tras el tiempo de inactividad configurado, para que el siguiente compañero no opere a mi nombre.
 12. Como Usuario, quiero que cualquier toque, clic o tecla en la página cuente como actividad, para que no se bloquee mientras escribo en un formulario o abro y cierro modales.
 13. Como Usuario, quiero que los procesos automáticos (cola de fotos, reintentos) no cuenten como actividad, para que el equipo se bloquee aunque haya fotos pendientes.
-14. Como ADMIN, quiero que el servidor rechace cualquier acción que llegue tras el tiempo de inactividad, aunque el navegador falle o se manipule, para que nada quede a nombre equivocado.
+14. Como ADMIN, quiero que el servidor rechace cualquier acción que llegue tras el tiempo de inactividad (más un minuto de margen, porque el navegador avisa de la actividad como máximo una vez por minuto), aunque el navegador falle o se manipule, para que nada quede a nombre equivocado.
 15. Como Usuario, quiero que el navegador le avise al servidor de mi actividad local (como máximo una vez por minuto), para que el servidor sepa que sigo trabajando aunque cerrar un modal no genere ninguna petición.
 16. Como Usuario, quiero un botón "Bloquear" en el menú, para bloquear el equipo al instante antes de pasárselo a un compañero.
 17. Como Usuario, quiero un botón "Salir de este dispositivo" en el menú, para quitar mi registro de ese equipo puntual.
@@ -95,7 +95,7 @@ El bloqueo lo hace cumplir el servidor y funciona igual en celular y en escritor
 - `current_staff` sigue siendo el único punto de entrada para obtener al actor. Además de sus comprobaciones actuales (`activo`, `sesion_version`), exige que el registro Dispositivo–Usuario esté vigente y que la última actividad no pase del tiempo configurado. Si pasó, responde con un rechazo distinguible del 401 de "sin sesión": las peticiones htmx o fetch reciben un código o encabezado que el cliente convierte en la capa de bloqueo, y la navegación normal recibe la pantalla de bloqueo. En ambos casos la acción no se aplica.
 - Toda petición aceptada que venga de interacción del Usuario renueva la marca de actividad. Las peticiones automáticas, como la cola de fotos, no la renuevan: se marcan con un encabezado propio.
 - Endpoint de aviso de actividad: sin contenido y sin efectos, renueva la marca si el equipo no está bloqueado todavía.
-- La duración máxima de la cookie de sesión deja de ser un número fijo: el vencimiento real lo controlan el tiempo de inactividad y la vigencia del registro, leídos de la configuración en cada petición.
+- La cookie de sesión conserva sus 24 h renovables en cada uso. El registro del equipo vive en su propia cookie firmada (un año), y el vencimiento real lo controlan el tiempo de inactividad y la vigencia del registro, leídos de la configuración en cada petición. Una sesión vencida con registro vigente pide PIN, no contraseña (desvío acordado en el ticket 02).
 - Se crea una dependencia **`registered_device_staff`** para la subida de fotos en cola: exige solo un registro de dispositivo vigente, no el desbloqueo. Aplica únicamente a la ruta de asociar fotos a un Paquete ya existente.
 
 ### Módulo de dominio nuevo: servicio del Operador del dispositivo

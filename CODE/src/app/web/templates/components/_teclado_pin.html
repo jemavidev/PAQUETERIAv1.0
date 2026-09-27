@@ -1,7 +1,8 @@
 {#- Teclado del PIN de operador (`.scratch/pin-operador-dispositivo`, tickets 03/04): lo usan la pantalla de bloqueo y
     la capa de bloqueo sobre la página. Un <input> real (se puede teclear desde un teclado físico) con
     `inputmode="none"` para que en el celular no se abra además el teclado del sistema -- el teclado en pantalla es este.
-    Al completar 4 dígitos se envía solo. Estilos propios (`.teclado-pin`), sin clases nuevas de Tailwind. -#}
+    Al completar 4 dígitos se envía solo. Estilos propios (`.teclado-pin`), sin clases nuevas de Tailwind. Sin
+    `autofocus` nativo (issue 418): `data-enfocar` lo enfoca solo desde el breakpoint `sm` (`base.html`). -#}
 {% macro estilos_teclado_pin() %}
 <style>
   .teclado-pin { max-width: 18rem; margin: 0 auto; text-align: center; }
@@ -19,12 +20,12 @@
 </style>
 {% endmacro %}
 
-{% macro teclado_pin(action, siguiente='', error=none, form_id='form-teclado-pin', autofocus=True) %}
+{% macro teclado_pin(action, siguiente='', error=none, form_id='form-teclado-pin', enfocar=True) %}
 <form method="post" action="{{ action }}" id="{{ form_id }}" class="teclado-pin" data-teclado-pin autocomplete="off">
   <input type="hidden" name="siguiente" value="{{ siguiente }}">
   <label for="{{ form_id }}-campo" class="teclado-pin-campo">PIN</label>
   <input id="{{ form_id }}-campo" name="pin" type="password" inputmode="none" maxlength="4" pattern="[0-9]{4}"
-         class="teclado-pin-campo" autocomplete="off"{% if autofocus %} autofocus{% endif %} data-teclado-pin-campo>
+         class="teclado-pin-campo" autocomplete="off"{% if enfocar %} data-enfocar{% endif %} data-teclado-pin-campo>
   <div class="teclado-pin-puntos" aria-hidden="true">
     {% for _ in range(4) %}<span class="teclado-pin-punto" data-teclado-pin-punto></span>{% endfor %}
   </div>

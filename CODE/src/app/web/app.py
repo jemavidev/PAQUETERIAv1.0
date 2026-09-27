@@ -18,7 +18,7 @@ from starlette.responses import RedirectResponse
 
 from .config import secret_key
 from .rate_limit import InMemoryRateLimiter
-from .security import RedireccionStaff
+from .security import RedireccionStaff, bloquear_si_vencio
 from .routes.announce import router as announce_router
 from .routes.auth import router as auth_router
 from .routes.ayuda import router as ayuda_router
@@ -110,6 +110,9 @@ def create_app() -> FastAPI:
     # hora actual) en cada respuesta con sesión, así que cada uso renueva otras 24 h; sin uso, vence sola. `https_only`
     # (cookie `Secure`) solo fuera de desarrollo: en `http://localhost` una cookie Secure no viajaría.
     app.state.cookies_seguras = os.environ.get("WEB_ENV") in ("staging", "production")
+    # PIN de operador (ticket 04): registrado ANTES que la sesión para quedar por dentro de ella (Starlette envuelve al
+    # revés del orden de registro) -- necesita `request.session` ya cargada.
+    app.middleware("http")(bloquear_si_vencio)
     app.add_middleware(
         SessionMiddleware,
         secret_key=secret_key(),

@@ -162,3 +162,14 @@ def test_bloqueado_no_muestra_nada_de_staff(client, reloj):
     texto = client.get("/bloqueo").text
     assert 'action="/bloquear"' not in texto  # sin menú de cuenta de staff
     assert 'data-segundos-inactividad' not in texto  # sin contador en la propia pantalla de bloqueo
+
+
+def test_vencida_la_inactividad_la_busqueda_ya_no_muestra_la_vista_de_staff(client, reloj):
+    """Hallazgo de la revisión: `/consultar` y `/entrar` miran la sesión sin pasar por `current_staff`. El middleware
+    bloquea el equipo antes de cualquier ruta, así que tampoco ellas ven un Operador activo vencido."""
+    _sembrar(client)
+    _ingresar(client, "ana@club.com")
+    assert client.get("/entrar", follow_redirects=False).headers["location"] == "/paquetes"
+    reloj.avanzar(_LIMITE + 1)
+    r = client.get("/entrar", follow_redirects=False)
+    assert r.status_code == 200  # ya no la trata como staff con sesión

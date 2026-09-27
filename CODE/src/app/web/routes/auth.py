@@ -37,16 +37,11 @@ from app.domain.usuario import Usuario
 from ..db import get_db
 from ..rate_limit import rate_limit
 from ..security import (
-    CUSTOMER_NOMBRE_SESSION_KEY,
-    CUSTOMER_SESSION_KEY,
-    NOMBRE_SESSION_KEY,
-    ROLE_SESSION_KEY,
-    SESION_VERSION_KEY,
-    SESSION_KEY,
-    DEBE_CAMBIAR_PIN_KEY,
     OPERADOR_BLOQUEADO_KEY,
+    SESION_VERSION_KEY,
     abrir_sesion_staff,
     bloquear_sesion_staff,
+    cerrar_sesion_cliente,
     cerrar_sesion_staff,
     current_staff,
     dispositivo_id_de,
@@ -112,9 +107,6 @@ def login_submit(
     # Usuario; sin PIN todavía, lo primero es crearlo.
     dispositivo = obtener_o_crear_dispositivo(db, dispositivo_id_de(request))
     ingreso = registrar_ingreso(db, dispositivo, usuario)
-    if ingreso.debe_cambiar_pin:
-        # Ticket 07: el equipo había dejado de aceptar PIN por intentos fallidos -- quien entra, renueva el suyo.
-        request.session[DEBE_CAMBIAR_PIN_KEY] = True
     # Corrección en vivo 2026-08-02: antes iba a /mi-sesion (ruta de prueba);
     # /paquetes es lo que un staff realmente quiere ver al entrar.
     respuesta = RedirectResponse(
@@ -132,7 +124,7 @@ def _pantalla_pin(request: Request, usuario: Usuario, error: str | None = None, 
             "request": request,
             "usuario": usuario,
             "tiene_pin": bool(usuario.pin_huella),
-            "debe_cambiar_pin": bool(request.session.get(DEBE_CAMBIAR_PIN_KEY)),
+            "debe_cambiar_pin": usuario.debe_cambiar_pin,
             "error": error,
         },
         status_code=status_code,
@@ -156,8 +148,7 @@ def mi_pin_guardar(
     """Crear el PIN (`.scratch/pin-operador-dispositivo`, ticket 02), o cambiarlo obligatoriamente tras un bloqueo
     del equipo por intentos fallidos (ticket 07, puede dejar el mismo). Quien llega acá en cualquiera de los dos casos
     acaba de entrar con su contraseña, así que no se le vuelve a pedir."""
-    debe_cambiar = bool(request.session.get(DEBE_CAMBIAR_PIN_KEY))
-    if usuario.pin_huella and not debe_cambiar:
+    if usuario.pin_huella and not usuario.debe_cambiar_pin:
         # Cambio voluntario (ticket 08): se confirma con la contraseña -- quien encuentre el equipo desbloqueado no
         # puede adueñarse del PIN de otro.
         if not password or verify_credentials(db, usuario.email or "", password) is None:
@@ -170,7 +161,6 @@ def mi_pin_guardar(
         return _pantalla_pin(request, usuario, str(exc), status_code=429)
     except ValueError as exc:
         return _pantalla_pin(request, usuario, str(exc), status_code=400)
-    request.session.pop(DEBE_CAMBIAR_PIN_KEY, None)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -261,7 +251,6 @@ def cerrar_en_todos_mis_dispositivos(
     falta la contraseña."""
     cerrar_en_todos(db, usuario, actor=usuario)
     cerrar_sesion_staff(request)
-    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
     return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -275,21 +264,15 @@ def salir_de_este_dispositivo(
     dispositivo_id = dispositivo_id_de(request)
     salir_de_dispositivo(db, dispositivo_id, usuario)
     cerrar_sesion_staff(request)
-    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
-    request.session.pop(CUSTOMER_SESSION_KEY, None)
-    request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
+    cerrar_sesion_cliente(request)
     destino = "/bloqueo" if acepta_pin(db, dispositivo_id) else "/ingresar"
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/salir")
 def logout(request: Request):
-    # pop, no clear: la sesión de cliente (persona_id) es independiente y no debe
-    # cerrarse al cerrar la de staff.
-    request.session.pop(SESSION_KEY, None)
-    request.session.pop(ROLE_SESSION_KEY, None)
-    request.session.pop(NOMBRE_SESSION_KEY, None)
-    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
+    # La sesión de cliente (persona_id) es independiente y no se cierra al cerrar la de staff.
+    cerrar_sesion_staff(request)
     return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -300,12 +283,8 @@ def logout_todo(request: Request):
     (Grupo 10, Ronda 2). `pop` de las claves, nunca `request.session.
     clear()`, para no arrastrar por accidente alguna clave futura ajena a
     estas dos sesiones."""
-    request.session.pop(SESSION_KEY, None)
-    request.session.pop(ROLE_SESSION_KEY, None)
-    request.session.pop(NOMBRE_SESSION_KEY, None)
-    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
-    request.session.pop(CUSTOMER_SESSION_KEY, None)
-    request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
+    cerrar_sesion_staff(request)
+    cerrar_sesion_cliente(request)
     return RedirectResponse("/anunciar", status_code=status.HTTP_303_SEE_OTHER)
 
 

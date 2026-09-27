@@ -130,6 +130,19 @@ def _uuid_motivo_o_404(motivo_id: str) -> uuid.UUID:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Motivo no encontrado")
 
 
+def _contexto_staff(request: Request, db: Session, admin: Usuario, **extra) -> dict:
+    """Contexto de `/administracion/personal`, reusado por el GET y por cada POST que vuelve a pintar la pantalla.
+    Incluye el aviso de bloqueos de equipos por PIN incorrectos (`.scratch/pin-operador-dispositivo`, ticket 07)."""
+    return {
+        "request": request,
+        "admin": admin,
+        "roles": list(RolUsuario),
+        "staff_list": listar_staff(db),
+        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
+        **extra,
+    }
+
+
 @router.get("/administracion/personal", response_class=HTMLResponse)
 def admin_staff_form(
     request: Request,
@@ -142,13 +155,7 @@ def admin_staff_form(
     un duplicado silencioso en un reload): el id del Usuario recién dado de
     alta, para el toast de éxito -- `admin_staff_submit` ahora redirige acá
     en vez de renderizar directo."""
-    contexto = {
-        "request": request,
-        "admin": admin,
-        "roles": list(RolUsuario),
-        "staff_list": listar_staff(db),
-        "bloqueos_pin": bloqueos_por_intentos_recientes(db),
-    }
+    contexto = _contexto_staff(request, db, admin)
     if creado:
         contexto["creado"] = db.get(Usuario, creado)
     return templates.TemplateResponse("admin/staff.html", contexto)
@@ -167,19 +174,17 @@ def admin_staff_submit(
     def _error(mensaje: str, campos: list[str] = None):
         return templates.TemplateResponse(
             "admin/staff.html",
-            {
-                "request": request,
-                "admin": admin,
-                "roles": list(RolUsuario),
-                "staff_list": listar_staff(db),
-                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
-                "error": mensaje,
-                "email": email or "",
-                "nombre": nombre or "",
-                "error_email": mensaje if "email" in (campos or []) else None,
-                "error_nombre": mensaje if "nombre" in (campos or []) else None,
-                "error_password": mensaje if "password" in (campos or []) else None,
-            },
+            _contexto_staff(
+                request,
+                db,
+                admin,
+                error=mensaje,
+                email=email or "",
+                nombre=nombre or "",
+                error_email=mensaje if "email" in (campos or []) else None,
+                error_nombre=mensaje if "nombre" in (campos or []) else None,
+                error_password=mensaje if "password" in (campos or []) else None,
+            ),
             status_code=400,
         )
 
@@ -238,14 +243,12 @@ def admin_staff_editar(
     def _error(mensaje: str):
         return templates.TemplateResponse(
             "admin/staff.html",
-            {
-                "request": request,
-                "admin": admin,
-                "roles": list(RolUsuario),
-                "staff_list": listar_staff(db),
-                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
-                "error": mensaje,
-            },
+            _contexto_staff(
+                request,
+                db,
+                admin,
+                error=mensaje,
+            ),
             status_code=400,
         )
 
@@ -278,14 +281,12 @@ def admin_staff_resetear_password(
     except (PermissionError, ValueError) as exc:
         return templates.TemplateResponse(
             "admin/staff.html",
-            {
-                "request": request,
-                "admin": admin,
-                "roles": list(RolUsuario),
-                "staff_list": listar_staff(db),
-                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
-                "error": str(exc),
-            },
+            _contexto_staff(
+                request,
+                db,
+                admin,
+                error=str(exc),
+            ),
             status_code=400,
         )
     return RedirectResponse("/administracion/personal", status_code=status.HTTP_303_SEE_OTHER)
@@ -328,14 +329,12 @@ def admin_staff_desactivar(
     except ValueError as exc:
         return templates.TemplateResponse(
             "admin/staff.html",
-            {
-                "request": request,
-                "admin": admin,
-                "roles": list(RolUsuario),
-                "staff_list": listar_staff(db),
-                "bloqueos_pin": bloqueos_por_intentos_recientes(db),
-                "error": str(exc),
-            },
+            _contexto_staff(
+                request,
+                db,
+                admin,
+                error=str(exc),
+            ),
             status_code=400,
         )
     return RedirectResponse("/administracion/personal", status_code=status.HTTP_303_SEE_OTHER)

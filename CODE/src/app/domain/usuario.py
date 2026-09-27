@@ -97,6 +97,10 @@ class Usuario(Base):
     # Mismo espíritu que `sesion_version`, para los registros de dispositivo: subirla invalida TODOS los registros de
     # este Usuario ("Cerrar en todos los dispositivos").
     registros_version = Column(Integer, nullable=False, default=0, server_default="0")
+    # Entró con contraseña en un equipo bloqueado por PIN incorrectos (ticket 07): debe cambiar su PIN (puede dejar el
+    # mismo) antes de operar. En la BD y no en la sesión: un Bloqueo o un cierre de sesión no lo borran, y mientras siga
+    # en pie su PIN no desbloquea ningún equipo -- quien conozca el PIN viejo no puede saltarse el cambio.
+    debe_cambiar_pin = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     # Username de la v1 al que corresponde este Usuario
     # (`.scratch/importador-v1-espejo`): uno existente enlazado por email, uno
     # inactivo creado para conservar la autoría, o `operator_1` (el Usuario

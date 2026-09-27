@@ -17,7 +17,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer
+from sqlalchemy import Column, DateTime, Enum, ForeignKeyConstraint, Index, Integer
 from sqlalchemy.dialects.postgresql import UUID
 
 from .base import Base
@@ -42,10 +42,15 @@ class Dispositivo(Base):
 class RegistroDispositivo(Base):
     __tablename__ = "registros_dispositivo"
 
-    dispositivo_id = Column(
-        UUID(as_uuid=True), ForeignKey("dispositivos.id", ondelete="CASCADE"), primary_key=True
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["dispositivo_id"], ["dispositivos.id"], ondelete="CASCADE", name="fk_registros_dispositivo_dispositivo"
+        ),
+        ForeignKeyConstraint(["usuario_id"], ["usuarios.id"], ondelete="CASCADE", name="fk_registros_dispositivo_usuario"),
     )
-    usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True)
+
+    dispositivo_id = Column(UUID(as_uuid=True), primary_key=True)
+    usuario_id = Column(UUID(as_uuid=True), primary_key=True)
     registrado_en = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     registros_version = Column(Integer, nullable=False, default=0, server_default="0")
 
@@ -61,12 +66,18 @@ class TipoEventoSeguridad(str, enum.Enum):
 class EventoSeguridad(Base):
     __tablename__ = "eventos_seguridad"
 
-    __table_args__ = (Index("ix_eventos_seguridad_tipo_creado_en", "tipo", "creado_en"),)
+    __table_args__ = (
+        Index("ix_eventos_seguridad_tipo_creado_en", "tipo", "creado_en"),
+        ForeignKeyConstraint(["usuario_id"], ["usuarios.id"], ondelete="CASCADE", name="fk_eventos_seguridad_usuario"),
+        ForeignKeyConstraint(
+            ["dispositivo_id"], ["dispositivos.id"], ondelete="SET NULL", name="fk_eventos_seguridad_dispositivo"
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tipo = Column(Enum(TipoEventoSeguridad, native_enum=False, length=30), nullable=False)
-    usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=True)
-    dispositivo_id = Column(UUID(as_uuid=True), ForeignKey("dispositivos.id", ondelete="SET NULL"), nullable=True)
+    usuario_id = Column(UUID(as_uuid=True), nullable=True)
+    dispositivo_id = Column(UUID(as_uuid=True), nullable=True)
     creado_en = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
 
     def __repr__(self) -> str:

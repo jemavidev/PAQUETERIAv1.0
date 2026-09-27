@@ -113,3 +113,22 @@ def test_el_bloqueo_por_intentos_aparece_en_el_aviso_del_admin_y_no_para_el_oper
 
     _ingresar(client, "ana@club.com")
     assert client.get("/administracion/personal", follow_redirects=False).status_code == 403
+
+
+def test_el_cambio_obligatorio_no_se_salta_bloqueando_el_equipo(client):
+    """Hallazgo de la revisión: el cambio pendiente vivía solo en la sesión y un Bloqueo lo borraba, así que el PIN
+    viejo (posiblemente expuesto) volvía a desbloquear. Ahora vive en la BD y ese PIN no desbloquea hasta cambiarlo."""
+    _equipo_bloqueado_con_ana(client)
+    for _ in range(5):
+        _pin(client, "9999")
+    _ingresar(client, "ana@club.com")  # queda en "Cambia tu PIN"...
+
+    client.post("/bloquear")  # ...pero en vez de cambiarlo, bloquea
+    r = _pin(client, "1111")
+    assert r.headers["location"] == "/ingresar"  # el PIN viejo no desbloquea
+
+    _ingresar(client, "ana@club.com")
+    assert client.get("/paquetes", follow_redirects=False).headers["location"] == "/mi-pin"
+    client.post("/mi-pin", data={"pin": "1111", "pin_confirmacion": "1111"})
+    client.post("/bloquear")
+    assert _pin(client, "1111").headers["location"] == "/paquetes"

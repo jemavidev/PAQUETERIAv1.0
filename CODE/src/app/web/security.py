@@ -16,9 +16,8 @@ from fastapi.responses import RedirectResponse
 from itsdangerous import BadSignature, Signer
 from sqlalchemy.orm import Session
 
-from app.domain import operador_dispositivo_service as ods
-from app.domain.configuracion_conjunto_service import obtener_seguridad_sesion
-from app.domain.operador_dispositivo_service import acepta_pin, registro_vigente, tiene_registros_vigentes
+from app.domain.configuracion_conjunto_service import SEGUNDOS_INACTIVIDAD_POR_DEFECTO, obtener_seguridad_sesion
+from app.domain.operador_dispositivo_service import acepta_pin, ahora, registro_vigente, tiene_registros_vigentes
 from app.domain.persona import Persona
 from app.domain.usuario import RolUsuario, Usuario
 
@@ -91,8 +90,6 @@ def fijar_cookie_dispositivo(request: Request, response, dispositivo_id) -> None
 ULTIMA_ACTIVIDAD_KEY = "ultima_actividad"
 OPERADOR_BLOQUEADO_KEY = "operador_bloqueado"
 SEGUNDOS_INACTIVIDAD_KEY = "segundos_inactividad"
-# Ticket 07: entró con contraseña en un equipo bloqueado por intentos fallidos -- cambia su PIN antes de seguir.
-DEBE_CAMBIAR_PIN_KEY = "debe_cambiar_pin"
 MARGEN_AVISO_SEGUNDOS = 60
 # Peticiones que el navegador hace solo (cola de fotos, reintentos): no cuentan como actividad.
 ENCABEZADO_AUTOMATICO = "x-paquetex-automatico"
@@ -114,17 +111,29 @@ def abrir_sesion_staff(request: Request, usuario: Usuario) -> None:
     # única puerta real de las rutas de administración.
     request.session[ROLE_SESSION_KEY] = usuario.rol.value
     request.session[NOMBRE_SESSION_KEY] = usuario.nombre
-    request.session[ULTIMA_ACTIVIDAD_KEY] = ods._ahora().timestamp()
+    request.session[ULTIMA_ACTIVIDAD_KEY] = ahora().timestamp()
     request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
 
 
-def cerrar_sesion_staff(request: Request) -> None:
-    """Quita al Operador activo. `pop`, nunca `clear`: la sesión de cliente es independiente."""
+def _quitar_operador(request: Request) -> None:
+    """Quita al Operador activo, sin olvidar quién era si hubo un Bloqueo. `pop`, nunca `clear`: la sesión de cliente
+    es independiente."""
     request.session.pop(SESSION_KEY, None)
     request.session.pop(ROLE_SESSION_KEY, None)
     request.session.pop(NOMBRE_SESSION_KEY, None)
     request.session.pop(ULTIMA_ACTIVIDAD_KEY, None)
-    request.session.pop(DEBE_CAMBIAR_PIN_KEY, None)
+
+
+def cerrar_sesion_staff(request: Request) -> None:
+    """Cierra la sesión de staff del todo (salir, no bloquear)."""
+    _quitar_operador(request)
+    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
+
+
+def cerrar_sesion_cliente(request: Request) -> None:
+    """Cierra la sesión de cliente (residente), independiente de la de staff."""
+    request.session.pop(CUSTOMER_SESSION_KEY, None)
+    request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
 
 
 def bloquear_sesion_staff(request: Request) -> None:
@@ -132,9 +141,26 @@ def bloquear_sesion_staff(request: Request) -> None:
     desbloquear se sepa si es la misma persona (sigue donde iba) u otra (vista limpia). Se quita del todo, no se marca:
     las vistas que solo miran si hay sesión de staff (búsqueda, `/entrar`) no deben ver nada con el equipo bloqueado."""
     anterior = request.session.get(SESSION_KEY)
-    cerrar_sesion_staff(request)
+    _quitar_operador(request)
     if anterior:
         request.session[OPERADOR_BLOQUEADO_KEY] = anterior
+
+
+def _vencio_inactividad(request: Request, segundos: int, momento: float) -> bool:
+    ultima = request.session.get(ULTIMA_ACTIVIDAD_KEY) or momento
+    return momento - ultima > segundos + MARGEN_AVISO_SEGUNDOS
+
+
+async def bloquear_si_vencio(request: Request, call_next):
+    """Middleware (dentro de la sesión): antes de cualquier ruta, si la inactividad ya venció, el equipo queda
+    bloqueado. Así también lo respetan las vistas que solo miran si hay sesión de staff sin pasar por `current_staff`
+    (búsqueda, `/entrar`). Sin consultar la BD: usa los segundos que `current_staff` dejó en la sesión en la última
+    petición; `current_staff` vuelve a comprobar con la configuración vigente."""
+    if request.session.get(SESSION_KEY):
+        segundos = request.session.get(SEGUNDOS_INACTIVIDAD_KEY) or SEGUNDOS_INACTIVIDAD_POR_DEFECTO
+        if _vencio_inactividad(request, segundos, ahora().timestamp()):
+            bloquear_sesion_staff(request)
+    return await call_next(request)
 
 
 def _es_fetch(request: Request) -> bool:
@@ -147,7 +173,7 @@ def _sin_operador(request: Request, db: Session, detalle: str):
     """Sin Operador activo válido. Si alguien puede desbloquear este equipo con su PIN: a un `fetch`, 423 con
     `X-PaqueteX-Bloqueo` (el cliente muestra la capa de bloqueo); a una navegación, la pantalla de bloqueo (volviendo
     después a la vista pedida, si era un GET). Si nadie puede, 401 → `/ingresar`."""
-    cerrar_sesion_staff(request)
+    _quitar_operador(request)
     if acepta_pin(db, dispositivo_id_de(request)):
         if _es_fetch(request):
             raise HTTPException(423, detail="Equipo bloqueado", headers={"X-PaqueteX-Bloqueo": "1"})
@@ -191,13 +217,12 @@ def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
         _sin_operador(request, db, "Sesión inválida")
 
     segundos = obtener_seguridad_sesion(db).segundos_inactividad
-    ahora = ods._ahora().timestamp()
-    ultima = request.session.get(ULTIMA_ACTIVIDAD_KEY) or ahora
-    if ahora - ultima > segundos + MARGEN_AVISO_SEGUNDOS:
+    momento = ahora().timestamp()
+    if _vencio_inactividad(request, segundos, momento):
         bloquear_sesion_staff(request)
         _sin_operador(request, db, "Equipo bloqueado")
     if not request.headers.get(ENCABEZADO_AUTOMATICO):
-        request.session[ULTIMA_ACTIVIDAD_KEY] = ahora
+        request.session[ULTIMA_ACTIVIDAD_KEY] = momento
     # Para el contador del navegador (`base.html`): los segundos vigentes, sin otra consulta al pintar la página.
     request.session[SEGUNDOS_INACTIVIDAD_KEY] = segundos
     return usuario
@@ -205,8 +230,9 @@ def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
 
 def current_staff(request: Request, usuario: Usuario = Depends(staff_sin_pin)) -> Usuario:
     """El `Usuario` de la sesión actual: el actor de las acciones y la puerta de las rutas con privilegios.
-    Sin sesión válida → 401; sin PIN todavía → a "Crea tu PIN" (nadie opera sin identidad rápida)."""
-    if not usuario.pin_huella or request.session.get(DEBE_CAMBIAR_PIN_KEY):
+    Sin sesión válida → 401; sin PIN todavía, o con un cambio de PIN obligatorio pendiente (ticket 07) → a `/mi-pin`
+    (nadie opera sin identidad rápida)."""
+    if not usuario.pin_huella or usuario.debe_cambiar_pin:
         raise RedireccionStaff("/mi-pin")
     return usuario
 

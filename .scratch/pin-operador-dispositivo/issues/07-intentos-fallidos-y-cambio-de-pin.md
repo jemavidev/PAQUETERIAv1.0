@@ -24,3 +24,4 @@
 - Quien entra con contraseña en un equipo bloqueado por intentos (ADMIN incluido) queda con `debe_cambiar_pin` en la sesión hasta confirmar un PIN en `/mi-pin`.
 - `acepta_pin` reemplaza a `tiene_registros_vigentes` como condición para mostrar la pantalla o la capa de bloqueo. La cola de fotos sigue usando solo el registro del dispositivo.
 - El aviso en `/administracion/personal` muestra los últimos 10 bloqueos con fecha, hora local y los primeros 8 caracteres del id del equipo.
+- **Corrección tras `code-review` (2026-09-27):** el cambio de PIN obligatorio vivía en la sesión, y "Bloquear" o la inactividad lo borraban, así que el PIN viejo volvía a desbloquear. Ahora es `Usuario.debe_cambiar_pin` (BD): mientras siga pendiente, ese PIN no desbloquea ningún equipo ("Debes cambiar tu PIN: ingresa con tu usuario y contraseña"), y `current_staff` manda a `/mi-pin`.
