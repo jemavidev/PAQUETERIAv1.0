@@ -150,8 +150,9 @@
                     persona_destino_saldo_id=persona_destino_saldo_id|default(none),
                     saldo_actual=paquete.saldo_actual,
                     candidatos_fingerprint=candidatos_fingerprint|default(none),
-                    abierto=(recibir_error_guia|default(none) is not none),
-                    error_guia=recibir_error_guia|default(none)) }}
+                    abierto=(recibir_error_guia|default(none) is not none or recibir_error_posicion|default(none) is not none),
+                    error_guia=recibir_error_guia|default(none),
+                    error_posicion=recibir_error_posicion|default(none)) }}
   {%- endif %}
   {%- if request.session.get(SESSION_KEY) and paquete.estado.value == 'RECIBIDO' %}
   {# `entregar_error_motivo` (pedido explícito del cliente, reportado en

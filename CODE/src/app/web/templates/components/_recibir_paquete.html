@@ -31,7 +31,7 @@
 {% from "components/_inputs.html" import input_texto, toggle %}
 {% from "components/_picker_apartamento.html" import picker_apartamento %}
 
-{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, persona_destino_saldo_id=None, saldo_actual=None, candidatos_fingerprint=None, error_guia=None) %}
+{% macro modal_recibir(paquete_id, tipos, condiciones, abierto=False, sin_apartamento=False, candidatos=None, catalogo_torres=None, recipient_name=None, recipient_phone=None, snapshot_torre=None, snapshot_apartamento=None, vuelve_de_promover=False, recontactar_valor=None, residentes_por_unidad=None, origen=None, q=None, persona_destino_saldo_id=None, saldo_actual=None, candidatos_fingerprint=None, error_guia=None, error_posicion=None) %}
 {%- set opciones_tipo = [] -%}
 {%- for t in tipos %}{% set _ = opciones_tipo.append((t.value, t.value.replace('_', ' ')|capitalize)) %}{% endfor -%}
 {%- set opciones_condicion = [] -%}
@@ -357,6 +357,22 @@
     {%- endif %}
 
     {{ carga_fotos(id='recibir-' ~ paquete_id, max_fotos=3, paquete_id=paquete_id) }}
+
+    {#- Posición de almacenamiento (`.scratch/posicion-almacenamiento`): lo último antes del botón Recibir. La
+        grilla es el estante visto de frente (`GRILLA_ESTANTE`: 72|71 arriba … 12|11 abajo). Radios reales con
+        estilo de botón (mismo patrón que `grupo_chips`): un toque SOLO selecciona, nunca envía. -#}
+    <fieldset class="mt-4">
+      <legend class="text-sm font-medium text-slate-700 mb-1.5">Posición</legend>
+      <div class="grid grid-cols-2 gap-2">
+        {%- for fila in GRILLA_ESTANTE %}{% for codigo in fila %}
+        <label class="cursor-pointer">
+          <input type="radio" name="posicion" value="{{ codigo }}" class="peer sr-only">
+          <span class="flex items-center justify-center rounded-lg border border-slate-300 py-3 text-base font-semibold text-slate-700 transition peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-blue-300 peer-checked:bg-blue-800 peer-checked:border-blue-800 peer-checked:text-white">{{ codigo }}</span>
+        </label>
+        {%- endfor %}{% endfor %}
+      </div>
+      <p class="posicion-msg mt-1.5 text-sm text-red-600" role="alert"{% if not error_posicion %} hidden{% endif %}>{{ error_posicion or '' }}</p>
+    </fieldset>
 
     {# Issue 306 (.scratch/pendientes-cliente): botón flotante y siempre
        visible dentro del scroll propio del modal (pedido explícito del

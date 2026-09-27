@@ -99,6 +99,11 @@ Número del transportador. **Opcional** — no todos los operadores la usan hoy.
 ### Modo lector
 Preferencia **por equipo** (no por Usuario) que el Staff activa con **"Lector"** en el menú de cuenta, para los equipos con un lector de códigos de barras integrado (por ejemplo el Farset F7). Apagada por defecto y guardada en el propio equipo. Encendida, al abrir **Recibir** (y "Confirmar guía" de **Entregar**) el foco va al campo de la guía, para que el lector escriba ahí (el campo mantiene su `inputmode="text"` normal — se probó ocultar el teclado en pantalla con `inputmode="none"` y el lector físico del F7 dejaba de poder escribir en el campo). Nunca recibe un paquete por sí sola: una lectura **solo llena** la guía, y recibir lo confirma siempre el Operador con el botón.
 
+### Posición (`posicion`)
+El compartimento del estante de la papelería Papyrus donde el Operador guarda el Paquete al **Recibir**. Un solo estante de 7 filas × 2 lados, **fijo en código**: código de dos dígitos **fila + lado** — fila 1 (abajo) … 7 (arriba); lado **1 = derecha**, **2 = izquierda** (11, 12 … 71, 72), tal cual las etiquetas del estante. Cada Posición guarda **varios** paquetes (sin control de ocupación). Se elige una sola vez al recibir y **no se edita** después; se conserva tras entregar. Solo el staff la ve — nunca el residente. Un Paquete sin Posición (recibido antes de existir, o importado de v1) está **"Sin ubicación"** (`.scratch/posicion-almacenamiento`).
+
+- Término evitado: **"ubicación"** como sustantivo del dominio (solo es copy del estado "Sin ubicación"), y la `posicion`/"baroti" de v1 — un número autogenerado, sin relación.
+
 ### Usuario (staff)
 Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. **Solo un `ADMIN` crea cuentas de staff.**
 
