@@ -71,6 +71,10 @@
        explícito (2026-08-01) -- es la única acción del lado derecho, se
        beneficia de destacar un poco más que los íconos del nav. */
     .site-actions-icon svg { width:28px; height:28px; }
+    /* Issue 422: el candado de "Bloquear equipo" es un <button> dentro de un <form> -- sin marco ni fondo propios,
+       igual que los enlaces de `.site-actions`. */
+    .site-actions form { display:flex; margin:0; }
+    button.site-actions-icon { border:0; background:transparent; cursor:pointer; }
     /* --- Menú de cuenta (avatar + dropdown), variantes autenticadas -------- */
     /* Corrección en vivo (2026-08-01): vive en `.site-actions` (extremo
        derecho), igual que producción -- no en la fila de nav como en el
@@ -455,6 +459,14 @@
          excepción especial de CSS. #}
       <div class="site-actions">
         {% if tiene_staff %}
+        {#- Issue 422 (.scratch/pendientes-cliente): bloquear el equipo en un toque, a la izquierda del menú de cuenta,
+            en escritorio y en móvil -- solo con un Operador activo. Mismo efecto que "Bloquear" del menú (el script de
+            la capa avisa a las demás pestañas al enviarse cualquier formulario a `/bloquear`). -#}
+        <form method="post" action="/bloquear">
+          <button type="submit" class="site-actions-icon" aria-label="Bloquear equipo" title="Bloquear equipo" data-bloquear-equipo>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.candado|safe }}</svg>
+          </button>
+        </form>
         {% call cuenta_menu(nombre_staff) %}
           {% if tiene_persona %}
           <div class="account-menu-block-label">Cliente</div>

@@ -38,7 +38,7 @@ def test_bloquear_en_una_pestana_pone_la_capa_en_la_otra(app_viva, pagina):
     pestana_b = _preparar(app_viva, pagina)
     abrir_menu_de_cuenta(pagina)
     with pagina.expect_navigation():
-        pagina.locator('#site-header form[action="/bloquear"] button').click()
+        pagina.locator('#site-header .account-menu form[action="/bloquear"] button').click()
     assert "/bloqueo" in pagina.url
     _capa(pestana_b).wait_for(state="visible")
 

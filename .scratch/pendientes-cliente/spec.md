@@ -441,3 +441,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `419` — "Corregir destinatario" solo con apartamento asignado (lápiz apagado sin apartamento) — **verificado** (`96bb562`)
 - `420` — Ícono "persona con intercambio" para Corregir destinatario — **verificado** (`96bb562`)
 - `421` — En móvil, sin apartamento, no se muestra el ícono apagado de Corregir — **verificado** (`96bb562`)
+- `422` — Candado para bloquear el equipo junto al menú de cuenta — **implementado** (local)
+- `423` — PIN: teclear los números en escritorio sin usar el mouse — **implementado** (local)

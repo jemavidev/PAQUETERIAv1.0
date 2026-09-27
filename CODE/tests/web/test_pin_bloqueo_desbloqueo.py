@@ -178,3 +178,15 @@ def test_cambiar_la_contrasena_invalida_el_pin_en_los_otros_equipos_no_en_el_pro
     r = otro_equipo.get("/paquetes", follow_redirects=False)
     assert r.headers["location"].endswith("/ingresar")  # no a /bloqueo: su registro también cayó
     assert _desbloquear(otro_equipo, "1111").status_code == 400
+
+
+def test_el_header_trae_el_candado_solo_con_operador_activo(client):
+    """Issue 422 (.scratch/pendientes-cliente): candado para bloquear el equipo, a la izquierda del menú de cuenta."""
+    assert "data-bloquear-equipo" not in client.get("/anunciar").text
+    _sembrar(client)
+    _ingresar(client, "ana@club.com")
+    texto = client.get("/paquetes").text
+    assert "data-bloquear-equipo" in texto
+    assert texto.index("data-bloquear-equipo") < texto.index('class="account-menu')
+    client.post("/bloquear")
+    assert "data-bloquear-equipo" not in client.get("/bloqueo").text
