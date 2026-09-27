@@ -432,4 +432,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `410` — Ninguna búsqueda distingue mayúsculas de minúsculas (ej. `/consultar?q=za9325`) — **desplegado en test (`b7e4170`), pendiente confirmar en vivo**
 - `411` — Pantalla "Respaldos" amigable, con el look and feel de la app y modales — **desplegado en test (`53b6964`), pendiente confirmar en vivo**
 - `412` — El Farset F7 se queda pensando o se bloquea en los modales Recibir/Entregar, sobre todo al capturar fotos en Recibir — **pendiente**
-- `413` — Activar la compresión de respuestas en test.papyrus.com.co (Caddy `encode`) — **implementado, desplegando a test (`3ea732f`)**
+- `413` — Activar la compresión de respuestas en test.papyrus.com.co (Caddy `encode`) — **desplegado en test (`3ea732f`), pendiente confirmar en vivo**

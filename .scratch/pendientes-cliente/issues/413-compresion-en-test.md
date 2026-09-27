@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-26):** "activa la compresión en el servidor de test, en caso que hagas esto para que
 serviria".
 
-**Status:** implementado, desplegando a test (`3ea732f`)
+**Status:** desplegado en test (`3ea732f`), pendiente confirmar en vivo
 
 ## Alcance
 
@@ -21,3 +21,12 @@ serviria".
   `/paquetes?estado=ANUNCIADO` 1.493.422 B -> 256.334 B (gzip) / 99.230 B (zstd); `/paquetes` 644.472 -> 63.622 B
   (zstd); contenido idéntico tras descomprimir; primer byte sigue llegando al instante (streaming intacto).
 - 596 pruebas de /paquetes en verde. Deploy repo: `Caddyfile` + `ci.yml` (restart de caddy si cambia el Caddyfile).
+
+## Desplegado (2026-09-26, `3ea732f`)
+
+- CI verde; el paso de deploy corrió "Cambio en Caddyfile -- restart de caddy" y el health check dio OK.
+- En vivo: `/anunciar` 36.923 -> 12.486 B (zstd); `tailwind.css` 117.296 -> 19.074 B; `zxing.min.js` 292.379 -> 92.967 B;
+  PNG (`colibri-icono.png`) sin `Content-Encoding` (pasa tal cual).
+- En el F7 real por WiFi, `/paquetes?estado=ANUNCIADO` (2 cargas): red 1.630.397 -> ~80.800 B (-95 %); descarga del
+  HTML 481-560 -> 146-336 ms; carga completa 2.350-2.438 -> 2.043-2.347 ms. Con buen WiFi la mejora total es modesta
+  (el grueso es armar la página en el equipo); la ganancia grande es con señal débil o datos móviles.
