@@ -2,14 +2,16 @@
 {% from "components/_formularios.html" import formulario_flujo %}
 {% from "components/_inputs.html" import input_texto %}
 {% from "components/_toast.html" import toast %}
-{% block title %}{{ 'Crea tu PIN' if not tiene_pin else 'Mi PIN' }} — PAQUETEX{% endblock %}
+{% block title %}{{ 'Cambia tu PIN' if debe_cambiar_pin else ('Crea tu PIN' if not tiene_pin else 'Mi PIN') }} — PAQUETEX{% endblock %}
 {% block content %}
 {# PIN de operador (`.scratch/pin-operador-dispositivo`): 4 dígitos, único, elegido por el Usuario. Con él se
    desbloquea cualquier equipo donde el Usuario entró con contraseña. #}
 <div class="max-w-md mx-auto px-4 py-8">
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
   {% set attrs_pin = 'inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off"' %}
-  {% call formulario_flujo('Crea tu PIN', action='/mi-pin', boton_texto='Guardar PIN', subtitulo='4 dígitos para identificarte en los equipos compartidos. No lo compartas: todo lo que se haga con tu PIN queda a tu nombre.', form_id='form-pin') %}
+  {% set titulo_pin = 'Cambia tu PIN' if debe_cambiar_pin else ('Crea tu PIN' if not tiene_pin else 'Mi PIN') %}
+  {% set subtitulo_pin = 'Este equipo se bloqueó por varios PIN incorrectos. Elige un PIN nuevo (o confirma el mismo) para seguir.' if debe_cambiar_pin else '4 dígitos para identificarte en los equipos compartidos. No lo compartas: todo lo que se haga con tu PIN queda a tu nombre.' %}
+  {% call formulario_flujo(titulo_pin, action='/mi-pin', boton_texto='Guardar PIN', subtitulo=subtitulo_pin, form_id='form-pin') %}
     {{ input_texto('PIN', name='pin', type='password', icono=iconos_nav.candado, error=error, autofocus=True, extra_attrs=attrs_pin, mostrar_label=True) }}
     {{ input_texto('Confirmar PIN', name='pin_confirmacion', type='password', icono=iconos_nav.candado, extra_attrs=attrs_pin, mostrar_label=True) }}
   {% endcall %}

@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.domain import operador_dispositivo_service as ods
 from app.domain.configuracion_conjunto_service import obtener_seguridad_sesion
-from app.domain.operador_dispositivo_service import registro_vigente, tiene_registros_vigentes
+from app.domain.operador_dispositivo_service import acepta_pin, registro_vigente, tiene_registros_vigentes
 from app.domain.persona import Persona
 from app.domain.usuario import RolUsuario, Usuario
 
@@ -91,6 +91,8 @@ def fijar_cookie_dispositivo(request: Request, response, dispositivo_id) -> None
 ULTIMA_ACTIVIDAD_KEY = "ultima_actividad"
 OPERADOR_BLOQUEADO_KEY = "operador_bloqueado"
 SEGUNDOS_INACTIVIDAD_KEY = "segundos_inactividad"
+# Ticket 07: entró con contraseña en un equipo bloqueado por intentos fallidos -- cambia su PIN antes de seguir.
+DEBE_CAMBIAR_PIN_KEY = "debe_cambiar_pin"
 MARGEN_AVISO_SEGUNDOS = 60
 # Peticiones que el navegador hace solo (cola de fotos, reintentos): no cuentan como actividad.
 ENCABEZADO_AUTOMATICO = "x-paquetex-automatico"
@@ -122,6 +124,7 @@ def cerrar_sesion_staff(request: Request) -> None:
     request.session.pop(ROLE_SESSION_KEY, None)
     request.session.pop(NOMBRE_SESSION_KEY, None)
     request.session.pop(ULTIMA_ACTIVIDAD_KEY, None)
+    request.session.pop(DEBE_CAMBIAR_PIN_KEY, None)
 
 
 def bloquear_sesion_staff(request: Request) -> None:
@@ -145,7 +148,7 @@ def _sin_operador(request: Request, db: Session, detalle: str):
     `X-PaqueteX-Bloqueo` (el cliente muestra la capa de bloqueo); a una navegación, la pantalla de bloqueo (volviendo
     después a la vista pedida, si era un GET). Si nadie puede, 401 → `/ingresar`."""
     cerrar_sesion_staff(request)
-    if tiene_registros_vigentes(db, dispositivo_id_de(request)):
+    if acepta_pin(db, dispositivo_id_de(request)):
         if _es_fetch(request):
             raise HTTPException(423, detail="Equipo bloqueado", headers={"X-PaqueteX-Bloqueo": "1"})
         destino = "/bloqueo"
@@ -203,7 +206,7 @@ def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
 def current_staff(request: Request, usuario: Usuario = Depends(staff_sin_pin)) -> Usuario:
     """El `Usuario` de la sesión actual: el actor de las acciones y la puerta de las rutas con privilegios.
     Sin sesión válida → 401; sin PIN todavía → a "Crea tu PIN" (nadie opera sin identidad rápida)."""
-    if not usuario.pin_huella:
+    if not usuario.pin_huella or request.session.get(DEBE_CAMBIAR_PIN_KEY):
         raise RedireccionStaff("/mi-pin")
     return usuario
 

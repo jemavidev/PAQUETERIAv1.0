@@ -136,7 +136,12 @@
       }).then(function (r) {
         return r.json().then(function (datos) { return { ok: r.ok, datos: datos }; });
       }).then(function (res) {
-        if (!res.ok) { form.pintarTecladoPin(res.datos.error || 'PIN incorrecto.'); return; }
+        if (!res.ok) {
+          // Ticket 07: al agotar los intentos el servidor manda a usuario y contraseña.
+          if (res.datos.destino) { location.assign(res.datos.destino); return; }
+          form.pintarTecladoPin(res.datos.error || 'PIN incorrecto.');
+          return;
+        }
         if (res.datos.mismo_operador) { ocultar(true, res.datos.es_admin); return; }
         // Otra persona: nada de lo que dejó la anterior (modales, formularios a medias) sigue en pantalla -- ni en
         // esta pestaña ni en las demás.

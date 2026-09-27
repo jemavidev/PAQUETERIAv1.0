@@ -20,12 +20,13 @@ from sqlalchemy.orm import Session
 from app.domain.configuracion_conjunto_service import obtener_nombre_conjunto
 from app.domain.operador_dispositivo_service import (
     DemasiadosIntentosDePin,
+    EquipoRequiereContrasena,
     PinIncorrecto,
+    acepta_pin,
     definir_pin,
     desbloquear,
     obtener_o_crear_dispositivo,
     registrar_ingreso,
-    tiene_registros_vigentes,
 )
 from app.domain.usuario import RolUsuario
 from app.domain.staff_service import editar_mi_perfil, set_password, verify_credentials
@@ -40,6 +41,7 @@ from ..security import (
     ROLE_SESSION_KEY,
     SESION_VERSION_KEY,
     SESSION_KEY,
+    DEBE_CAMBIAR_PIN_KEY,
     OPERADOR_BLOQUEADO_KEY,
     abrir_sesion_staff,
     bloquear_sesion_staff,
@@ -106,11 +108,15 @@ def login_submit(
     # PIN de operador (`.scratch/pin-operador-dispositivo`): entrar con contraseña registra ESTE equipo para el
     # Usuario; sin PIN todavía, lo primero es crearlo.
     dispositivo = obtener_o_crear_dispositivo(db, dispositivo_id_de(request))
-    debe_crear_pin = registrar_ingreso(db, dispositivo, usuario)
+    ingreso = registrar_ingreso(db, dispositivo, usuario)
+    if ingreso.debe_cambiar_pin:
+        # Ticket 07: el equipo había dejado de aceptar PIN por intentos fallidos -- quien entra, renueva el suyo.
+        request.session[DEBE_CAMBIAR_PIN_KEY] = True
     # Corrección en vivo 2026-08-02: antes iba a /mi-sesion (ruta de prueba);
     # /paquetes es lo que un staff realmente quiere ver al entrar.
     respuesta = RedirectResponse(
-        "/mi-pin" if debe_crear_pin else "/paquetes", status_code=status.HTTP_303_SEE_OTHER
+        "/mi-pin" if (ingreso.debe_crear_pin or ingreso.debe_cambiar_pin) else "/paquetes",
+        status_code=status.HTTP_303_SEE_OTHER,
     )
     fijar_cookie_dispositivo(request, respuesta, dispositivo.id)
     return respuesta
@@ -119,7 +125,13 @@ def login_submit(
 def _pantalla_pin(request: Request, usuario: Usuario, error: str | None = None, status_code: int = 200):
     return templates.TemplateResponse(
         "auth/pin.html",
-        {"request": request, "usuario": usuario, "tiene_pin": bool(usuario.pin_huella), "error": error},
+        {
+            "request": request,
+            "usuario": usuario,
+            "tiene_pin": bool(usuario.pin_huella),
+            "debe_cambiar_pin": bool(request.session.get(DEBE_CAMBIAR_PIN_KEY)),
+            "error": error,
+        },
         status_code=status_code,
     )
 
@@ -137,9 +149,11 @@ def mi_pin_guardar(
     pin: str = Form(""),
     pin_confirmacion: str = Form(""),
 ):
-    """Crear el PIN (`.scratch/pin-operador-dispositivo`, ticket 02). Quien llega acá sin PIN acaba de entrar con su
-    contraseña, así que no se le vuelve a pedir."""
-    if usuario.pin_huella:
+    """Crear el PIN (`.scratch/pin-operador-dispositivo`, ticket 02), o cambiarlo obligatoriamente tras un bloqueo
+    del equipo por intentos fallidos (ticket 07, puede dejar el mismo). Quien llega acá en cualquiera de los dos casos
+    acaba de entrar con su contraseña, así que no se le vuelve a pedir."""
+    debe_cambiar = bool(request.session.get(DEBE_CAMBIAR_PIN_KEY))
+    if usuario.pin_huella and not debe_cambiar:
         return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
     if pin != pin_confirmacion:
         return _pantalla_pin(request, usuario, "Los PIN no coinciden.", status_code=400)
@@ -149,6 +163,7 @@ def mi_pin_guardar(
         return _pantalla_pin(request, usuario, str(exc), status_code=429)
     except ValueError as exc:
         return _pantalla_pin(request, usuario, str(exc), status_code=400)
+    request.session.pop(DEBE_CAMBIAR_PIN_KEY, None)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -181,7 +196,7 @@ def pantalla_bloqueo(request: Request, db: Session = Depends(get_db), siguiente:
     """Pantalla de bloqueo (`.scratch/pin-operador-dispositivo`, ticket 03): nombre del conjunto, teclado del PIN y el
     enlace a usuario y contraseña. Nunca lista a los registrados. Sin registros vigentes en el equipo, no sirve de
     nada: directo a `/ingresar`."""
-    if not tiene_registros_vigentes(db, dispositivo_id_de(request)):
+    if not acepta_pin(db, dispositivo_id_de(request)):
         return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
     return _pantalla_bloqueo(request, db, siguiente)
 
@@ -198,6 +213,11 @@ def desbloquear_con_pin(
     quiere_json = "application/json" in request.headers.get("accept", "")
     try:
         usuario = desbloquear(db, dispositivo_id_de(request), pin)
+    except EquipoRequiereContrasena as exc:
+        # Ticket 07: se agotaron los intentos -- a usuario y contraseña (la capa recibe el destino).
+        if quiere_json:
+            return JSONResponse({"error": str(exc), "destino": "/ingresar"}, status_code=400)
+        return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
     except PinIncorrecto as exc:
         if quiere_json:
             return JSONResponse({"error": str(exc)}, status_code=400)

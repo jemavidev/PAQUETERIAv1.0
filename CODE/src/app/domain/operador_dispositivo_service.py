@@ -14,6 +14,7 @@ import hmac
 import os
 import re
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.exc import IntegrityError
@@ -27,6 +28,8 @@ _PIN_RE = re.compile(r"^\d{4}$")
 # Límite de cambios de PIN rechazados por "ya existe": exigir unicidad confirma que ese PIN es de alguien, así que se
 # limita el sondeo (grilling 2026-09-27).
 MAX_PIN_REPETIDOS_POR_HORA = 3
+# PIN incorrectos seguidos que un equipo tolera antes de exigir usuario y contraseña (grilling 2026-09-27).
+MAX_PIN_FALLIDOS = 5
 
 
 class PinNoDisponible(ValueError):
@@ -84,9 +87,19 @@ def obtener_o_crear_dispositivo(session: Session, dispositivo_id) -> Dispositivo
     return dispositivo
 
 
-def registrar_ingreso(session: Session, dispositivo: Dispositivo, usuario: Usuario) -> bool:
+@dataclass(frozen=True)
+class ResultadoIngreso:
+    # Todavía no tiene PIN: lo primero es crearlo.
+    debe_crear_pin: bool
+    # Entró con contraseña en un equipo que había dejado de aceptar PIN por intentos fallidos (ticket 07): cambia su
+    # PIN (puede dejar el mismo) antes de seguir.
+    debe_cambiar_pin: bool
+
+
+def registrar_ingreso(session: Session, dispositivo: Dispositivo, usuario: Usuario) -> ResultadoIngreso:
     """Tras verificar la contraseña: registra (o renueva) el equipo para `usuario` y pone en cero los intentos de PIN
-    fallidos del equipo. Devuelve `True` si el Usuario todavía tiene que crear su PIN."""
+    fallidos del equipo."""
+    debe_cambiar_pin = (dispositivo.intentos_pin_fallidos or 0) >= MAX_PIN_FALLIDOS
     ahora = _ahora()
     registro = session.get(RegistroDispositivo, (dispositivo.id, usuario.id))
     if registro is None:
@@ -97,7 +110,9 @@ def registrar_ingreso(session: Session, dispositivo: Dispositivo, usuario: Usuar
     dispositivo.intentos_pin_fallidos = 0
     dispositivo.ultimo_uso_en = ahora
     session.flush()
-    return not usuario.pin_huella
+    return ResultadoIngreso(
+        debe_crear_pin=not usuario.pin_huella, debe_cambiar_pin=bool(usuario.pin_huella) and debe_cambiar_pin
+    )
 
 
 def registro_vigente(session: Session, dispositivo_id, usuario: Usuario) -> bool:
@@ -181,22 +196,62 @@ def tiene_registros_vigentes(session: Session, dispositivo_id) -> bool:
     return any(registro_vigente(session, dispositivo_id, usuario) for _registro, usuario in registros)
 
 
+class EquipoRequiereContrasena(PinIncorrecto):
+    """El equipo acumuló `MAX_PIN_FALLIDOS` PIN incorrectos seguidos: no acepta ningún PIN (ni el correcto) hasta que
+    alguien entre con su contraseña."""
+
+
+def acepta_pin(session: Session, dispositivo_id) -> bool:
+    """¿La pantalla de bloqueo le sirve a este equipo? Hace falta alguien que pueda desbloquearlo con su PIN, y que el
+    equipo no haya agotado sus intentos."""
+    dispositivo = obtener_dispositivo(session, dispositivo_id)
+    if dispositivo is None or (dispositivo.intentos_pin_fallidos or 0) >= MAX_PIN_FALLIDOS:
+        return False
+    return tiene_registros_vigentes(session, dispositivo.id)
+
+
 def desbloquear(session: Session, dispositivo_id, pin: str) -> Usuario:
     """El Usuario dueño de `pin`, si tiene un registro vigente en este equipo -- el nuevo Operador activo.
 
     Raises:
-        PinIncorrecto: en cualquier otro caso.
+        EquipoRequiereContrasena: si el equipo ya agotó sus intentos, o si este fallo es el que los agota (queda
+            registrado como evento de seguridad para el aviso al ADMIN).
+        PinIncorrecto: en cualquier otro caso de rechazo.
     """
     dispositivo = obtener_dispositivo(session, dispositivo_id)
+    if dispositivo is not None and (dispositivo.intentos_pin_fallidos or 0) >= MAX_PIN_FALLIDOS:
+        raise EquipoRequiereContrasena(_MENSAJE_REQUIERE_CONTRASENA)
     usuario = None
     if dispositivo is not None and _PIN_RE.match((pin or "").strip()):
         usuario = session.query(Usuario).filter(Usuario.pin_huella == huella_pin(pin.strip())).first()
     if usuario is None or not registro_vigente(session, dispositivo.id, usuario):
         if dispositivo is not None:
             dispositivo.intentos_pin_fallidos = (dispositivo.intentos_pin_fallidos or 0) + 1
+            if dispositivo.intentos_pin_fallidos >= MAX_PIN_FALLIDOS:
+                session.add(
+                    EventoSeguridad(
+                        tipo=TipoEventoSeguridad.BLOQUEO_POR_INTENTOS, dispositivo_id=dispositivo.id, creado_en=_ahora()
+                    )
+                )
+                session.flush()
+                raise EquipoRequiereContrasena(_MENSAJE_REQUIERE_CONTRASENA)
             session.flush()
         raise PinIncorrecto("PIN incorrecto.")
     dispositivo.intentos_pin_fallidos = 0
     dispositivo.ultimo_uso_en = _ahora()
     session.flush()
     return usuario
+
+
+_MENSAJE_REQUIERE_CONTRASENA = "Demasiados intentos. Ingresa con tu usuario y contraseña."
+
+
+def bloqueos_por_intentos_recientes(session: Session, limite: int = 10) -> list[EventoSeguridad]:
+    """Los últimos bloqueos de equipos por PIN incorrectos, más reciente primero (aviso en `/administracion/personal`)."""
+    return (
+        session.query(EventoSeguridad)
+        .filter(EventoSeguridad.tipo == TipoEventoSeguridad.BLOQUEO_POR_INTENTOS)
+        .order_by(EventoSeguridad.creado_en.desc())
+        .limit(limite)
+        .all()
+    )
