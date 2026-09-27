@@ -112,6 +112,8 @@ def test_pin_de_otro_usuario_se_rechaza_y_el_cuarto_intento_en_una_hora_se_bloqu
 
 
 def test_el_registro_vence_segun_los_dias_configurados(client):
+    """Tras días sin uso, el Bloqueo por inactividad ya actuó: con registro vigente el equipo pide el PIN
+    (`/bloqueo`); con registro vencido, usuario y contraseña (`/ingresar`)."""
     admin, op = _sembrar(client)
     ods.definir_pin(client.db, op, "4821")
     actualizar_seguridad_sesion(client.db, segundos_inactividad=300, dias_registro_dispositivo=3, actor=admin)
@@ -121,7 +123,8 @@ def test_el_registro_vence_segun_los_dias_configurados(client):
     ahora = datetime.now(timezone.utc)
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(ods, "_ahora", lambda: ahora + timedelta(days=2, hours=23))
-        assert client.get("/paquetes", follow_redirects=False).status_code == 200
+        assert client.get("/paquetes", follow_redirects=False).headers["location"].startswith("/bloqueo")
+        assert client.post("/bloqueo", data={"pin": "4821"}, follow_redirects=False).status_code == 303
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(ods, "_ahora", lambda: ahora + timedelta(days=3, minutes=1))
         r = client.get("/paquetes", follow_redirects=False)
@@ -138,10 +141,11 @@ def test_acortar_los_dias_vence_los_registros_viejos_en_la_siguiente_peticion(cl
     ahora = datetime.now(timezone.utc)
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(ods, "_ahora", lambda: ahora + timedelta(days=5))
+        assert client.post("/bloqueo", data={"pin": "4821"}, follow_redirects=False).status_code == 303
         assert client.get("/paquetes", follow_redirects=False).status_code == 200
         actualizar_seguridad_sesion(client.db, segundos_inactividad=300, dias_registro_dispositivo=4, actor=admin)
         client.db.commit()
-        assert client.get("/paquetes", follow_redirects=False).status_code == 303
+        assert client.get("/paquetes", follow_redirects=False).headers["location"].endswith("/ingresar")
 
 
 def test_sin_la_cookie_del_equipo_la_sesion_no_vale(client):

@@ -1,0 +1,111 @@
+{#- Capa de bloqueo e inactividad (`.scratch/pin-operador-dispositivo`, ticket 04).
+
+    Solo con Operador activo, y nunca en la pantalla de bloqueo ni en "Crea tu PIN". Cualquier toque, clic o tecla
+    cuenta como actividad; al servidor se le avisa como máximo una vez por minuto (`POST /actividad`, con un aviso
+    diferido si hubo actividad dentro de ese minuto). Pasados los segundos configurados sin actividad -- o si cualquier
+    `fetch` recibe 423 con `X-PaqueteX-Bloqueo` -- se cubre la página con el teclado del PIN, SIN navegar: el estado
+    de la página se conserva. Si desbloquea la misma persona, la capa se quita y todo sigue igual; si es otra, se carga
+    limpia la vista que indique el servidor. -#}
+{% from "components/_teclado_pin.html" import estilos_teclado_pin, teclado_pin %}
+{{ estilos_teclado_pin() }}
+<style>
+  .capa-bloqueo { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+    padding: 16px; background: rgba(15, 23, 42, .78); }
+  .capa-bloqueo[hidden] { display: none; }
+  .capa-bloqueo-panel { width: 100%; max-width: 22rem; background: #fff; border-radius: 1rem; padding: 1.5rem;
+    text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, .25); }
+  .capa-bloqueo-titulo { font-size: 1.125rem; font-weight: 700; color: #0f172a; }
+  .capa-bloqueo-enlace { display: inline-block; margin-top: 1.25rem; font-size: .875rem; font-weight: 500; color: #1e40af; }
+</style>
+<div class="capa-bloqueo" id="capa-bloqueo" hidden role="dialog" aria-modal="true" aria-labelledby="capa-bloqueo-titulo"
+     data-segundos-inactividad="{{ segundos_inactividad }}">
+  <div class="capa-bloqueo-panel">
+    <p class="capa-bloqueo-titulo" id="capa-bloqueo-titulo">Equipo bloqueado</p>
+    <p class="text-sm text-slate-700 mt-1">Digita tu PIN para continuar.</p>
+    {{ teclado_pin('/bloqueo', form_id='capa-bloqueo-form', autofocus=False) }}
+    <a href="/ingresar" class="capa-bloqueo-enlace">Ingresar con usuario y contraseña</a>
+  </div>
+</div>
+<script>
+  (function () {
+    var capa = document.getElementById('capa-bloqueo');
+    var form = document.getElementById('capa-bloqueo-form');
+    var segundos = parseInt(capa.getAttribute('data-segundos-inactividad'), 10) || 300;
+    var AVISO_MS = 60000;
+    var ultima = Date.now();
+    var ultimoAviso = Date.now();
+    var avisoPendiente = false;
+    var bloqueada = false;
+    var fetchOriginal = window.fetch.bind(window);
+
+    function avisar() {
+      ultimoAviso = Date.now();
+      avisoPendiente = false;
+      fetchOriginal('/actividad', { method: 'POST', credentials: 'same-origin' })
+        .then(function (r) { if (r.status === 423) mostrar(false); }, function () {});
+    }
+    function actividad() {
+      if (bloqueada) return;
+      ultima = Date.now();
+      if (Date.now() - ultimoAviso >= AVISO_MS) avisar(); else avisoPendiente = true;
+    }
+    function mostrar(avisarAlServidor) {
+      if (bloqueada) return;
+      bloqueada = true;
+      // El servidor bloquea en el acto (no espera su margen): nadie puede seguir operando detrás de la capa.
+      if (avisarAlServidor) fetchOriginal('/bloquear', { method: 'POST', credentials: 'same-origin', redirect: 'manual' }).catch(function () {});
+      form.querySelector('input[name=siguiente]').value = location.pathname + location.search;
+      capa.hidden = false;
+      form.pintarTecladoPin('');
+      document.dispatchEvent(new CustomEvent('paquetex:bloqueo'));
+    }
+    function ocultar() {
+      bloqueada = false;
+      capa.hidden = true;
+      ultima = ultimoAviso = Date.now();
+      avisoPendiente = false;
+      document.dispatchEvent(new CustomEvent('paquetex:desbloqueo'));
+    }
+
+    ['pointerdown', 'keydown'].forEach(function (evento) {
+      document.addEventListener(evento, actividad, { capture: true, passive: true });
+    });
+    setInterval(function () {
+      if (bloqueada) return;
+      var ahora = Date.now();
+      if (ahora - ultima >= segundos * 1000) { mostrar(true); return; }
+      if (avisoPendiente && ahora - ultimoAviso >= AVISO_MS) avisar();
+    }, 1000);
+
+    // Cualquier fetch de la página que el servidor rechace por Bloqueo muestra la capa.
+    window.fetch = function () {
+      return fetchOriginal.apply(null, arguments).then(function (r) {
+        if (r.status === 423 && r.headers.get('X-PaqueteX-Bloqueo')) mostrar(false);
+        return r;
+      });
+    };
+    // Con la capa puesta no sale ningún formulario de la página (el de la capa, sí).
+    document.addEventListener('submit', function (e) {
+      if (bloqueada && e.target !== form) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      fetchOriginal('/bloqueo', {
+        method: 'POST', body: new FormData(form), credentials: 'same-origin', headers: { 'Accept': 'application/json' },
+      }).then(function (r) {
+        return r.json().then(function (datos) { return { ok: r.ok, datos: datos }; });
+      }).then(function (res) {
+        if (!res.ok) { form.pintarTecladoPin(res.datos.error || 'PIN incorrecto.'); return; }
+        if (res.datos.mismo_operador) { ocultar(); return; }
+        // Otra persona: nada de lo que dejó la anterior (modales, formularios a medias) sigue en pantalla.
+        location.assign(res.datos.destino);
+      }).catch(function () {
+        // Sin JSON (el equipo ya no tiene registros vigentes → `/ingresar`) o sin red: a la pantalla completa.
+        location.assign('/bloqueo');
+      });
+    });
+
+    window.paqueteXBloqueo = { mostrar: function () { mostrar(true); }, bloqueada: function () { return bloqueada; } };
+  })();
+</script>

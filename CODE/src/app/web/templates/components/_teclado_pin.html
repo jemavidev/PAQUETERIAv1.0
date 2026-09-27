@@ -19,12 +19,12 @@
 </style>
 {% endmacro %}
 
-{% macro teclado_pin(action, siguiente='', error=none, form_id='form-teclado-pin') %}
+{% macro teclado_pin(action, siguiente='', error=none, form_id='form-teclado-pin', autofocus=True) %}
 <form method="post" action="{{ action }}" id="{{ form_id }}" class="teclado-pin" data-teclado-pin autocomplete="off">
   <input type="hidden" name="siguiente" value="{{ siguiente }}">
   <label for="{{ form_id }}-campo" class="teclado-pin-campo">PIN</label>
   <input id="{{ form_id }}-campo" name="pin" type="password" inputmode="none" maxlength="4" pattern="[0-9]{4}"
-         class="teclado-pin-campo" autocomplete="off" autofocus data-teclado-pin-campo>
+         class="teclado-pin-campo" autocomplete="off"{% if autofocus %} autofocus{% endif %} data-teclado-pin-campo>
   <div class="teclado-pin-puntos" aria-hidden="true">
     {% for _ in range(4) %}<span class="teclado-pin-punto" data-teclado-pin-punto></span>{% endfor %}
   </div>

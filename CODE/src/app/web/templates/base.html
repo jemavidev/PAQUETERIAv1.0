@@ -761,6 +761,7 @@
             clearTimeout(reloj);
             if (r.ok) return 'lista';
             if (r.status === 401 || r.status === 403) return 'sin-sesion';
+            if (r.status === 423) return 'reintentar';  // equipo bloqueado (PIN de operador): la foto no se pierde
             if (r.status === 409) return r.json().then(function (j) { return j && j.reintentar ? 'reintentar' : 'descartar'; }, function () { return 'descartar'; });
             if (r.status >= 400 && r.status < 500) return 'descartar';
             return 'reintentar';
@@ -835,6 +836,9 @@
       window.__paqueteXObserverPaginacion.observe(sentinel);
     };
   </script>
+{%- if tiene_staff and request.session.get(SEGUNDOS_INACTIVIDAD_KEY) and request.url.path not in ('/bloqueo', '/mi-pin') %}
+{%- with segundos_inactividad = request.session.get(SEGUNDOS_INACTIVIDAD_KEY) %}{% include "components/_capa_bloqueo.html" %}{% endwith %}
+{%- endif %}
 {#- Issue 418 (.scratch/pendientes-cliente, pedido explícito del cliente): en MÓVIL nada recibe el foco solo -- evita que
     el teclado en pantalla salte al cargar una página. Los campos ya no llevan el `autofocus` nativo sino
     `data-enfocar` (`_inputs.html`, `_busqueda_filtros.html`, OTP de `customer_verify.html`); este script lo aplica

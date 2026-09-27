@@ -14,7 +14,7 @@ siguen siendo cookies/keys independientes por dentro (`/salir` y
 """
 
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.domain.configuracion_conjunto_service import obtener_nombre_conjunto
@@ -40,8 +40,9 @@ from ..security import (
     ROLE_SESSION_KEY,
     SESION_VERSION_KEY,
     SESSION_KEY,
+    OPERADOR_BLOQUEADO_KEY,
     abrir_sesion_staff,
-    cerrar_sesion_staff,
+    bloquear_sesion_staff,
     current_staff,
     dispositivo_id_de,
     fijar_cookie_dispositivo,
@@ -192,19 +193,35 @@ def desbloquear_con_pin(
     pin: str = Form(""),
     siguiente: str = Form("/paquetes"),
 ):
+    """Desbloquear con PIN. Desde la capa de bloqueo (ticket 04) llega como `fetch` con `Accept: application/json` y
+    responde si el Operador cambió: la misma persona sigue donde iba, otra recibe `destino` recargado limpio."""
+    quiere_json = "application/json" in request.headers.get("accept", "")
     try:
         usuario = desbloquear(db, dispositivo_id_de(request), pin)
     except PinIncorrecto as exc:
+        if quiere_json:
+            return JSONResponse({"error": str(exc)}, status_code=400)
         return _pantalla_bloqueo(request, db, siguiente, error=str(exc), status_code=400)
+    mismo_operador = request.session.get(OPERADOR_BLOQUEADO_KEY) == str(usuario.id)
     abrir_sesion_staff(request, usuario)
-    return RedirectResponse(_siguiente_seguro(siguiente, usuario), status_code=status.HTTP_303_SEE_OTHER)
+    destino = _siguiente_seguro(siguiente, usuario)
+    if quiere_json:
+        return JSONResponse({"mismo_operador": mismo_operador, "destino": destino})
+    return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/bloquear")
 def bloquear(request: Request):
     """"Bloquear" del menú: quita al Operador activo, sin tocar los registros del equipo."""
-    cerrar_sesion_staff(request)
+    bloquear_sesion_staff(request)
     return RedirectResponse("/bloqueo", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/actividad", status_code=204)
+def aviso_de_actividad(usuario: Usuario = Depends(current_staff)):
+    """Aviso del navegador (ticket 04): hubo toques o teclas desde el último aviso. Sin efectos: `current_staff` ya
+    renueva la marca -- o responde 423 si el equipo quedó bloqueado entretanto."""
+    return Response(status_code=204)
 
 
 @router.post("/salir")
@@ -214,6 +231,7 @@ def logout(request: Request):
     request.session.pop(SESSION_KEY, None)
     request.session.pop(ROLE_SESSION_KEY, None)
     request.session.pop(NOMBRE_SESSION_KEY, None)
+    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
     return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -227,6 +245,7 @@ def logout_todo(request: Request):
     request.session.pop(SESSION_KEY, None)
     request.session.pop(ROLE_SESSION_KEY, None)
     request.session.pop(NOMBRE_SESSION_KEY, None)
+    request.session.pop(OPERADOR_BLOQUEADO_KEY, None)
     request.session.pop(CUSTOMER_SESSION_KEY, None)
     request.session.pop(CUSTOMER_NOMBRE_SESSION_KEY, None)
     return RedirectResponse("/anunciar", status_code=status.HTTP_303_SEE_OTHER)
