@@ -6,14 +6,19 @@
 
 **Blocked by:** 04 — Bloqueo por inactividad.
 
-**Status:** ready-for-agent
+**Status:** done · 6 tests web + 1 de navegador nuevos verdes; paquetes/fotos (256) y browser (90) verdes
 
-- [ ] Dependencia `registered_device_staff`: exige un registro de dispositivo vigente de algún Usuario activo en el equipo, y no mira el bloqueo ni la inactividad.
-- [ ] Solo la ruta de asociar fotos a un Paquete existente la usa. Crear, recibir, corregir y cualquier otra ruta siguen exigiendo el desbloqueo.
-- [ ] La cola manda el encabezado de petición automática y no se detiene ante la señal de bloqueo (sí se detiene ante un 401 real, como hoy).
-- [ ] Pruebas en la costura web:
+- [x] Dependencia `registered_device_staff`: exige un registro de dispositivo vigente de algún Usuario activo en el equipo, y no mira el bloqueo ni la inactividad.
+- [x] Solo la ruta de asociar fotos a un Paquete existente la usa. Crear, recibir, corregir y cualquier otra ruta siguen exigiendo el desbloqueo.
+- [x] La cola manda el encabezado de petición automática y no se detiene ante la señal de bloqueo (sí se detiene ante un 401 real, como hoy).
+- [x] Pruebas en la costura web:
   - subir una foto con el equipo bloqueado funciona;
   - sin registro de dispositivo, falla;
   - la subida no renueva la marca de actividad;
   - otra ruta de Paquete con el equipo bloqueado sigue rechazada.
-- [ ] Prueba en la costura de navegador: con la capa de bloqueo visible, una foto encolada termina de subir.
+- [x] Prueba en la costura de navegador: con la capa de bloqueo visible, una foto encolada termina de subir.
+
+## Comments
+
+- La dependencia quedó como `dispositivo_registrado` (puerta sin Usuario: la ruta no usaba al actor). `_puerta_fotos` en la ruta decide según `asociar`: la cola solo pide registro de dispositivo, y la subida progresiva del modal pide `current_staff`.
+- La cola también corre en la pantalla `/bloqueo` (tras "Bloquear" manual), no solo con la capa sobre la página.

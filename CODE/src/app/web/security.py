@@ -208,6 +208,15 @@ def current_staff(request: Request, usuario: Usuario = Depends(staff_sin_pin)) -
     return usuario
 
 
+def dispositivo_registrado(request: Request, db: Session = Depends(get_db)) -> None:
+    """Puerta de la cola de fotos en segundo plano (`.scratch/pin-operador-dispositivo`, ticket 05): basta con que el
+    equipo tenga un registro vigente de algún Usuario activo -- no mira el Bloqueo ni la inactividad, y no toca la marca
+    de actividad. Es seguro porque una foto en cola solo se asocia a un Paquete ya recibido y no se atribuye a nadie.
+    Sin registro → 401."""
+    if not tiene_registros_vigentes(db, dispositivo_id_de(request)):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Equipo sin registro vigente")
+
+
 def require_admin(usuario: Usuario = Depends(current_staff)) -> Usuario:
     """Como `current_staff`, pero exige rol ADMIN. Si no → 403."""
     if usuario.rol != RolUsuario.ADMIN:

@@ -104,3 +104,52 @@ def test_un_pin_equivocado_deja_la_capa_con_el_mensaje(app_viva, pagina):
         "() => document.querySelector('#capa-bloqueo-form [data-teclado-pin-error]').textContent.includes('PIN incorrecto')"
     )
     assert _capa(pagina).is_visible()
+
+
+def test_la_cola_de_fotos_sigue_subiendo_con_la_capa_puesta(app_viva, pagina):
+    """Ticket 05: con la capa de bloqueo visible, una foto que quedó en la cola del equipo termina de subir."""
+    import io
+    import time
+
+    from PIL import Image
+
+    from app.domain.paquete import EstadoPaquete
+    from app.domain.paquete_foto import PaqueteFoto
+
+    from _ayudantes import paquete_en_bd
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (640, 480), color=(120, 90, 40)).save(buffer, format="JPEG")
+
+    _preparar(app_viva, pagina)
+    paquete = anunciar_paquete(app_viva)
+    abrir_modal_recibir(pagina, app_viva, paquete)
+    colgadas = []
+    pagina.route("**/paquetes/*/fotos", lambda ruta: colgadas.append(ruta))  # la subida progresiva no responde
+    pagina.set_input_files(f"#foto-input-recibir-{paquete.id}",
+                           files=[{"name": "etiqueta.jpg", "mimeType": "image/jpeg", "buffer": buffer.getvalue()}])
+    pagina.wait_for_function("() => document.body.innerText.includes('Subiendo')")
+    with pagina.expect_navigation():
+        pagina.locator(f"#modal-receive-{paquete.id} button[type=submit]").click()
+    assert paquete_en_bd(app_viva, paquete.id).estado == EstadoPaquete.RECIBIDO
+
+    pagina.clock.fast_forward("01:05")
+    _capa(pagina).wait_for(state="visible")
+
+    pagina.unroute("**/paquetes/*/fotos")
+    for ruta in colgadas:
+        try:
+            ruta.abort()
+        except Exception:
+            pass
+    pagina.evaluate("() => window.paqueteXColaFotos.procesar(true)")
+
+    limite = time.time() + 10
+    while time.time() < limite:
+        app_viva.db.expire_all()
+        if app_viva.db.query(PaqueteFoto).filter(PaqueteFoto.paquete_id == paquete.id).count() == 1:
+            break
+        time.sleep(0.2)
+    else:
+        raise AssertionError("la foto de la cola no se subió con el equipo bloqueado")
+    assert _capa(pagina).is_visible()

@@ -701,7 +701,9 @@
     })();
     {% endif %}
 
-    {% if tiene_staff %}
+    {#- PIN de operador (ticket 05): también en la pantalla de bloqueo -- la cola sigue subiendo mientras el equipo
+        espera un PIN (su ruta solo exige el registro del dispositivo). #}
+    {% if tiene_staff or request.url.path == '/bloqueo' %}
     // Cola de fotos de Recibir (issue 389, .scratch/pendientes-cliente): "Recibir" ya no espera ni lleva las fotos
     // que falten por subir -- el componente de fotos (`components/_carga_fotos.html`) las deja acá, en IndexedDB (en
     // disco, no en memoria: los equipos de portería pueden tener poca), y este bloque las sube solas desde CUALQUIER
@@ -756,6 +758,8 @@
         var reloj = controlador ? setTimeout(function () { controlador.abort(); }, TIEMPO_LIMITE_MS) : null;
         return fetch('/paquetes/' + entrada.paqueteId + '/fotos', {
           method: 'POST', body: datos, credentials: 'same-origin', signal: controlador ? controlador.signal : undefined,
+          // PIN de operador (ticket 05): petición automática -- no cuenta como actividad del Usuario.
+          headers: { 'X-PaqueteX-Automatico': '1' },
         })
           .then(function (r) {
             clearTimeout(reloj);
