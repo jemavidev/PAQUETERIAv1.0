@@ -13,6 +13,7 @@ import csv
 import io
 import uuid
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -30,7 +31,9 @@ from app.domain.estadisticas_tablero_service import FiltrosTablero, calcular_tab
 from app.domain.configuracion_conjunto_service import (
     actualizar_datos_operativos,
     obtener_datos_operativos,
+    actualizar_seguridad_sesion,
     obtener_nombre_conjunto,
+    obtener_seguridad_sesion,
     renombrar_conjunto,
 )
 from app.domain.configuracion_empresa_service import (
@@ -682,6 +685,7 @@ def _contexto_conjunto(request: Request, db: Session, admin: Usuario, **override
         "horario_domingos": datos_operativos.horario_domingos,
         "numero_whatsapp": datos_operativos.numero_whatsapp or (whatsapp_soporte_numero() or ""),
         "empresa": obtener_datos_empresa(db),
+        "seguridad": obtener_seguridad_sesion(db),
     }
     contexto.update(overrides)
     return contexto
@@ -786,6 +790,44 @@ def admin_conjunto_empresa_guardar(
     return templates.TemplateResponse(
         "admin/conjunto.html",
         _contexto_conjunto(request, db, admin, guardado="empresa"),
+    )
+
+
+@router.post("/administracion/conjunto/seguridad", response_class=HTMLResponse)
+def admin_conjunto_seguridad_guardar(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    segundos_inactividad: str = Form(""),
+    dias_registro_dispositivo: str = Form(""),
+):
+    """Sección "Seguridad de sesión" (`.scratch/pin-operador-dispositivo`, ticket 01)."""
+    try:
+        actualizar_seguridad_sesion(
+            db,
+            segundos_inactividad=segundos_inactividad,
+            dias_registro_dispositivo=dias_registro_dispositivo,
+            actor=admin,
+        )
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "admin/conjunto.html",
+            _contexto_conjunto(
+                request,
+                db,
+                admin,
+                seguridad=SimpleNamespace(
+                    segundos_inactividad=segundos_inactividad,
+                    dias_registro_dispositivo=dias_registro_dispositivo,
+                ),
+                error_seguridad=str(exc),
+            ),
+            status_code=400,
+        )
+
+    return templates.TemplateResponse(
+        "admin/conjunto.html",
+        _contexto_conjunto(request, db, admin, guardado="seguridad"),
     )
 
 
