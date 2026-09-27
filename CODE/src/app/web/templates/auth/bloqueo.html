@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% from "components/_teclado_pin.html" import estilos_teclado_pin, teclado_pin %}
-{% block title %}Equipo bloqueado — PAQUETEX{% endblock %}
+{% block title %}Equipo bloqueado — PAQUETEX<script>
+  // Sincronización entre pestañas (ticket 06): si otra pestaña de este equipo desbloquea, esta pantalla sigue a la
+  // vista pedida (el servidor vuelve a decidir si hay permiso).
+  (function () {
+    var CANAL = 'paquetex-bloqueo';
+    var siguiente = {{ siguiente|tojson }};
+    function recibir(m) { if (m && m.tipo === 'desbloqueo') location.assign(siguiente || '/paquetes'); }
+    if (window.BroadcastChannel) new BroadcastChannel(CANAL).onmessage = function (e) { recibir(e.data); };
+    else window.addEventListener('storage', function (e) {
+      if (e.key === CANAL && e.newValue) { try { recibir(JSON.parse(e.newValue)); } catch (err) {} }
+    });
+  })();
+</script>
+{% endblock %}
 {% block content %}
 {# Pantalla de bloqueo (`.scratch/pin-operador-dispositivo`, ticket 03). Nunca lista a los Usuarios registrados. #}
 {{ estilos_teclado_pin() }}
@@ -14,4 +27,17 @@
     </p>
   </div>
 </div>
+<script>
+  // Sincronización entre pestañas (ticket 06): si otra pestaña de este equipo desbloquea, esta pantalla sigue a la
+  // vista pedida (el servidor vuelve a decidir si hay permiso).
+  (function () {
+    var CANAL = 'paquetex-bloqueo';
+    var siguiente = {{ siguiente|tojson }};
+    function recibir(m) { if (m && m.tipo === 'desbloqueo') location.assign(siguiente || '/paquetes'); }
+    if (window.BroadcastChannel) new BroadcastChannel(CANAL).onmessage = function (e) { recibir(e.data); };
+    else window.addEventListener('storage', function (e) {
+      if (e.key === CANAL && e.newValue) { try { recibir(JSON.parse(e.newValue)); } catch (err) {} }
+    });
+  })();
+</script>
 {% endblock %}

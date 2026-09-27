@@ -206,7 +206,9 @@ def desbloquear_con_pin(
     abrir_sesion_staff(request, usuario)
     destino = _siguiente_seguro(siguiente, usuario)
     if quiere_json:
-        return JSONResponse({"mismo_operador": mismo_operador, "destino": destino})
+        return JSONResponse(
+            {"mismo_operador": mismo_operador, "destino": destino, "es_admin": usuario.rol == RolUsuario.ADMIN}
+        )
     return RedirectResponse(destino, status_code=status.HTTP_303_SEE_OTHER)
 
 

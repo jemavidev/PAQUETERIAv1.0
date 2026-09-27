@@ -38,20 +38,57 @@
     var bloqueada = false;
     var fetchOriginal = window.fetch.bind(window);
 
+    // Sincronización entre pestañas (ticket 06): en un equipo hay UN solo Operador activo (la cookie de sesión es la
+    // misma en todas las pestañas). Bloquear, desbloquear, cambiar de Operador y la actividad se avisan por un canal del
+    // navegador; sin BroadcastChannel, por eventos de `storage`. El servidor sigue siendo la fuente de verdad: si un
+    // mensaje se pierde, la siguiente petición de esa pestaña igual recibe la señal de bloqueo.
+    var CANAL = 'paquetex-bloqueo';
+    var canal = window.BroadcastChannel ? new BroadcastChannel(CANAL) : null;
+    function difundir(mensaje) {
+      try {
+        if (canal) canal.postMessage(mensaje);
+        else localStorage.setItem(CANAL, JSON.stringify(Object.assign({ n: Math.random() }, mensaje)));
+      } catch (e) {}
+    }
+    function recibir(mensaje) {
+      if (!mensaje || !mensaje.tipo) return;
+      if (mensaje.tipo === 'actividad') { if (!bloqueada) ultima = Math.max(ultima, mensaje.t); }
+      else if (mensaje.tipo === 'aviso') { ultimoAviso = Math.max(ultimoAviso, mensaje.t); }
+      else if (mensaje.tipo === 'bloqueo') { mostrar(false, false); }
+      else if (mensaje.tipo === 'desbloqueo') {
+        if (mensaje.mismo_operador) { if (bloqueada) ocultar(false); }
+        else location.assign(destinoPara(mensaje.es_admin));
+      }
+    }
+    if (canal) canal.onmessage = function (e) { recibir(e.data); };
+    else window.addEventListener('storage', function (e) {
+      if (e.key === CANAL && e.newValue) { try { recibir(JSON.parse(e.newValue)); } catch (err) {} }
+    });
+    // Otra persona desbloqueó en otra pestaña: esta vista se recarga limpia -- al inicio si el nuevo Operador no tiene
+    // permiso para ella (mismo criterio que el servidor al desbloquear).
+    function destinoPara(esAdmin) {
+      var aqui = location.pathname + location.search;
+      return (!esAdmin && location.pathname.indexOf('/administracion') === 0) ? '/paquetes' : aqui;
+    }
+    var ultimaDifusion = 0;
+
     function avisar() {
       ultimoAviso = Date.now();
       avisoPendiente = false;
+      difundir({ tipo: 'aviso', t: ultimoAviso });  // uno por minuto por EQUIPO, no por pestaña
       fetchOriginal('/actividad', { method: 'POST', credentials: 'same-origin' })
         .then(function (r) { if (r.status === 423) mostrar(false); }, function () {});
     }
     function actividad() {
       if (bloqueada) return;
       ultima = Date.now();
+      if (ultima - ultimaDifusion >= 5000) { ultimaDifusion = ultima; difundir({ tipo: 'actividad', t: ultima }); }
       if (Date.now() - ultimoAviso >= AVISO_MS) avisar(); else avisoPendiente = true;
     }
-    function mostrar(avisarAlServidor) {
+    function mostrar(avisarAlServidor, difundirBloqueo) {
       if (bloqueada) return;
       bloqueada = true;
+      if (difundirBloqueo !== false) difundir({ tipo: 'bloqueo' });
       // El servidor bloquea en el acto (no espera su margen): nadie puede seguir operando detrás de la capa.
       if (avisarAlServidor) fetchOriginal('/bloquear', { method: 'POST', credentials: 'same-origin', redirect: 'manual' }).catch(function () {});
       form.querySelector('input[name=siguiente]').value = location.pathname + location.search;
@@ -59,7 +96,8 @@
       form.pintarTecladoPin('');
       document.dispatchEvent(new CustomEvent('paquetex:bloqueo'));
     }
-    function ocultar() {
+    function ocultar(difundirDesbloqueo, esAdmin) {
+      if (difundirDesbloqueo) difundir({ tipo: 'desbloqueo', mismo_operador: true, es_admin: esAdmin });
       bloqueada = false;
       capa.hidden = true;
       ultima = ultimoAviso = Date.now();
@@ -84,9 +122,11 @@
         return r;
       });
     };
-    // Con la capa puesta no sale ningún formulario de la página (el de la capa, sí).
+    // Con la capa puesta no sale ningún formulario de la página (el de la capa, sí). "Bloquear" del menú navega a la
+    // pantalla de bloqueo: antes de irse, avisa a las demás pestañas.
     document.addEventListener('submit', function (e) {
-      if (bloqueada && e.target !== form) { e.preventDefault(); e.stopImmediatePropagation(); }
+      if (bloqueada && e.target !== form) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+      if (e.target.getAttribute('action') === '/bloquear') difundir({ tipo: 'bloqueo' });
     }, true);
 
     form.addEventListener('submit', function (e) {
@@ -97,8 +137,10 @@
         return r.json().then(function (datos) { return { ok: r.ok, datos: datos }; });
       }).then(function (res) {
         if (!res.ok) { form.pintarTecladoPin(res.datos.error || 'PIN incorrecto.'); return; }
-        if (res.datos.mismo_operador) { ocultar(); return; }
-        // Otra persona: nada de lo que dejó la anterior (modales, formularios a medias) sigue en pantalla.
+        if (res.datos.mismo_operador) { ocultar(true, res.datos.es_admin); return; }
+        // Otra persona: nada de lo que dejó la anterior (modales, formularios a medias) sigue en pantalla -- ni en
+        // esta pestaña ni en las demás.
+        difundir({ tipo: 'desbloqueo', mismo_operador: false, es_admin: res.datos.es_admin });
         location.assign(res.datos.destino);
       }).catch(function () {
         // Sin JSON (el equipo ya no tiene registros vigentes → `/ingresar`) o sin red: a la pantalla completa.

@@ -143,12 +143,12 @@ def test_desbloquear_desde_la_capa_dice_si_cambio_el_operador(client, reloj):
 
     r = client.post("/bloqueo", data={"pin": "2222", "siguiente": "/paquetes"}, headers={"Accept": "application/json"})
     assert r.status_code == 200
-    assert r.json() == {"mismo_operador": True, "destino": "/paquetes"}
+    assert r.json() == {"mismo_operador": True, "destino": "/paquetes", "es_admin": False}
 
     reloj.avanzar(_LIMITE + 1)
     client.post("/actividad", headers=_FETCH)
     r = client.post("/bloqueo", data={"pin": "1111", "siguiente": "/paquetes"}, headers={"Accept": "application/json"})
-    assert r.json() == {"mismo_operador": False, "destino": "/paquetes"}
+    assert r.json() == {"mismo_operador": False, "destino": "/paquetes", "es_admin": False}
 
     r = client.post("/bloqueo", data={"pin": "9999", "siguiente": "/paquetes"}, headers={"Accept": "application/json"})
     assert r.status_code == 400
