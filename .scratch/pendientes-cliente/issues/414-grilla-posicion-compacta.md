@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-27):** "de que forma puedes hacer que se vea mas pequeno" (la grilla de Posición de
 `.scratch/posicion-almacenamiento`). Opción elegida: **botones compactos**.
 
-**Status:** implementado (local), pendiente desplegar
+**Status:** desplegado en test (`f17c396`, 2026-09-27), pendiente confirmar en vivo
 
 ## Alcance
 

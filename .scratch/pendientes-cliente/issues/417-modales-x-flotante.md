@@ -5,7 +5,7 @@ necesito que esta x sea flotante [...] algunos modales tienen el scroll invisibl
 lo que pasa actualmente es que al bajar a ver mas contenido la "x" se queda en la parte superior [...] la "x" necesito que
 sea una forma facil y que se sigan manteniendo las otras formas de cerrarlo".
 
-**Status:** implementado (local), pendiente desplegar
+**Status:** desplegado en test (`f17c396`, 2026-09-27), pendiente confirmar en vivo
 
 ## Alcance
 

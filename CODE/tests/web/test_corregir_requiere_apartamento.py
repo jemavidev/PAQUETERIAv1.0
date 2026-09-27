@@ -77,3 +77,22 @@ def test_corregir_un_paquete_sin_apartamento_se_rechaza_sin_cambios(client):
     assert f"{_AVISO}." in r.text
     client.db.expire_all()
     assert client.db.get(Paquete, sin.id).recipient_name == "ANA"
+
+
+def test_el_boton_corregir_usa_el_icono_de_persona_con_intercambio(client):
+    """Issue 420: persona + flechas ⇄ en vez del lápiz, en la fila y en "Ver" (activo y apagado)."""
+    from app.web.icons import ICONOS_NAV
+
+    _login_staff(client)
+    apto = resolver_apartamento(client.db, "TORRE 1", "101")
+    con = _anunciar(client, "3002222222", "Beto", apartamento=apto)
+    sin = _anunciar(client, "3001111111", "Ana")
+
+    html = client.get("/paquetes", params={"estado": ""}).text
+
+    icono = ICONOS_NAV["cambiar_destinatario"]
+    botones_con = re.findall(rf'<button[^>]*data-open="modal-correct-{con.id}"[^>]*>\s*<svg[^>]*>(.*?)</svg>', html, re.S)
+    assert len(botones_con) == 2 and all(icono in b for b in botones_con)
+    apagados_sin = re.findall(rf'<span[^>]*title="{_AVISO}"[^>]*>\s*<svg[^>]*>(.*?)</svg>', html, re.S)
+    assert len(apagados_sin) >= 2 and all(icono in b for b in apagados_sin)
+    assert "M13.586 3.586" not in "".join(botones_con + apagados_sin)  # ya no es el lápiz
