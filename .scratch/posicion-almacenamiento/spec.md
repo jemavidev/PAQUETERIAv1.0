@@ -1,6 +1,6 @@
 # Spec — Posición de almacenamiento al Recibir
 
-Status: ready-for-agent
+Status: done -- tickets 01-03 desplegados en test (`f17c396`) y verificados por Jesús 2026-09-27
 
 Origen: sesión de `grilling` del 2026-09-26 (pedido del cliente sobre el modal Recibir de /paquetes).
 
