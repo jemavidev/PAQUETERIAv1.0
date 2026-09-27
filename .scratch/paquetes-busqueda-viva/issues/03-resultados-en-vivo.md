@@ -25,7 +25,7 @@ siempre reflejan el texto/Estado vigente.
 
 **Blocked by:** 02.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: bb86d74)
 
 - [ ] La porción de tarjetas + paginación de `packages/list.html` se extrae a una plantilla
       reusable, incluida por la carga normal de página.

@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 (comparte la pantalla `/announce`/`/paquetes`, aunque la lógica de dominio es independiente).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: commit "corregir destinatario de un paquete ANUNCIADO" (2026-07-26))
 
 - [ ] `corregir_destinatario(session, paquete, actor, recipient_name, recipient_phone=None)` en `paquete_lifecycle.py`: `TransicionInvalida` si `paquete.estado != ANUNCIADO`. Si es válido, actualiza `recipient_name`/`recipient_phone` y registra `corrected_at`/`corrected_by_usuario_id` (columnas nuevas, migración Alembic).
 - [ ] Botón/modal "Corregir" en `/paquetes`, visible solo si `estado == ANUNCIADO` (con o sin advertencia — el staff puede corregir proactivamente).

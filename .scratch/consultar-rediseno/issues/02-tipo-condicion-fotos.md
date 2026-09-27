@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 (comparten la plantilla de `/consultar`).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: dba79b2; /consultar muestra tipo, condición y fotos)
 
 - [ ] Migración Alembic agrega `package_type`/`package_condition` (nullable, con default `NORMAL`/`BUENO` a nivel de servicio si no se especifican) a `paquetes`.
 - [ ] Nueva tabla `paquete_fotos` (ligada a `Paquete`): `id`, `paquete_id`, `url`, `created_at`.

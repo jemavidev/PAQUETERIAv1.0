@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: f4a75e7)
 
 - [ ] `MAX_OCUPANTES_ACTIVOS` pasa de `5` a `10` en `ocupante_service.py`.
 - [ ] `agregar_ocupante` sigue rechazando el 11º Ocupante activo con el mismo mensaje de error (número actualizado).

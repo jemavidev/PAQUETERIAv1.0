@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 5049197)
 
 - [ ] En `paquete_service.announce()`, para `Destinatario.OCUPANTE` sin `persona_id` propio: `recipient_phone` usa el Teléfono de la Persona `anunciante` ya resuelta en esa misma llamada (`None` si el Anunciante es solo-WhatsApp), no `telefono_notificacion_ocupante`.
 - [ ] Camino Torre+Apto directo: sin cambio observable (el Anunciante ya se resolvía al principal vía `anunciante_para_ocupante`).

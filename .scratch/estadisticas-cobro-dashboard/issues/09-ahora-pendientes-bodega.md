@@ -7,7 +7,7 @@ punto de semáforo.
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Paquetes pendientes" = Anunciados + Recibidos actuales, con el desglose "X anunciados · Y
       recibidos".

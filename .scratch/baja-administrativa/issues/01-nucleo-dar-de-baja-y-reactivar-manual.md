@@ -15,7 +15,7 @@ de punta a punta sin esas tres piezas.
 
 **Blocked by:** Ninguno — puede arrancar de inmediato.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 422069d)
 
 - [ ] Migración: nueva columna `Persona.baja_administrativa_en` (timestamp con zona horaria,
       nullable), declarada también en el modelo ORM (paridad esquema↔ORM).

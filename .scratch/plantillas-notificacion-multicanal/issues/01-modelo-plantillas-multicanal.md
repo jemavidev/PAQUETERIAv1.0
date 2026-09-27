@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — puede arrancar de inmediato.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 49facf2)
 
 - [ ] Migración Alembic: `plantillas_notificacion` gana `canal` (`NOT NULL`) y `asunto` (nullable). `UniqueConstraint("evento", "motivo", "canal")` reemplaza la actual `("evento", "motivo")`; el índice único parcial para `motivo IS NULL` se extiende para incluir `canal`. Backfill: toda fila existente antes de esta migración queda con `canal='SMS'`.
 - [ ] `obtener_texto_actual(session, evento, motivo=None, canal=CanalNotificacion.SMS)` devuelve el texto vigente de ese canal — personalizado si existe fila para `(evento, motivo, canal)`, si no el default. `obtener_asunto_actual(session, evento, motivo=None)` hace lo mismo para el asunto de Email.

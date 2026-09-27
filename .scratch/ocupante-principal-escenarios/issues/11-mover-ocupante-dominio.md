@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: a56ef52)
 
 - [ ] Nueva función en `ocupante_service.py` (o extensión de una existente) que, dado un Ocupante activo no-principal y una unidad destino, hace la baja + el alta en una sola operación de dominio.
 - [ ] Si la Persona es principal de su unidad actual, la función rechaza con el mismo mensaje que ya existe hoy (no se mueve, ni siquiera si está sola en su unidad).

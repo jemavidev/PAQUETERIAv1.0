@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (reusa la ruta de envío de prueba y el patrón de "canal configurado → botón habilitado/deshabilitado" que introduce ese ticket).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: fd30df3)
 
 - [ ] La pestaña WhatsApp de cada modal muestra el campo de destino + botón "Enviar prueba" deshabilitado, con una nota visible explicando que WhatsApp no tiene proveedor configurado todavía.
 - [ ] El botón deshabilitado no impide seguir editando y guardando el texto de la pestaña WhatsApp normalmente — solo el envío real queda bloqueado.

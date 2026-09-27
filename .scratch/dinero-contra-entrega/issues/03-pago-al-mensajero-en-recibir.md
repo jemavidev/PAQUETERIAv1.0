@@ -6,7 +6,7 @@ de saldo. Confirmar el pago crea el movimiento negativo en la misma transacción
 
 **Blocked by:** 01 — Núcleo: entidad y funciones de saldo. (En paralelo con 02 y 04.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: c2e5894)
 
 - [ ] El selector de pago aparece solo si el destinatario o un compañero de apartamento actual tiene
       historial de saldo

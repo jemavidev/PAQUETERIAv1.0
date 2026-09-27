@@ -12,7 +12,7 @@ rota. Reusa la función de dominio `movimientos_de_persona` (ya existente, hoy s
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: aa1c0a2)
 
 - [ ] El modal "Saldo" de una Persona con movimientos existentes lista todos ellos, más recientes
       primero, debajo del formulario de "Actualizar".

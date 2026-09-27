@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 02 (necesita el nuevo modo de `Destinatario` — es el único que puede producir un nombre distinto al registrado).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: aviso "no coincide" en `packages/_resultados.html`)
 
 - [ ] Helper de solo lectura que compara `paquete.recipient_name` contra el `nombre` actual de la Persona (`announced_by_persona_id`), normalizando espacios/mayúsculas para la comparación (nunca para el guardado).
 - [ ] La advertencia NO aparece cuando el nombre coincide, ni cuando la Persona fue creada por este mismo anuncio (nada que comparar todavía).

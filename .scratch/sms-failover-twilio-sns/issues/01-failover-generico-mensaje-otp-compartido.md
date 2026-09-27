@@ -18,7 +18,7 @@ probada.
 
 **Blocked by:** None — puede empezar de inmediato.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: c1ca845)
 
 - [x] Existe un failover sender genérico en `app/domain` (reutilizable tanto
       para el shape de `NotificationSender` como el de `OtpSender`), que

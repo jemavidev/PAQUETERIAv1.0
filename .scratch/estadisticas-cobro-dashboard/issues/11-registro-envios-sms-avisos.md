@@ -8,7 +8,7 @@ posible.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `registro_sms_service.py` + migración 0055)
 
 - [ ] Existe un registro (tabla nueva, append-only, con su migración Alembic y el ORM alineado con ella)
       que anota, por cada intento de envío real: el momento, el tipo (por ahora solo "aviso de paquete"),

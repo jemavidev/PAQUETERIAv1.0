@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: cc23e99)
 
 - [ ] El clasificador vive en un módulo de dominio compartido (no en una ruta web específica).
 - [ ] `announce_new.py` importa y usa la versión compartida — sin duplicar la lógica.

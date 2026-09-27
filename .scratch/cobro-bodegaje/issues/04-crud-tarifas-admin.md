@@ -6,7 +6,7 @@ ninguno de los 4.
 
 **Blocked by:** 01 — Núcleo: entidades de cobro + cálculo puro. (En paralelo con 02 y 03.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 33de9d4)
 
 - [ ] Admin edita las 4 tarifas desde `/administracion/tarifas-cobro`
 - [ ] Un operador (no admin) recibe 403

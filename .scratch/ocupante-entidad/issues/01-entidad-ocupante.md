@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — la Fase 1 (`/domain-modeling`, `CONTEXT.md` + ADR-0006) ya resolvió el modelo conceptual.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 1deb3ca)
 
 - [ ] Migración Alembic nueva (tras `0009`) crea `ocupantes`: `id`, `apartamento_id` (FK), `persona_id` (FK, nullable), `nombre`, `es_principal` (bool), timestamps. Índice único parcial garantiza máximo 1 `es_principal=True` por `apartamento_id`.
 - [ ] Modelo ORM `Ocupante` en `app/domain/`, con `__table_args__` idénticos a la migración (paridad esquema↔ORM).

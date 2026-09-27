@@ -6,7 +6,7 @@ de la entrega — mismo patrón exacto que `MotivoCancelacion` (sin campo "activ
 **Blocked by:** 01 — Núcleo: entidades de cobro + cálculo puro. (En paralelo con 02 y 04 — el flujo
 de Entregar puede probarse con un motivo sembrado directo en tests, sin depender de este CRUD.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 33de9d4)
 
 - [ ] Admin puede crear un `MotivoAnulacionCobro` nuevo
 - [ ] Admin puede eliminar un `MotivoAnulacionCobro` existente

@@ -10,7 +10,7 @@ completa con tests de `tests/data_model/`.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 73ce53a (dominio))
 
 - [ ] `paquete_service.paquetes_sin_apartamento_de_telefono(session, telefono_canonico)` existe y
       devuelve los Paquetes `Anunciado` sin snapshot de Apartamento para ese teléfono, ya sea como

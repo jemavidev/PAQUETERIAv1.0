@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (clasificador compartido), 06 (reusa las funciones de dominio de WhatsApp).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: df91802)
 
 - [ ] El formulario "nuevo ocupante" de Corregir destinatario usa el input único autoclasificado.
 - [ ] Mensaje distinto para "este paquete no tiene apartamento resuelto en su snapshot" vs. "falta el nombre del nuevo residente".

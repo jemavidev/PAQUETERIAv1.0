@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 (necesita el `access_code` y la ausencia de `tracking_number` ya resueltos para la pantalla de éxito).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: /announce simplificado en uso)
 
 - [ ] Nuevo modo en `Destinatario` (`paquete_service.py`) que resuelve `recipient_name` al nombre declarado por el cliente y `recipient_phone` al teléfono del anunciante — sin tocar el comportamiento de `yo_mismo`/`persona_registrada`/`solo_nombre` existentes (los tests de otras rebanadas que los usan como fixture no deben cambiar).
 - [ ] `GET/POST /anunciar`: el formulario y la ruta solo aceptan `nombre`, `telefono`, `acepta_tyc` — se elimina `a_nombre_de`, `destinatario_telefono`, `destinatario_nombre`.

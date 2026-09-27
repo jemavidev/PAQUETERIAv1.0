@@ -7,7 +7,7 @@ resuelto. Una vez registrado, el `Cobro` es inmutable para siempre.
 
 **Blocked by:** 01 — Núcleo: entidades de cobro + cálculo puro.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 675d78c)
 
 - [ ] Entregar crea el `Cobro` con el monto calculado (recalculado server-side, nunca confiado del
       cliente) en la misma transacción que `delivered_at`

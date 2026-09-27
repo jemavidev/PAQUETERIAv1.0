@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: fde90f5)
 
 - [ ] `GET /announce/identificar` con un código Torre+Apto completo (2 dígitos de torre válidos + número de apartamento) que no calza con el catálogo devuelve un fragmento con un mensaje explícito, no una respuesta vacía.
 - [ ] Un código todavía incompleto (a medio teclear) sigue sin mostrar nada — el indicador solo aparece cuando ya se puede evaluar contra el catálogo.

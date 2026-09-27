@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (input de contacto único para registrar un residente nuevo ahí mismo), 04 (la promoción automática necesita que este paso pueda dejar un Ocupante concreto identificado).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: e68bed4)
 
 - [ ] Si el destinatario del paquete no tiene apartamento en su Persona, el modal de Recibir ofrece declarar Torre+Apartamento (mismo catálogo cerrado, sin la restricción de "solo unidades vacías" del ticket 13 — acá se está identificando a una persona ya conocida por Teléfono/WhatsApp).
 - [ ] Si el destinatario tiene (o se le acaba de declarar) apartamento, el modal muestra el roster de esa unidad con las mismas 3 opciones que ya tiene Corregir destinatario: confirmar al actual, elegir otro residente existente, o registrar uno nuevo (con el input único de contacto del ticket 01).

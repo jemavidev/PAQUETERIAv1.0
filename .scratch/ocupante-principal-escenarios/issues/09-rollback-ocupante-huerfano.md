@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: bda821c)
 
 - [ ] `announce_new.py`: cuando `agregar_ocupante` tiene éxito pero `_anunciar_para` devuelve error (sin Anunciante resolvible), se hace `db.rollback()` antes de `return _error(...)`.
 - [ ] `packages.py`: cuando `agregar_ocupante` tiene éxito pero `corregir_destinatario` lanza `TransicionInvalida`, se hace `db.rollback()` antes de devolver el error.

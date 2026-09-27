@@ -5,7 +5,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Anuncio → recepción" = promedio de (recibido − anunciado) de los paquetes recibidos en cada
       ventana (Hoy/Semana/Mes), en horas.

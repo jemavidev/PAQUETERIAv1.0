@@ -9,7 +9,7 @@ NO está de baja no dispara nada (no-op).
 **Blocked by:** 01 (necesita que exista la columna `baja_administrativa_en` y la función
 `reactivar_persona`).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 7dd6342)
 
 - [ ] Hook en `paquete_lifecycle.receive()`, mismo lugar y mismo patrón que la promoción automática
       a Principal (`promover_al_recibir`) — se dispara DESPUÉS de la transición exitosa a Recibido,

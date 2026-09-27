@@ -6,7 +6,7 @@ tiempo promedio de bodegaje — sin exportar a archivo ni filtros avanzados en e
 
 **Blocked by:** 02 — Entrega atómica con cobro.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 4828931)
 
 - [ ] La página muestra cantidad y monto total recaudado para un rango de fechas dado
 - [ ] Muestra el desglose por cliente/apartamento

@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 — puede construirse en paralelo a 02/03, no depende de la UI.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: f1f21c4)
 
 - [ ] Migración Alembic crea `plantillas_notificacion_historial` con las columnas descritas.
 - [ ] `guardar_plantilla` inserta una fila de historial en cada llamada exitosa, con `texto_anterior`/`asunto_anterior` de la fila previa (o `NULL` si es la primera personalización) y `texto_nuevo`/`asunto_nuevo` con los valores guardados.

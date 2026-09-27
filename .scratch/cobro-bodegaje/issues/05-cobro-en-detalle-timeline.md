@@ -5,7 +5,7 @@
 
 **Blocked by:** 02 — Entrega atómica con cobro.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: bbc5bab)
 
 - [ ] El detalle de un paquete `Entregado` muestra el monto cobrado, o "$0" + el motivo elegido
 - [ ] Un paquete `Anunciado`/`Recibido`/`Cancelado` no muestra ninguna mención de cobro (no tiene

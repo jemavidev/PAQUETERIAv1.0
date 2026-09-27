@@ -7,7 +7,7 @@ UI todavía.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 5f93fee)
 
 - [ ] `registrar_movimiento_saldo` crea un movimiento con signo (positivo suma, negativo resta)
 - [ ] `saldo_de_persona` suma correctamente varios movimientos, incluyendo el caso de terminar en

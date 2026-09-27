@@ -5,7 +5,7 @@ el mecanismo genérico `rate_limit()` ya existente en el proyecto.
 
 **Blocked by:** None — can start immediately (independiente de la migración por año).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: d54801b)
 
 - [ ] 10 solicitudes en la ventana de 60 segundos pasan con normalidad
 - [ ] La 11ª solicitud dentro del mismo minuto responde 429 con el mismo patrón de mensaje que ya

@@ -6,7 +6,7 @@ notificación— quedan anotados en el mismo registro del ticket 11, diferenciad
 
 **Blocked by:** 11
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `registro_sms_service.py` + 0055/0059)
 
 - [ ] Cada código de acceso enviado por SMS queda registrado con tipo "código de acceso", el proveedor
       que lo entregó (o "fallido"), mismas reglas de failover y de tolerancia a fallos que el 11 — sin

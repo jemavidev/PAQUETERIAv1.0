@@ -7,7 +7,7 @@ una tarjeta a la que un filtro activo no le aplica.
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 1a4d74b)
 
 - [ ] "Paquetes" muestra: Total de paquetes (con cualquier movimiento en el periodo), Anunciados,
       Recibidos, Entregados y Cancelados, cada uno por la fecha de su propio evento dentro del periodo.

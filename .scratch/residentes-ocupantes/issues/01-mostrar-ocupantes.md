@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — la entidad Ocupante ya existe.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 005fbf4)
 
 - [ ] Si la Persona tiene `apartamento_actual_id`, la ficha muestra la lista de Ocupantes de ese Apartamento (`listar_ocupantes`).
 - [ ] Se indica visualmente cuál Ocupante es el principal.

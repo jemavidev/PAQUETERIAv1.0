@@ -8,7 +8,7 @@ ticket y el ticket "Entrega atómica con cobro" del módulo `cobro-bodegaje` toc
 de Entregar — no se bloquean entre sí, pero quien implemente el segundo de los dos debe revisar el
 formulario ya extendido por el primero.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: c781312)
 
 - [ ] Un saldo negativo asociado al destinatario muestra el campo de ajuste al Entregar
 - [ ] Completar el campo crea el movimiento positivo correspondiente

@@ -16,7 +16,7 @@ sin tener que decidir en qué campo iba cada dato.
 
 **Blocked by:** Ninguno — puede empezar de inmediato.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: ef02767)
 
 - [ ] `_listar` (en `app/web/routes/packages.py`) elimina los parámetros/filtros separados de
       `torre` y `apartamento`.

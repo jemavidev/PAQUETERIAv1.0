@@ -5,7 +5,7 @@ mismo molde que `MotivoCancelacion`.
 
 **Blocked by:** 01 — Núcleo: bloquear / autorizar desbloqueo. (En paralelo con 02 y 04.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: eabece1)
 
 - [ ] Admin crea un `MotivoBloqueo` nuevo
 - [ ] Admin elimina un `MotivoBloqueo` existente

@@ -6,7 +6,7 @@ anulaciones, las exenciones por primera entrega y el cobro más alto.
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Promedio recaudado por paquete" = Total de ingresos ÷ cantidad de cobros del periodo.
 - [ ] "Recaudado por bodegaje" y "Recaudado por servicio" muestran su suma y su % sobre el Total de

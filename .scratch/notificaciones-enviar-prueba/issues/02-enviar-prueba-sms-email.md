@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (el pre-llenado del destino de SMS usa el teléfono del admin, que recién existe tras ese ticket).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: dac5479)
 
 - [ ] Cada pestaña SMS/Email de cada modal evento/motivo tiene un campo de destino (pre-llenado con el teléfono/correo del admin logueado, vacío si no lo tiene guardado) y un botón "Enviar prueba".
 - [ ] El botón envía la plantilla TAL COMO QUEDÓ GUARDADA en ese canal (nunca un texto sin guardar en el textarea que se esté editando).

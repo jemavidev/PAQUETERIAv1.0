@@ -20,7 +20,7 @@ submit tradicional con recarga de página.
 
 **Blocked by:** 01 — trabaja sobre la barra ya reducida a un único campo de texto libre.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: e4acd1f)
 
 - [ ] 4 íconos circulares de color (Anunciado/Recibido/Entregado/Cancelado) reemplazan el
       radiogroup de chips de texto de Estado, con la misma paleta que los badges.

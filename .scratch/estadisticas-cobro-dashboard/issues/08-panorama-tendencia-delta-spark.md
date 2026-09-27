@@ -6,7 +6,7 @@ y un minigráfico de los últimos 7 días.
 
 **Blocked by:** 06 (Ingresos ya existe desde el 01; Entregados/Cancelados los trae el 06)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] Cada una de las tres columnas (Hoy, Semana, Mes) de Ingresos, Entregados y Cancelados muestra su
       variación ▲▼ contra el mismo tramo del periodo anterior: Hoy vs. ayer hasta esta misma hora;

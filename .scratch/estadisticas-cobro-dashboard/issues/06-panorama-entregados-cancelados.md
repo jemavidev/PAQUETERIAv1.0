@@ -5,7 +5,7 @@ Cancelados, cada una con Hoy | Semana | Mes, separadas entre sí (nunca sumadas 
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Entregados" muestra Hoy, Esta semana y Este mes: paquetes ENTREGADO por fecha de entrega, en hora
       de Colombia.

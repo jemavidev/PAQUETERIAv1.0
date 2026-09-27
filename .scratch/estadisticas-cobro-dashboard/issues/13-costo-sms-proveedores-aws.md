@@ -7,7 +7,7 @@ puede construir y verse en pantalla de forma completamente aislada.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `guardar_costo_promedio_sms` + migración 0056)
 
 - [ ] El campo aparece SOLO en la sección de AWS SNS (no en LIWA ni en Twilio).
 - [ ] Acepta números con decimales, incluido vacío (= sin configurar). Un valor negativo o no numérico

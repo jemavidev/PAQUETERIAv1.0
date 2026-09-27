@@ -8,7 +8,7 @@ paso, sin aviso ni confirmación aparte — el staff ya está presente y decidie
 
 **Blocked by:** 01 — Detección y corrección de Paquetes huérfanos (dominio).
 
-**Status:** ready-for-agent
+**Status:** abierto -- revisado 2026-09-26: sin implementar: `paquetes_sin_apartamento_de_telefono` (dominio, ticket 01) no tiene ningún llamador; ver pedido 44
 
 - [ ] `ocupante_service.agregar_ocupante`, `asociar_telefono_a_ocupante` y
       `editar_telefono_ocupante` aceptan un parámetro nuevo `staff_actor: Usuario | None = None`

@@ -18,7 +18,7 @@ distinta de `movimientos_de_persona` (ya existente, acotada a una sola Persona).
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: aa1c0a2 (`movimientos_saldo_contra_entrega.html`))
 
 - [ ] Cualquier rol de staff (no solo Admin) puede acceder a la nueva ruta del ledger global.
 - [ ] Sin filtros, la vista lista los movimientos más recientes de todos los residentes, paginados.

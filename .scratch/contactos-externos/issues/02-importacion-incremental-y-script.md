@@ -7,7 +7,7 @@ nombre, o reporta el caso ambiguo de conectar dos contactos ya persistidos), má
 
 **Blocked by:** 01 — Núcleo: esquema + fusión pura.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 0a13c15)
 
 - [ ] Primera importación crea los `ContactoExterno` esperados con sus teléfonos y fuente(s)
 - [ ] Reimportar exactamente el mismo lote no duplica ningún contacto

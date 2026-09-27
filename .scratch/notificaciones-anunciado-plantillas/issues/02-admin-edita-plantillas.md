@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 (necesita la tabla de plantillas).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 826f08b; /administracion/notificaciones)
 
 - [ ] Ruta protegida por `require_admin` (mismo patrón que `/administracion/personal`).
 - [ ] Lista todos los eventos que notifican (`ANUNCIADO`, `RECIBIDO`, `ENTREGADO`) + una fila por cada `MotivoCancelacion` para `CANCELADO`.

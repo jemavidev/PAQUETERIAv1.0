@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — el Grupo 1 ya está implementado.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 826f08b)
 
 - [ ] `_EVENTOS_QUE_NOTIFICAN` en `notificacion_service.py` incluye `ANUNCIADO`.
 - [ ] Migración Alembic crea `plantillas_notificacion`: `id`, `evento`, `motivo` (nullable), `texto`, `updated_at`; único por `(evento, motivo)`.

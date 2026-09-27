@@ -5,7 +5,7 @@ ya tienen Ingresos/Entregados/Cancelados (ticket 08), adaptado a que SMS es una 
 
 **Blocked by:** 08, 14
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `_tendencia_sms`)
 
 - [ ] Cada columna (Hoy/Semana/Mes) de "SMS enviados por AWS" muestra su variación ▲▼ contra el mismo
       tramo del periodo anterior, con el mismo cálculo exacto que ya usan Ingresos/Entregados/Cancelados.

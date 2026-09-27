@@ -9,7 +9,7 @@ los tickets de este módulo usa.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: ec72b28)
 
 - [ ] `calcular_cobro` devuelve $1.500 para un paquete Normal sin primera entrega ni bodegaje
 - [ ] `calcular_cobro` devuelve $2.000 para Extra-dimensionado en las mismas condiciones

@@ -8,7 +8,7 @@ muestra un avatar neutro.
 
 **Blocked by:** 01 — Alcance ampliado: `/mis-paquetes` muestra los paquetes de todo el Apartamento.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 33d9052)
 
 - [ ] Paleta fija de 5 colores, una por cada posición posible del roster de `listar_ocupantes`
       (0=principal .. 4=quinto Ocupante) — coherente con `MAX_OCUPANTES_ACTIVOS = 5` ya existente,

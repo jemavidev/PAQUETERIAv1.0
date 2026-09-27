@@ -7,7 +7,7 @@ dígitos del año a los paquetes elegibles (`Entregado` por `delivered_at`, o `C
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 5cb83d5)
 
 - [ ] Un paquete `Entregado` del año anterior con código de 4 caracteres queda con 6 tras migrar
 - [ ] Un paquete `Cancelado` del año anterior también migra (por `cancelled_at`)

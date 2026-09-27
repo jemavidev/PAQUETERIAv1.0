@@ -7,7 +7,7 @@ saldo distinto de cero.
 
 **Blocked by:** 01 — Núcleo: entidad y funciones de saldo.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 65d8bd0)
 
 - [ ] Cualquier rol de staff registra un depósito/recuperación desde la ficha del residente
 - [ ] El listado de saldos muestra solo residentes con saldo distinto de cero

@@ -8,7 +8,7 @@ en su lugar) — salvo que el Anunciante TAMBIÉN esté de baja, en cuyo caso ta
 
 **Blocked by:** 01 (necesita que exista la columna `baja_administrativa_en`).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 07b3eb6)
 
 - [ ] `notificacion_service.resolver_destino_notificable`: el candidato Destinatario (resuelto por
       `recipient_phone`) se descarta si tiene `baja_administrativa_en` seteado, cayendo al mismo

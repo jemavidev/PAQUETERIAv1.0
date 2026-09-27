@@ -6,7 +6,7 @@ NOMBRE del cliente, nunca su teléfono.
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Clientes activos" = Personas distintas (por el teléfono del destinatario del paquete) con al
       menos un paquete con movimiento en el periodo.

@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (clasificador compartido), 06 (reusa las funciones de dominio de WhatsApp que introduce ese ticket).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 6102811)
 
 - [ ] El formulario "agregar Ocupante" de `/mis-datos` usa el input único autoclasificado.
 - [ ] `/mis-datos` muestra botones "Asociar/Editar/Desvincular WhatsApp" por cada Ocupante gestionable (mismo guard de `_ocupante_gestionable_por` que ya existe).

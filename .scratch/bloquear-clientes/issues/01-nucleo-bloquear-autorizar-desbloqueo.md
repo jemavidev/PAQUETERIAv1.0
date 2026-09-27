@@ -7,7 +7,7 @@ con un indicador visual del estado para que el staff vea de un vistazo quién es
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 68435af)
 
 - [ ] Staff bloquea a un residente, exigiendo un `motivo_bloqueo_id`
 - [ ] Staff autoriza el desbloqueo de un residente ya bloqueado

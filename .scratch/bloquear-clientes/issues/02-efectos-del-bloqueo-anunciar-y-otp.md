@@ -7,7 +7,7 @@ fallback de teléfono de notificación que ya existe). Más el guard en la elegi
 
 **Blocked by:** 01 — Núcleo: bloquear / autorizar desbloqueo.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 5f29ab4)
 
 - [ ] Anunciar con `PERSONA_REGISTRADA` a un teléfono bloqueado se rechaza
 - [ ] Anunciar vía `Destinatario.ocupante(...)` a un Ocupante sin Persona propia cuyo Principal está

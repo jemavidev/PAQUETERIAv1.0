@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 02.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/plantilla_email_html.py::envolver_html` + preview)
 
 - [ ] Existe una función pura que envuelve asunto+cuerpo en el layout HTML de marca (logo de Papyrus, enlaces del sitio).
 - [ ] La pestaña Email muestra un preview que refleja el texto/asunto recién escritos, con los placeholders ya resueltos usando datos de ejemplo.

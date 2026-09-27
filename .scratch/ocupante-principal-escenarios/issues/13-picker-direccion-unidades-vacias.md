@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 1f6fd20)
 
 - [ ] Nueva consulta de dominio (más amplia que `apartamentos_con_principal`): unidades con AL MENOS un Ocupante activo, tenga o no principal confirmado.
 - [ ] El picker de tab Dirección deshabilita (no solo marca) esas unidades — se puede ver que existen pero no seleccionarlas.

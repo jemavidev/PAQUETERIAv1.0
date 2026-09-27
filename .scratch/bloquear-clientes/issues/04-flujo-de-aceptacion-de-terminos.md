@@ -9,7 +9,7 @@ aceptar registra `terminos_aceptados_en` y limpia el estado de bloqueo por compl
 completo de un residente real, pero no depende técnicamente de él — sus tests pueden simular una
 sesión de cliente ya autenticada directamente.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 11dfae4)
 
 - [ ] Un residente con `desbloqueo_autorizado_en` seteado que accede a `/mis-paquetes` es redirigido
       a la pantalla de aceptar términos

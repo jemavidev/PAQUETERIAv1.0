@@ -10,7 +10,7 @@ automático cuando es el staff quien vincula el teléfono).
 
 **Blocked by:** 01 — Detección y corrección de Paquetes huérfanos (dominio).
 
-**Status:** ready-for-agent
+**Status:** abierto -- revisado 2026-09-26: sin implementar: no hay aviso de Paquetes huérfanos en la ficha de /residentes; ver pedido 44
 
 - [ ] Al renderizar la ficha de cliente/Apartamento en `/residentes`, por cada Ocupante activo de
       esa unidad (o la Persona sola, si la ficha es de un cliente sin Apartamento) se consulta el

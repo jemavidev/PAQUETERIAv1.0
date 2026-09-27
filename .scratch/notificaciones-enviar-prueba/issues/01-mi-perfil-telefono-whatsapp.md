@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 39685b5)
 
 - [ ] `Usuario` (dominio) tiene dos columnas nuevas, teléfono y WhatsApp, ambas opcionales (nullable) — migración Alembic nueva; todo `Usuario` existente arranca con ambas en `NULL`.
 - [ ] El formulario de `/mi-sesion` gana dos campos de texto (teléfono, WhatsApp) junto al de nombre que ya existe.

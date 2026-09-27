@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 82b083e)
 
 - [ ] `promover_a_principal` marca `confirmado_en = ahora()` cuando estaba `None`, en la misma operación que marca `es_principal=True`.
 - [ ] Si el Ocupante ya estaba confirmado antes de promoverse, `confirmado_en` no se pisa (conserva la fecha original).

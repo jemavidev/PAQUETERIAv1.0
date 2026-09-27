@@ -12,7 +12,7 @@ el comportamiento de desarrollo/test (`ConsoleNotificationSender`/
 
 **Blocked by:** 01 — Failover genérico de SMS + mensaje OTP compartido
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: c1ca845)
 
 - [x] `TwilioNotificationSender` y `TwilioOtpSender` existen en
       `app/domain/twilio_sender.py`, implementan

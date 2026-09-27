@@ -4,7 +4,7 @@
 
 **Blocked by:** 11 (función de dominio para mover).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 2c3bb11)
 
 - [ ] Las 4 vistas muestran, cuando corresponde, de qué unidad (Torre+Apartamento) es Ocupante actualmente esa persona.
 - [ ] Cuando no es principal ahí, se ofrece una acción "Mover acá" que usa la función del ticket 11.

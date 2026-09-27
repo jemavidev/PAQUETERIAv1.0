@@ -7,7 +7,7 @@ usuario, serie diaria paginada) y sus pruebas, dejando el código base sin camin
 **Blocked by:** 03 (una vez que Recaudo completo existe en el tablero nuevo, nada depende ya del
 servicio anterior)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: solo queda `estadisticas_tablero_service.py`)
 
 - [ ] El servicio de estadísticas anterior (agregados por cliente/apartamento, por usuario, serie diaria
       paginada) y sus estructuras de datos exclusivas se eliminan del código de dominio.

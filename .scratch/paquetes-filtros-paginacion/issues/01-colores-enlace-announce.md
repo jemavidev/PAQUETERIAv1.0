@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: a21f0a0)
 
 - [ ] `.estado-anunciado`, `.estado-recibido`, `.estado-cancelado` actualizados en `packages/list.html` y `search/form.html` (Entregado ya era verde, sin cambio).
 - [ ] Enlace a `/announce` visible en el encabezado de `/paquetes`.

@@ -7,7 +7,7 @@ persistencia incremental ni UI todavía.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 4f0f470)
 
 - [ ] Dos filas de fuentes distintas con el mismo teléfono se fusionan en un solo contacto
 - [ ] Gana el nombre de Google Contacts sobre producción cuando difieren para el mismo contacto

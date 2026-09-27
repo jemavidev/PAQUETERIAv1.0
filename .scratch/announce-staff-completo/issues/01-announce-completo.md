@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — Grupo 1 (Anunciar simplificado) y la entidad Ocupante ya están implementados.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 83d13b5)
 
 - [ ] Bloque Apartamento: Conjunto/Torre/Apartamento, los 3 vacíos o los 3 llenos (error si solo alguno).
 - [ ] Bloque Residentes: filas dinámicas Nombre + Teléfono (Teléfono opcional por fila). Cada fila con datos llama `agregar_ocupante`. El primer residente de una unidad SIN Ocupantes previos debe tener teléfono (mensaje de error claro si no).

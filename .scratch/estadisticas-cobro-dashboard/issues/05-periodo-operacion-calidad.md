@@ -5,7 +5,7 @@ hay más movimiento, y tres indicadores de calidad del proceso.
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Operador con más entregas" muestra el nombre del Usuario (staff) con más entregas en el periodo y
       cuántas.

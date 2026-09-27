@@ -1,7 +1,7 @@
 # Ticket 01 — Mostrar actor de cada transición en /consultar y /paquetes
 
 **Spec:** `.scratch/consultar-auditoria-actor/spec.md`
-**Status:** todo
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 984b734)
 
 ## Alcance
 

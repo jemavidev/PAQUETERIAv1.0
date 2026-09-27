@@ -5,7 +5,7 @@ a qué paquete se aplicó cada uno) desde su propio portal.
 
 **Blocked by:** 01 — Núcleo: entidad y funciones de saldo. (En paralelo con el resto.)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 8716864)
 
 - [ ] El residente ve su propio saldo e historial de movimientos
 - [ ] NO ve el saldo ni el historial de otro residente, aunque comparta apartamento

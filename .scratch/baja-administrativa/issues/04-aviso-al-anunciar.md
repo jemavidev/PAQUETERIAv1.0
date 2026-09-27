@@ -8,7 +8,7 @@ persona.
 
 **Blocked by:** 01 (necesita que exista la columna `baja_administrativa_en`).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 8d32852)
 
 - [ ] Pill/aviso "Sin notificar — de baja" en los componentes de `/announce` que ya muestran el pill
       "Auto" (identificación de unidad/contacto) cuando la Persona identificada tiene

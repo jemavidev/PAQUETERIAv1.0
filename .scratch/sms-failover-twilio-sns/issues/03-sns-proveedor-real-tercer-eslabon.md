@@ -11,7 +11,7 @@ credenciales AWS por S3 — exige la bandera explícita.
 **Blocked by:** 02 — Twilio como proveedor SMS real + selección
 multi-proveedor (LIWA → Twilio)
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: c1ca845)
 
 - [x] `SnsNotificationSender` y `SnsOtpSender` existen en
       `app/domain/sns_sender.py`, implementan

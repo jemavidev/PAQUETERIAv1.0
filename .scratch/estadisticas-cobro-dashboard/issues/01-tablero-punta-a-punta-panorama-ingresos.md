@@ -20,7 +20,7 @@ Las tres tarjetas que sí quedan completas en este ticket:
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 1a4d74b)
 
 - [ ] La pantalla ya no tiene los campos "Desde"/"Hasta" ni el `<select>` de Usuario, ni las tres listas
       paginadas (por cliente/apartamento, por usuario, serie diaria); solo Admin puede verla (sin sesión

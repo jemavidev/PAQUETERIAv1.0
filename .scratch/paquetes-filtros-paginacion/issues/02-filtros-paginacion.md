@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01 (comparte plantilla, aunque la lógica es independiente).
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: a21f0a0)
 
 - [ ] Filtro por `estado` (exacto).
 - [ ] Filtro por `q`: coincide si es igual a `access_code`, o a `guide_number`, o `recipient_name` contiene el texto (parcial, insensible a mayúsculas), o el texto normaliza como teléfono y coincide con `announced_by_phone`/`recipient_phone`.

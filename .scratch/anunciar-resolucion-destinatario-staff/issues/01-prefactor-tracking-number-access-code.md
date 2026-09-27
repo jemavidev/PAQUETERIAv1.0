@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — puede empezar de inmediato.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 478d1c5)
 
 - [ ] Nueva migración Alembic elimina la columna `tracking_number` y su `UniqueConstraint` de `paquetes`.
 - [ ] `_generar_tracking_number` y toda referencia a `tracking_number` se eliminan de `paquete_service.py`, `paquete.py`, `announce.py`, `search.py`, `announce/confirmacion.html`, `search/form.html`.

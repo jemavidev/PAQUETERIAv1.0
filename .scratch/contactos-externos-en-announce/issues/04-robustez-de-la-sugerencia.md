@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 — Sugerencia por Teléfono: elegir el nombre de un Contacto externo y anunciar o recibir a su nombre.
 
-**Status:** ready-for-agent
+**Status:** abierto -- revisado 2026-09-26: parcial: la sugerencia se vuelve a resolver en el servidor al elegirla, pero no se contempla que el valor se haya registrado entre tanto ni hay pruebas de esos casos
 
 - [ ] **Vigencia al elegir:** al hacer clic en la tarjetita, el servidor vuelve a resolver el valor (identificándolo por el valor tecleado y su tipo, nunca por un nombre enviado desde el navegador). Si entre tanto se registró una Persona con esa identidad, se muestra su estado vigente (la tarjeta de siempre) y **no se crea un duplicado**; si el Contacto externo ya no existe, se muestra el formulario "No encontramos a nadie".
 - [ ] **Un solo par de botones:** mientras "Nueva persona" está abierta no se ve a la vez el par Anunciar/Recibir de la tarjeta seleccionada; al cerrarla, vuelve a verse (mismo comportamiento que la lista de residentes de una unidad).

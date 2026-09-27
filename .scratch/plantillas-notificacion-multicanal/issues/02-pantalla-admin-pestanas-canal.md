@@ -4,7 +4,7 @@
 
 **Bloqueado por:** 01.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: pestañas por canal en `admin/notificaciones.html`)
 
 - [ ] La pantalla muestra las 8 filas de evento/motivo, cada una con 3 pestañas (SMS/Email/WhatsApp).
 - [ ] Cada pestaña de canal muestra su propio texto vigente (personalizado o default), independiente de los otros 2 canales del mismo evento.

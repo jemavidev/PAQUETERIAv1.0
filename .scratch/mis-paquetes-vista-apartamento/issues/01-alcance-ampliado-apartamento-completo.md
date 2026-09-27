@@ -11,7 +11,7 @@ conjunto ampliado. Una sesión sin Apartamento asignado sigue viendo exactamente
 **Verificado en vivo** (commit `2fa910c` en `jemavidev/PaqueteX`, deploy success, health OK,
 `test.papyrus.com.co`). Ticket 02 (avatar de color) desbloqueado.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: bce420b)
 
 - [ ] `ocupante_service.telefonos_activos_del_apartamento_de(session, persona)` existe: sin
       Apartamento devuelve `[persona.telefono]` (comportamiento actual); con Apartamento, devuelve

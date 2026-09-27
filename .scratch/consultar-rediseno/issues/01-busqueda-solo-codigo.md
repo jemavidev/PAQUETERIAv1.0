@@ -4,7 +4,7 @@
 
 **Bloqueado por:** Ninguno — el Grupo 1 (access_code de 4 caracteres) ya está implementado.
 
-**Estado:** ready-for-agent
+**Estado:** implementado (cerrado en la revisión del 2026-09-26; evidencia: dba79b2)
 
 - [ ] `search.py` elimina la rama de búsqueda por teléfono; `q` compara contra `access_code` O `guide_number` exactos.
 - [ ] Mensaje "sin resultados" genérico (no distingue cuál campo falló).

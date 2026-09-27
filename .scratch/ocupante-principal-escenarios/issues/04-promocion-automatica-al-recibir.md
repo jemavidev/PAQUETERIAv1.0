@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (necesita que promover también confirme, para no dejar un principal sin confirmar).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: promoción automática en `paquete_lifecycle.py` (receive))
 
 - [ ] Al final de `paquete_lifecycle.receive()`, tras una transición exitosa, se resuelve el Ocupante correspondiente al destinatario del paquete: primero por `recipient_phone` (Persona → Ocupante activo), si no por coincidencia de `recipient_name` dentro del roster de la unidad del snapshot (`snapshot_torre`/`snapshot_apartamento`).
 - [ ] Si se resuelve un Ocupante, su unidad no tiene principal todavía, y el Ocupante tiene `persona_id` — se promueve (`promover_a_principal`).

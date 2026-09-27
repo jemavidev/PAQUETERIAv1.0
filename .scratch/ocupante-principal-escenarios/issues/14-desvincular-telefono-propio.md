@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 30b14e2)
 
 - [ ] Nueva función en `persona_service.py` (junto a `cambiar_telefono_propio`): quita `telefono`, exige `whatsapp_usuario` ya presente (rechaza con mensaje claro si no).
 - [ ] La UI de tab Datos exige confirmación explícita (ej. checkbox u paso adicional) que menciona la pérdida de acceso, antes de ejecutar.

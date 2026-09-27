@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (clasificador compartido).
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: 6de5ecb)
 
 - [ ] `ocupante_service` gana `asociar_whatsapp_a_ocupante`/`editar_whatsapp_ocupante`/`desvincular_whatsapp_ocupante`, mismo contrato y restricciones que sus contrapartes de Teléfono (el principal no se edita/desvincula por acá).
 - [ ] El formulario "agregar Ocupante" de tab Residentes usa el input único autoclasificado del ticket 01 en vez del campo "Teléfono" actual — puede crear un Ocupante identificado por Teléfono o por WhatsApp.

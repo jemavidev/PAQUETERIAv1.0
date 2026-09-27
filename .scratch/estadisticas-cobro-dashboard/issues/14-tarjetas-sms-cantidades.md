@@ -6,7 +6,7 @@ periodo" de Periodo seleccionado — solo cantidades todavía, el costo es el ti
 
 **Blocked by:** 02, 11, 12
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `SmsPanorama`/`SmsPeriodo` en el tablero)
 
 - [ ] Panorama → "SMS enviados por AWS": cuenta, para Hoy/Semana/Mes, los mensajes del registro cuyo
       proveedor fue AWS SNS (avisos + códigos de acceso juntos) — no cambia con los filtros de la barra.

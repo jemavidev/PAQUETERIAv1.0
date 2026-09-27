@@ -5,7 +5,7 @@ tarjetas de SMS ganan su costo estimado en Panorama y en Periodo, más "Costo de
 
 **Blocked by:** 13, 14
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `TrioCosto` en el tablero)
 
 - [ ] Panorama → "SMS enviados por AWS" muestra, debajo de cada columna (Hoy/Semana/Mes), el costo
       estimado = cantidad de esa columna × el costo promedio configurado HOY (no un precio histórico).

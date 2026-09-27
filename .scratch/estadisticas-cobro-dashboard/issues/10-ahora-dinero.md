@@ -4,7 +4,7 @@
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** implementado (cerrado en la revisión del 2026-09-26; evidencia: `domain/estadisticas_tablero_service.py`)
 
 - [ ] "Por cobrar en bodega" = suma, sobre los paquetes RECIBIDO actuales, del cobro que se calcularía SI
       se entregaran ahora mismo — misma aritmética y misma exención de primera entrega que ya usa el

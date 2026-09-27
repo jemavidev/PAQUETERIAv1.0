@@ -6,7 +6,7 @@
 
 **Blocked by:** 02 — Sugerencia por Teléfono: elegir el nombre de un Contacto externo y anunciar o recibir a su nombre.
 
-**Status:** ready-for-agent
+**Status:** abierto -- revisado 2026-09-26: sin implementar: `sugerir_nombre_de_contacto_externo` devuelve None para `whatsapp` ("llega con el ticket 03")
 
 - [ ] Un usuario de WhatsApp que **no existe en paquetes** y coincide de forma exacta con **cualquiera de los usuarios de WhatsApp** de un Contacto externo produce la misma sugerencia que el Teléfono: mismo mensaje, misma tarjetita solo con el nombre, mismo desplegable "Nueva persona" plegado.
 - [ ] La coincidencia ignora el formato de entrada: con o sin `@` inicial y en cualquier combinación de mayúsculas y minúsculas (la forma canónica es sin `@` y en minúscula).
