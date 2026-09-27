@@ -463,6 +463,11 @@
           {{ bloque_staff(es_admin) }}
           {% endif %}
           <div class="account-menu-separator"></div>
+          {#- PIN de operador (`.scratch/pin-operador-dispositivo`, ticket 03): deja el equipo en la pantalla de
+              bloqueo antes de pasárselo a otro compañero, sin cerrar los registros del equipo. -#}
+          <form method="post" action="/bloquear">
+            <button type="submit" class="account-menu-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">{{ iconos_nav.candado|safe }}</svg>Bloquear</button>
+          </form>
           {{ formulario_salir() }}
         {% endcall %}
         {% elif tiene_persona %}

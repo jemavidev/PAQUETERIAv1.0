@@ -17,12 +17,17 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.domain.configuracion_conjunto_service import obtener_nombre_conjunto
 from app.domain.operador_dispositivo_service import (
     DemasiadosIntentosDePin,
+    PinIncorrecto,
     definir_pin,
+    desbloquear,
     obtener_o_crear_dispositivo,
     registrar_ingreso,
+    tiene_registros_vigentes,
 )
+from app.domain.usuario import RolUsuario
 from app.domain.staff_service import editar_mi_perfil, set_password, verify_credentials
 from app.domain.usuario import Usuario
 
@@ -35,6 +40,8 @@ from ..security import (
     ROLE_SESSION_KEY,
     SESION_VERSION_KEY,
     SESSION_KEY,
+    abrir_sesion_staff,
+    cerrar_sesion_staff,
     current_staff,
     dispositivo_id_de,
     fijar_cookie_dispositivo,
@@ -94,12 +101,7 @@ def login_submit(
     if usuario is None:
         return _error()
 
-    request.session[SESSION_KEY] = str(usuario.id)
-    request.session[SESION_VERSION_KEY] = usuario.sesion_version or 0  # issue 383
-    # Dato derivado para el menú (DEC-09) -- require_admin sigue siendo la
-    # única puerta real de las rutas de administración.
-    request.session[ROLE_SESSION_KEY] = usuario.rol.value
-    request.session[NOMBRE_SESSION_KEY] = usuario.nombre
+    abrir_sesion_staff(request, usuario)
     # PIN de operador (`.scratch/pin-operador-dispositivo`): entrar con contraseña registra ESTE equipo para el
     # Usuario; sin PIN todavía, lo primero es crearlo.
     dispositivo = obtener_o_crear_dispositivo(db, dispositivo_id_de(request))
@@ -147,6 +149,62 @@ def mi_pin_guardar(
     except ValueError as exc:
         return _pantalla_pin(request, usuario, str(exc), status_code=400)
     return RedirectResponse("/paquetes", status_code=status.HTTP_303_SEE_OTHER)
+
+
+def _siguiente_seguro(siguiente: str, usuario: Usuario) -> str:
+    """A dónde volver tras desbloquear: solo rutas locales, y al inicio si el nuevo Operador no tiene permiso para la
+    vista pedida (un OPERADOR sobre Administración)."""
+    siguiente = (siguiente or "").strip()
+    if not siguiente.startswith("/") or siguiente.startswith("//") or "\\" in siguiente:
+        return "/paquetes"
+    if siguiente.startswith("/administracion") and usuario.rol != RolUsuario.ADMIN:
+        return "/paquetes"
+    return siguiente
+
+
+def _pantalla_bloqueo(request: Request, db: Session, siguiente: str, error: str | None = None, status_code=200):
+    return templates.TemplateResponse(
+        "auth/bloqueo.html",
+        {
+            "request": request,
+            "nombre_conjunto": obtener_nombre_conjunto(db),
+            "siguiente": siguiente,
+            "error": error,
+        },
+        status_code=status_code,
+    )
+
+
+@router.get("/bloqueo", response_class=HTMLResponse)
+def pantalla_bloqueo(request: Request, db: Session = Depends(get_db), siguiente: str = "/paquetes"):
+    """Pantalla de bloqueo (`.scratch/pin-operador-dispositivo`, ticket 03): nombre del conjunto, teclado del PIN y el
+    enlace a usuario y contraseña. Nunca lista a los registrados. Sin registros vigentes en el equipo, no sirve de
+    nada: directo a `/ingresar`."""
+    if not tiene_registros_vigentes(db, dispositivo_id_de(request)):
+        return RedirectResponse("/ingresar", status_code=status.HTTP_303_SEE_OTHER)
+    return _pantalla_bloqueo(request, db, siguiente)
+
+
+@router.post("/bloqueo")
+def desbloquear_con_pin(
+    request: Request,
+    db: Session = Depends(get_db),
+    pin: str = Form(""),
+    siguiente: str = Form("/paquetes"),
+):
+    try:
+        usuario = desbloquear(db, dispositivo_id_de(request), pin)
+    except PinIncorrecto as exc:
+        return _pantalla_bloqueo(request, db, siguiente, error=str(exc), status_code=400)
+    abrir_sesion_staff(request, usuario)
+    return RedirectResponse(_siguiente_seguro(siguiente, usuario), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/bloquear")
+def bloquear(request: Request):
+    """"Bloquear" del menú: quita al Operador activo, sin tocar los registros del equipo."""
+    cerrar_sesion_staff(request)
+    return RedirectResponse("/bloqueo", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/salir")
@@ -246,8 +304,10 @@ def cambiar_mi_password(
         set_password(db, usuario, password)
     except ValueError as exc:
         return _error(str(exc), campos=["password"])
-    # Issue 383: el cambio cierra las sesiones de OTROS equipos, no la de quien lo acaba de hacer.
+    # Issue 383: el cambio cierra las sesiones de OTROS equipos, no la de quien lo acaba de hacer -- ni el registro de
+    # este equipo (PIN de operador), que se renueva con la versión nueva.
     request.session[SESION_VERSION_KEY] = usuario.sesion_version
+    registrar_ingreso(db, obtener_o_crear_dispositivo(db, dispositivo_id_de(request)), usuario)
 
     return templates.TemplateResponse(
         "auth/me.html", {"request": request, "usuario": usuario, "guardado": True}

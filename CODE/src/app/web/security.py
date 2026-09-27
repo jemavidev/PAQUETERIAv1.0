@@ -9,13 +9,14 @@ sale SIEMPRE de la sesión verificada, nunca de un parámetro del cliente.
 """
 
 import uuid
+from urllib.parse import quote
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from itsdangerous import BadSignature, Signer
 from sqlalchemy.orm import Session
 
-from app.domain.operador_dispositivo_service import registro_vigente
+from app.domain.operador_dispositivo_service import registro_vigente, tiene_registros_vigentes
 from app.domain.persona import Persona
 from app.domain.usuario import RolUsuario, Usuario
 
@@ -89,20 +90,49 @@ class RedireccionStaff(Exception):
         self.destino = destino
 
 
+def abrir_sesion_staff(request: Request, usuario: Usuario) -> None:
+    """Deja a `usuario` como Operador activo de la sesión (al entrar con contraseña o al desbloquear con PIN)."""
+    request.session[SESSION_KEY] = str(usuario.id)
+    request.session[SESION_VERSION_KEY] = usuario.sesion_version or 0  # issue 383
+    # Dato derivado para el menú (DEC-09) -- require_admin sigue siendo la
+    # única puerta real de las rutas de administración.
+    request.session[ROLE_SESSION_KEY] = usuario.rol.value
+    request.session[NOMBRE_SESSION_KEY] = usuario.nombre
+
+
+def cerrar_sesion_staff(request: Request) -> None:
+    """Quita al Operador activo. `pop`, nunca `clear`: la sesión de cliente es independiente."""
+    request.session.pop(SESSION_KEY, None)
+    request.session.pop(ROLE_SESSION_KEY, None)
+    request.session.pop(NOMBRE_SESSION_KEY, None)
+
+
+def _sin_operador(request: Request, db: Session, detalle: str):
+    """Sin Operador activo válido. Si alguien puede desbloquear este equipo con su PIN, a la pantalla de bloqueo
+    (volviendo después a la vista pedida, si era una navegación); si no, 401 → `/ingresar`."""
+    cerrar_sesion_staff(request)
+    if tiene_registros_vigentes(db, dispositivo_id_de(request)):
+        destino = "/bloqueo"
+        if request.method == "GET":
+            pedido = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+            destino += "?siguiente=" + quote(pedido, safe="/")
+        raise RedireccionStaff(destino)
+    raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=detalle)
+
+
 def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
     """El `Usuario` de la sesión actual, sin exigir que ya tenga PIN -- solo para la pantalla que lo crea.
-    Sin sesión válida → 401.
+    Sin sesión válida → pantalla de bloqueo si el equipo tiene registros vigentes, si no 401.
 
     Un 401 lo convierte el app en un redirect a `/ingresar` (ver app factory).
     """
     raw = request.session.get(SESSION_KEY)
     if not raw:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="No autenticado")
+        _sin_operador(request, db, "No autenticado")
     try:
         usuario_id = uuid.UUID(str(raw))
     except (ValueError, TypeError):
-        request.session.pop(SESSION_KEY, None)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Sesión inválida")
+        _sin_operador(request, db, "Sesión inválida")
 
     usuario = db.get(Usuario, usuario_id)
     if usuario is not None and request.session.get(SESION_VERSION_KEY, 0) != (usuario.sesion_version or 0):
@@ -119,8 +149,7 @@ def staff_sin_pin(request: Request, db: Session = Depends(get_db)) -> Usuario:
         # acceso en el siguiente request, no recién en su próximo login
         # (hueco real encontrado en auditoría, .scratch/pendientes-cliente
         # -- antes `activo` solo se chequeaba en `staff_service.autenticar`).
-        request.session.pop(SESSION_KEY, None)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Sesión inválida")
+        _sin_operador(request, db, "Sesión inválida")
     return usuario
 
 

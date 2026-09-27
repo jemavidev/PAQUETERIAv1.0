@@ -157,3 +157,46 @@ def definir_pin(session: Session, usuario: Usuario, pin: str) -> None:
     )
     session.flush()
     raise PinNoDisponible("Ese PIN no está disponible. Elige otro.")
+
+
+# --------------------------------------------------------------------------- #
+# Desbloqueo
+# --------------------------------------------------------------------------- #
+class PinIncorrecto(ValueError):
+    """El PIN no corresponde a ningún Usuario registrado en este equipo. Un solo mensaje para todos los casos: no
+    revela si el PIN existe en otro equipo."""
+
+
+def tiene_registros_vigentes(session: Session, dispositivo_id) -> bool:
+    """¿Alguien puede desbloquear este equipo con su PIN? Si no, la pantalla de bloqueo no sirve y se va a
+    `/ingresar`."""
+    if dispositivo_id is None:
+        return False
+    registros = (
+        session.query(RegistroDispositivo, Usuario)
+        .join(Usuario, Usuario.id == RegistroDispositivo.usuario_id)
+        .filter(RegistroDispositivo.dispositivo_id == dispositivo_id, Usuario.activo.is_(True))
+        .all()
+    )
+    return any(registro_vigente(session, dispositivo_id, usuario) for _registro, usuario in registros)
+
+
+def desbloquear(session: Session, dispositivo_id, pin: str) -> Usuario:
+    """El Usuario dueño de `pin`, si tiene un registro vigente en este equipo -- el nuevo Operador activo.
+
+    Raises:
+        PinIncorrecto: en cualquier otro caso.
+    """
+    dispositivo = obtener_dispositivo(session, dispositivo_id)
+    usuario = None
+    if dispositivo is not None and _PIN_RE.match((pin or "").strip()):
+        usuario = session.query(Usuario).filter(Usuario.pin_huella == huella_pin(pin.strip())).first()
+    if usuario is None or not registro_vigente(session, dispositivo.id, usuario):
+        if dispositivo is not None:
+            dispositivo.intentos_pin_fallidos = (dispositivo.intentos_pin_fallidos or 0) + 1
+            session.flush()
+        raise PinIncorrecto("PIN incorrecto.")
+    dispositivo.intentos_pin_fallidos = 0
+    dispositivo.ultimo_uso_en = _ahora()
+    session.flush()
+    return usuario
