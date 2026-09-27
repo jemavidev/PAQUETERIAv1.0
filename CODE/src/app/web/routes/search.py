@@ -31,6 +31,7 @@ from fastapi.responses import HTMLResponse
 
 from sqlalchemy import func, or_
 
+from app.domain.posicion_service import filas_desactivadas
 from app.domain.apartamento_service import listar_catalogo_por_torre
 from app.domain.cobro import Cobro
 from app.domain.cobro_service import (
@@ -218,6 +219,7 @@ def renderizar_busqueda(
                 {
                     "tipos": list(TipoPaquete),
                     "condiciones": list(CondicionPaquete),
+                    "filas_desactivadas": filas_desactivadas(db),  # issue 416
                     "catalogo_torres": listar_catalogo_por_torre(db),
                     "residentes_por_unidad": residentes_por_torre_apartamento(db),
                     "candidatos_correccion": candidatos_correccion(db, paquete),

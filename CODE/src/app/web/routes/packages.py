@@ -79,6 +79,7 @@ from app.domain.paquete_correccion_service import (
 )
 from app.domain.guia import GuiaDemasiadoLarga, normalizar_guia
 from app.domain.posicion import PosicionInvalida, normalizar_posicion
+from app.domain.posicion_service import filas_desactivadas, posicion_habilitada
 from app.domain.imagen_service import ImagenInvalida
 from app.domain.paquete_foto_service import MAX_FOTOS_POR_PAQUETE, agregar_foto_desde_url, listar_fotos
 from app.domain.paquete_lifecycle import (
@@ -1239,6 +1240,8 @@ def _render_lista(
         "motivos_anulacion_cobro": listar_motivos_anulacion(db),
         "tipos": list(TipoPaquete),
         "condiciones": list(CondicionPaquete),
+        # Issue 416: filas del estante que el ADMIN desactivó -- el modal Recibir no las deja elegir.
+        "filas_desactivadas": filas_desactivadas(db),
         "estados": list(EstadoPaquete),
         "filtro_estado": estado or "",
         "filtro_q": q or "",
@@ -1596,6 +1599,9 @@ async def receive_action(
     try:
         posicion = normalizar_posicion(posicion)
         error_posicion = None if posicion else "Elige la posición del estante donde guardas el paquete."
+        # Issue 416: una fila desactivada en Administración → Posiciones no se puede elegir.
+        if posicion and not posicion_habilitada(db, posicion):
+            error_posicion = f"La posición «{posicion}» está desactivada."
     except PosicionInvalida as exc:
         error_posicion = str(exc)
     if error_posicion:

@@ -435,3 +435,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `413` — Activar la compresión de respuestas en test.papyrus.com.co (Caddy `encode`) — **desplegado en test (`3ea732f`), pendiente confirmar en vivo**
 - `414` — Grilla de Posición del modal Recibir más pequeña (botones compactos) — **implementado (local), pendiente desplegar**
 - `415` — Grilla de Posición: 11/12/21/22 con fondo azul y 41–72 pegados entre sí — **implementado (local), pendiente desplegar**
+- `416` — Administración → Posiciones: desactivar filas del estante (no elegibles en Recibir) — **implementado (local), pendiente desplegar**
