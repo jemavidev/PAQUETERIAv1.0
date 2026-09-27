@@ -107,12 +107,25 @@ El compartimento del estante de la papelería Papyrus donde el Operador guarda e
 ### Usuario (staff)
 Miembro del staff. Entidad separada de la Persona. Roles `ADMIN` / `OPERADOR`. **Solo un `ADMIN` crea cuentas de staff.**
 
+### PIN
+4 dígitos que cada Usuario **elige** y que son **únicos** entre todos los Usuarios: en un equipo compartido identifican a quién está operando sin elegir nombre de una lista. Solo sirven en un **Dispositivo registrado** de su dueño. Se guarda como huella HMAC, nunca en claro. Es obligatorio: sin PIN, el Usuario no pasa de "Crea tu PIN" (`.scratch/pin-operador-dispositivo`).
+
+### Dispositivo registrado
+Un equipo (navegador, identificado por su propia cookie firmada) donde un Usuario entró con **usuario y contraseña**. Vigente por los días configurados en "Seguridad de sesión" (15 por defecto). Deja de valer con "Salir de este dispositivo", "Cerrar en todos los dispositivos", un cambio de contraseña o la desactivación del Usuario. Tras **5 PIN incorrectos seguidos**, el equipo exige contraseña y quien entre cambia su PIN.
+
+### Operador activo
+El Usuario que desbloqueó el equipo con su PIN (o entró con contraseña): el **actor** de todo lo que se haga en ese equipo hasta el siguiente Bloqueo. Hay **uno solo por equipo**, sin importar las pestañas abiertas.
+
+### Bloqueo
+Estado del equipo tras la **inactividad configurada** (300 s por defecto; cuenta cualquier toque, clic o tecla) o tras "Bloquear". El servidor rechaza toda acción hasta que alguien digite su PIN, salvo la **cola de fotos**, que sigue subiendo. Si desbloquea la misma persona, sigue donde iba; si es otra, la vista se recarga limpia.
+- Término evitado: "bloqueado" a secas para esto — "Bloqueado" ya es el estado de un **residente** (`.scratch/bloquear-clientes`). Este es el Bloqueo **del equipo**.
+
 ---
 
 ## Autenticación
 
 - **Clientes**: **OTP por teléfono** (baja fricción; ya dan el teléfono).
-- **Staff**: **usuario/email + contraseña fuerte**; no depende del proveedor SMS para entrar. MFA opcional a futuro.
+- **Staff**: **usuario/email + contraseña fuerte**; no depende del proveedor SMS para entrar. MFA opcional a futuro. En un equipo ya registrado con contraseña, el día a día es el **PIN** (ver arriba).
 
 ---
 
