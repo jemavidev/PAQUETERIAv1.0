@@ -4,7 +4,7 @@
 staff pero no se ha logueado y el pin si existe o si es correcto, deberia poder redirigirlo a la pantalla de login,
 indiferentemente que otro usuario sea el que haya bloqueado la pantalla con PIN"
 
-**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (`860699b`, confirmado por Jesús en test 2026-09-27)
 
 ## Alcance
 

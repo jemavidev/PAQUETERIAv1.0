@@ -5,7 +5,7 @@ reflejen en el input, de esta forma al cargar esta vista simplemente se puedan d
 ya que en este momento es necesario presionar los botones de cada digito con el mouse. Este comportamiento es diferente a un
 dispositivo mobil ya que en el dispositivo movil si seria facil presionar cada numero."
 
-**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (`860699b`, confirmado por Jesús en test 2026-09-27)
 
 ## Alcance
 

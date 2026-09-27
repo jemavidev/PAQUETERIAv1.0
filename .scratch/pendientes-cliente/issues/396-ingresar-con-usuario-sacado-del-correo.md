@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "es posible que paralelo a el email se pueda también ingresar con un nombre de usuario ...
 (email: jveyes@gmail.com, entonces usuario: jveyes)" -- tras el análisis: "sí, hazlo con el usuario sacado del correo".
 
-**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (`860699b`, confirmado por Jesús en test 2026-09-27)
 
 ## Decisiones
 

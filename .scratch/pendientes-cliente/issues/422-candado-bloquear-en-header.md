@@ -5,7 +5,7 @@ no veo un acceso directo a esta vista, tanto para el desktop como para los dispo
 digamos de un candado al lado del boton de login, puede ser a la izquierda de este. Este deberia ser visible solamente si
 existe algun usuario logueado en ese dispositivo."
 
-**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo — versión corregida, ver abajo
+**Status:** verificado (`860699b`, confirmado por Jesús en test 2026-09-27) — versión corregida, ver abajo
 
 ## Alcance
 
@@ -30,4 +30,4 @@ pantalla de bloqueo y pueda ingresar el pin"
 - Con un Operador activo no aparece. Bloquear sigue siendo "Bloquear" del menú de cuenta.
 - Se reemplaza lo implementado en `b3d96f9` (candado que bloqueaba).
 
-**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (`860699b`, confirmado por Jesús en test 2026-09-27)

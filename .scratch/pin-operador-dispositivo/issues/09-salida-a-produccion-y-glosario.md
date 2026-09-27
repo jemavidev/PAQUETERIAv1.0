@@ -6,14 +6,14 @@
 
 **Blocked by:** 01, 02, 03, 04, 05, 06, 07, 08.
 
-**Status:** desplegado en test (`860699b`, 2026-09-27) · pendiente: verificación en vivo
+**Status:** done · verificado en test (`860699b`, 2026-09-27)
 
 - [x] Invalidación de las sesiones de staff al desplegar: subir la versión de sesión de todos (migración o comando operativo), sin tocar las sesiones de cliente.
 - [x] La llave HMAC del PIN se agrega a la configuración del repo de despliegue (`jemavidev/PaqueteX`) y al entorno de test, generada al azar y nunca commiteada.
 - [x] Se reconstruye `tailwind.css` si hubo clases nuevas en las plantillas (el Dockerfile de despliegue no lo hace).
 - [x] Glosario de `CONTEXT.md`: PIN, Dispositivo registrado, Operador activo y Bloqueo.
 - [x] La suite completa corre verde con el comando del CI (`pytest` sin rutas) y con `-m browser`.
-- [ ] Verificación en `test.papyrus.com.co`, en celular y escritorio: primer ingreso y creación del PIN, cambio entre dos Usuarios con PIN, bloqueo por inactividad, y fotos subiendo con el equipo bloqueado.
+- [x] Verificación en `test.papyrus.com.co`, en celular y escritorio: primer ingreso y creación del PIN, cambio entre dos Usuarios con PIN, bloqueo por inactividad, y fotos subiendo con el equipo bloqueado.
 
 ## Comments
 

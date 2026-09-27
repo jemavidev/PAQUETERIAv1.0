@@ -415,7 +415,7 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `393` — Saldo contra entrega: el destinatario se resuelve por teléfono, luego WhatsApp, y por nombre solo si es único (antes: primer nombre coincidente); limpieza del selector de saldo por apartamento — **desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo**
 - `394` — "La papelería Papyrus" / "el personal de Papyrus" en vez de "portería"/"portero" en los 11 textos visibles, asunto del correo de Recibido y glosario — **desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo**
 - `395` — `/mis-datos`: el código del paquete en los movimientos del saldo enlaza a `/consultar?q=<código>` — **desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo**
-- `396` — `/ingresar` y `/entrar`: el staff entra con correo o con usuario (lo que va antes de la "@", sin migración); crear personal rechaza un usuario repetido — **desplegado en test (`860699b`, reabierto y corregido 2026-09-27: `/entrar` seguía con `type="email"`), pendiente confirmar en vivo**
+- `396` — `/ingresar` y `/entrar`: el staff entra con correo o con usuario (lo que va antes de la "@", sin migración); crear personal rechaza un usuario repetido — **verificado** (`860699b`)
 - `397` — `/paquetes` móvil: cada paquete en 2 líneas y acciones grandes -- 3 variantes prototipadas (`:8011`, rama `prototipo/paquetes-movil-2-lineas`) -- elegida la B, con letra más grande — **desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo**
 - `398` — "Staff Papyrus" en vez de "Operador v1 (sin identificar)" para el usuario técnico de las entregas/cancelaciones importadas de la v1 — **verificado (según su archivo de issue; el índice estaba desactualizado)**
 - `399` — `/administracion/estadisticas-cobro`: quitar la barra de filtros (atajos de fecha, Tipo, Cobrado/Anulado); "Periodo seleccionado" pasa a "Todo el historial" — **verificado (localhost y test, `b272a6b`)**
@@ -441,7 +441,7 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `419` — "Corregir destinatario" solo con apartamento asignado (lápiz apagado sin apartamento) — **verificado** (`96bb562`)
 - `420` — Ícono "persona con intercambio" para Corregir destinatario — **verificado** (`96bb562`)
 - `421` — En móvil, sin apartamento, no se muestra el ícono apagado de Corregir — **verificado** (`96bb562`)
-- `422` — Candado en el header para ir a desbloquear (solo con el equipo bloqueado) — **desplegado en test (`860699b`), pendiente confirmar en vivo**
-- `423` — PIN: teclear los números en escritorio sin usar el mouse — **desplegado en test (`860699b`), pendiente confirmar en vivo**
-- `424` — Footer público: siempre los 4 íconos (Anunciar, Consultar, Ayuda, WhatsApp) — **desplegado en test (`860699b`), pendiente confirmar en vivo**
-- `425` — PIN correcto de un Usuario sin registro en el equipo: a `/ingresar` — **desplegado en test (`860699b`), pendiente confirmar en vivo**
+- `422` — Candado en el header para ir a desbloquear (solo con el equipo bloqueado) — **verificado** (`860699b`)
+- `423` — PIN: teclear los números en escritorio sin usar el mouse — **verificado** (`860699b`)
+- `424` — Footer público: siempre los 4 íconos (Anunciar, Consultar, Ayuda, WhatsApp) — **verificado** (`860699b`)
+- `425` — PIN correcto de un Usuario sin registro en el equipo: a `/ingresar` — **verificado** (`860699b`)
