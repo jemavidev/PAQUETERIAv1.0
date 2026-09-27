@@ -6,10 +6,10 @@
 
 **Blocked by:** 01, 02, 03, 04, 05, 06, 07, 08.
 
-**Status:** implementado localmente · pendiente: deploy a test (solo cuando se pida)
+**Status:** desplegado en test (`860699b`, 2026-09-27) · pendiente: verificación en vivo
 
 - [x] Invalidación de las sesiones de staff al desplegar: subir la versión de sesión de todos (migración o comando operativo), sin tocar las sesiones de cliente.
-- [ ] La llave HMAC del PIN se agrega a la configuración del repo de despliegue (`jemavidev/PaqueteX`) y al entorno de test, generada al azar y nunca commiteada.
+- [x] La llave HMAC del PIN se agrega a la configuración del repo de despliegue (`jemavidev/PaqueteX`) y al entorno de test, generada al azar y nunca commiteada.
 - [x] Se reconstruye `tailwind.css` si hubo clases nuevas en las plantillas (el Dockerfile de despliegue no lo hace).
 - [x] Glosario de `CONTEXT.md`: PIN, Dispositivo registrado, Operador activo y Bloqueo.
 - [x] La suite completa corre verde con el comando del CI (`pytest` sin rutas) y con `-m browser`.
@@ -26,3 +26,4 @@
   1. Generar `PIN_SECRET_KEY` al azar y agregarla al `.env` del servidor **y** al bloque `environment:` de `docker-compose.yml` en el repo de despliegue (`jemavidev/PaqueteX`). Con `WEB_ENV=production` es obligatoria: sin ella, entrar falla con RuntimeError. Documentada en `.env.staging.example`.
   2. Llevar los archivos al repo de despliegue (diff por archivo, sin `git subtree`).
   3. Verificar en `test.papyrus.com.co`, en celular y escritorio: crear el PIN al primer ingreso, cambio entre dos Usuarios con PIN, bloqueo por inactividad y fotos subiendo con el equipo bloqueado.
+- **Deploy 2026-09-27 (`860699b` en `jemavidev/PaqueteX`):** `PIN_SECRET_KEY` generada en el servidor con `openssl rand -hex 32` (nunca salió de allí; respaldo previo del `.env` en `.env.bak-2026-09-27`) y agregada al `environment:` de `docker-compose.yml`. CI verde (tests + deploy), `alembic_version` = `0069_pin_dispositivo`, la variable está presente en el contenedor. Falta la verificación en celular y escritorio.

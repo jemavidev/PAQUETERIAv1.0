@@ -5,7 +5,7 @@ Consultar, Ayuda y Whatsapp) estos deben ser los iconos por default que deberia 
 publicar cuando los usuarios no esten logueados o este el bloqueo activo por PIN para usuarios de staff." Confirmado: "usemos
 la version de los 4 iconos".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
 
 ## Causa
 

@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "es posible que paralelo a el email se pueda también ingresar con un nombre de usuario ...
 (email: jveyes@gmail.com, entonces usuario: jveyes)" -- tras el análisis: "sí, hazlo con el usuario sacado del correo".
 
-**Status:** pendiente (reabierto 2026-09-27)
+**Status:** desplegado en test (`860699b`, 2026-09-27), pendiente confirmar en vivo
 
 ## Decisiones
 
@@ -31,3 +31,5 @@ navegador rechaza "jveyes" antes de enviarlo. El 396 solo había cambiado `/ingr
 El backend sí resolvía el usuario (verificado por HTTP contra :8010 con una cuenta temporal).
 
 - `/entrar` (pestaña Staff): mismo campo que `/ingresar` -- "Email o usuario", `type="text"`.
+- Prueba nueva: `test_la_pestana_staff_de_entrar_acepta_escribir_un_usuario` (fallaba antes). Suite del CI en el repo de
+  despliegue: 2424 en verde. En test, `/entrar` ya sirve "Email o usuario" con `type="text"`.
