@@ -148,6 +148,9 @@ def test_el_modal_ver_muestra_la_posicion_o_dice_sin_ubicacion(client):
 
     assert "📍 41" in _modal_ver(html, con)
     assert "Sin ubicación" in _modal_ver(html, sin)
+    # Issue 431: en el título, justo a la derecha de la píldora del código.
+    titulo = re.search(r"<h2[^>]*>(.*?)</h2>", _modal_ver(html, con), re.S).group(1)
+    assert re.search(rf">{con.access_code}</a>\s*<span[^>]*>📍 41</span>", titulo)
     ver_entregado = _modal_ver(html, entregado)
     assert "📍" not in ver_entregado and "Sin ubicación" not in ver_entregado
 
@@ -163,6 +166,8 @@ def test_la_tarjeta_de_consultar_con_sesion_de_staff_muestra_la_posicion(client)
 
     assert "📍 41" in tarjeta_con
     assert "Sin ubicación" in tarjeta_sin
+    # Issue 431: en la misma línea que la píldora de días, a su derecha.
+    assert re.search(r"días?\s*</span>\s*<span[^>]*>📍 41</span>", tarjeta_con)
 
 
 def test_la_lista_de_coincidencias_por_guia_muestra_la_posicion(client):

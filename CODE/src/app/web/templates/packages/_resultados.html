@@ -343,6 +343,8 @@
        (conversación 2026-08-16, pedido explícito) -- `ver_paquete_id` viaja
        como querystring (`/paquetes?ver=<id>`), mismo patrón ya usado por
        `error_paquete_id` para reabrir el modal Corregir en un error. #}
+    {#- Issue 431: la Posición (o "Sin ubicación") a la derecha de la píldora del código, en el mismo título. #}
+    {%- set titulo_paquete = titulo_paquete ~ ' ' ~ etiqueta_posicion(p, sin_ubicacion=True) %}
     {% call modal("ver-" ~ p.id, titulo_paquete, ancho='md', abierto=(ver_paquete_id|default(none) == p.id|string)) %}
       {# Teléfono + Torre/Apto justo debajo del título, en la misma línea
          (conversación 2026-08-17, pedido explícito: "el numero de telefono
@@ -405,8 +407,6 @@
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div class="flex flex-wrap items-center gap-2">
           {{ badge(p.estado) }}
-          {# Issue 427: la Posición también en el modal Ver (solo Recibido; "Sin ubicación" si no tiene). #}
-          {{ etiqueta_posicion(p, sin_ubicacion=True) }}
           {# Duración transcurrida (conversación 2026-08-17, pedido
              explícito, refinado el mismo día para incluir horas): desde
              que se RECIBIÓ hasta que se entregó/canceló, o contando en
