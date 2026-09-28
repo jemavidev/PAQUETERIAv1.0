@@ -11,6 +11,10 @@
 # imagen (a diferencia de docker-compose).
 #
 # Uso: ./scripts/paquetex_dev_up.sh
+# Desde el celular (misma red Wi-Fi, 2026-09-28): escuchar en la red y que los enlaces (WhatsApp, correos) apunten a
+# la IP del equipo en vez de localhost -- ojo, cualquiera en esa red llega a este servidor (la BD dev trae contactos
+# reales):
+#   APP_HOST=0.0.0.0 PUBLIC_BASE_URL=http://192.168.1.121:8010 ./scripts/paquetex_dev_up.sh
 # Reset a datos limpios: ./scripts/paquetex_dev_reset.sh
 
 set -euo pipefail
@@ -20,6 +24,7 @@ CONTAINER=paquetex_dev_pg
 VOLUME=paquetex_dev_pgdata          # con NOMBRE -- nunca queda huérfano
 PG_PORT=5433
 APP_PORT=8010
+APP_HOST="${APP_HOST:-127.0.0.1}"
 DB_URL="postgresql://paquetex:paquetex_dev@localhost:${PG_PORT}/paquetex_dev"
 ADMIN_EMAIL="info@papyrus.com.co"
 ADMIN_PASSWORD="Contrasena1"
@@ -88,8 +93,8 @@ RESPALDOS_LOCAL="${RESPALDOS_LOCAL:-$HOME/.paquetex-dev}"
 mkdir -p "$RESPALDOS_LOCAL/respaldos" "$RESPALDOS_LOCAL/fotos-copia"
 
 cd "$CODE_DIR/src"
-exec env DATABASE_URL="$DB_URL" PUBLIC_BASE_URL="http://localhost:${APP_PORT}" \
+exec env DATABASE_URL="$DB_URL" PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-http://localhost:${APP_PORT}}" \
   RESPALDO_DIR="$RESPALDOS_LOCAL/respaldos" RESPALDO_FOTOS_DIR="$RESPALDOS_LOCAL/fotos-copia" \
   RESPALDO_CHECKOUT_DIR="$(dirname "$CODE_DIR")" RESPALDO_CHECKOUT_SUBDIR=CODE RESPALDO_CODIGO_DIR="$CODE_DIR" \
   RESPALDO_DIR_HOST="$RESPALDOS_LOCAL/respaldos" RESPALDO_APP_DIR_HOST="$CODE_DIR" \
-  "$CODE_DIR/.venv/bin/python" -m uvicorn app.web.app:app --reload --host 127.0.0.1 --port "$APP_PORT"
+  "$CODE_DIR/.venv/bin/python" -m uvicorn app.web.app:app --reload --host "$APP_HOST" --port "$APP_PORT"
