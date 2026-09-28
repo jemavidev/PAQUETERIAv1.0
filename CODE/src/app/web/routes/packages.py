@@ -48,7 +48,7 @@ from app.domain.cobro_service import (
 )
 from app.domain.motivo_cancelacion_service import listar_motivos, motivo_valido
 from app.domain.notification_sender import NotificationSender
-from app.domain.notificacion_service import preparar_notificacion
+from app.domain.notificacion_service import mensaje_whatsapp_paquete, preparar_notificacion, textos_whatsapp_vigentes
 from app.domain.ocupante import Ocupante
 from app.domain.ocupante_service import (
     agregar_ocupante,
@@ -287,22 +287,6 @@ def _con_texto_whatsapp(base_url: str | None, texto: str) -> str | None:
         return None
     separador = "&" if "?" in base_url else "?"
     return f"{base_url}{separador}text={texto}"
-
-
-def _mensaje_whatsapp(paquete: Paquete) -> str:
-    """Texto pre-cargado (`?text=`) del botón de WhatsApp de Acciones (issue
-    222, .scratch/pendientes-cliente, plantilla exacta pedida por el
-    cliente) -- con negrilla nativa de WhatsApp (`*texto*`), a diferencia
-    del cuerpo compartido de `notificacion_service.PLANTILLAS_DEFAULT`
-    (SMS/Email/WhatsApp automáticos), que se quedó en texto plano porque esa
-    sintaxis no significa nada fuera de WhatsApp."""
-    estado_texto = paquete.estado.value.capitalize()
-    link = f"{public_base_url_relaxed() or ''}/consultar?q={paquete.access_code}"
-    return (
-        f"Hola *{paquete.recipient_name}*, tu paquete con código "
-        f"*{paquete.access_code}* está *{estado_texto}*. "
-        f"Consulta más detalles aquí: {link}"
-    )
 
 
 def _whatsapp_notificacion_permitida(
@@ -719,6 +703,8 @@ def _listar(
     # pendientes-cliente) -- batch por TODAS las Personas candidatas de la
     # página (mismo criterio "un puñado fijo de queries" de arriba), no una
     # consulta por fila dentro del loop principal de más abajo.
+    # Issue 433: la pestaña WhatsApp de cada estado, una sola consulta para toda la página.
+    textos_whatsapp = textos_whatsapp_vigentes(db)
     preferencias_whatsapp = preferencias_activas_por_persona(
         db,
         {p.id for p in personas_por_telefono_destinatario.values()}
@@ -1002,7 +988,10 @@ def _listar(
         # whatsapp.com`, captura la PWA de Chrome) -- `packages/_acciones.
         # html` renderiza los 2 links, uno oculto según el breakpoint.
         _base_whatsapp_desktop = _whatsapp_url_destinatario(p, persona_para_whatsapp, desktop=True)
-        _texto_whatsapp = quote(_mensaje_whatsapp(p), safe="")
+        # Issue 433: el texto es la pestaña WhatsApp del estado del paquete en /administracion/notificaciones.
+        _texto_whatsapp = quote(
+            mensaje_whatsapp_paquete(db, p, public_base_url_relaxed() or "", textos_whatsapp), safe=""
+        )
         # Mensaje pre-cargado + gate por preferencia (issue 222, .scratch/
         # pendientes-cliente): el link SIEMPRE se calcula (falta de éste es
         # "sin teléfono registrado"), pero el botón solo queda HABILITADO si
