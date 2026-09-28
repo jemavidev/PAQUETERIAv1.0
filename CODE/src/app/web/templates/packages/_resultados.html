@@ -405,6 +405,8 @@
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div class="flex flex-wrap items-center gap-2">
           {{ badge(p.estado) }}
+          {# Issue 427: la Posición también en el modal Ver (solo Recibido; "Sin ubicación" si no tiene). #}
+          {{ etiqueta_posicion(p, sin_ubicacion=True) }}
           {# Duración transcurrida (conversación 2026-08-17, pedido
              explícito, refinado el mismo día para incluir horas): desde
              que se RECIBIÓ hasta que se entregó/canceló, o contando en

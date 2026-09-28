@@ -445,3 +445,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `423` — PIN: teclear los números en escritorio sin usar el mouse — **verificado** (`860699b`)
 - `424` — Footer público: siempre los 4 íconos (Anunciar, Consultar, Ayuda, WhatsApp) — **verificado** (`860699b`)
 - `425` — PIN correcto de un Usuario sin registro en el equipo: a `/ingresar` — **verificado** (`860699b`)
+- `426` — `/paquetes`: los badges Anunciado/Recibido siguen la búsqueda activa (antes: total global, issue 126) — **implementado** (local)
+- `427` — La Posición visible en todas las vistas de staff (modal Ver, /consultar staff, coincidencias por guía, dashboard) — **implementado** (local)

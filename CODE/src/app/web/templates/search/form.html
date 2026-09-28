@@ -8,7 +8,7 @@
 {% from "components/_visor_fotos.html" import galeria_fotos %}
 {% from "components/_modales.html" import modal, grupo_chips %}
 {% from "components/_recibir_paquete.html" import recursos_recibir, modal_recibir %}
-{% from "components/_posicion.html" import posicion_entregar %}
+{% from "components/_posicion.html" import chip_posicion, etiqueta_posicion, posicion_entregar %}
 {% from "components/_toast.html" import toast %}
 {% block title %}Consultar paquete — PAQUETEX{% endblock %}
 {% block content %}
@@ -39,6 +39,10 @@
       <strong class="text-slate-900 text-lg">{{ nombre_visible if ofuscado else paquete.recipient_name }}</strong>
       {{ badge(paquete.estado) }}
     </div>
+    {%- if request.session.get(SESSION_KEY) and paquete.estado.value == 'RECIBIDO' %}
+    {# Issue 427: la Posición en la tarjeta, solo con sesión de staff -- el residente nunca la ve. #}
+    <div class="mt-1.5">{{ etiqueta_posicion(paquete, sin_ubicacion=True) }}</div>
+    {%- endif %}
     {%- if dias_desde_recibido is not none %}
     {# Destacado como pill, sin etiqueta -- "5 días" solo, corrección en
        vivo 2026-08-02. Color índigo a propósito: no coincide con ninguno
@@ -317,7 +321,10 @@
             <strong class="block text-slate-900">{{ c.destinatario }}</strong>
             <span class="text-sm text-slate-700">Código {{ c.access_code }}</span>
           </span>
-          {{ badge(c.estado) }}
+          <span class="flex shrink-0 items-center gap-2">
+            {%- if c.estado.value == 'RECIBIDO' %}{{ chip_posicion(c.posicion) }}{% endif %}
+            {{ badge(c.estado) }}
+          </span>
         </a>
       </li>
       {% endfor %}
