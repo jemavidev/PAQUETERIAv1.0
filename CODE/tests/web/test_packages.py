@@ -3471,7 +3471,9 @@ def test_lista_no_dispara_una_query_de_persona_o_usuario_por_paquete(client):
     # +2 fijas por petición de `current_staff` (`.scratch/pin-operador-
     # dispositivo`, ticket 02): el registro del dispositivo y los días de
     # vigencia configurados.
-    assert len(queries) <= 22, (
+    # +1 fija de `textos_whatsapp_vigentes` (issue 433): la pestaña WhatsApp de los 4 estados, una sola consulta
+    # para toda la página (el texto del botón WhatsApp de cada paquete sale de ahí).
+    assert len(queries) <= 23, (
         f"{len(queries)} queries para 8 paquetes -- parece que volvió el N+1 "
         "(ver _listar en packages.py)"
     )
