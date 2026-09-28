@@ -4,7 +4,7 @@
 los badges siguen mostrando el mismo número de paquetes anunciados y recibidos, la idea es que si se filtra algo se
 actualicen los badges".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** implementado, aprobado por Jesús en local (2026-09-27) · pendiente desplegar a test
 
 ## Contexto
 

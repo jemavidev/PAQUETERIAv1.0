@@ -447,3 +447,6 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `425` — PIN correcto de un Usuario sin registro en el equipo: a `/ingresar` — **verificado** (`860699b`)
 - `426` — `/paquetes`: los badges Anunciado/Recibido siguen la búsqueda activa (antes: total global, issue 126) — **implementado** (local)
 - `427` — La Posición visible en todas las vistas de staff (modal Ver, /consultar staff, coincidencias por guía, dashboard) — **implementado** (local)
+- `428` — `/docs`, `/redoc` y `/openapi.json` apagados fuera de desarrollo — **implementado** (local)
+- `429` — Mensajes de confirmación que nunca se mostraban (teléfono actualizado, cuenta eliminada, residente eliminado) — **implementado** (local)
+- `430` — `PUBLIC_BASE_URL` desde el `.env` del servidor (no fijo en test) y obligatoria al arrancar — **implementado** (local)
