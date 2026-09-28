@@ -22,7 +22,7 @@ def _login_admin(client):
 
 
 def _modal_solicitud(texto):
-    i = texto.rindex(">Solicitud de autorización<")
+    i = texto.rindex(">SOLICITAR AUTORIZACION<")
     inicio = texto.rindex('<div id="modal-notif-', 0, i)
     fin = texto.find('<div id="modal-', inicio + 1)
     return texto[inicio : fin if fin != -1 else len(texto)]

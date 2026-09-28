@@ -40,3 +40,8 @@ asociar los mensajes de `/administracion/notificaciones` a los enlaces de WhatsA
 - Notificaciones, plantillas, historial, /announce, notifications y WhatsApp de /paquetes: 237 + 19 en verde.
 - Vista previa en vivo (JS) comparada con el filtro de Python sobre el mismo texto: HTML idéntico. Sin clases de
   Tailwind nuevas.
+
+## Ajuste (Jesús, 2026-09-27)
+
+- "cambia este texto "Solicitud de autorización" por "SOLICITAR AUTORIZACION"": el título de la fila nueva en
+  `/administracion/notificaciones` ahora es **SOLICITAR AUTORIZACION** (en mayúsculas, como ANUNCIADO/RECIBIDO/...).

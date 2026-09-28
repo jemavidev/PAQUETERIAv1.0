@@ -427,7 +427,7 @@ def _filas_plantillas(db: Session):
         {
             "evento": None,
             "clave": EVENTO_SOLICITUD_AUTORIZACION,
-            "titulo": "Solicitud de autorización",
+            "titulo": "SOLICITAR AUTORIZACION",  # nombre pedido por Jesús, en mayúsculas como las demás filas
             "motivo": None,
             "canales": [
                 {
