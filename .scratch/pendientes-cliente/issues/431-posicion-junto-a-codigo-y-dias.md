@@ -4,7 +4,7 @@
 lado derecho de la píldora con el código de los paquetes. Adicional en la vista /consultar ubiques la posición de
 "Posición en el estante" al lado derecho de la píldora con la cantidad de días."
 
-**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado en escritorio (`a3bda27`, Jesús 2026-09-28) · falta confirmar en celular
 
 ## Contexto
 

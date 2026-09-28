@@ -3,7 +3,7 @@
 **Origen:** análisis de enlaces (`.scratch/analisis-enlaces/mapa-de-enlaces.md`, hallazgo 1). Jesús: "corrige los 3
 problemas que encontraste".
 
-**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado (`a3bda27`, confirmado por Jesús en test 2026-09-28)
 
 ## Decisiones
 

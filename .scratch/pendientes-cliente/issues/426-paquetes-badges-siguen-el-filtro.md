@@ -4,7 +4,7 @@
 los badges siguen mostrando el mismo número de paquetes anunciados y recibidos, la idea es que si se filtra algo se
 actualicen los badges".
 
-**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado en escritorio (`a3bda27`, Jesús 2026-09-28) · falta confirmar en celular
 
 ## Contexto
 
