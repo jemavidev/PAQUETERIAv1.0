@@ -305,9 +305,18 @@ def test_url_whatsapp_cae_al_telefono_sin_usuario(db_session):
 # la variante mobile, ver `.scratch/whatsapp-deep-link/investigacion-
 # oficial.md`.
 # --------------------------------------------------------------------------- #
-def test_url_whatsapp_desktop_prioriza_el_usuario_sobre_el_telefono(db_session):
+def test_url_whatsapp_desktop_prioriza_el_telefono_sobre_el_usuario(db_session):
+    # Issue 434: en escritorio solo `web.whatsapp.com/send?phone=` abre la app instalada de WhatsApp Web -- con
+    # usuario (`wa.me/<usuario>`) Chrome abría una pestaña. Con teléfono, se usa el teléfono aunque haya usuario.
     ana = get_or_create_persona(db_session, "3001234567", "Ana")
     update_datos_personales(db_session, ana, whatsapp_usuario="ana.whats")
+    assert url_whatsapp_desktop(ana) == "https://web.whatsapp.com/send?phone=573001234567"
+    assert url_whatsapp(ana) == "https://wa.me/ana.whats"  # en el celular no cambia: sigue el usuario
+
+
+def test_url_whatsapp_desktop_solo_con_usuario_sigue_en_wa_me(db_session):
+    # Sin teléfono no hay dirección de WhatsApp Web que abra un chat por usuario: queda `wa.me/<usuario>`.
+    ana = get_or_create_persona_por_whatsapp(db_session, "ana.whats", "Ana")
     assert url_whatsapp_desktop(ana) == "https://wa.me/ana.whats"
 
 
@@ -331,8 +340,7 @@ def test_url_whatsapp_sin_texto_no_agrega_query_param(db_session):
 
 
 def test_url_whatsapp_desktop_con_texto_usa_signo_de_pregunta_si_es_usuario(db_session):
-    ana = get_or_create_persona(db_session, "3001234567", "Ana")
-    update_datos_personales(db_session, ana, whatsapp_usuario="ana.whats")
+    ana = get_or_create_persona_por_whatsapp(db_session, "ana.whats", "Ana")
     assert url_whatsapp_desktop(ana, texto="Hola") == "https://wa.me/ana.whats?text=Hola"
 
 

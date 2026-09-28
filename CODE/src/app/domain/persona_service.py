@@ -475,14 +475,14 @@ def url_whatsapp_desktop(persona: Persona, texto: str = None) -> str:
     (los templates renderizan los dos, uno oculto según el breakpoint
     mobile/desktop, ver `customers_manage/_resultados.html` y similares).
 
-    Con username no hay equivalente en `web.whatsapp.com` (exige un
-    teléfono real en `?phone=`) -- se queda en `wa.me/<user>` igual que la
-    variante mobile, es el único mecanismo que existe para ese caso en
-    cualquier dispositivo.
+    Prioridad INVERSA a la de celular (issue 434, .scratch/pendientes-cliente): el teléfono primero, aunque la
+    Persona tenga usuario de WhatsApp. Solo `web.whatsapp.com/send?phone=` abre la app instalada; con usuario
+    (`wa.me/<user>`) Chrome abría una pestaña. Sin teléfono no hay equivalente de usuario en `web.whatsapp.com`
+    (exige un número en `?phone=`) -- se queda en `wa.me/<user>`, el único mecanismo que existe para ese caso.
 
     `texto`: ver `url_whatsapp` -- mismo agregado, con `&` en vez de `?`
     cuando la base ya trae `?phone=`."""
-    if persona.whatsapp_usuario:
+    if not persona.telefono:
         base = f"https://wa.me/{persona.whatsapp_usuario}"
         return f"{base}?text={quote(texto)}" if texto else base
     numero = re.sub(r"\D", "", persona.telefono)

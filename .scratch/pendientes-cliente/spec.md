@@ -453,3 +453,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `431` — La Posición al lado de la píldora del código (modal Ver) y de la de días (/consultar) — **verificado en escritorio** (`a3bda27`) · falta celular
 - `432` — Enlaces de WhatsApp de escritorio abren la app instalada de WhatsApp Web (`target="_blank"`) — **desplegado** (`a3bda27`) · solo funciona con WhatsApp Web cerrado
 - `433` — Mensajes de WhatsApp editables desde `/administracion/notificaciones` (botón de `/paquetes` + Solicitud de autorización), con formato enriquecido — **verificado en escritorio** (`a3bda27`) · falta celular
+- `434` — WhatsApp de escritorio: con usuario de WhatsApp abría una pestaña en vez de la app instalada (escritorio usa el número si lo hay) — **implementado** (local)
