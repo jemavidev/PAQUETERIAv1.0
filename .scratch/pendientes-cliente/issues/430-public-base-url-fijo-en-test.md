@@ -2,7 +2,7 @@
 
 **Origen:** análisis de enlaces, hallazgo 3. Jesús: "corrige los 3 problemas que encontraste".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
 
 ## Contexto
 
@@ -32,3 +32,10 @@ Además, el mensaje de WhatsApp de Acciones caía a un enlace relativo (inservib
 
 - `tests/web/test_arranque_produccion.py::test_fuera_de_desarrollo_no_arranca_sin_public_base_url` (production y
   staging; fallaban antes). La parte del `docker-compose.yml` queda para el deploy (arriba).
+
+## Deploy (2026-09-27, `a3bda27`)
+
+- `.env` del servidor de test: `PUBLIC_BASE_URL=https://test.papyrus.com.co` agregado ANTES del push (respaldo previo en
+  `.env.bak-2026-09-27b`). `docker-compose.yml` ahora usa `${PUBLIC_BASE_URL:?...}` (validado con `docker compose config`
+  contra ese `.env` antes del push). En vivo: el contenedor la tiene y `/health` responde.
+- **En producción**, el `.env` de ese servidor tiene que llevar su propio dominio: sin la variable, el contenedor no arranca.

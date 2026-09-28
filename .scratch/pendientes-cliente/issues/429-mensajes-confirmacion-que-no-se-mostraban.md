@@ -2,7 +2,7 @@
 
 **Origen:** análisis de enlaces, hallazgo 2. Jesús: "corrige los 3 problemas que encontraste".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
 
 ## Contexto
 

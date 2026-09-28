@@ -4,7 +4,7 @@
 recuerda que todas estas ediciones deben manejar los mensajes enriquecidos (negrillas, emojis y más)". Contexto: cómo
 asociar los mensajes de `/administracion/notificaciones` a los enlaces de WhatsApp.
 
-**Status:** implementado (local, sin desplegar)
+**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
 
 ## Contexto
 

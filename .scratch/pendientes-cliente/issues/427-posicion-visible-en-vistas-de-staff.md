@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "necesito que en las diferentes vistas de staff muestres o tengas presente la posición de
 los paquetes en el sistema, esto ya que no siempre muestras este dato".
 
-**Status:** implementado, aprobado por Jesús en local (2026-09-27) · pendiente desplegar a test
+**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
 
 ## Contexto
 

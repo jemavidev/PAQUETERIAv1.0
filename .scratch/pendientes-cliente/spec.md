@@ -445,11 +445,11 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `423` — PIN: teclear los números en escritorio sin usar el mouse — **verificado** (`860699b`)
 - `424` — Footer público: siempre los 4 íconos (Anunciar, Consultar, Ayuda, WhatsApp) — **verificado** (`860699b`)
 - `425` — PIN correcto de un Usuario sin registro en el equipo: a `/ingresar` — **verificado** (`860699b`)
-- `426` — `/paquetes`: los badges Anunciado/Recibido siguen la búsqueda activa (antes: total global, issue 126) — **implementado** (local)
-- `427` — La Posición visible en todas las vistas de staff (modal Ver, /consultar staff, coincidencias por guía, dashboard) — **implementado** (local)
-- `428` — `/docs`, `/redoc` y `/openapi.json` apagados fuera de desarrollo — **implementado** (local)
-- `429` — Mensajes de confirmación que nunca se mostraban (teléfono actualizado, cuenta eliminada, residente eliminado) — **implementado** (local)
-- `430` — `PUBLIC_BASE_URL` desde el `.env` del servidor (no fijo en test) y obligatoria al arrancar — **implementado** (local)
-- `431` — La Posición al lado de la píldora del código (modal Ver) y de la de días (/consultar) — **implementado** (local)
-- `432` — Enlaces de WhatsApp de escritorio abren la app instalada de WhatsApp Web (`target="_blank"`) — **implementado** (local)
-- `433` — Mensajes de WhatsApp editables desde `/administracion/notificaciones` (botón de `/paquetes` + Solicitud de autorización), con formato enriquecido — **implementado** (local)
+- `426` — `/paquetes`: los badges Anunciado/Recibido siguen la búsqueda activa (antes: total global, issue 126) — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `427` — La Posición visible en todas las vistas de staff (modal Ver, /consultar staff, coincidencias por guía, dashboard) — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `428` — `/docs`, `/redoc` y `/openapi.json` apagados fuera de desarrollo — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `429` — Mensajes de confirmación que nunca se mostraban (teléfono actualizado, cuenta eliminada, residente eliminado) — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `430` — `PUBLIC_BASE_URL` desde el `.env` del servidor (no fijo en test) y obligatoria al arrancar — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `431` — La Posición al lado de la píldora del código (modal Ver) y de la de días (/consultar) — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `432` — Enlaces de WhatsApp de escritorio abren la app instalada de WhatsApp Web (`target="_blank"`) — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
+- `433` — Mensajes de WhatsApp editables desde `/administracion/notificaciones` (botón de `/paquetes` + Solicitud de autorización), con formato enriquecido — **desplegado en test (`a3bda27`), pendiente confirmar en vivo**
