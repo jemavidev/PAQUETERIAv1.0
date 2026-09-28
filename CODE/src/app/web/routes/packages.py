@@ -1165,18 +1165,25 @@ def _peticion_en_vivo(request: Request) -> bool:
     return request.headers.get("X-Requested-With") == "fetch"
 
 
-def _conteos_pendientes(db: Session) -> dict:
-    """Total de paquetes en ANUNCIADO y en RECIBIDO -- GLOBAL, sin filtrar
-    por la búsqueda/estado activo (retroalimentación en vivo 2026-08-18,
-    issue 126): indicador operativo de trabajo pendiente para los badges
-    de `filtro_estado()`, no un recuento de lo que se ve en pantalla. Una
-    sola consulta agrupada, no dos `count()` sueltos."""
-    filas = (
-        db.query(Paquete.estado, func.count(Paquete.id))
-        .filter(Paquete.estado.in_([EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO]))
-        .group_by(Paquete.estado)
-        .all()
+def _conteos_pendientes(db: Session, q: str = None, conectados: bool = False) -> dict:
+    """Paquetes en ANUNCIADO y en RECIBIDO para los badges de `filtro_estado()` (issue 126), contando solo los que
+    calzan con la búsqueda `q` -- mismo criterio que `_listar`, incluidos el modo `conectados` y la expansión por
+    código de acceso exacto (issue 426: antes era un total GLOBAL; sin `q` lo sigue siendo). NO se filtra por el
+    estado elegido: el estado es justo lo que el badge ayuda a escoger. Una sola consulta agrupada."""
+    q = (q or "").strip()
+    relacionados = paquetes_relacionados_por_codigo(db, q) if q else None
+    if relacionados is not None:
+        por_estado = {}
+        for paquete in relacionados:
+            por_estado[paquete.estado.value] = por_estado.get(paquete.estado.value, 0) + 1
+        return {"ANUNCIADO": por_estado.get("ANUNCIADO", 0), "RECIBIDO": por_estado.get("RECIBIDO", 0)}
+
+    query = db.query(Paquete.estado, func.count(Paquete.id)).filter(
+        Paquete.estado.in_([EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO])
     )
+    if q:
+        query = query.filter(or_(*condiciones_busqueda_paquetes(db, q, conectados)))
+    filas = query.group_by(Paquete.estado).all()
     por_estado = {estado.value: total for estado, total in filas}
     return {"ANUNCIADO": por_estado.get("ANUNCIADO", 0), "RECIBIDO": por_estado.get("RECIBIDO", 0)}
 
@@ -1205,10 +1212,9 @@ def _render_lista(
     )
     en_vivo = _peticion_en_vivo(request)
     plantilla = "packages/_resultados.html" if en_vivo else "packages/list.html"
-    # La barra de filtros (con los badges) vive FUERA de `_resultados.html`
-    # -- no hace falta recalcular esto en cada fetch de búsqueda en vivo,
-    # que solo reemplaza el fragmento de resultados.
-    conteos_estado = _conteos_pendientes(db) if not en_vivo else None
+    # Badges de la barra de filtros (issue 426): siguen la búsqueda activa. La barra vive FUERA de `_resultados.html`
+    # -- en la búsqueda en vivo los conteos viajan como headers (`X-Conteo-*`, abajo) y el JS la actualiza.
+    conteos_estado = _conteos_pendientes(db, q=q, conectados=conectados)
     # Issue 310/313 (.scratch/pendientes-cliente): un solo conteo sirve para
     # las 2 cosas -- deshabilita "Mostrar conexiones" en 0 (issue 310) Y
     # pinta su badge de cantidad (issue 313), SIN importar si el toggle
@@ -1251,8 +1257,7 @@ def _render_lista(
         "pagina_actual": pagina_actual,
         "total_paginas": total_paginas,
         # Badges de conteo (Anunciado/Recibido) sobre los íconos de
-        # filtro (issue 126) -- `None` en peticiones de búsqueda en
-        # vivo, ver `conteos_estado` más arriba.
+        # filtro (issue 126), según la búsqueda activa (issue 426).
         "conteos_estado": conteos_estado,
         # Catálogo de Torre+Apartamento para el paso nuevo de Recibir
         # (.scratch/ocupante-principal-escenarios, ticket 05) -- declarar
@@ -1308,6 +1313,8 @@ def _render_lista(
     headers = {
         "X-Hay-Conexiones": "true" if hay_conexiones else "false",
         "X-Conteo-Conectados": str(conteo_conectados) if conteo_conectados > 0 else "",
+        "X-Conteo-Anunciado": str(conteos_estado["ANUNCIADO"]),
+        "X-Conteo-Recibido": str(conteos_estado["RECIBIDO"]),
     }
     if en_vivo:
         # Fragmento chico (búsqueda/paginación en vivo) -- no vale la pena
