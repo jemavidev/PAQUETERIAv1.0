@@ -5,7 +5,7 @@ número de teléfono para WhatsApp, abre el Chrome app y puedo enviar el mensaje
 WhatsApp en vez de número, se abre una ventana nueva en el mismo navegador, no sé cómo podrías corregirlo". Luego:
 "retomemos lo de WhatsApp, cómo puedes solucionar esto".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** verificado — probado por Jesús en localhost (escritorio + celular) el 2026-10-07 y desplegado en producción (elclub, `ef434cf` del repo de deploy, 2026-10-07); test.papyrus.com.co ya no existe
 
 ## Causa
 

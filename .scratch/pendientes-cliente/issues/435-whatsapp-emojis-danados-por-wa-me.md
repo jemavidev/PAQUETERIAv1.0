@@ -4,7 +4,7 @@
 en `https://api.whatsapp.com/send/?text=Hola+%2ATEST+3%2A%0A%0A%EF%BF%BD+Tu+paquete...&username=...&type=username` y el
 mensaje mostró "Hola *TEST 3* � Tu paquete *Y5U8* está *Recibido*...": el 📦 de la plantilla llegó como "�".
 
-**Status:** implementado (local, sin desplegar) · falta confirmar en celular que api.whatsapp.com abre la app
+**Status:** verificado — probado por Jesús en localhost (escritorio + celular) el 2026-10-07 y desplegado en producción (elclub, `ef434cf` del repo de deploy, 2026-10-07); test.papyrus.com.co ya no existe
 
 ## Causa (comprobada con curl)
 
