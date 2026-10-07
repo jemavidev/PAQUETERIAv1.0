@@ -5,7 +5,7 @@ nombre y entramos en la vista de /consultas, analizamos cualquier cosa y al regr
 quiere filtrar está ahí en posición, pero el filtro se perdió, es necesario presionar enter o actualizar el valor del
 nombre que se escribió (quitando o agregando un carácter para que se filtre nuevamente)".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** verificado — probado por Jesús en localhost el 2026-10-07 y desplegado en producción (elclub, `96a89a2` del repo de deploy, 2026-10-07)
 
 ## Causa
 
