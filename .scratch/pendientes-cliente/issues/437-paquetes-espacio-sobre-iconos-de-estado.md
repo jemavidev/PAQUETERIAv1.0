@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-10-07):** "en la clase `flex items-center gap-2 w-full justify-between md:w-auto
 md:justify-normal` dejar un pequeño espacio en la parte superior ya que está muy pegado a la sección superior".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** verificado — probado por Jesús en localhost el 2026-10-07 y desplegado en producción (elclub, `e5819a6` del repo de deploy, 2026-10-07)
 
 ## Decisiones
 

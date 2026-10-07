@@ -5,7 +5,7 @@ los paquetes con estado entregado o cancelados, que solo por defecto se vean los
 que requiera visualizar un paquete con un estado diferente, sería necesario usar los filtros o la barra de búsqueda o
 ambos".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** verificado — probado por Jesús en localhost el 2026-10-07 y desplegado en producción (elclub, `e5819a6` del repo de deploy, 2026-10-07)
 
 ## Decisiones
 
