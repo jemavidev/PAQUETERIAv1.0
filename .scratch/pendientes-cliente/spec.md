@@ -459,3 +459,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `437` — Espacio arriba de la fila de íconos de Estado en `/paquetes` (celular) — **verificado** (local) · desplegado en producción (`e5819a6`)
 - `438` — Al volver a `/paquetes` (p. ej. desde `/consultar`) el filtro escrito se perdía: la búsqueda en vivo ahora deja el filtro en la URL — **verificado** (local) · desplegado en producción (`96a89a2`)
 - `439` — Flechas ‹ › para pasar entre fotos en el visor (escritorio; en celular sigue solo el swipe) — **verificado** (local) · desplegado en producción (`baa751c`)
+- `440` — Zoom con la rueda del mouse en el visor de fotos, y arrastrar para moverse con zoom (escritorio) — **implementado** (local)
