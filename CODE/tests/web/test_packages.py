@@ -4909,6 +4909,25 @@ def test_chip_de_duracion_usa_el_mismo_color_que_el_badge_de_estado(client):
     assert "bg-blue-100" in fragmento  # RECIBIDO = azul, igual que badge(p.estado)
 
 
+def test_filas_blancas_con_franja_y_codigo_solido_por_estado(client):
+    # Issue 442 (.scratch/pendientes-cliente, variante B): fila blanca + franja de color a la izquierda; código en color
+    # sólido; tarjeta móvil con franja gruesa. Antes: fondo pastel en toda la fila, que no distinguía bien los estados.
+    staff = _login_staff(client)
+    anunciado = _anunciar(client, tel="3001234567", nombre="Ana")
+    recibido = _anunciar(client, tel="3019999999", nombre="Beto")
+    dom_receive(client.db, recibido, staff)
+    client.db.commit()
+
+    html = client.get("/paquetes").text
+    assert 'bg-white hover:bg-amber-50 border-b border-slate-200 shadow-[inset_6px_0_0_0_#fbbf24]' in html
+    assert 'bg-white hover:bg-blue-50 border-b border-slate-200 shadow-[inset_6px_0_0_0_#2563eb]' in html
+    assert "bg-amber-100/60" not in html and "bg-blue-100/60" not in html
+    tarjeta = html[html.index(f'data-tarjeta-paquete="{recibido.id}"') - 200:]
+    assert "border-l-8 border-l-blue-600" in tarjeta[:400]
+    codigo = html.split(f'href="/consultar?q={anunciado.access_code}"')[1][:200]
+    assert "bg-amber-400 text-amber-950" in codigo
+
+
 def test_columna_cliente_codigo_de_acceso_enlaza_a_consultar(client):
     _login_staff(client)
     p = _anunciar(client, nombre="Ana")
@@ -4931,7 +4950,8 @@ def test_columna_cliente_codigo_de_acceso_tiene_fondo_por_estado(client):
     r = client.get("/paquetes")
     # Issue 441: el primer enlace es el botón del código en la tarjeta de celular; la píldora de la tabla viene después.
     enlaces = r.text.split(f'href="/consultar?q={p.access_code}"')[1:]
-    assert all("bg-amber-100" in fragmento[:300] for fragmento in enlaces[:2])
+    # Issue 442: color sólido (variante B), ya no el pastel `-100`.
+    assert all("bg-amber-400" in fragmento[:300] for fragmento in enlaces[:2])
     assert "rounded-full" in enlaces[1][:300]
 
 

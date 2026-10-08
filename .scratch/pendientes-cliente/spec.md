@@ -461,3 +461,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `439` — Flechas ‹ › para pasar entre fotos en el visor (escritorio; en celular sigue solo el swipe) — **verificado** (local) · desplegado en producción (`baa751c`)
 - `440` — Zoom con la rueda del mouse en el visor de fotos, y arrastrar para moverse con zoom (escritorio) — **implementado** · desplegado en producción (`480e9a3`) · falta confirmar
 - `441` — Tarjeta móvil de `/paquetes`: 4 botones abajo (WhatsApp · Llamar · Código · Recibir/Entregar) y "Asignar apartamento" junto a la Posición — **implementado** (local)
+- `442` — Colores por Estado en `/paquetes` con más contraste: código sólido, filas blancas con franja, tarjeta con franja gruesa (variante B del prototipo) — **implementado** (local)
