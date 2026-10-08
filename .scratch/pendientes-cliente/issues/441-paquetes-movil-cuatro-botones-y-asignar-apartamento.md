@@ -7,7 +7,7 @@ Botón para el cambio de estados "Recibir/Entregar") [...] agregues el botón de
 o sección de "Posición en el estante"". Confirmado: el código es una **reubicación** (sale de la primera fila) y
 "Asignar apartamento" se comporta **igual que en escritorio**.
 
-**Status:** implementado (local, sin desplegar)
+**Status:** implementado — desplegado en producción (elclub, `dc2f001` del repo de deploy, 2026-10-07); falta confirmación de Jesús en producción
 
 ## Decisiones
 
