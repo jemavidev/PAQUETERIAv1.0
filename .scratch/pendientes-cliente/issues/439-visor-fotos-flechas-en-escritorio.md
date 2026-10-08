@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-10-07):** "para los controladores de las imágenes puedas agregar unas flechas para ir
 pasando entre imágenes, esto especialmente en la versión de desktop, mejora esta experiencia de usuario".
 
-**Status:** implementado (local, sin desplegar)
+**Status:** verificado — probado por Jesús en localhost el 2026-10-07 y desplegado en producción (elclub, `baa751c` del repo de deploy, 2026-10-07)
 
 ## Decisiones
 
