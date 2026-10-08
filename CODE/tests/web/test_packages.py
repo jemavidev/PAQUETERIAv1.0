@@ -4480,7 +4480,12 @@ def test_icono_asignar_apartamento_en_anunciado_y_recibido_sin_unidad(client):
     # ningún estado -- confirmado de nuevo en issue 346. El modal "Ver"
     # (issue 342) también la mantiene activa. 2 paquetes (anunciado +
     # recibido) x 2 ubicaciones (columna desktop + modal Ver) = 4.
-    assert r.text.count("🏠</button>") == 4  # (anunciado + recibido) x 2 (desktop + modal Ver)
+    # Issue 441: + la tarjeta de celular, junto a la Posición -- 2 paquetes x 3 ubicaciones = 6.
+    assert r.text.count("🏠</button>") == 6  # (anunciado + recibido) x 3 (desktop + modal Ver + tarjeta móvil)
+    for paquete in (anunciado, recibido):
+        tarjeta = r.text[r.text.index(f'data-tarjeta-paquete="{paquete.id}"'):]
+        tarjeta = tarjeta[: tarjeta.index("<!-- /tarjeta -->")]
+        assert f'data-open="modal-asignar-apto-{paquete.id}"' in tarjeta
     # ENTREGADO sin unidad: mismo ícono, apagado (gris claro), sin acción --
     # ya no un emoji compuesto distinto (issue 151).
     # `grayscale` + `opacity-50` (no `text-*`) -- un emoji a color ignora el
@@ -4924,10 +4929,10 @@ def test_columna_cliente_codigo_de_acceso_tiene_fondo_por_estado(client):
     client.db.commit()
 
     r = client.get("/paquetes")
-    idx_link = r.text.index(f'href="/consultar?q={p.access_code}"')
-    fragmento = r.text[idx_link : idx_link + 300]
-    assert "bg-amber-100" in fragmento
-    assert "rounded-full" in fragmento
+    # Issue 441: el primer enlace es el botón del código en la tarjeta de celular; la píldora de la tabla viene después.
+    enlaces = r.text.split(f'href="/consultar?q={p.access_code}"')[1:]
+    assert all("bg-amber-100" in fragmento[:300] for fragmento in enlaces[:2])
+    assert "rounded-full" in enlaces[1][:300]
 
 
 def test_modal_ver_telefono_y_direccion_comparten_linea_con_separador(client):
