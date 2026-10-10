@@ -4,7 +4,7 @@
 solo necesito que Staff/Admin sean los únicos que lo vean, restringiendo la visualización de Público/Residente, este
 debe quedar posicionado al lado derecho de 'Consultar', ilústrate con relación al ícono."
 
-**Status:** verificado (local, Jesús 2026-10-10: "se ve bien y funciona como debe") — desplegado en producción (elclub, `bcd94f7` del repo de deploy, 2026-10-10); falta confirmar en producción
+**Status:** verificado (local, Jesús 2026-10-10: "se ve bien y funciona como debe") — desplegado en producción (elclub, `bcd94f7` del repo de deploy, 2026-10-10); **confirmado en producción por Jesús (2026-10-10: "está funcionando al pelo")**
 
 ## Decisiones
 
