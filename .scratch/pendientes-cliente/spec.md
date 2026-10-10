@@ -462,3 +462,4 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `440` — Zoom con la rueda del mouse en el visor de fotos, y arrastrar para moverse con zoom (escritorio) — **implementado** · desplegado en producción (`480e9a3`) · falta confirmar
 - `441` — Tarjeta móvil de `/paquetes`: 4 botones abajo (WhatsApp · Llamar · Código · Recibir/Entregar) y "Asignar apartamento" junto a la Posición — **implementado** · desplegado en producción (`dc2f001`) · falta confirmar
 - `442` — Colores por Estado en `/paquetes` con más contraste: código sólido, filas blancas con franja, tarjeta con franja gruesa (variante B del prototipo) — **implementado** · desplegado en producción (`dc2f001`) · falta confirmar
+- `443` — Enlace "Bancos" (https://facturas.papyrus.com.co/bancos) en el header de Staff/Admin, a la derecha de Consultar (y en el footer móvil reemplaza a Consultar) — **verificado** (local) · sin desplegar
