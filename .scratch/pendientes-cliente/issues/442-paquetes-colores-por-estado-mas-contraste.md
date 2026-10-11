@@ -4,7 +4,7 @@
 paquetes, esto ya que se ven muy sutiles y no se diferencian lo suficiente entre alguno de ellos". Luego: "arma varias
 alternativas y te diré cuál seleccionar" → eligió **B** ("B se ve bien, impleméntalo").
 
-**Status:** implementado — desplegado en producción (elclub, `dc2f001` del repo de deploy, 2026-10-07); falta confirmación de Jesús en producción
+**Status:** verificado — desplegado en producción (elclub, `dc2f001` del repo de deploy, 2026-10-07); **confirmado en producción por Jesús (2026-10-11)**
 
 ## Prototipo
 

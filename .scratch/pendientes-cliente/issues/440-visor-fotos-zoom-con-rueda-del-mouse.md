@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-10-07):** "de qué forma podría usar el scroll del mouse para hacer zoom in/out? es
 posible que me ayudes con esto?"
 
-**Status:** implementado — desplegado en producción (elclub, `480e9a3` del repo de deploy, 2026-10-07); probado en Chromium headless, falta confirmación de Jesús en producción
+**Status:** verificado — desplegado en producción (elclub, `480e9a3` del repo de deploy, 2026-10-07); **confirmado en producción por Jesús (2026-10-11)**
 
 ## Decisiones
 
