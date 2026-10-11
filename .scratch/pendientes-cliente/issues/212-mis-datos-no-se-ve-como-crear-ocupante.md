@@ -5,7 +5,7 @@ residente en esta vista." — la ruta (`POST /mis-datos/ocupantes`) existe,
 falta confirmar si el disparador en la UI está ausente, escondido, o poco
 claro.
 
-**Status:** pendiente
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: pendiente
 
 ## Investigación
 

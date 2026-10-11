@@ -5,7 +5,7 @@ el teclado para que la lectura la escriba el lector ... si solo se ingresa con e
 foco en el input de la guia y al presionar el boton del lector esto no realiza la lectura ... no funciona si el
 teclado no esta activo". Celular (cámara) y escritorio funcionan bien.
 
-**Status:** descartado — NO funcionó en el F7 real (probado por Jesús, 2026-09-22: ninguna de las dos variantes
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: descartado — NO funcionó en el F7 real (probado por Jesús, 2026-09-22: ninguna de las dos variantes
 escribe; el gatillo solo escribe con el teclado abierto a mano). Código revertido el 2026-09-23 sin llegar a commitearse
 (`enfocarParaLector` vuelve a solo enfocar y seleccionar). Siguiente camino, fuera de la web: ajustes del propio equipo
 (modo de salida "simular teclas" en Scanning Settings, o "mostrar teclado virtual con el teclado físico" de Android).

@@ -8,7 +8,7 @@ me das para esto). Por ultimo que posibilidad existe en que coloques alque que i
 usuario en esta vista, de forma que a simple vista se puedan diferenciar los paquetes que le
 pertenecen a uno y a otro ocupante."
 
-**Status:** en curso — decisiones del cliente registradas abajo
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: en curso — decisiones del cliente registradas abajo
 
 ## Decisiones del cliente (2026-08-04)
 

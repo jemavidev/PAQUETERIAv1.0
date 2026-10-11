@@ -33,7 +33,7 @@ se repiten acá):
     de una captura de pantalla real de `/customers/manage` para clonarla
     esta vez con la referencia correcta en mano.
 
-**Status:** implementado (pendiente punto 14, sin nueva referencia visual)
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: implementado (pendiente punto 14, sin nueva referencia visual)
 
 ## Decisiones de implementación
 

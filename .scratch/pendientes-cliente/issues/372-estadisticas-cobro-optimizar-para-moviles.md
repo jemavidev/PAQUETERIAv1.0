@@ -5,7 +5,7 @@
 creo que esto lo puedes mejorar para que todo se visualice en la misma pagina, analiza si
 algun otro necesita otro tipo de ajustes".
 
-**Status:** implementado en la propuesta (`:8011`, commit sobre el del 371; lo actual, `:8010`, no se toca); pendiente que Jesús lo confirme en su navegador
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: implementado en la propuesta (`:8011`, commit sobre el del 371; lo actual, `:8010`, no se toca); pendiente que Jesús lo confirme en su navegador
 
 ## Contexto
 

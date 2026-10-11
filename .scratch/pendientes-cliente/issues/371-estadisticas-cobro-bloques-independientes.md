@@ -7,7 +7,7 @@ las diferentes secciones de esta vista, ya que te estare diciendo cual va de pri
 y el orden de como debe quedar todo. Por ahora esto sera lo ultimo que haga con relacion a
 esta vista para continuar con otro enfoque despues."
 
-**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Contexto
 

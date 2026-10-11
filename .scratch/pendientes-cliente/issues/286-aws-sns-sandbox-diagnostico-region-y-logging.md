@@ -6,7 +6,7 @@ realiza pruebas con el numero 3002596319" → (no llegó) → "no ha
 llegado, corrije lo relacionado a las credenciales, actualiza lo
 necesario" → (envío directo por AWS CLI SÍ llegó) "Sí me llegó"
 
-**Status:** verificado -- causa raíz confirmada y corregida de punta a punta.
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: verificado -- causa raíz confirmada y corregida de punta a punta.
 La sección "Seguimiento" de abajo quedó resuelta poco después de escrita:
 [[287]] y [[288]] corrigieron los dos bugs reales de la app (teléfono sin
 normalizar en "Enviar prueba"; plantillas con tildes forzando 3 segmentos

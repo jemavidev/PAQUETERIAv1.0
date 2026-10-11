@@ -7,7 +7,7 @@ que reciba el número del apartamento [...] lo que está apareciendo es otra bar
 para ingresar nuevamente el apartamento". Pidió además cuidar el debounce para que los íconos
 no aparezcan/desaparezcan mientras se sigue escribiendo.
 
-**Status:** removido -- ver issue 309, el cliente pidió deshacer toda la búsqueda por Torre/Apto
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: removido -- ver issue 309, el cliente pidió deshacer toda la búsqueda por Torre/Apto
 después de esta 3ra ronda de UI.
 
 ## Cómo se resolvió

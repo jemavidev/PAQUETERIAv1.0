@@ -7,7 +7,7 @@ número de apartamento, se listan las Torres que YA tienen residentes en ese nú
 la búsqueda pasa a filtrar ESTRICTAMENTE por esa Torre+Apto -- descartando cualquier otro campo
 (teléfono/email/whatsapp que contengan esos mismos dígitos por coincidencia, etc.).
 
-**Status:** removido -- después de 2 rondas de retroalimentación en vivo (issues 311, 312)
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: removido -- después de 2 rondas de retroalimentación en vivo (issues 311, 312)
 tratando de acomodar la UI, el cliente pidió explícitamente deshacer todo el trabajo: "esto de
 buscar por torre y apartamento te quedo grande, hagamos algo mejor, remueve todo lo relacionado
 a la busqueda por torre y apartamento en la vista de /paquetes". Revertido por completo --

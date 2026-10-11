@@ -9,7 +9,7 @@ existen algunos iconos a la derecha de esto dime tambien que se puede hacer".
 Después de ver el análisis: "muestrame lo que cambiaria, pero no modifiques lo que
 se tiene actualmente".
 
-**Status:** pendiente (propuesta prototipada en vivo, separada de lo actual; falta
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: pendiente (propuesta prototipada en vivo, separada de lo actual; falta
 que Jesús decida qué se queda)
 
 ## Análisis que se le entregó

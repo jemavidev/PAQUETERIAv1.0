@@ -6,7 +6,7 @@
 "en la vista /paquetes remueve el icono 'Asignar apartamento' y 'fecha
 hora', veo que estos datos los podremos consultar en el modal"
 
-**Status:** implementado, pendiente confirmar visualmente
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: implementado, pendiente confirmar visualmente
 
 ### Contexto
 

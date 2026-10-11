@@ -5,7 +5,7 @@ localhost o el servidor de test.papyrus.com.co el dispositivo se queda pensando 
 al interactuar con algunos modales ya sea el de recibir o entregar paquetes, especialmente el de recibir paquetes lo he
 notado al tratar de capturar algunas fotos".
 
-**Status:** pendiente
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: pendiente
 
 ## Alcance
 

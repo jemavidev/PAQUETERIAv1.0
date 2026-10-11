@@ -6,7 +6,7 @@ que no incluiste el precio que se cobro a los paquetes entregados, Por ultimo de
 puedes mostrar una alternativa a como se verian de una mejor manera los datos dentro de las
 tarjetas, un poco mas amigable, probemos y me muestras alternativas"
 
-**Status:** verificado en vivo (puntos 1, 2 y 4 — desplegado a test.papyrus.com.co, commit `75f79bc`
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: verificado en vivo (puntos 1, 2 y 4 — desplegado a test.papyrus.com.co, commit `75f79bc`
 en `jemavidev/PaqueteX`); punto 3 sigue bloqueado, ver hallazgo abajo
 
 ## Alcance (4 puntos)

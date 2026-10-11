@@ -6,7 +6,7 @@ telefono del contacto principal, de hay en adelante todos los paquetes que llegu
 contacto principal o de un ocupante del mismo sea relacionado directamente con este, no deberia
 quedar 'Sin Apartamento', te digo esto por el caso de estos 2 paquetes '32TE' y '64E3'".
 
-**Status:** formalizado — spec publicado en
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: formalizado — spec publicado en
 `.scratch/asociacion-retroactiva-apartamento/spec.md` (`ready-for-agent`, 2026-08-04). El
 seguimiento de implementación continúa allá, no en este archivo.
 

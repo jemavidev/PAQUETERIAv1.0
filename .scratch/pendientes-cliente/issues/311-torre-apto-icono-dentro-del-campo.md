@@ -8,7 +8,7 @@ parte creaste un nuevo botón que invoca una nueva barra con esta funcionalidad"
 mover el ícono de "conectados" (issue 308) al mismo tratamiento, con el mismo criterio de
 activación de issue 310 para ambos.
 
-**Status:** la mitad Torre/Apto de este issue fue REMOVIDA en issue 309 (el cliente pidió
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: la mitad Torre/Apto de este issue fue REMOVIDA en issue 309 (el cliente pidió
 deshacer toda la búsqueda por Torre/Apto tras esta 2da ronda de UI). La mitad "conectados"
 (reubicarlo como ícono dentro del campo `q`, con el mismo criterio de activación de issue 310)
 SÍ se mantiene -- eso nunca fue parte del pedido de remover, sigue implementado y en verde.

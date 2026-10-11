@@ -11,7 +11,7 @@ modales del aplicativo**; acotado con el cliente a **solo vistas de staff** (`/p
 `/residentes`, `/administracion`) -- pantallas de cliente (`customer/verify.html`, `/mis-datos`) y
 `/consultar` (pública) quedan FUERA de este alcance a propósito.
 
-**Status:** implementado en todos los modales de staff salvo un caso pendiente de decisión (ver
+**Status:** verificado — cerrado por Jesús 2026-10-11 ("todo revisado y funcionando"). Antes: implementado en todos los modales de staff salvo un caso pendiente de decisión (ver
 abajo) -- pendiente verificar visualmente en vivo (extensión de Chrome no disponible en esta sesión).
 415 tests relacionados en verde (`test_packages.py`, `test_customers_manage.py`,
 `test_admin_staff.py`, `test_admin_notificaciones.py`) -- solo confirman que el HTML se sigue
