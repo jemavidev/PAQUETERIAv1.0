@@ -5,7 +5,7 @@
 redondeados, lo que necesito es que me muestres como se puede aplicar ese mismo look and feel en la version de desktop
 de /paquetes."
 
-**Status:** pendiente — prototipo listo, falta que Jesús elija variante
+**Status:** implementado (local, 2026-10-11) — elegida la variante B; falta verificar y desplegar
 
 ## Prototipo
 
@@ -20,3 +20,12 @@ flotante y flechas ← → del teclado:
   acciones de escritorio (Ver, Modificar, Cancelar…) al pie.
 - **D**: una tarjeta ancha por paquete, en una sola línea: nombre y apartamento · Estado · tiempo | Posición | código |
   acciones.
+
+## Decisión
+
+Jesús (2026-10-11): "La opción B me parece perfecta". La misma tabla de siempre (columnas, encabezado, acciones), pero
+con `border-separate border-spacing-y-2`: cada fila es una tarjeta blanca con aire entre filas, bordes redondeados
+`rounded-xl` y la franja `border-l-8` del color del Estado, la misma de la tarjeta móvil (issue 442). Reemplaza la
+franja por sombra interna del issue 442 en escritorio. Al pasar el mouse se tiñe toda la fila
+(`[&:hover>td]:bg-…-50`; con `hover:[&>td]` solo se teñía la celda bajo el cursor, visto en la captura).
+Tailwind recompilado (`?v=119`).
