@@ -5,7 +5,7 @@
 redondeados, lo que necesito es que me muestres como se puede aplicar ese mismo look and feel en la version de desktop
 de /paquetes."
 
-**Status:** implementado (local, 2026-10-11) — elegida la variante B; falta verificar y desplegar
+**Status:** verificado (local, Jesús 2026-10-11: "el resto de cosas sí están funcionando") — falta desplegar
 
 ## Prototipo
 

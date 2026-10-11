@@ -4,7 +4,7 @@
 cuando se visualizan las imagenes, la idea de esto es ver como se ve el paquete y con el icono y la posicion se veria
 donde esta ubicada."
 
-**Status:** implementado (local, 2026-10-11) — falta verificar y desplegar
+**Status:** implementado (local, 2026-10-11) — Jesús pidió centrarla; falta verificar el centrado y desplegar
 
 ## Decisiones
 
@@ -14,3 +14,8 @@ donde esta ubicada."
 - En `/consultar` se pasa con el mismo criterio que la píldora junto a los días (issues 427/431): **solo con sesión de
   staff y solo RECIBIDO**. El residente nunca la ve, y en Entregado/Cancelado ya no hay posición vigente.
 - Prueba: `tests/web/test_search.py::test_visor_de_fotos_muestra_la_posicion_solo_al_staff_y_solo_recibido`.
+
+## Seguimiento
+
+- Jesús (2026-10-11): "podrías centrar la píldora con la posición". Pasa de arriba a la izquierda a **arriba al
+  centro** (`left-1/2 -translate-x-1/2`, mismo centrado que el contador "1 / 3" de abajo).
