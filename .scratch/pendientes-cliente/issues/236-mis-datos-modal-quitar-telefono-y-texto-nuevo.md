@@ -8,7 +8,7 @@ personal te asigna un Teléfono nuevo. Entiendo que perderé el acceso a
 panel de "Mis datos", ya que el ingreso a este panel solamente por número
 de Teléfono. Entiendo que perderé el acceso a "Mis datos".'"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

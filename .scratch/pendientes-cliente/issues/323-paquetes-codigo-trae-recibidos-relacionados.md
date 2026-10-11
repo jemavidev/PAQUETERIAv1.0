@@ -6,7 +6,7 @@ que por lo general si tienen 3 paquetes recibidos, la idea es que al consultar u
 paquetes se muestren los otros paquetes de este mismo cliente o los residentes del apartamento, se
 esta forma se puedan mostrar todos los paquetes con una sola consulta."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Decisiones de alcance (confirmadas con el cliente antes de implementar)

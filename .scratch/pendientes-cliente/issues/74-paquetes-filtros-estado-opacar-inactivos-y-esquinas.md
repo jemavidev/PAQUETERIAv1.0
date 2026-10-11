@@ -7,7 +7,7 @@ diferenciarlo del resto; (2) cambiar la forma de círculo a "más como un
 cuadrado pero con unos bordes aplicados" (esquinas redondeadas, no círculo
 completo).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

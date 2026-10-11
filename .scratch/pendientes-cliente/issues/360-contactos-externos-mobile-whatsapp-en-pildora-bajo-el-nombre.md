@@ -7,7 +7,7 @@ en este caso quedaria por cada contacto 2 filas 'Nombre' al lado izquierdo,
 'Contacto de whatsapp' debajo del nombre en la nueva fila, El 'numero de
 telefono' al lado derecho."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

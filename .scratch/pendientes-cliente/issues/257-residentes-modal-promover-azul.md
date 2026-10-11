@@ -6,7 +6,7 @@ principal? Se degrada automáticamente a quien es principal ahora.',
 permite que los colores predominantes sean los tonos azules así como
 debería ser."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

@@ -7,7 +7,7 @@ estar distribuidos estos iconos en el espacio que se tenga, recuerda mismo
 tamano que el actual, pero redistribuidos en espacios', el icono de
 anunciar un paquete sigue estando en el mismo lugar"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

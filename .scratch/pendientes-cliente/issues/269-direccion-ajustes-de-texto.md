@@ -7,7 +7,7 @@
 4. Cambia "Si ya es Ocupante (no principal) de otra unidad, moverlo acá" por "Mudar residente de apartamento" -- y si existe algún modal de esto, actualizarlo con el mismo enfoque.
 5. Cambia "Libre -- sin residentes registrados" por "Apartamento vacío."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

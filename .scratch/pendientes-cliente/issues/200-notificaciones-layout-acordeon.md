@@ -10,7 +10,7 @@ como tab, acordeón) directo sobre `/administracion/notificaciones` vía
 `?variant=a/b/d`, contra datos reales. Respuesta del cliente: "VAMOS CON LA
 OPCION d Y ESTARE REALIZANDO MODIFICACIONES MAS ADELANTE".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cómo se prototipó (nota de proceso, `/prototype` skill)
 

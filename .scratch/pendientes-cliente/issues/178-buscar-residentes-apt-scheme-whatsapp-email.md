@@ -5,7 +5,7 @@ algo solo permite buscar por numero de apartamento y el esquema deberia ser 'apt
 para buscar los apartamentos que sean el 302 de cualquier torre. Adicional a esto necesito que
 permitas la busqueda por usuario de whatsapp y tambien por email."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

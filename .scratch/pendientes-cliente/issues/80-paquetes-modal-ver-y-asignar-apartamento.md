@@ -48,7 +48,7 @@ y la columna Dirección, tras ver [[79]] desplegado:
     (terminales). Clic cierra "Ver" y abre el modal real de la acción en el
     mismo gesto (traspaso limpio, no dos modales superpuestos).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

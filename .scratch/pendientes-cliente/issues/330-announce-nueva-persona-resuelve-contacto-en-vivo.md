@@ -7,7 +7,7 @@ ser posible que solo con ese dato se traigan los datos de este residente si exis
 saber dónde vive y si existe, en caso que no exista, se debe habilitar un campo para colocar el
 nombre."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de alcance (mini-diseño, confirmadas con el cliente antes de implementar)
 

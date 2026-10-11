@@ -6,7 +6,7 @@ letting me click on the whatsapp icon in this view" -- reportado como
 ejemplo concreto tras la pregunta general de issue 103 sobre la prioridad
 username > teléfono.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

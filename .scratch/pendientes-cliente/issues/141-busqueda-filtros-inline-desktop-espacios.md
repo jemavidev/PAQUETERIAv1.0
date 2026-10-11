@@ -8,7 +8,7 @@
 - "los 5 últimos íconos [4 filtros de Estado + botón de limpiar] necesito que los redistribuyas
   en la segunda línea donde se agrupan estos" (mobile).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

@@ -7,7 +7,7 @@ prueba por SMS/Email/WhatsApp ([[205-notificaciones-enviar-prueba]]): un
 envío real de prueba deja obsoleto el iframe con datos de ejemplo
 (`Juan Pérez`) que servía de aproximación.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

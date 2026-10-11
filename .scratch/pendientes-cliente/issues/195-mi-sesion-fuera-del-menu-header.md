@@ -6,7 +6,7 @@ header" — seguimiento a la pregunta anterior sobre qué alternativas había
 para esa vista (eliminarla del todo, o convertirla en "cambiar mi
 contraseña"); el cliente resolvió sacarla del menú.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo importante ANTES de tocar código
 

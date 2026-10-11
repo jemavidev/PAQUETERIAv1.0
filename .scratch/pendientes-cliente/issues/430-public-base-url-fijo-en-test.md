@@ -2,7 +2,7 @@
 
 **Origen:** análisis de enlaces, hallazgo 3. Jesús: "corrige los 3 problemas que encontraste".
 
-**Status:** desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`a3bda27`, 2026-09-27), pendiente confirmar en vivo
 
 ## Contexto
 

@@ -4,7 +4,7 @@
 mostrar esto en un modal, similar como lo haces en 'Promover o Eliminar'"
 (seguimiento de [[228-mis-datos-residentes-editar-un-boton-y-acordeon-exclusivo]]).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

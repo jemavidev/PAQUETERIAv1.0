@@ -4,7 +4,7 @@
 necesito que la sección/modal de Notificaciones sea menos compacta."
 (seguimiento de [[229-mis-datos-residentes-editar-notif-como-modal-y-bug-canal-doble]]).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

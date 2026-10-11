@@ -3,7 +3,7 @@
 **Pedido original:** "Este emoji 👫 debería tener un acceso directo al tab de ese residente,
 específicamente en la opción donde se visualizan los residentes."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

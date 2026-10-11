@@ -10,7 +10,7 @@ el front no para la logica del sistema" — el fix es solo de
 presentación (plantillas), nunca toca cómo el dominio/backend maneja
 `None`/`NULL`.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Investigación
 

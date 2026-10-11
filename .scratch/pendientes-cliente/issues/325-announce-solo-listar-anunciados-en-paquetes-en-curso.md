@@ -4,7 +4,7 @@
 todos los paquetes que no tengan estado 'Anunciado', ya que esta vista es para anunciar o recibir
 paquetes, no está diseñada para entregar o cancelar paquetes."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

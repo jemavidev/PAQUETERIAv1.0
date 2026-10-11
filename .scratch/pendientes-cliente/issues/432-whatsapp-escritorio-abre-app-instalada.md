@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** probó "Solicitar autorización por WhatsApp" (`/announce`) en escritorio: "funciona de
 maravillas, como debería funcionar, aplica esto al resto de mensajes de WhatsApp para el escritorio".
 
-**Status:** desplegado en test (`a3bda27`) · funciona solo con WhatsApp Web cerrado, ver "Prueba en vivo"
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`a3bda27`) · funciona solo con WhatsApp Web cerrado, ver "Prueba en vivo"
 
 ## Contexto
 

@@ -3,7 +3,7 @@
 **Pedido original:** "realiza ahora la unificacion de las vistas /paquetes y /residentes para
 que por ejemplo las mayusculas sean en los mismos puntos o solo unifica a una de las 2"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

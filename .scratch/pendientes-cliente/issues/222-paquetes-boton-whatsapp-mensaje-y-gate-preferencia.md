@@ -11,7 +11,7 @@ permitidas dejarían el botón habilitado y las que no dejarían el botón en
 gris e inactivo [...] pruebas con 'darrazola' y '+573008103849'."
 (motivación original de [[221-mis-datos-notificaciones-activar-whatsapp]]).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

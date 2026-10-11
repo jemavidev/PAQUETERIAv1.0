@@ -14,7 +14,7 @@ ADMIN) — y que la página en sí nunca tuvo capacidad de edición real
 la necesidad real es autoservicio de cuenta para cualquier staff, no solo
 un enlace.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

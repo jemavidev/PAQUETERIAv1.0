@@ -6,7 +6,7 @@ PRINCIPAL de TORRE 2 Apto 302 -- marcá "Mover acá" para reubicarlo
 vacía si está solo).' y similares para que estén acordes con lo que se
 ha cambiado."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 

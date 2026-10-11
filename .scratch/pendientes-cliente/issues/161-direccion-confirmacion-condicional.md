@@ -9,7 +9,7 @@ código: 2 de las 3 reglas ya estaban implementadas (unidad vacía → confirma 
 Principal → gana el primero en recibir un paquete, `promover_al_recibir`) -- la única que faltaba
 era la del medio.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

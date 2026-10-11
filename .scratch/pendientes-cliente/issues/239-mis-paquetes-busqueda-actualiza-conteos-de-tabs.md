@@ -4,7 +4,7 @@
 al momento de utilizar la barra de búsqueda, quiero que las cantidades de
 en los Tabs se actualicen también."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

@@ -6,7 +6,7 @@ referente a este lo crees una pildora que estara al laso de
 Auto/Principal/Torre-Apt?, dime si es posible y asi optimizamos espacio
 y mejoramos los padings y margenes"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

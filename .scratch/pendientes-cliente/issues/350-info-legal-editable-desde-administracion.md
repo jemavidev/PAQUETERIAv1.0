@@ -7,7 +7,7 @@ refleje en las páginas públicas (ejemplo: tarifas, conjunto, NIT, dirección,
 en general todo lo que podría cambiar, este podría ser en la vista de
 `/administracion/conjunto`)."
 
-**Status:** desplegado a test.papyrus.com.co (2026-09-19), pendiente que el
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado a test.papyrus.com.co (2026-09-19), pendiente que el
 cliente lo confirme visualmente — `ConfiguracionEmpresa` (razón social, NIT,
 dirección, contacto) + horarios de atención en `ConfiguracionConjunto`,
 editables desde `/administracion/conjunto`, reflejados en vivo en

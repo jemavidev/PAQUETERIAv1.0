@@ -7,7 +7,7 @@ Editar, solo uno se mantenga abierto, o el uno o el otro, para poder ir
 cambiando o el uno o el otro." (seguimiento de
 [[227-mis-datos-residentes-editar-unificado]]).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

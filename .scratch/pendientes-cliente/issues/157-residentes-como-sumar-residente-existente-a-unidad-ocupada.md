@@ -19,7 +19,7 @@ Ambos puntos, confirmados reproduciendo el flujo completo (asignar unidad vacía
 segunda Persona YA existente por su contacto → confirmado en la lista con 👫 de [[156]]) antes de
 tocar código.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

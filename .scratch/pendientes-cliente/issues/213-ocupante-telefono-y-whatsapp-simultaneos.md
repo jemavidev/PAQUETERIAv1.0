@@ -8,7 +8,7 @@ usuarios principales es que será posible realizar los cambios [el
 staff/Principal] — los residentes simples no podrán modificar la
 información de otros, solo la de ellos."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Nota: el dominio (ADR-0007) ya permite que una Persona tenga Teléfono,
 WhatsApp o ambos — falta confirmar si la restricción "uno u otro" descrita

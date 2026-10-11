@@ -5,7 +5,7 @@ segmentos, la idea es que los sms se reciban en el menor tiempo posible"
 — tras activar logging de entrega de AWS SNS ([[287]]) para diagnosticar
 por qué dos envíos de prueba no mostraban rastro en CloudWatch.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Investigación
 

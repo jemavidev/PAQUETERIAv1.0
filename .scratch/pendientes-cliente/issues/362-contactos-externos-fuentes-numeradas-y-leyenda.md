@@ -14,7 +14,7 @@ Whatsapp = 01' o similar, que me recomiendas., recuerda que esto solo debe
 funcionar para la vista desde el desktop [...] la vista para mobile es bastante
 compacta y no es necesario ya que sera solo consulta."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hechos hallados (2026-09-20, BD de dev)
 

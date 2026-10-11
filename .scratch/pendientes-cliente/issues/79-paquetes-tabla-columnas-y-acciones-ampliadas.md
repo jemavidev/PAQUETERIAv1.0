@@ -14,7 +14,7 @@ Accion, Eliminar) [...] los botones de accion deben tener colores y ser
 alusivos a lo que realiza cada uno de ellos, la columna de 'Cliente' debe ser
 cliqueable y mostrar lo mismo que el boton de 'Ver'."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

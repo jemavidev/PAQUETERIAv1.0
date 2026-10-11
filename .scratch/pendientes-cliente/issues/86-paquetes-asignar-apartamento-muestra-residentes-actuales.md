@@ -5,7 +5,7 @@
 aparecer si este esta libre o si tiene residentes actuales, esto con el
 fin de saber si se asocia o no un usuario sin apartamento a otro"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

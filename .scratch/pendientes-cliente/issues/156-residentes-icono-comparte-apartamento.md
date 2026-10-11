@@ -7,7 +7,7 @@ apartamento con otros residentes, muestrame opciones" — se mostraron 4 variant
 Aclaración inmediata: "Solo quiero que sean las 2 personitas, nada más" — sin número/texto visible
 al lado, solo el ícono.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

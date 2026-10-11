@@ -7,7 +7,7 @@ pendientes y posibles nuevos." + confirmación de arreglar el bug de
 colisión encontrado y aplicar los 2 refactors sugeridos por la revisión de
 Standards.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgos (code-review de dos ejes, Standards + Spec, sobre el diff sin
 commitear de toda la sesión en esta área)

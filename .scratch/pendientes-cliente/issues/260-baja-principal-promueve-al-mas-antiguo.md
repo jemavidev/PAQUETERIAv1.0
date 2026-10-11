@@ -5,7 +5,7 @@ mover_ocupante" — confirmando la propuesta de reusar el mismo mecanismo
 de auto-promoción que ya existe en `mover_ocupante` (issue 159) para el
 flujo "Mudarse de este apartamento".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance (ajustado tras revisión de scope)
 

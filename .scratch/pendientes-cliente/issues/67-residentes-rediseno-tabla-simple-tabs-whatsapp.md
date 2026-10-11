@@ -14,7 +14,7 @@ telefono, email, torre y apartamento. De igual forma en otra sección se
 debe poder hacer crud a lo relacionado a las notificaciones en general.
 Por último y por ahora se debe poder gestionar las opciones de residentes."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

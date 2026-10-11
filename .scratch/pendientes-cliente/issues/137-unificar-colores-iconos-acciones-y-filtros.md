@@ -12,7 +12,7 @@ tercero ("todo el sistema") queda deliberadamente pendiente de un barrido
 aparte antes de tocar colores que codifican significado en otras partes
 de la app (ver Pendiente abajo).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

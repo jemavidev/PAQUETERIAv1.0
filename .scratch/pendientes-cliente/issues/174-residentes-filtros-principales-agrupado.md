@@ -53,7 +53,7 @@ pregunta de opción múltiple sobre CÓMO se ve "Agrupar por apartamento": el cl
 "Tarjetas por apartamento" (reusa el patrón visual "Residentes de la unidad" que ya existe en el
 modal Ver de `/paquetes`) en vez de una tabla con encabezados de grupo.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones inferidas (sin pregunta aparte, por precedente directo en el propio pedido/código)
 

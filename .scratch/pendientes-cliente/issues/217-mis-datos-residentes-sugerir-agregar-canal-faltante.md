@@ -7,7 +7,7 @@ sugerir de la misma forma agregar teléfono/whatsapp, solo en caso que no lo
 tenga." (seguimiento de [[216-mis-datos-residentes-acciones-mas-claras]] y
 [[213-ocupante-telefono-y-whatsapp-simultaneos]]).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

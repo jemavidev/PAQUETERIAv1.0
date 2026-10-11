@@ -6,7 +6,7 @@ apartamento esta mala, tiene una letra T de mas asi como se muestra:
 (Apartamento EL CLUB · T TORRE 2 · APT 302) debe decir (Apartamento EL CLUB
 · TORRE 2 · APT 302), sin la letra T antes de la palabra TORRE"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico (`/diagnosing-bugs`)
 

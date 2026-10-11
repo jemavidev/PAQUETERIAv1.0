@@ -11,7 +11,7 @@ pueda usar la camara de dispositivos mobiles para capturar las imagenes,
 recuerda que son maximo 3 imagenes. Cambia el Nombre de[l boton
 'Confirmar recibo' a 'Recibir']."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

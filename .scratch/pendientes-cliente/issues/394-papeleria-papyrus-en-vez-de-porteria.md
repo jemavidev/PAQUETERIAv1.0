@@ -5,7 +5,7 @@ porteros de un edificio, ... será personal de la papelería Papyrus los que est
 se identifiquen en el sistema pero no como porteros". Respuestas: el transportador deja el paquete en el punto Papyrus
 ("el punto Papyrus es correcto"); nombre del lugar: "... en la papelería Papyrus".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 

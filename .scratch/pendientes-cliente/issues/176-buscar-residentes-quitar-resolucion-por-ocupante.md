@@ -8,7 +8,7 @@ los relacionados de una unidad, ya no hace falta que la búsqueda por texto infi
 otras personas (el Principal) solo porque comparten unidad con quien matcheó -- el resultado debe
 ser exactamente quien matchea el término, nada más.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

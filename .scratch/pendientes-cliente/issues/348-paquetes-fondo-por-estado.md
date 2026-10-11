@@ -8,7 +8,7 @@ respondida con una recomendación alternativa, borde lateral de color, para
 evitar competir con las píldoras de color que ya lleva la fila; el cliente
 reafirmó la idea original de fondo).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

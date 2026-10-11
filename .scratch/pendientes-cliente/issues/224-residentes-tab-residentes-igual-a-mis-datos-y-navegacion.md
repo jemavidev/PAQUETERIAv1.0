@@ -9,7 +9,7 @@ feature y que se pueda interactuar entre los diferentes residentes, dime si
 es posible." (seguimiento de la comparación pedida entre
 `/mis-datos` y `/residentes`, tab Residentes).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance confirmado con el cliente
 

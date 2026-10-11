@@ -6,7 +6,7 @@ modificando lo que construyes), pero de una forma mas rapida, creo que
 podria generar todo un esquema completo para correr el proyecto en
 localhost y solo poder desplegar a test cuando te lo pida."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

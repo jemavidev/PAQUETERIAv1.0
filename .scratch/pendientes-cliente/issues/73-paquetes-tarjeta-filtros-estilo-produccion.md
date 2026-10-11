@@ -9,7 +9,7 @@ lg:p-6 mb-4 sm:mb-6`) — colores más vivos y más espacio usado por la
 información. Explícitamente **no** pide letras más grandes (el tamaño de
 texto sigue como está).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

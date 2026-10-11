@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "Podría hacer las 'x' que cierran los
 modales un poco más grande ya que casi no se ve."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 

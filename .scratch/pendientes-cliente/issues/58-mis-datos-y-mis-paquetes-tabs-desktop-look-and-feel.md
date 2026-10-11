@@ -7,7 +7,7 @@ ven los TABS (solo en el look and feel), para que se vean un poco mas
 grande en el desktop, y se pueda resaltar cuales son y cual esta
 seleccionado, pero que se vean en la misma posicion qu esta actualemnte."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

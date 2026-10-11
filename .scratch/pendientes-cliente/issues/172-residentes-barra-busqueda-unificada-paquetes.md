@@ -3,7 +3,7 @@
 **Pedido original:** "quiero que unifiques la barra de busqueda, que quede similar (en lo que
 aplique) a la barra de la vista /paquetes, corrije esto"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

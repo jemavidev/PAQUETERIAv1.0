@@ -6,7 +6,7 @@ coincidencias exactas (destinatario real) y, al presionarlo, SOLO las conexiones
 el término buscado matchea al Anunciante, no al destinatario). Aplica a los 4 campos de texto:
 Nombre, Teléfono, Email, Usuario de WhatsApp.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). Verificado end-to-end contra el servidor real (`localhost:8010`) con
 los datos reales del caso "JESUS VILLALOBOS": `q=jesus` sin `conectados` -> 6; con `conectados=true`
 -> 2 (MASE, KTN4). Igual para email. 225 + 158 tests relacionados en verde

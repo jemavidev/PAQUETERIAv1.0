@@ -6,7 +6,7 @@ existentes al cargar la vista por primera vez y poder ir buscando o
 filtrando por 'Hoy Ayer Esta semana Este mes', a estos filtros agrega '3
 últimos meses' y 'semestre' y 'último año'".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Tests:
 - `tests/web/test_admin_estadisticas_cobro.py`: primera carga con todos los

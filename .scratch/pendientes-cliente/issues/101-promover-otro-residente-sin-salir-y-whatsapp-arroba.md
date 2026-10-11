@@ -13,7 +13,7 @@
    para los clientes de whatsapp al validarlos quiero que se validen con
    la @ y sin la @ y que nos lleven al mismo resultado."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

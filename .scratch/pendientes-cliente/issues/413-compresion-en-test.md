@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-26):** "activa la compresión en el servidor de test, en caso que hagas esto para que
 serviria".
 
-**Status:** desplegado en test (`3ea732f`), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`3ea732f`), pendiente confirmar en vivo
 
 ## Alcance
 

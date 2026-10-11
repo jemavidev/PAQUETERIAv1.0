@@ -23,7 +23,7 @@
   la ficha) generó dudas ("OK, pero no sé") -- pendiente de una decisión
   más clara, ver conversación.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 quedan abiertos sin resolver todavía.
 
 ## Decisión de implementación

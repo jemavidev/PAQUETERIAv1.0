@@ -9,7 +9,7 @@ transision natural (UX) esto ya que en la actualidad no se si se peuda
 hacer pitch to zoom o si se pueda deslizar entre imagenes con los dedos sin
 tocar las flechas."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

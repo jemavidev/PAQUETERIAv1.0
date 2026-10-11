@@ -4,7 +4,7 @@
 necesito que remuevas esta barra roja que aparece al lado izquierdo
 'tab-panel border-l-4 border-red-400 pl-3'."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Seguimiento: "Volver a Residentes" más visible/funcional
 

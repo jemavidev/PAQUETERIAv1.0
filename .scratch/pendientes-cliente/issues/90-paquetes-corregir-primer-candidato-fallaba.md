@@ -4,7 +4,7 @@
 que se tiene en la vista de /paquetes... botones, enlaces, modales") — no fue un pedido puntual,
 sino un bug real descubierto al ejercitar la vista de punta a punta con Playwright.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Bug
 

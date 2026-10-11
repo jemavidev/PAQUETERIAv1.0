@@ -6,7 +6,7 @@ veras" — seguido de evidencia concreta: "acabo de probar con FANTASMA 1 A7MA y
 aparece en un lado como asignado a una torre y apartamento, pero en otro lado no aparece... No
 aparece en residentes pero si se visualiza en paquete."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

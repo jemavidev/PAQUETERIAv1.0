@@ -2,7 +2,7 @@
 
 **Pedido original (Jesús):** "mejora la forma en que se ve esto "19/09/2026 · paquete 49a62449", que sea más amigable".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 

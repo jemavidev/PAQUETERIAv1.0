@@ -6,7 +6,7 @@ ADMIN Cerrar sesión 'bg-white border border-gray-200 rounded-2xl shadow-lg
 p-6' creo que no es necesario" — la tarjeta de avatar+nombre+email+rol+
 Cerrar sesión agregada en issue 197.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

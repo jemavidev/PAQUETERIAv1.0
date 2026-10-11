@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "Cambia el mensaje de 'Eliminar (solo admin)' a
 'Eliminar paquete'".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_tooltip_del_chip_eliminar_dice_eliminar_paquete` en
 `tests/web/test_packages.py`.

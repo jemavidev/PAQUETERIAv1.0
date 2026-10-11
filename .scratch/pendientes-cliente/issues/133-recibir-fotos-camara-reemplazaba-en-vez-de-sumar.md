@@ -7,7 +7,7 @@ posibles... si intento con la segunda, esta remplaza la primera que se
 tomo, la idea es que puedan ser hasta 3 imagenes maximo. Analiza y dime
 que flujos se compotan asi y como lo puedes corregir."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

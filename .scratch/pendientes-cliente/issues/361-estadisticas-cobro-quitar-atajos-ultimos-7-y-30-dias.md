@@ -4,7 +4,7 @@
 relacionados a 'Últimos 7 días y Últimos 30 días', ya que estos están
 incluidos en semana y mes".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_atajos_de_fecha_son_solo_hoy_ayer_semana_y_mes` en
 `tests/web/test_admin_estadisticas_cobro.py`.

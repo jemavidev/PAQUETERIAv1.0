@@ -8,7 +8,7 @@ distinto era que `/paquetes` carga Nunito Sans (Google Fonts) mientras `/residen
 `/consultar` usan la fuente por defecto del sitio, y el título justo debajo del header compartido
 se siente "distinto" por eso → confirmado: "sí, quítalo."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

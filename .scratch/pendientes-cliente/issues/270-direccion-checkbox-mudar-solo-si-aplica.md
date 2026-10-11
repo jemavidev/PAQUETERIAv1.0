@@ -6,7 +6,7 @@ apartamento', que me sugieres" -- confirmó la sugerencia: mostrarlo
 solo si `mi_ocupante` existe (la Persona de la ficha ya es Ocupante
 activo de alguna unidad).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 

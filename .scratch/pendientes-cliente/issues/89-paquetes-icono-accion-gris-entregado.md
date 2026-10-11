@@ -5,7 +5,7 @@
 entregados coloca el icono en la columana de accion de color gris o
 desactivado para que no sea cliqueable y gris tipo desactivado"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

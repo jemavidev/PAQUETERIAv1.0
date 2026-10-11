@@ -8,7 +8,7 @@ este a la mano izquierda del boton de ANUNCIADO, justo al lado, podria ser
 algo que referencie el echo de 'agregar'. Este nuevo icono o boton debe
 tener el look and feel del resto de botones a su lado."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

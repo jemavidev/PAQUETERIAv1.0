@@ -5,7 +5,7 @@ visualice que sea posible que tengas 2 líneas por cada paquete, esto con el fin
 muestra, adicional que se pueda tener los íconos de la columna acción más grandes y fácil de usar por cualquier usuario
 en dispositivos móviles. Dame 3 versiones de cómo lo solucionarías".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

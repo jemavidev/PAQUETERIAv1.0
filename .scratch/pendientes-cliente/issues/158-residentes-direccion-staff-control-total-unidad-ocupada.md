@@ -10,7 +10,7 @@ residente sin cambios. Respuesta del cliente: "En el punto 1 me parece bien todo
 tengas presente que la integridad debe ser real... Para el punto 2 me parece bien, solo verifica
 que nada se rompa y todo se lo más íntegro, lógico y transparente posible."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

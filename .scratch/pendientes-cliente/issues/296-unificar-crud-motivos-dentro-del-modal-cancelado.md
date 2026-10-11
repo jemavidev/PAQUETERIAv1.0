@@ -8,7 +8,7 @@ crear, para que sea un solo modulo que trabaje de la mano" — tras terminar
 mismo: una arriba para renombrar/borrar el motivo (la etiqueta), otra abajo
 (la fila `CANCELADO · <motivo>`) para editar sus 3 plantillas de canal.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado
 

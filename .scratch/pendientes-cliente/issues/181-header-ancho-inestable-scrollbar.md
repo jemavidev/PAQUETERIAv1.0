@@ -5,7 +5,7 @@ la de /paquetes sigue teniendo el mismo comportamiento de nota a simple vista qu
 analiza ondo y dime cuando lo encuentres" → mid-turn: "al parecer parece el ancho o de una vista o
 de la otra" y "pero creo que esta en el header".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

@@ -7,7 +7,7 @@ veo que para la versión mobile se ve bastante regular y sobresale del
 área donde deberían estar, analiza cuál sería la mejor opción y
 corrige."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

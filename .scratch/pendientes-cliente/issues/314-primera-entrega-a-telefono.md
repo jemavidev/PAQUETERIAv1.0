@@ -5,7 +5,7 @@ que se entrega un paquete a un residente, mostrar una bandera/prueba visual de e
 es el NÚMERO DE TELÉFONO específico (`recipient_phone`), independientemente de que ese teléfono
 viva con otros residentes en la misma unidad.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). El modal se confirmó ubicado en `/paquetes` (no `/residentes`, el
 pedido original lo mencionaba ahí por error del cliente, aclarado con AskUserQuestion). Verificado
 contra datos reales (`localhost:8010`): 3 paquetes RECIBIDO reales, ninguno pinta la bandera

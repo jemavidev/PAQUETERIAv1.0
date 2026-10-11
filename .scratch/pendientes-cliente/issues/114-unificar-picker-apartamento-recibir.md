@@ -16,7 +16,7 @@ el cliente eligió que alcance con elegir la Torre y seguir, ya que el
 botón real de confirmar sigue siendo "Confirmar recibo" más abajo en el
 mismo form.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

@@ -11,7 +11,7 @@ pertenece, a menos que ya este tenga un apartamento asignado. no se tu
 que opinas" -- confirmado "si", con pedido adicional de seguir
 compactando texto hacia placeholder cuando sea posible.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

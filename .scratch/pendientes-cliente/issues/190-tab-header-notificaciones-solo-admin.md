@@ -8,7 +8,7 @@ agregues un tab al header donde solo se muestre para el rol de admin"
 SMS/Email/WhatsApp recién construidas, `.scratch/plantillas-notificacion-
 multicanal`, tickets 01-04.)
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo antes de implementar
 

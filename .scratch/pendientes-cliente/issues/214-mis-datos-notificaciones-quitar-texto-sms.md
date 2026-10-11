@@ -4,7 +4,7 @@
 activar para Anuncio -- Recibido/Entregado/Cancelado los gestiona un
 administrador."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Limpieza del registro (2026-09-26)
 

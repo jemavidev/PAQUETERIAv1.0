@@ -4,7 +4,7 @@
 la lista que aparece en esta vista no es similar a la de los paquetes por ejemplo, veo que esta
 esta mas compacta, la idea es que el look and feel sea similar, puedes corregir esta lista"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

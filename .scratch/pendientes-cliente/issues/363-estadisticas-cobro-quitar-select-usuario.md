@@ -2,7 +2,7 @@
 
 **Pedido original (Jesús):** "Remueve el select de 'usuario_id'".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 Test: `test_no_hay_filtro_por_usuario_y_el_parametro_se_ignora` en
 `tests/web/test_admin_estadisticas_cobro.py` (reemplaza a los 2 tests que

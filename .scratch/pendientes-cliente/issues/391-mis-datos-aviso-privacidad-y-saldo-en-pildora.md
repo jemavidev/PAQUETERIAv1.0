@@ -7,7 +7,7 @@ toda esta sección [la tarjeta del saldo] la puedes colocar con un botón que di
 $<valor del saldo> y al presionarlo se muestre el contenido, ... una especie de píldora que se presione y se muestre la
 información desplegada."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 

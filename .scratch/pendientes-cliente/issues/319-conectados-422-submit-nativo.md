@@ -4,7 +4,7 @@
 /paquetes este dato se filtra de inmediato, pero si presiono enter aparece algo asi como esto
 `{"detail":[{"type":"bool_parsing","loc":["query","conectados"],...}]}`".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome confirmada no conectada en
 esta sesión). Reproducido y corregido contra el servidor real.
 

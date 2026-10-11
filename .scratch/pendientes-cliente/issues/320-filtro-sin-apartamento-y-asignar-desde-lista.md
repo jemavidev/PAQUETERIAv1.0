@@ -5,7 +5,7 @@
 asociarle uno directo desde ahí. Pidió sugerencia de diseño que se vea consistente con el resto
 del aplicativo.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
 sesión). Verificado contra el servidor real (residente de prueba insertado y eliminado en la
 misma verificación) y 8 tests nuevos, suite completa en verde.

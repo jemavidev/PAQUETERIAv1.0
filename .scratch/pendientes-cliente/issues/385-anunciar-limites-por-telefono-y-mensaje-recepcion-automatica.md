@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "con un límite por cliente (número de teléfono), después de un número de anuncios, sugerir activar la recepción automática desde mis datos o solicitando al personal de staff que lo activen ... mensaje amigable"; "la recepción automática ya existe de forma de flag" (hallazgo 3).
 Respuesta de Jesús a la auditoría funcional (`.scratch/auditoria-funcional-2026-09-23/reporte.md`), 2026-09-23 — "soluciona estas cositas"; todo en localhost, el servidor de test se habla después.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 

@@ -7,7 +7,7 @@ depender de que el toggle ya estuviera activado (es un adelanto de lo que hay, n
 confirmación de lo que se está viendo), y el color se corrigió de índigo a rojo para que
 coincida con el resto de badges de conteo de la app (issue 126).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión). Verificado end-to-end contra el servidor real (`localhost:8010`,
 caso "JESUS VILLALOBOS"): `q=jesus` (SIN `conectados`) -> header `X-Conteo-Conectados: 2` + badge
 rojo "2" visible con el toggle todavía apagado; sin conexiones -> header vacío, sin badge. 3

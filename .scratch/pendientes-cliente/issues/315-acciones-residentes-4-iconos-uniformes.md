@@ -5,7 +5,7 @@ Acciones para una fila, en vez de omitirlos se deben mostrar desactivados -- mis
 usado para otros íconos -- para que la lista de íconos sea siempre del mismo tamaño y se vea de
 forma uniforme entre filas.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión).
 
 ## Los 4 íconos

@@ -7,7 +7,7 @@ que `whatsapp_usuario` tenía antes de issue 69), porque `_blank_to_none`
 convierte "" a `None` antes de llegar a `update_datos_personales`, y esa
 función trata `email=None` como "no tocar" (contrato de 2 estados).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

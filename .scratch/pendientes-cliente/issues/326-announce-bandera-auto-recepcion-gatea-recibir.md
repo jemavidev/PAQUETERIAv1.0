@@ -19,7 +19,7 @@
 > presionar el botón de recibir y este internamente deberá anunciar el paquete y paralelo después
 > de anunciarlo abrir el modal de recepción de paquetes para continuar con este flujo."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones de alcance (confirmadas con el cliente antes de implementar)
 

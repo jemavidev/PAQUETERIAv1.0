@@ -5,7 +5,7 @@
 que ya el paquete este en estado 'Entregado o Cancelado' no aparezca el
 boton. Confirmado que se veria mejor."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto -- reversión parcial del mismo día
 

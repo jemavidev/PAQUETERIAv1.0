@@ -5,7 +5,7 @@ colores de las pildoras de la vista /residentes especificamente en la
 version mobil, especificamente entre 'Principal y Torre/Apartamento',
 los 2 tienen tonos azules"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

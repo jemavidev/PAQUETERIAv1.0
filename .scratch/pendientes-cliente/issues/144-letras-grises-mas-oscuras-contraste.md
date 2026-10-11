@@ -6,7 +6,7 @@ equipos que manejamos solo se vería mejor con letras más oscuras" → confirm�
 todo" tras proponerle subir un escalón el tono (no saltar directo a negro, para no aplanar la
 jerarquía visual label/dato).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

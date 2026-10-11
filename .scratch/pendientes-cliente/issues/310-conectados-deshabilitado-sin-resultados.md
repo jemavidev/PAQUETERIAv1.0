@@ -4,7 +4,7 @@
 cuando existan conexiones reales para la búsqueda actual -- si presionarlo no cambiaría nada
 en pantalla, no debería ser presionable.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 disponible en esta sesión).
 
 ## Regla

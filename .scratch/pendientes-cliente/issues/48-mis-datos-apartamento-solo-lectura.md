@@ -9,7 +9,7 @@ opción de hacer esto? Adicional de qué forma podría mejorar la forma en que
 se verá la torre y el apartamento... Por último siempre debe aparecer (solo
 lectura) el nombre del conjunto."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

@@ -3,7 +3,7 @@
 **Pedido original (cliente):** "remove the arrows on the images, lets the
 swipe funtionality working as it is, just remove the 2 arrows for now"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

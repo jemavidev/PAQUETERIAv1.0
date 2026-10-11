@@ -8,7 +8,7 @@ vacío -- T10 centrada). Pidió sugerencias de LOOK: cards, acordeón, secciones
 y cómo tratar a los residentes sin apartamento asignado (que YA tienen su propio tratamiento
 hoy, separado del agrupado).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 pendiente que el cliente lo confirme visualmente (extensión de Chrome no disponible en esta
 sesión). Cliente eligió **Variante A** ("me parece perfecta en todas las
 vistas") sobre acordeón/secciones. Prototipo (código + ruta throwaway) BORRADO tras plegar la

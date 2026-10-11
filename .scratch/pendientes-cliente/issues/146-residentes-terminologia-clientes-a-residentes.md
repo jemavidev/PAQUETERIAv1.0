@@ -4,7 +4,7 @@
 todo lo comentado en las otras 2 vistas de paquetes y anuncios, adicional necesito que se cambie
 el término de clientes a residentes, ya que eso es lo que son, residentes."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto importante: esto revierte una decisión anterior
 

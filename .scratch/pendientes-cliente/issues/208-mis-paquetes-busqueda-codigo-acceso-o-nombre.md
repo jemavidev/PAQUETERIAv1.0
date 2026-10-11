@@ -5,7 +5,7 @@ una opción de búsqueda por código de acceso o el nombre del residente,
 recuerda que debería estar similar a las barras de búsqueda que ya has
 venido trabajando."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

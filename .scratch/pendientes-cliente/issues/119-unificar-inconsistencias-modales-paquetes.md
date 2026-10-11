@@ -7,7 +7,7 @@ asi: 1. - 'Recibir' y 'Guardar'. 2. - 'Confirmar guía (opcional)' -->
 'Confirmar guía'. 3. - Lo que tu sugieras. 4. - Lo que tu sugieras." +
 "Agrega también 5. - Ícono de persona" (mismo turno).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Resolución de cada punto
 

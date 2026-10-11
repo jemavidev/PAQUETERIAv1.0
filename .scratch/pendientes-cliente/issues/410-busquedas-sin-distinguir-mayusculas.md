@@ -3,7 +3,7 @@
 **Pedido original (Jesús, 2026-09-26):** "La idea es que en cualquier búsqueda no distinga nunca, que sea lo mismo"
 (a raíz de que `/consultar?q=za9325` no encontraba el paquete `ZA9325`).
 
-**Status:** desplegado en test (`b7e4170`), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`b7e4170`), pendiente confirmar en vivo
 
 ## Qué se hace
 

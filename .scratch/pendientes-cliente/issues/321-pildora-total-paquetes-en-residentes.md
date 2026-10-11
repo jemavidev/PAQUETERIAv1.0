@@ -9,7 +9,7 @@ siguentes datos en la busqueda 'telefono, email o usuario de whatsapp' mostrando
 paquetes de este cliente, como ya esta funcionando actualmente. Esta pildora debe ser similar a
 las existentes 'Auto, Principal y Torre/Apt'."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 (2026-09-05, commit `bcac30d`) -- pendiente que el cliente lo confirme visualmente (extensión de
 Chrome no disponible en esta sesión). Verificado contra el servidor real de desarrollo (residente
 real "JESUS VILLALOBOS", +573002596319: píldora mostró "6", `/paquetes?q=%2B573002596319` devolvió

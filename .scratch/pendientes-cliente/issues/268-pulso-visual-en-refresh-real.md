@@ -7,7 +7,7 @@ que se note" -- propuesto por Claude: detectar un refresh REAL
 y disparar un pulso breve. Cliente confirmó: "pulso breve solo en
 refresh real".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Verificación
 

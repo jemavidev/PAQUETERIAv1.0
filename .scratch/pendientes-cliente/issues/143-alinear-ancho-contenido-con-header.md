@@ -4,7 +4,7 @@
 del mismo ancho que el contenido del header" → confirmó extenderlo a "todas las vistas que
 aplique" y desplegar a test.papyrus.com.co.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Criterio aplicado
 

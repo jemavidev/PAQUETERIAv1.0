@@ -4,7 +4,7 @@
 links ... aquí te pido 2 cosas: renombrar todas las referencias al nuevo nombre de dashboard y retomar algo que te
 había pedido" (lo segundo es el issue 371, bloques independientes).
 
-**Status:** desplegado en test (`c77c719`), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`c77c719`), pendiente confirmar en vivo
 
 ## Decisiones
 

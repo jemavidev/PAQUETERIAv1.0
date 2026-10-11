@@ -9,7 +9,7 @@ mensaje de seguimiento: "Tambien mueve lo que es 'Motivos de anulación' hasta
 la nueva seccion de 'Datos'" (mensaje llegó cortado a mitad de frase, se
 confirmó el destino "Datos" vía pregunta directa).
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

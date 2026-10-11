@@ -6,7 +6,7 @@ especificamente la columna Clientes, necesito que este codigo se vea asi
 como acabas de hacer con los otros, bordes redondeados y con un fondo en
 ese background, me colaboras?"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

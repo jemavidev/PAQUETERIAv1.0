@@ -3,7 +3,7 @@
 **Pedido original:** convertir "Nombre, teléfono, WhatsApp, email, torre o apt302" a "Nombre,
 Teléfono, WhatsApp, Email, APT302".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Cambio
 

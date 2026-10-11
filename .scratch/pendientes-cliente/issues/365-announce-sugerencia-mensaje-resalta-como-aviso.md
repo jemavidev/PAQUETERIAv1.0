@@ -7,7 +7,7 @@ podría ser:'" -- se propusieron 3 formas (caja de aviso ámbar / solo texto
 destacado / franja lateral) y el cliente eligió la **A, caja de aviso ámbar**:
 "Si aplica la opcion A".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

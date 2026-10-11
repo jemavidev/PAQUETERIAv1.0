@@ -6,7 +6,7 @@ ellos mismos con formularios y demas, pero no permitas que se modifique el
 rol por ellos mismos" -- seguimiento a issue 196 (autoservicio de
 contraseña) y al pedido de mejorar el look de `/mi-sesion`.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance
 

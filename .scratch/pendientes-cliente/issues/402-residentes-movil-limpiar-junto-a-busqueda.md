@@ -6,7 +6,7 @@ lado de la barra de búsqueda, los otros tres íconos deberían comportarse igua
 sin_apartamento)" ... "ten presente la vista de paquetes, esta tiene unos tamaños y espaciados específicos". Luego:
 "aplícalo pero solo a la vista móvil".
 
-**Status:** desplegado en test (`f65dfc7`), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (`f65dfc7`), pendiente confirmar en vivo
 
 ## Decisiones (acordadas)
 

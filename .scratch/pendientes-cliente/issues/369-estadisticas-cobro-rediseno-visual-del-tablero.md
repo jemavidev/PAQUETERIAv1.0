@@ -3,7 +3,7 @@
 **Pedido original (Jesús):** "no sé, pero creo que aplicaste sobre ingeniería y
 /administracion/estadisticas-cobro no se ve nada agradable".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Qué se ve hoy (capturas del tablero real, escritorio 1440 y móvil 390)
 

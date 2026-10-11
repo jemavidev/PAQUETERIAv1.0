@@ -8,7 +8,7 @@ tenía su propio picker Torre→Piso→Apartamento (JS duplicado), mientras `/pa
 apartamento"/Recibir) y `/announce` (modal Recibir compartido) ya usaban un componente unificado
 con un flujo distinto (Apartamento→Torre) y trato informativo (no bloqueante) de unidades ocupadas.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Qué cambió
 

@@ -8,7 +8,7 @@ del nombre del residente, esto asi como hiciste con la vista /residentes
 para algunos campos, la idea de todo esto es que la informacion se vea
 compacta sin cambiar los tamanos de la informacion para que se puedan leer"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Contexto
 

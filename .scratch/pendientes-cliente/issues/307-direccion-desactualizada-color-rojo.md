@@ -8,7 +8,7 @@ destinatario resuelto de un paquete YA CERRADO (ENTREGADO/CANCELADO) ya no vive 
 congelada en el snapshot, el texto "Torre X · Apt Y" debe verse en **rojo** y dejar de ser un link
 -- tanto en el modal "Ver" como en la columna "Dirección" de la tabla.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

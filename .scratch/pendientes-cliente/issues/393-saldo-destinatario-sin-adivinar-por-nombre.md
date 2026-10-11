@@ -4,7 +4,7 @@
 destinatario de un paquete se buscaba por teléfono y, si no, por NOMBRE tomando la primera coincidencia; con dos
 personas del mismo nombre, el descuento/abono del contra entrega podía ir a la persona equivocada.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Decisiones
 

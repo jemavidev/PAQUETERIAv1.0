@@ -5,7 +5,7 @@ hecho que no tenga un apartamento resuelto no debería ser impedimento para reci
 paquetes no están asociados a un apartamento". Aprobó las 3 correcciones propuestas: "recuerda el no tener un
 apartamento no debería bloquear para recibir".
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

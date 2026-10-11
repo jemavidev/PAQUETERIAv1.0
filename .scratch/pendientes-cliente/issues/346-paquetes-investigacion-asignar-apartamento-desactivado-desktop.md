@@ -6,7 +6,7 @@ deberia aparecer activado" (seguido de la confusión previa: "no se porque
 ahora los iconos de asignar apartamento aparecen desactivados en todas las
 vistas, pero menos en el modal de la vista Residentes, no se porque").
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Hallazgo (verificado en vivo en localhost:8010)
 

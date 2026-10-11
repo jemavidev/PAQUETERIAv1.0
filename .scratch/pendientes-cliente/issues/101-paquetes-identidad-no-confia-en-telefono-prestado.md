@@ -8,7 +8,7 @@ registrado, no entiendo si es un cambio de estado que no actualice,
 analiza y dime que ves y como se interpreta, no se si otros usuarios
 presenten algun problema"
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 

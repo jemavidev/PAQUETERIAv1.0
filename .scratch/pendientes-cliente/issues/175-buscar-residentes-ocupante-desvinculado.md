@@ -11,7 +11,7 @@ barrido de esas issues no cubrió -- vive en la capa de rutas (`customers_manage
 dominio (`ocupante_service.py`) donde se hizo ese barrido. Confirmado con auditoría completa de
 las 22 consultas contra `Ocupante` en todo el repo: esta es la ÚNICA que falta.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 corregía se quitó en el seguimiento inmediato; el diagnóstico y el fix en sí siguen siendo
 correctos mientras el mecanismo existió, se deja el registro tal cual)
 

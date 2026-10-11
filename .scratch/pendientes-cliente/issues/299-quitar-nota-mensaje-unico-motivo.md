@@ -5,7 +5,7 @@ solo -- {motivo} se reemplaza por el que el STAFF elija al cancelar.'" --
 tras [[298]], que agregó esa nota explicativa bajo la lista "Motivos
 seleccionables" del modal CANCELADO en `/administracion/notificaciones`.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Alcance acordado
 

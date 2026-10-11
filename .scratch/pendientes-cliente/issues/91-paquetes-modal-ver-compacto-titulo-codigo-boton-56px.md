@@ -10,7 +10,7 @@ pequeno, posiblemente que el pading o margin sea menor, de esta forma
 tener esa seccion superior mas pequena, recuerda que este boton
 deberia ser lo suficientemente grande para su look and feel."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Implementación
 

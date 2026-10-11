@@ -16,7 +16,7 @@ Tras el análisis, dos correcciones puntuales derivadas:
 > codigo. En caso que en una vista publica se consulte un codigo de acceso es porque ya este se
 > conoce y se podra interactuar con este, pero nunca revelarlo en vistas publicas."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 en PaqueteX) -- pendiente que el cliente lo confirme visualmente.
 
 ## Análisis (OTP)

@@ -5,7 +5,7 @@ recomendaciones") -- reusar en el tab Residentes el mismo mecanismo de vista pre
 ya tenía "+ Nuevo residente" en `/paquetes` (Recibir/Corregir destinatario), para que agregar un
 residente desde acá se sienta igual que hacerlo desde `/paquetes`.
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Refactor de dominio (seam real, no hipotético)
 

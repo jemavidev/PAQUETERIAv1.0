@@ -8,7 +8,7 @@ analizar inicialmente los modales para corregir esto y también analiza
 las secciones cuando se pasan a mobil para que esto no pase o sea
 controlado."
 
-**Status:** desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
+**Status:** verificado — cerrado por Jesús 2026-10-11 (en producción). Antes: desplegado en test (código revisado idéntico a `3ea732f`, 2026-09-26), pendiente confirmar en vivo
 
 ## Diagnóstico
 
