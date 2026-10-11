@@ -465,5 +465,5 @@ yendo por `/to-spec` → `/to-tickets`, que el cliente invoca directamente.
 - `443` — Enlace "Bancos" (https://facturas.papyrus.com.co/bancos) en el header de Staff/Admin, a la derecha de Consultar (y en el footer móvil reemplaza a Consultar) — **verificado** en producción (`bcd94f7`)
 - `444` — `/consultar?q=<código>`: ícono y Posición en el visor de fotos (solo staff, solo Recibido), centrada arriba — **implementado** (local)
 - `445` — `/paquetes` escritorio con el look de tarjetas separadas y bordes redondeados del celular — variante B (filas separadas) — **verificado** (local) · falta desplegar
-- `446` — Vista de mensaje especial (fines de semana / días sin servicio) para Anunciados <5 días y Recibidos, SMS + WhatsApp, mensaje editable en Notificaciones — **pendiente**
+- `446` — Vista de mensaje especial (fines de semana / días sin servicio) para Anunciados <5 días y Recibidos, SMS + WhatsApp, mensaje editable en Notificaciones — **pendiente** · diseño acordado (grilling), falta `/to-spec`
 - `447` — Anunciar a un teléfono/usuario de WhatsApp desconocido no ofrecía notificar: ahora Anunciar + Pedir autorización (como una Persona sin autorización automática) — **verificado** (local) · falta desplegar
