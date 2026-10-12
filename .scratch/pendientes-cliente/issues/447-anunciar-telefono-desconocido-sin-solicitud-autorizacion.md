@@ -5,7 +5,7 @@ telefono o usuario de whatsapp que no existe en los clientes actuales o clientes
 anunciar para uno de estos numeros, no se porque pero no aparece la opcion de notificar al cliente que existe un
 paquete para el, que acaba un domiciliario de traerlo y que nosotros necesitamos autorizacion para recibirlo."
 
-**Status:** verificado (local, Jesús 2026-10-11: "el resto de cosas sí están funcionando") — falta desplegar
+**Status:** verificado (local, Jesús 2026-10-11: "el resto de cosas sí están funcionando") — desplegado en producción (elclub, `5be8e10` del repo de deploy, 2026-10-11); falta confirmar en producción
 
 ## Diagnóstico
 

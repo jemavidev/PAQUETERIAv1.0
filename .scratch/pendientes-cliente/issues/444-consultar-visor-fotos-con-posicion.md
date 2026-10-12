@@ -4,7 +4,7 @@
 cuando se visualizan las imagenes, la idea de esto es ver como se ve el paquete y con el icono y la posicion se veria
 donde esta ubicada."
 
-**Status:** implementado (local, 2026-10-11) — Jesús pidió centrarla; falta verificar el centrado y desplegar
+**Status:** implementado (local, 2026-10-11) — Jesús pidió centrarla; falta verificar el centrado — desplegado en producción (elclub, `5be8e10` del repo de deploy, 2026-10-11); falta confirmar en producción
 
 ## Decisiones
 
