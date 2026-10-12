@@ -8,6 +8,19 @@
 {%- set _franja = {'ANUNCIADO': 'border-l-amber-400', 'RECIBIDO': 'border-l-blue-600'} %}
 {%- set _fila_tarjeta = '[&>td]:bg-white [&>td]:border-y [&>td]:border-slate-200 [&>td:first-child]:rounded-l-xl [&>td:first-child]:border-l-8 [&>td:last-child]:rounded-r-xl [&>td:last-child]:border-r drop-shadow-sm [&:hover>td]:bg-slate-50' %}
 {%- set _franja_td = {'ANUNCIADO': '[&>td:first-child]:border-l-amber-400', 'RECIBIDO': '[&>td:first-child]:border-l-blue-600'} %}
+{%- set _boton_apagado = 'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-300' %}
+{#- WhatsApp (ticket 04): abre el chat con el mensaje elegido ya escrito; sin registro. Dos enlaces celular/escritorio,
+   mismo criterio que el resto de la app. Sin mensaje elegido o sin contacto: apagado con el motivo. -#}
+{%- macro boton_whatsapp(cliente) -%}
+{%- set enlaces = whatsapp.get(cliente.persona.id) if mensaje else none %}
+{%- if enlaces %}
+<a href="{{ enlaces[0] }}" target="_blank" rel="noopener" class="sm:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700" aria-label="WhatsApp a {{ cliente.persona.nombre }}" title="WhatsApp"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></a>
+<a href="{{ enlaces[1] }}" target="_blank" rel="noopener" class="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700" aria-label="WhatsApp a {{ cliente.persona.nombre }}" title="WhatsApp"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></a>
+{%- else %}
+{%- set _motivo = 'Elige un mensaje primero' if not mensaje else 'Sin teléfono ni WhatsApp registrado' %}
+<span class="{{ _boton_apagado }}" role="img" aria-label="WhatsApp: {{ _motivo }}" title="{{ _motivo }}"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></span>
+{%- endif %}
+{%- endmacro %}
 {%- macro codigos(cliente) -%}
 <span class="flex flex-wrap gap-1.5">
   {%- for p in cliente.paquetes %}
@@ -24,6 +37,7 @@
     <p class="text-lg font-semibold leading-tight text-slate-900 truncate m-0">{{ c.persona.nombre }}</p>
     {%- if c.direccion %}<p class="mt-0.5 text-sm font-semibold uppercase text-slate-700 m-0">{{ c.direccion }}</p>{% endif %}
     <div class="mt-2">{{ codigos(c) }}</div>
+    <div class="mt-2.5 flex items-center justify-end gap-2" data-acciones-aviso>{{ boton_whatsapp(c) }}</div>
   </div>
   {%- endfor %}
 </div>
@@ -35,6 +49,7 @@
         <th class="text-left font-semibold px-4 py-2.5">Cliente</th>
         <th class="text-left font-semibold px-4 py-2.5">Torre y Apartamento</th>
         <th class="text-left font-semibold px-4 py-2.5">Paquetes</th>
+        <th class="text-right font-semibold px-4 py-2.5">Avisar</th>
       </tr>
     </thead>
     <tbody>
@@ -43,6 +58,7 @@
         <td class="px-4 py-2.5 font-medium text-slate-900">{{ c.persona.nombre }}</td>
         <td class="px-4 py-2.5 uppercase text-slate-700">{{ c.direccion or '' }}</td>
         <td class="px-4 py-2.5">{{ codigos(c) }}</td>
+        <td class="px-4 py-2.5"><div class="flex items-center justify-end gap-2" data-acciones-aviso>{{ boton_whatsapp(c) }}</div></td>
       </tr>
       {%- endfor %}
     </tbody>

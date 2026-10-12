@@ -11,6 +11,30 @@
     <p class="text-sm text-slate-600 m-0">Clientes con paquetes Anunciados en los últimos 5 días o Recibidos.</p>
   </div>
   {% if error %}{{ toast(error, variant='danger') }}{% endif %}
+
+  {#- Selector de mensaje (ticket 04): todos los botones de la lista usan el elegido. Va en la URL (`?mensaje=`), así
+     que un GET normal alcanza; el JS solo envía el formulario al cambiar la opción. -#}
+  {%- if mensaje %}
+  <form method="get" action="/administracion/avisos-especiales" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-2" data-selector-mensaje>
+    <label for="selector-mensaje" class="block text-sm font-medium text-slate-700">Mensaje a enviar</label>
+    <div class="flex items-center gap-2">
+      <select id="selector-mensaje" name="mensaje" onchange="this.form.submit()"
+              class="flex-1 min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+        {%- for m in mensajes %}
+        <option value="{{ m.id }}" {% if m.id == mensaje.id %}selected{% endif %}>{{ m.nombre }}</option>
+        {%- endfor %}
+      </select>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">Usar</button></noscript>
+    </div>
+    {%- set _previa = aviso_vista_previa(mensaje.texto) %}
+    <div class="rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 break-words whitespace-pre-line" data-vista-previa-aviso>{{ _previa.texto }}</div>
+    <p class="text-xs {{ 'text-slate-500' if _previa.un_sms else 'text-amber-700' }} m-0">Vista previa con datos de ejemplo · {{ _previa.caracteres }} caracteres en SMS (160 = 1 SMS)</p>
+  </form>
+  {%- else %}
+  <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" data-sin-mensajes>
+    Todavía no hay mensajes especiales. Créalos en <a href="/administracion/notificaciones" class="font-semibold underline">Notificaciones → Mensajes especiales</a> para poder enviar avisos.
+  </div>
+  {%- endif %}
   <div id="resultados-avisos">
     {% include "admin/_avisos_especiales_resultados.html" %}
   </div>

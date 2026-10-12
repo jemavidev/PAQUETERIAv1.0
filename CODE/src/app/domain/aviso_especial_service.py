@@ -27,6 +27,7 @@ from .mensaje_especial import (
 from .notificacion_service import _sin_tildes, normalizar_texto_plantilla, resolver_destino_notificable
 from .paquete import EstadoPaquete, Paquete, torre_sin_prefijo
 from .persona import Persona
+from .persona_service import url_whatsapp, url_whatsapp_desktop
 from .zona_horaria import ZONA_HORARIA_APP
 
 VARIABLES_MENSAJE = ("nombre", "codigos")
@@ -275,3 +276,30 @@ def listar_clientes(session: Session, hoy: date = None) -> list[ClienteAviso]:
             continue
         por_persona.setdefault(persona.id, ClienteAviso(persona)).paquetes.append(paquete)
     return sorted(por_persona.values(), key=lambda c: (c.persona.nombre or "").lower())
+
+
+def texto_para(cliente: ClienteAviso, mensaje: MensajeEspecial) -> str:
+    """El texto de `mensaje` resuelto para `cliente`: su nombre y los códigos de sus Paquetes en la lista."""
+    return resolver_texto(mensaje.texto, cliente.persona.nombre, cliente.codigos)
+
+
+def enlaces_whatsapp(cliente: ClienteAviso, mensaje: MensajeEspecial) -> tuple[str, str] | None:
+    """`(celular, escritorio)` para abrir el chat de `cliente` con `mensaje` ya escrito -- los mismos enlaces del
+    resto de la app (`url_whatsapp`/`url_whatsapp_desktop`). `None` si no tiene teléfono ni usuario de WhatsApp.
+    El WhatsApp no deja registro: la app no puede saber si de verdad se envió."""
+    persona = cliente.persona
+    if not (persona.telefono or persona.whatsapp_usuario):
+        return None
+    texto = texto_para(cliente, mensaje)
+    return url_whatsapp(persona, texto=texto), url_whatsapp_desktop(persona, texto=texto)
+
+
+def elegir_mensaje(session: Session, mensaje_id) -> MensajeEspecial | None:
+    """El mensaje elegido en el selector: `mensaje_id` (un UUID, o `None`) si es un mensaje vigente, si no el primero
+    por nombre, o `None` si no hay ninguno."""
+    if mensaje_id is not None:
+        elegido = obtener_mensaje(session, mensaje_id)
+        if elegido is not None:
+            return elegido
+    mensajes = listar_mensajes(session)
+    return mensajes[0] if mensajes else None

@@ -162,3 +162,83 @@ def test_la_ventana_de_anunciados_empieza_a_medianoche_hora_colombia_de_hace_4_d
     once_pm_del_6 = datetime(2026, 10, 6, 23, 0, tzinfo=ZONA_HORARIA_APP)  # 5 días calendario atrás: fuera
     assert once_pm_del_6 < inicio
     assert datetime(2026, 10, 7, 0, 0, tzinfo=ZONA_HORARIA_APP) >= inicio
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 04 -- selector de mensaje y WhatsApp
+# --------------------------------------------------------------------------- #
+def _mensaje(client, nombre="Fin de semana", texto="Hola {nombre}: el sabado no hay servicio. Paquetes: {codigos}"):
+    from app.domain.aviso_especial_service import crear_mensaje
+
+    m = crear_mensaje(client.db, nombre, texto)
+    client.db.commit()
+    return m
+
+
+def test_el_boton_de_whatsapp_abre_el_chat_con_el_mensaje_elegido_resuelto_para_ese_cliente(client):
+    from urllib.parse import quote
+
+    _login_admin(client)
+    p = _anunciar(client, tel="3001234567", nombre="Ana")
+    m = _mensaje(client)
+
+    html = client.get(_URL, params={"mensaje": str(m.id)}).text
+
+    texto = quote(f"Hola ANA: el sabado no hay servicio. Paquetes: {p.access_code}")
+    assert f"https://api.whatsapp.com/send/?phone=573001234567&amp;type=phone_number&amp;text={texto}" in html
+    assert f"https://web.whatsapp.com/send?phone=573001234567&amp;text={texto}" in html
+
+
+def test_sin_eleccion_el_selector_usa_el_primer_mensaje_por_nombre_y_muestra_su_vista_previa(client):
+    _login_admin(client)
+    _anunciar(client)
+    _mensaje(client, nombre="Puente festivo", texto="Lunes festivo sin servicio, {nombre}.")
+    _mensaje(client, nombre="Fin de semana", texto="Sabado sin servicio, {nombre}.")
+
+    html = client.get(_URL).text
+
+    elegido = re.search(r"<option[^>]*selected[^>]*>([^<]*)</option>", html).group(1)
+    assert elegido == "Fin de semana"
+    previa = re.search(r"data-vista-previa-aviso>([^<]*)<", html).group(1)
+    assert previa == "Sabado sin servicio, MARIA PEREZ."
+    assert "Lunes+festivo" not in html and "Lunes%20festivo" not in html  # los botones usan el elegido
+
+
+def test_un_mensaje_eliminado_o_un_id_invalido_cae_al_primero_vigente(client):
+    from app.domain.aviso_especial_service import eliminar_mensaje
+
+    _login_admin(client)
+    _anunciar(client)
+    borrado = _mensaje(client, nombre="Aaa viejo", texto="Viejo")
+    _mensaje(client, nombre="Fin de semana", texto="Nuevo")
+    eliminar_mensaje(client.db, borrado.id)
+    client.db.commit()
+
+    for valor in (str(borrado.id), "no-es-un-id"):
+        html = client.get(_URL, params={"mensaje": valor}).text
+        assert re.search(r"<option[^>]*selected[^>]*>([^<]*)</option>", html).group(1) == "Fin de semana"
+        assert "Aaa viejo" not in html
+
+
+def test_sin_mensajes_creados_avisa_con_enlace_a_notificaciones_y_apaga_el_whatsapp(client):
+    _login_admin(client)
+    _anunciar(client)
+
+    html = client.get(_URL).text
+
+    assert "Todavía no hay mensajes especiales." in html
+    assert 'href="/administracion/notificaciones"' in html
+    assert "api.whatsapp.com" not in html
+    assert 'aria-label="WhatsApp: Elige un mensaje primero"' in html
+
+
+def test_el_whatsapp_es_solo_un_enlace_sin_ruta_de_servidor_ni_registro(client):
+    _login_admin(client)
+    _anunciar(client)
+    m = _mensaje(client)
+
+    html = client.get(_URL, params={"mensaje": str(m.id)}).text
+
+    whatsapp = re.findall(r'<a href="(https://(?:api|web)\.whatsapp\.com[^"]*)"', html)
+    assert len(whatsapp) == 4  # celular + escritorio, en la tarjeta y en la fila
+    assert all("target" in a for a in re.findall(r'<a href="https://(?:api|web)\.whatsapp\.com[^>]*>', html))
