@@ -1,6 +1,45 @@
 {% extends "base.html" %}
 {% from "components/_toast.html" import toast %}
 {% block title %}Avisos especiales — PAQUETEX<script>
+  // Búsqueda en vivo (ticket 07): al escribir (con pausa) pide solo la lista y la reemplaza; el filtro queda en la URL
+  // (issue 438) para que "atrás" o recargar vuelvan igual. Los botones de Estado envían el formulario normal.
+  (function () {
+    var form = document.querySelector('[data-busqueda-avisos]');
+    var resultados = document.getElementById('resultados-avisos');
+    if (!form || !resultados) return;
+    var q = form.querySelector('input[name=q]');
+    var espera = null, controlador = null;
+    q.addEventListener('input', function () {
+      clearTimeout(espera);
+      espera = setTimeout(function () {
+        if (controlador) controlador.abort();
+        controlador = new AbortController();
+        var params = new URLSearchParams();
+        form.querySelectorAll('input[name]').forEach(function (campo) {
+          if (campo.value) params.set(campo.name, campo.value);
+        });
+        var estado = form.querySelector('[data-estado-avisos]').value;
+        if (estado) params.set('estado', estado);
+        var url = form.getAttribute('action') + (params.toString() ? '?' + params.toString() : '');
+        if (window.history && history.replaceState) history.replaceState(history.state, '', url);
+        fetch(url, {headers: {'X-Requested-With': 'fetch'}, signal: controlador.signal, credentials: 'same-origin'})
+          .then(function (r) { return r.text(); })
+          .then(function (html) {
+            resultados.innerHTML = html;
+            // Los conteos de la barra siguen la búsqueda: el fragmento los trae en `data-conteos`.
+            var datos = resultados.querySelector('[data-conteos]');
+            if (!datos) return;
+            var conteos = JSON.parse(datos.getAttribute('data-conteos'));
+            form.querySelectorAll('[data-conteo-estado]').forEach(function (span) {
+              span.textContent = conteos[span.getAttribute('data-conteo-estado')];
+            });
+          })
+          .catch(function () {});
+      }, 300);
+    });
+  })();
+</script>
+<script>
   // Enviar SMS sin recargar (ticket 05): manda el formulario de la fila por fetch y reemplaza la fila de escritorio y
   // la tarjeta de celular de ese cliente con la respuesta (nuevo "Último SMS" o el aviso rojo de falla). Un error
   // que impide intentar el envío (400) se muestra en la misma fila. Sin JS, el formulario hace un POST normal.
@@ -77,6 +116,28 @@
     Todavía no hay mensajes especiales. Créalos en <a href="/administracion/notificaciones" class="font-semibold underline">Notificaciones → Mensajes especiales</a> para poder enviar avisos.
   </div>
   {%- endif %}
+  {#- Búsqueda y filtro (ticket 07): barra propia (la de `/paquetes` trae sus 4 Estados y parámetros). GET normal sin
+     JS; con JS, búsqueda en vivo que reemplaza `#resultados-avisos` y deja el filtro en la URL. Lleva el mensaje
+     elegido como campo oculto para no perderlo. -#}
+  <form method="get" action="/administracion/avisos-especiales" class="flex flex-wrap items-center gap-2" data-busqueda-avisos>
+    {%- if mensaje %}<input type="hidden" name="mensaje" value="{{ mensaje.id }}">{% endif %}
+    {#- Sin `name`: el Estado lo manda el botón presionado; este valor solo lo lee la búsqueda en vivo. -#}
+    <input type="hidden" value="{{ filtro_estado }}" data-estado-avisos>
+    <div class="flex-1 min-w-[12rem] flex items-center rounded-lg border border-slate-300 bg-white px-3 focus-within:ring-2 focus-within:ring-blue-300">
+      <svg class="h-4 w-4 text-slate-400 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/></svg>
+      <input type="text" name="q" value="{{ filtro_q }}" placeholder="Nombre, teléfono, código, torre o apartamento" autocomplete="off" aria-label="Buscar cliente"
+             class="flex-1 min-w-0 border-0 bg-transparent px-2 py-2.5 text-base focus:ring-0 focus:outline-none placeholder:text-slate-400">
+    </div>
+    <div class="flex items-center gap-1.5" role="group" aria-label="Filtrar por estado">
+      {%- for clave, texto in [('', 'Todos'), ('ANUNCIADO', 'Anunciados'), ('RECIBIDO', 'Recibidos')] %}
+      <button type="submit" name="estado" value="{{ clave }}" data-filtro-estado="{{ clave }}" aria-pressed="{{ 'true' if filtro_estado == clave else 'false' }}"
+              class="rounded-full border px-3 py-2 text-sm font-semibold {{ 'border-blue-800 bg-blue-800 text-white' if filtro_estado == clave else 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' }}">
+        {{ texto }} <span data-conteo-estado="{{ clave }}">{{ conteos[clave] }}</span>
+      </button>
+      {%- endfor %}
+    </div>
+  </form>
+
   <div id="resultados-avisos">
     {% include "admin/_avisos_especiales_resultados.html" %}
   </div>

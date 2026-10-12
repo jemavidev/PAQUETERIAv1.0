@@ -15,9 +15,11 @@ from sqlalchemy.orm import Session
 
 from app.domain.aviso_especial_service import (
     AvisoNoEnviable,
+    conteos_por_estado,
     elegir_mensaje,
     enlaces_whatsapp,
     enviar_sms,
+    filtrar_clientes,
     listar_clientes,
     listar_mensajes,
 )
@@ -39,9 +41,20 @@ def _uuid_o_none(valor: str | None):
         return None
 
 
-def _contexto(request: Request, db: Session, admin: Usuario, mensaje_id: str | None) -> dict:
+_POR_PAGINA = 30
+_ESTADOS_FILTRO = ("ANUNCIADO", "RECIBIDO")
+
+
+def _contexto(
+    request: Request, db: Session, admin: Usuario, mensaje_id: str | None, q: str = "", estado: str = "", pagina: int = 1
+) -> dict:
     mensaje = elegir_mensaje(db, _uuid_o_none(mensaje_id))
-    clientes = listar_clientes(db)
+    estado = estado if estado in _ESTADOS_FILTRO else ""
+    buscados = filtrar_clientes(listar_clientes(db), q=q)
+    filtrados = filtrar_clientes(buscados, estado=estado)
+    total_paginas = max(1, -(-len(filtrados) // _POR_PAGINA))
+    pagina = min(max(1, pagina), total_paginas)
+    clientes = filtrados[(pagina - 1) * _POR_PAGINA : pagina * _POR_PAGINA]
     return {
         "request": request,
         "admin": admin,
@@ -49,6 +62,12 @@ def _contexto(request: Request, db: Session, admin: Usuario, mensaje_id: str | N
         "mensajes": listar_mensajes(db),
         "mensaje": mensaje,
         "whatsapp": {c.persona.id: enlaces_whatsapp(c, mensaje) for c in clientes} if mensaje else {},
+        "filtro_q": q or "",
+        "filtro_estado": estado,
+        "conteos": conteos_por_estado(buscados),
+        "pagina_actual": pagina,
+        "total_paginas": total_paginas,
+        "params_paginacion": {"mensaje": str(mensaje.id) if mensaje else None, "q": q or None, "estado": estado or None},
     }
 
 
@@ -63,12 +82,18 @@ _AVISOS_RESULTADO = {
 def avisos_especiales(
     request: Request,
     mensaje: str = None,
+    q: str = "",
+    estado: str = "",
+    pagina: int = 1,
     resultado: str = None,
     error: str = None,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
-    contexto = _contexto(request, db, admin, mensaje)
+    """La vista. Con `X-Requested-With: fetch` (búsqueda en vivo, ticket 07) responde solo la lista."""
+    contexto = _contexto(request, db, admin, mensaje, q=q, estado=estado, pagina=pagina)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return templates.TemplateResponse("admin/_avisos_especiales_resultados.html", contexto)
     if resultado in _AVISOS_RESULTADO:
         contexto["aviso"], contexto["aviso_variante"] = _AVISOS_RESULTADO[resultado]
     elif error:

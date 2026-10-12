@@ -8,11 +8,11 @@ Ver spec: User Stories 21-24, 28.
 
 **Blocked by:** 04 — Selector de mensaje y botón de WhatsApp
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-11)
 
-- [ ] Búsqueda en vivo (mismo patrón de fragmento HTML que `/paquetes`) por nombre, teléfono, código o Torre/Apartamento, sin distinguir mayúsculas
-- [ ] Filtro Anunciado/Recibido; un cliente con paquetes de los dos estados aparece en ambos
-- [ ] Conteo de clientes total y por filtro
-- [ ] Paginación con el componente de la app
-- [ ] El mensaje elegido (`?mensaje=`) se conserva al buscar, filtrar y paginar, también en la búsqueda en vivo
-- [ ] Pruebas por HTTP
+- [x] Búsqueda en vivo (mismo patrón de fragmento HTML que `/paquetes`) por nombre, teléfono, código o Torre/Apartamento, sin distinguir mayúsculas
+- [x] Filtro Anunciado/Recibido; un cliente con paquetes de los dos estados aparece en ambos
+- [x] Conteo de clientes total y por filtro
+- [x] Paginación con el componente de la app
+- [x] El mensaje elegido (`?mensaje=`) se conserva al buscar, filtrar y paginar, también en la búsqueda en vivo
+- [x] Pruebas por HTTP

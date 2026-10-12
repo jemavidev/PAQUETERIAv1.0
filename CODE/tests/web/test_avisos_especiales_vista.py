@@ -523,3 +523,84 @@ def test_la_baja_tiene_prioridad_sobre_los_demas_motivos(client):
     persona = Persona(nombre="X", telefono=None, baja_administrativa_en=dt.now(timezone.utc))
 
     assert motivo_sin_sms(client.db, ClienteAviso(persona)) == "De baja"
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 07 -- búsqueda, filtro, conteos y paginación
+# --------------------------------------------------------------------------- #
+def _nombres(html):
+    return [f.split(" ")[0] for f in _filas(html)]
+
+
+def test_buscar_por_nombre_sin_tildes_ni_mayusculas_telefono_o_codigo(client):
+    _login_admin(client)
+    _anunciar(client, tel="3001111111", nombre="Andrés")
+    beto = _anunciar(client, tel="3002222222", nombre="Beto")
+    _anunciar(client, tel="3003333333", nombre="Carla")
+
+    assert _nombres(client.get(_URL, params={"q": "andres"}).text) == ["ANDRÉS"]
+    assert _nombres(client.get(_URL, params={"q": "300 222"}).text) == ["BETO"]
+    assert _nombres(client.get(_URL, params={"q": beto.access_code.lower()}).text) == ["BETO"]
+    assert _nombres(client.get(_URL, params={"q": "nadie"}).text) == []
+
+
+def test_buscar_por_torre_y_apartamento(client):
+    from app.domain.apartamento_service import resolver_apartamento
+
+    _login_admin(client)
+    _anunciar(client, tel="3001111111", nombre="Ana", apartamento=resolver_apartamento(client.db, "TORRE 2", "706"))
+    _anunciar(client, tel="3002222222", nombre="Beto", apartamento=resolver_apartamento(client.db, "TORRE 4", "806"))
+    client.db.commit()
+
+    assert _nombres(client.get(_URL, params={"q": "706"}).text) == ["ANA"]
+    assert _nombres(client.get(_URL, params={"q": "torre 4"}).text) == ["BETO"]
+
+
+def test_filtro_por_estado_con_conteos_y_un_cliente_con_los_dos_estados_sale_en_ambos(client):
+    admin = _login_admin(client)
+    _anunciar(client, tel="3001111111", nombre="Solo anunciado")
+    recibido = _anunciar(client, tel="3002222222", nombre="Solo recibido")
+    receive(client.db, recibido, admin)
+    _anunciar(client, tel="3003333333", nombre="Ambos")
+    ambos = _anunciar(client, tel="3003333333", nombre="Ambos")
+    receive(client.db, ambos, admin)
+    client.db.commit()
+
+    html = client.get(_URL).text
+    assert re.search(r"data-conteo-estado=\"\"[^>]*>[^<]*3", html)
+    assert re.search(r"data-conteo-estado=\"ANUNCIADO\"[^>]*>[^<]*2", html)
+    assert re.search(r"data-conteo-estado=\"RECIBIDO\"[^>]*>[^<]*2", html)
+    assert sorted(_nombres(client.get(_URL, params={"estado": "ANUNCIADO"}).text)) == ["AMBOS", "SOLO"]
+    recibidos = _filas(client.get(_URL, params={"estado": "RECIBIDO"}).text)
+    assert sorted(f.split(" ")[0] for f in recibidos) == ["AMBOS", "SOLO"]
+    assert any("SOLO RECIBIDO" in f for f in recibidos)
+
+
+def test_la_busqueda_en_vivo_devuelve_solo_los_resultados_y_conserva_el_mensaje(client):
+    _login_admin(client)
+    _anunciar(client, tel="3001111111", nombre="Ana")
+    m = _mensaje(client, nombre="Festivo", texto="Lunes {nombre}")
+
+    r = client.get(_URL, params={"q": "ana", "mensaje": str(m.id)}, headers={"X-Requested-With": "fetch"})
+
+    assert "<html" not in r.text  # solo el fragmento
+    assert _nombres(r.text) == ["ANA"]
+    assert "Lunes%20ANA" in r.text  # los botones siguen usando el mensaje elegido
+
+
+def test_la_barra_conserva_el_mensaje_elegido_y_la_paginacion_lleva_filtros_y_mensaje(client, monkeypatch):
+    from app.web.routes import avisos_especiales
+
+    monkeypatch.setattr(avisos_especiales, "_POR_PAGINA", 2)
+    _login_admin(client)
+    for i in range(5):
+        _anunciar(client, tel=f"30011111{i}0", nombre=f"Cliente {i}")
+    m = _mensaje(client)
+
+    html = client.get(_URL, params={"mensaje": str(m.id), "q": "cliente"}).text
+
+    assert f'name="mensaje" value="{m.id}"' in html  # campo oculto de la barra de búsqueda
+    assert len(_filas(html)) == 2
+    assert f"mensaje={m.id}" in re.search(r'href="([^"]*pagina=2[^"]*)"', html).group(1)
+    assert "q=cliente" in re.search(r'href="([^"]*pagina=2[^"]*)"', html).group(1)
+    assert len(_filas(client.get(_URL, params={"mensaje": str(m.id), "q": "cliente", "pagina": 3}).text)) == 1

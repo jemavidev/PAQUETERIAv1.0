@@ -330,6 +330,43 @@ def motivo_sin_sms(session: Session, cliente: ClienteAviso) -> str | None:
     return None
 
 
+def _normalizado(texto: str | None) -> str:
+    return " ".join(_sin_tildes(texto or "").lower().split())
+
+
+def filtrar_clientes(clientes: list[ClienteAviso], q: str = "", estado: str = "") -> list[ClienteAviso]:
+    """La búsqueda y el filtro de la vista (ticket 07). `q` coincide, sin tildes ni mayúsculas, con el nombre, el
+    usuario de WhatsApp, un código de acceso o la Torre/Apartamento; sus dígitos, con el teléfono. `estado`
+    (ANUNCIADO/RECIBIDO) deja a quien tenga al menos un Paquete en ese Estado: un cliente con los dos sale en ambos."""
+    termino = _normalizado(q)
+    digitos = "".join(ch for ch in termino if ch.isdigit())
+    resultado = []
+    for c in clientes:
+        if estado and not any(p.estado.value == estado for p in c.paquetes):
+            continue
+        if termino:
+            textos = [c.persona.nombre, c.persona.whatsapp_usuario, c.direccion, *c.codigos]
+            telefono = "".join(ch for ch in (c.persona.telefono or "") if ch.isdigit())
+            if not (
+                any(termino in _normalizado(t) for t in textos)
+                or (digitos and digitos == termino.replace(" ", "") and digitos in telefono)
+            ):
+                continue
+        resultado.append(c)
+    return resultado
+
+
+def conteos_por_estado(clientes: list[ClienteAviso]) -> dict:
+    """`{"": total, "ANUNCIADO": n, "RECIBIDO": n}` -- cuántos clientes muestra cada opción del filtro."""
+    return {
+        "": len(clientes),
+        **{
+            e.value: sum(1 for c in clientes if any(p.estado is e for p in c.paquetes))
+            for e in (EstadoPaquete.ANUNCIADO, EstadoPaquete.RECIBIDO)
+        },
+    }
+
+
 def ultimos_envios(session: Session, persona_ids: list) -> dict:
     """`{persona_id: EnvioAvisoEspecial}` con el envío más reciente de cada Persona (las que no tienen, no están)."""
     if not persona_ids:
