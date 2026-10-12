@@ -36,7 +36,10 @@
 {#- SMS (ticket 05): un formulario por fila. Con JS, `data-enviar-sms` lo manda por fetch y reemplaza la fila con la
    respuesta (sin recargar); sin JS, POST normal y la vista vuelve con un aviso (Post/Redirect/Get). -#}
 {%- macro boton_sms(cliente) -%}
-{%- if mensaje %}
+{#- Ticket 06: mismas reglas que los avisos automáticos -- sin SMS, el botón queda apagado con el motivo visible. -#}
+{%- if cliente.motivo_sin_sms %}
+<span class="inline-flex h-10 items-center rounded-lg border border-slate-100 bg-slate-50 px-3 text-xs font-medium text-slate-500" data-sms-apagado title="{{ cliente.motivo_sin_sms }}">SMS: {{ cliente.motivo_sin_sms }}</span>
+{%- elif mensaje %}
 <form method="post" action="/administracion/avisos-especiales/sms" data-enviar-sms class="inline-flex">
   <input type="hidden" name="persona_id" value="{{ cliente.persona.id }}">
   <input type="hidden" name="mensaje" value="{{ mensaje.id }}">

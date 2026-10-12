@@ -8,11 +8,11 @@ Ver spec: Implementation Decisions (Regla del SMS, Quién es "el cliente") y Use
 
 **Blocked by:** 05 — Enviar SMS y "Último SMS"
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-11)
 
-- [ ] Motivos, en este orden de prioridad: "De baja" (baja administrativa), "Sin teléfono", "Notificaciones SMS desactivadas"
-- [ ] "Notificaciones SMS desactivadas" solo si el canal SMS está apagado (`preferencia_activa`) para el Estado de TODOS sus paquetes en la lista; con al menos uno activo, el SMS está disponible
-- [ ] Un POST de envío a un cliente no elegible se rechaza sin llamar al sender ni registrar envío
-- [ ] Los clientes solo-WhatsApp aparecen con "Sin teléfono" y el WhatsApp disponible, sin cambiar el comportamiento de los avisos automáticos
-- [ ] El bloqueo no agrega una regla nueva (igual que los avisos automáticos)
-- [ ] Pruebas por HTTP y, para la matriz de motivos, sobre el servicio de dominio
+- [x] Motivos, en este orden de prioridad: "De baja" (baja administrativa), "Sin teléfono", "Notificaciones SMS desactivadas"
+- [x] "Notificaciones SMS desactivadas" solo si el canal SMS está apagado (`preferencia_activa`) para el Estado de TODOS sus paquetes en la lista; con al menos uno activo, el SMS está disponible
+- [x] Un POST de envío a un cliente no elegible se rechaza sin llamar al sender ni registrar envío
+- [x] Los clientes solo-WhatsApp aparecen con "Sin teléfono" y el WhatsApp disponible, sin cambiar el comportamiento de los avisos automáticos
+- [x] El bloqueo no agrega una regla nueva (igual que los avisos automáticos)
+- [x] Pruebas por HTTP y, para la matriz de motivos, sobre el servicio de dominio

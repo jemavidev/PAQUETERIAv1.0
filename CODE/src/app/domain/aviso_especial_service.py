@@ -29,7 +29,9 @@ from .notification_sender import NotificationSender
 from .notificacion_service import _sin_tildes, normalizar_texto_plantilla, resolver_destino_notificable
 from .paquete import EstadoPaquete, Paquete, torre_sin_prefijo
 from .persona import Persona
-from .persona_service import url_whatsapp, url_whatsapp_desktop
+from .persona_service import buscar_persona_por_whatsapp, url_whatsapp, url_whatsapp_desktop
+from .preferencia_notificacion import CanalNotificacion
+from .preferencia_notificacion_service import preferencia_activa
 from .registro_sms import TipoRegistroSms
 from .registro_sms_service import registrar_envio
 from .zona_horaria import ZONA_HORARIA_APP
@@ -225,6 +227,8 @@ class ClienteAviso:
     paquetes: list[Paquete] = field(default_factory=list)
     # El último SMS de aviso especial que salió hacia esta Persona (cualquier mensaje), o `None`.
     ultimo_envio: EnvioAvisoEspecial | None = None
+    # Por qué no se le puede enviar SMS ("De baja", "Sin teléfono", "Notificaciones SMS desactivadas"), o `None`.
+    motivo_sin_sms: str | None = None
 
     @property
     def codigos(self) -> list[str]:
@@ -277,14 +281,53 @@ def listar_clientes(session: Session, hoy: date = None) -> list[ClienteAviso]:
     )
     por_persona: dict = {}
     for paquete in paquetes:
-        persona = resolver_destino_notificable(session, paquete)
+        persona = cliente_del_paquete(session, paquete)
         if persona is None:
             continue
         por_persona.setdefault(persona.id, ClienteAviso(persona)).paquetes.append(paquete)
     ultimos = ultimos_envios(session, list(por_persona))
     for persona_id, cliente in por_persona.items():
         cliente.ultimo_envio = ultimos.get(persona_id)
+        cliente.motivo_sin_sms = motivo_sin_sms(session, cliente)
     return sorted(por_persona.values(), key=lambda c: (c.persona.nombre or "").lower())
+
+
+def cliente_del_paquete(session: Session, paquete: Paquete) -> Persona | None:
+    """La Persona de la fila de `paquete`. Primero, la misma de sus avisos automáticos (`resolver_destino_notificable`:
+    el Destinatario alcanzable, o si no, el Anunciante vivo y con teléfono). Si esa resolución no da a nadie (de baja,
+    o solo con usuario de WhatsApp), la fila igual aparece -- con el SMS apagado y su motivo (`motivo_sin_sms`) -- a
+    nombre del Destinatario (por teléfono o usuario de WhatsApp) o, si no, del Anunciante, mientras no esté
+    anonimizado. No cambia nada de los avisos automáticos."""
+    persona = resolver_destino_notificable(session, paquete)
+    if persona is not None:
+        return persona
+    destinatario = None
+    if paquete.recipient_phone:
+        destinatario = session.query(Persona).filter(Persona.telefono == paquete.recipient_phone).one_or_none()
+    elif paquete.recipient_whatsapp:
+        destinatario = buscar_persona_por_whatsapp(session, paquete.recipient_whatsapp)
+    if destinatario is not None and destinatario.eliminado_en is None:
+        return destinatario
+    anunciante = session.get(Persona, paquete.announced_by_persona_id)
+    if anunciante is not None and anunciante.eliminado_en is None:
+        return anunciante
+    return None
+
+
+def motivo_sin_sms(session: Session, cliente: ClienteAviso) -> str | None:
+    """Por qué NO se le puede enviar SMS a `cliente` -- mismas reglas que los avisos automáticos -- o `None` si se
+    puede. En orden de prioridad: de baja administrativa; sin teléfono; SMS desactivado (`preferencia_activa`) para el
+    Estado de TODOS sus Paquetes en la lista (con al menos uno activo, se puede: el aviso especial no es un evento de
+    Paquete). El bloqueo no agrega regla, igual que en los avisos automáticos."""
+    persona = cliente.persona
+    if persona.baja_administrativa_en is not None:
+        return "De baja"
+    if not persona.telefono:
+        return "Sin teléfono"
+    estados = {p.estado for p in cliente.paquetes}
+    if estados and not any(preferencia_activa(session, persona.id, CanalNotificacion.SMS, e) for e in estados):
+        return "Notificaciones SMS desactivadas"
+    return None
 
 
 def ultimos_envios(session: Session, persona_ids: list) -> dict:
@@ -365,7 +408,8 @@ def enviar_sms(
     Sin confirmación ni bloqueo por envíos recientes: el "Último SMS" es solo informativo.
 
     Raises:
-        AvisoNoEnviable: el mensaje no existe o fue eliminado, o el cliente ya no tiene Paquetes pendientes.
+        AvisoNoEnviable: el mensaje no existe o fue eliminado, el cliente ya no tiene Paquetes pendientes, o no se
+            le puede enviar SMS (`motivo_sin_sms`).
     """
     mensaje = obtener_mensaje(session, mensaje_id)
     if mensaje is None:
@@ -373,6 +417,8 @@ def enviar_sms(
     cliente = buscar_cliente(session, persona_id, hoy)
     if cliente is None:
         raise AvisoNoEnviable("Ese cliente ya no tiene paquetes pendientes.")
+    if cliente.motivo_sin_sms:
+        raise AvisoNoEnviable(f"No se le puede enviar SMS: {cliente.motivo_sin_sms}.")
 
     texto = texto_sms(texto_para(cliente, mensaje))
     try:

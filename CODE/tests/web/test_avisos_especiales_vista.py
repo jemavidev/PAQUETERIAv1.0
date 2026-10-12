@@ -440,3 +440,86 @@ def test_el_operador_no_puede_enviar_avisos(client, monkeypatch):
 
     assert _enviar(client, p.announced_by_persona_id, m.id).status_code == 403
     assert sender.enviados == []
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 06 -- reglas de quién puede recibir SMS
+# --------------------------------------------------------------------------- #
+def _fila_html(html, persona_id):
+    return re.search(rf'<tr[^>]*data-cliente-aviso="{persona_id}"[^>]*>.*?</tr>', html, re.S).group(0)
+
+
+def _sms_apagado(fila_html):
+    """El motivo del botón SMS apagado, o `None` si el botón está disponible."""
+    if 'data-enviar-sms' in fila_html:
+        return None
+    return re.search(r'data-sms-apagado title="([^"]*)"', fila_html).group(1)
+
+
+def test_un_cliente_de_baja_aparece_con_el_sms_apagado_y_no_se_le_puede_enviar(client, monkeypatch):
+    from app.domain.persona import Persona
+    from app.domain.persona_service import dar_de_baja_administrativa
+
+    _login_admin(client)
+    p = _anunciar(client)
+    dar_de_baja_administrativa(client.db, client.db.get(Persona, p.announced_by_persona_id))
+    client.db.commit()
+    m = _mensaje(client)
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    fila = _fila_html(client.get(_URL, params={"mensaje": str(m.id)}).text, p.announced_by_persona_id)
+
+    assert _sms_apagado(fila) == "De baja"
+    assert "web.whatsapp.com" in fila  # el WhatsApp sigue disponible
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+    assert r.status_code == 400 and "De baja" in r.text
+    assert sender.enviados == []
+
+
+def test_un_cliente_solo_whatsapp_aparece_con_sin_telefono_y_su_whatsapp_disponible(client, monkeypatch):
+    _login_admin(client)
+    p = announce(client.db, anunciante_whatsapp="ana.whats", anunciante_nombre="Ana", destinatario=Destinatario.yo_mismo())
+    client.db.commit()
+    m = _mensaje(client)
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    fila = _fila_html(client.get(_URL, params={"mensaje": str(m.id)}).text, p.announced_by_persona_id)
+
+    assert _sms_apagado(fila) == "Sin teléfono"
+    assert "username=ana.whats" in fila
+    assert _enviar(client, p.announced_by_persona_id, m.id).status_code == 400
+    assert sender.enviados == []
+
+
+def test_sms_apagado_si_desactivo_el_sms_para_el_estado_de_todos_sus_paquetes(client, monkeypatch):
+    from app.domain.paquete import EstadoPaquete
+    from app.domain.preferencia_notificacion import CanalNotificacion
+    from app.domain.preferencia_notificacion_service import guardar_preferencia
+
+    admin = _login_admin(client)
+    anunciado = _anunciar(client)
+    recibido = _anunciar(client)
+    receive(client.db, recibido, admin)
+    pid = anunciado.announced_by_persona_id
+    guardar_preferencia(client.db, pid, CanalNotificacion.SMS, EstadoPaquete.RECIBIDO, False)
+    client.db.commit()
+    m = _mensaje(client)
+    _con_sender(client, monkeypatch, _SenderFalso())
+
+    # Con SMS activo para Anunciado (uno de sus paquetes), el botón sigue disponible.
+    assert _sms_apagado(_fila_html(client.get(_URL).text, pid)) is None
+
+    guardar_preferencia(client.db, pid, CanalNotificacion.SMS, EstadoPaquete.ANUNCIADO, False)
+    client.db.commit()
+    assert _sms_apagado(_fila_html(client.get(_URL).text, pid)) == "Notificaciones SMS desactivadas"
+    assert _enviar(client, pid, m.id).status_code == 400
+
+
+def test_la_baja_tiene_prioridad_sobre_los_demas_motivos(client):
+    from app.domain.aviso_especial_service import ClienteAviso, motivo_sin_sms
+    from app.domain.persona import Persona
+    from datetime import datetime as dt
+
+    persona = Persona(nombre="X", telefono=None, baja_administrativa_en=dt.now(timezone.utc))
+
+    assert motivo_sin_sms(client.db, ClienteAviso(persona)) == "De baja"
