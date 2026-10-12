@@ -7,7 +7,7 @@ Clona lo que es la vista de /paquetes y realiza la propuesta para estos que este
 mensaje de texto y mensaje por whatsapp por medio de un link (boton). El mensaje se podra editar en
 /administracion/notificaciones."
 
-**Status:** implementado (local, 2026-10-11) — 8 tickets en `.scratch/avisos-especiales/issues/`, suite completa en verde; falta verificar y desplegar
+**Status:** implementado — desplegado en producción (deploy `b968b6e`, 2026-10-12, migraciones 0070/0071 aplicadas); falta confirmar en producción
 
 ## Decisiones (grilling, Jesús 2026-10-11)
 
