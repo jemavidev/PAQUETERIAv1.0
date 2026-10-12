@@ -7,8 +7,8 @@ Ver spec: Implementation Decisions (Registro de envíos SMS) y User Stories 37-3
 
 **Blocked by:** 05 — Enviar SMS y "Último SMS"
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-11)
 
-- [ ] Las tarjetas que hoy suman `AVISO_PAQUETE` (cantidad y costo) suman también `AVISO_ESPECIAL`
-- [ ] Los OTP siguen contándose aparte, como hoy
-- [ ] Prueba en `test_admin_dashboard.py` (o su equivalente) con registros de los dos tipos
+- [x] Las tarjetas que hoy suman `AVISO_PAQUETE` (cantidad y costo) suman también `AVISO_ESPECIAL`
+- [x] Los OTP siguen contándose aparte, como hoy
+- [x] Prueba en `test_admin_dashboard.py` (o su equivalente) con registros de los dos tipos
