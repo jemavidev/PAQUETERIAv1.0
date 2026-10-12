@@ -604,3 +604,38 @@ def test_la_barra_conserva_el_mensaje_elegido_y_la_paginacion_lleva_filtros_y_me
     assert f"mensaje={m.id}" in re.search(r'href="([^"]*pagina=2[^"]*)"', html).group(1)
     assert "q=cliente" in re.search(r'href="([^"]*pagina=2[^"]*)"', html).group(1)
     assert len(_filas(client.get(_URL, params={"mensaje": str(m.id), "q": "cliente", "pagina": 3}).text)) == 1
+
+
+# --------------------------------------------------------------------------- #
+# Revisión de código
+# --------------------------------------------------------------------------- #
+def test_la_url_no_puede_poner_texto_libre_en_pantalla(client):
+    _login_admin(client)
+
+    html = client.get(_URL, params={"error": "Tu cuenta fue suspendida", "resultado": "Llama al 300"}).text
+
+    assert "Tu cuenta fue suspendida" not in html and "Llama al 300" not in html
+
+
+def test_una_pagina_que_no_es_un_numero_muestra_la_primera(client):
+    _login_admin(client)
+    _anunciar(client)
+
+    r = client.get(_URL, params={"pagina": "abc"})
+
+    assert r.status_code == 200 and len(_filas(r.text)) == 1
+
+
+def test_sin_js_un_error_vuelve_a_la_vista_con_un_codigo_y_no_con_el_texto(client, monkeypatch):
+    from app.web.routes import avisos_especiales
+
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    _con_sender(client, monkeypatch, _SenderFalso())
+    monkeypatch.setattr(avisos_especiales, "sms_configurado", lambda: False)
+
+    r = _enviar(client, p.announced_by_persona_id, m.id, fetch=False)
+
+    assert r.headers["location"] == f"{_URL}?mensaje={m.id}&resultado=no-configurado"
+    assert "El SMS no está configurado todavía" in client.get(r.headers["location"]).text

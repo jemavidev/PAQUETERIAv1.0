@@ -460,7 +460,7 @@ def _mensajes_especiales(db: Session) -> list[dict]:
 
 
 def _pantalla_notificaciones(request: Request, db: Session, admin: Usuario, status_code=200, **extra):
-    """`/administracion/notificaciones` completa -- usada por las rutas de los mensajes especiales."""
+    """`/administracion/notificaciones` completa (plantillas + mensajes especiales) -- la usan todas sus rutas."""
     return templates.TemplateResponse(
         "admin/notificaciones.html",
         {
@@ -478,15 +478,7 @@ def _pantalla_notificaciones(request: Request, db: Session, admin: Usuario, stat
 def admin_notificaciones_form(
     request: Request, db: Session = Depends(get_db), admin: Usuario = Depends(require_admin)
 ):
-    return templates.TemplateResponse(
-        "admin/notificaciones.html",
-        {
-            "request": request,
-            "admin": admin,
-            "filas": _filas_plantillas(db),
-            "mensajes_especiales": _mensajes_especiales(db),
-        },
-    )
+    return _pantalla_notificaciones(request, db, admin)
 
 
 @router.post("/administracion/notificaciones", response_class=HTMLResponse)
@@ -501,23 +493,15 @@ def admin_notificaciones_guardar(
     asunto: str = Form(None),
 ):
     def _error(mensaje: str, marcar_fila: bool = False):
-        return templates.TemplateResponse(
-            "admin/notificaciones.html",
-            {
-                "request": request,
-                "admin": admin,
-                "filas": _filas_plantillas(db),
-                "mensajes_especiales": _mensajes_especiales(db),
-                "error": mensaje,
-                # Identifica CUÁL de las N filas × 3 canales (cada uno su
-                # propio <form>) falló, para marcar solo esa pestaña/textarea
-                # -- retroalimentación en vivo 2026-08-02, extendida a canal
-                # en el ticket 02 de plantillas-notificacion-multicanal.
-                "error_evento": evento if marcar_fila else None,
-                "error_motivo": (motivo or None) if marcar_fila else None,
-                "error_canal": canal if marcar_fila else None,
-            },
-            status_code=400,
+        # `error_*` identifica CUÁL de las N filas × 3 canales (cada uno su propio <form>) falló, para marcar solo esa
+        # pestaña/textarea -- retroalimentación en vivo 2026-08-02, extendida a canal en el ticket 02 de
+        # plantillas-notificacion-multicanal.
+        return _pantalla_notificaciones(
+            request, db, admin, status_code=400,
+            error=mensaje,
+            error_evento=evento if marcar_fila else None,
+            error_motivo=(motivo or None) if marcar_fila else None,
+            error_canal=canal if marcar_fila else None,
         )
 
     es_solicitud = evento == EVENTO_SOLICITUD_AUTORIZACION
@@ -576,18 +560,9 @@ def admin_notificaciones_guardar(
         usuario_id=admin.id,
     )
 
-    return templates.TemplateResponse(
-        "admin/notificaciones.html",
-        {
-            "request": request,
-            "admin": admin,
-            "filas": _filas_plantillas(db),
-            "mensajes_especiales": _mensajes_especiales(db),
-            "guardado": True,
-            "guardado_evento": evento,
-            "guardado_motivo": motivo or None,
-            "guardado_canal": canal,
-        },
+    return _pantalla_notificaciones(
+        request, db, admin,
+        guardado=True, guardado_evento=evento, guardado_motivo=motivo or None, guardado_canal=canal,
     )
 
 
@@ -617,20 +592,13 @@ def admin_notificaciones_probar(
     silencio."""
 
     def _error(mensaje: str, marcar_fila: bool = False):
-        return templates.TemplateResponse(
-            "admin/notificaciones.html",
-            {
-                "request": request,
-                "admin": admin,
-                "filas": _filas_plantillas(db),
-                "mensajes_especiales": _mensajes_especiales(db),
-                "error": mensaje,
-                "prueba_error_evento": evento if marcar_fila else None,
-                "prueba_error_motivo": (motivo or None) if marcar_fila else None,
-                "prueba_error_canal": canal if marcar_fila else None,
-                "prueba_error_destino": destino if marcar_fila else None,
-            },
-            status_code=400,
+        return _pantalla_notificaciones(
+            request, db, admin, status_code=400,
+            error=mensaje,
+            prueba_error_evento=evento if marcar_fila else None,
+            prueba_error_motivo=(motivo or None) if marcar_fila else None,
+            prueba_error_canal=canal if marcar_fila else None,
+            prueba_error_destino=destino if marcar_fila else None,
         )
 
     try:
@@ -698,19 +666,10 @@ def admin_notificaciones_probar(
             registrar_envio(db, TipoRegistroSms.AVISO_PAQUETE, exitoso=False)
         return _error(f"No se pudo enviar la prueba: {exc}", marcar_fila=True)
 
-    return templates.TemplateResponse(
-        "admin/notificaciones.html",
-        {
-            "request": request,
-            "admin": admin,
-            "filas": _filas_plantillas(db),
-            "mensajes_especiales": _mensajes_especiales(db),
-            "prueba_ok": True,
-            "prueba_destino": destino_limpio,
-            "prueba_ok_evento": evento,
-            "prueba_ok_motivo": motivo or None,
-            "prueba_ok_canal": canal,
-        },
+    return _pantalla_notificaciones(
+        request, db, admin,
+        prueba_ok=True, prueba_destino=destino_limpio,
+        prueba_ok_evento=evento, prueba_ok_motivo=motivo or None, prueba_ok_canal=canal,
     )
 
 

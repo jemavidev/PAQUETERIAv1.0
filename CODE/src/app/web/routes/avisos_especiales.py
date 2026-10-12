@@ -24,6 +24,7 @@ from app.domain.aviso_especial_service import (
     listar_mensajes,
 )
 from app.domain.notification_sender import NotificationSender
+from app.domain.paquete import EstadoPaquete
 from app.domain.usuario import Usuario
 
 from ..db import get_db
@@ -42,7 +43,7 @@ def _uuid_o_none(valor: str | None):
 
 
 _POR_PAGINA = 30
-_ESTADOS_FILTRO = ("ANUNCIADO", "RECIBIDO")
+_ESTADOS_FILTRO = (EstadoPaquete.ANUNCIADO.value, EstadoPaquete.RECIBIDO.value)
 
 
 def _contexto(
@@ -72,9 +73,14 @@ def _contexto(
 
 
 # Resultado de un envío sin JS (Post/Redirect/Get): el POST redirige con `?resultado=` y la vista muestra el aviso.
+# Solo códigos conocidos: la URL nunca trae texto libre que la vista muestre (un enlace armado no puede poner un
+# mensaje falso en pantalla).
 _AVISOS_RESULTADO = {
     "enviado": ("SMS enviado.", "success"),
     "fallo": ("No se pudo enviar el SMS. Intenta de nuevo.", "danger"),
+    "no-configurado": ("El SMS no está configurado todavía (Administración → Proveedores).", "danger"),
+    "invalido": ("Datos de envío inválidos.", "danger"),
+    "no-enviable": ("No se pudo intentar el envío: el mensaje o el cliente ya no están disponibles.", "danger"),
 }
 
 
@@ -84,20 +90,17 @@ def avisos_especiales(
     mensaje: str = None,
     q: str = "",
     estado: str = "",
-    pagina: int = 1,
+    pagina: str = "1",
     resultado: str = None,
-    error: str = None,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin),
 ):
     """La vista. Con `X-Requested-With: fetch` (búsqueda en vivo, ticket 07) responde solo la lista."""
-    contexto = _contexto(request, db, admin, mensaje, q=q, estado=estado, pagina=pagina)
+    contexto = _contexto(request, db, admin, mensaje, q=q, estado=estado, pagina=int(pagina) if pagina.isdigit() else 1)
     if request.headers.get("X-Requested-With") == "fetch":
         return templates.TemplateResponse("admin/_avisos_especiales_resultados.html", contexto)
     if resultado in _AVISOS_RESULTADO:
         contexto["aviso"], contexto["aviso_variante"] = _AVISOS_RESULTADO[resultado]
-    elif error:
-        contexto["aviso"], contexto["aviso_variante"] = error, "danger"
     return templates.TemplateResponse("admin/avisos_especiales.html", contexto)
 
 
@@ -118,19 +121,19 @@ def avisos_especiales_enviar_sms(
     es_fetch = request.headers.get("X-Requested-With") == "fetch"
     mensaje_id, pid = _uuid_o_none(mensaje), _uuid_o_none(persona_id)
 
-    def _error(texto: str):
+    def _error(texto: str, codigo: str):
         if es_fetch:
             return HTMLResponse(texto, status_code=400)
-        return _volver(mensaje, error=texto)
+        return _volver(mensaje, resultado=codigo)
 
     if not sms_configurado():
-        return _error("El SMS no está configurado todavía (Administración → Proveedores).")
+        return _error(_AVISOS_RESULTADO["no-configurado"][0], "no-configurado")
     if mensaje_id is None or pid is None:
-        return _error("Datos de envío inválidos.")
+        return _error(_AVISOS_RESULTADO["invalido"][0], "invalido")
     try:
         resultado = enviar_sms(db, pid, mensaje_id, sender, usuario_id=admin.id)
     except AvisoNoEnviable as exc:
-        return _error(str(exc))
+        return _error(str(exc), "no-enviable")
 
     if not es_fetch:
         return _volver(mensaje, resultado="enviado" if resultado.enviado else "fallo")

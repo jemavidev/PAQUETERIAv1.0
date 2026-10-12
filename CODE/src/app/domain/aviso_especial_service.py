@@ -10,6 +10,7 @@ Este módulo concentra las reglas para que las rutas solo lo llamen:
   únicas variables;
 - quiénes aparecen en la vista: un cliente por fila, con sus Paquetes pendientes.
 """
+import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 
@@ -35,6 +36,8 @@ from .preferencia_notificacion_service import preferencia_activa
 from .registro_sms import TipoRegistroSms
 from .registro_sms_service import registrar_envio
 from .zona_horaria import ZONA_HORARIA_APP
+
+logger = logging.getLogger(__name__)
 
 VARIABLES_MENSAJE = ("nombre", "codigos")
 
@@ -261,7 +264,7 @@ def hoy_local() -> date:
     return datetime.now(ZONA_HORARIA_APP).date()
 
 
-def listar_clientes(session: Session, hoy: date = None) -> list[ClienteAviso]:
+def listar_clientes(session: Session, hoy: date | None = None) -> list[ClienteAviso]:
     """Un `ClienteAviso` por Persona, ordenados por nombre. Entran los Paquetes RECIBIDOS (cualquier fecha) y los
     ANUNCIADOS desde `inicio_ventana_anunciados(hoy)`; nunca ENTREGADOS ni CANCELADOS. El cliente de cada Paquete es
     el mismo destino de sus avisos automáticos (`resolver_destino_notificable`): un Paquete sin nadie alcanzable no
@@ -296,8 +299,8 @@ def cliente_del_paquete(session: Session, paquete: Paquete) -> Persona | None:
     """La Persona de la fila de `paquete`. Primero, la misma de sus avisos automáticos (`resolver_destino_notificable`:
     el Destinatario alcanzable, o si no, el Anunciante vivo y con teléfono). Si esa resolución no da a nadie (de baja,
     o solo con usuario de WhatsApp), la fila igual aparece -- con el SMS apagado y su motivo (`motivo_sin_sms`) -- a
-    nombre del Destinatario (por teléfono o usuario de WhatsApp) o, si no, del Anunciante, mientras no esté
-    anonimizado. No cambia nada de los avisos automáticos."""
+    nombre del Destinatario (por teléfono o usuario de WhatsApp) o, si no, del Anunciante con algún contacto, mientras
+    no esté anonimizado: nunca una fila sin a quién escribirle. No cambia nada de los avisos automáticos."""
     persona = resolver_destino_notificable(session, paquete)
     if persona is not None:
         return persona
@@ -309,7 +312,11 @@ def cliente_del_paquete(session: Session, paquete: Paquete) -> Persona | None:
     if destinatario is not None and destinatario.eliminado_en is None:
         return destinatario
     anunciante = session.get(Persona, paquete.announced_by_persona_id)
-    if anunciante is not None and anunciante.eliminado_en is None:
+    if (
+        anunciante is not None
+        and anunciante.eliminado_en is None
+        and (anunciante.telefono or anunciante.whatsapp_usuario)
+    ):
         return anunciante
     return None
 
@@ -421,7 +428,7 @@ class ResultadoEnvio:
     enviado: bool
 
 
-def buscar_cliente(session: Session, persona_id, hoy: date = None) -> ClienteAviso | None:
+def buscar_cliente(session: Session, persona_id, hoy: date | None = None) -> ClienteAviso | None:
     """La fila de `persona_id` en la lista de hoy, o `None` si ya no tiene Paquetes pendientes."""
     return next((c for c in listar_clientes(session, hoy) if c.persona.id == persona_id), None)
 
@@ -432,7 +439,7 @@ def enviar_sms(
     mensaje_id,
     sender: NotificationSender,
     usuario_id=None,
-    hoy: date = None,
+    hoy: date | None = None,
 ) -> ResultadoEnvio:
     """Envía `mensaje_id` por SMS al cliente `persona_id`, ahora (síncrono: quien llama espera la respuesta real del
     proveedor, porque necesita saber si llegó). Solo si el cliente sigue en la lista de hoy.
@@ -461,6 +468,9 @@ def enviar_sms(
     try:
         proveedor = sender.enviar(cliente.persona.telefono, texto)
     except Exception:
+        # Proveedor caído o rechazo -- y también un error de programación: se registra como fallido sin tumbar la
+        # vista, pero queda en el log para no confundir un bug con una caída del proveedor.
+        logger.exception("No se pudo enviar el SMS de aviso especial a la persona %s", cliente.persona.id)
         registrar_envio(session, TipoRegistroSms.AVISO_ESPECIAL, exitoso=False)
         return ResultadoEnvio(cliente, enviado=False)
 
