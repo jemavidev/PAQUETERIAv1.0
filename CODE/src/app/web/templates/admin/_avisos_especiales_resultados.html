@@ -1,0 +1,53 @@
+{#- Lista de clientes de "Avisos especiales" (`.scratch/avisos-especiales`). Fragmento aparte para que la búsqueda en
+   vivo y el envío por fila (que devuelve solo su fila) rendericen exactamente lo mismo que la carga normal.
+   Colores por Estado: los mismos de `/paquetes` (`packages/_resultados.html`, issues 442/445). -#}
+{%- set _codigo_color = {
+  'ANUNCIADO': 'bg-amber-400 text-amber-950 border-amber-500',
+  'RECIBIDO': 'bg-blue-600 text-white border-blue-700',
+} %}
+{%- set _franja = {'ANUNCIADO': 'border-l-amber-400', 'RECIBIDO': 'border-l-blue-600'} %}
+{%- set _fila_tarjeta = '[&>td]:bg-white [&>td]:border-y [&>td]:border-slate-200 [&>td:first-child]:rounded-l-xl [&>td:first-child]:border-l-8 [&>td:last-child]:rounded-r-xl [&>td:last-child]:border-r drop-shadow-sm [&:hover>td]:bg-slate-50' %}
+{%- set _franja_td = {'ANUNCIADO': '[&>td:first-child]:border-l-amber-400', 'RECIBIDO': '[&>td:first-child]:border-l-blue-600'} %}
+{%- macro codigos(cliente) -%}
+<span class="flex flex-wrap gap-1.5">
+  {%- for p in cliente.paquetes %}
+  <a href="/consultar?q={{ p.access_code }}" class="inline-flex items-center {{ _codigo_color.get(p.estado.value, 'bg-gray-50 text-gray-800 border-gray-200') }} border rounded-full px-2.5 py-1 font-mono font-extrabold text-sm tracking-wide hover:underline" title="{{ p.estado.value|capitalize }} -- clic para consultar">{{ p.access_code }}</a>
+  {%- endfor %}
+</span>
+{%- endmacro %}
+
+{%- if clientes %}
+{#- Celular: tarjetas. -#}
+<div class="sm:hidden space-y-2.5" data-avisos-movil>
+  {%- for c in clientes %}
+  <div class="rounded-xl border border-slate-200 border-l-8 {{ _franja[c.estado_principal] }} bg-white p-3 shadow-sm" data-tarjeta-aviso="{{ c.persona.id }}">
+    <p class="text-lg font-semibold leading-tight text-slate-900 truncate m-0">{{ c.persona.nombre }}</p>
+    {%- if c.direccion %}<p class="mt-0.5 text-sm font-semibold uppercase text-slate-700 m-0">{{ c.direccion }}</p>{% endif %}
+    <div class="mt-2">{{ codigos(c) }}</div>
+  </div>
+  {%- endfor %}
+</div>
+{#- Escritorio: filas-tarjeta. -#}
+<div class="hidden sm:block overflow-x-auto mt-1">
+  <table class="w-full sm:min-w-[720px] text-sm border-separate border-spacing-y-2">
+    <thead class="text-xs uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="text-left font-semibold px-4 py-2.5">Cliente</th>
+        <th class="text-left font-semibold px-4 py-2.5">Torre y Apartamento</th>
+        <th class="text-left font-semibold px-4 py-2.5">Paquetes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {%- for c in clientes %}
+      <tr id="cliente-aviso-{{ c.persona.id }}" data-cliente-aviso="{{ c.persona.id }}" class="{{ _fila_tarjeta }} {{ _franja_td[c.estado_principal] }}">
+        <td class="px-4 py-2.5 font-medium text-slate-900">{{ c.persona.nombre }}</td>
+        <td class="px-4 py-2.5 uppercase text-slate-700">{{ c.direccion or '' }}</td>
+        <td class="px-4 py-2.5">{{ codigos(c) }}</td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
+{%- else %}
+<p class="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center text-sm text-slate-500" data-avisos-vacio>No hay clientes con paquetes pendientes.</p>
+{%- endif %}

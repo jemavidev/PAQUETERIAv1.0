@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "components/_toast.html" import toast %}
+{% block title %}Avisos especiales — PAQUETEX{% endblock %}
+{% block content %}
+{#- Avisos especiales (`.scratch/avisos-especiales`): un cliente por fila -- quienes tienen Paquetes ANUNCIADOS de los
+   últimos 5 días calendario o RECIBIDOS -- para avisarles a mano que ciertos días no hay servicio. Solo ADMIN. Mismo
+   ancho y look que `/paquetes` (filas-tarjeta del issue 445 en escritorio, tarjetas en celular). -#}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-16 md:pb-4 space-y-3">
+  <div>
+    <h1 class="text-xl font-bold text-slate-900 m-0">Avisos especiales</h1>
+    <p class="text-sm text-slate-600 m-0">Clientes con paquetes Anunciados en los últimos 5 días o Recibidos.</p>
+  </div>
+  {% if error %}{{ toast(error, variant='danger') }}{% endif %}
+  <div id="resultados-avisos">
+    {% include "admin/_avisos_especiales_resultados.html" %}
+  </div>
+</div>
+{% endblock %}

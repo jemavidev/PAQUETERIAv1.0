@@ -7,9 +7,11 @@ Este módulo concentra las reglas para que las rutas solo lo llamen:
 
 - los mensajes guardados (`MensajeEspecial`): crear, editar, eliminar (lógico), con historial;
 - la resolución del texto para un cliente: un solo texto para SMS y WhatsApp, con `{nombre}` y `{codigos}` como
-  únicas variables.
+  únicas variables;
+- quiénes aparecen en la vista: un cliente por fila, con sus Paquetes pendientes.
 """
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -22,7 +24,10 @@ from .mensaje_especial import (
     MensajeEspecial,
     MensajeEspecialHistorial,
 )
-from .notificacion_service import _sin_tildes, normalizar_texto_plantilla
+from .notificacion_service import _sin_tildes, normalizar_texto_plantilla, resolver_destino_notificable
+from .paquete import EstadoPaquete, Paquete, torre_sin_prefijo
+from .persona import Persona
+from .zona_horaria import ZONA_HORARIA_APP
 
 VARIABLES_MENSAJE = ("nombre", "codigos")
 
@@ -197,3 +202,76 @@ def eliminar_mensaje(session: Session, mensaje_id, usuario_id=None) -> None:
         )
     )
     session.flush()
+
+
+# --------------------------------------------------------------------------- #
+# Quiénes aparecen en la vista
+# --------------------------------------------------------------------------- #
+# Un Paquete ANUNCIADO cuenta si se anunció hoy o en los 4 días calendario anteriores (hora de Colombia).
+DIAS_ANUNCIADO = 5
+
+
+@dataclass
+class ClienteAviso:
+    """Una fila de la vista: la Persona que recibiría hoy los avisos automáticos de estos Paquetes, con sus
+    Paquetes pendientes (ANUNCIADOS recientes y RECIBIDOS)."""
+
+    persona: Persona
+    paquetes: list[Paquete] = field(default_factory=list)
+
+    @property
+    def codigos(self) -> list[str]:
+        return [p.access_code for p in self.paquetes]
+
+    @property
+    def estado_principal(self) -> str:
+        """El Estado que pinta la franja de la fila: RECIBIDO si tiene alguno (lo que más urge retirar), si no
+        ANUNCIADO."""
+        recibido = any(p.estado is EstadoPaquete.RECIBIDO for p in self.paquetes)
+        return EstadoPaquete.RECIBIDO.value if recibido else EstadoPaquete.ANUNCIADO.value
+
+    @property
+    def direccion(self) -> str | None:
+        """"Torre 2 · Apt 706" del primer Paquete que tenga apartamento (mismo formato que `/paquetes`)."""
+        for p in self.paquetes:
+            if p.snapshot_apartamento:
+                torre = torre_sin_prefijo(p.snapshot_torre)
+                return f"Torre {torre} · Apt {p.snapshot_apartamento}" if torre else f"Apt {p.snapshot_apartamento}"
+        return None
+
+
+def inicio_ventana_anunciados(hoy: date) -> datetime:
+    """El instante (UTC) desde el que un ANUNCIADO cuenta: medianoche, hora de Colombia, de hace 4 días."""
+    primer_dia = hoy - timedelta(days=DIAS_ANUNCIADO - 1)
+    return datetime.combine(primer_dia, time.min, tzinfo=ZONA_HORARIA_APP).astimezone(timezone.utc)
+
+
+def hoy_local() -> date:
+    return datetime.now(ZONA_HORARIA_APP).date()
+
+
+def listar_clientes(session: Session, hoy: date = None) -> list[ClienteAviso]:
+    """Un `ClienteAviso` por Persona, ordenados por nombre. Entran los Paquetes RECIBIDOS (cualquier fecha) y los
+    ANUNCIADOS desde `inicio_ventana_anunciados(hoy)`; nunca ENTREGADOS ni CANCELADOS. El cliente de cada Paquete es
+    el mismo destino de sus avisos automáticos (`resolver_destino_notificable`): un Paquete sin nadie alcanzable no
+    aparece."""
+    hoy = hoy or hoy_local()
+    paquetes = (
+        session.query(Paquete)
+        .filter(
+            (Paquete.estado == EstadoPaquete.RECIBIDO)
+            | (
+                (Paquete.estado == EstadoPaquete.ANUNCIADO)
+                & (Paquete.announced_at >= inicio_ventana_anunciados(hoy))
+            )
+        )
+        .order_by(Paquete.announced_at)
+        .all()
+    )
+    por_persona: dict = {}
+    for paquete in paquetes:
+        persona = resolver_destino_notificable(session, paquete)
+        if persona is None:
+            continue
+        por_persona.setdefault(persona.id, ClienteAviso(persona)).paquetes.append(paquete)
+    return sorted(por_persona.values(), key=lambda c: (c.persona.nombre or "").lower())
