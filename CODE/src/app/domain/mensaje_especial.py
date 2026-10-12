@@ -12,6 +12,11 @@ nombre eliminado puede volver a usarse en un mensaje nuevo.
 
 MensajeEspecialHistorial — registro append-only de cada creación, edición y eliminación (mismo criterio que
 `PlantillaNotificacionHistorial`: solo INSERT, `usuario_id` nullable para callers sin actor).
+
+EnvioAvisoEspecial — registro append-only de cada SMS de aviso especial que SÍ salió (ticket 05): de él sale el
+"Último SMS" de cada cliente. Guarda el nombre del mensaje COPIADO al enviar (el mensaje puede renombrarse o
+eliminarse después) y, a propósito, ni el texto ni el teléfono -- mismo criterio de privacidad que `RegistroSms`. Los
+intentos fallidos no van acá: solo a `registros_sms`.
 """
 import enum
 import uuid
@@ -74,4 +79,23 @@ class MensajeEspecialHistorial(Base):
     nombre_nuevo = Column(String(MAX_NOMBRE_MENSAJE), nullable=True)
     texto_anterior = Column(String(MAX_TEXTO_MENSAJE), nullable=True)
     texto_nuevo = Column(String(MAX_TEXTO_MENSAJE), nullable=True)
+    creado_en = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+
+class EnvioAvisoEspecial(Base):
+    __tablename__ = "envios_aviso_especial"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["persona_id"], ["personas.id"], name="fk_envios_aviso_especial_persona", ondelete="CASCADE"
+        ),
+        ForeignKeyConstraint(["mensaje_id"], ["mensajes_especiales.id"], name="fk_envios_aviso_especial_mensaje"),
+        ForeignKeyConstraint(["usuario_id"], ["usuarios.id"], name="fk_envios_aviso_especial_usuario"),
+        Index("ix_envios_aviso_especial_persona_creado_en", "persona_id", "creado_en"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    persona_id = Column(UUID(as_uuid=True), nullable=False)
+    mensaje_id = Column(UUID(as_uuid=True), nullable=False)
+    nombre_mensaje = Column(String(MAX_NOMBRE_MENSAJE), nullable=False)
+    usuario_id = Column(UUID(as_uuid=True), nullable=True)
     creado_en = Column(DateTime(timezone=True), nullable=False, default=_utcnow)

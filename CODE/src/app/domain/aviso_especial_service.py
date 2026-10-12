@@ -21,13 +21,17 @@ from .mensaje_especial import (
     MAX_NOMBRE_MENSAJE,
     MAX_TEXTO_MENSAJE,
     AccionMensajeEspecial,
+    EnvioAvisoEspecial,
     MensajeEspecial,
     MensajeEspecialHistorial,
 )
+from .notification_sender import NotificationSender
 from .notificacion_service import _sin_tildes, normalizar_texto_plantilla, resolver_destino_notificable
 from .paquete import EstadoPaquete, Paquete, torre_sin_prefijo
 from .persona import Persona
 from .persona_service import url_whatsapp, url_whatsapp_desktop
+from .registro_sms import TipoRegistroSms
+from .registro_sms_service import registrar_envio
 from .zona_horaria import ZONA_HORARIA_APP
 
 VARIABLES_MENSAJE = ("nombre", "codigos")
@@ -219,6 +223,8 @@ class ClienteAviso:
 
     persona: Persona
     paquetes: list[Paquete] = field(default_factory=list)
+    # El último SMS de aviso especial que salió hacia esta Persona (cualquier mensaje), o `None`.
+    ultimo_envio: EnvioAvisoEspecial | None = None
 
     @property
     def codigos(self) -> list[str]:
@@ -275,7 +281,24 @@ def listar_clientes(session: Session, hoy: date = None) -> list[ClienteAviso]:
         if persona is None:
             continue
         por_persona.setdefault(persona.id, ClienteAviso(persona)).paquetes.append(paquete)
+    ultimos = ultimos_envios(session, list(por_persona))
+    for persona_id, cliente in por_persona.items():
+        cliente.ultimo_envio = ultimos.get(persona_id)
     return sorted(por_persona.values(), key=lambda c: (c.persona.nombre or "").lower())
+
+
+def ultimos_envios(session: Session, persona_ids: list) -> dict:
+    """`{persona_id: EnvioAvisoEspecial}` con el envío más reciente de cada Persona (las que no tienen, no están)."""
+    if not persona_ids:
+        return {}
+    envios = (
+        session.query(EnvioAvisoEspecial)
+        .filter(EnvioAvisoEspecial.persona_id.in_(persona_ids))
+        .order_by(EnvioAvisoEspecial.persona_id, EnvioAvisoEspecial.creado_en.desc())
+        .distinct(EnvioAvisoEspecial.persona_id)
+        .all()
+    )
+    return {e.persona_id: e for e in envios}
 
 
 def texto_para(cliente: ClienteAviso, mensaje: MensajeEspecial) -> str:
@@ -303,3 +326,67 @@ def elegir_mensaje(session: Session, mensaje_id) -> MensajeEspecial | None:
             return elegido
     mensajes = listar_mensajes(session)
     return mensajes[0] if mensajes else None
+
+
+# --------------------------------------------------------------------------- #
+# Enviar por SMS
+# --------------------------------------------------------------------------- #
+class AvisoNoEnviable(ValueError):
+    """El SMS no se puede intentar: el mensaje ya no existe o el cliente ya no está en la lista."""
+
+
+@dataclass
+class ResultadoEnvio:
+    cliente: ClienteAviso
+    enviado: bool
+
+
+def buscar_cliente(session: Session, persona_id, hoy: date = None) -> ClienteAviso | None:
+    """La fila de `persona_id` en la lista de hoy, o `None` si ya no tiene Paquetes pendientes."""
+    return next((c for c in listar_clientes(session, hoy) if c.persona.id == persona_id), None)
+
+
+def enviar_sms(
+    session: Session,
+    persona_id,
+    mensaje_id,
+    sender: NotificationSender,
+    usuario_id=None,
+    hoy: date = None,
+) -> ResultadoEnvio:
+    """Envía `mensaje_id` por SMS al cliente `persona_id`, ahora (síncrono: quien llama espera la respuesta real del
+    proveedor, porque necesita saber si llegó). Solo si el cliente sigue en la lista de hoy.
+
+    - Sale: queda un `EnvioAvisoEspecial` (el nuevo "Último SMS") y, si hubo un proveedor real, un `RegistroSms`
+      `AVISO_ESPECIAL` exitoso.
+    - Falla (`sender.enviar` lanza): un `RegistroSms` fallido y NINGÚN `EnvioAvisoEspecial` -- la fecha del último SMS
+      siempre es de uno que sí salió.
+
+    Sin confirmación ni bloqueo por envíos recientes: el "Último SMS" es solo informativo.
+
+    Raises:
+        AvisoNoEnviable: el mensaje no existe o fue eliminado, o el cliente ya no tiene Paquetes pendientes.
+    """
+    mensaje = obtener_mensaje(session, mensaje_id)
+    if mensaje is None:
+        raise AvisoNoEnviable("Ese mensaje ya no existe. Elige otro.")
+    cliente = buscar_cliente(session, persona_id, hoy)
+    if cliente is None:
+        raise AvisoNoEnviable("Ese cliente ya no tiene paquetes pendientes.")
+
+    texto = texto_sms(texto_para(cliente, mensaje))
+    try:
+        proveedor = sender.enviar(cliente.persona.telefono, texto)
+    except Exception:
+        registrar_envio(session, TipoRegistroSms.AVISO_ESPECIAL, exitoso=False)
+        return ResultadoEnvio(cliente, enviado=False)
+
+    envio = EnvioAvisoEspecial(
+        persona_id=cliente.persona.id, mensaje_id=mensaje.id, nombre_mensaje=mensaje.nombre, usuario_id=usuario_id
+    )
+    session.add(envio)
+    session.flush()
+    if proveedor is not None:
+        registrar_envio(session, TipoRegistroSms.AVISO_ESPECIAL, exitoso=True, proveedor=proveedor)
+    cliente.ultimo_envio = envio
+    return ResultadoEnvio(cliente, enviado=True)

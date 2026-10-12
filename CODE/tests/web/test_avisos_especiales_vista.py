@@ -242,3 +242,201 @@ def test_el_whatsapp_es_solo_un_enlace_sin_ruta_de_servidor_ni_registro(client):
     whatsapp = re.findall(r'<a href="(https://(?:api|web)\.whatsapp\.com[^"]*)"', html)
     assert len(whatsapp) == 4  # celular + escritorio, en la tarjeta y en la fila
     assert all("target" in a for a in re.findall(r'<a href="https://(?:api|web)\.whatsapp\.com[^>]*>', html))
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 05 -- enviar SMS y "Último SMS"
+# --------------------------------------------------------------------------- #
+_SMS = "/administracion/avisos-especiales/sms"
+
+
+class _SenderFalso:
+    """Registra lo enviado; `falla=True` simula que ningún proveedor lo entregó."""
+
+    def __init__(self, falla=False, proveedor="AWS_SNS"):
+        self.enviados, self.falla, self.proveedor = [], falla, proveedor
+
+    def enviar(self, destino, mensaje):
+        if self.falla:
+            raise RuntimeError("proveedor caído")
+        self.enviados.append((destino, mensaje))
+        return self.proveedor
+
+
+def _con_sender(client, monkeypatch, sender):
+    from app.web import notifications
+    from app.web.routes import avisos_especiales
+
+    monkeypatch.setattr(avisos_especiales, "sms_configurado", lambda: True)
+    client.app.dependency_overrides[notifications.get_notification_sender] = lambda: sender
+    return sender
+
+
+def _enviar(client, persona_id, mensaje_id, fetch=True):
+    headers = {"X-Requested-With": "fetch"} if fetch else {}
+    return client.post(
+        _SMS, data={"persona_id": str(persona_id), "mensaje": str(mensaje_id)}, headers=headers,
+        follow_redirects=False,
+    )
+
+
+def test_enviar_sms_manda_el_texto_resuelto_sin_tildes_y_la_fila_muestra_el_ultimo_sms(client, monkeypatch):
+    _login_admin(client)
+    p = _anunciar(client, tel="3001234567", nombre="Andrés")
+    m = _mensaje(client, nombre="Fin de semana", texto="Hola {nombre}: el sábado no hay servicio. {codigos}")
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+
+    assert r.status_code == 200
+    assert sender.enviados == [("+573001234567", f"Hola ANDRES: el sabado no hay servicio. {p.access_code}")]
+    fila = re.search(r"<tr[^>]*data-cliente-aviso[^>]*>.*?</tr>", r.text, re.S).group(0)
+    assert "Último SMS: Fin de semana ·" in re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", fila))
+
+
+def _registros_sms(client):
+    from app.domain.registro_sms import RegistroSms
+
+    client.db.expire_all()
+    return client.db.query(RegistroSms).all()
+
+
+def _envios(client):
+    from app.domain.mensaje_especial import EnvioAvisoEspecial
+
+    client.db.expire_all()
+    return client.db.query(EnvioAvisoEspecial).all()
+
+
+def test_un_envio_exitoso_queda_registrado_como_aviso_especial_para_el_dashboard(client, monkeypatch):
+    admin = _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    _con_sender(client, monkeypatch, _SenderFalso(proveedor="AWS_SNS"))
+
+    _enviar(client, p.announced_by_persona_id, m.id)
+
+    [registro] = _registros_sms(client)
+    assert (registro.tipo.value, registro.exitoso, registro.proveedor) == ("AVISO_ESPECIAL", True, "AWS_SNS")
+    assert registro.paquete_id is None and registro.evento is None
+    [envio] = _envios(client)
+    assert (envio.persona_id, envio.nombre_mensaje, envio.usuario_id) == (p.announced_by_persona_id, "Fin de semana", admin.id)
+
+
+def test_si_el_sms_falla_la_fila_avisa_en_rojo_y_no_cuenta_como_ultimo_sms(client, monkeypatch):
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    _con_sender(client, monkeypatch, _SenderFalso(falla=True))
+
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+
+    assert r.status_code == 200
+    assert "No se pudo enviar el SMS. Intenta de nuevo." in r.text
+    assert "Sin avisos enviados" in r.text
+    assert _envios(client) == []
+    [registro] = _registros_sms(client)
+    assert (registro.tipo.value, registro.exitoso, registro.proveedor) == ("AVISO_ESPECIAL", False, None)
+
+
+def test_reenviar_no_se_bloquea_y_el_ultimo_sms_es_el_mas_reciente_de_cualquier_mensaje(client, monkeypatch):
+    _login_admin(client)
+    p = _anunciar(client)
+    fin_de_semana = _mensaje(client, nombre="Fin de semana", texto="Sabado")
+    festivo = _mensaje(client, nombre="Festivo", texto="Lunes")
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    _enviar(client, p.announced_by_persona_id, fin_de_semana.id)
+    _enviar(client, p.announced_by_persona_id, fin_de_semana.id)
+    _enviar(client, p.announced_by_persona_id, festivo.id)
+
+    assert [t for _, t in sender.enviados] == ["Sabado", "Sabado", "Lunes"]
+    fila = _filas(client.get(_URL, params={"mensaje": str(fin_de_semana.id)}).text)[0]
+    assert "Último SMS: Festivo ·" in fila
+
+
+def test_un_mensaje_eliminado_despues_de_enviarse_conserva_su_nombre_en_el_ultimo_sms(client, monkeypatch):
+    from app.domain.aviso_especial_service import eliminar_mensaje
+
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client, nombre="Cierre inventario", texto="Cerrado")
+    _mensaje(client, nombre="Fin de semana", texto="Sabado")
+    _con_sender(client, monkeypatch, _SenderFalso())
+    _enviar(client, p.announced_by_persona_id, m.id)
+    eliminar_mensaje(client.db, m.id)
+    client.db.commit()
+
+    assert "Último SMS: Cierre inventario ·" in _filas(client.get(_URL).text)[0]
+
+
+def test_enviar_con_un_mensaje_eliminado_responde_error_sin_enviar(client, monkeypatch):
+    from app.domain.aviso_especial_service import eliminar_mensaje
+
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    eliminar_mensaje(client.db, m.id)
+    client.db.commit()
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+
+    assert r.status_code == 400
+    assert "Ese mensaje ya no existe. Elige otro." in r.text
+    assert sender.enviados == [] and _registros_sms(client) == []
+
+
+def test_enviar_a_quien_ya_no_tiene_paquetes_pendientes_responde_error(client, monkeypatch):
+    admin = _login_admin(client)
+    p = _anunciar(client)
+    receive(client.db, p, admin)
+    deliver(client.db, p, admin)
+    client.db.commit()
+    m = _mensaje(client)
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+
+    assert r.status_code == 400
+    assert "Ese cliente ya no tiene paquetes pendientes." in r.text
+    assert sender.enviados == []
+
+
+def test_sin_js_el_envio_redirige_a_la_vista_con_el_resultado(client, monkeypatch):
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    _con_sender(client, monkeypatch, _SenderFalso())
+
+    r = _enviar(client, p.announced_by_persona_id, m.id, fetch=False)
+
+    assert r.status_code == 303
+    assert r.headers["location"] == f"{_URL}?mensaje={m.id}&resultado=enviado"
+    assert "SMS enviado." in client.get(r.headers["location"]).text
+
+
+def test_sin_proveedor_de_sms_configurado_no_intenta_enviar(client, monkeypatch):
+    from app.web.routes import avisos_especiales
+
+    _login_admin(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+    monkeypatch.setattr(avisos_especiales, "sms_configurado", lambda: False)
+
+    r = _enviar(client, p.announced_by_persona_id, m.id)
+
+    assert r.status_code == 400
+    assert "El SMS no está configurado todavía" in r.text
+    assert sender.enviados == []
+
+
+def test_el_operador_no_puede_enviar_avisos(client, monkeypatch):
+    _login_operador(client)
+    p = _anunciar(client)
+    m = _mensaje(client)
+    sender = _con_sender(client, monkeypatch, _SenderFalso())
+
+    assert _enviar(client, p.announced_by_persona_id, m.id).status_code == 403
+    assert sender.enviados == []

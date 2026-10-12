@@ -11,15 +11,15 @@ recarga, Texto del SMS) y User Stories 16-19, 30-40.
 
 **Blocked by:** 04 — Selector de mensaje y botón de WhatsApp
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-11)
 
-- [ ] POST por fila que envía de forma síncrona con el `NotificationSender` de la app; el texto lleva `{nombre}` y `{codigos}` resueltos y la normalización sin tildes de los SMS
-- [ ] Envío exitoso: se crea el registro de envío (persona, mensaje, nombre del mensaje copiado, Admin, fecha) y la fila actualizada muestra el nuevo Último SMS
-- [ ] Envío fallido: aviso rojo en la fila, sin registro de envío nuevo
-- [ ] Cada intento (exitoso o fallido) se registra en `registros_sms` con el tipo nuevo `AVISO_ESPECIAL`
-- [ ] Con JS, el botón hace fetch y reemplaza el fragmento de la fila ("Enviando…" mientras espera); sin JS, POST normal con redirección a la vista (Post/Redirect/Get)
-- [ ] "Último SMS" por cliente con el envío más reciente de cualquier mensaje, en hora de Colombia y formato amigable; "Sin avisos enviados" si no hay
-- [ ] Un mensaje eliminado después de enviarse sigue mostrando su nombre en el Último SMS
-- [ ] Enviar con un mensaje eliminado o inexistente responde un error claro y no envía nada
-- [ ] Reenviar a un cliente con envío reciente funciona sin confirmación
-- [ ] Pruebas por HTTP reemplazando `get_notification_sender` por un sender falso (éxito y falla)
+- [x] POST por fila que envía de forma síncrona con el `NotificationSender` de la app; el texto lleva `{nombre}` y `{codigos}` resueltos y la normalización sin tildes de los SMS
+- [x] Envío exitoso: se crea el registro de envío (persona, mensaje, nombre del mensaje copiado, Admin, fecha) y la fila actualizada muestra el nuevo Último SMS
+- [x] Envío fallido: aviso rojo en la fila, sin registro de envío nuevo
+- [x] Cada intento (exitoso o fallido) se registra en `registros_sms` con el tipo nuevo `AVISO_ESPECIAL`
+- [x] Con JS, el botón hace fetch y reemplaza el fragmento de la fila ("Enviando…" mientras espera); sin JS, POST normal con redirección a la vista (Post/Redirect/Get)
+- [x] "Último SMS" por cliente con el envío más reciente de cualquier mensaje, en hora de Colombia y formato amigable; "Sin avisos enviados" si no hay
+- [x] Un mensaje eliminado después de enviarse sigue mostrando su nombre en el Último SMS
+- [x] Enviar con un mensaje eliminado o inexistente responde un error claro y no envía nada
+- [x] Reenviar a un cliente con envío reciente funciona sin confirmación
+- [x] Pruebas por HTTP reemplazando `get_notification_sender` por un sender falso (éxito y falla)

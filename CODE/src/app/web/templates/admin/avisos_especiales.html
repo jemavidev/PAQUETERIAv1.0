@@ -1,6 +1,48 @@
 {% extends "base.html" %}
 {% from "components/_toast.html" import toast %}
-{% block title %}Avisos especiales — PAQUETEX{% endblock %}
+{% block title %}Avisos especiales — PAQUETEX<script>
+  // Enviar SMS sin recargar (ticket 05): manda el formulario de la fila por fetch y reemplaza la fila de escritorio y
+  // la tarjeta de celular de ese cliente con la respuesta (nuevo "Último SMS" o el aviso rojo de falla). Un error
+  // que impide intentar el envío (400) se muestra en la misma fila. Sin JS, el formulario hace un POST normal.
+  (function () {
+    var contenedor = document.getElementById('resultados-avisos');
+    if (!contenedor) return;
+    contenedor.addEventListener('submit', function (e) {
+      var form = e.target.closest('[data-enviar-sms]');
+      if (!form) return;
+      e.preventDefault();
+      var boton = form.querySelector('button');
+      var personaId = form.querySelector('[name=persona_id]').value;
+      var textoBoton = boton.textContent;
+      boton.disabled = true;
+      boton.textContent = boton.getAttribute('data-texto-enviando');
+      fetch(form.action, {method: 'POST', body: new FormData(form), headers: {'X-Requested-With': 'fetch'}, credentials: 'same-origin'})
+        .then(function (r) { return r.text().then(function (html) { return {ok: r.ok, html: html}; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.html);
+          var plantilla = document.createElement('template');
+          plantilla.innerHTML = res.html;
+          var fila = plantilla.content.querySelector('[data-cliente-aviso]');
+          var tarjeta = plantilla.content.querySelector('[data-tarjeta-aviso]');
+          var filaActual = contenedor.querySelector('[data-cliente-aviso="' + personaId + '"]');
+          var tarjetaActual = contenedor.querySelector('[data-tarjeta-aviso="' + personaId + '"]');
+          if (fila && filaActual) filaActual.replaceWith(fila);
+          if (tarjeta && tarjetaActual) tarjetaActual.replaceWith(tarjeta);
+        })
+        .catch(function (err) {
+          boton.disabled = false;
+          boton.textContent = textoBoton;
+          var aviso = document.createElement('span');
+          aviso.className = 'mt-1 block text-xs font-semibold text-red-600';
+          aviso.setAttribute('role', 'alert');
+          aviso.textContent = (err && err.message) || 'No se pudo enviar el SMS. Intenta de nuevo.';
+          var lugar = form.closest('[data-cliente-aviso], [data-tarjeta-aviso]').querySelector('[data-ultimo-sms]');
+          if (lugar) lugar.after(aviso);
+        });
+    });
+  })();
+</script>
+{% endblock %}
 {% block content %}
 {#- Avisos especiales (`.scratch/avisos-especiales`): un cliente por fila -- quienes tienen Paquetes ANUNCIADOS de los
    últimos 5 días calendario o RECIBIDOS -- para avisarles a mano que ciertos días no hay servicio. Solo ADMIN. Mismo
@@ -10,7 +52,7 @@
     <h1 class="text-xl font-bold text-slate-900 m-0">Avisos especiales</h1>
     <p class="text-sm text-slate-600 m-0">Clientes con paquetes Anunciados en los últimos 5 días o Recibidos.</p>
   </div>
-  {% if error %}{{ toast(error, variant='danger') }}{% endif %}
+  {% if aviso %}{{ toast(aviso, variant=aviso_variante) }}{% endif %}
 
   {#- Selector de mensaje (ticket 04): todos los botones de la lista usan el elegido. Va en la URL (`?mensaje=`), así
      que un GET normal alcanza; el JS solo envía el formulario al cambiar la opción. -#}

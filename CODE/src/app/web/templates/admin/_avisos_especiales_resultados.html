@@ -1,44 +1,12 @@
 {#- Lista de clientes de "Avisos especiales" (`.scratch/avisos-especiales`). Fragmento aparte para que la búsqueda en
-   vivo y el envío por fila (que devuelve solo su fila) rendericen exactamente lo mismo que la carga normal.
-   Colores por Estado: los mismos de `/paquetes` (`packages/_resultados.html`, issues 442/445). -#}
-{%- set _codigo_color = {
-  'ANUNCIADO': 'bg-amber-400 text-amber-950 border-amber-500',
-  'RECIBIDO': 'bg-blue-600 text-white border-blue-700',
-} %}
-{%- set _franja = {'ANUNCIADO': 'border-l-amber-400', 'RECIBIDO': 'border-l-blue-600'} %}
-{%- set _fila_tarjeta = '[&>td]:bg-white [&>td]:border-y [&>td]:border-slate-200 [&>td:first-child]:rounded-l-xl [&>td:first-child]:border-l-8 [&>td:last-child]:rounded-r-xl [&>td:last-child]:border-r drop-shadow-sm [&:hover>td]:bg-slate-50' %}
-{%- set _franja_td = {'ANUNCIADO': '[&>td:first-child]:border-l-amber-400', 'RECIBIDO': '[&>td:first-child]:border-l-blue-600'} %}
-{%- set _boton_apagado = 'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-300' %}
-{#- WhatsApp (ticket 04): abre el chat con el mensaje elegido ya escrito; sin registro. Dos enlaces celular/escritorio,
-   mismo criterio que el resto de la app. Sin mensaje elegido o sin contacto: apagado con el motivo. -#}
-{%- macro boton_whatsapp(cliente) -%}
-{%- set enlaces = whatsapp.get(cliente.persona.id) if mensaje else none %}
-{%- if enlaces %}
-<a href="{{ enlaces[0] }}" target="_blank" rel="noopener" class="sm:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700" aria-label="WhatsApp a {{ cliente.persona.nombre }}" title="WhatsApp"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></a>
-<a href="{{ enlaces[1] }}" target="_blank" rel="noopener" class="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700" aria-label="WhatsApp a {{ cliente.persona.nombre }}" title="WhatsApp"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></a>
-{%- else %}
-{%- set _motivo = 'Elige un mensaje primero' if not mensaje else 'Sin teléfono ni WhatsApp registrado' %}
-<span class="{{ _boton_apagado }}" role="img" aria-label="WhatsApp: {{ _motivo }}" title="{{ _motivo }}"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{{ iconos_nav.whatsapp|safe }}</svg></span>
-{%- endif %}
-{%- endmacro %}
-{%- macro codigos(cliente) -%}
-<span class="flex flex-wrap gap-1.5">
-  {%- for p in cliente.paquetes %}
-  <a href="/consultar?q={{ p.access_code }}" class="inline-flex items-center {{ _codigo_color.get(p.estado.value, 'bg-gray-50 text-gray-800 border-gray-200') }} border rounded-full px-2.5 py-1 font-mono font-extrabold text-sm tracking-wide hover:underline" title="{{ p.estado.value|capitalize }} -- clic para consultar">{{ p.access_code }}</a>
-  {%- endfor %}
-</span>
-{%- endmacro %}
-
+   vivo renderice exactamente lo mismo que la carga normal; las piezas de cada fila viven en
+   `_avisos_especiales_macros.html` (también las usa la respuesta del envío por fila). -#}
+{%- import "admin/_avisos_especiales_macros.html" as av with context %}
 {%- if clientes %}
 {#- Celular: tarjetas. -#}
 <div class="sm:hidden space-y-2.5" data-avisos-movil>
   {%- for c in clientes %}
-  <div class="rounded-xl border border-slate-200 border-l-8 {{ _franja[c.estado_principal] }} bg-white p-3 shadow-sm" data-tarjeta-aviso="{{ c.persona.id }}">
-    <p class="text-lg font-semibold leading-tight text-slate-900 truncate m-0">{{ c.persona.nombre }}</p>
-    {%- if c.direccion %}<p class="mt-0.5 text-sm font-semibold uppercase text-slate-700 m-0">{{ c.direccion }}</p>{% endif %}
-    <div class="mt-2">{{ codigos(c) }}</div>
-    <div class="mt-2.5 flex items-center justify-end gap-2" data-acciones-aviso>{{ boton_whatsapp(c) }}</div>
-  </div>
+  {{ av.tarjeta(c) }}
   {%- endfor %}
 </div>
 {#- Escritorio: filas-tarjeta. -#}
@@ -49,17 +17,13 @@
         <th class="text-left font-semibold px-4 py-2.5">Cliente</th>
         <th class="text-left font-semibold px-4 py-2.5">Torre y Apartamento</th>
         <th class="text-left font-semibold px-4 py-2.5">Paquetes</th>
+        <th class="text-left font-semibold px-4 py-2.5">Último aviso</th>
         <th class="text-right font-semibold px-4 py-2.5">Avisar</th>
       </tr>
     </thead>
     <tbody>
       {%- for c in clientes %}
-      <tr id="cliente-aviso-{{ c.persona.id }}" data-cliente-aviso="{{ c.persona.id }}" class="{{ _fila_tarjeta }} {{ _franja_td[c.estado_principal] }}">
-        <td class="px-4 py-2.5 font-medium text-slate-900">{{ c.persona.nombre }}</td>
-        <td class="px-4 py-2.5 uppercase text-slate-700">{{ c.direccion or '' }}</td>
-        <td class="px-4 py-2.5">{{ codigos(c) }}</td>
-        <td class="px-4 py-2.5"><div class="flex items-center justify-end gap-2" data-acciones-aviso>{{ boton_whatsapp(c) }}</div></td>
-      </tr>
+      {{ av.fila(c) }}
       {%- endfor %}
     </tbody>
   </table>
