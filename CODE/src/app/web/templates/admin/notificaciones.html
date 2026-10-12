@@ -107,6 +107,8 @@
      `{codigos}`; la vista previa y el conteo los arma `aviso_especial_service.vista_previa`. Cada mensaje abre su
      modal de edición (ticket 02); "Nuevo mensaje" abre el suyo. -#}
   {% if mensaje_creado|default(false) %}{{ toast('Mensaje especial creado.', variant='success') }}{% endif %}
+  {% if mensaje_editado|default(false) %}{{ toast('Mensaje especial actualizado.', variant='success') }}{% endif %}
+  {% if mensaje_eliminado|default(false) %}{{ toast('Mensaje especial eliminado.', variant='success') }}{% endif %}
   <div class="pt-4 flex items-center justify-between gap-3">
     <h2 class="text-lg font-bold text-slate-900">Mensajes especiales</h2>
     {{ boton('Nuevo mensaje', size='sm', extra_attrs='data-open="modal-mensaje-especial-nuevo"') }}
@@ -133,6 +135,22 @@
                              mensaje_nuevo_nombre|default(''), mensaje_nuevo_texto|default(''),
                              (error if _nuevo_con_error else none), 'Crear') }}
   {% endcall %}
+
+  {#- Ticket 02: un modal de edición por mensaje (con "Eliminar" adentro) y su confirmación aparte. -#}
+  {% for item in mensajes_especiales|default([]) %}
+  {%- set m = item.mensaje %}
+  {%- set _editar_con_error = (mensaje_editar_error_id|default(none)) == m.id|string %}
+  {% call modal('mensaje-especial-' ~ m.id, 'Editar mensaje especial', ancho='lg', abierto=_editar_con_error) %}
+  {{ editor_mensaje_especial('/administracion/notificaciones/mensajes-especiales/' ~ m.id ~ '/editar',
+                             (mensaje_editar_nombre if _editar_con_error else m.nombre),
+                             (mensaje_editar_texto if _editar_con_error else m.texto),
+                             (error if _editar_con_error else none), 'Guardar') }}
+  <div class="mt-4 pt-4 border-t border-gray-100">
+    {{ boton('Eliminar mensaje', variant='danger', size='sm', extra_attrs='data-close="modal-mensaje-especial-' ~ m.id ~ '" data-open="modal-mensaje-especial-eliminar-' ~ m.id ~ '"') }}
+  </div>
+  {% endcall %}
+  {% call modal_confirmacion('mensaje-especial-eliminar-' ~ m.id, 'Eliminar mensaje', 'Deja de aparecer en Avisos especiales. Los clientes a los que ya se les envió siguen viendo su nombre en "Último SMS".', 'Eliminar', action='/administracion/notificaciones/mensajes-especiales/' ~ m.id ~ '/eliminar') %}{% endcall %}
+  {% endfor %}
 
   {#- Pedido en vivo (issue 202, heredado): si hay una fila con
      error/guardado propio, ESA es la que abre su modal automáticamente; si
@@ -282,10 +300,11 @@
   (function () {
     function toggle(id, hidden) { var m = document.getElementById(id); if (m) m.hidden = hidden; }
     document.addEventListener('click', function (e) {
-      var abrir = e.target.closest('[data-open]');
-      if (abrir) { toggle(abrir.dataset.open, false); return; }
+      // Un mismo botón puede cerrar un modal y abrir otro ("Eliminar mensaje" pasa de editar a confirmar).
       var cerrar = e.target.closest('[data-close]');
       if (cerrar) { toggle(cerrar.dataset.close, true); }
+      var abrir = e.target.closest('[data-open]');
+      if (abrir) { toggle(abrir.dataset.open, false); }
     });
   })();
 </script>

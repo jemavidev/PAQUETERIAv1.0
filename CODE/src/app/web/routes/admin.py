@@ -60,6 +60,8 @@ from app.domain.motivo_bloqueo_service import (
 )
 from app.domain.aviso_especial_service import (
     crear_mensaje as crear_mensaje_especial,
+    editar_mensaje as editar_mensaje_especial,
+    eliminar_mensaje as eliminar_mensaje_especial,
     listar_mensajes as listar_mensajes_especiales,
     vista_previa as aviso_vista_previa,
 )
@@ -741,6 +743,51 @@ def admin_mensaje_especial_crear(
             mensaje_nuevo_error=True, mensaje_nuevo_nombre=nombre or "", mensaje_nuevo_texto=texto or "",
         )
     return _pantalla_notificaciones(request, db, admin, mensaje_creado=True)
+
+
+def _uuid_mensaje_especial_o_404(mensaje_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(mensaje_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
+
+
+@router.post("/administracion/notificaciones/mensajes-especiales/{mensaje_id}/editar", response_class=HTMLResponse)
+def admin_mensaje_especial_editar(
+    mensaje_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+    nombre: str = Form(None),
+    texto: str = Form(None),
+):
+    """Edita un mensaje especial (`.scratch/avisos-especiales`, ticket 02). Un error reabre el modal de ESE mensaje
+    con lo escrito."""
+    mid = _uuid_mensaje_especial_o_404(mensaje_id)
+    try:
+        editar_mensaje_especial(db, mid, nombre, texto, usuario_id=admin.id)
+    except ValueError as exc:
+        return _pantalla_notificaciones(
+            request, db, admin, status_code=400, error=str(exc),
+            mensaje_editar_error_id=str(mid), mensaje_editar_nombre=nombre or "", mensaje_editar_texto=texto or "",
+        )
+    return _pantalla_notificaciones(request, db, admin, mensaje_editado=True)
+
+
+@router.post("/administracion/notificaciones/mensajes-especiales/{mensaje_id}/eliminar", response_class=HTMLResponse)
+def admin_mensaje_especial_eliminar(
+    mensaje_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+):
+    """Elimina (lógico) un mensaje especial (`.scratch/avisos-especiales`, ticket 02)."""
+    mid = _uuid_mensaje_especial_o_404(mensaje_id)
+    try:
+        eliminar_mensaje_especial(db, mid, usuario_id=admin.id)
+    except ValueError as exc:
+        return _pantalla_notificaciones(request, db, admin, status_code=400, error=str(exc))
+    return _pantalla_notificaciones(request, db, admin, mensaje_eliminado=True)
 
 
 @router.get("/administracion/motivos-cancelacion", response_class=HTMLResponse)

@@ -125,3 +125,94 @@ def test_crear_deja_la_creacion_en_el_historial_con_el_admin(client):
     assert historial.accion.value == "CREADO"
     assert historial.usuario_id == admin.id
     assert (historial.nombre_nuevo, historial.texto_nuevo) == ("Festivo", "Lunes festivo: sin servicio.")
+
+
+# --------------------------------------------------------------------------- #
+# Ticket 02 -- editar y eliminar
+# --------------------------------------------------------------------------- #
+def _id_de(client, nombre):
+    return client.db.query(MensajeEspecial).filter_by(nombre=nombre).one().id
+
+
+def test_editar_cambia_nombre_y_texto_y_deja_antes_y_despues_en_el_historial(client):
+    admin = _login_admin(client)
+    _crear(client, nombre="Fin de semana", texto="Sabado sin servicio.")
+    mid = _id_de(client, "Fin de semana")
+
+    r = client.post(f"{_CREAR}/{mid}/editar", data={"nombre": "Puente festivo", "texto": "Lunes 13 sin servicio, {nombre}."})
+
+    assert r.status_code == 200
+    assert "Mensaje especial actualizado." in r.text
+    assert "Puente festivo" in _seccion(r.text) and "Fin de semana" not in _seccion(r.text)
+    client.db.expire_all()
+    edicion = client.db.query(MensajeEspecialHistorial).filter_by(accion="EDITADO").one()
+    assert edicion.usuario_id == admin.id
+    assert (edicion.nombre_anterior, edicion.nombre_nuevo) == ("Fin de semana", "Puente festivo")
+    assert (edicion.texto_anterior, edicion.texto_nuevo) == ("Sabado sin servicio.", "Lunes 13 sin servicio, {nombre}.")
+
+
+def test_editar_con_nombre_de_otro_mensaje_se_rechaza_y_reabre_su_modal(client):
+    _login_admin(client)
+    _crear(client, nombre="Festivo")
+    _crear(client, nombre="Fin de semana")
+    mid = _id_de(client, "Fin de semana")
+
+    r = client.post(f"{_CREAR}/{mid}/editar", data={"nombre": "festivo", "texto": "Otro texto"})
+
+    assert r.status_code == 400
+    modal = re.search(rf'<div[^>]*id="modal-mensaje-especial-{mid}"[^>]*>', r.text).group(0)
+    assert " hidden" not in modal
+    client.db.expire_all()
+    assert client.db.get(MensajeEspecial, mid).nombre == "Fin de semana"
+
+
+def test_editar_valida_las_variables_igual_que_crear(client):
+    _login_admin(client)
+    _crear(client, nombre="Festivo")
+    mid = _id_de(client, "Festivo")
+
+    r = client.post(f"{_CREAR}/{mid}/editar", data={"nombre": "Festivo", "texto": "Hola {apartamento}"})
+
+    assert r.status_code == 400
+    assert "La variable {apartamento} no existe." in r.text
+
+
+def test_eliminar_lo_quita_de_la_lista_sin_borrarlo_y_libera_el_nombre(client):
+    admin = _login_admin(client)
+    _crear(client, nombre="Festivo")
+    mid = _id_de(client, "Festivo")
+
+    r = client.post(f"{_CREAR}/{mid}/eliminar")
+
+    assert r.status_code == 200
+    assert "Mensaje especial eliminado." in r.text
+    assert "Festivo" not in _seccion(r.text)
+    client.db.expire_all()
+    assert client.db.get(MensajeEspecial, mid).eliminado_en is not None  # eliminación lógica
+    eliminacion = client.db.query(MensajeEspecialHistorial).filter_by(accion="ELIMINADO").one()
+    assert (eliminacion.usuario_id, eliminacion.nombre_anterior) == (admin.id, "Festivo")
+    # El nombre vuelve a estar libre para un mensaje nuevo.
+    assert _crear(client, nombre="Festivo").status_code == 200
+
+
+def test_eliminar_pide_confirmacion(client):
+    _login_admin(client)
+    _crear(client, nombre="Festivo")
+    mid = _id_de(client, "Festivo")
+
+    html = client.get(_URL).text
+
+    assert f'data-open="modal-mensaje-especial-eliminar-{mid}"' in html
+    confirmacion = html[html.index(f'id="modal-mensaje-especial-eliminar-{mid}"'):]
+    assert f'action="{_CREAR}/{mid}/eliminar"' in confirmacion[:3000]
+
+
+def test_editar_o_eliminar_un_mensaje_ya_eliminado_responde_error(client):
+    _login_admin(client)
+    _crear(client, nombre="Festivo")
+    mid = _id_de(client, "Festivo")
+    client.post(f"{_CREAR}/{mid}/eliminar")
+
+    assert client.post(f"{_CREAR}/{mid}/eliminar").status_code == 400
+    assert client.post(f"{_CREAR}/{mid}/editar", data={"nombre": "X", "texto": "Y"}).status_code == 400
+    assert client.post(f"{_CREAR}/no-es-un-id/eliminar").status_code == 404

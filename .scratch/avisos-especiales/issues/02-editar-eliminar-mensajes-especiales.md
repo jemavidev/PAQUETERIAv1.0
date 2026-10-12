@@ -8,11 +8,11 @@ Ver spec: User Stories 58-61.
 
 **Blocked by:** 01 — Crear mensajes especiales en Notificaciones
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-11)
 
-- [ ] Editar nombre y/o texto desde un modal con la misma vista previa y conteo del ticket 01
-- [ ] Las mismas validaciones del 01 al editar (nombre único, variables permitidas, texto obligatorio)
-- [ ] Cada edición queda en el historial con usuario, fecha, nombre/texto anterior y nuevo
-- [ ] Eliminar pide confirmación; el mensaje deja de aparecer en la lista y queda registrado en el historial
-- [ ] La eliminación es lógica (no se borra la fila); un nombre eliminado puede volver a usarse en un mensaje nuevo
-- [ ] Pruebas por HTTP
+- [x] Editar nombre y/o texto desde un modal con la misma vista previa y conteo del ticket 01
+- [x] Las mismas validaciones del 01 al editar (nombre único, variables permitidas, texto obligatorio)
+- [x] Cada edición queda en el historial con usuario, fecha, nombre/texto anterior y nuevo
+- [x] Eliminar pide confirmación; el mensaje deja de aparecer en la lista y queda registrado en el historial
+- [x] La eliminación es lógica (no se borra la fila); un nombre eliminado puede volver a usarse en un mensaje nuevo
+- [x] Pruebas por HTTP

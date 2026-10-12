@@ -146,3 +146,54 @@ def crear_mensaje(session: Session, nombre: str, texto: str, usuario_id=None) ->
     )
     session.flush()
     return mensaje
+
+
+def editar_mensaje(session: Session, mensaje_id, nombre: str, texto: str, usuario_id=None) -> MensajeEspecial:
+    """Cambia el nombre y/o el texto de un mensaje vigente y deja el antes/después en el historial.
+
+    Raises:
+        ValueError: el mensaje no existe (o fue eliminado), o las mismas validaciones de `crear_mensaje`.
+    """
+    mensaje = obtener_mensaje(session, mensaje_id)
+    if mensaje is None:
+        raise ValueError("Mensaje no encontrado.")
+    nombre_limpio, texto_limpio = _validar(session, nombre, texto, excluir_id=mensaje.id)
+    nombre_anterior, texto_anterior = mensaje.nombre, mensaje.texto
+    mensaje.nombre, mensaje.texto = nombre_limpio, texto_limpio
+    _flush_o_duplicado(session, nombre_limpio)
+    session.add(
+        MensajeEspecialHistorial(
+            mensaje_id=mensaje.id,
+            accion=AccionMensajeEspecial.EDITADO,
+            usuario_id=usuario_id,
+            nombre_anterior=nombre_anterior,
+            nombre_nuevo=nombre_limpio,
+            texto_anterior=texto_anterior,
+            texto_nuevo=texto_limpio,
+        )
+    )
+    session.flush()
+    return mensaje
+
+
+def eliminar_mensaje(session: Session, mensaje_id, usuario_id=None) -> None:
+    """Elimina un mensaje vigente: eliminación LÓGICA (`eliminado_en`), para que los envíos ya hechos conserven su
+    nombre y que el nombre pueda volver a usarse. Queda en el historial.
+
+    Raises:
+        ValueError: el mensaje no existe o ya fue eliminado.
+    """
+    mensaje = obtener_mensaje(session, mensaje_id)
+    if mensaje is None:
+        raise ValueError("Mensaje no encontrado.")
+    mensaje.eliminado_en = datetime.now(timezone.utc)
+    session.add(
+        MensajeEspecialHistorial(
+            mensaje_id=mensaje.id,
+            accion=AccionMensajeEspecial.ELIMINADO,
+            usuario_id=usuario_id,
+            nombre_anterior=mensaje.nombre,
+            texto_anterior=mensaje.texto,
+        )
+    )
+    session.flush()
