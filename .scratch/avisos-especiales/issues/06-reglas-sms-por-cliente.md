@@ -11,7 +11,7 @@ Ver spec: Implementation Decisions (Regla del SMS, Quién es "el cliente") y Use
 **Status:** done (2026-10-11)
 
 - [x] Motivos, en este orden de prioridad: "De baja" (baja administrativa), "Sin teléfono", "Notificaciones SMS desactivadas"
-- [x] "Notificaciones SMS desactivadas" solo si el canal SMS está apagado (`preferencia_activa`) para el Estado de TODOS sus paquetes en la lista; con al menos uno activo, el SMS está disponible
+- [x] "Notificaciones SMS desactivadas" solo si el cliente APAGÓ A PROPÓSITO el SMS (preferencia guardada en falso) para el Estado de TODOS sus paquetes en la lista; los valores por defecto no bloquean (decisión de Jesús, 2026-10-11 -- antes decía `preferencia_activa`, que con el default de Recibido apagado dejaba sin SMS a casi todos)
 - [x] Un POST de envío a un cliente no elegible se rechaza sin llamar al sender ni registrar envío
 - [x] Los clientes solo-WhatsApp aparecen con "Sin teléfono" y el WhatsApp disponible, sin cambiar el comportamiento de los avisos automáticos
 - [x] El bloqueo no agrega una regla nueva (igual que los avisos automáticos)

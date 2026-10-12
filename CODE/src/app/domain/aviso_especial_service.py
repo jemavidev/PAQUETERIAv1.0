@@ -31,8 +31,7 @@ from .notificacion_service import _sin_tildes, normalizar_texto_plantilla, resol
 from .paquete import EstadoPaquete, Paquete, torre_sin_prefijo
 from .persona import Persona
 from .persona_service import buscar_persona_por_whatsapp, url_whatsapp, url_whatsapp_desktop
-from .preferencia_notificacion import CanalNotificacion
-from .preferencia_notificacion_service import preferencia_activa
+from .preferencia_notificacion import CanalNotificacion, PersonaPreferenciaNotificacion
 from .registro_sms import TipoRegistroSms
 from .registro_sms_service import registrar_envio
 from .zona_horaria import ZONA_HORARIA_APP
@@ -322,17 +321,29 @@ def cliente_del_paquete(session: Session, paquete: Paquete) -> Persona | None:
 
 
 def motivo_sin_sms(session: Session, cliente: ClienteAviso) -> str | None:
-    """Por qué NO se le puede enviar SMS a `cliente` -- mismas reglas que los avisos automáticos -- o `None` si se
-    puede. En orden de prioridad: de baja administrativa; sin teléfono; SMS desactivado (`preferencia_activa`) para el
-    Estado de TODOS sus Paquetes en la lista (con al menos uno activo, se puede: el aviso especial no es un evento de
-    Paquete). El bloqueo no agrega regla, igual que en los avisos automáticos."""
+    """Por qué NO se le puede enviar SMS a `cliente`, o `None` si se puede. En orden de prioridad: de baja
+    administrativa; sin teléfono; el cliente APAGÓ A PROPÓSITO el SMS (una preferencia guardada en falso) para el
+    Estado de TODOS sus Paquetes en la lista. El bloqueo no agrega regla, igual que en los avisos automáticos.
+
+    Los valores por defecto NO bloquean (decisión de Jesús, 2026-10-11): por costo, el SMS de Recibido viene apagado
+    por defecto (`preferencia_notificacion_service._default_activo`), así que con `preferencia_activa` casi ningún
+    cliente con solo Recibidos podría recibir el aviso. El aviso especial no es un evento de Paquete: lo que se
+    respeta es lo que el cliente eligió."""
     persona = cliente.persona
     if persona.baja_administrativa_en is not None:
         return "De baja"
     if not persona.telefono:
         return "Sin teléfono"
-    estados = {p.estado for p in cliente.paquetes}
-    if estados and not any(preferencia_activa(session, persona.id, CanalNotificacion.SMS, e) for e in estados):
+    estados = {p.estado.value for p in cliente.paquetes}
+    apagados = {
+        evento
+        for (evento,) in session.query(PersonaPreferenciaNotificacion.evento).filter(
+            PersonaPreferenciaNotificacion.persona_id == persona.id,
+            PersonaPreferenciaNotificacion.canal == CanalNotificacion.SMS.value,
+            PersonaPreferenciaNotificacion.activo.is_(False),
+        )
+    }
+    if estados and estados <= apagados:
         return "Notificaciones SMS desactivadas"
     return None
 

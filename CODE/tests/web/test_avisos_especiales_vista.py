@@ -639,3 +639,15 @@ def test_sin_js_un_error_vuelve_a_la_vista_con_un_codigo_y_no_con_el_texto(clien
 
     assert r.headers["location"] == f"{_URL}?mensaje={m.id}&resultado=no-configurado"
     assert "El SMS no está configurado todavía" in client.get(r.headers["location"]).text
+
+
+def test_los_valores_por_defecto_de_sms_no_apagan_el_aviso_especial(client):
+    # Decisión de Jesús (2026-10-11): por costo, el SMS de Recibido viene apagado POR DEFECTO; eso no debe bloquear el
+    # aviso especial -- solo un apagado explícito del cliente lo bloquea.
+    admin = _login_admin(client)
+    p = _anunciar(client)
+    receive(client.db, p, admin)  # solo Recibido, sin ninguna preferencia guardada
+    client.db.commit()
+    _mensaje(client)
+
+    assert _sms_apagado(_fila_html(client.get(_URL).text, p.announced_by_persona_id)) is None

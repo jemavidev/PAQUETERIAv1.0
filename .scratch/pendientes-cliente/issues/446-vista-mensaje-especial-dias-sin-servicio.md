@@ -7,7 +7,7 @@ Clona lo que es la vista de /paquetes y realiza la propuesta para estos que este
 mensaje de texto y mensaje por whatsapp por medio de un link (boton). El mensaje se podra editar en
 /administracion/notificaciones."
 
-**Status:** desglosado en 8 tickets en `.scratch/avisos-especiales/issues/` (2026-10-11); pendiente de implementar
+**Status:** implementado (local, 2026-10-11) — 8 tickets en `.scratch/avisos-especiales/issues/`, suite completa en verde; falta verificar y desplegar
 
 ## Decisiones (grilling, Jesús 2026-10-11)
 
@@ -31,3 +31,10 @@ mensaje de texto y mensaje por whatsapp por medio de un link (boton). El mensaje
     eliminar con confirmación, historial de cambios; **un solo texto** para SMS y WhatsApp.
 
 Look de la lista: el de `/paquetes` escritorio (filas-tarjeta, issue 445), con búsqueda y filtro Anunciado/Recibido.
+
+## Seguimiento (2026-10-11, durante la implementación)
+
+- Al probar en local, los 11 clientes salían con el SMS apagado: por defecto el SMS solo está activo para Anunciado
+  (Recibido apagado desde el 2026-08-10, por costo). Jesús eligió: **solo cuentan los apagados explícitos**. El SMS
+  del aviso especial se permite salvo que el cliente haya apagado A PROPÓSITO el SMS para el Estado de todos sus
+  paquetes en la lista; los valores por defecto no lo bloquean.

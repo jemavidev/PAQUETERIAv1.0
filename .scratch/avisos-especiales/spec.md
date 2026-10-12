@@ -205,9 +205,11 @@ Los mensajes especiales se crean, editan y eliminan en `/administracion/notifica
 - **Elegibilidad de Paquetes**: Estado RECIBIDO (cualquier fecha) o ANUNCIADO con fecha de anuncio, convertida a hora de
   Colombia, entre hoy y 4 días calendario atrás. ENTREGADO y CANCELADO nunca entran. Se reusa la conversión de zona
   horaria que ya usa la app (`hora_local`/config del conjunto), sin una zona fija nueva.
-- **Regla del SMS** (decisión de esta conversación): el SMS está disponible si la Persona no está en baja
-  administrativa, tiene teléfono y tiene el canal SMS activo (`preferencia_activa`) para el Estado (ANUNCIADO o
-  RECIBIDO) de al menos uno de sus paquetes en la lista. Si no, el motivo es "De baja", "Sin teléfono" o
+- **Regla del SMS** (decisión de esta conversación, ajustada el 2026-10-11 al implementar): el SMS está disponible si
+  la Persona no está en baja administrativa, tiene teléfono y NO apagó a propósito el canal SMS (una preferencia
+  GUARDADA en falso) para el Estado (ANUNCIADO o RECIBIDO) de todos sus paquetes en la lista. Los valores por
+  defecto no bloquean: por costo, el SMS de Recibido viene apagado por defecto, y con `preferencia_activa` casi
+  ningún cliente con solo Recibidos habría podido recibir el aviso. Si no, el motivo es "De baja", "Sin teléfono" o
   "Notificaciones SMS desactivadas", en ese orden de prioridad. Las mismas reglas se aplican en el envío. No hay regla
   nueva para bloqueados: se comporta igual que los avisos automáticos (hoy el bloqueo no frena notificaciones).
 - **Esquema nuevo** (migración Alembic):
