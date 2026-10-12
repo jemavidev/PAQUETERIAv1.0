@@ -1,0 +1,18 @@
+# 06 — Reglas de quién puede recibir SMS
+
+**What to build:** El botón SMS respeta las mismas reglas que los avisos automáticos. Si no aplica, queda apagado con el motivo visible
+y el WhatsApp sigue disponible. Las reglas se revisan al dibujar la lista y también en el POST de envío. Los clientes
+que solo tienen usuario de WhatsApp (sin teléfono) también aparecen en la lista, con el SMS apagado.
+
+Ver spec: Implementation Decisions (Regla del SMS, Quién es "el cliente") y User Stories 41-47.
+
+**Blocked by:** 05 — Enviar SMS y "Último SMS"
+
+**Status:** ready-for-agent
+
+- [ ] Motivos, en este orden de prioridad: "De baja" (baja administrativa), "Sin teléfono", "Notificaciones SMS desactivadas"
+- [ ] "Notificaciones SMS desactivadas" solo si el canal SMS está apagado (`preferencia_activa`) para el Estado de TODOS sus paquetes en la lista; con al menos uno activo, el SMS está disponible
+- [ ] Un POST de envío a un cliente no elegible se rechaza sin llamar al sender ni registrar envío
+- [ ] Los clientes solo-WhatsApp aparecen con "Sin teléfono" y el WhatsApp disponible, sin cambiar el comportamiento de los avisos automáticos
+- [ ] El bloqueo no agrega una regla nueva (igual que los avisos automáticos)
+- [ ] Pruebas por HTTP y, para la matriz de motivos, sobre el servicio de dominio

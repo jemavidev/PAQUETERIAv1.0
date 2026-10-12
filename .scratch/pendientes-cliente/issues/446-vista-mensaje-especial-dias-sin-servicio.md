@@ -7,7 +7,7 @@ Clona lo que es la vista de /paquetes y realiza la propuesta para estos que este
 mensaje de texto y mensaje por whatsapp por medio de un link (boton). El mensaje se podra editar en
 /administracion/notificaciones."
 
-**Status:** formalizado en `.scratch/avisos-especiales/spec.md` (2026-10-11); falta `/to-tickets`
+**Status:** desglosado en 8 tickets en `.scratch/avisos-especiales/issues/` (2026-10-11); pendiente de implementar
 
 ## Decisiones (grilling, Jesús 2026-10-11)
 
